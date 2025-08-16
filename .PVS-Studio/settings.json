@@ -37,6 +37,6 @@
   "traceSpoonLogFileName": "spoon.log",
   "check-license": false,
   "logging": "OFF",
-  "project": "C:/Users/SANTIAGO/Documents/Facultad/Tercer_año/PAW/Proyecto_Eclipse/paw-2025b-06",
+  "project": "//wsl.localhost/Ubuntu-22.04/home/SANTI/PAW/paw2025Q2",
   "type": "sources"
 }
