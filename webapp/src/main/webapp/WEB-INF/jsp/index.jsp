@@ -3,6 +3,8 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <link rel="stylesheet" href="<c:url value='/css/buttons.css' />" />
 <link rel="stylesheet" href="<c:url value='/css/input.css' />" />
+<link rel="stylesheet" href="<c:url value='/css/card.css' />" />
+<link rel="stylesheet" href="<c:url value='/css/text.css' />" />
 
 <!DOCTYPE html>
 <html>
@@ -31,6 +33,13 @@
         return true;
     }
 </script>
+
+<h3>Ejemplo de text.tag</h3>
+<t:text text="Este es un texto usando text.tag" size="card-md" />
+
+<h3>Ejemplo de card.tag</h3>
+<t:card text="Esta es una tarjeta usando card.tag" size="card-lg" cssClass="card-default" />
+<t:card text="Tarjeta deshabilitada" disabled="true" />
 
 </body>
 </html>
