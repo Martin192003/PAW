@@ -10,7 +10,6 @@ import org.springframework.web.servlet.ModelAndView;
 public class HelloWorldController {
     @RequestMapping("/")
     public ModelAndView helloWorld() {
-
-        return  new ModelAndView("index.jsp");
+        return  new ModelAndView("index");
     }
 }
