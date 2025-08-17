@@ -10,6 +10,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
     <org.springframework.version>5.3.33</org.springframework.version>
+    <jstl.version>1.2</jstl.version>
   </properties>
 
   <dependencyManagement>
@@ -18,6 +19,11 @@
         <groupId>org.springframework</groupId>
         <artifactId>spring-webmvc</artifactId>
         <version>${org.springframework.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>jstl</artifactId>
+        <version>${jstl.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
