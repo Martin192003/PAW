@@ -14,7 +14,7 @@
 
 <div class="form-group">
     <c:if test="${not empty label}">
-        <label for="${name}"><c:out value="${label}" /></label>
+        <label for="${name}"><c:out value="${label}"/></label>
     </c:if>
 
     <input
@@ -23,12 +23,12 @@
             name="${name}"
             value="<c:out value='${value}'/>"
             placeholder="<c:out value='${placeholder}'/>"
-            class="form-control"
+            class="form-control ${not empty error ? 'is-invalid' : ''}"
             <c:if test="${inputRequired}">required</c:if>
             <c:if test="${not empty pattern}">pattern="${pattern}"</c:if>
     />
 
     <c:if test="${not empty error}">
-        <span class="error"><c:out value="${error}" /></span>
+        <span class="error"><c:out value="${error}"/></span>
     </c:if>
 </div>
