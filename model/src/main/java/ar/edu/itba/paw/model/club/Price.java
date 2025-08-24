@@ -1,7 +1,7 @@
-package ar.edu.itba.paw.model.boliche;
+package ar.edu.itba.paw.model.club;
 
 public enum Price {
-    LOW,
-    MEDIUM,
-    HIGH
+    BAJO,
+    MEDIO,
+    ALTO
 }

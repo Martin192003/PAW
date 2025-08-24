@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.model.boliche;
+package ar.edu.itba.paw.model.club;
 
 public enum VenueType {
     BAR,
