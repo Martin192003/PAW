@@ -1,9 +1,9 @@
 package ar.edu.itba.paw.service;
 
-import ar.edu.itba.paw.model.boliche.Boliche;
-import ar.edu.itba.paw.model.boliche.MusicalGenre;
-import ar.edu.itba.paw.model.boliche.Price;
-import ar.edu.itba.paw.model.boliche.VenueType;
+import ar.edu.itba.paw.model.club.Boliche;
+import ar.edu.itba.paw.model.club.MusicalGenre;
+import ar.edu.itba.paw.model.club.Price;
+import ar.edu.itba.paw.model.club.VenueType;
 
 import java.util.Optional;
 import java.util.Set;
@@ -13,7 +13,7 @@ public interface BolicheService {
     Optional<Boliche> findById(Long id);
     Optional<Boliche> findBySlug(String slug);
 
-  //  Optional<Boliche> search(BolicheFilter filter, BolicheSort sort, int page, int pageSize);
+  //  Optional<Boliche> search(BolicheFilter filter, BolicheSort sort, int page, int pageSize); //PREGUNTAR DONDE VA BolicheFilter EN SERVICE? EN MODEL?
 
 
     boolean existsBySlug(String slug);

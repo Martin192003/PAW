@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.model.boliche;
+package ar.edu.itba.paw.model.club;
 
 public enum MusicalGenre {
     ROCK,
@@ -9,5 +9,6 @@ public enum MusicalGenre {
     CUMBIA,
     TRAP,
     JAZZ,
+    OTRO
 
 }

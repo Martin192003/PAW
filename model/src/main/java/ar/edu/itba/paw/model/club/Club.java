@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.model.boliche;
+package ar.edu.itba.paw.model.club;
 
 
 import ar.edu.itba.paw.model.common.Contact;
@@ -7,7 +7,7 @@ import ar.edu.itba.paw.model.common.Location;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Boliche {
+public class Club {
     private final long id;
     private String name;
     private final VenueType type;
@@ -20,7 +20,7 @@ public class Boliche {
     private String description;
 
 
-    public Boliche(long id, VenueType type, String name, Location location, Contact contact, Price price, double rating, int quantityRatings, String description) {
+    public Club(long id, VenueType type, String name, Location location, Contact contact, Price price, double rating, int quantityRatings, String description) {
 
         /* ACA DEBERIAN HABER VALIDACIONES */
         this.id = id;
