@@ -1,5 +1,5 @@
 <%@ tag language="java" pageEncoding="UTF-8"%>
-<%@ attribute name="text" required="true" %>
+<%@ attribute name="text" required="false" %>
 <%@ attribute name="size" required="false" %>
 <%@ attribute name="cssClass" required="false" %>
 <%@ attribute name="disabled" required="false" type="java.lang.Boolean" %>
@@ -13,6 +13,6 @@
 
 <div class="${classes}" <c:if test="${disabled}">style="pointer-events:none;opacity:0.6;"</c:if>>
     <div class="card-body">
-        ${text}
+        <jsp:doBody/>
     </div>
 </div>

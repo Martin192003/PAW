@@ -1,8 +1,16 @@
+@font-face {
+    font-family: 'Darklinos';
+    src: url('../fonts/DARKLINOS.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 body {
     font-family: Arial, sans-serif;
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    background-color: #1b1a1a;
+    color: #fff;
 }
 .header {
     text-align: center;
@@ -28,8 +36,26 @@ body {
     border: 1px solid #ddd;
     border-radius: 5px;
 }
+.app-title {
+    font-family: 'Darklinos', Arial, sans-serif;
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #4f0255;
+    letter-spacing: 2px;
+    z-index: 100;
+    text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.3);
+}
 .text-demo, .card-demo {
     margin: 15px 0;
+}
+.app-boliches {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
 }
 #formError {
     color: red;
