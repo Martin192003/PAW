@@ -8,6 +8,11 @@ CREATE TABLE IF NOT EXISTS clubs(
     quantityRatings INT DEFAULT 0,
     priceRange VARCHAR(20) CHECK (priceRange IN ('bajo', 'medio', 'alto')),
     description TEXT,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    adminId INT REFERENCES users(userID) ON DELETE CASCADE
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS clubAdmins (
+    clubId INT REFERENCES clubs(clubId) ON DELETE CASCADE,
+    adminId INT REFERENCES users(userId) ON DELETE CASCADE,
+    PRIMARY KEY (clubId, adminId)
 );
