@@ -13,10 +13,12 @@
 <html>
 <body>
 <div class="top-bar">
-    <div class="app-title">
-        Bling <br>
-        &nbsp;&nbsp;Bling
-    </div>
+    <a href="<c:url value='/' />" class="logo-link">
+        <div class="app-title">
+            Bling <br>
+            &nbsp;&nbsp;Bling
+        </div>
+    </a>
 </div>
 <div class="app-boliches">
     <t:card size="card-lg" cssClass="boliche-card" dataId="1">

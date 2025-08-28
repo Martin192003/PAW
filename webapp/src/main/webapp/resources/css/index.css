@@ -73,6 +73,16 @@ body {
     min-height: 60vh;
     padding-top: 100px;
 }
+.logo-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.logo-link:hover {
+    text-decoration: none;
+    opacity: 0.9;
+}
 #formError {
     color: red;
     margin-top: 10px;
