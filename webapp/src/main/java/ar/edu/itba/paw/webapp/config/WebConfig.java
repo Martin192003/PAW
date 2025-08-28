@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("classpath:db/schema.sql")
+    @Value("classpath:/schema.sql")
     private Resource schemaSql;
 
 
@@ -40,7 +40,13 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/resources/**").addResourceLocations("/resources/");
     }
 
-
+    @Bean
+    public DataSourceInitializer dataSourceInitializer(final DataSource ds) {
+        final DataSourceInitializer dsi = new DataSourceInitializer();
+        dsi.setDataSource(ds);
+        dsi.setDatabasePopulator(databasePopulator());
+        return dsi;
+    }
 
     @Bean
     public DataSource dataSource() {
@@ -52,6 +58,7 @@ public class WebConfig implements WebMvcConfigurer {
         ds.setPassword("postgres");
         return ds;
     }
+
 
     private DatabasePopulator databasePopulator() {
         ResourceDatabasePopulator dbp = new ResourceDatabasePopulator();
