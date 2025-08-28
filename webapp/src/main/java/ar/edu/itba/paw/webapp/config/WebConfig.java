@@ -7,11 +7,14 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
+
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import javax.sql.DataSource;
+
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.DatabasePopulator;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -20,15 +23,16 @@ import org.springframework.beans.factory.annotation.Value;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("classpath:schema.sql")
+    @Value("classpath:db/schema.sql")
     private Resource schemaSql;
+
 
     @Bean
     public InternalResourceViewResolver viewResolver() {
-        InternalResourceViewResolver resolver = new InternalResourceViewResolver();
-        resolver.setPrefix("/WEB-INF/jsp/");
-        resolver.setSuffix(".jsp");
-        return resolver;
+        InternalResourceViewResolver r = new InternalResourceViewResolver();
+        r.setPrefix("/WEB-INF/jsp/");
+        r.setSuffix(".jsp");
+        return r;
     }
 
     @Override
@@ -36,27 +40,24 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/resources/**").addResourceLocations("/resources/");
     }
 
+
+
     @Bean
     public DataSource dataSource() {
-        final SimpleDriverDataSource ds = new SimpleDriverDataSource();
+        String port = "5433";
+        SimpleDriverDataSource ds = new SimpleDriverDataSource();
         ds.setDriverClass(org.postgresql.Driver.class);
-        ds.setUrl("jdbc:postgresql://localhost/paw");
-        ds.setUsername("root");
-        ds.setPassword("root");
+        ds.setUrl("jdbc:postgresql://localhost:" + port + "/paw?sslmode=disable");
+        ds.setUsername("postgres");
+        ds.setPassword("postgres");
         return ds;
     }
 
-//    @Bean
-//    public DataSourceInitializer dataSourceInitializer(final DataSource ds) {
-//        final DataSourceInitializer dsi = new DataSourceInitializer();
-//        dsi.setDataSource(ds);
-//        dsi.setDatabasePopulator(databasePopulator());
-//        return dsi;
-//    }
-//    private DatabasePopulator databasePopulator() {
-//        final ResourceDatabasePopulator dbp = new ResourceDatabasePopulator();
-//        dbp.addScript(schemaSql);
-//        return dbp;
-//    }
-
+    private DatabasePopulator databasePopulator() {
+        ResourceDatabasePopulator dbp = new ResourceDatabasePopulator();
+        dbp.setContinueOnError(true);   // tolera drops/creates idempotentes
+        dbp.setIgnoreFailedDrops(true);
+        dbp.addScript(schemaSql);       // primero schema
+        return dbp;
+    }
 }
