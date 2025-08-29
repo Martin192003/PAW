@@ -1,7 +1,5 @@
 package ar.edu.itba.paw.persistence;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +11,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.sql.DataSource;
-import ar.edu.itba.paw.model.User.User;
-import ar.edu.itba.paw.model.User.Role;
+import ar.edu.itba.paw.model.user.User;
+import ar.edu.itba.paw.model.user.Role;
 import org.springframework.stereotype.Repository;
 
 @Repository

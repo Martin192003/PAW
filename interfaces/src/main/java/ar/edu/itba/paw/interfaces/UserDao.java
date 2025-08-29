@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.interfaces;
 
-import ar.edu.itba.paw.model.User.User;
-import ar.edu.itba.paw.model.User.Role;
+import ar.edu.itba.paw.model.user.User;
+import ar.edu.itba.paw.model.user.Role;
 
 
 public interface UserDao {

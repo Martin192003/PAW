@@ -1,10 +1,10 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.interfaces.UserDao;
-import ar.edu.itba.paw.model.User.Role;
+import ar.edu.itba.paw.model.user.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ar.edu.itba.paw.model.User.User;
+import ar.edu.itba.paw.model.user.User;
 import ar.edu.itba.paw.interfaces.UserService;
 
 

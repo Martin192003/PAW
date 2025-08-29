@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.model.User;
+package ar.edu.itba.paw.model.user;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
