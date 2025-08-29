@@ -1,27 +1,28 @@
 package ar.edu.itba.paw.webapp.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+import org.springframework.jdbc.datasource.init.DataSourceInitializer;
+import org.springframework.jdbc.datasource.init.DatabasePopulator;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import javax.sql.DataSource;
-import org.springframework.jdbc.datasource.init.DataSourceInitializer;
-import org.springframework.jdbc.datasource.init.DatabasePopulator;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.springframework.core.io.Resource;
-import org.springframework.beans.factory.annotation.Value;
 
 @EnableWebMvc
-@ComponentScan({"ar.edu.itba.paw.webapp.controller"})
+@ComponentScan({"ar.edu.itba.paw.webapp.controller", "ar.edu.itba.paw.service",
+        "ar.edu.itba.paw.persistence"})
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    /*@Value("classpath:schema.sql")
-    private Resource schemaSql;*/
+    @Value("classpath:db/schema.sql")
+    private Resource schemaSql;
 
     @Bean
     public InternalResourceViewResolver viewResolver() {
@@ -45,7 +46,6 @@ public class WebConfig implements WebMvcConfigurer {
         ds.setPassword("postgres");
         return ds;
     }
-/*
     @Bean
     public DataSourceInitializer dataSourceInitializer(final DataSource ds) {
         final DataSourceInitializer dsi = new DataSourceInitializer();
@@ -58,5 +58,4 @@ public class WebConfig implements WebMvcConfigurer {
         dbp.addScript(schemaSql);
         return dbp;
     }
-*/
 }
