@@ -27,7 +27,9 @@
 <div class="detail-page">
     <div class="detail-header">
         <h1 class="detail-title">${club.title}</h1>
-        <t:button text="Contactarse" cssClass="btn-success" icon="fa-solid fa-envelope" />
+        <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value='/contact?id=${club.id}' />'">
+            <i class="fa-solid fa-envelope"></i> Contactarse
+        </button>
     </div>
 
     <div class="detail-content">

@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />" />
 <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />" />
 <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />" />
+<link rel="stylesheet" href="<c:url value='/resources/css/contactForm.css' />" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <meta charset="UTF-8">
 
@@ -20,42 +21,40 @@
             </div>
         </a>
     </div>
-    <t:card size="card-xl" cssClass="contact-card">
-        <div class="contact-title">Contacto con ${bolicheName}</div>
-        <form id="contactForm" action="#" method="post">
-            <input type="hidden" name="bolichId" value="${bolichId}">
-
-            <div class="form-group">
-                <label for="name">Nombre completo:</label>
-                <input type="text" id="name" name="name" class="form-control" required>
+    <div class="contact-page">
+        <t:card size="card-lg" cssClass="contact-card">
+            <div class="contact-title">
+                    Contactate con ${clubName}
+                    <span class="contact-icon">
+                        <i class="fa-solid fa-headphones"></i>
+                    </span>
             </div>
+            <form id="contactForm" action="#" method="post">
+                <input type="hidden" name="clubId" value="${clubId}">
 
-            <div class="form-group">
-                <label for="email">Correo electrónico:</label>
-                <input type="email" id="email" name="email" class="form-control" required>
-            </div>
+                <div class="form-group">
+                    <input type="text" id="name" name="name" class="form-control" placeholder="Nombre completo" required>
+                </div>
 
-            <div class="form-group">
-                <label for="phone">Teléfono:</label>
-                <input type="tel" id="phone" name="phone" class="form-control">
-            </div>
+                <div class="form-group">
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Correo electrónico" required>
+                </div>
 
-            <div class="form-group">
-                <label for="subject">Asunto:</label>
-                <input type="text" id="subject" name="subject" class="form-control" required>
-            </div>
+                <div class="form-group">
+                    <input type="tel" id="phone" name="phone" class="form-control" placeholder="Teléfono">
+                </div>
 
-            <div class="form-group">
-                <label for="message">Mensaje:</label>
-                <textarea id="message" name="message" class="form-control" required></textarea>
-            </div>
+                <div class="form-group">
+                    <textarea id="message" name="message" class="form-control" placeholder="Mensaje" required></textarea>
+                </div>
 
-            <div class="contact-buttons">
-                <button type="button" class="btn-secondary" onclick="window.history.back()">Cancelar</button>
-                <button type="submit" class="btn-primary">Enviar mensaje</button>
-            </div>
-        </form>
-    </t:card>
+                <div class="contact-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Enviar mensaje</button>
+                </div>
+            </form>
+        </t:card>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

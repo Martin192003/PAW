@@ -6,6 +6,7 @@
 
 .detail-header {
     padding: 20px;
+    text-decoration: none;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     justify-content: space-between;
     align-items: center;

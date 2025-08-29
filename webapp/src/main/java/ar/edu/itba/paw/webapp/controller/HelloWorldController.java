@@ -26,8 +26,26 @@ public class HelloWorldController {
             return new ModelAndView("redirect:/");
         }
 
+        club.put("id", id);
+
         ModelAndView mav = new ModelAndView("clubDetails");
         mav.addObject("club", club);
+        return mav;
+    }
+
+    @RequestMapping("/contact")
+    public ModelAndView showContactForm(@RequestParam("id") String id) {
+        Map<String, String> club = clubsInformation.get(id);
+
+        if (club == null) {
+            return new ModelAndView("redirect:/");
+        }
+
+        club.put("id", id);
+
+        ModelAndView mav = new ModelAndView("contactForm");
+        mav.addObject("clubId", id);
+        mav.addObject("clubName", club.get("title"));
         return mav;
     }
 
