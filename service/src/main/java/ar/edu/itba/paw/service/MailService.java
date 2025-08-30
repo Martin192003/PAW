@@ -47,10 +47,27 @@ public class MailService {
         }
     }
 
+    public void sendContactConfirmation(String userEmail, String clubName, String originalMessage) {
+        try {
+            SimpleMailMessage mail = new SimpleMailMessage();
+            mail.setFrom(defaultFrom);
+            mail.setTo(userEmail);
+            mail.setSubject("Confirmación de contacto - " + clubName);
+            mail.setText("Hemos recibido tu mensaje para " + clubName + ".\n\nCopia de tu mensaje:\n\""
+                    + originalMessage + "\"\n\nTe responderán a la brevedad.\n\n(No responder a este correo)");
+            LOGGER.info("SMTP confirmation send attempt to {}", userEmail);
+            mailSender.send(mail);
+            LOGGER.info("SMTP confirmation OK to {}", userEmail);
+        } catch (Exception e) {
+            LOGGER.warn("Confirmation email FAILED to {}: {}", userEmail, e.getMessage());
+        }
+    }
+
     private String host() {
         return (mailSender instanceof JavaMailSenderImpl)
                 ? ((JavaMailSenderImpl) mailSender).getHost() : "?";
     }
+
     private String user() {
         return (mailSender instanceof JavaMailSenderImpl)
                 ? ((JavaMailSenderImpl) mailSender).getUsername() : "?";
