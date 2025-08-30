@@ -14,7 +14,7 @@ public interface ProductsDao {
 
     List<Product> findAll();
     List<Product> findByClub(Club club);
-
+    List<Product> findByClubID(UUID clubId);
     Product create(Club club, String name, String description, BigDecimal basePrice, ProductType type, boolean isAvailable);
     Product update(Product product);
     boolean delete(UUID id);

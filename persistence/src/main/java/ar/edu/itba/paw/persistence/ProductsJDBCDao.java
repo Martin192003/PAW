@@ -29,7 +29,7 @@ public class ProductsJDBCDao implements ProductsDao {
         p.setProductName(rs.getString("product_name"));
         p.setDescription(rs.getString("description"));
         p.setBasePrice(rs.getBigDecimal("base_price"));
-        p.setProductType(ProductType.valueOf(rs.getString("product_type"))); // 'alcoholicas'|'noAlcoholicas'
+        p.setProductType(ProductType.fromDb(rs.getString("product_type")));
         p.setIsAvailable(rs.getBoolean("is_available"));
         p.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
         return p;
@@ -102,6 +102,12 @@ public class ProductsJDBCDao implements ProductsDao {
     public List<Product> findByClub(Club club) {
         final String sql = "SELECT product_id,club_id,product_name,description,base_price,product_type,is_available,created_at FROM products WHERE club_id = ?";
         return jdbc.query(sql, ROW_MAPPER, club.getClubId());
+    }
+
+    @Override
+    public List<Product> findByClubID(UUID clubId) {
+        final String sql = "SELECT product_id,club_id,product_name,description,base_price,product_type,is_available,created_at FROM products WHERE club_id = ?";
+        return jdbc.query(sql, ROW_MAPPER, clubId);
     }
 
 }

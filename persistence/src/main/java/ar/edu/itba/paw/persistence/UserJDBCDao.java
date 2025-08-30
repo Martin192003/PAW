@@ -26,7 +26,8 @@ public class UserJDBCDao implements UserDao {
         u.setEmail(rs.getString("email"));
         u.setPasswordHash(rs.getString("password_hash"));
         u.setCellphone(rs.getString("cellphone"));
-        u.setRole(Role.valueOf(rs.getString("role")));
+        final String roleStr = rs.getString("role");
+        u.setRole(roleStr == null ? null : Role.valueOf(roleStr.trim().toUpperCase(Locale.ROOT)));
         u.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
         return u;
     };
