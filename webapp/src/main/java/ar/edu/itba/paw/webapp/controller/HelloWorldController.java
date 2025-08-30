@@ -11,7 +11,7 @@ import java.util.Map;
 @Controller
 public class HelloWorldController {
 
-    private final Map<String, Map<String, String>> clubsInformation = initializeClubsInformation();
+    /*private final Map<String, Map<String, String>> clubsInformation = initializeClubsInformation();
 
     @RequestMapping("/")
     public ModelAndView helloWorld() {
@@ -51,7 +51,7 @@ public class HelloWorldController {
 
     //yo creería que va acá pero no estoy seguro
     //vamos a usar String para el Id para no hacer conversiones innecesarias después para el path
-    private Map<String, Map<String, String>> initializeClubsInformation() {
+    /*private Map<String, Map<String, String>> initializeClubsInformation() {
         Map<String, Map<String, String>> clubsInfo = new HashMap<>();
 
         Map<String, String> bali = new HashMap<>();
@@ -125,5 +125,5 @@ public class HelloWorldController {
         clubsInfo.put("5", roseInRio);
 
         return clubsInfo;
-    }
+    }*/
 }
