@@ -51,15 +51,17 @@ public class ContactController {
                 message
         );
 
-        if (sent) {
-            // send confirmation to user (ignore result; non-blocking effect)
-            mailService.sendContactConfirmation(email, club.getClubName(), message);
-        }
 
         ra.addFlashAttribute("sent", sent);
         if (!sent) {
             ra.addFlashAttribute("error", "Email send failed (see logs)");
         }
         return "redirect:/contact?id=" + clubId;
+    }
+
+    @GetMapping("/verify-email")
+    public String verifyEmail(@RequestParam("id") Long userId, Model model) {
+        //a futuro verificara
+        return "verifiedMail";
     }
 }
