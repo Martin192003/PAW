@@ -1,8 +1,8 @@
 package ar.edu.itba.paw.interfaces;
 
-import ar.edu.itba.paw.model.User.Role;
-import ar.edu.itba.paw.model.User.User;
+import ar.edu.itba.paw.model.User;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
@@ -21,5 +21,14 @@ public interface UserService {
      * @param username The name of the user.
      * @return The created user.
      */
-    User create(String username, String password, String surname, String email, String cellphone, Role role);
+    User create(String username, String password, String surname, String email, String cellphone, String role);
+
+    /*User update(User user);
+    boolean delete(UUID id);
+
+    User findByEmail(String email);
+    User findByUserName(String userName);
+
+    List<User> findAll();
+    List<User> findByRole(String role);*/
 }
