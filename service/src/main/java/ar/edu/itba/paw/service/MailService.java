@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.service;
 
+/*
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.SimpleMailMessage;
@@ -78,4 +79,95 @@ public class MailService {
                 (phone == null || phone.isEmpty() ? "" : "\nTel: " + phone) +
                 "\n\nMensaje:\n" + msg;
     }
+}*/
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
+
+@Service
+public class MailService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MailService.class);
+    private final JavaMailSender mailSender;
+    private final TemplateEngine templateEngine;
+    private final String defaultFrom;
+
+    public MailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
+        this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
+        String from = System.getenv("SMTP_USER");
+        if ((from == null || from.isBlank()) && mailSender instanceof JavaMailSenderImpl) {
+            from = ((JavaMailSenderImpl) mailSender).getUsername();
+        }
+        if (from == null || from.isBlank()) {
+            from = "no-reply@local";
+        }
+        this.defaultFrom = from;
+        LOGGER.info("MailService defaultFrom={}", this.defaultFrom);
+    }
+
+    public boolean sendContact(String to, String clubName, String fromEmail, String name, String phone, String message) {
+        try {
+            // First email using "booking-inquiry-club.html"
+            MimeMessage clubMail = mailSender.createMimeMessage();
+            MimeMessageHelper clubHelper = new MimeMessageHelper(clubMail, true);
+            clubHelper.setFrom(defaultFrom);
+            clubHelper.setTo(to);
+            clubHelper.setSubject("Contacto para " + clubName);
+            clubHelper.setReplyTo(fromEmail);
+
+            Context clubContext = new Context();
+            clubContext.setVariable("clubName", clubName);
+            clubContext.setVariable("name", name);
+            clubContext.setVariable("fromEmail", fromEmail);
+            clubContext.setVariable("phone", phone);
+            clubContext.setVariable("message", message);
+            clubContext.setVariable("submittedAt", ZonedDateTime.now());
+            String clubHtmlBody = templateEngine.process("booking-inquiry-club", clubContext);
+            clubHelper.setText(clubHtmlBody, true);
+
+            // Second email using "booking-inquiry-user.html"
+            MimeMessage userMail = mailSender.createMimeMessage();
+            MimeMessageHelper userHelper = new MimeMessageHelper(userMail, true);
+            userHelper.setFrom(defaultFrom);
+            userHelper.setTo(fromEmail);
+            userHelper.setSubject("Confirmación de contacto - " + clubName);
+
+            Context userContext = new Context();
+            userContext.setVariable("clubName", clubName);
+            userContext.setVariable("name", name);
+            userContext.setVariable("submittedAt", ZonedDateTime.now());
+
+            String ctaUrl = "" + UUID.randomUUID(); //Falta URL deployment
+            userContext.setVariable("ctaUrl", ctaUrl);
+            userContext.setVariable("ctaText", "Confirmar mi correo");
+
+            String userHtmlBody = templateEngine.process("booking-inquiry-user", userContext);
+            userHelper.setText(userHtmlBody, true);
+
+            // Send both emails
+            mailSender.send(clubMail);
+            mailSender.send(userMail);
+
+            LOGGER.info("SMTP send OK to {} and {}", to, fromEmail);
+            return true;
+        } catch (MessagingException e) {
+            LOGGER.error("SMTP send FAILED: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
 }
