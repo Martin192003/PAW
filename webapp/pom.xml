@@ -33,6 +33,21 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
     </dependency>
+      <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>model</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>interfaces</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>ar.edu.itba.paw</groupId>
+          <artifactId>service</artifactId>
+          <version>${project.version}</version>
+      </dependency>
   </dependencies>
 
   <build>
