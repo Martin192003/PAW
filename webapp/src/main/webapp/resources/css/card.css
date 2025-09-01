@@ -8,7 +8,7 @@
     border-radius: 8px;
     background: #3c3c3c;
     margin: 16px 0;
-    width: 300px;
+    width: 100%;
     box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 1.5px 12px rgba(140,0,183,0.35);
     transition: transform 0.4s, box-shadow 0.2s;
 }
@@ -18,8 +18,17 @@
     box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 3px 18px rgba(140,0,183,0.45);
     z-index: 2;
 }
+.boliche-card {
+    margin: 16px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.boliche-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 4px 20px rgba(140,0,183,0.5);
+}
 .card-md { padding: 16px; }
-.card-lg { padding: 0px; width: 60%; height: 170px; display: flex; align-items: stretch; }
+.card-lg {width: 70%; height: 170px; display: flex; align-items: stretch; }
 .card-disabled { opacity: 0.6; }
 .card-body { font-size: 16px; }
 .card-left { height: 100%; display: flex; width: 30%}

@@ -25,13 +25,6 @@
             <span class="contact-icon"><i class="fa-solid fa-headphones"></i></span>
         </div>
 
-        <!-- Mensaje de éxito -->
-        <c:if test="${sent}">
-            <div class="alert alert-success" style="margin-bottom:12px;">
-                Tu mensaje fue enviado. ¡Gracias!
-            </div>
-        </c:if>
-
         <form id="contactForm" action="<c:url value='/contact'/>" method="post">
             <input type="hidden" name="clubId" value="${clubId}">
             <div class="form-group">
@@ -53,6 +46,22 @@
         </form>
     </t:card>
 </div>
-
+<div id="sentModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#222; color:#fff; padding:32px; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.6); width:400px; text-align:center;">
+        <div style="font-size:22px; margin-bottom:18px;">Tu mensaje fue enviado. ¡Gracias!</div>
+        <button class="btn btn-success" onclick="volverADetalles()">Volver</button>
+    </div>
+</div>
+<script>
+    var sent = ${sent ? 'true' : 'false'};
+    if (sent) {
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("sentModal").style.display = "flex";
+        });
+    }
+    function volverADetalles() {
+        window.location.href = "<c:url value='/clubs/${clubId}' />";
+    }
+</script>
 </body>
 </html>
