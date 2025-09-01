@@ -11,10 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public class PhotoJDBCDao implements PhotoDao {
@@ -43,7 +40,7 @@ public class PhotoJDBCDao implements PhotoDao {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("photos")
-                .usingColumns("photo_id", "club_id", "url", "posted_by", "created_at");
+                .usingColumns("photo_id", "club_id", "url", "posted_by");
         this.clubDao = clubDao;
         this.userDao = userDao;
     }
@@ -52,21 +49,24 @@ public class PhotoJDBCDao implements PhotoDao {
     public Photo create(String url, Club club, User postedBy) {
         UUID id = UUID.randomUUID();
         Map<String,Object> params = new HashMap<>();
-        params.put( "photo_id", id);
+        params.put("photo_id", id);
         params.put("club_id", club.getClubId());
         params.put("url", url);
         params.put("posted_by", postedBy.getId());
-        params.put("created_at", OffsetDateTime.now());
 
         insert.execute(params);
-        return findById(id);
+        return findById(id).orElseThrow(() -> new IllegalStateException("Inserted photo not found: " + id));
     }
 
     @Override
-    public Photo update(Photo photo) {
+    public Photo update(UUID photoId, String url) {
+        Objects.requireNonNull(photoId, "photoId is required");
+        Objects.requireNonNull(url, "url is required");
+
         final String sql = "UPDATE photos SET url = ? WHERE photo_id = ?";
-        int updated = jdbc.update(sql, photo.getUrl(), photo.getPhotoId());
-        return updated > 0 ? findById(photo.getPhotoId()) : null;
+        int updated = jdbc.update(sql, url, photoId);
+
+        return updated > 0 ? findById(photoId).orElse(null) : null;
     }
 
     @Override
@@ -76,25 +76,25 @@ public class PhotoJDBCDao implements PhotoDao {
     }
 
     @Override
-    public Photo findById(UUID id) {
-        final String sql = "SELECT photo_id, club_id, url, posted_by, created_at FROM photos WHERE photo_id = ?";
+    public Optional<Photo> findById(UUID id) {
+        final String sql = "SELECT * FROM photos WHERE photo_id = ?";
         Photo p = jdbc.query(sql, ROW_MAPPER, id).stream().findFirst().orElse(null);
         if (p != null) {
-            p.setClub(clubDao.findById(p.getClub().getClubId()));
-            p.setPostedBy(userDao.findById(p.getPostedBy().getId()));
+            p.setClub(clubDao.findById(p.getClub().getClubId()).orElse(null));
+            p.setPostedBy(userDao.findById(p.getPostedBy().getId()).orElse(null));
         }
-        return p;
+        return Optional.ofNullable(p);
     }
 
     @Override
     public List<Photo> findByClub(Club club) {
-        final String sql = "SELECT photo_id, club_id, url, posted_by, created_at FROM photos WHERE club_id = ?";
+        final String sql = "SELECT * FROM photos WHERE club_id = ?";
         return jdbc.query(sql, ROW_MAPPER, club.getClubId());
     }
 
     @Override
     public List<Photo> findByUser(User user) {
-        final String sql = "SELECT photo_id, club_id, url, posted_by, created_at FROM photos WHERE posted_by = ?";
+        final String sql = "SELECT * FROM photos WHERE posted_by = ?";
         return jdbc.query(sql, ROW_MAPPER, user.getId());
     }
 

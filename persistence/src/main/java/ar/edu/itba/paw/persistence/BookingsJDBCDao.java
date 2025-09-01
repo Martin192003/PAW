@@ -13,10 +13,7 @@ import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public class BookingsJDBCDao implements BookingDao {
@@ -28,31 +25,36 @@ public class BookingsJDBCDao implements BookingDao {
     private static final RowMapper<Booking> ROW_MAPPER = (rs, rowNum) -> {
         Booking b = new Booking();
         b.setBookingId(rs.getObject("booking_id", UUID.class));
+
         UUID userId = rs.getObject("user_id", UUID.class);
         User u = new User();
         u.setUserId(userId);
         b.setUser(u);
-        b.setTableId(rs.getObject("table_id", Table.class));
+
+        b.setTableId(rs.getObject("table_id", UUID.class));
+
         b.setBookingStart(rs.getObject("booking_start", OffsetDateTime.class));
         b.setBookingEnd(rs.getObject("booking_end", OffsetDateTime.class));
-        b.setStatus(Status.valueOf(rs.getString("status")));
+
+        b.setStatus(Status.fromDb(rs.getString("status")));
+
         b.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
         b.setTotalAmount(rs.getBigDecimal("total_amount"));
         return b;
     };
-
     @Autowired
     public BookingsJDBCDao(final DataSource ds, final UserDao userDao) {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("bookings")
-                .usingColumns("booking_id", "user_id", "table_id", "booking_start", "booking_end", "status", "total_amount", "created_at");
+                .usingColumns("booking_id", "user_id", "table_id", "booking_start", "booking_end", "status", "total_amount");
         this.userDao = userDao;
     }
 
     @Override
-    public Booking create(User user, UUID tableId, String status, BigDecimal totalAmount,
+    public Booking create(User user, UUID tableId, Status status, BigDecimal totalAmount,
                           OffsetDateTime bookingStart, OffsetDateTime bookingEnd) {
+
         UUID id = UUID.randomUUID();
         Map<String,Object> params = new HashMap<>();
         params.put("booking_id", id);
@@ -60,27 +62,34 @@ public class BookingsJDBCDao implements BookingDao {
         params.put("table_id", tableId);
         params.put("booking_start", bookingStart);
         params.put("booking_end", bookingEnd);
-        params.put("status", status);
+        params.put("status", status.db());
         params.put("total_amount", totalAmount);
-        params.put("created_at", OffsetDateTime.now());
+
         insert.execute(params);
-        return findById(id);
+        return findById(id).orElseThrow(() -> new IllegalStateException("Inserted booking not found: " + id));
     }
 
+
     @Override
-    public Booking update(Booking booking) {
-        final String sql = "UPDATE bookings SET user_id=?, table_id=?, booking_start=?, booking_end=?, status=?, total_amount=? WHERE booking_id = ?";
+    public Booking update(UUID bookingId, User user, UUID tableId, Status status, BigDecimal totalAmount,
+                          OffsetDateTime bookingStart, OffsetDateTime bookingEnd) {
+        final String sql = "UPDATE bookings " +
+                "SET user_id = ?, table_id = ?, booking_start = ?, booking_end = ?, status = ?, total_amount = ? " +
+                "WHERE booking_id = ?";
+
         int updated = jdbc.update(sql,
-                booking.getUser().getId(),
-                booking.getTableId(),
-                booking.getBookingStart(),
-                booking.getBookingEnd(),
-                booking.getStatus(),
-                booking.getTotalAmount(),
-                booking.getBookingId()
+                user.getId(),
+                tableId,
+                bookingStart,
+                bookingEnd,
+                status.db(),      // "pendiente" | "disponible" | "reservada"
+                totalAmount,
+                bookingId
         );
-        return updated > 0 ? findById(booking.getBookingId()) : null;
+
+        return updated > 0 ? findById(bookingId).orElse(null) : null;
     }
+
 
     @Override
     public boolean delete(UUID bookingId) {
@@ -89,30 +98,27 @@ public class BookingsJDBCDao implements BookingDao {
     }
 
     @Override
-    public Booking findById(UUID id) {
-        final String sql = "SELECT booking_id,user_id,table_id,booking_start,booking_end,status,created_at,total_amount FROM bookings WHERE booking_id = ?";
+    public Optional<Booking> findById(UUID id) {
+        final String sql = "SELECT * FROM bookings WHERE booking_id = ?";
         Booking b = jdbc.query(sql, ROW_MAPPER, id).stream().findFirst().orElse(null);
-        if (b != null) {
-            b.setUser(userDao.findById(b.getUser().getId()));
-        }
-        return b;
+        return Optional.ofNullable(b);
     }
 
     @Override
     public List<Booking> findAll() {
-        final String sql = "SELECT booking_id,user_id,table_id,booking_start,booking_end,status,created_at,total_amount FROM bookings";
+        final String sql = "SELECT * FROM bookings";
         return jdbc.query(sql, ROW_MAPPER);
     }
 
     @Override
     public List<Booking> findByUser(User user) {
-        final String sql = "SELECT booking_id,user_id,table_id,booking_start,booking_end,status,created_at,total_amount FROM bookings WHERE user_id = ?";
+        final String sql = "SELECT * FROM bookings WHERE user_id = ?";
         return jdbc.query(sql, ROW_MAPPER, user.getId());
     }
 
     @Override
     public List<Booking> findByTable(UUID tableId) {
-        final String sql = "SELECT booking_id,user_id,table_id,booking_start,booking_end,status,created_at,total_amount FROM bookings WHERE table_id = ?";
+        final String sql = "SELECT * FROM bookings WHERE table_id = ?";
         return jdbc.query(sql, ROW_MAPPER, tableId);
     }
 

@@ -18,7 +18,6 @@ public class ActivityJDBCDao implements ActivityDao {
 
     private final JdbcTemplate jdbc;
     private final SimpleJdbcInsert insert;
-    private final BookingDao bookingDao;
 
     private static final RowMapper<Activity> ROW_MAPPER = (rs, rowNum) -> {
         UUID id = rs.getObject("activity_id", UUID.class);
@@ -41,13 +40,13 @@ public class ActivityJDBCDao implements ActivityDao {
     };
 
     @Autowired
-    public ActivityJDBCDao(final DataSource ds, final BookingDao bookingDao) {
+    public ActivityJDBCDao(final DataSource ds) {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("activity")
                 .usingColumns("activity_id", "booking_id", "activity_type", "activity_date", "details");
-        this.bookingDao = bookingDao;
     }
+
     @Override
     public Activity create(Booking booking, String activityType, String details, OffsetDateTime activityDate) {
         UUID id = UUID.randomUUID();
@@ -58,19 +57,19 @@ public class ActivityJDBCDao implements ActivityDao {
         params.put("activity_date", activityDate);
         params.put("details", details);
         insert.execute(params);
-        return findById(id);
+        return new Activity(id, booking, activityType, activityDate, details);
     }
 
     @Override
-    public Activity update(Activity activity) {
+    public Activity update(UUID id, Booking booking, String activityType, String details, OffsetDateTime activityDate) {
         final String sql = "UPDATE activity SET booking_id = ?, activity_type = ?, activity_date = ?, details = ? WHERE activity_id = ?";
         int upd = jdbc.update(sql,
-                activity.getBooking().getBookingId(),
-                activity.getActivityType(),
-                activity.getActivityDate(),
-                activity.getDetails(),
-                activity.getActivityId());
-        return upd > 0 ? findById(activity.getActivityId()) : null;
+                booking.getBookingId(),
+                activityType,
+                activityDate,
+                details,
+                id);
+        return upd > 0 ? new Activity(id, booking, activityType, activityDate, details) : null;
     }
 
     @Override
@@ -80,18 +79,15 @@ public class ActivityJDBCDao implements ActivityDao {
     }
 
     @Override
-    public Activity findById(UUID id) {
-        final String sql = "SELECT activity_id, booking_id, activity_type, activity_date, details FROM activity WHERE activity_id = ?";
+    public Optional<Activity> findById(UUID id) {
+        final String sql = "SELECT * FROM activity WHERE activity_id = ?";
         Activity a = jdbc.query(sql, ROW_MAPPER, id).stream().findFirst().orElse(null);
-        if (a != null) {
-            a.setBooking(bookingDao.findById(a.getBooking().getBookingId()));
-        }
-        return a;
+        return Optional.ofNullable(a);
     }
 
     @Override
     public List<Activity> findAll() {
-        final String sql = "SELECT activity_id, booking_id, activity_type, activity_date, details FROM activity";
+        final String sql = "SELECT * FROM activity";
         List<Activity> list = jdbc.query(sql, ROW_MAPPER);
         return list;
     }
@@ -99,13 +95,12 @@ public class ActivityJDBCDao implements ActivityDao {
     @Override
     public List<Activity> findByUser(User user) {
         final String sql =
-                "SELECT a.activity_id, a.booking_id, a.activity_type, a.activity_date, a.details " +
+                "SELECT a.* " +
                         "FROM activity a JOIN bookings b ON a.booking_id = b.booking_id " +
                         "WHERE b.user_id = ?";
         UUID userId = user.getId();
         List<Activity> list = jdbc.query(sql, ROW_MAPPER, userId);
         return list;
     }
-
 
 }

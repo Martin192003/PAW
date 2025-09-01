@@ -5,7 +5,7 @@ import ar.edu.itba.paw.model.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.interfaces.UserService;
+import ar.edu.itba.paw.interfaces.service.UserService;
 
 import java.util.UUID;
 
@@ -22,12 +22,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User findById(final UUID id) {
-        return userDao.findById(id);
+        return userDao.findById(id).orElse(null);
     }
 
     @Override
     public User create(String username, String password, String surname, String email, String cellphone, String role) {
-        return userDao.create(username, password, surname, email, cellphone, role);
+        return userDao.create(username, password, surname, email, cellphone, Role.valueOf(role.toUpperCase()));
     }
 
 }

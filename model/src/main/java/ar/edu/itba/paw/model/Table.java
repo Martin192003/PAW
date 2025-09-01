@@ -6,8 +6,8 @@ import java.util.UUID;
 
 public class Table {
 
-    private UUID tableId;
-    private Club club;
+    private UUID id;
+    private UUID clubId;
     private int tableNumber;
     private int capacity;
     private TableState tableState; //  disponible, pendiente, reservada
@@ -16,9 +16,9 @@ public class Table {
 
     public Table() {}
 
-    public Table(Club club, int tableNumber, int capacity, TableState state, BigDecimal price, BigDecimal discount) {
-        this.tableId = UUID.randomUUID();
-        this.club = club;
+    public Table(UUID id,UUID clubID, int tableNumber, int capacity, TableState state, BigDecimal price, BigDecimal discount) {
+        this.id = id;
+        this.clubId = clubId;
         this.tableNumber = tableNumber;
         this.capacity = capacity;
         this.tableState = state == null ? TableState.DISPONIBLE : state;
@@ -26,11 +26,11 @@ public class Table {
         this.discount = discount == null ? BigDecimal.ZERO : discount;
     }
 
-    public UUID getTableId() { return tableId; }
-    public void setTableId(UUID tableId) { this.tableId = tableId; }
+    public UUID getTableId() { return id; }
+    public void setTableId(UUID tableId) { this.id = tableId; }
 
-    public Club getClub() { return club; }
-    public void setClub(Club club) { this.club = club; }
+    public UUID getClubId() { return clubId; }
+    public void setClubId(UUID club) { this.clubId = club; }
 
     public int getTableNumber() { return tableNumber; }
     public void setTableNumber(int tableNumber) { this.tableNumber = tableNumber; }

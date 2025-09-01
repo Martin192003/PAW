@@ -22,14 +22,15 @@ public class ClubTablesJDBCDao implements ClubTablesDao {
     private static final RowMapper<Table> ROW_MAPPER = (rs, i) -> {
         Table t = new Table();
         t.setTableId(rs.getObject("table_id", java.util.UUID.class));
-        Club c = new Club(); c.setClubId(rs.getObject("club_id", java.util.UUID.class)); t.setClub(c);
+        t.setClubId(rs.getObject("club_id", java.util.UUID.class));   // 👈 guarda el UUID, no el objeto Club
         t.setTableNumber(rs.getInt("table_number"));
         t.setCapacity(rs.getInt("capacity"));
-        t.setTableState(TableState.valueOf(rs.getString("table_state").toUpperCase())); // 'disponible','pendiente','reservada'
+        t.setTableState(TableState.fromDb(rs.getString("table_state"))); // enum ⇐ texto BD
         t.setPrice(rs.getBigDecimal("price"));
         t.setDiscount(rs.getBigDecimal("discount"));
         return t;
     };
+
 
     @Autowired
     public ClubTablesJDBCDao(final DataSource ds) {
@@ -40,33 +41,40 @@ public class ClubTablesJDBCDao implements ClubTablesDao {
     }
 
     @Override
-    public Table create(int number, int capacity, java.util.UUID clubId, String tableState, BigDecimal price, BigDecimal discount) {
-        java.util.UUID id = java.util.UUID.randomUUID();
+    public Table create(int number, int capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount) {
+        UUID id = UUID.randomUUID();
         Map<String,Object> params = new HashMap<>();
         params.put("table_id", id);
         params.put("club_id", clubId);
         params.put("table_number", number);
         params.put("capacity", capacity);
-        params.put("table_state", tableState);
+        params.put("table_state", tableState.db());
         params.put("price", price);
         params.put("discount", discount);
         insert.execute(params);
-        return findById(id);
+        return new Table(id, clubId, number, capacity, tableState, price, discount);
+    }
+    @Override
+    public Table update(UUID tableId, UUID clubId, Integer tableNumber, Integer capacity,
+                        TableState state, BigDecimal price, BigDecimal discount) {
+        final String sql =
+                "UPDATE club_tables " +
+                        "SET club_id = ?, table_number = ?, capacity = ?, table_state = ?, price = ?, discount = ? " +
+                        "WHERE table_id = ?";
+
+        int upd = jdbc.update(sql,
+                clubId,
+                tableNumber,
+                capacity,
+                state.db(),
+                price,
+                discount,
+                tableId
+        );
+
+        return (upd > 0) ? findById(tableId).orElse(null) : null;
     }
 
-    @Override
-    public Table update(Table table) {
-        final String sql = "UPDATE club_tables SET club_id=?, table_number=?, capacity=?, table_state=?, price=?, discount=? WHERE table_id=?";
-        int upd = jdbc.update(sql,
-                table.getClub().getClubId(),
-                table.getTableNumber(),
-                table.getCapacity(),
-                table.getTableState(),
-                table.getPrice(),
-                table.getDiscount(),
-                table.getTableId());
-        return upd > 0 ? findById(table.getTableId()) : null;
-    }
 
     @Override
     public boolean delete(java.util.UUID id) {
@@ -74,20 +82,20 @@ public class ClubTablesJDBCDao implements ClubTablesDao {
     }
 
     @Override
-    public Table findById(java.util.UUID id) {
-        final String sql = "SELECT table_id,club_id,table_number,capacity,table_state,price,discount FROM club_tables WHERE table_id = ?";
-        return jdbc.query(sql, ROW_MAPPER, id).stream().findFirst().orElse(null);
+    public Optional<Table> findById(UUID id) {
+        final String sql = "SELECT * FROM club_tables WHERE table_id = ?";
+        return jdbc.query(sql, ROW_MAPPER, id).stream().findFirst();
     }
 
     @Override
     public List<Table> findAll() {
-        final String sql = "SELECT table_id,club_id,table_number,capacity,table_state,price,discount FROM club_tables ORDER BY table_number ASC";
+        final String sql = "SELECT * FROM club_tables ORDER BY table_number ASC";
         return jdbc.query(sql, ROW_MAPPER);
     }
 
     @Override
     public List<Table> findByClub(Club club) {
-        final String sql = "SELECT table_id,club_id,table_number,capacity,table_state,price,discount FROM club_tables WHERE club_id = ? ORDER BY table_number ASC";
+        final String sql = "SELECT * FROM club_tables WHERE club_id = ? ORDER BY table_number ASC";
         return jdbc.query(sql, ROW_MAPPER, club.getClubId());
     }
 

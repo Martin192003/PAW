@@ -25,11 +25,20 @@ public class ClubJDBCDao implements ClubDao {
         c.setClubId(rs.getObject("club_id", UUID.class));
         c.setClubName(rs.getString("club_name"));
         c.setLocation(rs.getString("location"));
-        c.setRating(rs.getBigDecimal("rating"));
+        c.setRating((BigDecimal) rs.getObject("rating")); // puede ser null
         c.setQuantityRatings(rs.getObject("quantity_ratings") == null ? null : rs.getInt("quantity_ratings"));
         c.setPriceRange(rs.getString("price_range"));
         c.setDescription(rs.getString("description"));
-        User u = new User(); u.setUserId(rs.getObject("contact_info", UUID.class)); c.setContactInfo(u);
+
+        UUID contactId = rs.getObject("contact_info", UUID.class);
+        if (contactId != null) {
+            User u = new User();
+            u.setUserId(contactId);
+            c.setContactInfo(u);
+        } else {
+            c.setContactInfo(null);
+        }
+
         c.setMusicGenre(rs.getString("music_genre"));
         c.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
         return c;
@@ -40,7 +49,7 @@ public class ClubJDBCDao implements ClubDao {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("clubs")
-                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre","created_at");
+                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre");
         this.userDao = userDao;
     }
 
@@ -55,34 +64,62 @@ public class ClubJDBCDao implements ClubDao {
         params.put("quantity_ratings", 0);
         params.put("price_range", priceRange);
         params.put("description", description);
-        params.put("contact_info", contactInfo.getId());
+        params.put("contact_info", contactInfo != null ? contactInfo.getId() : null);
         params.put("music_genre", musicGenre);
-        params.put("created_at", OffsetDateTime.now());
+
         insert.execute(params);
-        return findById(id);
+        return findById(id).orElseThrow();
     }
 
     @Override
-    public Club update(Club club) {
-        final String sql = "UPDATE clubs SET club_name=?, location=?, rating=?, quantity_ratings=?, price_range=?, description=?, contact_info=?, music_genre=? WHERE club_id=?";
-        // Validación simple (DB ya valida 1..5):
-        if (club.getRating() != null) {
-            BigDecimal r = club.getRating();
-            if (r.compareTo(new BigDecimal("1.0")) < 0 || r.compareTo(new BigDecimal("5.0")) > 0)
-                throw new IllegalArgumentException("rating fuera de rango (1..5): " + r);
+    public Club update(UUID clubId,
+                       String name,
+                       String location,
+                       BigDecimal rating,
+                       Integer quantityRatings,
+                       String priceRange,
+                       String description,
+                       UUID contactInfoId,
+                       String musicGenre) {
+
+        Objects.requireNonNull(clubId, "clubId is required");
+        Objects.requireNonNull(name, "name is required");
+        Objects.requireNonNull(location, "location is required");
+        Objects.requireNonNull(priceRange, "priceRange is required");
+        if (!Set.of("bajo","medio","alto").contains(priceRange)) {
+            throw new IllegalArgumentException("priceRange debe ser bajo|medio|alto");
         }
+        if (rating != null) {
+            if (rating.compareTo(new BigDecimal("1.0")) < 0 || rating.compareTo(new BigDecimal("5.0")) > 0) {
+                throw new IllegalArgumentException("rating fuera de rango (1..5): " + rating);
+            }
+        }
+        if (quantityRatings != null && quantityRatings < 0) {
+            throw new IllegalArgumentException("quantity_ratings debe ser >= 0");
+        }
+
+        final String sql = "UPDATE clubs " +
+                "SET club_name = ?, location = ?, rating = ?, quantity_ratings = ?, price_range = ?, " +
+                "    description = ?, contact_info = ?, music_genre = ? " +
+                "WHERE club_id = ?";
+
         int upd = jdbc.update(sql,
-                club.getClubName(),
-                club.getLocation(),
-                club.getRating(),
-                club.getQuantityRatings(),
-                club.getPriceRange(),
-                club.getDescription(),
-                club.getContactInfo().getId(),
-                club.getMusicGenre(),
-                club.getClubId());
-        return upd > 0 ? findById(club.getClubId()) : null;
+                name,
+                location,
+                rating,
+                quantityRatings,
+                priceRange,
+                description,
+                contactInfoId,
+                musicGenre,
+                clubId
+        );
+
+        return (upd > 0) ? findById(clubId).orElse(null) : null;
     }
+
+
+
 
     @Override
     public boolean delete(UUID clubId) {
@@ -90,24 +127,41 @@ public class ClubJDBCDao implements ClubDao {
     }
 
     @Override
-    public Club findById(UUID clubId) {
-        final String sql = "SELECT club_id,club_name,location,rating,quantity_ratings,price_range,description,contact_info,music_genre,created_at FROM clubs WHERE club_id = ?";
-        Club c = jdbc.query(sql, ROW_MAPPER, clubId).stream().findFirst().orElse(null);
-        if (c != null) c.setContactInfo(userDao.findById(c.getContactInfo().getId()));
-        return c;
+    public Integer incrementQuantityRatings(UUID clubId, int delta) {
+        Objects.requireNonNull(clubId, "clubId is required");
+
+        final String sql =
+                "UPDATE clubs " +
+                        "SET quantity_ratings = GREATEST(0, COALESCE(quantity_ratings, 0) + ?) " +
+                        "WHERE club_id = ? " +
+                        "RETURNING quantity_ratings";
+
+        try {
+            return jdbc.queryForObject(sql, Integer.class, delta, clubId);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return null; // club no existe
+        }
     }
 
     @Override
-    public Club findByName(String clubName) {
-        final String sql = "SELECT club_id,club_name,location,rating,quantity_ratings,price_range,description,contact_info,music_genre,created_at FROM clubs WHERE LOWER(club_name)=LOWER(?)";
+    public Optional<Club> findById(UUID clubId) {
+        final String sql = "SELECT * FROM clubs WHERE club_id = ?";
+        Club c = jdbc.query(sql, ROW_MAPPER, clubId).stream().findFirst().orElse(null);
+        if (c != null) c.setContactInfo(userDao.findById(c.getContactInfo().getId()).orElse(null));
+        return Optional.ofNullable(c);
+    }
+
+    @Override
+    public Optional<Club> findByName(String clubName) {
+        final String sql = "SELECT * FROM clubs WHERE LOWER(club_name)=LOWER(?)";
         Club c = jdbc.query(sql, ROW_MAPPER, clubName).stream().findFirst().orElse(null);
-        if (c != null) c.setContactInfo(userDao.findById(c.getContactInfo().getId()));
-        return c;
+        if (c != null) c.setContactInfo(userDao.findById(c.getContactInfo().getId()).orElse(null));
+        return Optional.ofNullable(c);
     }
 
     @Override
     public List<Club> findAll() {
-        final String sql = "SELECT club_id,club_name,location,rating,quantity_ratings,price_range,description,contact_info,music_genre,created_at FROM clubs ORDER BY club_name ASC";
+        final String sql = "SELECT * FROM clubs ORDER BY club_name ASC";
         return jdbc.query(sql, ROW_MAPPER);
     }
 

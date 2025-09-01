@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS plpgsql;
 
 CREATE TABLE IF NOT EXISTS users (
                                      user_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -44,7 +42,7 @@ CREATE TABLE IF NOT EXISTS bookings (
                                         table_id      UUID NOT NULL REFERENCES club_tables(table_id) ON DELETE CASCADE,
                                         booking_start TIMESTAMPTZ NOT NULL,
                                         booking_end   TIMESTAMPTZ NOT NULL,
-                                        status        VARCHAR(20) NOT NULL CHECK (status IN ('confirmada','pendiente','cancelada')),
+                                        status        VARCHAR(20) NOT NULL CHECK (status IN ('confirmada','pendiente','disponible')),
                                         created_at    TIMESTAMPTZ DEFAULT NOW(),
                                         total_amount  NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
                                         CHECK (booking_end > booking_start)
@@ -130,3 +128,34 @@ CREATE TABLE IF NOT EXISTS club_admins (
                                            admin_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                                            PRIMARY KEY (club_id, admin_id)
 );
+
+CREATE OR REPLACE FUNCTION booking_items_set_line_total()
+    RETURNS trigger
+AS $$
+BEGIN
+    IF NEW.quantity IS NULL OR NEW.unit_price IS NULL THEN
+        RAISE EXCEPTION 'quantity y unit_price no pueden ser NULL';
+    END IF;
+
+    IF NEW.quantity <= 0 THEN
+        RAISE EXCEPTION 'quantity debe ser > 0';
+    END IF;
+
+    IF NEW.unit_price < 0 THEN
+        RAISE EXCEPTION 'unit_price debe ser >= 0';
+    END IF;
+
+    NEW.line_total := ROUND(NEW.unit_price * NEW.quantity, 2);
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_booking_items_line_total ON booking_items;
+
+CREATE TRIGGER trg_booking_items_line_total
+    BEFORE INSERT OR UPDATE OF quantity, unit_price, line_total ON booking_items
+    FOR EACH ROW
+EXECUTE FUNCTION booking_items_set_line_total();
+
+UPDATE booking_items
+SET line_total = ROUND(unit_price * quantity, 2);

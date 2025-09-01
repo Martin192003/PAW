@@ -19,7 +19,7 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     public List<Product> getMenuByClub(UUID clubId) {
-        return productsDao.findByClub(clubDao.findById(clubId));
+        return productsDao.findByClub(clubDao.findById(clubId).orElseThrow(IllegalArgumentException::new));
     }
 
 }

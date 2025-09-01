@@ -9,7 +9,7 @@ public class Booking {
 
     private UUID bookingId;
     private User user;
-    private Table table;
+    private UUID table;
     private OffsetDateTime bookingStart;
     private OffsetDateTime bookingEnd;
     private Status status; // 'confirmada' | 'pendiente' | 'cancelada'
@@ -18,7 +18,7 @@ public class Booking {
 
     public Booking() {}
 
-    public Booking(UUID bookingId, User user, Table table, OffsetDateTime bookingStart,
+    public Booking(UUID bookingId, User user, UUID table, OffsetDateTime bookingStart,
                    OffsetDateTime bookingEnd, Status status, OffsetDateTime createdAt,
                    BigDecimal totalAmount) {
         this.bookingId = bookingId;
@@ -37,8 +37,8 @@ public class Booking {
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 
-    public Table getTableId() { return table; }
-    public void setTableId(Table tableId) { this.table= table; }
+    public UUID getTableId() { return table; }
+    public void setTableId(UUID tableId) { this.table= tableId; }
 
     public OffsetDateTime getBookingStart() { return bookingStart; }
     public void setBookingStart(OffsetDateTime bookingStart) { this.bookingStart = bookingStart; }

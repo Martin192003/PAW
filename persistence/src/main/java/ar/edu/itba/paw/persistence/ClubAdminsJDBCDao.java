@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class ClubAdminsJDBCDao implements ClubAdminDao {
@@ -32,13 +33,21 @@ public class ClubAdminsJDBCDao implements ClubAdminDao {
     @Override
     public List<User> findAdmins(Club club) {
         final String sql = "SELECT admin_id FROM club_admins WHERE club_id = ?";
-        return jdbc.query(sql, (rs, i) -> userDao.findById(rs.getObject("admin_id", java.util.UUID.class)), club.getClubId());
+        return jdbc.query(sql, (rs, i) -> userDao.findById(rs.getObject("admin_id", java.util.UUID.class)), club.getClubId())
+                .stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 
     @Override
     public List<Club> findClubsByAdmin(User admin) {
         final String sql = "SELECT club_id FROM club_admins WHERE admin_id = ?";
-        return jdbc.query(sql, (rs, i) -> clubDao.findById(rs.getObject("club_id", java.util.UUID.class)), admin.getId());
+        return jdbc.query(sql, (rs, i) -> clubDao.findById(rs.getObject("club_id", java.util.UUID.class)), admin.getId())
+                .stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 
     @Override

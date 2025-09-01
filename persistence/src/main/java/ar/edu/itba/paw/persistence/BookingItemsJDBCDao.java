@@ -18,8 +18,6 @@ public class BookingItemsJDBCDao implements BookingItemsDao {
 
     private final JdbcTemplate jdbc;
     private final SimpleJdbcInsert insert;
-    private final BookingDao bookingDao;
-    private final ProductsDao productsDao;
 
     private static final RowMapper<BookingItem> ROW_MAPPER = (rs, rowNum) -> {
         BookingItem bi = new BookingItem();
@@ -35,22 +33,19 @@ public class BookingItemsJDBCDao implements BookingItemsDao {
 
         bi.setQuantity(rs.getInt("quantity"));
         bi.setUnitPrice(rs.getBigDecimal("unit_price"));
-        bi.setLineTotal(rs.getBigDecimal("line_total"));
         return bi;
     };
 
     @Autowired
-    public BookingItemsJDBCDao(final DataSource ds, final BookingDao bookingDao, final ProductsDao productsDao) {
+    public BookingItemsJDBCDao(final DataSource ds) {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("booking_items")
                 .usingColumns("booking_item_id", "booking_id", "product_id", "quantity", "unit_price", "line_total");
-        this.bookingDao = bookingDao;
-        this.productsDao = productsDao;
     }
 
     @Override
-    public BookingItem create(Booking booking, Product product, int quantity, BigDecimal unitPrice, BigDecimal lineTotal) {
+    public BookingItem create(Booking booking, Product product, int quantity, BigDecimal unitPrice) {
         UUID id = UUID.randomUUID();
         HashMap<String,Object> params = new HashMap<>();
 
@@ -59,23 +54,21 @@ public class BookingItemsJDBCDao implements BookingItemsDao {
         params.put("product_id", product.getProductId());
         params.put("quantity", quantity);
         params.put("unit_price", unitPrice);
-        params.put("line_total", lineTotal);
         insert.execute(params);
-        return findById(id);
+        return new BookingItem(id, booking, product, quantity, unitPrice, lineTotal(id));
     }
 
     @Override
-    public BookingItem update(BookingItem bookingItem) {
+    public BookingItem update(UUID id, Booking booking, Product product, int quantity, BigDecimal unitPrice) {
         final String sql = "UPDATE booking_items SET booking_id=?, product_id=?, quantity=?, unit_price=?, line_total=? WHERE booking_item_id=?";
         int updated = jdbc.update(sql,
-                bookingItem.getBooking().getBookingId(),
-                bookingItem.getProduct().getProductId(),
-                bookingItem.getQuantity(),
-                bookingItem.getUnitPrice(),
-                bookingItem.getLineTotal(),
-                bookingItem.getBookingItemId()
+                booking.getBookingId(),
+                product.getProductId(),
+                quantity,
+                unitPrice,
+                id
         );
-        return updated > 0 ? findById(bookingItem.getBookingItemId()) : null;
+        return updated > 0 ? new BookingItem(id, booking, product, quantity, unitPrice, lineTotal(id)) : null;
     }
 
     @Override
@@ -85,14 +78,10 @@ public class BookingItemsJDBCDao implements BookingItemsDao {
     }
 
     @Override
-    public BookingItem findById(UUID id) {
+    public Optional<BookingItem> findById(UUID id) {
         final String sql = "SELECT booking_item_id, booking_id, product_id, quantity, unit_price, line_total FROM booking_items WHERE booking_item_id = ?";
         BookingItem bi = jdbc.query(sql, ROW_MAPPER, id).stream().findFirst().orElse(null);
-        if (bi != null) {
-            bi.setBooking(bookingDao.findById(bi.getBooking().getBookingId()));
-            bi.setProduct(productsDao.findById(bi.getProduct().getProductId()));
-        }
-        return bi;
+        return Optional.ofNullable(bi);
     }
 
     @Override
@@ -111,6 +100,10 @@ public class BookingItemsJDBCDao implements BookingItemsDao {
     public List<BookingItem> findByProduct(Product product) {
         final String sql = "SELECT booking_item_id, booking_id, product_id, quantity, unit_price, line_total FROM booking_items WHERE product_id = ?";
         return jdbc.query(sql, ROW_MAPPER, product.getProductId());
+    }
+
+    private BigDecimal lineTotal(UUID id) {
+        return jdbc.queryForObject("SELECT line_total FROM booking_items WHERE booking_item_id = ?", BigDecimal.class, id);
     }
 
 }

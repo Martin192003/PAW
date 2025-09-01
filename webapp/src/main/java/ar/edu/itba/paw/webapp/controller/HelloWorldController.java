@@ -9,7 +9,7 @@ import org.springframework.web.servlet.ModelAndView;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import ar.edu.itba.paw.interfaces.UserService;
+import ar.edu.itba.paw.interfaces.service.UserService;
 
 import java.util.UUID;
 

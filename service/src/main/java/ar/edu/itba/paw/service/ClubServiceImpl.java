@@ -26,6 +26,6 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     public Optional<Club> getClubById(UUID clubId) {
-        return Optional.ofNullable(clubDao.findById(clubId));
+        return clubDao.findById(clubId);
     }
 }

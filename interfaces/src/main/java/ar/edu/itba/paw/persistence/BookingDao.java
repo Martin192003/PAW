@@ -1,23 +1,25 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Booking;
+import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface BookingDao {
-    Booking findById(UUID id);
+    Optional<Booking> findById(UUID id);
     List<Booking> findAll();
 
     List<Booking> findByUser(User user);
-    List<Booking> findByTable(UUID tableId); // si luego modelás Table, podés cambiar a Table
+    List<Booking> findByTable(UUID tableId);
 
-    Booking create(User user, UUID tableId, String status, BigDecimal totalAmount,
-                   OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
+    public Booking create(User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
 
-    Booking update(Booking booking);
+    Booking update(UUID bookingId, User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
+
     boolean delete(UUID bookingId);
 }

@@ -19,7 +19,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public double getAverageRating(UUID clubId) {
-        List<Review> reviews = reviewsDao.findByClub(clubDao.findById(clubId));
+        List<Review> reviews = reviewsDao.findByClub(clubDao.findById(clubId).orElseThrow(IllegalArgumentException::new));
         if (reviews.isEmpty()) {
             return 0.0;
         }

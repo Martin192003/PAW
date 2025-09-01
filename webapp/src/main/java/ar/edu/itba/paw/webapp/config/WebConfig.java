@@ -1,15 +1,12 @@
 package ar.edu.itba.paw.webapp.config;
 
-import ar.edu.itba.paw.service.config.MailConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
-import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import javax.sql.DataSource;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.DatabasePopulator;
@@ -18,7 +15,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 
 @EnableWebMvc
-@ComponentScan({"ar.edu.itba.paw.webapp.controller", "ar.edu.itba.paw.service", "ar.edu.itba.paw.persistence", "ar.edu.itba.paw.service.config"})
+@ComponentScan({
+        "ar.edu.itba.paw.webapp.controller",
+        "ar.edu.itba.paw.service",
+        "ar.edu.itba.paw.persistence",
+        "ar.edu.itba.paw.service.config"
+})
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -27,20 +29,21 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     public InternalResourceViewResolver viewResolver() {
-        InternalResourceViewResolver resolver = new InternalResourceViewResolver();
-        resolver.setPrefix("/WEB-INF/jsp/");
-        resolver.setSuffix(".jsp");
-        return resolver;
+        var r = new InternalResourceViewResolver();
+        r.setPrefix("/WEB-INF/jsp/");
+        r.setSuffix(".jsp");
+        return r;
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/resources/**").addResourceLocations("/resources/");
+        registry.addResourceHandler("/resources/**")
+                .addResourceLocations("/resources/");
     }
 
     @Bean
     public DataSource dataSource() {
-        final SimpleDriverDataSource ds = new SimpleDriverDataSource();
+        var ds = new org.springframework.jdbc.datasource.SimpleDriverDataSource();
         ds.setDriverClass(org.postgresql.Driver.class);
         ds.setUrl("jdbc:postgresql://localhost:5433/paw");
         ds.setUsername("postgres");
@@ -50,14 +53,23 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     public DataSourceInitializer dataSourceInitializer(final DataSource ds) {
-        final DataSourceInitializer dsi = new DataSourceInitializer();
+        var dsi = new DataSourceInitializer();
         dsi.setDataSource(ds);
-        dsi.setDatabasePopulator(databasePopulator());
+
+        boolean hasSchema = (schemaSql != null && schemaSql.exists());
+        dsi.setEnabled(hasSchema);
+
+        if (hasSchema) {
+            dsi.setDatabasePopulator(databasePopulator());
+        }
         return dsi;
     }
+
     private DatabasePopulator databasePopulator() {
-        final ResourceDatabasePopulator dbp = new ResourceDatabasePopulator();
-        dbp.addScript(schemaSql);
-        return dbp;
+        var pop = new ResourceDatabasePopulator();
+        pop.addScript(schemaSql);
+        pop.setContinueOnError(true);
+        pop.setIgnoreFailedDrops(true);
+        return pop;
     }
 }
