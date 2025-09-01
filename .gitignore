@@ -9,7 +9,7 @@ dist/
 
 
 # Environment variable files
-.env
+webapp/.env
 
 # Compiled Java class files
 *.class

@@ -82,26 +82,26 @@ public class BookingItemsJDBCDao implements BookingItemsDao {
 
     @Override
     public Optional<BookingItem> findById(UUID id) {
-        final String sql = "SELECT booking_item_id, booking_id, product_id, quantity, unit_price, line_total FROM booking_items WHERE booking_item_id = ?";
+        final String sql = "SELECT * FROM booking_items WHERE booking_item_id = ?";
         BookingItem bi = jdbc.query(sql, ROW_MAPPER, id).stream().findFirst().orElse(null);
         return Optional.ofNullable(bi);
     }
 
     @Override
     public List<BookingItem> findAll() {
-        final String sql = "SELECT booking_item_id, booking_id, product_id, quantity, unit_price, line_total FROM booking_items";
+        final String sql = "SELECT * FROM booking_items";
         return jdbc.query(sql, ROW_MAPPER);
     }
 
     @Override
     public List<BookingItem> findByBooking(Booking booking) {
-        final String sql = "SELECT booking_item_id, booking_id, product_id, quantity, unit_price, line_total FROM booking_items WHERE booking_id = ?";
+        final String sql = "SELECT * FROM booking_items WHERE booking_id = ?";
         return jdbc.query(sql, ROW_MAPPER, booking.getBookingId());
     }
 
     @Override
     public List<BookingItem> findByProduct(Product product) {
-        final String sql = "SELECT booking_item_id, booking_id, product_id, quantity, unit_price, line_total FROM booking_items WHERE product_id = ?";
+        final String sql = "SELECT * FROM booking_items WHERE product_id = ?";
         return jdbc.query(sql, ROW_MAPPER, product.getProductId());
     }
 

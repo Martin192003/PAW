@@ -42,7 +42,6 @@ public class ProductsJDBCDao implements ProductsDao {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("products")
-                // sin created_at para que lo setee la DB
                 .usingColumns("product_id","club_id","product_name","description","base_price","product_type","is_available");
     }
 
@@ -69,7 +68,6 @@ public class ProductsJDBCDao implements ProductsDao {
         return findById(id).orElseThrow(() -> new IllegalStateException("Inserted product not found: " + id));
     }
 
-    // update por parámetros (no Product)
     @Override
     public Product update(UUID productId, UUID clubId, String name, String description,
                           BigDecimal basePrice, ProductType type, Boolean isAvailable) {

@@ -19,13 +19,27 @@ import org.springframework.beans.factory.annotation.Value;
         "ar.edu.itba.paw.webapp.controller",
         "ar.edu.itba.paw.service",
         "ar.edu.itba.paw.persistence",
-        "ar.edu.itba.paw.service.config"
+        "ar.edu.itba.paw.service.config",
+        "ar.edu.itba.paw.webapp.config"
+
 })
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     @Value("classpath:schema.sql")
     private Resource schemaSql;
+
+    @Value("${DB_HOST:localhost}")
+    private String dbHost;
+    @Value("${DB_PORT:5433}")
+    private String dbPort;
+    @Value("${DB_NAME:paw}")
+    private String dbName;
+
+    @Value("${DB_USER}")
+    private String dbUser;
+    @Value("${DB_PASS}")
+    private String dbPass;
 
     @Bean
     public InternalResourceViewResolver viewResolver() {
@@ -45,9 +59,9 @@ public class WebConfig implements WebMvcConfigurer {
     public DataSource dataSource() {
         var ds = new org.springframework.jdbc.datasource.SimpleDriverDataSource();
         ds.setDriverClass(org.postgresql.Driver.class);
-        ds.setUrl("jdbc:postgresql://localhost:5433/paw");
-        ds.setUsername("postgres");
-        ds.setPassword("postgres");
+        ds.setUrl(String.format("jdbc:postgresql://%s:%s/%s", dbHost, dbPort, dbName));
+        ds.setUsername(dbUser);
+        ds.setPassword(dbPass);
         return ds;
     }
 
