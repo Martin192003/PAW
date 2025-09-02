@@ -20,34 +20,53 @@
     </a>
 </div>
 
-<div class="boliches-wrapper">
-    <div class="app-boliches">
-        <c:forEach var="club" items="${clubs}">
-            <a class="boliche-link" href="<c:url value='/clubs/${club.clubId}' />">
-                <t:card size="card-lg" cssClass="boliche-card">
-                    <div class="card-content">
-                        <div class="card-left">
-                            <img src="<c:url value='/resources/img/Bali-Imagen.webp' />"
-                                 alt="${club.clubName}" class="card-image">
-                        </div>
-                        <div class="card-right">
-                            <div class="card-text-title">${club.clubName}</div>
-                            <span class="card-text-body">
-                                <i class="fa-solid fa-location-dot"></i> ${club.location}<br>
-                                <i class="fa-solid fa-star" style="color:#FFD700;"></i>
-                                <i class="fa-solid fa-star" style="color:#FFD700;"></i>
-                                <i class="fa-solid fa-star" style="color:#FFD700;"></i>
-                                <i class="fa-solid fa-star-half-alt" style="color:#FFD700;"></i>
-                                <i class="fa-regular fa-star" style="color:#bab8b8;"></i>
-                                    ${club.rating}<br>
-                                ${club.description}
-                            </span>
-                        </div>
-                    </div>
-                </t:card>
-            </a>
-        </c:forEach>
-    </div>
+<div class="app-boliches">
+    <c:forEach var="club" items="${clubs}">
+        <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">
+            <div class="card-content">
+                <div class="card-left">
+                    <img src="<c:url value='/resources/img/Bali-Imagen.webp' />"
+                         alt="${club.clubName}" class="card-image">
+                </div>
+                <div class="card-right">
+                    <div class="card-text-title">${club.clubName}</div>
+                    <span class="card-text-body">
+                    <i class="fa-solid fa-location-dot"></i> ${club.location}<br>
+                    <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
+                    <c:set var="halfStar" value="${(club.rating % 1) >= 0.5 ? 1 : 0}" />
+                    <c:set var="emptyStars" value="${5 - (ratingInt + halfStar)}" />
+
+                     <c:forEach var="i" begin="1" end="${ratingInt}">
+                         <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                     </c:forEach>
+                    <c:if test="${halfStar == 1}">
+                        <i class="fa-solid fa-star-half-stroke" style="color:#FFD700;"></i>
+                    </c:if>
+                    <c:forEach var="i" begin="1" end="${emptyStars}">
+                        <i class="fa-regular fa-star" style="color:#bab8b8;"></i>
+                    </c:forEach>
+                            ${club.rating}<br>
+                    ${club.description}
+                </span>
+                </div>
+            </div>
+        </t:card>
+    </c:forEach>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.boliche-card');
+        cards.forEach(card => {
+            card.addEventListener('click', function() {
+                const clubId = this.getAttribute('data-id');
+                if (clubId) {
+                    window.location.href = '<c:url value="/clubs/" />' + clubId;
+                }
+            });
+            card.style.cursor = 'pointer';
+        });
+    });
+</script>
+
 </body>
 </html>

@@ -12,7 +12,11 @@
 <c:set var="isDisabled" value="${disabled == true ? 'card-disabled' : ''}" />
 <c:set var="classes" value="card ${cardSize} ${cardClass} ${isDisabled}" />
 
-<div class="${classes}" <c:if test="${disabled}">style="pointer-events:none;opacity:0.6;"</c:if> <c:if test="${not empty dataId}">data-id="${dataId}"</c:if>>    <div class="card-body">
+<div class="${classes}"
+     <c:if test="${disabled}">style="pointer-events:none;opacity:0.6;"</c:if>
+     <c:if test="${not empty dataId}">data-id="${dataId}" </c:if>
+     <c:if test="${not empty onclick}">onclick="${onclick}" style="cursor:pointer;"</c:if>>
+    <div class="card-body">
         <jsp:doBody/>
     </div>
 </div>

@@ -26,14 +26,20 @@
 </div>
 
 <div class="detail-page">
-    <div class="detail-header">
-        <h1 class="detail-title"><c:out value="${club.clubName}"/></h1>
-
+    <div style="margin-bottom: 0px; margin-left: 18px;">
+        <button type="button" class="btn btn-success"
+                onclick="window.location.href='<c:url value="/clubs"/>'">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+    </div>
+    <div class="detail-header" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%;">
+        <h1 class="detail-title">${club.clubName}</h1>
         <button type="button" class="btn btn-success"
                 onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
             <i class="fa-solid fa-envelope"></i> Contactarse
         </button>
     </div>
+
 
     <div class="detail-content">
         <img src="<c:url value='/resources/img/Bali-Imagen.webp' />"
@@ -41,14 +47,8 @@
 
         <div class="detail-info">
             <div class="detail-details">
-                <!-- Location: soporta String o VO -->
                 <span>${locationText}</span>
-
-
-                <!-- Musical genre: enum o String -->
                 <span>${genreText}</span>
-
-                <!-- Rating -->
                 <div>
                     <i class="fa-solid fa-star" style="color:#FFD700;"></i>
                     <c:choose>
@@ -64,12 +64,10 @@
             </div>
         </div>
 
-        <!-- Descripción -->
         <div class="detail-description">
             <p><c:out value="${club.description}" /></p>
         </div>
 
-        <!-- Carta -->
         <div class="detail-buttons">
             <div class="dropdown">
                 <button class="dropdown-btn btn btn-success">
@@ -82,7 +80,6 @@
                                 <p style="padding:12px;">No hay productos.</p>
                             </c:when>
                             <c:otherwise>
-                                <!-- forEach sobre Map: entry es Map.Entry -->
                                 <c:forEach var="entry" items="${productsByCategory}">
                                     <div class="drink-category">
                                         <h3><c:out value="${entry.key}"/></h3>
@@ -130,6 +127,5 @@
         </script>
     </div>
 </div>
-
 </body>
 </html>
