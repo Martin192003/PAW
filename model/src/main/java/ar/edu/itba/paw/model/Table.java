@@ -18,7 +18,7 @@ public class Table {
 
     public Table(UUID id,UUID clubID, int tableNumber, int capacity, TableState state, BigDecimal price, BigDecimal discount) {
         this.id = id;
-        this.clubId = clubId;
+        this.clubId = clubID;
         this.tableNumber = tableNumber;
         this.capacity = capacity;
         this.tableState = state == null ? TableState.DISPONIBLE : state;

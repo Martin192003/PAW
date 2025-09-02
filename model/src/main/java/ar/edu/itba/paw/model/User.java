@@ -15,7 +15,7 @@ public class User {
     private Role role; // 'admin' | 'user' (validado por la DB)
     private OffsetDateTime createdAt;
 
-    public User() {}
+    public User(){}
 
     public User(UUID userId, String userName, String surname, String email, String passwordHash,
                 String cellphone, Role role, OffsetDateTime createdAt) {

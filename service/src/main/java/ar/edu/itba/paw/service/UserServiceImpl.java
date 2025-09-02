@@ -5,8 +5,9 @@ import ar.edu.itba.paw.model.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.interfaces.service.UserService;
+import ar.edu.itba.paw.service.UserService;
 
+import java.util.Optional;
 import java.util.UUID;
 
 

@@ -8,8 +8,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserDao {
-    public User create(String userName, String passwordHash, String surname, String email, String cellphone, Role role);
-    public User update(UUID userId, String userName, String surname, String email, String passwordHash, String cellphone, Role role);
+    User create(String userName, String passwordHash, String surname, String email, String cellphone, Role role);
+    User update(UUID userId, String userName, String surname, String email, String passwordHash, String cellphone, Role role);
     boolean delete(UUID id);
 
     Optional<User> findById(UUID id);

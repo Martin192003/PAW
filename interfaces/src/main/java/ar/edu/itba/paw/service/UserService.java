@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.interfaces.service;
+package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;

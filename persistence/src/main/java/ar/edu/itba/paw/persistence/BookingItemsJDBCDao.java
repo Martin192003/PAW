@@ -48,14 +48,17 @@ public class BookingItemsJDBCDao implements BookingItemsDao {
     public BookingItem create(Booking booking, Product product, int quantity, BigDecimal unitPrice) {
         UUID id = UUID.randomUUID();
         HashMap<String,Object> params = new HashMap<>();
+        BigDecimal lineTotall = unitPrice.multiply(BigDecimal.valueOf(quantity));
 
         params.put("booking_item_id", id);
         params.put("booking_id", booking.getBookingId());
         params.put("product_id", product.getProductId());
         params.put("quantity", quantity);
         params.put("unit_price", unitPrice);
+        params.put("line_total", lineTotall);
+
         insert.execute(params);
-        return new BookingItem(id, booking, product, quantity, unitPrice, lineTotal(id));
+        return new BookingItem(id, booking, product, quantity, unitPrice, lineTotall);
     }
 
     @Override

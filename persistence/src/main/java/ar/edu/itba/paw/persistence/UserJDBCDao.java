@@ -21,7 +21,7 @@ public class UserJDBCDao implements UserDao {
 
     private static final RowMapper<User> ROW_MAPPER = (rs, i) -> {
         User u = new User();
-        u.setUserId(rs.getObject("user_id", java.util.UUID.class));
+        u.setUserId(UUID.fromString(rs.getString("user_id")));
         u.setUserName(rs.getString("user_name"));
         u.setSurname(rs.getString("surname"));
         u.setEmail(rs.getString("email"));
@@ -29,7 +29,7 @@ public class UserJDBCDao implements UserDao {
         u.setCellphone(rs.getString("cellphone"));
         final String roleStr = rs.getString("role");
         u.setRole(roleStr == null ? null : Role.valueOf(roleStr.trim().toUpperCase(Locale.ROOT)));
-        u.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+        u.setCreatedAt(rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(java.time.ZoneOffset.UTC));
         return u;
     };
 
