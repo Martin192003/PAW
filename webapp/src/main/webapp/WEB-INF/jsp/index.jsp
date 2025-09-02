@@ -32,20 +32,22 @@
                     <div class="card-text-title">${club.clubName}</div>
                     <span class="card-text-body">
                     <i class="fa-solid fa-location-dot"></i> ${club.location}<br>
-                    <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
-                    <c:set var="halfStar" value="${(club.rating % 1) >= 0.5 ? 1 : 0}" />
-                    <c:set var="emptyStars" value="${5 - (ratingInt + halfStar)}" />
-
-                     <c:forEach var="i" begin="1" end="${ratingInt}">
-                         <i class="fa-solid fa-star" style="color:#FFD700;"></i>
-                     </c:forEach>
+                     <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
+                    <c:set var="decimal" value="${club.rating - ratingInt}" />
+                    <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
+                    <c:set var="fullStars" value="${ratingInt}" />
+                    <c:set var="emptyStars" value="${5 - (fullStars + halfStar)}" />
+                    <c:forEach var="i" begin="1" end="${fullStars}">
+                        <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                    </c:forEach>
                     <c:if test="${halfStar == 1}">
                         <i class="fa-solid fa-star-half-stroke" style="color:#FFD700;"></i>
                     </c:if>
                     <c:forEach var="i" begin="1" end="${emptyStars}">
                         <i class="fa-regular fa-star" style="color:#bab8b8;"></i>
                     </c:forEach>
-                            ${club.rating}<br>
+
+                    ${club.rating}<br>
                     ${club.description}
                 </span>
                 </div>
@@ -67,6 +69,5 @@
         });
     });
 </script>
-
 </body>
 </html>

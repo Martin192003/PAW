@@ -23,19 +23,6 @@ body {
     border-radius: 8px;
     background-color: #f9f9f9;
 }
-.component-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 15px 0;
-}
-.form-demo {
-    max-width: 500px;
-    margin: 20px 0;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
 .app-title {
     font-family: 'Darklinos', Arial, sans-serif;
     position: absolute;

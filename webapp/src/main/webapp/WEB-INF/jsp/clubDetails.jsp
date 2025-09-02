@@ -1,12 +1,11 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title><c:out value="${club.clubName}"/> - Detalles</title>
-
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />" />
@@ -26,7 +25,7 @@
 </div>
 
 <div class="detail-page">
-    <div style="margin-bottom: 0px; margin-left: 18px;">
+    <div class="detail-back">
         <button type="button" class="btn btn-success"
                 onclick="window.location.href='<c:url value="/clubs"/>'">
             <i class="fa-solid fa-arrow-left"></i>

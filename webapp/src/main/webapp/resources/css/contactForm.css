@@ -103,28 +103,3 @@ body {
     overflow: hidden;
     height: 100vh;
 }
-.modal{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100vw;
-    height:100vh;
-    background:rgba(0,0,0,0.5);
-    z-index:9999;
-    justify-content:center;
-    align-items:center;
-}
-.modal-content{
-    background:#222;
-    color:#fff;
-    padding:32px;
-    border-radius:12px;
-    box-shadow:0 4px 24px rgba(0,0,0,0.6);
-    width:400px;
-    text-align:center;
-}
-.modal-message{
-    font-size:22px;
-    margin-bottom:18px;
-}
