@@ -1,27 +1,26 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.service.PhotoService;
 import ar.edu.itba.paw.service.UserService;
-import ar.edu.itba.paw.model.Photo;
-import org.springframework.http.CacheControl;
-import org.springframework.http.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ModelAndView;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
-import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Controller
 public class PhotoController {
+
+    private static final Logger log = LoggerFactory.getLogger(PhotoController.class);
 
     private final PhotoService photoService;
     private final UserService userService;
@@ -31,40 +30,67 @@ public class PhotoController {
         this.userService = userService;
     }
 
-
-    @GetMapping("/clubs/{clubId}/photos")
-    public ModelAndView listClubPhotos(@PathVariable UUID clubId,
-                                       @RequestParam(defaultValue = "0") int page,
-                                       @RequestParam(defaultValue = "20") int size) {
-        List<Photo> photos = photoService.listByClub(clubId, page, size);
-        ModelAndView mav = new ModelAndView("clubPhotos"); // JSP: /WEB-INF/jsp/clubPhotos.jsp
-        mav.addObject("clubId", clubId);
-        mav.addObject("photos", photos);
-        mav.addObject("page", page);
-        mav.addObject("size", size);
-        return mav;
-    }
-
     @PostMapping("/clubs/{clubId}/photos")
     public String upload(@PathVariable UUID clubId,
                          @RequestParam("file") MultipartFile file,
                          Principal principal) throws IOException {
 
-        var user = userService.findByEmail(principal.getName());
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/" + clubId + "?err=empty";
+        }
 
-        Photo p = new Photo();
-        p.setClubId(clubId);
-        p.setPostedBy(user.getId());
-        p.setFilename(file.getOriginalFilename());
-        p.setContentType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
-        p.setSizeBytes(file.getSize());
-        p.setData(file.getBytes()); // <--- byte[] para BYTEA
-        p.setUrl("/photos/" + UUID.randomUUID()); // o la ruta que uses para servirla
+        var effectiveUser = (principal != null)
+                ? userService.findByEmail(principal.getName())
+                : userService.findByEmail("dev@local");
 
-        photoService.save(p); // inserta
+        if (effectiveUser == null) {
+            return "redirect:/clubs/" + clubId + "?err=user";
+        }
 
-        return "redirect:/clubs/" + clubId;
+        // ⚠️ Ojo con el getter del usuario
+        UUID photoId = photoService.upload(
+                clubId,
+                effectiveUser.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        // Nada de setear URL acá. El DAO debe dejar url = "/photos/{photoId}"
+        return "redirect:/clubs/" + clubId + "?photo=" + photoId;
     }
 
 
+    @GetMapping("/photos/{photoId}")
+    @ResponseBody
+    public ResponseEntity<byte[]> getPhoto(@PathVariable UUID photoId) {
+        var opt = photoService.getWithId(photoId);
+        if (opt.isEmpty()) {
+            log.warn("Photo {} not found", photoId);
+            return ResponseEntity.notFound().build();
+        }
+        var p = opt.get();
+        if (p.getData() == null || p.getData().length == 0) {
+            log.warn("Photo {} has no data", photoId);
+            return ResponseEntity.notFound().build();
+        }
+        var mt = sniff(p.getData());
+        log.info("Serving photo {} ({} bytes, {})", photoId, p.getData().length, mt);
+        return ResponseEntity.ok().contentType(mt).body(p.getData());
+    }
+    private static MediaType sniff(byte[] d) {
+        if (d.length >= 4
+                && (d[0] & 0xFF) == 0x89 && d[1] == 'P' && d[2] == 'N' && d[3] == 'G') {
+            return MediaType.IMAGE_PNG;
+        }
+        if (d.length >= 2
+                && (d[0] & 0xFF) == 0xFF && (d[1] & 0xFF) == 0xD8) { // JPEG SOI
+            return MediaType.IMAGE_JPEG;
+        }
+        if (d.length >= 12) {
+            String fourCC = new String(d, 8, 4, StandardCharsets.US_ASCII);
+            if ("WEBP".equals(fourCC)) return MediaType.parseMediaType("image/webp");
+        }
+        return MediaType.APPLICATION_OCTET_STREAM;
+    }
 }

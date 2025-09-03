@@ -71,13 +71,17 @@ CREATE TABLE IF NOT EXISTS reviews (
     );
 
 
-CREATE TABLE IF NOT EXISTS photos (
-                                      photo_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    club_id    UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS photos
+(
+    photo_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    club_id    UUID NOT NULL REFERENCES clubs (club_id) ON DELETE CASCADE,
     url        TEXT NOT NULL,
     data       BYTEA,
-    posted_by  UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    posted_by  UUID NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ      DEFAULT NOW(),
+    filename   TEXT,
+    content_type TEXT,
+    size_bytes BIGINT
     );
 CREATE INDEX ON photos (club_id);
 

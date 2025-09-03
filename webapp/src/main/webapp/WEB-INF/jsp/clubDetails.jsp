@@ -41,7 +41,7 @@
 
 
     <div class="detail-content">
-        <img src="<c:url value='/resources/img/Bali-Imagen.webp' />"
+        <img src="<c:url value='${photoUrlByClub[club.clubId]}' />"
              alt="<c:out value='${club.clubName}'/>" class="detail-image">
 
         <div class="detail-info">

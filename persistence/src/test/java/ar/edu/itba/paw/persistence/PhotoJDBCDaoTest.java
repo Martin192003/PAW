@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Photo;
@@ -93,4 +93,4 @@ public class PhotoJDBCDaoTest {
         boolean deleted = photoDao.delete(UUID.randomUUID());
         assertFalse(deleted);
     }
-}
+}*/

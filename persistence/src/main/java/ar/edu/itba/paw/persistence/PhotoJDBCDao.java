@@ -1,6 +1,5 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.persistence.PhotoDao;
 import ar.edu.itba.paw.model.Photo;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -8,7 +7,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.Timestamp;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -110,30 +108,25 @@ public class PhotoJDBCDao implements PhotoDao {
     }
 
     @Override
-    public Photo save(Photo p) {
-        final String sql = """
-            INSERT INTO photos (
-                photo_id, club_id, posted_by, filename, content_type, size_bytes, data, url
-            ) VALUES (
-                uuid_generate_v4(), ?, ?, ?, ?, ?, ?, ?
-            )
-            RETURNING photo_id
-            """;
+    public UUID save(Photo p) {
+        final String insertSql = """
+      INSERT INTO photos (club_id, posted_by, filename, content_type, size_bytes, data, url, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, '/photos/pending', NOW())
+      RETURNING photo_id
+    """;
 
-        UUID newId = jdbc.queryForObject(
-                sql,
-                (rs, rowNum) -> rs.getObject(1, UUID.class),
+        UUID id = jdbc.queryForObject(insertSql,
+                (rs, i) -> rs.getObject("photo_id", UUID.class),
                 p.getClubId(),
                 p.getPostedBy(),
                 p.getFilename(),
                 p.getContentType(),
                 p.getSizeBytes(),
-                p.getData(),
-                p.getUrl()
+                p.getData()
         );
 
-        p.setPhotoId(newId);
-        return p;
+        jdbc.update("UPDATE photos SET url = ? WHERE photo_id = ?", "/photos/" + id, id);
+        return id;
     }
 
     @Override

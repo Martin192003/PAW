@@ -3,6 +3,7 @@ package ar.edu.itba.paw.webapp.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -24,22 +25,28 @@ import org.springframework.beans.factory.annotation.Value;
 
 })
 @Configuration
+@PropertySource(value = {
+        "classpath:application.properties",
+})
 public class WebConfig implements WebMvcConfigurer {
 
     @Value("classpath:schema.sql")
     private Resource schemaSql;
 
-    @Value("${DB_HOST:localhost}")
+    @Value("localhost")
     private String dbHost;
-    @Value("${DB_PORT:5433}")
+    @Value("5433")
     private String dbPort;
-    @Value("${DB_NAME:paw}")
+    @Value("paw")
     private String dbName;
 
-    @Value("${DB_USER}")
+    @Value("postgres")
     private String dbUser;
-    @Value("${DB_PASS}")
+    @Value("postgres")
     private String dbPass;
+
+    @Value("${app.schema.init:false}")
+    private boolean runSchema;  // default: false (prod)
 
     @Bean
     public InternalResourceViewResolver viewResolver() {
@@ -66,24 +73,29 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public DataSourceInitializer dataSourceInitializer(final DataSource ds) {
+    public DataSourceInitializer dataSourceInitializer(DataSource ds) {
         var dsi = new DataSourceInitializer();
         dsi.setDataSource(ds);
 
-        boolean hasSchema = (schemaSql != null && schemaSql.exists());
-        dsi.setEnabled(hasSchema);
-
-        if (hasSchema) {
-            dsi.setDatabasePopulator(databasePopulator());
-        }
+        var pop = new ResourceDatabasePopulator();
+        pop.addScript(schemaSql);
+        pop.setContinueOnError(true);
+        pop.setIgnoreFailedDrops(true);
+        dsi.setDatabasePopulator(pop);
+        dsi.setEnabled(runSchema);
         return dsi;
+    }
+
+    @Bean
+    public org.springframework.web.multipart.commons.CommonsMultipartResolver multipartResolver() {
+        var r = new org.springframework.web.multipart.commons.CommonsMultipartResolver();
+        r.setMaxUploadSizePerFile(10 * 1024 * 1024); // 10MB
+        return r;
     }
 
     private DatabasePopulator databasePopulator() {
         var pop = new ResourceDatabasePopulator();
         pop.addScript(schemaSql);
-        pop.setContinueOnError(true);
-        pop.setIgnoreFailedDrops(true);
         return pop;
     }
 }

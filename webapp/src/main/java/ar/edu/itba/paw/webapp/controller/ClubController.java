@@ -24,22 +24,21 @@ public class ClubController {
         this.clubService = clubService;
     }
 
-    // GET /webapp/clubs  (y /webapp/clubs/)
     @GetMapping({"", "/"})
     public String getAllClubs(Model model) {
         List<Club> clubs = clubService.getAllClubs();
 
         Map<UUID, String> photoUrlByClub = new HashMap<>();
         for (Club c : clubs) {
-            List<Photo> photos = photoService.listByClub(c.getClubId(), 0, 1); // primera/última como portada
+            List<Photo> photos = photoService.listByClub(c.getClubId(), 0, 1);
             if (!photos.isEmpty()) {
-                photoUrlByClub.put(c.getClubId(), photos.get(0).getUrl()); // /photos/{id}
+                photoUrlByClub.put(c.getClubId(), photos.get(0).getUrl()); // ej: /photos/{id}
             }
         }
 
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
-        return "index"; // /WEB-INF/jsp/index.jsp
+        return "index";
     }
 
 

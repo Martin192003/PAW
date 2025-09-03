@@ -20,7 +20,7 @@ public interface PhotoService {
 
     Optional<Photo> getWithId(UUID photoId);
 
-    Photo save(Photo photo);
+    UUID save(Photo photo);
 
     boolean delete(UUID photoId);
 }
