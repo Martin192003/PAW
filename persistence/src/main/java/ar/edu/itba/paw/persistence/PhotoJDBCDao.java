@@ -1,101 +1,144 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.persistence.PhotoDao;
 import ar.edu.itba.paw.model.Photo;
-import ar.edu.itba.paw.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class PhotoJDBCDao implements PhotoDao {
 
     private final JdbcTemplate jdbc;
-    private final SimpleJdbcInsert insert;
-    private final ClubDao clubDao;
-    private final UserDao userDao;
 
-    private static final RowMapper<Photo> ROW_MAPPER = (rs, rowNum) -> {
+    public PhotoJDBCDao(DataSource ds) {
+        this.jdbc = new JdbcTemplate(ds);
+    }
+
+    private static final RowMapper<Photo> METADATA_MAPPER = (rs, i) -> {
         Photo p = new Photo();
         p.setPhotoId(rs.getObject("photo_id", UUID.class));
-        Club c = new Club();
-        c.setClubId(rs.getObject("club_id", UUID.class));
-        p.setClub(c);
+        p.setClubId(rs.getObject("club_id", UUID.class));
         p.setUrl(rs.getString("url"));
-        User u = new User();
-        u.setUserId(rs.getObject("posted_by", UUID.class));
-        p.setPostedBy(u);
-        p.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+        p.setPostedBy(rs.getObject("posted_by", UUID.class));
+        Timestamp ts = rs.getTimestamp("created_at");
+        if (ts != null) p.setCreatedAt(ts.toInstant().atOffset(ZoneOffset.UTC));
+        p.setContentType(rs.getString("content_type"));
+        p.setFilename(rs.getString("filename"));
+        long size = rs.getLong("size_bytes");
+        p.setSizeBytes(rs.wasNull() ? null : size);
         return p;
     };
 
-    @Autowired
-    public PhotoJDBCDao(final DataSource ds, final ClubDao clubDao, final UserDao userDao) {
-        this.jdbc = new JdbcTemplate(ds);
-        this.insert = new SimpleJdbcInsert(jdbc)
-                .withTableName("photos")
-                .usingColumns("photo_id", "club_id", "url", "posted_by");
-        this.clubDao = clubDao;
-        this.userDao = userDao;
+    private static final RowMapper<Photo> WITH_DATA_MAPPER = (rs, i) -> {
+        Photo p = METADATA_MAPPER.mapRow(rs, i);
+        assert p != null;
+        p.setData(rs.getBytes("data"));
+        return p;
+    };
+
+    @Override
+    public UUID create(UUID clubId,
+                       UUID postedBy,
+                       String filename,
+                       String contentType,
+                       byte[] data) {
+        final String insertSql = """
+            INSERT INTO photos (club_id, url, posted_by, created_at, data, content_type, filename, size_bytes)
+            VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)
+            RETURNING photo_id
+            """;
+
+        UUID id = jdbc.queryForObject(
+                insertSql,
+                (rs, i) -> rs.getObject("photo_id", UUID.class),
+                clubId,
+                "/photos/pending",
+                postedBy,
+                data,
+                contentType,
+                filename,
+                (long) data.length
+        );
+
+        jdbc.update("UPDATE photos SET url = ? WHERE photo_id = ?",
+                "/photos/" + id, id);
+
+        return id;
     }
 
     @Override
-    public Photo create(String url, Club club, User postedBy) {
-        UUID id = UUID.randomUUID();
-        Map<String,Object> params = new HashMap<>();
-        params.put("photo_id", id);
-        params.put("club_id", club.getClubId());
-        params.put("url", url);
-        params.put("posted_by", postedBy.getId());
-
-        insert.execute(params);
-        return findById(id).orElseThrow(() -> new IllegalStateException("Inserted photo not found: " + id));
+    public List<Photo> findByClub(UUID clubId, int limit, int offset) {
+        final String sql = """
+            SELECT *
+            FROM photos
+            WHERE club_id = ?
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+            """;
+        return jdbc.query(sql, METADATA_MAPPER, clubId, limit, offset);
     }
 
     @Override
-    public Photo update(UUID photoId, String url) {
-        Objects.requireNonNull(photoId, "photoId is required");
-        Objects.requireNonNull(url, "url is required");
-
-        final String sql = "UPDATE photos SET url = ? WHERE photo_id = ?";
-        int updated = jdbc.update(sql, url, photoId);
-
-        return updated > 0 ? findById(photoId).orElse(null) : null;
+    public Optional<Photo> findByIdWithData(UUID photoId) {
+        final String sql = """
+            SELECT *
+            FROM photos
+            WHERE photo_id = ?
+            """;
+        List<Photo> list = jdbc.query(sql, WITH_DATA_MAPPER, photoId);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
 
     @Override
-    public boolean delete(UUID id) {
-        final String sql = "DELETE FROM photos WHERE photo_id = ?";
-        return jdbc.update(sql, id) > 0;
+    public Optional<Photo> findById(UUID photoId) {
+        final String sql = """
+            SELECT *
+            FROM photos
+            WHERE photo_id = ?
+            """;
+        List<Photo> list = jdbc.query(sql, METADATA_MAPPER, photoId);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
 
     @Override
-    public Optional<Photo> findById(UUID id) {
-        final String sql = "SELECT * FROM photos WHERE photo_id = ?";
-        Photo p = jdbc.query(sql, ROW_MAPPER, id).stream().findFirst().orElse(null);
-        if (p != null) {
-            p.setClub(clubDao.findById(p.getClub().getClubId()).orElse(null));
-            p.setPostedBy(userDao.findById(p.getPostedBy().getId()).orElse(null));
-        }
-        return Optional.ofNullable(p);
+    public Photo save(Photo p) {
+        final String sql = """
+            INSERT INTO photos (
+                photo_id, club_id, posted_by, filename, content_type, size_bytes, data, url
+            ) VALUES (
+                uuid_generate_v4(), ?, ?, ?, ?, ?, ?, ?
+            )
+            RETURNING photo_id
+            """;
+
+        UUID newId = jdbc.queryForObject(
+                sql,
+                (rs, rowNum) -> rs.getObject(1, UUID.class),
+                p.getClubId(),
+                p.getPostedBy(),
+                p.getFilename(),
+                p.getContentType(),
+                p.getSizeBytes(),
+                p.getData(),
+                p.getUrl()
+        );
+
+        p.setPhotoId(newId);
+        return p;
     }
 
     @Override
-    public List<Photo> findByClub(Club club) {
-        final String sql = "SELECT * FROM photos WHERE club_id = ?";
-        return jdbc.query(sql, ROW_MAPPER, club.getClubId());
+    public boolean delete(UUID photoId) {
+        int updated = jdbc.update("DELETE FROM photos WHERE photo_id = ?", photoId);
+        return updated > 0;
     }
-
-    @Override
-    public List<Photo> findByUser(User user) {
-        final String sql = "SELECT * FROM photos WHERE posted_by = ?";
-        return jdbc.query(sql, ROW_MAPPER, user.getId());
-    }
-
 }

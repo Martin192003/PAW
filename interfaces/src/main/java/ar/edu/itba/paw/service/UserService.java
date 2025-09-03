@@ -13,12 +13,12 @@ public interface UserService {
 
     User create(String username, String password, String surname, String email, String cellphone, String role);
 
-    /*User update(User user);
+    User update(User user);
     boolean delete(UUID id);
 
     User findByEmail(String email);
     User findByUserName(String userName);
 
     List<User> findAll();
-    List<User> findByRole(String role);*/
+    List<User> findByRole(String role);
 }

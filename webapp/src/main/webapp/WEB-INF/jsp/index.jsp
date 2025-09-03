@@ -25,8 +25,8 @@
         <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">
             <div class="card-content">
                 <div class="card-left">
-                    <img src="<c:url value='/resources/img/Bali-Imagen.webp' />"
-                         alt="${club.clubName}" class="card-image">
+                    <img src="<c:url value='${photoUrlByClub[club.clubId]}' />"
+                         alt="${club.clubName}" class="card-image" />
                 </div>
                 <div class="card-right">
                     <div class="card-text-title">${club.clubName}</div>

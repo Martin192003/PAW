@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.service.UserService;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -29,6 +29,44 @@ public class UserServiceImpl implements UserService {
     @Override
     public User create(String username, String password, String surname, String email, String cellphone, String role) {
         return userDao.create(username, password, surname, email, cellphone, Role.valueOf(role.toUpperCase()));
+    }
+
+    @Override
+    public User update(User user) {
+        return userDao.update(
+                user.getId(),
+                user.getUsername(),
+                user.getSurname(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getCellphone(),
+                user.getRole()
+        );
+    }
+
+    @Override
+    public boolean delete(UUID id) {
+        return userDao.delete(id);
+    }
+
+    @Override
+    public User findByEmail(String email) {
+        return userDao.findByEmail(email).orElse(null);
+    }
+
+    @Override
+    public User findByUserName(String userName) {
+        return userDao.findByUserName(userName).orElse(null);
+    }
+
+    @Override
+    public List<User> findAll() {
+        return userDao.findAll();
+    }
+
+    @Override
+    public List<User> findByRole(String role) {
+        return userDao.findByRole(role);
     }
 
 }
