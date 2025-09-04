@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 
 <!DOCTYPE html>
@@ -41,7 +42,7 @@
 
 
     <div class="detail-content">
-        <img src="<c:url value='${photoUrlByClub[club.clubId]}' />"
+        <img src="<c:url value='${coverPhotoUrl}' />"
              alt="<c:out value='${club.clubName}'/>" class="detail-image">
 
         <div class="detail-info">
@@ -89,12 +90,12 @@
                                                         <c:out value="${p.productName}"/>
                                                     </span>
                                                     <span class="drink-price">
-                                                          <c:choose>
-                                                              <c:when test="${not empty p.basePrice}">
-                                                                  $<fmt:formatNumber value="${p.basePrice}" type="number" minFractionDigits="0" maxFractionDigits="0"/>
-                                                              </c:when>
-                                                              <c:otherwise>—</c:otherwise>
-                                                          </c:choose>
+                                                      <c:choose>
+                                                          <c:when test="${p.basePrice != null}">
+                                                              $<fmt:formatNumber value="${p.basePrice}" type="number" minFractionDigits="0" maxFractionDigits="0"/>
+                                                          </c:when>
+                                                          <c:otherwise>$0</c:otherwise>
+                                                      </c:choose>
                                                     </span>
                                                 </li>
                                             </c:forEach>

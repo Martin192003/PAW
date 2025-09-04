@@ -42,16 +42,16 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("classpath:schema.sql")
     private Resource schemaSql;
 
-    @Value("localhost")
+    @Value("${app.db.host}")
     private String dbHost;
-    @Value("5433")
+    @Value("${app.db.port}")
     private String dbPort;
-    @Value("paw")
+    @Value("${app.db.name}")
     private String dbName;
 
-    @Value("postgres")
+    @Value("${app.db.user}")
     private String dbUser;
-    @Value("postgres")
+    @Value("${app.db.pass}")
     private String dbPass;
 
     @Value("${app.schema.init:false}")
