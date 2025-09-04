@@ -3,26 +3,99 @@ package ar.edu.itba.paw.webapp.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import javax.sql.DataSource;
+import org.springframework.jdbc.datasource.init.DataSourceInitializer;
+import org.springframework.jdbc.datasource.init.DatabasePopulator;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.core.io.Resource;
+import org.springframework.beans.factory.annotation.Value;
 
 @EnableWebMvc
-@ComponentScan({"ar.edu.itba.paw.webapp.controller"})
+@ComponentScan({
+        "ar.edu.itba.paw.webapp.controller",
+        "ar.edu.itba.paw.service",
+        "ar.edu.itba.paw.persistence",
+        "ar.edu.itba.paw.service.config",
+        "ar.edu.itba.paw.webapp.config"
+
+})
 @Configuration
+@PropertySource(value = {
+        "classpath:application.properties",
+})
 public class WebConfig implements WebMvcConfigurer {
+
+    @Value("classpath:schema.sql")
+    private Resource schemaSql;
+
+    @Value("localhost")
+    private String dbHost;
+    @Value("5433")
+    private String dbPort;
+    @Value("paw")
+    private String dbName;
+
+    @Value("postgres")
+    private String dbUser;
+    @Value("postgres")
+    private String dbPass;
+
+    @Value("${app.schema.init:false}")
+    private boolean runSchema;  // default: false (prod)
 
     @Bean
     public InternalResourceViewResolver viewResolver() {
-        InternalResourceViewResolver resolver = new InternalResourceViewResolver();
-        resolver.setPrefix("/WEB-INF/jsp/");
-        resolver.setSuffix(".jsp");
-        return resolver;
+        var r = new InternalResourceViewResolver();
+        r.setPrefix("/WEB-INF/jsp/");
+        r.setSuffix(".jsp");
+        return r;
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/css/**").addResourceLocations("/css/");
+        registry.addResourceHandler("/resources/**")
+                .addResourceLocations("/resources/");
+    }
+
+    @Bean
+    public DataSource dataSource() {
+        var ds = new org.springframework.jdbc.datasource.SimpleDriverDataSource();
+        ds.setDriverClass(org.postgresql.Driver.class);
+        ds.setUrl(String.format("jdbc:postgresql://%s:%s/%s", dbHost, dbPort, dbName));
+        ds.setUsername(dbUser);
+        ds.setPassword(dbPass);
+        return ds;
+    }
+
+    @Bean
+    public DataSourceInitializer dataSourceInitializer(DataSource ds) {
+        var dsi = new DataSourceInitializer();
+        dsi.setDataSource(ds);
+
+        var pop = new ResourceDatabasePopulator();
+        pop.addScript(schemaSql);
+        pop.setContinueOnError(true);
+        pop.setIgnoreFailedDrops(true);
+        dsi.setDatabasePopulator(pop);
+        dsi.setEnabled(runSchema);
+        return dsi;
+    }
+
+    @Bean
+    public org.springframework.web.multipart.commons.CommonsMultipartResolver multipartResolver() {
+        var r = new org.springframework.web.multipart.commons.CommonsMultipartResolver();
+        r.setMaxUploadSizePerFile(10 * 1024 * 1024); // 10MB
+        return r;
+    }
+
+    private DatabasePopulator databasePopulator() {
+        var pop = new ResourceDatabasePopulator();
+        pop.addScript(schemaSql);
+        return pop;
     }
 }

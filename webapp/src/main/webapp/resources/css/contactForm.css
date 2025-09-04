@@ -1,0 +1,105 @@
+.contact-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 105vh;
+    width: 100%;
+    overflow: hidden;
+    padding-top: 25px;
+    box-sizing: border-box;
+}
+
+.contact-card {
+    pointer-events: auto;
+    transform: none;
+    justify-content: center;
+    align-content: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 1.5px 12px rgba(140,0,183,0.35);
+    width: 700px;
+    margin: auto;
+    padding: 36px;
+    transition: none;
+    height: 500px;
+    border-radius: 8px;
+    overflow-y: auto;
+}
+.contact-card:hover {
+    transform: none;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 1.5px 12px rgba(140,0,183,0.35);
+    cursor: default;
+}
+.contact-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background-color: #9c27b0;
+    border-radius: 60%;
+    margin-left: 10px;
+    color: #393939;
+}
+.contact-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+.contact-buttons .btn-secondary {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+    box-shadow: 0 2px 10px rgba(108, 117, 125, 0.4);
+    font-size: 16px;
+    padding: 8px 16px;
+}
+.contact-buttons .btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.5);
+}
+.contact-title {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 24px;
+    font-weight: bold;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-group {
+    margin-bottom: 5px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.form-control {
+    width: 600px;
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: transparent;
+    color: white;
+    margin-bottom: 15px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.contact-page .form-control:focus,
+.contact-card .form-control:focus {
+    border-color: #9c27b0;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(156, 39, 176, 0.25);
+    background-color: transparent;
+}
+textarea.form-control {
+    min-height: 160px;
+    width: 600px;
+    background-color: transparent;
+    resize: none;
+}
+body {
+    overflow: hidden;
+    height: 100vh;
+}

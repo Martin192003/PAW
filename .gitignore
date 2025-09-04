@@ -7,6 +7,12 @@
 node_modules/
 dist/
 
+
+# Environment variable files
+webapp/.env
+application.properties
+
+
 # Compiled Java class files
 *.class
 
