@@ -1,12 +1,12 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import ar.edu.itba.paw.service.ClubService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import ar.edu.itba.paw.service.PhotoService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,11 +21,13 @@ public class ClubDetailsController {
 
     private final ClubService clubService;
     private final ProductsDao productsDao;
+    private final PhotoService photoService;
 
     // Constructor injection (recomendado con Spring 5.x)
-    public ClubDetailsController(final ClubService clubService, final ProductsDao productsDao) {
+    public ClubDetailsController(final ClubService clubService, final ProductsDao productsDao, final PhotoService photoService) {
         this.clubService = clubService;
         this.productsDao = productsDao;
+        this.photoService = photoService;
     }
 
     @GetMapping("/{clubId}") // <- detalles en /clubs/{clubId}
@@ -33,6 +35,9 @@ public class ClubDetailsController {
         var maybeClub = clubService.getClubById(clubId);
         if (maybeClub.isEmpty()) return "errors/404"; // usa el que exista
 
+
+        var photos = photoService.listByClub(clubId, 0, 1);
+        String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
         var club = maybeClub.get();
 
         var products = productsDao.findByClub(club).stream()
@@ -60,6 +65,8 @@ public class ClubDetailsController {
         model.addAttribute("productsByCategory", ordered);
         model.addAttribute("locationText", toLocationText(club.getLocation()));
         model.addAttribute("genreText", toGenreText(club.getMusicGenre()));
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+
         return "clubDetails";
     }
 
