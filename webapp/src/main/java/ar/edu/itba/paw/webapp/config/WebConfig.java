@@ -1,19 +1,28 @@
 package ar.edu.itba.paw.webapp.config;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import javax.sql.DataSource;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.validation.Validator;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.DatabasePopulator;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
+
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 @EnableWebMvc
 @ComponentScan({
@@ -46,7 +55,7 @@ public class WebConfig implements WebMvcConfigurer {
     private String dbPass;
 
     @Value("${app.schema.init:false}")
-    private boolean runSchema;  // default: false (prod)
+    private boolean runSchema;
 
     @Bean
     public InternalResourceViewResolver viewResolver() {
@@ -54,6 +63,17 @@ public class WebConfig implements WebMvcConfigurer {
         r.setPrefix("/WEB-INF/jsp/");
         r.setSuffix(".jsp");
         return r;
+    }
+
+    @Bean
+    public MessageSource messageSource() {
+        final ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
+
+        messageSource.addBasenames("classpath:i18n/messages");
+        messageSource.setDefaultEncoding(StandardCharsets.UTF_8.displayName());
+        messageSource.setCacheSeconds((int) TimeUnit.MINUTES.toSeconds(5));
+
+        return messageSource;
     }
 
     @Override
@@ -97,5 +117,13 @@ public class WebConfig implements WebMvcConfigurer {
         var pop = new ResourceDatabasePopulator();
         pop.addScript(schemaSql);
         return pop;
+    }
+
+    @Bean
+    @Override
+    public Validator getValidator() {
+        LocalValidatorFactoryBean factoryBean = new LocalValidatorFactoryBean();
+        factoryBean.setValidationMessageSource(messageSource());
+        return factoryBean;
     }
 }
