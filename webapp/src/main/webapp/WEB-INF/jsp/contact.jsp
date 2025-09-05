@@ -1,5 +1,7 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 
 <!DOCTYPE html>
@@ -27,26 +29,28 @@
             Contactate con ${clubName}
             <span class="contact-icon"><i class="fa-solid fa-headphones"></i></span>
         </div>
-
-        <form id="contactForm" action="<c:url value='/contact'/>" method="post">
-            <input type="hidden" name="clubId" value="${clubId}">
+        <form:form modelAttribute="clubForm" method="post" id="contactForm">
             <div class="form-group">
-                <input type="text" name="name" class="form-control" placeholder="Nombre completo" required>
+                <form:input path="name" class="form-control" placeholder="Nombre completo" />
             </div>
+            <form:errors path="name" cssClass="error" element="div"/>
             <div class="form-group">
-                <input type="email" name="email" class="form-control" placeholder="Correo electrónico" required>
+                <form:input path="email" class="form-control" placeholder="Correo electrónico" />
             </div>
+            <form:errors path="email" cssClass="error" element="div"/>
             <div class="form-group">
-                <input type="tel" name="phone" class="form-control" placeholder="Teléfono">
+                <form:input path="phone" class="form-control" placeholder="Teléfono"/>
             </div>
+            <form:errors path="phone" cssClass="error" element="div"/>
             <div class="form-group">
-                <textarea name="message" class="form-control" placeholder="Mensaje" required></textarea>
+                <form:textarea path="message" class="form-control" placeholder="Mensaje" />
             </div>
+            <form:errors path="message" cssClass="error" element="div"/>
             <div class="contact-buttons">
                 <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancelar</button>
                 <button type="submit" class="btn btn-success">Enviar mensaje</button>
             </div>
-        </form>
+        </form:form>
     </t:card>
 </div>
 <div id="sentModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">

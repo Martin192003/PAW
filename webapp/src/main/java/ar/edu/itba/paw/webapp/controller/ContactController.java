@@ -3,11 +3,14 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.MailService;
+import ar.edu.itba.paw.webapp.form.ClubForm;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.validation.Valid;
 import java.util.UUID;
 
 @Controller
@@ -25,39 +28,50 @@ public class ContactController {
     public String showContact(@RequestParam("id") UUID clubId, Model model) {
         Club club = clubService.getClubById(clubId).orElse(null);
         if (club == null) return "error/404";
+        ClubForm clubForm = new ClubForm();
+        clubForm.setClubId(clubId);
         model.addAttribute("clubId", club.getClubId());
         model.addAttribute("clubName", club.getClubName());
+        model.addAttribute("clubForm", new ClubForm());
         return "contact";
     }
 
     @PostMapping("/contact")
-    public String submitContact(@RequestParam UUID clubId,
-                                @RequestParam String name,
-                                @RequestParam String email,
-                                @RequestParam(required = false) String phone,
-                                @RequestParam String message,
-                                RedirectAttributes ra) {
+    public String sendContact(@RequestParam("id") UUID clubId,
+                              @ModelAttribute("clubForm") @Valid ClubForm clubForm,
+                              BindingResult bindingResult,
+                              Model model,
+                              RedirectAttributes ra) {
         var clubOpt = clubService.getClubById(clubId);
         if (clubOpt.isEmpty()) return "error/404";
         var club = clubOpt.get();
+
+        model.addAttribute("clubId", club.getClubId());
+        model.addAttribute("clubName", club.getClubName());
+
+        if (bindingResult.hasErrors()) {
+            return "contact";
+        }
 
         String to = club.getContactInfo() != null ? club.getContactInfo().getEmail() : "test@local";
         boolean sent = mailService.sendContact(
                 to,
                 club.getClubName(),
-                email,
-                name,
-                phone,
-                message
+                clubForm.getEmail(),
+                clubForm.getName(),
+                clubForm.getPhone(),
+                clubForm.getMessage()
         );
 
-
-        ra.addFlashAttribute("sent", sent);
+        model.addAttribute("sent", sent);
         if (!sent) {
-            ra.addFlashAttribute("error", "Email send failed (see logs)");
+            model.addAttribute("error", "Email send failed (see logs)");
+        }else {
+            model.addAttribute("clubForm", new ClubForm());
         }
-        return "redirect:/contact?id=" + clubId;
+        return "contact";
     }
+
 
     @GetMapping("/verify-email")
     public String verifyEmail(@RequestParam("id") Long userId, Model model) {
