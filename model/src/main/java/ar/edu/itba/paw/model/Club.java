@@ -12,18 +12,17 @@ public class Club {
     private String location;
     private BigDecimal rating;
     private Integer quantityRatings;
-    private Price priceRange; // 'bajo' | 'medio' | 'alto'
+    private String priceRange; // 'bajo' | 'medio' | 'alto'
     private String description;
     private User contactInfo;
-    private MusicalGenre musicGenre;
+    private String musicGenre;
     private OffsetDateTime createdAt;
-    private Zone zone;
 
     public Club() {}
 
     public Club(UUID clubId, String clubName, String location, java.math.BigDecimal rating,
-                Integer quantityRatings, Price priceRange, String description,
-                User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone) {
+                Integer quantityRatings, String priceRange, String description,
+                User contactInfo, String musicGenre, OffsetDateTime createdAt) {
         this.clubId = clubId;
         this.clubName = clubName;
         this.location = location;
@@ -34,7 +33,6 @@ public class Club {
         this.contactInfo = contactInfo;
         this.musicGenre = musicGenre;
         this.createdAt = createdAt;
-        this.zone = zone;
     }
 
     public UUID getClubId() { return clubId; }

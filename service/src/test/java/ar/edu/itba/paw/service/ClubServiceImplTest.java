@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.persistence.ClubDao;
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,6 +12,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

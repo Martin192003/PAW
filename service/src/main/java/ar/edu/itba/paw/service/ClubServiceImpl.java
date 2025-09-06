@@ -1,6 +1,6 @@
 package ar.edu.itba.paw.service;
 
-import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.persistence.ClubDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
