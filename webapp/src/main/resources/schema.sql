@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS plpgsql;
 
 CREATE TABLE IF NOT EXISTS users (
-                                     user_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_name     VARCHAR(100) NOT NULL,
     surname       VARCHAR(100) NOT NULL,
     email         TEXT NOT NULL UNIQUE,
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 
 CREATE TABLE IF NOT EXISTS clubs (
-                                     club_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    club_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     club_name VARCHAR(100) NOT NULL,
     location VARCHAR(255) NOT NULL,
     rating NUMERIC(2,1) CHECK (rating >= 1 AND rating <= 5),
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS club_tables (
 
 
 CREATE TABLE IF NOT EXISTS bookings (
-                                        booking_id    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    booking_id    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id       UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     table_id      UUID NOT NULL REFERENCES club_tables(table_id) ON DELETE CASCADE,
     booking_start TIMESTAMPTZ NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS bookings (
 
 
 CREATE TABLE IF NOT EXISTS activity (
-                                        activity_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    activity_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     booking_id    UUID NOT NULL REFERENCES bookings(booking_id) ON DELETE CASCADE,
     activity_type VARCHAR(50) NOT NULL,
     activity_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS activity (
     );
 
 CREATE TABLE IF NOT EXISTS reviews (
-                                       review_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    review_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id     UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     club_id     UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
     rating      INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS photos
 CREATE INDEX ON photos (club_id);
 
 CREATE TABLE IF NOT EXISTS notifications (
-                                             notification_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    notification_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id    UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     type       VARCHAR(30) NOT NULL,
     message    TEXT NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX ON notifications (user_id, is_read);
 
 CREATE TABLE IF NOT EXISTS products (
-                                        product_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     club_id      UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
     product_name VARCHAR(100) NOT NULL,
     description  TEXT,
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS products (
 
 
 CREATE TABLE IF NOT EXISTS promotions (
-                                          promotion_id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    promotion_id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     club_id       UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
     promotion_name VARCHAR(100) NOT NULL,
     description   TEXT,
