@@ -47,7 +47,6 @@ public class PhotoController {
             return "redirect:/clubs/" + clubId + "?err=user";
         }
 
-        // ⚠️ Ojo con el getter del usuario
         UUID photoId = photoService.upload(
                 clubId,
                 effectiveUser.getId(),
@@ -56,7 +55,6 @@ public class PhotoController {
                 file.getBytes()
         );
 
-        // Nada de setear URL acá. El DAO debe dejar url = "/photos/{photoId}"
         return "redirect:/clubs/" + clubId + "?photo=" + photoId;
     }
 

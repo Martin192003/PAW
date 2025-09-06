@@ -4,7 +4,8 @@ import java.util.Locale;
 
 public enum ProductType {
     ALCOHOLICA("alcoholicas"),
-    NO_ALCOHOLICA("noAlcoholicas");
+    NO_ALCOHOLICA("noAlcoholicas"),
+    TRAGOS("tragos");
 
     private final String dbValue;
 
@@ -22,6 +23,7 @@ public enum ProductType {
         return switch (normalized) {
             case "ALCOHOLICAS", "ALCOHOLICA" -> ALCOHOLICA;
             case "NO_ALCOHOLICAS", "NO_ALCOHOLICA" -> NO_ALCOHOLICA;
+            case "TRAGOS" -> TRAGOS;
             default -> throw new IllegalArgumentException("Unknown product_type: " + raw);
         };
     }

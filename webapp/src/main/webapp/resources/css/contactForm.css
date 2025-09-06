@@ -19,9 +19,9 @@
     margin: auto;
     padding: 36px;
     transition: none;
-    height: 500px;
+    height: auto;
+    overflow-y: visible;
     border-radius: 8px;
-    overflow-y: auto;
 }
 .contact-card:hover {
     transform: none;
@@ -69,10 +69,10 @@
     font-weight: bold;
 }
 .form-group {
-    margin-bottom: 5px;
     width: 100%;
     display: flex;
     justify-content: center;
+    margin-bottom: 10px;
 }
 .form-control {
     width: 600px;
@@ -80,12 +80,25 @@
     border: 1px solid #ccc;
     border-radius: 8px;
     background-color: transparent;
+    font-family: Arial, sans-serif;
     color: white;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     font-size: 16px;
     box-sizing: border-box;
 }
-
+.form-control::placeholder {
+    font-family: inherit;
+    font-size: 16px;
+    color: #aaa;
+    opacity: 1;
+}
+.error {
+    color: #ff0000;
+    font-size: 14px;
+    margin-bottom: 1px;
+    text-align: left;
+    width: 600px;
+}
 .contact-page .form-control:focus,
 .contact-card .form-control:focus {
     border-color: #9c27b0;
@@ -101,5 +114,6 @@ textarea.form-control {
 }
 body {
     overflow: hidden;
-    height: 100vh;
+    overflow-y: auto;
+    height: auto;
 }
