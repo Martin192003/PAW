@@ -30,6 +30,7 @@ public class ClubJDBCDao implements ClubDao {
         c.setQuantityRatings(rs.getObject("quantity_ratings") == null ? null : rs.getInt("quantity_ratings"));
         c.setPriceRange(rs.getString("price_range"));
         c.setDescription(rs.getString("description"));
+        c.setZone(rs.getString("zone") == null ? null : Zone.valueOf(rs.getString("zone")));
 
         UUID contactId = rs.getObject("contact_info", UUID.class);
         if (contactId != null) {
@@ -55,7 +56,7 @@ public class ClubJDBCDao implements ClubDao {
     }
 
     @Override
-    public Club create(String name, String description, String location, String priceRange, User contactInfo, String musicGenre) {
+    public Club create(String name, String description, String location, String priceRange, User contactInfo, String musicGenre, Zone zone) {
         UUID id = UUID.randomUUID();
         Map<String,Object> params = new HashMap<>();
         params.put("club_id", id);
@@ -67,6 +68,7 @@ public class ClubJDBCDao implements ClubDao {
         params.put("description", description);
         params.put("contact_info", contactInfo != null ? contactInfo.getId() : null);
         params.put("music_genre", musicGenre);
+        params.put("zone", zone);
 
         insert.execute(params);
         return findById(id).orElseThrow();
@@ -81,7 +83,8 @@ public class ClubJDBCDao implements ClubDao {
                        String priceRange,
                        String description,
                        UUID contactInfoId,
-                       String musicGenre) {
+                       String musicGenre,
+                       Zone zone) {
 
         Objects.requireNonNull(clubId, "clubId is required");
         Objects.requireNonNull(name, "name is required");
@@ -101,7 +104,7 @@ public class ClubJDBCDao implements ClubDao {
 
         final String sql = "UPDATE clubs " +
                 "SET club_name = ?, location = ?, rating = ?, quantity_ratings = ?, price_range = ?, " +
-                "    description = ?, contact_info = ?, music_genre = ? " +
+                "    description = ?, contact_info = ?, music_genre = ?, zone = ?" +
                 "WHERE club_id = ?";
 
         int upd = jdbc.update(sql,
@@ -113,7 +116,8 @@ public class ClubJDBCDao implements ClubDao {
                 description,
                 contactInfoId,
                 musicGenre,
-                clubId
+                clubId,
+                zone
         );
 
         return (upd > 0) ? findById(clubId).orElse(null) : null;
