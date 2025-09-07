@@ -49,4 +49,9 @@ public class HelloWorldController {
         return mav;
     }
 
+    @RequestMapping("/login")
+    public ModelAndView login() {
+        return new ModelAndView("login");
+    }
+
 }

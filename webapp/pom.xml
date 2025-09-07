@@ -16,6 +16,9 @@
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 
+    <properties>
+        <org.springframework.version>5.3.33</org.springframework.version>
+    </properties>
 
   <dependencies>
     <dependency>
@@ -44,11 +47,6 @@
       <artifactId>postgresql</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.github.cdimascio</groupId>
-      <artifactId>java-dotenv</artifactId>
-      <version>5.2.2</version>
-    </dependency>
-    <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
     </dependency>
@@ -66,6 +64,32 @@
       <artifactId>logback-classic</artifactId>
       <version>1.2.13</version>
     </dependency>
+
+      <dependency>
+          <groupId>org.springframework.security</groupId>
+          <artifactId>spring-security-core</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>org.springframework.security</groupId>
+          <artifactId>spring-security-web</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>org.springframework.security</groupId>
+          <artifactId>spring-security-config</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>org.springframework</groupId>
+          <artifactId>spring-web</artifactId>
+          <version>${org.springframework.version}</version>
+      </dependency>
+
+      <dependency>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+          <version>4.0.1</version>
+          <scope>provided</scope>
+      </dependency>
       <!--VER ESTO POR FAVOR NO OLVIDARSE-->
       <dependency>
           <groupId>ar.edu.itba.paw</groupId>
@@ -88,6 +112,26 @@
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
         <version>2.15.1</version>
+      </dependency>
+      <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-core</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>jcl-over-slf4j</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>org.logback-extensions</groupId>
+          <artifactId>logback-ext-spring</artifactId>
       </dependency>
   </dependencies>
 
