@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS clubs (
                                      quantity_ratings INT DEFAULT 0,
                                      price_range VARCHAR(20) CHECK (price_range IN ('bajo','medio','alto')),
                                      description TEXT,
+                                     zone VARCHAR(50) CHECK (zone IS NULL OR zone IN ('ZONA_CABA','ZONA_NORTE','ZONA_OESTE','ZONA_SUR','ZONA_GBA')),
                                      contact_info UUID REFERENCES users(user_id) ON DELETE SET NULL,
                                      music_genre VARCHAR(50),
                                      created_at TIMESTAMPTZ DEFAULT NOW()
