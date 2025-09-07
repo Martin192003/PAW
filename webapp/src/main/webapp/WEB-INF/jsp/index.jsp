@@ -21,6 +21,43 @@
 </div>
 
 <div class="app-boliches">
+    <div class="filter-container">
+        <div class="filter-bar">
+            <input type="text" name="nombre" placeholder="Nombre" class="filter-item" />
+
+            <select name="zona" class="filter-item" required>
+                <option value="" disabled selected>Selecciona una zona</option>
+                <option value="caba">Ciudad Autónoma de Buenos Aires</option>
+                <option value="norte">Norte</option>
+                <option value="sur">Sur</option>
+                <option value="oeste">Oeste</option>
+            </select>
+
+            <select name="genero" class="filter-item" required>
+                <option value="" disabled selected>Selecciona un género</option>
+                <option value="rock">Rock</option>
+                <option value="pop">Pop</option>
+                <option value="cachengue">Cachengue</option>
+                <option value="techno">Techno</option>
+                <option value="reggaeton">Reggaeton</option>
+                <option value="cumbia">Cumbia</option>
+                <option value="trap">Trap</option>
+                <option value="jazz">Jazz</option>
+                <option value="otro">Otro</option>
+            </select>
+
+            <select name="precio" class="filter-item" required>
+                <option value="" disabled selected>Seleccione un precio</option>
+                <option value="alto">Alto</option>
+                <option value="medio">Medio</option>
+                <option value="bajo">Bajo</option>
+            </select>
+
+            <input type="number" name="puntuacionMin" placeholder="Punt. mínima" class="filter-item" min="0" max="5" step="0.1"/>
+            <input type="number" name="puntuacionMax" placeholder="Punt. máxima" class="filter-item" min="0" max="5" step="0.1"/>
+        </div>
+        <button type="submit" class="btn btn-filter">Filtrar</button>
+    </div>
     <c:forEach var="club" items="${clubs}">
         <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">
             <div class="card-content">

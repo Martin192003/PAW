@@ -69,6 +69,51 @@ body {
     text-decoration: none;
     opacity: 0.9;
 }
+.filter-bar {
+    display: flex;
+    align-items: stretch;
+    background: #3c3c3c;
+    border-radius: 8px 0 0 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    overflow: hidden;
+    flex: 1;
+}
+
+.filter-item {
+    flex: 1;
+    padding: 0 12px;
+    border: none;
+    font-size: 14px;
+    height: 48px;
+    color: #fff;
+    background: #3c3c3c;
+    outline: none;
+}
+.filter-item::placeholder,
+.filter-item option[disabled] {
+    color: #aaa;
+    opacity: 1;
+}
+select.filter-item {
+    color: #fff;
+}
+select.filter-item option[disabled] {
+    display: none;
+}
+select.filter-item:invalid {
+    color: #aaa;
+}
+select.filter-item option {
+    color: #fff;
+}
+.filter-container {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    width: 100%;
+    margin: 20px 0;
+    max-width: 1200px;
+}
 #formError {
     color: red;
     margin-top: 10px;
