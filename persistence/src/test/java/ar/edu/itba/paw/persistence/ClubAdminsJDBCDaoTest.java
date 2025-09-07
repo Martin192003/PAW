@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.Zone;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,7 +48,7 @@ public class ClubAdminsJDBCDaoTest {
     @Test
     public void testAddAdmin() {
         User admin = userDao.create("admin", "pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create("Club", "Desc", "Loc", "medio", admin, "Rock");
+        Club club = clubDao.create("Club", "Desc", "Loc", "medio", admin, "Rock", Zone.ZONA_CABA);
         boolean added = clubAdminsDao.addAdmin(club, admin);
         assertTrue(added);
         assertEquals(1, JdbcTestUtils.countRowsInTable(jdbcTemplate, "club_admins"));

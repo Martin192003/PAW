@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.Zone;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,7 +49,7 @@ public class ClubJDBCDaoTest {
     @Test
     public void testCreate() {
         User contact = userDao.create("user", "pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE);
+        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA);
         assertNotNull(club);
         assertEquals(NAME, club.getClubName());
         assertEquals(DESCRIPTION, club.getDescription());
