@@ -1,9 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.Role;
-import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.Zone;
+import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,8 +25,8 @@ public class ClubJDBCDaoTest {
     private static final String NAME = "Club Test";
     private static final String DESCRIPTION = "Descripción";
     private static final String LOCATION = "Ubicación";
-    private static final String PRICE_RANGE = "medio";
-    private static final String MUSIC_GENRE = "Rock";
+    private static final Price PRICE_RANGE = Price.MEDIO;
+    private static final MusicalGenre MUSIC_GENRE = MusicalGenre.ROCK;
 
     @Autowired
     private DataSource ds;

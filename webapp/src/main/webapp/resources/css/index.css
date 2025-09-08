@@ -73,3 +73,25 @@ body {
     color: red;
     margin-top: 10px;
 }
+
+.add-club-btn {
+    position: absolute;
+    right: 30px;
+    top: 20px;
+    background: linear-gradient(135deg, #9c27b0, #d500f9);
+    color: #fff;
+    font-family: 'Darklinos', Arial, sans-serif;
+    letter-spacing: 1px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 0 0 12px rgba(156, 39, 176, 0.7);
+    transition: all 0.3s ease;
+    z-index: 101;
+}
+.add-club-btn:hover {
+    box-shadow: 0 0 20px rgba(213, 0, 249, 0.9);
+    transform: scale(1.05);
+}

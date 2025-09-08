@@ -1,8 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.Zone;
+import ar.edu.itba.paw.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -28,7 +26,7 @@ public class ClubJDBCDao implements ClubDao {
         c.setLocation(rs.getString("location"));
         c.setRating((BigDecimal) rs.getObject("rating")); // puede ser null
         c.setQuantityRatings(rs.getObject("quantity_ratings") == null ? null : rs.getInt("quantity_ratings"));
-        c.setPriceRange(rs.getString("price_range"));
+        c.setPriceRange(rs.getString("price_range") == null ? null : Price.valueOf(rs.getString("price_range").toUpperCase()));
         c.setDescription(rs.getString("description"));
         c.setZone(rs.getString("zone") == null ? null : Zone.valueOf(rs.getString("zone")));
 
@@ -41,7 +39,7 @@ public class ClubJDBCDao implements ClubDao {
             c.setContactInfo(null);
         }
 
-        c.setMusicGenre(rs.getString("music_genre"));
+        c.setMusicGenre(rs.getString("music_genre") == null ? null : MusicalGenre.valueOf(rs.getString("music_genre").toUpperCase()));
         c.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
         return c;
     };
@@ -51,12 +49,12 @@ public class ClubJDBCDao implements ClubDao {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("clubs")
-                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre");
+                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre","zone");
         this.userDao = userDao;
     }
 
     @Override
-    public Club create(String name, String description, String location, String priceRange, User contactInfo, String musicGenre, Zone zone) {
+    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone) {
         UUID id = UUID.randomUUID();
         Map<String,Object> params = new HashMap<>();
         params.put("club_id", id);
@@ -64,13 +62,18 @@ public class ClubJDBCDao implements ClubDao {
         params.put("location", location);
         params.put("rating", null);
         params.put("quantity_ratings", 0);
-        params.put("price_range", priceRange);
+        params.put("price_range", priceRange != null ? priceRange.name().toLowerCase() : null);
         params.put("description", description);
         params.put("contact_info", contactInfo != null ? contactInfo.getId() : null);
-        params.put("music_genre", musicGenre);
+        params.put("music_genre", musicGenre != null ? musicGenre.name().toLowerCase() : null);
         params.put("zone", zone);
 
         insert.execute(params);
+
+        if (contactInfo != null && contactInfo.getId() != null) {
+            jdbc.update("UPDATE users SET role = 'admin' WHERE user_id = ?", contactInfo.getId());
+        }
+
         return findById(id).orElseThrow();
     }
 
@@ -80,10 +83,10 @@ public class ClubJDBCDao implements ClubDao {
                        String location,
                        BigDecimal rating,
                        Integer quantityRatings,
-                       String priceRange,
+                       Price priceRange,
                        String description,
                        UUID contactInfoId,
-                       String musicGenre,
+                       MusicalGenre musicGenre,
                        Zone zone) {
 
         Objects.requireNonNull(clubId, "clubId is required");
@@ -112,10 +115,10 @@ public class ClubJDBCDao implements ClubDao {
                 location,
                 rating,
                 quantityRatings,
-                priceRange,
+                priceRange != null ? priceRange.name().toLowerCase() : null,
                 description,
                 contactInfoId,
-                musicGenre,
+                musicGenre != null ? musicGenre.name().toLowerCase() : null,
                 clubId,
                 zone
         );

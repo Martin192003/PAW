@@ -1,6 +1,6 @@
 package ar.edu.itba.paw.service;
 
-import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.persistence.ClubDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,11 @@ public class ClubServiceImpl implements ClubService{
     @Override
     public List<Club> getAllClubs() {
         return clubDao.findAll();
+    }
 
+    @Override
+    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone){
+        return clubDao.create(name, description, location, priceRange, contactInfo, musicGenre, zone);
     }
 
     @Override

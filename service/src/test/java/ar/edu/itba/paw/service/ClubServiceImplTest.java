@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.model.MusicalGenre;
+import ar.edu.itba.paw.model.Price;
 import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.persistence.ClubDao;
 import org.junit.Assert;
@@ -26,9 +28,9 @@ public class ClubServiceImplTest {
     private static final String LOCATION = "Ubicación";
     private static final BigDecimal RATING = BigDecimal.valueOf(4.5);
     private static final Integer QUANTITY_RATINGS = 10;
-    private static final String PRICE_RANGE = "medio";
+    private static final Price PRICE_RANGE = Price.MEDIO;
     private static final String DESCRIPTION = "Descripción";
-    private static final String MUSIC_GENRE = "Rock";
+    private static final MusicalGenre MUSIC_GENRE = MusicalGenre.ROCK;
     private static final OffsetDateTime CREATED_AT = OffsetDateTime.now();
 
     @Mock

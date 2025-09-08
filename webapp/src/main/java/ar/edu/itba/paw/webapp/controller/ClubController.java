@@ -1,14 +1,19 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.model.Photo;
+import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.service.ClubService;
-import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.service.PhotoService;
+import ar.edu.itba.paw.webapp.form.AddClubForm;
+import ar.edu.itba.paw.webapp.form.ClubForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import java.util.UUID;
+import ar.edu.itba.paw.service.UserService;
 
+import javax.validation.Valid;
 import java.util.*;
 
 @Controller
@@ -16,12 +21,14 @@ import java.util.*;
 public class ClubController {
 
     private final ClubService clubService;
-    private  final PhotoService photoService;
+    private final PhotoService photoService;
+    private final UserService userService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService) {
         this.photoService = photoService;
         this.clubService = clubService;
+        this.userService = userService;
     }
 
     @GetMapping({"", "/"})
@@ -41,6 +48,39 @@ public class ClubController {
         return "index";
     }
 
+    @GetMapping("/new")
+    public String showClubForm(Model model) {
+        model.addAttribute("clubForm", new AddClubForm());
+        model.addAttribute("postPath", "/clubs/create");
+        model.addAttribute("priceValues", Price.values());
+        model.addAttribute("genreValues", MusicalGenre.values());
+        return "club_form";
+    }
+
+
+    @PostMapping("/create")
+    public String createClub(
+            @Valid @ModelAttribute("clubForm") AddClubForm addClubForm,
+            BindingResult errors) {
+
+        if (errors.hasErrors()) {
+            return "club_form";
+        }
+
+        User contactInfo = userService.findById(UUID.fromString("8966c8cf-b910-4d61-b748-c0b77acd9d9a"));
+
+        Club newClub = clubService.create(
+                addClubForm.getName(),
+                addClubForm.getDescription(),
+                addClubForm.getLocation(),
+                addClubForm.getPriceRange(),
+                contactInfo,
+                addClubForm.getMusicGenre(),
+                addClubForm.getZone()
+        );
+
+        return "redirect:/clubs/" + newClub.getClubId();
+    }
 
 
 

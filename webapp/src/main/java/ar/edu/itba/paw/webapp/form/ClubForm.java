@@ -1,7 +1,10 @@
 package ar.edu.itba.paw.webapp.form;
 
+import ar.edu.itba.paw.model.Zone;
+
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.UUID;
 
@@ -21,6 +24,21 @@ public class ClubForm {
 
     @NotBlank(message = "{contact.message.notblank}")
     private String message;
+
+    @NotBlank(message = "{club.location.notblank}")
+    private String location;
+
+    @NotBlank(message = "{club.priceRange.notblank}")
+    @Pattern(regexp = "bajo|medio|alto", message = "{club.priceRange.invalid}")
+    private String priceRange;
+
+    @NotBlank(message = "{club.description.notblank}")
+    private String description;
+
+    private String musicGenre;
+
+    @NotNull(message = "{club.zone.notnull}")
+    private Zone zone; // Enum con ZONA_CABA, ZONA_NORTE, etc.
 
     public String getName() {
         return name;
@@ -60,5 +78,40 @@ public class ClubForm {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getPriceRange() {
+        return priceRange;
+    }
+    public void setPriceRange(String priceRange) {
+        this.priceRange = priceRange;
+    }
+
+    public String getMusicGenre() {
+        return musicGenre;
+    }
+    public void setMusicGenre(String musicGenre) {
+        this.musicGenre = musicGenre;
+    }
+
+    public Zone getZone() {
+        return zone;
+    }
+    public void setZone(Zone zone) {
+        this.zone = zone;
     }
 }

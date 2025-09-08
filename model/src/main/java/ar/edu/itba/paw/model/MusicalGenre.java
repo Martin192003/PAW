@@ -9,6 +9,6 @@ public enum MusicalGenre {
     CUMBIA,
     TRAP,
     JAZZ,
+    ELECTRONICA,
     OTRO
-
 }
