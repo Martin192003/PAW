@@ -38,7 +38,7 @@ public class MenuServiceImplTest {
 
     @Test
     public void testGetMenuByClub() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", BigDecimal.valueOf(4.5), 10, "medio", "desc", null, "Rock", CREATED_AT);
+        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", BigDecimal.valueOf(4.5), 10, "medio", "desc", null, "Rock", CREATED_AT, null);
         Product product1 = new Product(UUID.randomUUID(), club, "Pizza", "desc1", BigDecimal.valueOf(100), null, true, CREATED_AT);
         Product product2 = new Product(UUID.randomUUID(), club, "Hamburguesa", "desc2", BigDecimal.valueOf(150), null, true, CREATED_AT);
 

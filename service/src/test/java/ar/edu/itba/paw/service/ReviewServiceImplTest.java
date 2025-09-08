@@ -2,6 +2,7 @@ package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ReviewsDao;
 import org.junit.Assert;
@@ -36,7 +37,7 @@ public class ReviewServiceImplTest {
 
     @Test
     public void testGetAverageRatingWithReviews() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, "medio", "desc", null, "Rock", CREATED_AT);
+        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, "medio", "desc", null, "Rock", CREATED_AT, null);
         Review review1 = new Review(UUID.randomUUID(), null, club, 4, "Muy bueno", CREATED_AT);
         Review review2 = new Review(UUID.randomUUID(), null, club, 2, "Regular", CREATED_AT);
 
@@ -50,7 +51,7 @@ public class ReviewServiceImplTest {
 
     @Test
     public void testGetAverageRatingNoReviews() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, "medio", "desc", null, "Rock", CREATED_AT);
+        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, "medio", "desc", null, "Rock", CREATED_AT, null);
 
         Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
         Mockito.when(reviewsDao.findByClub(club)).thenReturn(Collections.emptyList());

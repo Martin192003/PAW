@@ -1,3 +1,6 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS plpgsql;
+
 CREATE TABLE IF NOT EXISTS users (
                                      user_id       UUID PRIMARY KEY ,
                                      user_name     VARCHAR(100) NOT NULL,
@@ -9,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
                                      created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+
 CREATE TABLE IF NOT EXISTS clubs (
                                      club_id UUID PRIMARY KEY ,
                                      club_name VARCHAR(100) NOT NULL,
@@ -17,6 +21,7 @@ CREATE TABLE IF NOT EXISTS clubs (
                                      quantity_ratings INT DEFAULT 0,
                                      price_range VARCHAR(20) CHECK (price_range IN ('bajo','medio','alto')),
                                      description TEXT,
+                                     zone VARCHAR(50) CHECK (zone IS NULL OR zone IN ('ZONA_CABA','ZONA_NORTE','ZONA_OESTE','ZONA_SUR','ZONA_GBA')),
                                      contact_info UUID REFERENCES users(user_id) ON DELETE SET NULL,
                                      music_genre VARCHAR(50),
                                      created_at TIMESTAMPTZ DEFAULT NOW()
@@ -33,6 +38,7 @@ CREATE TABLE IF NOT EXISTS club_tables (
                                            UNIQUE (club_id, table_number)
 );
 
+
 CREATE TABLE IF NOT EXISTS bookings (
                                         booking_id    UUID PRIMARY KEY ,
                                         user_id       UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -44,6 +50,8 @@ CREATE TABLE IF NOT EXISTS bookings (
                                         total_amount  NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
                                         CHECK (booking_end > booking_start)
 );
+
+
 
 CREATE TABLE IF NOT EXISTS activity (
                                         activity_id   UUID PRIMARY KEY ,
@@ -97,6 +105,8 @@ CREATE TABLE IF NOT EXISTS products (
                                         created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
+
+
 CREATE TABLE IF NOT EXISTS promotions (
                                           promotion_id  UUID PRIMARY KEY ,
                                           club_id       UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
@@ -107,6 +117,7 @@ CREATE TABLE IF NOT EXISTS promotions (
                                           discount      NUMERIC(5,2) DEFAULT 0 CHECK (discount >= 0 AND discount <= 100),
                                           CHECK (end_date >= start_date)
 );
+
 
 CREATE TABLE IF NOT EXISTS booking_items (
                                              booking_item_id UUID PRIMARY KEY ,
@@ -119,6 +130,7 @@ CREATE TABLE IF NOT EXISTS booking_items (
 
 -- Trigger para line_total
 DROP FUNCTION IF EXISTS booking_items_set_line_total() CASCADE;
+
 CREATE OR REPLACE FUNCTION booking_items_set_line_total()
     RETURNS trigger
     LANGUAGE plpgsql

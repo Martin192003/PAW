@@ -2,6 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.Zone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -163,6 +164,50 @@ public class ClubJDBCDao implements ClubDao {
     public List<Club> findAll() {
         final String sql = "SELECT * FROM clubs ORDER BY club_name ASC";
         return jdbc.query(sql, ROW_MAPPER);
+    }
+
+
+    @Override
+    public List<Club> search(String nameLike,
+                             Zone location,
+                             String musicGenre,
+                             String priceRange,
+                             BigDecimal minRating,
+                             BigDecimal maxRating) {
+
+        StringBuilder sql = new StringBuilder("SELECT * FROM clubs WHERE 1=1");
+        List<Object> args = new ArrayList<>();
+
+        if (nameLike != null && !nameLike.isBlank()) {
+            sql.append(" AND LOWER(club_name) LIKE LOWER(?)");
+            args.add("%" + nameLike.trim() + "%");
+        }
+        if (location != null ) {
+            sql.append(" AND LOWER(location) = LOWER(?)");
+            args.add(location.toString());
+        }
+        if (musicGenre != null && !musicGenre.isBlank()) {
+            sql.append(" AND LOWER(music_genre) = LOWER(?)");
+            args.add(musicGenre.trim());
+        }
+        if (priceRange != null && !priceRange.isBlank()) {
+            if (!Set.of("bajo","medio","alto").contains(priceRange)) {
+                throw new IllegalArgumentException("priceRange inválido");
+            }
+            sql.append(" AND price_range = ?");
+            args.add(priceRange);
+        }
+        if (minRating != null) {
+            sql.append(" AND rating >= ?");
+            args.add(minRating);
+        }
+        if (maxRating != null) {
+            sql.append(" AND rating <= ?");
+            args.add(maxRating);
+        }
+        sql.append(" ORDER BY club_name ASC");
+
+        return jdbc.query(sql.toString(), ROW_MAPPER, args.toArray());
     }
 
 }
