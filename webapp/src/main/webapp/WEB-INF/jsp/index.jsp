@@ -22,41 +22,49 @@
 
 <div class="app-boliches">
     <div class="filter-container">
-        <div class="filter-bar">
-            <input type="text" name="nombre" placeholder="Nombre" class="filter-item" />
+        <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
+            <div class="filter-bar">
+                <input type="text" name="name" placeholder="Nombre"
+                       class="filter-item" value="${name != null ? name : ''}"/>
 
-            <select name="zona" class="filter-item" required>
-                <option value="" disabled selected>Selecciona una zona</option>
-                <option value="caba">Ciudad Autónoma de Buenos Aires</option>
-                <option value="norte">Norte</option>
-                <option value="sur">Sur</option>
-                <option value="oeste">Oeste</option>
-            </select>
+                <select name="zone" class="filter-item">
+                    <option value="">Selecciona una zona</option>
+                    <c:forEach var="z" items="${zones}">
+                        <option value="${z}" ${zone == z ? 'selected' : ''}>${z}</option>
+                    </c:forEach>
+                </select>
 
-            <select name="genero" class="filter-item" required>
-                <option value="" disabled selected>Selecciona un género</option>
-                <option value="rock">Rock</option>
-                <option value="pop">Pop</option>
-                <option value="cachengue">Cachengue</option>
-                <option value="techno">Techno</option>
-                <option value="reggaeton">Reggaeton</option>
-                <option value="cumbia">Cumbia</option>
-                <option value="trap">Trap</option>
-                <option value="jazz">Jazz</option>
-                <option value="otro">Otro</option>
-            </select>
+                <select name="genre" class="filter-item">
+                    <option value="">Selecciona un género</option>
+                    <c:forEach var="g" items="${genres}">
+                        <option value="${g}" ${genre == g ? 'selected' : ''}>${g}</option>
+                    </c:forEach>
+                </select>
 
-            <select name="precio" class="filter-item" required>
-                <option value="" disabled selected>Seleccione un precio</option>
-                <option value="alto">Alto</option>
-                <option value="medio">Medio</option>
-                <option value="bajo">Bajo</option>
-            </select>
+                <select name="price" class="filter-item">
+                    <option value="">Seleccione un precio</option>
+                    <option value="alto" ${price == 'alto' ? 'selected' : ''}>Alto</option>
+                    <option value="medio" ${price == 'medio' ? 'selected' : ''}>Medio</option>
+                    <option value="bajo" ${price == 'bajo' ? 'selected' : ''}>Bajo</option>
+                </select>
 
-            <input type="number" name="puntuacionMin" placeholder="Punt. mínima" class="filter-item" min="0" max="5" step="0.1"/>
-            <input type="number" name="puntuacionMax" placeholder="Punt. máxima" class="filter-item" min="0" max="5" step="0.1"/>
-        </div>
-        <button type="submit" class="btn btn-filter">Filtrar</button>
+                <input type="number" name="minRating" placeholder="Punt. mínima"
+                       class="filter-item" min="0" max="5" step="0.1"
+                       value="${minRating != null ? minRating : ''}"/>
+                <input type="number" name="maxRating" placeholder="Punt. máxima"
+                       class="filter-item" min="0" max="5" step="0.1"
+                       value="${maxRating != null ? maxRating : ''}"/>
+            </div>
+            <button type="submit" class="btn btn-filter">
+                <i class="fa-solid fa-filter"></i>
+                &nbsp;
+                Filtrar
+            </button>
+        </form>
+        <button type="button" class="btn-reset" onclick="window.location.href='<c:url value="/clubs"/>'">
+            <i class="fa-solid fa-rotate-left"></i>
+            Reset
+        </button>
     </div>
     <c:forEach var="club" items="${clubs}">
         <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">

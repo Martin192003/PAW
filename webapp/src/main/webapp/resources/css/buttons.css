@@ -30,6 +30,7 @@
 }
 .btn-filter:hover {
     background-color: #540761;
+    border-color: #540761;
     box-shadow: 0 4px 15px rgba(156, 39, 176, 0.5);
 }
 
