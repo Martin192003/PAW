@@ -22,10 +22,10 @@ public class ClubTablesJDBCDao implements ClubTablesDao {
     private static final RowMapper<Table> ROW_MAPPER = (rs, i) -> {
         Table t = new Table();
         t.setTableId(rs.getObject("table_id", java.util.UUID.class));
-        t.setClubId(rs.getObject("club_id", java.util.UUID.class));   // 👈 guarda el UUID, no el objeto Club
+        t.setClubId(rs.getObject("club_id", java.util.UUID.class));
         t.setTableNumber(rs.getInt("table_number"));
         t.setCapacity(rs.getInt("capacity"));
-        t.setTableState(TableState.fromDb(rs.getString("table_state"))); // enum ⇐ texto BD
+        t.setTableState(TableState.fromDb(rs.getString("table_state")));
         t.setPrice(rs.getBigDecimal("price"));
         t.setDiscount(rs.getBigDecimal("discount"));
         return t;

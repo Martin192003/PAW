@@ -2,8 +2,10 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
+import ar.edu.itba.paw.persistence.ClubTablesDao;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import ar.edu.itba.paw.service.ClubService;
+import ar.edu.itba.paw.service.TableService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import ar.edu.itba.paw.service.PhotoService;
@@ -22,12 +24,14 @@ public class ClubDetailsController {
     private final ClubService clubService;
     private final ProductsDao productsDao;
     private final PhotoService photoService;
+    private final TableService clubTables;
 
     // Constructor injection (recomendado con Spring 5.x)
-    public ClubDetailsController(final ClubService clubService, final ProductsDao productsDao, final PhotoService photoService) {
+    public ClubDetailsController(final ClubService clubService, final ProductsDao productsDao, final PhotoService photoService, TableService clubTables) {
         this.clubService = clubService;
         this.productsDao = productsDao;
         this.photoService = photoService;
+        this.clubTables = clubTables;
     }
 
     @GetMapping("/{clubId}") // <- detalles en /clubs/{clubId}
@@ -61,6 +65,10 @@ public class ClubDetailsController {
             ordered.put("Tragos", products);
         }
 
+        var tables = clubTables.findByClubId(clubId);
+
+
+        model.addAttribute("tables", tables);
         model.addAttribute("club", club);
         model.addAttribute("productsByCategory", ordered);
         model.addAttribute("locationText", toLocationText(club.getLocation()));
