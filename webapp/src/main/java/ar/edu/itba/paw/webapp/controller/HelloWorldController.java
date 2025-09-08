@@ -1,9 +1,9 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.webapp.form.UserForm;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import ar.edu.itba.paw.model.Role;
@@ -11,6 +11,7 @@ import ar.edu.itba.paw.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import ar.edu.itba.paw.service.UserService;
 
+import javax.validation.Valid;
 import java.util.UUID;
 
 @Controller
@@ -50,8 +51,27 @@ public class HelloWorldController {
     }
 
     @RequestMapping("/login")
-    public ModelAndView login() {
-        return new ModelAndView("login");
+    public ModelAndView login(@RequestParam(value = "success", required = false) final boolean success, @RequestParam(value = "username", required = false) final String username, @RequestParam(value = "password", required = false) final String password) {
+        ModelAndView mav = new ModelAndView("login");
+        mav.addObject("success", success);
+        mav.addObject("username", username);
+        return mav;
+    }
+
+    @RequestMapping("/register")
+    public ModelAndView register() {
+        ModelAndView mav = new ModelAndView("register");
+        mav.addObject("userForm", new UserForm());
+        return mav;
+    }
+
+    @PostMapping("/register")
+    public ModelAndView register(@Valid @ModelAttribute("userForm") final UserForm userForm, BindingResult bindingResult) {
+        if(bindingResult.hasErrors()) {
+            return new ModelAndView("register");
+        }
+        us.create(userForm.getUsername(), userForm.getPassword(), userForm.getSurname(), userForm.getEmail(), userForm.getCellphone(), userForm.getRole());
+        return new ModelAndView("redirect:/login");
     }
 
 }
