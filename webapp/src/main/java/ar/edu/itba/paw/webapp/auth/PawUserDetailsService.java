@@ -18,18 +18,15 @@ public class PawUserDetailsService implements UserDetailsService {
     @Autowired
     private UserService us;
     @Override
-    public UserDetails loadUserByUsername(final String username)
-            throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
         final ar.edu.itba.paw.model.User user = us.findByUserName(username);
         if (user == null) {
             throw new UsernameNotFoundException("No user by the name " +
                     username);
         }
         final Collection<? extends GrantedAuthority> authorities = Arrays.asList(
-                new SimpleGrantedAuthority("ROLE_USER"),
-                new SimpleGrantedAuthority("ROLE_ADMIN")
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase())
         );
-        return new org.springframework.security.core.userdetails.User(username,
-                user.getPassword(), authorities);
+        return new org.springframework.security.core.userdetails.User(username, user.getPassword(), authorities);
     }
 }

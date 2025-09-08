@@ -15,6 +15,9 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
 
     @Autowired
     public UserServiceImpl(final UserDao userDao) {
@@ -28,7 +31,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User create(String username, String password, String surname, String email, String cellphone, String role) {
-        return userDao.create(username, password, surname, email, cellphone, Role.valueOf(role.toUpperCase()));
+        return userDao.create(username, passwordEncoder.encode(password), surname, email, cellphone, Role.USER);
     }
 
     @Override
