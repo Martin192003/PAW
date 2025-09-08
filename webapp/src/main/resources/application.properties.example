@@ -1,0 +1,11 @@
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+MAIL_DEBUG=
+
+app.db.host=
+app.db.port=
+app.db.name=
+app.db.user=
+app.db.pass=

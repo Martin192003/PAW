@@ -67,7 +67,7 @@ public class ClubController {
             return "club_form";
         }
 
-        User contactInfo = userService.findById(UUID.fromString("8966c8cf-b910-4d61-b748-c0b77acd9d9a"));
+        User contactInfo = userService.findById(UUID.fromString("ed690532-e9d7-4a87-898b-2ca99bb9563d"));
 
         Club newClub = clubService.create(
                 addClubForm.getName(),

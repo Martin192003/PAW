@@ -33,7 +33,7 @@
         </button>
     </div>
     <div class="detail-header" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%;">
-        <h1 class="detail-title">${club.clubName}</h1>
+        <h1 class="detail-title"><c:out value="${club.clubName}"/></h1>
         <button type="button" class="btn btn-success"
                 onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
             <i class="fa-solid fa-envelope"></i> Contactarse
@@ -47,7 +47,7 @@
 
         <div class="detail-info">
             <div class="detail-details">
-                <span>${locationText}</span>
+                <span><c:out value="${locationText}"/></span>
                 <span>${genreText}</span>
                 <div>
                     <i class="fa-solid fa-star" style="color:#FFD700;"></i>
