@@ -18,6 +18,7 @@
     <a href="<c:url value='/clubs' />" class="logo-link">
         <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
     </a>
+    <a href="<c:url value='/clubs/new' />" class="add-club-btn">Añadir Boliche</a>
 </div>
 
 <div class="app-boliches">

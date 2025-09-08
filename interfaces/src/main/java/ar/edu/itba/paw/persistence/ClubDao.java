@@ -1,8 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.Zone;
+import ar.edu.itba.paw.model.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -10,9 +8,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ClubDao {
-    Club create(String name, String description, String location, String priceRange, User contactInfo, String musicGenre, Zone zone);
+    Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone);
 
-    Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, String priceRange, String description, UUID contactInfoId, String musicGenre, Zone zone);
+    Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone);
 
     boolean delete(UUID clubId);
 
