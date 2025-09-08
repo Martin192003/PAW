@@ -73,4 +73,41 @@ public class ClubController {
 
         return "index";
     }
+
+    @GetMapping("/new")
+    public String showClubForm(Model model) {
+        model.addAttribute("clubForm", new AddClubForm());
+        model.addAttribute("postPath", "/clubs/create");
+        model.addAttribute("priceValues", Price.values());
+        model.addAttribute("genreValues", MusicalGenre.values());
+        return "club_form";
+    }
+
+
+    @PostMapping("/create")
+    public String createClub(
+            @Valid @ModelAttribute("clubForm") AddClubForm addClubForm,
+            BindingResult errors) {
+
+        if (errors.hasErrors()) {
+            return "club_form";
+        }
+
+        User contactInfo = userService.findById(UUID.fromString("ed690532-e9d7-4a87-898b-2ca99bb9563d"));
+
+        Club newClub = clubService.create(
+                addClubForm.getName(),
+                addClubForm.getDescription(),
+                addClubForm.getLocation(),
+                addClubForm.getPriceRange(),
+                contactInfo,
+                addClubForm.getMusicGenre(),
+                addClubForm.getZone()
+        );
+
+        return "redirect:/clubs/" + newClub.getClubId();
+    }
+
+
+
 }
