@@ -70,8 +70,17 @@
         <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">
             <div class="card-content">
                 <div class="card-left">
-                    <img src="<c:url value='${photoUrlByClub[club.clubId]}' />"
-                         alt="${club.clubName}" class="card-image" />
+                    <c:choose>
+                        <c:when test="${not empty photoUrlByClub[club.clubId]}">
+                            <img src="<c:url value='${photoUrlByClub[club.clubId]}' />"
+                                 alt="${club.clubName}" class="card-image" />
+                        </c:when>
+                        <c:otherwise>
+                            <div class="card-no-image">
+                                Bling <br>&nbsp;&nbsp;Bling
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
                 <div class="card-right">
                     <div class="card-text-title">${club.clubName}</div>

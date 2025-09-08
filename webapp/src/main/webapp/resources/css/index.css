@@ -91,7 +91,7 @@ body {
 }
 .filter-item::placeholder,
 .filter-item option[disabled] {
-    color: #aaa;
+    color: white;
     opacity: 1;
 }
 select.filter-item {
@@ -125,6 +125,22 @@ select.filter-item option {
 }
 .btn-reset:hover {
     color: #540761;
+}
+.card-no-image {
+    width: 150px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #222;
+    color: #9c27b0;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 8px 0 0 8px;
+    line-height: 1.2;
+    text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.3);
+    font-family: 'Darklinos', Arial, sans-serif;
 }
 #formError {
     color: red;
