@@ -26,7 +26,7 @@
             Añadir Boliche
             <span class="contact-icon"><i class="fa-solid fa-martini-glass-citrus"></i></span>
         </div>
-        <form:form modelAttribute="clubForm" method="post" action="${pageContext.request.contextPath}${postPath}">
+        <form:form modelAttribute="clubForm" method="post" action="${pageContext.request.contextPath}${postPath}" enctype="multipart/form-data">
             <div class="form-group">
                 <form:input path="name" class="form-control" placeholder="Nombre"/>
             </div>
@@ -37,6 +37,7 @@
             <form:errors path="location" cssClass="error" element="div"/>
             <div class="form-group">
                 <form:select path="priceRange" class="form-control">
+                    <form:option value="" label="Seleccione un rango de precio"/>
                     <form:options items="${priceValues}" itemValue="name" itemLabel="label"/>
                 </form:select>
             </div>
@@ -47,7 +48,8 @@
             <form:errors path="description" cssClass="error" element="div"/>
             <div class="form-group">
                 <form:select path="musicGenre" class="form-control">
-                    <form:options items="${genreValues}" itemValue="name" itemLabel="name"/>
+                    <form:option value="" label="Seleccione un genero musical"/>
+                    <form:options items="${genreValues}" itemValue="name" itemLabel="label"/>
                 </form:select>
             </div>
             <form:errors path="musicGenre" cssClass="error" element="div"/>
@@ -61,6 +63,10 @@
                 </form:select>
             </div>
             <form:errors path="zone" cssClass="error" element="div"/>
+            <div class="form-group">
+                <input type="file" name="image" class="form-control" accept="image/*"/>
+            </div>
+            <form:errors path="image" cssClass="error" element="div"/>
             <div class="contact-buttons">
                 <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancelar</button>
                 <button type="submit" class="btn btn-success">Guardar</button>

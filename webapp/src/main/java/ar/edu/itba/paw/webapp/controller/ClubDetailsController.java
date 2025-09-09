@@ -64,7 +64,7 @@ public class ClubDetailsController {
         model.addAttribute("club", club);
         model.addAttribute("productsByCategory", ordered);
         model.addAttribute("locationText", toLocationText(club.getLocation()));
-        model.addAttribute("genreText", toGenreText(club.getMusicGenre() != null ? club.getMusicGenre().name() : null));
+        model.addAttribute("genreText", toGenreText(club.getMusicGenre() != null ? club.getMusicGenre().getLabel() : null));
         model.addAttribute("coverPhotoUrl", coverPhotoUrl);
 
         return "clubDetails";
