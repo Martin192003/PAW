@@ -83,9 +83,9 @@
                     </c:choose>
                 </div>
                 <div class="card-right">
-                    <div class="card-text-title">${club.clubName}</div>
+                    <div class="card-text-title"><c:out value="${club.clubName}"/></div>
                     <span class="card-text-body">
-                    <i class="fa-solid fa-location-dot"></i> ${club.location}<br>
+                    <i class="fa-solid fa-location-dot"></i> <c:out value="${club.location}"/><br>
                      <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
                     <c:set var="decimal" value="${club.rating - ratingInt}" />
                     <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
@@ -102,7 +102,7 @@
                     </c:forEach>
 
                     ${club.rating}<br>
-                    ${club.description}
+                 <c:out value="${club.description}"/>
                 </span>
                 </div>
             </div>
