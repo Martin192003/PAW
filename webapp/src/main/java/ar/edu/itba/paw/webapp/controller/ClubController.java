@@ -10,6 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 import java.util.UUID;
 import ar.edu.itba.paw.service.UserService;
 
@@ -67,7 +69,7 @@ public class ClubController {
             return "club_form";
         }
 
-        User contactInfo = userService.findById(UUID.fromString("ed690532-e9d7-4a87-898b-2ca99bb9563d"));
+        User contactInfo = userService.findById(UUID.fromString("8966c8cf-b910-4d61-b748-c0b77acd9d9a"));
 
         Club newClub = clubService.create(
                 addClubForm.getName(),
@@ -78,6 +80,21 @@ public class ClubController {
                 addClubForm.getMusicGenre(),
                 addClubForm.getZone()
         );
+
+        var image = addClubForm.getImage();
+        if (image != null && !image.isEmpty()) {
+            try {
+                photoService.upload(
+                        newClub.getClubId(),
+                        contactInfo.getId(),
+                        image.getOriginalFilename(),
+                        image.getContentType() != null ? image.getContentType() : "application/octet-stream",
+                        image.getBytes()
+                );
+            } catch (IOException e) {
+                // Manejar error si es necesario
+            }
+        }
 
         return "redirect:/clubs/" + newClub.getClubId();
     }
