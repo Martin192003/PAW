@@ -70,7 +70,7 @@ public class HelloWorldController {
         if(bindingResult.hasErrors()) {
             return new ModelAndView("register");
         }
-        us.create(userForm.getUsername(), userForm.getPassword(), userForm.getSurname(), userForm.getEmail(), userForm.getCellphone(), userForm.getRole());
+        us.create(userForm.getUsername(), userForm.getPassword(), userForm.getSurname(), userForm.getEmail(), userForm.getCellphone(), Role.USER.toString());
         return new ModelAndView("redirect:/login");
     }
 

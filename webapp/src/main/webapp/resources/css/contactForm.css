@@ -114,6 +114,5 @@ textarea.form-control {
 }
 body {
     overflow: hidden;
-    overflow-y: auto;
     height: auto;
 }
