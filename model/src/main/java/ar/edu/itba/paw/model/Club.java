@@ -5,24 +5,23 @@ import java.util.UUID;
 import java.math.BigDecimal;
 
 public class Club {
-
-
     private UUID clubId;
     private String clubName;
     private String location;
     private BigDecimal rating;
     private Integer quantityRatings;
-    private String priceRange; // 'bajo' | 'medio' | 'alto'
+    private Price priceRange; // 'bajo' | 'medio' | 'alto'
     private String description;
     private User contactInfo;
-    private String musicGenre;
+    private MusicalGenre musicGenre;
     private OffsetDateTime createdAt;
+    private Zone zone;
 
     public Club() {}
 
     public Club(UUID clubId, String clubName, String location, java.math.BigDecimal rating,
-                Integer quantityRatings, String priceRange, String description,
-                User contactInfo, String musicGenre, OffsetDateTime createdAt) {
+                Integer quantityRatings, Price priceRange, String description,
+                User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone) {
         this.clubId = clubId;
         this.clubName = clubName;
         this.location = location;
@@ -33,6 +32,7 @@ public class Club {
         this.contactInfo = contactInfo;
         this.musicGenre = musicGenre;
         this.createdAt = createdAt;
+        this.zone = zone;
     }
 
     public UUID getClubId() { return clubId; }

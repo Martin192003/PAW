@@ -56,7 +56,7 @@
             <div class="form-group">
                 <form:select path="zone" class="form-control" id="zone">
                     <form:option value="" label="Seleccione una zona"/>
-                    <form:options items="${zoneValues}" itemValue="name" itemLabel="label"/>
+                    <form:options items="${zoneValues}" itemValue="dbValue" itemLabel="displayName"/>
                 </form:select>
             </div>
             <form:errors path="zone" cssClass="error" element="div"/>

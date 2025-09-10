@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -50,12 +49,12 @@ public class ClubJDBCDao implements ClubDao {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("clubs")
-                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre");
+                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre","zone");
         this.userDao = userDao;
     }
 
     @Override
-    public Club create(String name, String description, String location, String priceRange, User contactInfo, String musicGenre) {
+    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone) {
         UUID id = UUID.randomUUID();
         Map<String,Object> params = new HashMap<>();
         params.put("club_id", id);
@@ -67,7 +66,7 @@ public class ClubJDBCDao implements ClubDao {
         params.put("description", description);
         params.put("contact_info", contactInfo != null ? contactInfo.getId() : null);
         params.put("music_genre", musicGenre != null ? musicGenre.name().toLowerCase() : null);
-        params.put("zone", zone);
+        params.put("zone", zone != null ? zone.name() : null);
 
         insert.execute(params);
 
@@ -120,8 +119,8 @@ public class ClubJDBCDao implements ClubDao {
                 description,
                 contactInfoId,
                 musicGenre != null ? musicGenre.name().toLowerCase() : null,
-                clubId,
-                zone
+                zone != null ? zone.name() : null,
+                clubId
         );
 
         return (upd > 0) ? findById(clubId).orElse(null) : null;

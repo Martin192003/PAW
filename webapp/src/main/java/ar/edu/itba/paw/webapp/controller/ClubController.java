@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.PhotoService;
+import ar.edu.itba.paw.webapp.form.AddClubForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -105,7 +106,7 @@ public class ClubController {
             return "club_form";
         }
 
-        User contactInfo = userService.findById(UUID.fromString("8966c8cf-b910-4d61-b748-c0b77acd9d9a"));
+        User contactInfo = userService.findById(UUID.fromString("01cd0a7b-b5ae-4e99-9549-a4fbf256d1bf"));
 
         Club newClub = clubService.create(
                 addClubForm.getName(),
@@ -128,7 +129,6 @@ public class ClubController {
                         image.getBytes()
                 );
             } catch (IOException e) {
-                // Manejar error si es necesario
             }
         }
 
