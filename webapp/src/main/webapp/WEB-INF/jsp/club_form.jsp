@@ -1,7 +1,7 @@
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
-<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <html>
 <head>
     <title>Añadir Boliche</title>
@@ -56,10 +56,7 @@
             <div class="form-group">
                 <form:select path="zone" class="form-control" id="zone">
                     <form:option value="" label="Seleccione una zona"/>
-                    <form:option value="ZONA_CABA" label="CABA"/>
-                    <form:option value="ZONA_NORTE" label="Norte"/>
-                    <form:option value="ZONA_OESTE" label="Oeste"/>
-                    <form:option value="ZONA_SUR" label="Sur"/>
+                    <form:options items="${zoneValues}" itemValue="name" itemLabel="label"/>
                 </form:select>
             </div>
             <form:errors path="zone" cssClass="error" element="div"/>

@@ -56,6 +56,7 @@ public class ClubController {
         model.addAttribute("postPath", "/clubs/create");
         model.addAttribute("priceValues", Price.values());
         model.addAttribute("genreValues", MusicalGenre.values());
+        model.addAttribute("zoneValues", Zone.values());
         return "club_form";
     }
 
@@ -69,7 +70,7 @@ public class ClubController {
             return "club_form";
         }
 
-        User contactInfo = userService.findById(UUID.fromString("01cd0a7b-b5ae-4e99-9549-a4fbf256d1bf"));
+        User contactInfo = userService.findById(UUID.fromString("8966c8cf-b910-4d61-b748-c0b77acd9d9a"));
 
         Club newClub = clubService.create(
                 addClubForm.getName(),
