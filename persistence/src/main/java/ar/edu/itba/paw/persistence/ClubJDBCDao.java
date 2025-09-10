@@ -183,8 +183,8 @@ public class ClubJDBCDao implements ClubDao {
             args.add("%" + nameLike.trim() + "%");
         }
         if (location != null ) {
-            sql.append(" AND LOWER(location) = LOWER(?)");
-            args.add(location.toString());
+            sql.append(" AND zone = ?");
+            args.add(location.name());
         }
         if (musicGenre != null && !musicGenre.isBlank()) {
             sql.append(" AND LOWER(music_genre) = LOWER(?)");

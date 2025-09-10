@@ -29,8 +29,8 @@
 
                 <select name="zone" class="filter-item">
                     <option value="">Selecciona una zona</option>
-                    <c:forEach var="z" items="${zones}">
-                        <option value="${z}" ${zone == z ? 'selected' : ''}>${z}</option>
+                    <c:forEach var="z" items="${zones}" >
+                        <option value="${z.dbValue}" ${zone == z ? 'selected' : ''}>${z.displayName}</option>
                     </c:forEach>
                 </select>
 
