@@ -99,10 +99,15 @@ public class ClubController {
 
     @PostMapping("/create")
     public String createClub(
+            Model model,
             @Valid @ModelAttribute("clubForm") AddClubForm addClubForm,
             BindingResult errors) {
 
         if (errors.hasErrors()) {
+            model.addAttribute("postPath", "/clubs/create");
+            model.addAttribute("priceValues", Price.values());
+            model.addAttribute("genreValues", MusicalGenre.values());
+            model.addAttribute("zoneValues", Zone.values());
             return "club_form";
         }
 
