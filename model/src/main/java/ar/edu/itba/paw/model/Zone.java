@@ -1,18 +1,18 @@
 package ar.edu.itba.paw.model;
 
 public enum Zone {
-    ZONA_NORTE("ZONA_NORTE"),
-    ZONA_OESTE("ZONA_OESTE"),
-    ZONA_SUR("ZONA_SUR"),
-    ZONA_CABA("ZONA_CABA");
+    ZONA_NORTE("Norte"),
+    ZONA_OESTE("Oeste"),
+    ZONA_SUR("Sur"),
+    ZONA_CABA("CABA");
 
-    final String zoneName;
-    Zone(String zoneName) {
-        this.zoneName = zoneName;
+    private final String label;
+
+    Zone(String label) {
+        this.label = label;
     }
 
-    @Override
-    public String toString() {
-        return zoneName;
+    public String getLabel() {
+        return label;
     }
 }
