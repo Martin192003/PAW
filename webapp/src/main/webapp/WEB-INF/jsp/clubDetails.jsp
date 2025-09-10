@@ -47,8 +47,8 @@
 
         <div class="detail-info">
             <div class="detail-details">
-                <span><c:out value="${locationText}"/></span>
-                <span><c:out value="${genreText}"/></span>
+                <span>📍<c:out value="${locationText}"/></span><br>
+                <span>🎸${genreText}</span>
                 <div>
                     <i class="fa-solid fa-star" style="color:#FFD700;"></i>
                     <c:choose>
