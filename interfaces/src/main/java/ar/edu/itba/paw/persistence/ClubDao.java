@@ -1,8 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.User;
-
+import ar.edu.itba.paw.model.*;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
