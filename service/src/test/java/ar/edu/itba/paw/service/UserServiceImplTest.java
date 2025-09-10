@@ -4,24 +4,23 @@ import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.sql.Timestamp;
+
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertEquals;
 
 import ar.edu.itba.paw.persistence.UserDao;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceImplTest {
@@ -36,6 +35,9 @@ public class UserServiceImplTest {
 
     @Mock
     private UserDao mockDao;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
     
     @InjectMocks
     private UserServiceImpl userService;
