@@ -133,3 +133,5 @@ CREATE TABLE IF NOT EXISTS club_admins (
     admin_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     PRIMARY KEY (club_id, admin_id)
     );
+
+select * from clubs
