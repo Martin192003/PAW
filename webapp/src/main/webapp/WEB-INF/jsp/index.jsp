@@ -26,7 +26,7 @@
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
             <div class="filter-bar">
                 <input type="text" name="name" placeholder="Nombre"
-                       class="filter-item" value="${name != null ? name : ''}"/>
+                       class="filter-item" value="${name != null ? name : ''}" />
 
                 <select name="zone" class="filter-item">
                     <option value="">Selecciona una zona</option>
