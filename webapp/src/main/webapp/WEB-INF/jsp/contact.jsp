@@ -26,7 +26,7 @@
 <div class="contact-page">
     <t:card size="card-lg" cssClass="contact-card">
         <div class="contact-title">
-            Contactate con ${clubName}
+            Contactate con <c:out value="${clubName}" />
             <span class="contact-icon"><i class="fa-solid fa-headphones"></i></span>
         </div>
         <form:form modelAttribute="clubForm" method="post" id="contactForm">
