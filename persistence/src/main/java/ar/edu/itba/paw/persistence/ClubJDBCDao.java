@@ -188,8 +188,8 @@ public class ClubJDBCDao implements ClubDao {
         List<Object> args = new ArrayList<>();
 
         if (nameLike != null && !nameLike.isBlank()) {
-            sql.append(" AND LOWER(club_name) LIKE LOWER(?)");
-            args.add("%" + nameLike.trim() + "%");
+            sql.append(" AND LOWER(club_name) ILIKE ? ESCAPE '\\'");
+            args.add(likeContains(nameLike));
         }
         if (location != null ) {
             sql.append(" AND LOWER(zone) = LOWER(?)");
@@ -217,6 +217,19 @@ public class ClubJDBCDao implements ClubDao {
         sql.append(" ORDER BY club_name ASC");
 
         return jdbc.query(sql.toString(), ROW_MAPPER, args.toArray());
+    }
+
+
+    public static String escapeLike(String param) {
+        if (param == null) return null;
+        return param
+                .replace("\\", "\\\\")  // primero escapás la barra invertida
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+    }
+
+    private static String likeContains(String s) {
+        return "%" + escapeLike(s.trim()) + "%";
     }
 
 }
