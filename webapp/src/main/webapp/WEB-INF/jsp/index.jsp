@@ -67,6 +67,46 @@
             Reset
         </button>
     </div>
+
+    <%-- Compute if any filter is applied --%>
+    <c:set var="anyFilterApplied" value="${not empty name or not empty zone or not empty genre or not empty price or not empty minRating or not empty maxRating}" />
+
+    <%-- Resolve zone display name if zone is set --%>
+    <c:if test="${not empty zone}">
+        <c:set var="zoneLabel" value="${zone}" />
+        <c:forEach var="z" items="${zones}">
+            <c:if test="${zone == z.dbValue or zone == z}">
+                <c:set var="zoneLabel" value="${z.displayName}" />
+            </c:if>
+        </c:forEach>
+    </c:if>
+
+    <c:if test="${empty clubs and anyFilterApplied}">
+        <div class="no-results">
+            No se encontraron boliches con estos filtros:
+            <ul class="filters-applied">
+                <c:if test="${not empty name}">
+                    <li>Nombre: <strong><c:out value='${name}'/></strong></li>
+                </c:if>
+                <c:if test="${not empty zone}">
+                    <li>Zona: <strong><c:out value='${zoneLabel}'/></strong></li>
+                </c:if>
+                <c:if test="${not empty genre}">
+                    <li>Género: <strong><c:out value='${genre}'/></strong></li>
+                </c:if>
+                <c:if test="${not empty price}">
+                    <li>Precio: <strong><c:out value='${price}'/></strong></li>
+                </c:if>
+                <c:if test="${not empty minRating}">
+                    <li>Punt. mínima: <strong><c:out value='${minRating}'/></strong></li>
+                </c:if>
+                <c:if test="${not empty maxRating}">
+                    <li>Punt. máxima: <strong><c:out value='${maxRating}'/></strong></li>
+                </c:if>
+            </ul>
+        </div>
+    </c:if>
+
     <c:forEach var="club" items="${clubs}">
         <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">
             <div class="card-content">
