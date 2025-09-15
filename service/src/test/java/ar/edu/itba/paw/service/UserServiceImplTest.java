@@ -38,7 +38,7 @@ public class UserServiceImplTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
-    
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -47,6 +47,7 @@ public class UserServiceImplTest {
         // 1. Setup!
         Mockito.when(mockDao.create(USERNAME, PASSWORD,LASTNAME, EMAIL, CELLPHONE, ROLE))
                 .thenReturn(new User(UUID.randomUUID(), USERNAME, LASTNAME, EMAIL, PASSWORD, CELLPHONE, ROLE, now));
+        Mockito.when(passwordEncoder.encode(PASSWORD)).thenReturn(PASSWORD);
         // 2. "ejercito" la class under test
         User maybeUser = userService.create(USERNAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, ROLE1);
         // 3. Asserts!

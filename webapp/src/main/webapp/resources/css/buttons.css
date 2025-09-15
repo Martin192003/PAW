@@ -13,6 +13,26 @@
     transition: all 0.2s ease-in-out;
     cursor: pointer;
 }
+.btn-filter {
+    height: 48px;
+    border-radius: 0 8px 8px 0;
+    font-size: 1rem;
+    padding: 0 32px;
+    background-color: #9c27b0;
+    color: #fff;
+    border: none;
+    box-shadow: 0 2px 10px rgba(156, 39, 176, 0.4);
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-filter:hover {
+    background-color: #540761;
+    border-color: #540761;
+    box-shadow: 0 4px 15px rgba(156, 39, 176, 0.5);
+}
 
 .btn-primary { background: #007bff; color: #fff; }
 .btn-success {

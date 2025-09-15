@@ -66,7 +66,7 @@ public class ClubJDBCDao implements ClubDao {
         params.put("description", description);
         params.put("contact_info", contactInfo != null ? contactInfo.getId() : null);
         params.put("music_genre", musicGenre != null ? musicGenre.name().toLowerCase() : null);
-        params.put("zone", zone);
+        params.put("zone", zone != null ? zone.name() : null);
 
         insert.execute(params);
 
@@ -93,7 +93,9 @@ public class ClubJDBCDao implements ClubDao {
         Objects.requireNonNull(name, "name is required");
         Objects.requireNonNull(location, "location is required");
         Objects.requireNonNull(priceRange, "priceRange is required");
-        if (!Set.of("bajo","medio","alto").contains(priceRange)) {
+
+        // validate priceRange using its lowercase name
+        if (!Set.of("bajo","medio","alto").contains(priceRange.name().toLowerCase())) {
             throw new IllegalArgumentException("priceRange debe ser bajo|medio|alto");
         }
         if (rating != null) {
@@ -107,7 +109,7 @@ public class ClubJDBCDao implements ClubDao {
 
         final String sql = "UPDATE clubs " +
                 "SET club_name = ?, location = ?, rating = ?, quantity_ratings = ?, price_range = ?, " +
-                "    description = ?, contact_info = ?, music_genre = ?, zone = ?" +
+                "    description = ?, contact_info = ?, music_genre = ?, zone = ? " +
                 "WHERE club_id = ?";
 
         int upd = jdbc.update(sql,
@@ -119,8 +121,8 @@ public class ClubJDBCDao implements ClubDao {
                 description,
                 contactInfoId,
                 musicGenre != null ? musicGenre.name().toLowerCase() : null,
-                clubId,
-                zone
+                zone != null ? zone.name() : null,
+                clubId
         );
 
         return (upd > 0) ? findById(clubId).orElse(null) : null;
@@ -171,6 +173,63 @@ public class ClubJDBCDao implements ClubDao {
     public List<Club> findAll() {
         final String sql = "SELECT * FROM clubs ORDER BY club_name ASC";
         return jdbc.query(sql, ROW_MAPPER);
+    }
+
+
+    @Override
+    public List<Club> search(String nameLike,
+                             Zone location,
+                             String musicGenre,
+                             String priceRange,
+                             BigDecimal minRating,
+                             BigDecimal maxRating) {
+
+        StringBuilder sql = new StringBuilder("SELECT * FROM clubs WHERE 1=1");
+        List<Object> args = new ArrayList<>();
+
+        if (nameLike != null && !nameLike.isBlank()) {
+            sql.append(" AND LOWER(club_name) ILIKE ? ESCAPE '\\'");
+            args.add(likeContains(nameLike));
+        }
+        if (location != null ) {
+            sql.append(" AND LOWER(zone) = LOWER(?)");
+            args.add(location.name());
+        }
+        if (musicGenre != null && !musicGenre.isBlank()) {
+            sql.append(" AND LOWER(music_genre) = LOWER(?)");
+            args.add(musicGenre.trim());
+        }
+        if (priceRange != null && !priceRange.isBlank()) {
+            if (!Set.of("bajo","medio","alto").contains(priceRange)) {
+                throw new IllegalArgumentException("priceRange inválido");
+            }
+            sql.append(" AND price_range = ?");
+            args.add(priceRange);
+        }
+        if (minRating != null) {
+            sql.append(" AND rating >= ?");
+            args.add(minRating);
+        }
+        if (maxRating != null) {
+            sql.append(" AND rating <= ?");
+            args.add(maxRating);
+        }
+        sql.append(" ORDER BY club_name ASC");
+
+        return jdbc.query(sql.toString(), ROW_MAPPER, args.toArray());
+    }
+
+
+    public static String escapeLike(String param) {
+        if (param == null) return null;
+        return param
+                .replace("\\", "\\\\")  // primero escapás la barra invertida
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+    }
+
+    private static String likeContains(String s) {
+        return "%" + escapeLike(s.trim()) + "%";
     }
 
 }

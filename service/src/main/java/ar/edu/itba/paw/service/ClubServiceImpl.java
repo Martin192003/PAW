@@ -5,6 +5,7 @@ import ar.edu.itba.paw.persistence.ClubDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,5 +32,15 @@ public class ClubServiceImpl implements ClubService{
     @Override
     public Optional<Club> getClubById(UUID clubId) {
         return clubDao.findById(clubId);
+    }
+
+    @Override
+    public List<Club> advancedSearch(String nameLike,
+                                     Zone location,
+                                     String musicGenre,
+                                     String priceRange,
+                                     BigDecimal minRating,
+                                     BigDecimal maxRating) {
+        return clubDao.search(nameLike, location, musicGenre, priceRange, minRating, maxRating);
     }
 }

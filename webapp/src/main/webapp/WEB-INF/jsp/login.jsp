@@ -32,11 +32,6 @@
                 <div class="form-group">
                     <input id="password" name="j_password" type="password" class="form-control" placeholder="Contraseña"/>
                 </div>
-                <div>
-                    <label>
-                        <input name="j_rememberme" type="checkbox"/> <spring:message code="remember_me"/>
-                    </label>
-                </div>
                 <div class="login-buttons">
                     <button type="submit" class="btn btn-success">Ingresar</button>
                     <a href="<c:url value='/register' />" class="login-forgot">¿No tienes cuenta? Registrate</a>

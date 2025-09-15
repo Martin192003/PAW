@@ -1,43 +1,51 @@
 package ar.edu.itba.paw.webapp.form;
 
 import javax.validation.constraints.*;
+import java.util.UUID;
 
 public class UserForm {
 
-    @NotEmpty(message = "{register.username.notempty}")
-    @Pattern(regexp = "^$|^[A-Za-z0-9_]+$", message = "{register.username.pattern}")
+    @NotEmpty
+    @Pattern(regexp = "^[A-Za-z0-9_]+$", message = "{contact.username.pattern}")
     private String username;
 
-    @NotEmpty(message = "{register.surname.notempty}")
-    @Pattern(regexp = "^$|^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$", message = "{register.surname.pattern}")
+    @NotEmpty
+    @Pattern(regexp = "^$|^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$")
     private String surname;
 
-    @NotBlank(message = "{register.email.notblank}")
-    @Email(message = "{register.email.invalid}")
+    @NotBlank(message = "{contact.email.notblank}")
+    @Email
     private String email;
 
-    @NotEmpty(message = "{register.password.notempty}")
-    @Pattern(regexp = "^$|^.{6,}$", message = "{register.password.size}")
+    @NotEmpty
+    @NotNull
+    //@Pattern()
+    @Size(min = 6)
     private String password;
 
-    @NotEmpty(message = "{register.phone.notempty}")
-    @Pattern(regexp = "^[0-9\\-\\+ ]*$", message = "{register.phone.pattern}")
+    @NotEmpty
+    @Pattern(regexp = "^[0-9\\-\\+ ]*$", message = "{contact.phone.pattern}")
     private String cellphone;
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    @NotEmpty
+    private String role;
 
-    public String getSurname() { return surname; }
-    public void setSurname(String surname) { this.surname = surname; }
+    public String getUsername() {return username;}
+    public void setUsername(String username) {this.username = username;}
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getSurname() {return surname;}
+    public void setSurname(String surname) {this.surname = surname;}
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public String getEmail() {return email;}
+    public void setEmail(String email) {this.email = email;}
 
-    public String getCellphone() { return cellphone; }
-    public void setCellphone(String cellphone) { this.cellphone = cellphone; }
+    public String getPassword() {return password;}
+    public void setPassword(String password) {this.password = password;}
+
+    public String getCellphone() {return cellphone;}
+    public void setCellphone(String cellphone) {this.cellphone = cellphone;}
+
+    public String getRole() {return role;}
+    public void setRole(String role) {this.role = role;}
 
 }
-

@@ -6,65 +6,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />" />
-    <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />" />
-    <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />" />
-    <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />" />
-    <link rel="stylesheet" href="<c:url value='/resources/css/register.css' />" />
-    <meta charset="UTF-8">
     <title>Register</title>
 </head>
 <body>
+<h1>Register</h1>
 
-<div class="register-page">
-    <div class="register-group">
-        <div class="app-title">
-            Bling <br>&nbsp;&nbsp;Bling
-        </div>
-        <div class="register-card">
-            <div class="register-title">
-                Crear cuenta
-            </div>
+<c:url var="registerUrl" value="/register" />
 
-            <c:url var="registerUrl" value="/register" />
+<form:form modelAttribute="userForm" method="post" action="${registerUrl}">
+    <!-- CSRF (Spring Security) -->
+    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
 
-            <form:form modelAttribute="userForm" method="post" action="${registerUrl}">
-                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-
-                <div class="form-group">
-                    <form:input path="username" cssClass="form-control" placeholder="Nombre de usuario"/>
-                    <form:errors path="username" cssClass="error"/>
-                </div>
-
-
-                <div class="form-group">
-                    <form:input path="surname" cssClass="form-control" placeholder="Apellido"/>
-                    <form:errors path="surname" cssClass="error"/>
-                </div>
-
-                <div class="form-group">
-                    <form:password path="password" cssClass="form-control" placeholder="Contraseña"/>
-                    <form:errors path="password" cssClass="error"/>
-                </div>
-
-                <div class="form-group">
-                    <form:input path="email" cssClass="form-control" placeholder="Email"/>
-                    <form:errors path="email" cssClass="error"/>
-                </div>
-
-                <div class="form-group">
-                    <form:input path="cellphone" cssClass="form-control" placeholder="Celular"/>
-                    <form:errors path="cellphone" cssClass="error"/>
-                </div>
-
-                <div class="register-buttons">
-                    <button type="submit" class="btn btn-success">Registrarse</button>
-                    <a href="<c:url value='/login' />" class="register-login">¿Ya tienes cuenta? Inicia sesión</a>
-                </div>
-            </form:form>
-        </div>
+    <div>
+        <label>Username:</label>
+        <form:input path="username" />
+        <form:errors path="username" cssClass="error" />
     </div>
-</div>
+    <div>
+        <label>Surname:</label>
+        <form:input path="surname" />
+        <form:errors path="surname" cssClass="error" />
+    </div>
+    <div>
+        <label>Password:</label>
+        <form:password path="password" />
+        <form:errors path="password" cssClass="error" />
+    </div>
+    <div>
+        <label>Email:</label>
+        <form:input path="email" />
+        <form:errors path="email" cssClass="error" />
+    </div>
+    <div>
+        <label>Cellphone:</label>
+        <form:input path="cellphone" />
+        <form:errors path="cellphone" cssClass="error" />
+    </div>
 
+    <div>
+    <label>Role:</label>
+    <form:input path="role" />
+    <form:errors path="role" cssClass="error" />
+    </div>
+
+
+    <div>
+        <button type="submit">Register</button>
+    </div>
+</form:form>
 </body>
 </html>

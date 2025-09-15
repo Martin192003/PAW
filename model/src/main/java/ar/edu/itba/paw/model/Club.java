@@ -5,8 +5,6 @@ import java.util.UUID;
 import java.math.BigDecimal;
 
 public class Club {
-
-
     private UUID clubId;
     private String clubName;
     private String location;
