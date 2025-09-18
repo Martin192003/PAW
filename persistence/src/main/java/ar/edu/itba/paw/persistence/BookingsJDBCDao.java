@@ -60,8 +60,8 @@ public class BookingsJDBCDao implements BookingDao {
         params.put("booking_id", id);
         params.put("user_id", user.getId());
         params.put("table_id", tableId);
-        params.put("booking_start", bookingStart);
-        params.put("booking_end", bookingEnd);
+        params.put("booking_start", java.sql.Timestamp.from(bookingStart.toInstant()));
+        params.put("booking_end",   java.sql.Timestamp.from(bookingEnd.toInstant()));
         params.put("status", status.db());
         params.put("total_amount", totalAmount);
 
@@ -80,8 +80,8 @@ public class BookingsJDBCDao implements BookingDao {
         int updated = jdbc.update(sql,
                 user.getId(),
                 tableId,
-                bookingStart,
-                bookingEnd,
+                java.sql.Timestamp.from(bookingStart.toInstant()),
+                java.sql.Timestamp.from(bookingEnd.toInstant()),
                 status.db(),      // "pendiente" | "disponible" | "reservada"
                 totalAmount,
                 bookingId

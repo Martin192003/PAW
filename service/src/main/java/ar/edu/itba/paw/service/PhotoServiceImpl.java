@@ -60,16 +60,19 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Photo> findById(UUID photoId) {
         return photoDao.findById(photoId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Photo> getWithId(UUID photoId) {
         return photoDao.findByIdWithData(photoId);
     }
 
     @Override
+    @Transactional
     public UUID save(Photo p) {
         return photoDao.save(p);
     }

@@ -72,31 +72,40 @@
 .dropdown {
     position: relative;
     display: inline-block;
-    width: 700px;
+    width: 100%; /* Adjusted from 700px to be responsive */
+    max-width: 400px; /* Match the image's narrower width */
 }
 .dropdown-btn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    background-color: #9c27b0; /* Matches the image's purple */
+    color: white;
+    border: none;
+    padding: 10px 15px;
     width: 100%;
-    padding-right: 15px;
+    text-align: left;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.dropdown-btn:hover {
+    background-color: #7b1fa2; /* Darker purple on hover */
 }
 .dropdown-content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
+    display: block; /* Changed from grid to block for single-column layout */
+    padding: 0;
 }
 .dropdown-btn i {
     margin-left: 10px;
     transition: transform 0.3s;
 }
 .dropdown-content {
-    position: absolute;
+    /* Existing styles remain, but ensure these are set */
     right: 0;
     left: 0;
     background-color: rgba(20, 20, 20, 0.95);
     backdrop-filter: blur(10px);
-    width: 96%;
+    width: 100%; /* Ensure it matches the button width */
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     border-radius: 8px;
     border: 1px solid rgba(156, 39, 176, 0.3);
@@ -135,7 +144,8 @@
     padding: 0;
     margin: 0;
 }
-.drink-category li {
+.drink-category li,
+.table-list li {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -143,25 +153,180 @@
     padding: 8px 0;
     border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
 }
+
 .drink-category li:last-child {
     border-bottom: none;
 }
 .drink-name {
     font-weight: 500;
 }
-.drink-price {
+.drink-price,
+.table-list li span:last-child {
     font-weight: 700;
-    color: #ba68c8;
+    color: #ba68c8; /* Matches the image's price color */
 }
 .dropdown-btn.active i {
     transform: rotate(180deg);
 }
-@media (max-width: 768px) {
-    .detail-info {
-        grid-template-columns: 1fr;
-    }
 
-    .back-button {
-        left: 20px;
+
+/* Fila contenedora */
+.bb-row{
+    display:flex;
+    gap:14px;
+    width:100%;
+    margin:10px 0 16px;
+}
+
+/* Cada dropdown independiente */
+.bb-dropdown{
+    position:relative;
+    flex:1 1 50%;
+    min-width:0; /* evita desbordes */
+}
+
+/* Botón púrpura */
+.bb-btn{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px 16px;
+    background:#9c27b0;
+    color:#fff;
+    font-size:16px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(0,0,0,.3);
+    border:1px solid rgba(156,39,176,.3);
+}
+.bb-btn:hover{ background:#7b1fa2; }
+.bb-btn.active i{ transform:rotate(180deg); transition:transform .25s; }
+
+/* Panel de cada dropdown: se abre debajo del botón correspondiente */
+.bb-panel{
+    position:absolute;
+    top: calc(100% + 6px);
+    left:0; right:0;
+    background: rgba(20,20,20,.95);
+    backdrop-filter: blur(10px);
+    border:1px solid rgba(156,39,176,.3);
+    border-radius:10px;
+    padding:0 16px;
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transform: scaleY(0.98);
+    transform-origin: top;
+    transition: all .25s ease-out;
+    z-index: 5;
+}
+.bb-panel.show{
+    padding:16px;
+    max-height: 70vh;      /* scroll si es muy largo */
+    overflow:auto;
+    opacity:1;
+    transform: scaleY(1);
+}
+
+/* Mensaje vacío */
+.bb-empty{ padding:12px; color:#fff; text-align:center; font-size:16px; margin:0; }
+
+/* Reuso de tus estilos */
+.drink-category{ margin-bottom:20px; border-bottom:1px solid rgba(156,39,176,.3); padding-bottom:15px; }
+.drink-category:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
+.drink-category h3{ font-size:18px; color:#9c27b0; margin:0 0 10px 0; }
+.drink-category ul{ list-style:none; padding:0; margin:0; }
+.drink-category li, .table-list li{
+    display:flex; align-items:center; justify-content:space-between;
+    color:#fff; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.1);
+}
+.drink-category li:last-child, .table-list li:last-child{ border-bottom:none; }
+.drink-name{ font-weight:500; }
+.drink-price, .table-row-price{ font-weight:700; color:#ba68c8; }
+
+.table-list{ list-style:none; margin:0; padding:0; }
+.table-row{ display:flex; align-items:center; gap:12px; width:100%; cursor:pointer; }
+.table-row input[type=radio]{ transform: scale(1.1); }
+.table-row-text{ flex:1; }
+.bb-actions{ margin-top:14px; }
+.input.invalid { outline: 2px solid #e53935; }
+
+/* Mobile: apila los dos dropdowns */
+@media (max-width: 768px){
+    .bb-row{ flex-direction:column; gap:12px; }
+    .bb-dropdown{ width:100%; }
+}
+/* Existing styles remain unchanged unless specified */
+
+/* Date selector styling */
+.bb-date {
+    position: relative;
+    width: 100%;
+    max-width: 300px; /* Match the dropdown width for consistency */
+    margin: 0;
+}
+
+.bb-label {
+    font-size: 14px;
+    color: #bab8b8;
+    font-weight: 500;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(156, 39, 176, 0.3);
+    border-radius: 8px;
+    background-color: rgba(20, 20, 20, 0.95);
+    color: #fff;
+    font-size: 16px;
+    box-sizing: border-box;
+    backdrop-filter: blur(5px);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #9c27b0;
+    box-shadow: 0 0 5px rgba(156, 39, 176, 0.5);
+}
+
+.input.invalid {
+    border-color: #ff4444;
+    background-color: rgba(255, 68, 68, 0.1);
+}
+
+.bb-help {
+    font-size: 12px;
+    color: #bab8b8;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+.bb-help strong {
+    color: #9c27b0;
+}
+
+/* Ensure the date input fits within the bb-row layout */
+.bb-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    width: 100%;
+    justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+    .bb-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .bb-date {
+        max-width: 100%;
     }
 }

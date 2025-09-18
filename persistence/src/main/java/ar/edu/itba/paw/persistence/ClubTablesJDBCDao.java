@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 @Repository
@@ -22,10 +23,10 @@ public class ClubTablesJDBCDao implements ClubTablesDao {
     private static final RowMapper<Table> ROW_MAPPER = (rs, i) -> {
         Table t = new Table();
         t.setTableId(rs.getObject("table_id", java.util.UUID.class));
-        t.setClubId(rs.getObject("club_id", java.util.UUID.class));   // 👈 guarda el UUID, no el objeto Club
+        t.setClubId(rs.getObject("club_id", java.util.UUID.class));
         t.setTableNumber(rs.getInt("table_number"));
         t.setCapacity(rs.getInt("capacity"));
-        t.setTableState(TableState.fromDb(rs.getString("table_state"))); // enum ⇐ texto BD
+        t.setTableState(TableState.fromDb(rs.getString("table_state")));
         t.setPrice(rs.getBigDecimal("price"));
         t.setDiscount(rs.getBigDecimal("discount"));
         return t;
@@ -75,6 +76,24 @@ public class ClubTablesJDBCDao implements ClubTablesDao {
         return (upd > 0) ? findById(tableId).orElse(null) : null;
     }
 
+    @Override
+    public List<Table> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to) {
+        final String sql = """
+            SELECT ct.*
+            FROM club_tables ct
+            WHERE ct.club_id = ?
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM bookings b
+                    WHERE b.table_id = ct.table_id
+                      AND b.status IN ('pendiente','reservada')
+                      AND b.booking_start < ?   
+                      AND b.booking_end   > ?    
+              )
+            ORDER BY ct.table_number ASC
+            """;
+        return jdbc.query(sql, ROW_MAPPER, clubId, to, from);
+    }
 
     @Override
     public boolean delete(java.util.UUID id) {
