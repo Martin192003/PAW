@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ReviewsDao;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +21,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public double getAverageRating(UUID clubId) {
         List<Review> reviews = reviewsDao.findByClub(clubDao.findById(clubId).orElseThrow(IllegalArgumentException::new));
         if (reviews.isEmpty()) {

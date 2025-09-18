@@ -1,10 +1,12 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.model.exceptions.EmailWasntSentException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.service.ClubService;
-import ar.edu.itba.paw.service.MailService;
+import ar.edu.itba.paw.service.EmailService;
 import ar.edu.itba.paw.webapp.form.ClubForm;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,9 +20,9 @@ import java.util.UUID;
 public class ContactController {
 
     private final ClubService clubService;
-    private final MailService mailService;
+    private final EmailService mailService;
 
-    public ContactController(ClubService clubService, MailService mailService) {
+    public ContactController(ClubService clubService, EmailService mailService) {
         this.clubService = clubService;
         this.mailService = mailService;
     }
@@ -44,7 +46,7 @@ public class ContactController {
                               Model model,
                               RedirectAttributes ra) {
         var clubOpt = clubService.getClubById(clubId);
-        if (clubOpt.isEmpty()) return "error/404";
+        if (clubOpt.isEmpty()) throw new NotFoundException("El boliche no existe.");
         var club = clubOpt.get();
 
         model.addAttribute("clubId", club.getClubId());
@@ -66,7 +68,7 @@ public class ContactController {
 
         model.addAttribute("sent", sent);
         if (!sent) {
-            model.addAttribute("error", "Email send failed (see logs)");
+            throw new EmailWasntSentException("No se pudo enviar el email, intente nuevamente más tarde.");
         }else {
             model.addAttribute("clubForm", new ClubForm());
         }
