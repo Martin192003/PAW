@@ -5,12 +5,14 @@ import ar.edu.itba.paw.model.TableState;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import ar.edu.itba.paw.persistence.ReviewsDao;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Service
 public class TableServiceImpl implements TableService {
 
 

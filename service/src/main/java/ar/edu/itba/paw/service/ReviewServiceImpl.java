@@ -3,10 +3,12 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ReviewsDao;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Service
 public class ReviewServiceImpl implements ReviewService {
 
     private ReviewsDao reviewsDao;
