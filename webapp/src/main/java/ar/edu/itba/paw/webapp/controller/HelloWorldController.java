@@ -58,20 +58,5 @@ public class HelloWorldController {
         return mav;
     }
 
-    @RequestMapping("/register")
-    public ModelAndView register() {
-        ModelAndView mav = new ModelAndView("register");
-        mav.addObject("userForm", new UserForm());
-        return mav;
-    }
-
-    @PostMapping("/register")
-    public ModelAndView register(@Valid @ModelAttribute("userForm") final UserForm userForm, BindingResult bindingResult) {
-        if(bindingResult.hasErrors()) {
-            return new ModelAndView("register");
-        }
-        us.create(userForm.getUsername(), userForm.getPassword(), userForm.getSurname(), userForm.getEmail(), userForm.getCellphone(), Role.USER.toString());
-        return new ModelAndView("redirect:/login");
-    }
 
 }
