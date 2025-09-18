@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.MailService;
 import ar.edu.itba.paw.webapp.form.ClubForm;
@@ -27,7 +28,7 @@ public class ContactController {
     @GetMapping("/contact")
     public String showContact(@RequestParam("id") UUID clubId, Model model) {
         Club club = clubService.getClubById(clubId).orElse(null);
-        if (club == null) return "error/404";
+        if (club == null) throw new NotFoundException("El boliche no existe.");
         ClubForm clubForm = new ClubForm();
         clubForm.setClubId(clubId);
         model.addAttribute("clubId", club.getClubId());

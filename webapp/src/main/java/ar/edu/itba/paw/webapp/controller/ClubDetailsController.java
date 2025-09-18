@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
+import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import ar.edu.itba.paw.service.ClubService;
 import org.springframework.stereotype.Controller;
@@ -33,8 +34,7 @@ public class ClubDetailsController {
     @GetMapping("/{clubId}") // <- detalles en /clubs/{clubId}
     public String clubDetails(@PathVariable UUID clubId, Model model) {
         var maybeClub = clubService.getClubById(clubId);
-        if (maybeClub.isEmpty()) return "errors/404"; // usa el que exista
-
+        if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
 
         var photos = photoService.listByClub(clubId, 0, 1);
         String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
