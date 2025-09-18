@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS clubs (
     description TEXT,
     contact_info UUID REFERENCES users(user_id) ON DELETE SET NULL,
     music_genre VARCHAR(50),
+    zone VARCHAR(50) CHECK (zone IN ('ZONA_CABA','ZONA_NORTE', 'ZONA_OESTE', 'ZONA_SUR')),
     created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
@@ -132,3 +133,5 @@ CREATE TABLE IF NOT EXISTS club_admins (
     admin_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     PRIMARY KEY (club_id, admin_id)
     );
+
+select * from clubs

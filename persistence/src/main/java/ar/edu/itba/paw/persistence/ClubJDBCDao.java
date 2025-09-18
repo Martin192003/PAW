@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -27,8 +26,9 @@ public class ClubJDBCDao implements ClubDao {
         c.setLocation(rs.getString("location"));
         c.setRating((BigDecimal) rs.getObject("rating")); // puede ser null
         c.setQuantityRatings(rs.getObject("quantity_ratings") == null ? null : rs.getInt("quantity_ratings"));
-        c.setPriceRange(rs.getString("price_range"));
+        c.setPriceRange(rs.getString("price_range") == null ? null : Price.valueOf(rs.getString("price_range").toUpperCase()));
         c.setDescription(rs.getString("description"));
+        c.setZone(rs.getString("zone") == null ? null : Zone.valueOf(rs.getString("zone")));
 
         UUID contactId = rs.getObject("contact_info", UUID.class);
         if (contactId != null) {
@@ -39,7 +39,7 @@ public class ClubJDBCDao implements ClubDao {
             c.setContactInfo(null);
         }
 
-        c.setMusicGenre(rs.getString("music_genre"));
+        c.setMusicGenre(rs.getString("music_genre") == null ? null : MusicalGenre.valueOf(rs.getString("music_genre").toUpperCase()));
         c.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
         return c;
     };
@@ -49,12 +49,12 @@ public class ClubJDBCDao implements ClubDao {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("clubs")
-                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre");
+                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre","zone");
         this.userDao = userDao;
     }
 
     @Override
-    public Club create(String name, String description, String location, String priceRange, User contactInfo, String musicGenre) {
+    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone) {
         UUID id = UUID.randomUUID();
         Map<String,Object> params = new HashMap<>();
         params.put("club_id", id);
@@ -62,12 +62,18 @@ public class ClubJDBCDao implements ClubDao {
         params.put("location", location);
         params.put("rating", null);
         params.put("quantity_ratings", 0);
-        params.put("price_range", priceRange);
+        params.put("price_range", priceRange != null ? priceRange.name().toLowerCase() : null);
         params.put("description", description);
         params.put("contact_info", contactInfo != null ? contactInfo.getId() : null);
-        params.put("music_genre", musicGenre);
+        params.put("music_genre", musicGenre != null ? musicGenre.name().toLowerCase() : null);
+        params.put("zone", zone != null ? zone.name() : null);
 
         insert.execute(params);
+
+        if (contactInfo != null && contactInfo.getId() != null) {
+            jdbc.update("UPDATE users SET role = 'admin' WHERE user_id = ?", contactInfo.getId());
+        }
+
         return findById(id).orElseThrow();
     }
 
@@ -77,16 +83,19 @@ public class ClubJDBCDao implements ClubDao {
                        String location,
                        BigDecimal rating,
                        Integer quantityRatings,
-                       String priceRange,
+                       Price priceRange,
                        String description,
                        UUID contactInfoId,
-                       String musicGenre) {
+                       MusicalGenre musicGenre,
+                       Zone zone) {
 
         Objects.requireNonNull(clubId, "clubId is required");
         Objects.requireNonNull(name, "name is required");
         Objects.requireNonNull(location, "location is required");
         Objects.requireNonNull(priceRange, "priceRange is required");
-        if (!Set.of("bajo","medio","alto").contains(priceRange)) {
+
+        // validate priceRange using its lowercase name
+        if (!Set.of("bajo","medio","alto").contains(priceRange.name().toLowerCase())) {
             throw new IllegalArgumentException("priceRange debe ser bajo|medio|alto");
         }
         if (rating != null) {
@@ -100,7 +109,7 @@ public class ClubJDBCDao implements ClubDao {
 
         final String sql = "UPDATE clubs " +
                 "SET club_name = ?, location = ?, rating = ?, quantity_ratings = ?, price_range = ?, " +
-                "    description = ?, contact_info = ?, music_genre = ? " +
+                "    description = ?, contact_info = ?, music_genre = ?, zone = ? " +
                 "WHERE club_id = ?";
 
         int upd = jdbc.update(sql,
@@ -108,10 +117,11 @@ public class ClubJDBCDao implements ClubDao {
                 location,
                 rating,
                 quantityRatings,
-                priceRange,
+                priceRange != null ? priceRange.name().toLowerCase() : null,
                 description,
                 contactInfoId,
-                musicGenre,
+                musicGenre != null ? musicGenre.name().toLowerCase() : null,
+                zone != null ? zone.name() : null,
                 clubId
         );
 
@@ -163,6 +173,63 @@ public class ClubJDBCDao implements ClubDao {
     public List<Club> findAll() {
         final String sql = "SELECT * FROM clubs ORDER BY club_name ASC";
         return jdbc.query(sql, ROW_MAPPER);
+    }
+
+
+    @Override
+    public List<Club> search(String nameLike,
+                             Zone location,
+                             String musicGenre,
+                             String priceRange,
+                             BigDecimal minRating,
+                             BigDecimal maxRating) {
+
+        StringBuilder sql = new StringBuilder("SELECT * FROM clubs WHERE 1=1");
+        List<Object> args = new ArrayList<>();
+
+        if (nameLike != null && !nameLike.isBlank()) {
+            sql.append(" AND LOWER(club_name) ILIKE ? ESCAPE '\\'");
+            args.add(likeContains(nameLike));
+        }
+        if (location != null ) {
+            sql.append(" AND LOWER(zone) = LOWER(?)");
+            args.add(location.name());
+        }
+        if (musicGenre != null && !musicGenre.isBlank()) {
+            sql.append(" AND LOWER(music_genre) = LOWER(?)");
+            args.add(musicGenre.trim());
+        }
+        if (priceRange != null && !priceRange.isBlank()) {
+            if (!Set.of("bajo","medio","alto").contains(priceRange)) {
+                throw new IllegalArgumentException("priceRange inválido");
+            }
+            sql.append(" AND price_range = ?");
+            args.add(priceRange);
+        }
+        if (minRating != null) {
+            sql.append(" AND rating >= ?");
+            args.add(minRating);
+        }
+        if (maxRating != null) {
+            sql.append(" AND rating <= ?");
+            args.add(maxRating);
+        }
+        sql.append(" ORDER BY club_name ASC");
+
+        return jdbc.query(sql.toString(), ROW_MAPPER, args.toArray());
+    }
+
+
+    public static String escapeLike(String param) {
+        if (param == null) return null;
+        return param
+                .replace("\\", "\\\\")  // primero escapás la barra invertida
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+    }
+
+    private static String likeContains(String s) {
+        return "%" + escapeLike(s.trim()) + "%";
     }
 
 }

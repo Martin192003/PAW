@@ -1,10 +1,7 @@
 // persistence/src/test/java/ar/edu/itba/paw/persistence/ReviewsJDBCDaoTest.java
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.Role;
-import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,6 +11,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.jdbc.JdbcTestUtils;
+
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -51,7 +49,7 @@ public class ReviewsJDBCDaoTest {
     @Test
     public void testCreateReview() {
         User user = userDao.create("user", "pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create("Club", "Desc", "Loc", "medio", user, "Rock");
+        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, user, MusicalGenre.ROCK, Zone.ZONA_CABA);
         Review review = reviewsDao.create(user, club, RATING, DESCRIPTION);
 
         assertNotNull(review);

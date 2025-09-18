@@ -1,6 +1,9 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.model.MusicalGenre;
+import ar.edu.itba.paw.model.Price;
+import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.persistence.ClubDao;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,9 +28,9 @@ public class ClubServiceImplTest {
     private static final String LOCATION = "Ubicación";
     private static final BigDecimal RATING = BigDecimal.valueOf(4.5);
     private static final Integer QUANTITY_RATINGS = 10;
-    private static final String PRICE_RANGE = "medio";
+    private static final Price PRICE_RANGE = Price.MEDIO;
     private static final String DESCRIPTION = "Descripción";
-    private static final String MUSIC_GENRE = "Rock";
+    private static final MusicalGenre MUSIC_GENRE = MusicalGenre.ROCK;
     private static final OffsetDateTime CREATED_AT = OffsetDateTime.now();
 
     @Mock
@@ -38,8 +41,8 @@ public class ClubServiceImplTest {
 
     @Test
     public void testGetAllClubs() {
-        Club club1 = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT);
-        Club club2 = new Club(UUID.randomUUID(), "OtroClub", "OtraUbicación", RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT);
+        Club club1 = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA);
+        Club club2 = new Club(UUID.randomUUID(), "OtroClub", "OtraUbicación", RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA);
 
         Mockito.when(mockDao.findAll()).thenReturn(Arrays.asList(club1, club2));
 
@@ -53,7 +56,7 @@ public class ClubServiceImplTest {
 
     @Test
     public void testGetClubByIdFound() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT);
+        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA);
 
         Mockito.when(mockDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
 

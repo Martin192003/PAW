@@ -1,88 +1,9 @@
 package ar.edu.itba.paw.service;
 
-/*
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.stereotype.Service;
-
-@Service
-public class MailService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MailService.class);
-    private final JavaMailSender mailSender;
-    private final String defaultFrom;
-
-    public MailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-        String from = System.getenv("SMTP_USER");
-        if ((from == null || from.isBlank()) && mailSender instanceof JavaMailSenderImpl) {
-            from = ((JavaMailSenderImpl) mailSender).getUsername();
-        }
-        if (from == null || from.isBlank()) {
-            from = "no-reply@local";
-        }
-        this.defaultFrom = from;
-        LOGGER.info("MailService defaultFrom={}", this.defaultFrom);
-    }
-
-    public boolean sendContact(String to, String clubName, String fromEmail, String name, String phone, String message) {
-        try {
-            SimpleMailMessage mail = new SimpleMailMessage();
-            mail.setFrom(defaultFrom);
-            mail.setTo(to);
-            mail.setSubject("Contacto para " + clubName);
-            mail.setReplyTo(fromEmail);
-            mail.setText(buildBody(name, fromEmail, phone, message));
-
-            LOGGER.info("SMTP send attempt host={} user={} from={} to={} subject={}",
-                    host(), user(), defaultFrom, to, mail.getSubject());
-            mailSender.send(mail);
-            LOGGER.info("SMTP send OK to {}", to);
-            return true;
-        } catch (Exception e) {
-            LOGGER.error("SMTP send FAILED to {}: {}", to, e.getMessage(), e);
-            return false;
-        }
-    }
-
-    public void sendContactConfirmation(String userEmail, String clubName, String originalMessage) {
-        try {
-            SimpleMailMessage mail = new SimpleMailMessage();
-            mail.setFrom(defaultFrom);
-            mail.setTo(userEmail);
-            mail.setSubject("Confirmación de contacto - " + clubName);
-            mail.setText("Hemos recibido tu mensaje para " + clubName + ".\n\nCopia de tu mensaje:\n\""
-                    + originalMessage + "\"\n\nTe responderán a la brevedad.\n\n(No responder a este correo)");
-            LOGGER.info("SMTP confirmation send attempt to {}", userEmail);
-            mailSender.send(mail);
-            LOGGER.info("SMTP confirmation OK to {}", userEmail);
-        } catch (Exception e) {
-            LOGGER.warn("Confirmation email FAILED to {}: {}", userEmail, e.getMessage());
-        }
-    }
-
-    private String host() {
-        return (mailSender instanceof JavaMailSenderImpl)
-                ? ((JavaMailSenderImpl) mailSender).getHost() : "?";
-    }
-
-    private String user() {
-        return (mailSender instanceof JavaMailSenderImpl)
-                ? ((JavaMailSenderImpl) mailSender).getUsername() : "?";
-    }
-
-    private String buildBody(String name, String email, String phone, String msg) {
-        return "Nombre: " + name + "\nEmail: " + email +
-                (phone == null || phone.isEmpty() ? "" : "\nTel: " + phone) +
-                "\n\nMensaje:\n" + msg;
-    }
-}*/
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -101,29 +22,42 @@ import java.util.UUID;
 public class MailService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MailService.class);
+
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
     private final String defaultFrom;
 
-    public MailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
+    public MailService(
+            JavaMailSender mailSender,
+            TemplateEngine templateEngine,
+            @Value("${app.mail.from:}") String configuredFrom
+    ) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
-        String from = System.getenv("SMTP_USER");
+
+        String from = (configuredFrom != null && !configuredFrom.isBlank())
+                ? configuredFrom
+                : null;
+
         if ((from == null || from.isBlank()) && mailSender instanceof JavaMailSenderImpl) {
-            from = ((JavaMailSenderImpl) mailSender).getUsername();
+            String username = ((JavaMailSenderImpl) mailSender).getUsername();
+            if (username != null && !username.isBlank()) {
+                from = username;
+            }
         }
         if (from == null || from.isBlank()) {
             from = "no-reply@local";
         }
+
         this.defaultFrom = from;
-        LOGGER.info("MailService defaultFrom={}", this.defaultFrom);
+        LOGGER.info("MailService defaultFrom={} host={} user={}", this.defaultFrom, host(), user());
     }
 
     public boolean sendContact(String to, String clubName, String fromEmail, String name, String phone, String message) {
         try {
-            // First email using "booking-inquiry-club.html"
+            // Email to club
             MimeMessage clubMail = mailSender.createMimeMessage();
-            MimeMessageHelper clubHelper = new MimeMessageHelper(clubMail, true);
+            MimeMessageHelper clubHelper = new MimeMessageHelper(clubMail, true, "UTF-8");
             clubHelper.setFrom(defaultFrom);
             clubHelper.setTo(to);
             clubHelper.setSubject("Contacto para " + clubName);
@@ -139,9 +73,9 @@ public class MailService {
             String clubHtmlBody = templateEngine.process("booking-inquiry-club", clubContext);
             clubHelper.setText(clubHtmlBody, true);
 
-            // Second email using "booking-inquiry-user.html"
+            // Confirmation email to user
             MimeMessage userMail = mailSender.createMimeMessage();
-            MimeMessageHelper userHelper = new MimeMessageHelper(userMail, true);
+            MimeMessageHelper userHelper = new MimeMessageHelper(userMail, true, "UTF-8");
             userHelper.setFrom(defaultFrom);
             userHelper.setTo(fromEmail);
             userHelper.setSubject("Confirmación de contacto - " + clubName);
@@ -150,15 +84,14 @@ public class MailService {
             userContext.setVariable("clubName", clubName);
             userContext.setVariable("name", name);
             userContext.setVariable("submittedAt", ZonedDateTime.now());
-
-            String ctaUrl = "" + UUID.randomUUID(); //Falta URL deployment
+            String ctaUrl = "" + UUID.randomUUID(); // TODO replace with deployment URL
             userContext.setVariable("ctaUrl", ctaUrl);
             userContext.setVariable("ctaText", "Confirmar mi correo");
 
             String userHtmlBody = templateEngine.process("booking-inquiry-user", userContext);
             userHelper.setText(userHtmlBody, true);
 
-            // Send both emails
+            // Send
             mailSender.send(clubMail);
             mailSender.send(userMail);
 
@@ -170,4 +103,15 @@ public class MailService {
         }
     }
 
+    private String host() {
+        return (mailSender instanceof JavaMailSenderImpl)
+                ? ((JavaMailSenderImpl) mailSender).getHost()
+                : "?";
+    }
+
+    private String user() {
+        return (mailSender instanceof JavaMailSenderImpl)
+                ? ((JavaMailSenderImpl) mailSender).getUsername()
+                : "?";
+    }
 }

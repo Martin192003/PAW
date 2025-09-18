@@ -50,3 +50,13 @@
     border-color: #dc3545 !important;
     box-shadow: 0 0 0 2px rgba(220,53,69,.15);
 }
+
+/* Color de texto para selects y opciones */
+.form-control {
+    color: black; /* el texto del select cerrado */
+}
+
+.form-control option {
+    color: black;           /* el texto de cada opción */
+    background-color: white; /* fondo blanco para buen contraste */
+}

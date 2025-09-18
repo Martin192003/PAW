@@ -31,8 +31,8 @@
 .card-lg {width: 70%; height: 170px; display: flex; align-items: stretch; }
 .card-disabled { opacity: 0.6; }
 .card-body { font-size: 16px; }
-.card-left { height: 100%; display: flex; width: 30%}
-.card-left img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px 0 0 8px; }
+.card-left { height: 100%; display: flex; width: 150px}
+.card-left img { width: 150px; height: 100%; object-fit: cover; border-radius: 8px 0 0 8px; }
 .card-content{display: flex; height: 100%; width: 100%;}
 .card-right{ flex: 1; width: 70%; height: 100%; display: flex; flex-direction: column;}
 .card-text-title{ font-size: 1.5em; font-weight: bold; margin-top: 8px; color: #fff; font-family: "Good Times", sans-serif; padding-left: 8px}

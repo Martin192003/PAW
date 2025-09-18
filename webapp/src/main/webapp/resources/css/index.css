@@ -69,7 +69,102 @@ body {
     text-decoration: none;
     opacity: 0.9;
 }
+.filter-bar {
+    display: flex;
+    align-items: stretch;
+    background: #3c3c3c;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    overflow: hidden;
+    flex: 1;
+}
+
+.filter-item {
+    flex: 1;
+    padding: 0 12px;
+    border: none;
+    font-size: 14px;
+    height: 48px;
+    color: #fff;
+    background: #3c3c3c;
+    outline: none;
+}
+.filter-item::placeholder,
+.filter-item option[disabled] {
+    color: white;
+    opacity: 1;
+}
+select.filter-item {
+    color: #fff;
+}
+select.filter-item option[disabled] {
+    display: none;
+}
+select.filter-item:invalid {
+    color: #aaa;
+}
+select.filter-item option {
+    color: #fff;
+}
+.filter-container {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    width: 100%;
+    margin: 20px 0;
+    max-width: 1200px;
+}
+.btn-reset {
+    background: none;
+    border: none;
+    color: #9c27b0;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 12px;
+    transition: color 0.2s ease;
+}
+.btn-reset:hover {
+    color: #540761;
+}
+.card-no-image {
+    width: 150px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #222;
+    color: #9c27b0;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 8px 0 0 8px;
+    line-height: 1.2;
+    text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.3);
+    font-family: 'Darklinos', Arial, sans-serif;
+}
 #formError {
     color: red;
     margin-top: 10px;
+}
+
+.add-club-btn {
+    position: absolute;
+    right: 30px;
+    top: 20px;
+    background: linear-gradient(135deg, #9c27b0, #d500f9);
+    color: #fff;
+    font-family: 'Darklinos', Arial, sans-serif;
+    letter-spacing: 1px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 0 0 12px rgba(156, 39, 176, 0.7);
+    transition: all 0.3s ease;
+    z-index: 101;
+}
+.add-club-btn:hover {
+    box-shadow: 0 0 20px rgba(213, 0, 249, 0.9);
+    transform: scale(1.05);
 }
