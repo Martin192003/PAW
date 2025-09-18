@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isErrorPage="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -41,16 +42,16 @@
 
 <div class="card error-card">
     <div class="error-title">
-        Error <br>&nbsp;&nbsp;<c:out value="${status}" />
+        <spring:message code="title.error"/> <br>&nbsp;&nbsp;<c:out value="${status}" />
     </div>
 
-    <div class="card-text-title" style="font-size: 2rem; margin-bottom: 1rem; color: #9c27b0;">¡Oops! Ha ocurrido un error.</div>
+    <div class="card-text-title" style="font-size: 2rem; margin-bottom: 1rem; color: #9c27b0;"><spring:message code="error.oops"/></div>
     <p class="card-text-body" style="font-size: 1.2rem; color: #ccc;">
-        <c:out value="${message}" />
+        <spring:message code="${message}"/>
     </p>
 
     <div style="margin-top:2rem;">
-        <a class="btn error-btn" href="<c:url value='/'/>">Volver a la página principal</a>
+        <a class="btn error-btn" href="<c:url value='/'/>"><spring:message code="button.return.main"/></a>
     </div>
 
 </div>
