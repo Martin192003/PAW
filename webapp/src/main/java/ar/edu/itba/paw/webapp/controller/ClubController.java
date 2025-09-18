@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.PhotoService;
+import ar.edu.itba.paw.service.SecurityService;
 import ar.edu.itba.paw.webapp.form.AddClubForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -32,12 +33,14 @@ public class ClubController {
     private final ClubService clubService;
     private final PhotoService photoService;
     private final UserService userService;
+    private final SecurityService securityService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, SecurityService securityService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
+        this.securityService = securityService;
 
     }
 
@@ -111,7 +114,7 @@ public class ClubController {
             return "club_form";
         }
 
-        User contactInfo = userService.findById(UUID.fromString("e4774564-d317-4a70-a64a-49b286c09285"));
+        User contactInfo = securityService.getVerifiedLoggedUser();
 
         Club newClub = clubService.create(
                 addClubForm.getName(),

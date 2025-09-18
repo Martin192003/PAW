@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User Registration Confirmation</title>
+</head>
+<body>
+<h1>Welcome, <span th:text="${username}"></span>!</h1>
+<p>Thank you for registering on our platform.</p>
+<p>Your registration was completed successfully on  <span th:text="${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')}"></span>.</p>
+<p>We are excited to have you on board!</p>
+<p>Best regards,</p>
+<p>The Team</p>
+</body>
+</html>

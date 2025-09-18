@@ -170,4 +170,48 @@ public class MailService {
         }
     }
 
+    public void sendClubCreationConfirmation(String to, String clubName){
+        try{
+            MimeMessage mail = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
+            helper.setFrom(defaultFrom);
+            helper.setTo(to);
+            helper.setSubject("Confirmación de creación de club - " + clubName);
+
+            Context context = new Context();
+            context.setVariable("clubName", clubName);
+            context.setVariable("createdAt", ZonedDateTime.now());
+
+            String htmlBody = templateEngine.process("club-creation-confirmation", context);
+            helper.setText(htmlBody, true);
+
+            mailSender.send(mail);
+            LOGGER.info("SMTP club creation confirmation OK to {}", to);
+        } catch (MessagingException e) {
+            LOGGER.error("SMTP club creation confirmation FAILED to {}: {}", to, e.getMessage(), e);
+        }
+    }
+
+    public void sendUserRegistrationConfirmation(String to, String username){
+        try{
+            MimeMessage mail = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
+            helper.setFrom(defaultFrom);
+            helper.setTo(to);
+            helper.setSubject("Confirmación de registro - " + username);
+
+            Context context = new Context();
+            context.setVariable("username", username);
+            context.setVariable("registeredAt", ZonedDateTime.now());
+
+            String htmlBody = templateEngine.process("user-registration-confirmation", context);
+            helper.setText(htmlBody, true);
+
+            mailSender.send(mail);
+            LOGGER.info("SMTP user registration confirmation OK to {}", to);
+        } catch (MessagingException e) {
+            LOGGER.error("SMTP user registration confirmation FAILED to {}: {}", to, e.getMessage(), e);
+        }
+    }
+
 }

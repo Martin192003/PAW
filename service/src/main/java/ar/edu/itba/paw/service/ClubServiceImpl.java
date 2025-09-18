@@ -14,8 +14,10 @@ import java.util.UUID;
 public class ClubServiceImpl implements ClubService{
 
     private final ClubDao clubDao;
+    private final MailService mailService;
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao) {
+    public ClubServiceImpl(ClubDao clubDao, MailService mailService) {
+        this.mailService = mailService;
         this.clubDao = clubDao;
     }
 
@@ -26,7 +28,9 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone){
-        return clubDao.create(name, description, location, priceRange, contactInfo, musicGenre, zone);
+        Club newClub = clubDao.create(name, description, location, priceRange, contactInfo, musicGenre, zone);
+        mailService.sendClubCreationConfirmation(contactInfo.getEmail(), name);
+        return newClub;
     }
 
     @Override
