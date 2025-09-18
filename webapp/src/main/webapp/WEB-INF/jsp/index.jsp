@@ -71,7 +71,7 @@
             </button>
         </form>
         <button type="button" class="btn-reset" onclick="window.location.href='<c:url value="/clubs"/>'">
-            <i class="fa-solid fa-rotate-left"></i>
+            <i class="fa-solid fa-rotate-right"></i>
             <spring:message code="button.reset"/>
         </button>
     </div>
@@ -89,27 +89,11 @@
 
     <c:if test="${empty clubs and anyFilterApplied}">
         <div class="no-results">
-            No se encontraron boliches con estos filtros:
-            <ul class="filters-applied">
-                <c:if test="${not empty name}">
-                    <li>Nombre: <strong><c:out value='${name}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty zone}">
-                    <li>Zona: <strong><c:out value='${zoneLabel}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty genre}">
-                    <li>Género: <strong><c:out value='${genre}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty price}">
-                    <li>Precio: <strong><c:out value='${price}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty minRating}">
-                    <li>Punt. mínima: <strong><c:out value='${minRating}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty maxRating}">
-                    <li>Punt. máxima: <strong><c:out value='${maxRating}'/></strong></li>
-                </c:if>
-            </ul>
+            <spring:message code="error.noresults"/>
+            <button type="button" class="btn-reset" style="margin-top:16px;" onclick="window.location.href='<c:url value="/clubs"/>'">
+                <i class="fa-solid fa-rotate-right"></i>
+                <spring:message code="button.reset"/>
+            </button>
         </div>
     </c:if>
 
@@ -133,6 +117,8 @@
                     <div class="card-text-title"><c:out value="${club.clubName}"/></div>
                     <span class="card-text-body">
                     <i class="fa-solid fa-location-dot"></i> <c:out value="${club.location}"/><br>
+                    <i class="fa-solid fa-music"></i> <spring:message code="genre.${club.musicGenre}"/><br>
+                    ️<i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
                      <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
                     <c:set var="decimal" value="${club.rating - ratingInt}" />
                     <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
