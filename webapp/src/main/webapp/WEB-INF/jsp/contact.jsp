@@ -34,22 +34,23 @@
         <spring:message code="placeholder.phone" var="phPhone"/>
         <spring:message code="placeholder.message" var="phMessage"/>
         <form:form modelAttribute="clubForm" method="post" id="contactForm">
+            <span class="form-text-required"><spring:message code="form.required"/></span>
             <div class="form-group">
                 <form:input path="name" class="form-control" placeholder="${phName}" />
+                <form:errors path="name" cssClass="error" element="div"/>
             </div>
-            <form:errors path="name" cssClass="error" element="div"/>
             <div class="form-group">
                 <form:input path="email" class="form-control" placeholder="${phEmail}" />
+                <form:errors path="email" cssClass="error" element="div"/>
             </div>
-            <form:errors path="email" cssClass="error" element="div"/>
             <div class="form-group">
                 <form:input path="phone" class="form-control" placeholder="${phPhone}"/>
+                <form:errors path="phone" cssClass="error" element="div"/>
             </div>
-            <form:errors path="phone" cssClass="error" element="div"/>
             <div class="form-group">
                 <form:textarea path="message" class="form-control" placeholder="${phMessage}" />
+                <form:errors path="message" cssClass="error" element="div"/>
             </div>
-            <form:errors path="message" cssClass="error" element="div"/>
             <div class="contact-buttons">
                 <button type="button" class="btn btn-secondary" onclick="window.history.back()"><spring:message code="button.cancel"/></button>
                 <button type="submit" class="btn btn-success"><spring:message code="button.send"/></button>

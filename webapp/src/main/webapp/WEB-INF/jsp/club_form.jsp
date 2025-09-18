@@ -35,6 +35,7 @@
         <spring:message code="form.zone" var="phZone"/>
 
         <form:form modelAttribute="clubForm" method="post" action="${pageContext.request.contextPath}${postPath}" enctype="multipart/form-data">
+            <span class="form-text-required"><spring:message code="form.required"/></span>
             <div class="form-group">
                 <form:input path="name" class="form-control" placeholder="${phName}"/>
                 <form:errors path="name" cssClass="error" element="div"/>

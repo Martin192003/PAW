@@ -9,6 +9,11 @@
     box-sizing: border-box;
 }
 
+.contact-card form {
+    display: flex;
+    flex-direction: column;
+}
+
 .contact-card {
     pointer-events: auto;
     transform: none;
@@ -16,7 +21,7 @@
     align-content: center;
     box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 1.5px 12px rgba(140,0,183,0.35);
     width: 700px;
-    margin: auto;
+    margin-top: 60px;
     padding: 36px;
     transition: none;
     height: auto;
@@ -71,7 +76,9 @@
 .form-group {
     width: 100%;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 10px;
     margin-bottom: 10px;
 }
 .form-control {
@@ -92,12 +99,22 @@
     color: #aaa;
     opacity: 1;
 }
+.form-text-required {
+    margin-left: auto;
+    color: #c1bfbf;
+    font-size: 15px;
+    padding-left: 2px;
+    font-family: Arial, sans-serif;
+    margin-top: -5px;
+    margin-bottom: 10px;
+}
 .error {
     color: #ff0000;
-    font-size: 14px;
-    margin-bottom: 1px;
+    font-size: 12px;
     text-align: left;
     width: 600px;
+    padding-left: 2px;
+    font-family: Arial, sans-serif;
 }
 .contact-page .form-control:focus,
 .contact-card .form-control:focus {
@@ -113,6 +130,6 @@ textarea.form-control {
     resize: none;
 }
 body {
-    overflow: hidden;
+    overflow: auto;
     height: auto;
 }

@@ -24,8 +24,7 @@
 
 <div class="app-boliches">
     <div class="filter-container">
-        <spring:message code="placeholder.name" var="phName"/>
-        <spring:message code="form.zone" var="phZone"/>
+        <spring:message code="filter.name" var="phName"/>
         <spring:message code="filter.minRating" var="phMinrating"/>
         <spring:message code="filter.maxRating" var="phMaxrating"/>
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
@@ -34,7 +33,7 @@
                        class="filter-item" value="${name != null ? name : ''}" />
 
                 <select name="zone" class="filter-item">
-                    <option value=""><spring:message code="form.zone"/></option>
+                    <option value=""><spring:message code="filter.zone"/></option>
                     <c:forEach var="z" items="${zones}" >
                         <option value="${z.dbValue}" ${zone == z.dbValue ? 'selected' : ''}>
                             <spring:message code="zone.${z.dbValue}"/>
@@ -43,7 +42,7 @@
                 </select>
 
                 <select name="genre" class="filter-item">
-                    <option value=""><spring:message code="form.musicGenre"/></option>
+                    <option value=""><spring:message code="filter.genre"/></option>
                     <c:forEach var="g" items="${genres}">
                         <option value="${g}" ${genre == g ? 'selected' : ''}>
                             <spring:message code="genre.${g}"/>
@@ -52,7 +51,7 @@
                 </select>
 
                 <select name="price" class="filter-item">
-                    <option value=""><spring:message code="form.priceRange"/></option>
+                    <option value=""><spring:message code="filter.price"/></option>
                     <option value="alto" ${price == 'alto' ? 'selected' : ''}><spring:message code="filter.price.high"/></option>
                     <option value="medio" ${price == 'medio' ? 'selected' : ''}><spring:message code="filter.price.medium"/></option>
                     <option value="bajo" ${price == 'bajo' ? 'selected' : ''}><spring:message code="filter.price.low"/></option>

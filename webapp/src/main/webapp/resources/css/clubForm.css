@@ -12,6 +12,19 @@ body {
     padding-top: 25px;
     box-sizing: border-box;
 }
+.club-form-card form {
+    display: flex;
+    flex-direction: column;
+}
+.form-text-required {
+    margin-left: auto;
+    color: #c1bfbf;
+    font-size: 15px;
+    padding-left: 2px;
+    font-family: Arial, sans-serif;
+    margin-top: -5px;
+    margin-bottom: 10px;
+}
 .club-form-card {
     pointer-events: auto;
     transform: none;
