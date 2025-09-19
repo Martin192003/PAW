@@ -27,3 +27,8 @@
         background: #333;
         color: #fff;
     }
+
+    .sidebar .sidebar-btn.active {
+        background-color: #9c27b0;
+        font-weight: bold;
+    }

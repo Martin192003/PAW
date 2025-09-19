@@ -19,12 +19,21 @@
         <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
     </a>
 </div>
+
 <div class="sidebar">
-    <a href="<c:url value='/clubs/activity?userId=8966c8cf-b910-4d61-b748-c0b77acd9d9a' />" class="sidebar-btn">Mis boliches</a>
-    <a href="#" class="sidebar-btn">Mis reservas</a>
-    <a href="#" class="sidebar-btn">Perfil</a>
-    <a href="#" class="sidebar-btn">Ayuda</a>
+    <a href="<c:url value='/clubs/activity?userId=8966c8cf-b910-4d61-b748-c0b77acd9d9a' />"
+       class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">Mis boliches</a>
+
+    <a href="#"
+       class="sidebar-btn ${activePage == 'reservas' ? 'active' : ''}">Mis reservas</a>
+
+    <a href="<c:url value='/clubs/profile?userId=8966c8cf-b910-4d61-b748-c0b77acd9d9a' />"
+       class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">Mi perfil</a>
+
+    <a href="#"
+       class="sidebar-btn ${activePage == 'ayuda' ? 'active' : ''}">Ayuda</a>
 </div>
+
 <div class="app-boliches">
     <h1>Mis boliches</h1>
     <c:forEach var="club" items="${clubs}">

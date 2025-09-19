@@ -219,6 +219,8 @@ public class ClubController {
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
+        model.addAttribute("activePage", "clubs");
+
         return "clubActivity";
     }
 
@@ -253,5 +255,14 @@ public class ClubController {
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
-
+    @GetMapping("/profile")
+    public String showProfile(@RequestParam UUID userId, Model model) {
+        User user = userService.findById(userId);
+        if (user == null) {
+            return "redirect:/error"; // o mostrar mensaje de usuario no encontrado
+        }
+        model.addAttribute("user", user);
+        model.addAttribute("activePage", "profile");
+        return "profile";
+    }
 }
