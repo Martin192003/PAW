@@ -116,7 +116,7 @@
 
                 <div class="bb-panel">
                     <c:url var="reserveUrl" value="/clubs/${club.clubId}/reserve"/>
-                        <form id="reserveForm" method="post" action="${reserveUrl}">
+                    <form id="reserveForm" method="post" action="${reserveUrl}">
 
                         <!-- Fila: Fecha + Botón -->
                         <div class="bb-actions" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">

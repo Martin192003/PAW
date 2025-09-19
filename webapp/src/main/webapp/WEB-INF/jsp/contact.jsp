@@ -19,44 +19,49 @@
 <body>
 <div class="top-bar">
     <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
+        <div class="app-title"><spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/> </div>
     </a>
 </div>
 
 <div class="contact-page">
     <t:card size="card-lg" cssClass="contact-card">
         <div class="contact-title">
-            Contactate con <c:out value="${clubName}" />
+            <spring:message code="contact.title" arguments="${clubName}"/>
             <span class="contact-icon"><i class="fa-solid fa-headphones"></i></span>
         </div>
+        <spring:message code="form.fullname" var="phName"/>
+        <spring:message code="placeholder.email" var="phEmail"/>
+        <spring:message code="placeholder.phone" var="phPhone"/>
+        <spring:message code="placeholder.message" var="phMessage"/>
         <form:form modelAttribute="clubForm" method="post" id="contactForm">
+            <span class="form-text-required"><spring:message code="form.required"/></span>
             <div class="form-group">
-                <form:input path="name" class="form-control" placeholder="Nombre completo" />
+                <form:input path="name" class="form-control" placeholder="${phName}" />
+                <form:errors path="name" cssClass="error" element="div"/>
             </div>
-            <form:errors path="name" cssClass="error" element="div"/>
             <div class="form-group">
-                <form:input path="email" class="form-control" placeholder="Correo electrónico" />
+                <form:input path="email" class="form-control" placeholder="${phEmail}" />
+                <form:errors path="email" cssClass="error" element="div"/>
             </div>
-            <form:errors path="email" cssClass="error" element="div"/>
             <div class="form-group">
-                <form:input path="phone" class="form-control" placeholder="Teléfono"/>
+                <form:input path="phone" class="form-control" placeholder="${phPhone}"/>
+                <form:errors path="phone" cssClass="error" element="div"/>
             </div>
-            <form:errors path="phone" cssClass="error" element="div"/>
             <div class="form-group">
-                <form:textarea path="message" class="form-control" placeholder="Mensaje" />
+                <form:textarea path="message" class="form-control" placeholder="${phMessage}" />
+                <form:errors path="message" cssClass="error" element="div"/>
             </div>
-            <form:errors path="message" cssClass="error" element="div"/>
             <div class="contact-buttons">
-                <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancelar</button>
-                <button type="submit" class="btn btn-success">Enviar mensaje</button>
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()"><spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.send"/></button>
             </div>
         </form:form>
     </t:card>
 </div>
 <div id="sentModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
     <div style="background:#222; color:#fff; padding:32px; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.6); width:400px; text-align:center;">
-        <div style="font-size:22px; margin-bottom:18px;">Tu mensaje fue enviado. ¡Gracias!</div>
-        <button class="btn btn-success" onclick="volverADetalles()">Volver</button>
+        <div style="font-size:22px; margin-bottom:18px;"><spring:message code="contact.sent"/></div>
+        <button class="btn btn-success" onclick="volverADetalles()"><spring:message code="menu.back"/></button>
     </div>
 </div>
 <script>

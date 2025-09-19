@@ -1,11 +1,12 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bling Bling</title>
+    <title><spring:message code="app.title"/> <spring:message code="app.title"/></title>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
@@ -16,62 +17,67 @@
 <body>
 <div class="top-bar">
     <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
+        <div class="app-title"><spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/></div>
     </a>
-    <a href="<c:url value='/clubs/new' />" class="add-club-btn">Añadir Boliche</a>
+    <a href="<c:url value='/clubs/new' />" class="add-club-btn"><spring:message code="title.addClub"/></a>
 </div>
 
 <div class="app-boliches">
     <div class="filter-container">
+        <spring:message code="filter.name" var="phName"/>
+        <spring:message code="filter.minRating" var="phMinrating"/>
+        <spring:message code="filter.maxRating" var="phMaxrating"/>
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
             <div class="filter-bar">
-                <input type="text" name="name" placeholder="Nombre"
+                <input type="text" name="name" placeholder="${phName}"
                        class="filter-item" value="${name != null ? name : ''}" />
 
                 <select name="zone" class="filter-item">
-                    <option value="">Selecciona una zona</option>
+                    <option value=""><spring:message code="filter.zone"/></option>
                     <c:forEach var="z" items="${zones}" >
-                        <option value="${z.dbValue}" ${zone == z ? 'selected' : ''}>${z.displayName}</option>
+                        <option value="${z.dbValue}" ${zone == z.dbValue ? 'selected' : ''}>
+                            <spring:message code="zone.${z.dbValue}"/>
+                        </option>
                     </c:forEach>
                 </select>
 
                 <select name="genre" class="filter-item">
-                    <option value="">Selecciona un género</option>
+                    <option value=""><spring:message code="filter.genre"/></option>
                     <c:forEach var="g" items="${genres}">
-                        <option value="${g}" ${genre == g ? 'selected' : ''}>${g}</option>
+                        <option value="${g}" ${genre == g ? 'selected' : ''}>
+                            <spring:message code="genre.${g}"/>
+                        </option>
                     </c:forEach>
                 </select>
 
                 <select name="price" class="filter-item">
-                    <option value="">Seleccione un precio</option>
-                    <option value="alto" ${price == 'alto' ? 'selected' : ''}>Alto</option>
-                    <option value="medio" ${price == 'medio' ? 'selected' : ''}>Medio</option>
-                    <option value="bajo" ${price == 'bajo' ? 'selected' : ''}>Bajo</option>
+                    <option value=""><spring:message code="filter.price"/></option>
+                    <option value="alto" ${price == 'alto' ? 'selected' : ''}><spring:message code="filter.price.high"/></option>
+                    <option value="medio" ${price == 'medio' ? 'selected' : ''}><spring:message code="filter.price.medium"/></option>
+                    <option value="bajo" ${price == 'bajo' ? 'selected' : ''}><spring:message code="filter.price.low"/></option>
                 </select>
 
-                <input type="number" name="minRating" placeholder="Punt. mínima"
+                <input type="number" name="minRating" placeholder="${phMinrating}"
                        class="filter-item" min="0" max="5" step="0.1"
                        value="${minRating != null ? minRating : ''}"/>
-                <input type="number" name="maxRating" placeholder="Punt. máxima"
+                <input type="number" name="maxRating" placeholder="${phMaxrating}"
                        class="filter-item" min="0" max="5" step="0.1"
                        value="${maxRating != null ? maxRating : ''}"/>
             </div>
             <button type="submit" class="btn btn-filter">
                 <i class="fa-solid fa-filter"></i>
                 &nbsp;
-                Filtrar
+                <spring:message code="button.filter"/>
             </button>
         </form>
         <button type="button" class="btn-reset" onclick="window.location.href='<c:url value="/clubs"/>'">
-            <i class="fa-solid fa-rotate-left"></i>
-            Reset
+            <i class="fa-solid fa-rotate-right"></i>
+            <spring:message code="button.reset"/>
         </button>
     </div>
 
-    <%-- Compute if any filter is applied --%>
     <c:set var="anyFilterApplied" value="${not empty name or not empty zone or not empty genre or not empty price or not empty minRating or not empty maxRating}" />
 
-    <%-- Resolve zone display name if zone is set --%>
     <c:if test="${not empty zone}">
         <c:set var="zoneLabel" value="${zone}" />
         <c:forEach var="z" items="${zones}">
@@ -83,27 +89,11 @@
 
     <c:if test="${empty clubs and anyFilterApplied}">
         <div class="no-results">
-            No se encontraron boliches con estos filtros:
-            <ul class="filters-applied">
-                <c:if test="${not empty name}">
-                    <li>Nombre: <strong><c:out value='${name}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty zone}">
-                    <li>Zona: <strong><c:out value='${zoneLabel}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty genre}">
-                    <li>Género: <strong><c:out value='${genre}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty price}">
-                    <li>Precio: <strong><c:out value='${price}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty minRating}">
-                    <li>Punt. mínima: <strong><c:out value='${minRating}'/></strong></li>
-                </c:if>
-                <c:if test="${not empty maxRating}">
-                    <li>Punt. máxima: <strong><c:out value='${maxRating}'/></strong></li>
-                </c:if>
-            </ul>
+            <spring:message code="error.noresults"/>
+            <button type="button" class="btn-reset" style="margin-top:16px;" onclick="window.location.href='<c:url value="/clubs"/>'">
+                <i class="fa-solid fa-rotate-right"></i>
+                <spring:message code="button.reset"/>
+            </button>
         </div>
     </c:if>
 
@@ -118,7 +108,7 @@
                         </c:when>
                         <c:otherwise>
                             <div class="card-no-image">
-                                Bling <br>&nbsp;&nbsp;Bling
+                                <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
                             </div>
                         </c:otherwise>
                     </c:choose>
@@ -127,6 +117,8 @@
                     <div class="card-text-title"><c:out value="${club.clubName}"/></div>
                     <span class="card-text-body">
                     <i class="fa-solid fa-location-dot"></i> <c:out value="${club.location}"/><br>
+                    <i class="fa-solid fa-music"></i> <spring:message code="genre.${club.musicGenre}"/><br>
+                    ️<i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
                      <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
                     <c:set var="decimal" value="${club.rating - ratingInt}" />
                     <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
