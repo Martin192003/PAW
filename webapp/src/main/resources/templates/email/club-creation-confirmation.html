@@ -1,16 +1,79 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #ffffff; /* White */
+            background-color: #2c2c2c; /* Dark gray */
+            margin: 0;
+            padding: 0;
+        }
+
+        h2, h1 {
+            color: #a64ca6; /* Violet */
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p, li {
+            color: #e6e6e6; /* Soft white */
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        a {
+            color: #ffffff; /* White */
+            text-decoration: none;
+        }
+
+        a.button {
+            display: inline-block;
+            background-color: #a64ca6; /* Violet */
+            color: #ffffff; /* White */
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        a.button:hover {
+            background-color: #922d92; /* Darker violet */
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #444; /* Darker gray */
+            border-radius: 8px;
+            background-color: #333333; /* Intermediate gray */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #999999; /* Light gray */
+            margin-top: 20px;
+            border-top: 1px solid #444; /* Separator line */
+            padding-top: 10px;
+        }
+    </style>
     <meta charset="UTF-8">
-    <title>Club Creation Confirmation</title>
+    <title th:text="#{email.club.creation.title}"></title>
 </head>
 <body>
-<h1>Club Created Successfully!</h1>
-<p>Dear user,</p>
-<p>We are excited to inform you that your club "<strong th:text="${clubName}"></strong>" has been successfully created.</p>
-<p>Creation Date: <span th:text="${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')}"></span></p>
-<p>Thank you for using our platform!</p>
-<p>Best regards,</p>
-<p>The Team</p>
+    <h1 th:text="#{email.club.creation.heading}"></h1>
+    <p th:text="#{email.club.creation.greeting}"></p>
+    <p th:text="#{email.club.creation.body(${clubName})}"></p>
+    <p th:text="#{email.club.creation.date(${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')})}"></p>
+    <p th:text="#{email.club.creation.thankyou}"></p>
+    <p th:text="#{email.club.creation.signature}"></p>
 </body>
 </html>
