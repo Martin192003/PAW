@@ -1,13 +1,12 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title><c:out value="${club.clubName}"/> - <spring:message code="title.details"/></title>
+    <title><c:out value="${club.clubName}"/> - Detalles</title>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />" />
@@ -17,11 +16,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+<c:url var="clubUrl" value="/clubs/${club.clubId}"/>
 
 <div class="top-bar">
     <a href="<c:url value='/clubs' />" class="logo-link">
         <div class="app-title">
-            <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
+            Bling <br>&nbsp;&nbsp;Bling
         </div>
     </a>
 </div>
@@ -37,7 +37,7 @@
         <h1 class="detail-title"><c:out value="${club.clubName}"/></h1>
         <button type="button" class="btn btn-success"
                 onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
-            <i class="fa-solid fa-envelope"></i> <spring:message code="button.contact"/>
+            <i class="fa-solid fa-envelope"></i> Contactarse
         </button>
     </div>
 
@@ -56,10 +56,10 @@
                         <c:when test="${club.rating != null}">
                             <span>
                               <fmt:formatNumber value="${club.rating}" minFractionDigits="1" maxFractionDigits="1"/>
-                              (<c:out value="${club.quantityRatings}"/> <spring:message code="rating.reviews"/>)
+                              (<c:out value="${club.quantityRatings}"/> reseñas)
                             </span>
                         </c:when>
-                        <c:otherwise><span><spring:message code="error.norated"/></span></c:otherwise>
+                        <c:otherwise><span>No calificado</span></c:otherwise>
                     </c:choose>
                 </div>
             </div>
@@ -69,45 +69,104 @@
             <p><c:out value="${club.description}" /></p>
         </div>
 
-        <div class="detail-buttons">
-            <div class="dropdown">
-                <button class="dropdown-btn btn btn-success">
-                    <spring:message code="menu.menu"/> <i class="fa-solid fa-chevron-down"></i>
+
+
+        <!-- Fila con 2 dropdowns independientes -->
+        <div class="bb-row">
+            <!-- Dropdown: Carta -->
+            <div class="bb-dropdown" id="dd-menu">
+                <button type="button" class="bb-btn">
+                    <span>Carta</span>
+                    <i class="fa-solid fa-chevron-down"></i>
                 </button>
-                <div class="dropdown-content">
-                    <div class="dropdown-content-grid">
-                        <c:choose>
-                            <c:when test="${empty productsByCategory}">
-                                <p style="padding:12px;"><spring:message code="error.noproducts"/></p>
-                            </c:when>
-                            <c:otherwise>
-                                <c:forEach var="entry" items="${productsByCategory}">
-                                    <div class="drink-category">
-                                        <h3><c:out value="${entry.key}"/></h3>
-                                        <ul>
-                                            <c:forEach var="p" items="${entry.value}">
-                                                <li>
-                                                    <span class="drink-name">
-                                                        <c:out value="${p.productName}"/>
-                                                    </span>
-                                                    <span class="drink-price">
-                                                      <c:choose>
-                                                          <c:when test="${p.basePrice != null}">
-                                                              $<fmt:formatNumber value="${p.basePrice}" type="number" minFractionDigits="0" maxFractionDigits="0"/>
-                                                          </c:when>
-                                                          <c:otherwise>$0</c:otherwise>
-                                                      </c:choose>
-                                                    </span>
-                                                </li>
-                                            </c:forEach>
-                                        </ul>
-                                    </div>
-                                </c:forEach>
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
+                <div class="bb-panel">
+                    <c:choose>
+                        <c:when test="${empty productsByCategory}">
+                            <p class="bb-empty">No hay productos disponibles</p>
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach var="entry" items="${productsByCategory}">
+                                <div class="drink-category">
+                                    <h3><c:out value="${entry.key}"/></h3>
+                                    <ul>
+                                        <c:forEach var="p" items="${entry.value}">
+                                            <li>
+                                                <span class="drink-name"><c:out value="${p.productName}"/></span>
+                                                <span class="drink-price">
+                      $<fmt:formatNumber value="${p.basePrice}" type="number" minFractionDigits="0" maxFractionDigits="0"/>
+                    </span>
+                                            </li>
+                                        </c:forEach>
+                                    </ul>
+                                </div>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </div>
+
+
+
+            <!-- Dropdown: Mesas -->
+            <div class="bb-dropdown" id="dd-tables">
+                <button type="button" class="bb-btn">
+                    <span>Mesas</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+
+                <div class="bb-panel">
+                    <c:url var="reserveUrl" value="/clubs/${club.clubId}/reserve"/>
+                    <form id="reserveForm" method="post" action="${reserveUrl}">
+
+                        <!-- Fila: Fecha + Botón -->
+                        <div class="bb-actions" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+                            <div class="bb-date" style="display:flex; flex-direction:column;">
+                                <label for="bookingDate" class="bb-label" style="margin-bottom:6px;">Fecha de reserva</label>
+                                <input id="bookingDate" name="date" type="date" class="input"
+                                       value="${selectedDate != null ? selectedDate : ''}"
+                                       min="<fmt:formatDate value='${now}' pattern='yyyy-MM-dd'/>" />
+                                <p class="bb-help" id="dateHelp" style="margin-top:6px; max-width:380px;">
+                                    Solo se aceptan <strong>jueves, viernes y sábado</strong>. La franja es
+                                    <strong>23:59 a 06:00</strong> (del día siguiente).
+                                </p>
+                            </div>
+
+                            <button id="reserveBtn" type="submit" class="btn btn-success" disabled
+                                    style="height:40px; align-self:end;">
+                                <i class="fa-solid fa-calendar-check"></i> Reservar
+                            </button>
+                        </div>
+
+                        <c:choose>
+                            <c:when test="${empty availableTables}">
+                                <p class="bb-empty">No hay mesas disponibles</p>
+                            </c:when>
+                            <c:otherwise>
+                                <ul class="table-list">
+                                    <c:forEach var="t" items="${availableTables}">
+                                        <li class="table-item">
+                                            <label class="table-row">
+                                                <input type="radio" name="tableId" value="${t.tableId}" />
+                                                <span class="table-row-text">
+                                                    <strong>Mesa #${t.tableNumber}</strong> · Cap: ${t.capacity}
+                                                </span>
+                                                <span class="table-row-price">
+                                                    $<fmt:formatNumber value="${t.price}" minFractionDigits="0" maxFractionDigits="0"/>
+                                                    <c:if test="${t.discount != null && t.discount > 0}">
+                                                        <small>(desc: $<fmt:formatNumber value="${t.discount}" minFractionDigits="0" maxFractionDigits="0"/>)</small>
+                                                    </c:if>
+                                                </span>
+                                            </label>
+                                        </li>
+                                    </c:forEach>
+                                </ul>
+                            </c:otherwise>
+                        </c:choose>
+                    </form>
+                </div>
+            </div>
+
+
         </div>
 
         <script>
@@ -214,6 +273,7 @@
                 }
             });
         </script>
+
     </div>
 </div>
 </body>
