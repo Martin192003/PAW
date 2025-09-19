@@ -214,7 +214,7 @@ public class ClubController {
             var photos = photoService.listByClub(c.getClubId(), 0, 1);
             if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.get(0).getUrl());
         }
-
+        model.addAttribute("user", userService.findById(userId));
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("zones", Zone.values());

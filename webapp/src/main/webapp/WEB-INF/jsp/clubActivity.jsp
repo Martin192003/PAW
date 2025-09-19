@@ -21,13 +21,15 @@
 </div>
 
 <div class="sidebar">
-    <a href="<c:url value='/clubs/activity?userId=8966c8cf-b910-4d61-b748-c0b77acd9d9a' />"
-       class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">Mis boliches</a>
+    <c:if test="${user.role.name() == 'ADMIN'}">
+        <a href="<c:url value='/clubs/activity?userId=8b780366-0279-48c0-b822-8170d2a7bf7f' />"
+           class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">Mis boliches</a>
+    </c:if>
 
     <a href="#"
        class="sidebar-btn ${activePage == 'reservas' ? 'active' : ''}">Mis reservas</a>
 
-    <a href="<c:url value='/clubs/profile?userId=8966c8cf-b910-4d61-b748-c0b77acd9d9a' />"
+    <a href="<c:url value='/clubs/profile?userId=8b780366-0279-48c0-b822-8170d2a7bf7f' />"
        class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">Mi perfil</a>
 
     <a href="#"
