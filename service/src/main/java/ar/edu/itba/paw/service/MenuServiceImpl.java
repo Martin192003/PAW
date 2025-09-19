@@ -3,6 +3,7 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ProductsDao;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,6 +19,7 @@ public class MenuServiceImpl implements MenuService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Product> getMenuByClub(UUID clubId) {
         return productsDao.findByClub(clubDao.findById(clubId).orElseThrow(IllegalArgumentException::new));
     }

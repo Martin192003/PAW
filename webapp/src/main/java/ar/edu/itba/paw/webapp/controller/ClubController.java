@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.MusicalGenre;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.BadRequestException;
+import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.PhotoService;
 import ar.edu.itba.paw.webapp.form.AddClubForm;
@@ -45,8 +47,8 @@ public class ClubController {
     public String list(
             Model model,
             @RequestParam(value = "name", required = false) String nameLike,
-            @RequestParam(value = "zone", required = false) Zone zone,             // ENUM ✔
-            @RequestParam(value = "genre", required = false) String musicGenre,    // String ✔
+            @RequestParam(value = "zone", required = false) Zone zone,
+            @RequestParam(value = "genre", required = false) String musicGenre,
             @RequestParam(value = "price", required = false) String priceRange,
             @RequestParam(value = "minRating", required = false) BigDecimal minRating,
             @RequestParam(value = "maxRating", required = false) BigDecimal maxRating
@@ -70,8 +72,6 @@ public class ClubController {
 
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
-
-        // repintar filtros
         model.addAttribute("name", nameLike);
         model.addAttribute("zone", zone);
         model.addAttribute("genre", musicGenre);
@@ -88,6 +88,7 @@ public class ClubController {
 
     @GetMapping("/new")
     public String showClubForm(Model model) {
+
         model.addAttribute("clubForm", new AddClubForm());
         model.addAttribute("postPath", "/clubs/create");
         model.addAttribute("priceValues", Price.values());
@@ -111,7 +112,10 @@ public class ClubController {
             return "club_form";
         }
 
-        User contactInfo = userService.findById(UUID.fromString("e4774564-d317-4a70-a64a-49b286c09285"));
+        User contactInfo = userService.findById(UUID.fromString("d3eca35f-2476-4d93-bd26-17e47bd09f32"));
+        if(contactInfo == null) {
+            throw new IllegalStateException("No se encontró el usuario de contacto por defecto.");
+        }
 
         Club newClub = clubService.create(
                 addClubForm.getName(),
@@ -134,7 +138,11 @@ public class ClubController {
                         image.getBytes()
                 );
             } catch (IOException e) {
+                throw new BadRequestException("Error al crear el imagen");
             }
+        }
+        if (newClub == null) {
+            throw new DuplicateEntityException("No se pudo crear el club");
         }
 
         return "redirect:/clubs/" + newClub.getClubId();
