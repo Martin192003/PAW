@@ -19,6 +19,7 @@
         <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
     </a>
     <a href="<c:url value='/clubs/new' />" class="add-club-btn">Añadir Boliche</a>
+    <a href="<c:url value='/clubs/activity?userId=8966c8cf-b910-4d61-b748-c0b77acd9d9a' />" class="edit-club-btn">Mi actividad</a>
 </div>
 
 <div class="app-boliches">

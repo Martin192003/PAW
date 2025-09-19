@@ -43,4 +43,32 @@ public class ClubServiceImpl implements ClubService{
                                      BigDecimal maxRating) {
         return clubDao.search(nameLike, location, musicGenre, priceRange, minRating, maxRating);
     }
+
+    @Override
+    public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone) {
+        return clubDao.update(clubId, name, location, rating, quantityRatings, priceRange, description, contactInfoId, musicGenre, zone);
+    }
+
+    // ClubService.java
+    public Club updateClub(Club club) {
+        return clubDao.update(
+                club.getClubId(),
+                club.getClubName(),
+                club.getLocation(),
+                club.getRating(),
+                club.getQuantityRatings(),
+                club.getPriceRange(),
+                club.getDescription(),
+                club.getContactInfo() != null ? club.getContactInfo().getId() : null,
+                club.getMusicGenre(),
+                club.getZone()
+        );
+    }
+
+    @Override
+    public List<Club> getClubsByUser(UUID userId) {
+        return clubDao.findByUserId(userId);
+    }
+
+
 }

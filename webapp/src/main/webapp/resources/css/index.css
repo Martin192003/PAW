@@ -168,3 +168,58 @@ select.filter-item option {
     box-shadow: 0 0 20px rgba(213, 0, 249, 0.9);
     transform: scale(1.05);
 }
+
+.edit-club-btn {
+    font-family: 'Darklinos', Arial, sans-serif;
+    background: #000;
+    color: #ffd600;
+    letter-spacing: 1px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 0 0 12px rgba(255, 214, 0, 0.7);
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-block;
+}
+.edit-club-btn:hover {
+    box-shadow: 0 0 20px rgba(255, 214, 0, 0.9);
+    transform: scale(1.05);
+    color: #fff700;
+}
+
+.panel-content {
+    margin-left: 180px;
+    padding: 30px;
+    padding-top: 100px;
+}
+
+.club-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.club-image {
+    max-width: 300px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.edit-field-btn {
+    margin-left: 12px;
+    background: #9c27b0;
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.95em;
+    font-family: 'Darklinos', Arial, sans-serif;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.edit-field-btn:hover {
+    background: #d500f9;
+    color: #fff700;
+}

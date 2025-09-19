@@ -22,4 +22,6 @@ public interface ClubDao {
     Integer incrementQuantityRatings(UUID clubId, int delta);
 
     List<Club> search(String nameLike, Zone location, String musicGenre, String priceRange, BigDecimal minRating, BigDecimal maxRating);
+
+    List<Club> findByUserId(UUID userId);
 }

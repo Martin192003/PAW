@@ -5,8 +5,8 @@ import ar.edu.itba.paw.model.MusicalGenre;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.*;
-import ar.edu.itba.paw.service.ClubService;
-import ar.edu.itba.paw.service.PhotoService;
+import ar.edu.itba.paw.model.exceptions.NotFoundException;
+import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.AddClubForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.io.IOException;
 import java.util.UUID;
-import ar.edu.itba.paw.service.UserService;
 
 import javax.validation.Valid;
 import java.util.*;
@@ -32,13 +31,16 @@ public class ClubController {
     private final ClubService clubService;
     private final PhotoService photoService;
     private final UserService userService;
+    private final MenuService menuService;
+    private final ProductService productService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
-
+        this.menuService = menuService;
+        this.productService = productService;
     }
 
     @GetMapping({"", "/"})
@@ -111,7 +113,7 @@ public class ClubController {
             return "club_form";
         }
 
-        User contactInfo = userService.findById(UUID.fromString("e4774564-d317-4a70-a64a-49b286c09285"));
+        User contactInfo = userService.findById(UUID.fromString("52245a75-b3a3-4b2f-8921-3fb98ff10bc3"));
 
         Club newClub = clubService.create(
                 addClubForm.getName(),
@@ -140,8 +142,116 @@ public class ClubController {
         return "redirect:/clubs/" + newClub.getClubId();
     }
 
+    @GetMapping("/handle")
+    public String handleClub(
+            @RequestParam("clubId") UUID clubId,
+            Model model
+    ) {
+        var maybeClub = clubService.getClubById(clubId);
+        if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
+        var club = maybeClub.get();
 
+        var photos = photoService.listByClub(clubId, 0, 1);
+        String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
 
+        model.addAttribute("club", club);
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("zones", Zone.values());
+        model.addAttribute("genres", MusicalGenre.values());
+        model.addAttribute("prices", Price.values());
+        model.addAttribute("menu", menuService.getMenuByClub(clubId));
+
+        return "clubHandler";
+    }
+
+    @PostMapping("/editField")
+    public String editField(
+            @RequestParam("clubId") UUID clubId,
+            @RequestParam("field") String field,
+            @RequestParam("value") String value,
+            Model model
+    ) {
+        var maybeClub = clubService.getClubById(clubId);
+        if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
+        Club club = maybeClub.get();
+
+        switch (field) {
+            case "clubName":
+                club.setClubName(value);
+                break;
+            case "location":
+                club.setLocation(value);
+                break;
+            case "priceRange":
+                club.setPriceRange(Price.valueOf(value.toUpperCase()));
+                break;
+            case "description":
+                club.setDescription(value);
+                break;
+            case "zone":
+                club.setZone(Zone.valueOf(value));
+                break;
+            case "musicGenre":
+                club.setMusicGenre(MusicalGenre.valueOf(value));
+                break;
+            default:
+                throw new IllegalArgumentException("Campo inválido: " + field);
+        }
+
+        clubService.updateClub(club);
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @GetMapping("/activity")
+    public String userClubs(
+            @RequestParam("userId") UUID userId,
+            Model model
+    ) {
+        List<Club> clubs = clubService.getClubsByUser(userId);
+
+        Map<UUID, String> photoUrlByClub = new HashMap<>();
+        for (Club c : clubs) {
+            var photos = photoService.listByClub(c.getClubId(), 0, 1);
+            if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.get(0).getUrl());
+        }
+
+        model.addAttribute("clubs", clubs);
+        model.addAttribute("photoUrlByClub", photoUrlByClub);
+        model.addAttribute("zones", Zone.values());
+        model.addAttribute("genres", MusicalGenre.values());
+        return "clubActivity";
+    }
+
+    @PostMapping("/editProductPrice")
+    public String editProductPrice(
+            @RequestParam("productId") UUID productId,
+            @RequestParam("basePrice") BigDecimal basePrice
+    ) {
+        var product = productService.findById(productId).orElseThrow();
+        productService.update(productId, product.getClub().getClubId(), product.getProductName(),
+                product.getDescription(), basePrice, product.getProductType(), product.getIsAvailable());
+        return "redirect:/clubs/handle?clubId=" + product.getClub().getClubId();
+    }
+
+    @PostMapping("/deleteProduct")
+    public String deleteProduct(@RequestParam("productId") UUID productId) {
+        var product = productService.findById(productId).orElseThrow();
+        productService.delete(productId);
+        return "redirect:/clubs/handle?clubId=" + product.getClub().getClubId();
+    }
+
+    @PostMapping("/addProduct")
+    public String addProduct(
+            @RequestParam("clubId") UUID clubId,
+            @RequestParam("productName") String name,
+            @RequestParam("description") String description,
+            @RequestParam("basePrice") BigDecimal basePrice,
+            @RequestParam("productType") String type
+    ) {
+        var club = clubService.getClubById(clubId).orElseThrow();
+        productService.create(club, name, description, basePrice, ProductType.fromDb(type), true);
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
 
 
 }

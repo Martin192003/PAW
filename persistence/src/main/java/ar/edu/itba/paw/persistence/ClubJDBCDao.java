@@ -232,4 +232,10 @@ public class ClubJDBCDao implements ClubDao {
         return "%" + escapeLike(s.trim()) + "%";
     }
 
+    @Override
+    public List<Club> findByUserId(UUID userId) {
+        final String sql = "SELECT * FROM clubs WHERE contact_info = ? ORDER BY club_name ASC";
+        return jdbc.query(sql, ROW_MAPPER, userId);
+    }
+
 }
