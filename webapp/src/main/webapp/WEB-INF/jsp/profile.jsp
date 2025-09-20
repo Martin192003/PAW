@@ -23,14 +23,14 @@
 
 <div class="sidebar">
     <c:if test="${user.role.name() == 'ADMIN'}">
-        <a href="<c:url value='/clubs/activity?userId=8b780366-0279-48c0-b822-8170d2a7bf7f' />"
+        <a href="<c:url value='/clubs/activity?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />"
            class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">Mis boliches</a>
     </c:if>
 
     <a href="#"
        class="sidebar-btn ${activePage == 'reservas' ? 'active' : ''}">Mis reservas</a>
 
-    <a href="<c:url value='/clubs/profile?userId=8b780366-0279-48c0-b822-8170d2a7bf7f' />"
+    <a href="<c:url value='/clubs/profile?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />"
        class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">Mi perfil</a>
 
     <a href="#"
@@ -38,15 +38,33 @@
 </div>
 
 
-<div class="mi-perfil">
-    <h1>Mi perfil</h1>
-    <div class="perfil-card">
-        <p><strong>Nombre:</strong> ${user.username}</p>
-        <p><strong>Apellido:</strong> ${user.surname}</p>
-        <p><strong>Email:</strong> ${user.email}</p>
-        <p><strong>Celular:</strong> ${user.cellphone}</p>
-        <p><strong>Rol:</strong> ${user.role}</p>
-        <p><strong>Fecha de creación:</strong> ${user.createdAt}</p>
+<div class="profile-page">
+    <h1 class="profile-title">Mi perfil</h1>
+    <div class="profile-card">
+        <div class="profile-info-row">
+            <span class="profile-label">Nombre:</span>
+            <span class="profile-value">${user.username}</span>
+        </div>
+        <div class="profile-info-row">
+            <span class="profile-label">Apellido:</span>
+            <span class="profile-value">${user.surname}</span>
+        </div>
+        <div class="profile-info-row">
+            <span class="profile-label">Email:</span>
+            <span class="profile-value">${user.email}</span>
+        </div>
+        <div class="profile-info-row">
+            <span class="profile-label">Celular:</span>
+            <span class="profile-value">${user.cellphone}</span>
+        </div>
+        <div class="profile-info-row">
+            <span class="profile-label">Rol:</span>
+            <span class="profile-value">${user.role}</span>
+        </div>
+        <div class="profile-info-row">
+            <span class="profile-label">Fecha de creación:</span>
+            <span class="profile-value">${user.createdAt}</span>
+        </div>
     </div>
 </div>
 </body>

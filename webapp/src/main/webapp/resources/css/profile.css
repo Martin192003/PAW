@@ -1,36 +1,69 @@
-.mi-perfil {
-    margin-left: 220px; /* para que no choque con sidebar */
-    padding: 80px 40px; /* padding-top grande por la top-bar */
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
+.profile-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 110px;
     min-height: 100vh;
+    background: #1b1a1a;
 }
 
-.mi-perfil h1 {
-    font-size: 28px;
-    margin-bottom: 20px;
-    color: #333;
+.profile-title {
+    font-size: 2.2rem;
+    color: #9c27b0;
+    margin-bottom: 32px;
+    font-family: 'Darklinos', Arial, sans-serif;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.perfil-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 25px 30px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    max-width: 500px;
-}
-
-.perfil-card p {
-    margin: 12px 0;
-    font-size: 16px;
-    color: #555;
-}
-
-.perfil-card strong {
-    color: #222;
-}
-
-.sidebar-btn.active {
-    background-color: #333;
+.profile-card {
+    background: #3c3c3c;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(156, 39, 176, 0.12);
+    padding: 38px 44px;
+    min-width: 340px;
+    max-width: 420px;
+    width: 100%;
     color: #fff;
+    font-size: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.profile-info-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.profile-label {
+    width: 160px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 1.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-value {
+    color: #fff;
+    margin-left: 10px;
+    word-break: break-all;
+    font-size: 0.9em;
+}
+
+@media (max-width: 600px) {
+    .profile-card {
+        padding: 22px 10px;
+        min-width: unset;
+        max-width: 98vw;
+    }
+    .profile-title {
+        font-size: 1.3rem;
+    }
 }

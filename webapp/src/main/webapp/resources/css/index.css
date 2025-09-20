@@ -49,7 +49,7 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     z-index: 99;
 }
 .app-boliches {
@@ -222,4 +222,39 @@ select.filter-item option {
 .edit-field-btn:hover {
     background: #d500f9;
     color: #fff700;
+}
+.profile-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #9c27b0, #d500f9);
+    color: #fff;
+    font-size: 1.6rem;
+    margin-left: 18px;
+    border: none;
+    box-shadow: 0 0 12px rgba(156, 39, 176, 0.7);
+    transition: box-shadow 0.3s, transform 0.2s;
+    text-decoration: none;
+    position: relative;
+    top: 0px;
+}
+.profile-btn:hover {
+    box-shadow: 0 0 20px rgba(213, 0, 249, 0.9);
+    transform: scale(1.08);
+}
+.right-buttons {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    right: 30px;
+    top: 20px;
+}
+.add-club-btn {
+    position: static;
+    margin-right: 12px;
+    top: 0;
+    right: 0;
 }

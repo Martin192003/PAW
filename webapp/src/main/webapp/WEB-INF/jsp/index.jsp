@@ -18,10 +18,13 @@
     <a href="<c:url value='/clubs' />" class="logo-link">
         <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
     </a>
-    <a href="<c:url value='/clubs/new' />" class="add-club-btn">Añadir Boliche</a>
-    <a href="<c:url value='/clubs/profile?userId=8b780366-0279-48c0-b822-8170d2a7bf7f' />" class="edit-club-btn">Mi actividad</a>
+    <div class="right-buttons">
+        <a href="<c:url value='/clubs/new' />" class="add-club-btn">Añadir Boliche</a>
+        <a href="<c:url value='/clubs/profile?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />" class="profile-btn" title="Mi perfil">
+            <i class="fa-solid fa-user"></i>
+        </a>
+    </div>
 </div>
-
 <div class="app-boliches">
     <div class="filter-container">
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">

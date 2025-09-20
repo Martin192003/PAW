@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />">
+    <link rel="stylesheet" href="<c:url value='/resources/css/clubActivity.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/sidebar.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -22,14 +22,14 @@
 
 <div class="sidebar">
     <c:if test="${user.role.name() == 'ADMIN'}">
-        <a href="<c:url value='/clubs/activity?userId=8b780366-0279-48c0-b822-8170d2a7bf7f' />"
+        <a href="<c:url value='/clubs/activity?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />"
            class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">Mis boliches</a>
     </c:if>
 
     <a href="#"
        class="sidebar-btn ${activePage == 'reservas' ? 'active' : ''}">Mis reservas</a>
 
-    <a href="<c:url value='/clubs/profile?userId=8b780366-0279-48c0-b822-8170d2a7bf7f' />"
+    <a href="<c:url value='/clubs/profile?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />"
        class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">Mi perfil</a>
 
     <a href="#"
@@ -37,7 +37,7 @@
 </div>
 
 <div class="app-boliches">
-    <h1>Mis boliches</h1>
+    <h1 class="clubActivity-title">Mis boliches</h1>
     <c:forEach var="club" items="${clubs}">
         <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">
             <div class="card-content">
@@ -61,14 +61,25 @@
                             ${club.rating}<br>
                         <c:out value="${club.description}"/>
                     </span>
-                    <br>
-                    <a href="<c:url value='/clubs/handle?clubId=${club.clubId}' />" class="edit-field-btn">
-                        Editar Boliche
-                    </a>
                 </div>
             </div>
         </t:card>
     </c:forEach>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.boliche-card');
+        cards.forEach(card => {
+            card.addEventListener('click', function() {
+                const clubId = this.getAttribute('data-id');
+                if (clubId) {
+                    window.location.href = '<c:url value="/clubs/handle?clubId=" />' + clubId;
+                }
+            });
+            card.style.cursor = 'pointer';
+        });
+    });
+</script>
 </body>
 </html>
