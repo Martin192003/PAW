@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.exceptions.UsernameNotFoundException;
+import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.persistence.UserJDBCDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
@@ -61,6 +61,6 @@ public class SecurityServiceImpl implements SecurityService{
 
     @Override
     public User getVerifiedLoggedUser() {
-        return getLoggedUser().orElseThrow(UsernameNotFoundException::new);
+        return getLoggedUser().orElseThrow(UserNotFoundException::new);
     }
 }
