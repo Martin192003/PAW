@@ -259,10 +259,11 @@ public class ClubController {
     public String showProfile(@RequestParam UUID userId, Model model) {
         User user = userService.findById(userId);
         if (user == null) {
-            return "redirect:/error"; // o mostrar mensaje de usuario no encontrado
+            return "redirect:/error";
         }
         model.addAttribute("user", user);
         model.addAttribute("activePage", "profile");
         return "profile";
     }
+
 }

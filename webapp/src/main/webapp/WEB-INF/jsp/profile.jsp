@@ -20,24 +20,8 @@
         <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
     </a>
 </div>
-
-<div class="sidebar">
-    <c:if test="${user.role.name() == 'ADMIN'}">
-        <a href="<c:url value='/clubs/activity?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />"
-           class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">Mis boliches</a>
-    </c:if>
-
-    <a href="#"
-       class="sidebar-btn ${activePage == 'reservas' ? 'active' : ''}">Mis reservas</a>
-
-    <a href="<c:url value='/clubs/profile?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />"
-       class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">Mi perfil</a>
-
-    <a href="#"
-       class="sidebar-btn ${activePage == 'ayuda' ? 'active' : ''}">Ayuda</a>
-</div>
-
-
+<c:set var="activePage" value="profile" />
+<%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 <div class="profile-page">
     <h1 class="profile-title">Mi perfil</h1>
     <div class="profile-card">
