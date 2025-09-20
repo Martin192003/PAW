@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #ffffff; /* White */
+            background-color: #2c2c2c; /* Dark gray */
+            margin: 0;
+            padding: 0;
+        }
+
+        h2, h1 {
+            color: #a64ca6; /* Violet */
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p, li {
+            color: #e6e6e6; /* Soft white */
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        a {
+            color: #ffffff; /* White */
+            text-decoration: none;
+        }
+
+        a.button {
+            display: inline-block;
+            background-color: #a64ca6; /* Violet */
+            color: #ffffff; /* White */
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        a.button:hover {
+            background-color: #922d92; /* Darker violet */
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #444; /* Darker gray */
+            border-radius: 8px;
+            background-color: #333333; /* Intermediate gray */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #999999; /* Light gray */
+            margin-top: 20px;
+            border-top: 1px solid #444; /* Separator line */
+            padding-top: 10px;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <!--
+    <title th:text="#{email.registration.title(${username})}"></title>
+    -->
+    <title> ¡Bienvenido! </title>
+</head>
+<body>
+<!--
+    <h1 th:text="#{email.registration.title(${username})}"></h1>
+    <p th:text="#{email.registration.body}"></p>
+    <p th:text="#{email.registration.date(${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')})}"></p>
+    <p th:text="#{email.registration.closing}"></p>
+    <p th:text="#{email.registration.signature}"></p>
+   -->
+    <h1>Bienvenido, <span th:text="${username}"> </span>!</h1>
+    <p>Gracias por registrarte en nuestra plataforma.</p>
+    <p>Tu registro se completó con éxito el <span th:text="${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')}"> </span>.</p>
+    <p>¡Estamos emocionados de tenerte con nosotros!</p>
+    <p>Bling Bling</p>
+</body>
+</html>

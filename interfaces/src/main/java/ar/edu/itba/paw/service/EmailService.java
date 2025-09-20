@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import java.util.Map;
+import ar.edu.itba.paw.model.*;
 import java.util.concurrent.CompletableFuture;
 
 public interface EmailService {
@@ -13,9 +14,9 @@ public interface EmailService {
             String ctaText,
             String ctaUrl
     );
+    boolean sendContact(String to, String clubName, String fromEmail, String name, String phone, String message);
+    void sendBookingConfirmationToUser(User user, Club club, Table table, Booking booking);
+    void sendBookingNotificationToOwner(Club club, Table table, Booking booking);
 
-    CompletableFuture<Void> sendBookingInquiry(String to, Map<String, Object> model, String ctaUrl);
-
-    CompletableFuture<Void> sendBookingConfirmation(String to, Map<String, Object> model, String ctaUrl);
 }
 

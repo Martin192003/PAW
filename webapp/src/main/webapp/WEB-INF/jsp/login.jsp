@@ -13,25 +13,28 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/contactForm.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/login.css' />" />
     <meta charset="UTF-8">
-    <title>Login</title>
+    <title><spring:message code="title.login"/> </title>
 </head>
 <body>
 
 <div class="login-page">
     <div class="login-group">
         <div class="app-title">
-            Bling <br>&nbsp;&nbsp;Bling
+            <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
         </div>
         <div class="login-card">
             <div class="login-title">
-                Inicia sesión
+                <spring:message code="title.login"/>
             </div>
+            <spring:message code="form.username" var="phUser"/>
+            <spring:message code="form.password" var="phPassword"/>
+
             <form method="post" action="${pageContext.request.contextPath}/login">
                 <div class="form-group">
-                    <input id="username" name="j_username" class="form-control" placeholder="Usuario"/>
+                    <input id="usernameOrEmail" name="usernameOrEmail" type="text" class="form-control" placeholder="${phUser}"/>
                 </div>
                 <div class="form-group">
-                    <input id="password" name="j_password" type="password" class="form-control" placeholder="Contraseña"/>
+                    <input id="password" name="password" type="password" class="form-control" placeholder="${phPassword}"/>
                 </div>
                 <div>
                     <label>
@@ -44,8 +47,8 @@
                     </div>
                 </c:if>
                 <div class="login-buttons">
-                    <button type="submit" class="btn btn-success">Ingresar</button>
-                    <a href="<c:url value='/register' />" class="login-forgot">¿No tienes cuenta? Registrate</a>
+                    <button type="submit" class="btn btn-success"> <spring:message code="button.login"/> </button>
+                    <a href="<c:url value='/register' />" class="login-forgot"><spring:message code="login.noaccount"/></a>
                 </div>
             </form>
         </div>

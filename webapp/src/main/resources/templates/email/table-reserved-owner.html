@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Nueva reserva de mesa</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <style>
+        body{margin:0;padding:0;background:#0d0f15;color:#F2F4F8;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;}
+        a{color:#8AB4F8;text-decoration:underline;}
+        .wrapper{max-width:560px;margin:0 auto;padding:24px;}
+        .card{background:#121826;border:1px solid #2A3547;border-radius:10px;padding:28px;}
+        h1{margin:0 0 14px;font-size:21px;font-weight:700;color:#ffffff;}
+        p{line-height:1.6;margin:0 0 14px;font-size:15px;}
+        ul{list-style:none;padding:0;margin:0 0 18px;}
+        li{background:#0F172A;border:1px solid #2A3547;margin:0 0 8px;padding:10px 14px;border-radius:6px;font-size:14px;}
+        .cta{display:inline-block;background:#7E22CE;color:#ffffff !important;padding:12px 26px;border-radius:40px;font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+        .cta:hover{background:#6B21A8;}
+        .cta:focus-visible{outline:3px solid #8AB4F8;outline-offset:2px;border-radius:44px;}
+        .header{text-align:center;margin:0 0 26px;}
+        .brand{font-size:26px;font-weight:800;color:#ffffff;margin:12px 0 0;letter-spacing:.8px;}
+        .logo{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #7E22CE;box-shadow:0 0 0 4px #1C222C;}
+        .footer{margin-top:30px;text-align:center;font-size:12px;color:#C0CAD6;line-height:1.5;}
+        .muted{color:#C0CAD6;font-size:13px;margin-top:8px;}
+        .divider{height:1px;background:#2A3547;margin:24px 0;border:none;}
+        .tag{display:inline-block;background:#7E22CE;color:#fff;font-size:12px;font-weight:800;padding:5px 12px;border-radius:20px;letter-spacing:.6px;margin-bottom:18px;text-transform:uppercase;}
+        table.meta{width:100%;border-collapse:collapse;margin:6px 0 14px;}
+        table.meta td{padding:8px 0;font-size:14px;border-bottom:1px solid #2A3547;}
+        table.meta td.label{color: #ffffff;width:34%;font-weight:600;}
+        .value{color: #ffffff !important;font-weight:600;}
+        [data-ogsc] .value{color: #ffffff !important;}
+        @media (prefers-color-scheme: light){
+            body{background:#F3F5F9;color:#1D2430;}
+            a{color:#1A73E8;}
+            .card{background:#FFFFFF;border-color:#DBE2EA;}
+            li{background:#F7FAFE;border:1px solid #E3E8EF;}
+            table.meta td{border-bottom:1px solid #E3E8EF;}
+            .footer{color:#5C6773;}
+            .divider{background:#E3E8EF;}
+            .logo{box-shadow:0 0 0 4px #EEF2F7;}
+            .cta{background:#6B21A8;}
+            .cta:hover{background:#581C87;}
+            .tag{background:#6B21A8;}
+            .value{color:#1D2430 !important;}
+        }
+        @media only screen and (max-width:620px){
+            .wrapper{padding:16px;}
+            .card{padding:22px;}
+            h1{font-size:19px;}
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="header">
+        <img th:if="${logoUrl != null}" th:src="${logoUrl}" alt="Logo" class="logo"/>
+        <div class="brand" th:text="${brandName != null ? brandName : 'NightClub'}">NightClub</div>
+    </div>
+    <div class="card">
+        <span class="tag">Nueva reserva</span>
+        <h1>Nueva reserva de mesa</h1>
+        <p>Se registró una nueva reserva en <b th:text="${clubName}">Club</b>. Detalles:</p>
+        <table class="meta" role="presentation">
+            <tr>
+                <td class="label">Mesa</td>
+                <td><span class="value"> #<span class="value" th:text="${tableNumber}">1</span> (cap. <span class="value" th:text="${capacity}">4</span>)</span></td>
+            </tr>
+            <tr th:if="${dateTime != null}">
+                <td class="label">Horario</td>
+                <td><span class="value" th:text="${dateTime}">22:30</span></td>
+            </tr>
+            <tr th:if="${areaName != null}">
+                <td class="label">Sector</td>
+                <td><span class="value" th:text="${areaName}">VIP</span></td>
+            </tr>
+            <tr>
+                <td class="label">Usuario</td>
+                <td><span class="value" th:text="${username}">user</span> (<a class="value" th:href="'mailto:'+${userEmail}" th:text="${userEmail}">mail</a>)</td>
+            </tr>
+        </table>
+        <p style="text-align:center;margin:26px 0 6px;">
+            <a class="cta" th:href="${ctaUrl}" th:text="${ctaText}">Abrir panel</a>
+        </p>
+        <hr class="divider"/>
+        <p class="muted">Generado el <span th:text="${#temporals.format(sentAt, 'dd/MM/yyyy HH:mm')}">fecha</span>.</p>
+    </div>
+    <div class="footer">
+        <p th:text="${brandFooter != null ? brandFooter : '© 2025 BlingBling. Panel de administración.'}">© 2025 NightClub. Panel de administración.</p>
+        <p>Este correo es automático. No responder.</p>
+    </div>
+</div>
+</body>
+</html>
