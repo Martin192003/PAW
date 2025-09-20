@@ -31,10 +31,10 @@
 
             <form method="post" action="${pageContext.request.contextPath}/login">
                 <div class="form-group">
-                    <input id="username" name="j_username" class="form-control" placeholder="${phUser}"/>
+                    <input id="usernameOrEmail" name="usernameOrEmail" type="text" class="form-control" placeholder="${phUser}"/>
                 </div>
                 <div class="form-group">
-                    <input id="password" name="j_password" type="password" class="form-control" placeholder="${phPassword}"/>
+                    <input id="password" name="password" type="password" class="form-control" placeholder="${phPassword}"/>
                 </div>
                 <div>
                     <label>

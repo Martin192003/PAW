@@ -87,4 +87,14 @@ public class UserServiceImpl implements UserService {
         return userDao.findByRole(role);
     }
 
+    public boolean authenticateUsernameOrEmail(String usernameOrEmail, String password){
+        User user = userDao.findByUserName(usernameOrEmail).orElse(null);
+        if(user == null){
+            user = userDao.findByEmail(usernameOrEmail).orElse(null);
+            System.out.println("User not found: " + usernameOrEmail); // Debug log
+
+            if(user == null) return false;
+        }
+        return passwordEncoder.matches(password, user.getPassword());
+    }
 }
