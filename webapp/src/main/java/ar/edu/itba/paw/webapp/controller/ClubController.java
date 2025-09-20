@@ -9,6 +9,7 @@ import ar.edu.itba.paw.model.exceptions.BadRequestException;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.PhotoService;
+import ar.edu.itba.paw.service.SecurityService;
 import ar.edu.itba.paw.webapp.form.AddClubForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -34,12 +35,14 @@ public class ClubController {
     private final ClubService clubService;
     private final PhotoService photoService;
     private final UserService userService;
+    private final SecurityService securityService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, SecurityService securityService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
+        this.securityService = securityService;
 
     }
 
@@ -112,11 +115,10 @@ public class ClubController {
             return "club_form";
         }
 
-        User contactInfo = userService.findById(UUID.fromString("d3eca35f-2476-4d93-bd26-17e47bd09f32"));
+        User contactInfo = securityService.getVerifiedLoggedUser();
         if(contactInfo == null) {
             throw new IllegalStateException("No se encontró el usuario de contacto por defecto.");
         }
-
         Club newClub = clubService.create(
                 addClubForm.getName(),
                 addClubForm.getDescription(),

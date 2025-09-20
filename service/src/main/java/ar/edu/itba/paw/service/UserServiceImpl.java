@@ -19,12 +19,14 @@ public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
+    private final MailService mailService;
 
 
     @Autowired
-    public UserServiceImpl(final UserDao userDao, final PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(final UserDao userDao, final PasswordEncoder passwordEncoder, final MailService mailService) {
         this.passwordEncoder = passwordEncoder;
         this.userDao = userDao;
+        this.mailService = mailService;
     }
 
     @Override
@@ -36,7 +38,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User create(String username, String password, String surname, String email, String cellphone, String role) {
-        return userDao.create(username, passwordEncoder.encode(password), surname, email, cellphone, Role.USER);
+        User newUser = userDao.create(username, passwordEncoder.encode(password), surname, email, cellphone, Role.USER);
+        mailService.sendUserRegistrationConfirmation(email, username);
+        return newUser;
     }
 
     @Override
