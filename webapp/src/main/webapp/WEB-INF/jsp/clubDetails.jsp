@@ -1,12 +1,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title><c:out value="${club.clubName}"/> - Detalles</title>
+    <title><c:out value="${club.clubName}"/> - <spring:message code="title.details"/></title>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />" />
@@ -21,7 +22,7 @@
 <div class="top-bar">
     <a href="<c:url value='/clubs' />" class="logo-link">
         <div class="app-title">
-            Bling <br>&nbsp;&nbsp;Bling
+            <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
         </div>
     </a>
 </div>
@@ -37,29 +38,32 @@
         <h1 class="detail-title"><c:out value="${club.clubName}"/></h1>
         <button type="button" class="btn btn-success"
                 onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
-            <i class="fa-solid fa-envelope"></i> Contactarse
+            <i class="fa-solid fa-envelope"></i> <spring:message code="button.contact"/>
         </button>
     </div>
 
 
     <div class="detail-content">
-        <img src="<c:url value='${coverPhotoUrl}' />"
-             alt="<c:out value='${club.clubName}'/>" class="detail-image">
+        <c:if test="${not empty coverPhotoUrl}">
+            <img src="<c:url value='${coverPhotoUrl}' />"
+                 alt="<c:out value='${club.clubName}'/>" class="detail-image">
+        </c:if>
 
         <div class="detail-info">
             <div class="detail-details">
-                <span>📍<c:out value="${locationText}"/></span><br>
-                <span>🎸${genreText}</span>
+                <span><i class="fa-solid fa-location-dot"></i><c:out value="${locationText}"/></span><br>
+                <span><i class="fa-solid fa-music"></i><spring:message code="genre.${club.musicGenre}"/></span><br>
+                <i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
                 <div>
                     <i class="fa-solid fa-star" style="color:#FFD700;"></i>
                     <c:choose>
                         <c:when test="${club.rating != null}">
                             <span>
                               <fmt:formatNumber value="${club.rating}" minFractionDigits="1" maxFractionDigits="1"/>
-                              (<c:out value="${club.quantityRatings}"/> reseñas)
+                              (<c:out value="${club.quantityRatings}"/> <spring:message code="rating.reviews"/>)
                             </span>
                         </c:when>
-                        <c:otherwise><span>No calificado</span></c:otherwise>
+                        <c:otherwise><span><spring:message code="error.norated"/></span></c:otherwise>
                     </c:choose>
                 </div>
             </div>
@@ -76,13 +80,13 @@
             <!-- Dropdown: Carta -->
             <div class="bb-dropdown" id="dd-menu">
                 <button type="button" class="bb-btn">
-                    <span>Carta</span>
+                    <span><spring:message code="menu.menu"/></span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="bb-panel">
                     <c:choose>
                         <c:when test="${empty productsByCategory}">
-                            <p class="bb-empty">No hay productos disponibles</p>
+                            <p class="bb-empty"><spring:message code="error.noproductsavailable"/></p>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="entry" items="${productsByCategory}">
@@ -110,7 +114,7 @@
             <!-- Dropdown: Mesas -->
             <div class="bb-dropdown" id="dd-tables">
                 <button type="button" class="bb-btn">
-                    <span>Mesas</span>
+                    <span><spring:message code="button.tables"/></span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
 
@@ -121,25 +125,25 @@
                         <!-- Fila: Fecha + Botón -->
                         <div class="bb-actions" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
                             <div class="bb-date" style="display:flex; flex-direction:column;">
-                                <label for="bookingDate" class="bb-label" style="margin-bottom:6px;">Fecha de reserva</label>
+                                <label for="bookingDate" class="bb-label" style="margin-bottom:6px;"><spring:message code="title.reservation"/></label>
                                 <input id="bookingDate" name="date" type="date" class="input"
                                        value="${selectedDate != null ? selectedDate : ''}"
                                        min="<fmt:formatDate value='${now}' pattern='yyyy-MM-dd'/>" />
                                 <p class="bb-help" id="dateHelp" style="margin-top:6px; max-width:380px;">
-                                    Solo se aceptan <strong>jueves, viernes y sábado</strong>. La franja es
-                                    <strong>23:59 a 06:00</strong> (del día siguiente).
+                                    <spring:message code="tables.accept"/> <strong><spring:message code="tables.days"/></strong>. <spring:message code="tables.time"/>
+                                    <strong>23:59 <spring:message code="tables.to"/> 06:00</strong> (<spring:message code="tables.nextday"/>).
                                 </p>
                             </div>
 
                             <button id="reserveBtn" type="submit" class="btn btn-success" disabled
                                     style="height:40px; align-self:end;">
-                                <i class="fa-solid fa-calendar-check"></i> Reservar
+                                <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
                             </button>
                         </div>
 
                         <c:choose>
                             <c:when test="${empty availableTables}">
-                                <p class="bb-empty">No hay mesas disponibles</p>
+                                <p class="bb-empty"><spring:message code="tables.empty"/></p>
                             </c:when>
                             <c:otherwise>
                                 <ul class="table-list">
@@ -148,12 +152,12 @@
                                             <label class="table-row">
                                                 <input type="radio" name="tableId" value="${t.tableId}" />
                                                 <span class="table-row-text">
-                                                    <strong>Mesa #${t.tableNumber}</strong> · Cap: ${t.capacity}
+                                                    <strong><spring:message code="tables.table"/> #${t.tableNumber}</strong> · <spring:message code="tables.capacity"/>: ${t.capacity}
                                                 </span>
                                                 <span class="table-row-price">
                                                     $<fmt:formatNumber value="${t.price}" minFractionDigits="0" maxFractionDigits="0"/>
                                                     <c:if test="${t.discount != null && t.discount > 0}">
-                                                        <small>(desc: $<fmt:formatNumber value="${t.discount}" minFractionDigits="0" maxFractionDigits="0"/>)</small>
+                                                        <small>(<spring:message code="tables.discount"/>: $<fmt:formatNumber value="${t.discount}" minFractionDigits="0" maxFractionDigits="0"/>)</small>
                                                     </c:if>
                                                 </span>
                                             </label>
@@ -170,6 +174,9 @@
         </div>
 
         <script>
+            <spring:message code="tables.selectdate" var="msgSelectDate"/>
+            <spring:message code="tables.invaliddate" var="msgInvalidDate"/>
+            <spring:message code="tables.fixedrange" var="msgFixedRange"/>
             document.addEventListener('DOMContentLoaded', () => {
                 // Dropdowns (igual que tu script)
                 const dropdowns = Array.from(document.querySelectorAll('.bb-dropdown'));
@@ -222,13 +229,13 @@
                     reserveBtn.disabled = !(hasTable && hasValidDate);
 
                     if (!bookingDate.value) {
-                        dateHelp.innerHTML = 'Elegí una fecha. Solo Jue/Vie/Sáb. Franja: <strong>23:59 a 06:00</strong>.';
+                        dateHelp.innerHTML = '${msgSelectDate}';
                         bookingDate.classList.remove('invalid');
                     } else if (!hasValidDate) {
-                        dateHelp.innerHTML = 'La fecha seleccionada no es jueves, viernes ni sábado.';
+                        dateHelp.innerHTML = '${msgInvalidDate}';
                         bookingDate.classList.add('invalid');
                     } else {
-                        dateHelp.innerHTML = 'Franja fija: <strong>23:59 a 06:00</strong> (del día siguiente).';
+                        dateHelp.innerHTML = '${msgFixedRange}';
                         bookingDate.classList.remove('invalid');
                     }
                 }
@@ -273,7 +280,6 @@
                 }
             });
         </script>
-
     </div>
 </div>
 </body>
