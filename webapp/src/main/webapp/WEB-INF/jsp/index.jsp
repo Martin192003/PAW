@@ -14,17 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div class="top-bar">
-    <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
-    </a>
-    <div class="right-buttons">
-        <a href="<c:url value='/clubs/new' />" class="add-club-btn">Añadir Boliche</a>
-        <a href="<c:url value='/clubs/profile?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />" class="profile-btn" title="Mi perfil">
-            <i class="fa-solid fa-user"></i>
-        </a>
-    </div>
-</div>
+<c:set var="showRightButtons" value="true" />
+<%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="app-boliches">
     <div class="filter-container">
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">

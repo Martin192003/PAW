@@ -16,15 +16,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-
-<div class="top-bar">
-    <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title">
-            Bling <br>&nbsp;&nbsp;Bling
-        </div>
-    </a>
-</div>
-
+<c:set var="showRightButtons" value="false" />
+<%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="detail-page">
     <div class="detail-back">
         <button type="button" class="btn btn-success"
