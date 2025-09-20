@@ -69,11 +69,20 @@
     <title th:text="#{email.club.creation.title}"></title>
 </head>
 <body>
+    <!--
     <h1 th:text="#{email.club.creation.heading}"></h1>
     <p th:text="#{email.club.creation.greeting}"></p>
     <p th:text="#{email.club.creation.body(${clubName})}"></p>
     <p th:text="#{email.club.creation.date(${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')})}"></p>
     <p th:text="#{email.club.creation.thankyou}"></p>
     <p th:text="#{email.club.creation.signature}"></p>
+    -->
+    <h1>Confirmación de Creación de Club</h1>
+    <p>¡Club Creado Exitosamente!</p>
+    <p>Estimado usuario,</p>
+    <p>Nos complace informarle que su club "<span th:text="${clubName}"></span>" ha sido creado exitosamente.</p>
+    <p>Fecha de creación: <span th:text="${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+    <p>¡Gracias por usar nuestra plataforma!</p>
+    <p>Bling Bling</p>
 </body>
 </html>

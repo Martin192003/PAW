@@ -51,10 +51,18 @@ public class HelloWorldController {
     }
 
     @RequestMapping("/login")
-    public ModelAndView login(@RequestParam(value = "success", required = false) final boolean success, @RequestParam(value = "username", required = false) final String username, @RequestParam(value = "password", required = false) final String password) {
+    public ModelAndView login(@RequestParam(value = "success", required = false) final boolean success, @RequestParam(value = "usernameOrEmail", required = false) final String usernameOrEmail, @RequestParam(value = "password", required = false) final String password) {
         ModelAndView mav = new ModelAndView("login");
         mav.addObject("success", success);
-        mav.addObject("username", username);
+        mav.addObject("usernameOrEmail", usernameOrEmail);
+
+        if(usernameOrEmail != null && password != null) {
+            boolean isAuthenticated = us.authenticateUsernameOrEmail(usernameOrEmail, password);
+            if(isAuthenticated) {
+                mav.setViewName("redirect:/clubs");
+            }
+            mav.addObject("error", "Invalid credentials");
+        }
         return mav;
     }
 

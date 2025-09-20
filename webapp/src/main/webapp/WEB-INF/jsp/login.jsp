@@ -27,10 +27,10 @@
             </div>
             <form action="<c:url value='/login' />" method="post" enctype="application/x-www-form-urlencoded">
                 <div class="form-group">
-                    <input id="username" name="j_username" type="text" class="form-control" placeholder="Usuario"/>
+                    <input id="usernameOrEmail" name="usernameOrEmail" type="text" class="form-control" placeholder="Usuario o email"/>
                 </div>
                 <div class="form-group">
-                    <input id="password" name="j_password" type="password" class="form-control" placeholder="Contraseña"/>
+                    <input id="password" name="password" type="password" class="form-control" placeholder="Contraseña"/>
                 </div>
                 <div class="login-buttons">
                     <button type="submit" class="btn btn-success">Ingresar</button>

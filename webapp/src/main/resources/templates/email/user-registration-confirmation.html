@@ -66,13 +66,23 @@
         }
     </style>
     <meta charset="UTF-8">
+    <!--
     <title th:text="#{email.registration.title(${username})}"></title>
+    -->
+    <title> ¡Bienvenido! </title>
 </head>
 <body>
+<!--
     <h1 th:text="#{email.registration.title(${username})}"></h1>
     <p th:text="#{email.registration.body}"></p>
     <p th:text="#{email.registration.date(${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')})}"></p>
     <p th:text="#{email.registration.closing}"></p>
     <p th:text="#{email.registration.signature}"></p>
+   -->
+    <h1>Bienvenido, <span th:text="${username}"> </span>!</h1>
+    <p>Gracias por registrarte en nuestra plataforma.</p>
+    <p>Tu registro se completó con éxito el <span th:text="${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')}"> </span>.</p>
+    <p>¡Estamos emocionados de tenerte con nosotros!</p>
+    <p>Bling Bling</p>
 </body>
 </html>
