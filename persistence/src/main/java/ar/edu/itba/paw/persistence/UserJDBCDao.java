@@ -43,14 +43,18 @@ public class UserJDBCDao implements UserDao {
 
     @Override
     public User create(String username, String passwordHash, String surname, String email, String cellphone, Role role) {
+
+        final String dbRole = role.name().toLowerCase(Locale.ROOT);
+        final String dbEmail = email.trim().toLowerCase(Locale.ROOT);
+
         Map<String, Object> params = new HashMap<>();
         params.put("user_id", UUID.randomUUID());
         params.put("user_name", username);
         params.put("surname", surname);
-        params.put("email", email);
+        params.put("email", dbEmail);
         params.put("password_hash", passwordHash);
         params.put("cellphone", cellphone);
-        params.put("role", role.name());
+        params.put("role", dbRole);
         insert.execute(params);
         return findByEmail(email).orElseThrow();
     }

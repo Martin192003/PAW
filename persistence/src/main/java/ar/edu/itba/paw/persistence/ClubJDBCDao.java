@@ -68,7 +68,7 @@ public class ClubJDBCDao implements ClubDao {
         params.put("contact_info", contactInfo != null ? contactInfo.getId() : null);
         params.put("music_genre", musicGenre != null ? musicGenre.name().toLowerCase() : null);
         params.put("zone", zone != null ? zone.name() : null);
-        params.put("is_bar", isBar);
+        params.put("is_bar", isBar != null ? isBar : Boolean.FALSE);
 
         insert.execute(params);
 
