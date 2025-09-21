@@ -3,10 +3,12 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
 import ar.edu.itba.paw.model.TableState;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import ar.edu.itba.paw.service.ClubService;
+import ar.edu.itba.paw.service.SecurityService;
 import ar.edu.itba.paw.service.TableService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,13 +30,15 @@ public class ClubDetailsController {
     private final ProductsDao productsDao;
     private final PhotoService photoService;
     private final TableService clubTables;
+    private final SecurityService securityService;
 
     // Constructor injection (recomendado con Spring 5.x)
-    public ClubDetailsController(final ClubService clubService, final ProductsDao productsDao, final PhotoService photoService, TableService clubTables) {
+    public ClubDetailsController(final ClubService clubService, final ProductsDao productsDao, final PhotoService photoService, TableService clubTables, SecurityService securityService) {
         this.clubService = clubService;
         this.productsDao = productsDao;
         this.photoService = photoService;
         this.clubTables = clubTables;
+        this.securityService = securityService;
     }
 
     @GetMapping("/{clubId}")
@@ -82,6 +86,11 @@ public class ClubDetailsController {
 
         var photos = photoService.listByClub(clubId, 0, 1);
         String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
+
+        User user = securityService.getVerifiedLoggedUser();
+        if(user!=null){
+            model.addAttribute("user", user);
+        }
 
         model.addAttribute("club", club);
         model.addAttribute("productsByCategory", ordered);

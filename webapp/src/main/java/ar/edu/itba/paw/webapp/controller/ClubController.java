@@ -72,6 +72,11 @@ public class ClubController {
             if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.get(0).getUrl());
         }
 
+        User user = securityService.getVerifiedLoggedUser();
+        if(user!=null) {
+            model.addAttribute("user", user);
+        }
+
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("name", nameLike);
@@ -90,6 +95,11 @@ public class ClubController {
 
     @GetMapping("/new")
     public String showClubForm(Model model) {
+
+        User user = securityService.getVerifiedLoggedUser();
+        if(user!=null) {
+            model.addAttribute("user", user);
+        }
 
         model.addAttribute("clubForm", new AddClubForm());
         model.addAttribute("postPath", "/clubs/create");

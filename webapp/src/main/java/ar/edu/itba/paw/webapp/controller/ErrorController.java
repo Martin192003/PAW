@@ -15,12 +15,14 @@ public class ErrorController {
         Object statusAttr      = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
         Object messageAttr     = request.getAttribute(RequestDispatcher.ERROR_MESSAGE);
 
-        Integer status = (statusAttr instanceof Integer) ? (Integer) statusAttr : null;
-        String message = (messageAttr != null) ? messageAttr.toString() : null;
+        /*Integer status = (statusAttr instanceof Integer) ? (Integer) statusAttr : null;
+        String message = (messageAttr != null) ? messageAttr.toString() : null;*/
 
         /* String friendly = (message == null || message.isBlank()) PREGUNTAR ESTO TIRA MUCHA DATA EN EL ERROR 500, ES UN PROBLEMA DE SEGURIDAD
                 ? defaultMessage(status)
                 : message; */
+
+        Integer status = (statusAttr instanceof Integer) ? (Integer) statusAttr : null;
 
         ModelAndView mav = new ModelAndView("error/error");
         mav.addObject("status", status);
@@ -36,7 +38,7 @@ public class ErrorController {
             case 403 -> "error.403";
             case 404 -> "error.404";
             case 500 -> "error.500";
-            default   -> "error.default (" + code + ").";
+            default   -> "error.default";
         };
     }
 }
