@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.io.IOException;
+import java.security.Principal;
 import java.util.UUID;
 
 import javax.validation.Valid;
@@ -34,15 +35,17 @@ public class ClubController {
     private final MenuService menuService;
     private final ProductService productService;
     private final SecurityService securityService;
+    private final TableService tableService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService, TableService tableService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
         this.menuService = menuService;
         this.productService = productService;
         this.securityService = securityService;
+        this.tableService = tableService;
     }
 
     @GetMapping({"", "/"})
@@ -164,6 +167,16 @@ public class ClubController {
             @RequestParam("clubId") UUID clubId,
             Model model
     ) {
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) {
+            throw new UserNotFoundException("No se encontró el usuario logueado.");
+        }
+
+        List<User> clubUsers = clubService.getAdminsByClub(clubId);
+
+        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
         var maybeClub = clubService.getClubById(clubId);
         if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
         var club = maybeClub.get();
@@ -171,6 +184,7 @@ public class ClubController {
         var photos = photoService.listByClub(clubId, 0, 1);
         String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
 
+        model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("club", club);
         model.addAttribute("coverPhotoUrl", coverPhotoUrl);
         model.addAttribute("zones", Zone.values());
@@ -188,6 +202,16 @@ public class ClubController {
             @RequestParam("value") String value,
             Model model
     ) {
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) {
+            throw new UserNotFoundException("No se encontró el usuario logueado.");
+        }
+
+        List<User> clubUsers = clubService.getAdminsByClub(clubId);
+
+        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
         var maybeClub = clubService.getClubById(clubId);
         if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
         Club club = maybeClub.get();
@@ -246,18 +270,44 @@ public class ClubController {
             @RequestParam("productId") UUID productId,
             @RequestParam("basePrice") BigDecimal basePrice
     ) {
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) {
+            throw new UserNotFoundException("No se encontró el usuario logueado.");
+        }
+
         var product = productService.findById(productId).orElseThrow();
-        productService.update(productId, product.getClub().getClubId(), product.getProductName(),
+        UUID clubId = product.getClub().getClubId();
+        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
+
+        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+
+        productService.update(productId, clubId, product.getProductName(),
                 product.getDescription(), basePrice, product.getProductType(), product.getIsAvailable());
-        return "redirect:/clubs/handle?clubId=" + product.getClub().getClubId();
+        return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
 
     @PostMapping("/deleteProduct")
     public String deleteProduct(@RequestParam("productId") UUID productId) {
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) {
+            throw new UserNotFoundException("No se encontró el usuario logueado.");
+        }
+
         var product = productService.findById(productId).orElseThrow();
+        UUID clubId = product.getClub().getClubId();
+        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
+
+        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+
         productService.delete(productId);
-        return "redirect:/clubs/handle?clubId=" + product.getClub().getClubId();
+        return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
 
     @PostMapping("/addProduct")
     public String addProduct(
@@ -293,5 +343,90 @@ public class ClubController {
         model.addAttribute("activePage", "profile");
         return "profile";
     }
+
+    @PostMapping("/addTable")
+    public String addTable(
+            @RequestParam("clubId") UUID clubId,
+            @RequestParam("tableNumber") int tableNumber,
+            @RequestParam("capacity") int capacity,
+            @RequestParam("price") BigDecimal price,
+            @RequestParam("discount") BigDecimal discount
+    ) {
+        if (tableNumber < 1 || capacity < 1 || price.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0) {
+            throw new IllegalArgumentException("Datos inválidos para la mesa.");
+        }
+
+        var club = clubService.getClubById(clubId).orElseThrow();
+        TableState state = TableState.DISPONIBLE; // Estado fijo
+        tableService.create(tableNumber, capacity, club.getClubId(), state, price, discount);
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+
+    @PostMapping("/tables/{tableId}/edit")
+    public String editTable(
+            @PathVariable UUID tableId,
+            @RequestParam("clubId") UUID clubId,
+            @RequestParam("tableNumber") int tableNumber,
+            @RequestParam("capacity") int capacity,
+            @RequestParam("price") BigDecimal price,
+            @RequestParam("discount") BigDecimal discount
+    ) {
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) throw new UserNotFoundException("No se encontró el usuario logueado.");
+
+        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
+        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+
+        tableService.update(tableId, clubId, tableNumber, capacity, TableState.DISPONIBLE, price, discount);
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @PostMapping("/tables/{tableId}/delete")
+    public String deleteTable(@PathVariable UUID tableId, @RequestParam("clubId") UUID clubId) {
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) throw new UserNotFoundException("No se encontró el usuario logueado.");
+
+        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
+        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+
+        tableService.delete(tableId);
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+
+    /*
+        @GetMapping("/club/tables")
+        public String showTables(@RequestParam("userId") UUID userId, Model model) {
+            User user = userService.findById(userId);
+            List<Club> clubs = clubService.getClubsByUser(userId);
+            List<Table> allTables = new ArrayList<>();
+            for (Club club : clubs) {
+                allTables.addAll(tableService.findByClubId(club.getClubId()));
+            }
+            model.addAttribute("tables", allTables);
+            model.addAttribute("user", user);
+            return "clubTables";
+        }
+
+
+    private void checkLoggedUser(UUID clubId){
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) {
+            throw new UserNotFoundException("No se encontró el usuario logueado.");
+        }
+
+        List<User> clubUsers = clubService.getAdminsByClub(clubId);
+
+        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+    }*/
+
 
 }

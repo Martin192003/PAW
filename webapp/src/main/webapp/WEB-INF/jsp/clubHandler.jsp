@@ -116,6 +116,54 @@
     </form>
 </div>
 
+<!--Mesas-->
+<h2>Mesas</h2>
+<table class="styled-table">
+    <thead>
+    <tr>
+        <th>Número</th>
+        <th>Capacidad</th>
+        <th>Precio</th>
+        <th>Descuento (%)</th>
+        <th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody>
+    <c:forEach var="table" items="${tables}">
+        <tr>
+            <td><c:out value="${table.tableNumber}" /></td>
+            <td><c:out value="${table.capacity}" /></td>
+            <td><c:out value="${table.price}" /></td>
+            <td><c:out value="${table.discount}" /></td>
+            <td>
+                <button type="button" class="edit-field-btn"
+                        onclick="openTableEditModal('${table.tableId}', '${table.tableNumber}', '${table.capacity}', '${table.price}', '${table.discount}')">
+                    Editar
+                </button>
+                <button type="button" class="edit-field-btn btn-danger"
+                        onclick="openTableDeleteModal('${table.tableId}')">
+                    Eliminar
+                </button>
+            </td>
+        </tr>
+    </c:forEach>
+    </tbody>
+</table>
+
+<!-- Formulario para agregar mesa -->
+<div class="add-table-section">
+    <h3>Agregar mesa</h3>
+    <form method="post" action="<c:url value='/clubs/addTable' />" class="add-table-form">
+        <input type="hidden" name="clubId" value="${club.clubId}" />
+        <input type="number" name="tableNumber" placeholder="Número de mesa" required min="1" />
+        <input type="number" name="capacity" placeholder="Capacidad" required min="1" />
+        <input type="number" name="price" placeholder="Precio" step="0.01" required min="0" />
+        <input type="number" name="discount" placeholder="Descuento (%)" step="0.01" min="0" max="100" value="0" />
+        <button type="submit" class="edit-field-btn">Agregar mesa</button>
+    </form>
+</div>
+
+
 <!-- Modales -->
 <div id="editModal" class="modal">
     <div class="modal-content">
@@ -167,6 +215,43 @@
     </div>
 </div>
 
+<!-- Modal editar mesa -->
+<div id="tableEditModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeTableEditModal()">&times;</span>
+        <form method="post" id="tableEditForm">
+            <input type="hidden" name="clubId" value="${club.clubId}" />
+            <label>Número:</label>
+            <input type="number" name="tableNumber" id="editTableNumber" required />
+            <label>Capacidad:</label>
+            <input type="number" name="capacity" id="editTableCapacity" required />
+            <label>Precio:</label>
+            <input type="number" name="price" id="editTablePrice" step="0.01" required />
+            <label>Descuento (%):</label>
+            <input type="number" name="discount" id="editTableDiscount" step="0.01" min="0" max="100" required />
+            <div class="modal-actions">
+                <button type="submit" class="edit-field-btn">Guardar</button>
+                <button type="button" class="edit-field-btn btn-secondary" onclick="closeTableEditModal()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal eliminar mesa -->
+<div id="tableDeleteModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeTableDeleteModal()">&times;</span>
+        <h3>¿Seguro que querés eliminar esta mesa?</h3>
+        <form method="post" id="tableDeleteForm">
+            <input type="hidden" name="clubId" value="${club.clubId}" />
+            <div class="modal-actions">
+                <button type="submit" class="edit-field-btn btn-danger">Eliminar</button>
+                <button type="button" class="edit-field-btn btn-secondary" onclick="closeTableDeleteModal()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function openDeleteModal(productId) {
         document.getElementById('deleteProductId').value = productId;
@@ -202,6 +287,25 @@
     function closeEditModal() {
         document.getElementById('editModal').style.display = 'none';
     }
+    function openTableEditModal(tableId, tableNumber, capacity, price, discount) {
+        document.getElementById('tableEditModal').style.display = 'flex';
+        document.getElementById('editTableNumber').value = tableNumber;
+        document.getElementById('editTableCapacity').value = capacity;
+        document.getElementById('editTablePrice').value = price;
+        document.getElementById('editTableDiscount').value = discount;
+        document.getElementById('tableEditForm').action =
+            '${pageContext.request.contextPath}/clubs/tables/' + tableId + '/edit';    }
+    function closeTableEditModal() {
+        document.getElementById('tableEditModal').style.display = 'none';
+    }
+    function openTableDeleteModal(tableId) {
+        document.getElementById('tableDeleteModal').style.display = 'flex';
+        document.getElementById('tableDeleteForm').action =
+            '${pageContext.request.contextPath}/clubs/tables/' + tableId + '/delete';    }
+    function closeTableDeleteModal() {
+        document.getElementById('tableDeleteModal').style.display = 'none';
+    }
+
 </script>
 
 </body>
