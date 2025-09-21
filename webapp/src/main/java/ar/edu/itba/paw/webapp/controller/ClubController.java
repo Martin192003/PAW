@@ -55,18 +55,16 @@ public class ClubController {
             @RequestParam(value = "zone", required = false) Zone zone,
             @RequestParam(value = "genre", required = false) String musicGenre,
             @RequestParam(value = "price", required = false) String priceRange,
-            @RequestParam(value = "minRating", required = false) BigDecimal minRating,
-            @RequestParam(value = "maxRating", required = false) BigDecimal maxRating
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "isBar", required = false) Boolean isBar
     ) {
-        if (minRating != null && maxRating != null && minRating.compareTo(maxRating) > 0) {
-            BigDecimal tmp = minRating; minRating = maxRating; maxRating = tmp;
-        }
+
 
         boolean any = (nameLike != null || zone != null || musicGenre != null ||
-                priceRange != null || minRating != null || maxRating != null);
+                priceRange != null || sort != null || isBar != null);
 
         List<Club> clubs = any
-                ? clubService.advancedSearch(nameLike, zone, musicGenre, priceRange, minRating, maxRating)
+                ? clubService.advancedSearch(nameLike, zone, musicGenre, priceRange, isBar, sort)
                 : clubService.getAllClubs();
 
         Map<UUID, String> photoUrlByClub = new HashMap<>();
@@ -86,9 +84,8 @@ public class ClubController {
         model.addAttribute("zone", zone);
         model.addAttribute("genre", musicGenre);
         model.addAttribute("price", priceRange);
-        model.addAttribute("minRating", minRating);
-        model.addAttribute("maxRating", maxRating);
-
+        model.addAttribute("sort", sort);
+        model.addAttribute("isBar", isBar);
 
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
@@ -109,6 +106,7 @@ public class ClubController {
         model.addAttribute("priceValues", Price.values());
         model.addAttribute("genreValues", MusicalGenre.values());
         model.addAttribute("zoneValues", Zone.values());
+
         return "club_form";
     }
 
@@ -138,7 +136,8 @@ public class ClubController {
                 addClubForm.getPriceRange(),
                 contactInfo,
                 addClubForm.getMusicGenre(),
-                addClubForm.getZone()
+                addClubForm.getZone(),
+                addClubForm.getIsBar()
         );
 
         var image = addClubForm.getImage();
@@ -159,7 +158,7 @@ public class ClubController {
             throw new DuplicateEntityException("No se pudo crear el club");
         }
 
-        return "redirect:/clubs/" + newClub.getClubId();
+        return "redirect:/clubs/handle?clubId=" + newClub.getClubId();
     }
 
     @GetMapping("/handle")

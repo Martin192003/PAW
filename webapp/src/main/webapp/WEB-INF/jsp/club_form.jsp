@@ -19,6 +19,12 @@
 <c:set var="showRightButtons" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="club-form-page">
+    <div class="detail-back">
+        <button type="button" class="btn btn-success"
+                onclick="window.location.href='<c:url value="/clubs"/>'">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+    </div>
     <t:card size="card-lg" cssClass="club-form-card">
         <div class="club-form-title">
             <spring:message code="title.addClub"/>
@@ -30,6 +36,9 @@
         <spring:message code="form.priceRange" var="phPriceRange"/>
         <spring:message code="form.musicGenre" var="phMusicGenre"/>
         <spring:message code="form.zone" var="phZone"/>
+        <spring:message code="form.venueType" var="phvenueType"/>
+        <spring:message code="label.bar" var="phbar"></spring:message>
+        <spring:message code="label.notBar" var="phclub"></spring:message>
 
         <form:form modelAttribute="clubForm" method="post" action="${pageContext.request.contextPath}${postPath}" enctype="multipart/form-data">
             <span class="form-text-required"><spring:message code="form.required"/></span>
@@ -65,6 +74,14 @@
                     <form:options items="${zones}" itemValue="dbValue" itemLabel="displayName"/>
                 </form:select>
                 <form:errors path="zone" cssClass="error" element="div"/>
+            </div>
+            <div class="form-group">
+                <form:select path="isBar" class="form-control">
+                    <form:option value="" label="${phvenueType}"/>
+                    <form:option value="true" label="${phbar}"/>
+                    <form:option value="false" label="${phclub}"/>
+                </form:select>
+                <form:errors path="isBar" cssClass="error" element="div"/>
             </div>
             <div class="form-group">
                 <form:input path="image" type="file" class="form-control"/>

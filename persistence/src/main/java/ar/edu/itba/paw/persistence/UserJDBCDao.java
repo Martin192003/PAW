@@ -44,22 +44,19 @@ public class UserJDBCDao implements UserDao {
     @Override
     public User create(String username, String passwordHash, String surname, String email, String cellphone, Role role) {
 
-        final UUID id = UUID.randomUUID();
-        final Map<String, Object> params = new HashMap<>();
-        params.put("user_id", id);
+        final String dbRole = role.name().toLowerCase(Locale.ROOT);
+        final String dbEmail = email.trim().toLowerCase(Locale.ROOT);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("user_id", UUID.randomUUID());
         params.put("user_name", username);
         params.put("surname", surname);
-        params.put("email", email.trim().toLowerCase(Locale.ROOT));
+        params.put("email", dbEmail);
         params.put("password_hash", passwordHash);
         params.put("cellphone", cellphone);
-        params.put("role", role.name().toLowerCase(Locale.ROOT));
-
-        try {
-            insert.execute(params);
-        } catch (org.springframework.dao.DuplicateKeyException e) {
-            throw new IllegalStateException("El email ya está registrado: " + email, e);
-        }
-        return findById(id).orElseThrow(() -> new IllegalStateException("Inserted user not found: " + id));
+        params.put("role", dbRole);
+        insert.execute(params);
+        return findByEmail(email).orElseThrow();
     }
 
     @Override

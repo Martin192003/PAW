@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS clubs (
                                      contact_info UUID REFERENCES users(user_id) ON DELETE SET NULL,
                                      music_genre VARCHAR(50),
                                      zone VARCHAR(50) CHECK (zone IN ('ZONA_CABA','ZONA_NORTE', 'ZONA_OESTE', 'ZONA_SUR')),
+                                     is_bar BOOLEAN NOT NULL DEFAULT FALSE,
                                      created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

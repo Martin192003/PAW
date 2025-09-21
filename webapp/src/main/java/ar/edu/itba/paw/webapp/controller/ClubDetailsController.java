@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.time.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,15 +51,15 @@ public class ClubDetailsController {
         if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
         var club = maybeClub.get();
 
-        var zone = java.time.ZoneId.of("America/Argentina/Buenos_Aires");
-        java.time.LocalDate selectedDate;
+        var zone = ZoneId.of("America/Argentina/Buenos_Aires");
+        LocalDate selectedDate;
         if (dateStr == null || dateStr.isBlank()) {
-            var today = java.time.LocalDate.now(zone);
+            var today = LocalDate.now(zone);
             selectedDate = nextAllowedThuFriSat(today);
         } else {
-            selectedDate = java.time.LocalDate.parse(dateStr);
+            selectedDate = LocalDate.parse(dateStr);
             if (!isThuFriSat(selectedDate)) {
-                selectedDate = nextAllowedThuFriSat(selectedDate);
+               throw new InvalidDateRangeException("La fecha de inicio es incorrecta");
             }
         }
 
