@@ -29,7 +29,8 @@
         <i class="fa-solid fa-arrow-left"></i>
     </button>
 
-    <div class="club-image-container">
+    <!-- Botón editar imagen -->
+    <div class="club-image-container" style="position:relative;">
         <c:choose>
             <c:when test="${not empty coverPhotoUrl}">
                 <img src="<c:url value='${coverPhotoUrl}' />"
@@ -41,12 +42,17 @@
                 </div>
             </c:otherwise>
         </c:choose>
+        <button type="button" class="btn btn-success btn-edit-small"
+                style="position:absolute; top:12px; right:12px;"
+                onclick="document.getElementById('editImageModal').style.display='flex'">
+            <i class="fa-solid fa-image"></i>
+        </button>
     </div>
 
     <div class="club-info">
         <div><strong>Nombre:</strong> <c:out value="${club.clubName}" />
             <button type="button" class="btn btn-success btn-edit-small"
-                    onclick="openEditModal('location', '<c:out value="${club.clubName}" />')">
+                    onclick="openEditModal('clubName', '<c:out value="${club.clubName}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
@@ -143,51 +149,62 @@
 </div>
 
 <!--Mesas-->
-<h2>Mesas</h2>
-<table class="styled-table">
-    <thead>
-    <tr>
-        <th>Número</th>
-        <th>Capacidad</th>
-        <th>Precio</th>
-        <th>Descuento (%)</th>
-        <th>Acciones</th>
-    </tr>
-    </thead>
-    <tbody>
-    <c:forEach var="table" items="${tables}">
+<div class="club-section" style="margin-top:40px;">
+    <h2 class="club-title">Mesas</h2>
+    <table class="styled-table">
+        <thead>
         <tr>
-            <td><c:out value="${table.tableNumber}" /></td>
-            <td><c:out value="${table.capacity}" /></td>
-            <td><c:out value="${table.price}" /></td>
-            <td><c:out value="${table.discount}" /></td>
-            <td>
-                <button type="button" class="edit-field-btn"
-                        onclick="openTableEditModal('${table.tableId}', '${table.tableNumber}', '${table.capacity}', '${table.price}', '${table.discount}')">
-                    Editar
-                </button>
-                <button type="button" class="edit-field-btn btn-danger"
-                        onclick="openTableDeleteModal('${table.tableId}')">
-                    Eliminar
-                </button>
-            </td>
+            <th>Número</th>
+            <th>Capacidad</th>
+            <th>Precio</th>
+            <th>Descuento (%)</th>
+            <th></th>
         </tr>
-    </c:forEach>
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+        <c:if test="${empty tables}">
+            <tr>
+                <td colspan="5" class="styled-table-th-empty">
+                    No tiene mesas en este momento
+                </td>
+            </tr>
+        </c:if>
+        <c:forEach var="table" items="${tables}">
+            <tr>
+                <td><c:out value="${table.tableNumber}" /></td>
+                <td><c:out value="${table.capacity}" /></td>
+                <td><c:out value="${table.price}" /></td>
+                <td><c:out value="${table.discount}" /></td>
+                <td>
+                    <div style="display: flex; gap: 8px; justify-content: right;">
+                        <button type="button" class="btn btn-success btn-sm"
+                                onclick="openTableEditModal('${table.tableId}', '${table.tableNumber}', '${table.capacity}', '${table.price}', '${table.discount}')"
+                                title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm"
+                                onclick="openTableDeleteModal('${table.tableId}')"
+                                title="Eliminar">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </c:forEach>
+        </tbody>
+    </table>
 
-<!-- Formulario para agregar mesa -->
-<div class="add-table-section">
-    <h3>Agregar mesa</h3>
-    <form method="post" action="<c:url value='/clubs/addTable' />" class="add-table-form">
+    <h3 style="margin-top:32px;">Agregar mesa</h3>
+    <form method="post" action="<c:url value='/clubs/addTable' />" class="add-product-form" style="margin-bottom:24px;">
         <input type="hidden" name="clubId" value="${club.clubId}" />
         <input type="number" name="tableNumber" placeholder="Número de mesa" required min="1" />
         <input type="number" name="capacity" placeholder="Capacidad" required min="1" />
         <input type="number" name="price" placeholder="Precio" step="0.01" required min="0" />
         <input type="number" name="discount" placeholder="Descuento (%)" step="0.01" min="0" max="100" value="0" />
-        <button type="submit" class="edit-field-btn">Agregar mesa</button>
+        <button type="submit" class="btn btn-success">Agregar</button>
     </form>
 </div>
+
 
 
 <!-- Modales -->
@@ -227,6 +244,21 @@
     </div>
 </div>
 
+<!-- Modal editar imagen -->
+<div id="editImageModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="document.getElementById('editImageModal').style.display='none'">&times;</span>
+        <h3>Modificar imagen del club</h3>
+        <form method="post" action="<c:url value='/clubs/club/${club.clubId}/photos' />" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required />
+            <div class="modal-actions">
+                <button type="submit" class="edit-field-btn">Guardar</button>
+                <button type="button" class="edit-field-btn btn-secondary" onclick="document.getElementById('editImageModal').style.display='none'">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="deleteModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
@@ -241,27 +273,37 @@
     </div>
 </div>
 
-<!-- Modal editar mesa -->
-<div id="tableEditModal" class="modal">
-    <div class="modal-content">
-        <span class="modal-close" onclick="closeTableEditModal()">&times;</span>
-        <form method="post" id="tableEditForm">
-            <input type="hidden" name="clubId" value="${club.clubId}" />
-            <label>Número:</label>
-            <input type="number" name="tableNumber" id="editTableNumber" required />
-            <label>Capacidad:</label>
-            <input type="number" name="capacity" id="editTableCapacity" required />
-            <label>Precio:</label>
-            <input type="number" name="price" id="editTablePrice" step="0.01" required />
-            <label>Descuento (%):</label>
-            <input type="number" name="discount" id="editTableDiscount" step="0.01" min="0" max="100" required />
-            <div class="modal-actions">
-                <button type="submit" class="edit-field-btn">Guardar</button>
-                <button type="button" class="edit-field-btn btn-secondary" onclick="closeTableEditModal()">Cancelar</button>
-            </div>
-        </form>
+    <!-- Modal editar mesa  -->
+    <div id="tableEditModal" class="modal">
+        <div class="modal-content" style="background:#232323; color:#fff; border-radius:14px; padding:32px 28px; width:440px;">
+            <span class="modal-close" onclick="closeTableEditModal()" style="color:#fff;">&times;</span>
+            <h2 style="margin-bottom:18px; text-align:center; color:#9c27b0;">Editar mesa</h2>
+            <form method="post" id="tableEditForm" style="display:flex; flex-direction:column; gap:18px;">
+                <input type="hidden" name="clubId" value="${club.clubId}" />
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label for="editTableNumber" style="font-weight:500;">Número</label>
+                    <input type="number" name="tableNumber" id="editTableNumber" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label for="editTableCapacity" style="font-weight:500;">Capacidad</label>
+                    <input type="number" name="capacity" id="editTableCapacity" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label for="editTablePrice" style="font-weight:500;">Precio</label>
+                    <input type="number" name="price" id="editTablePrice" step="0.01" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label for="editTableDiscount" style="font-weight:500;">Descuento (%)</label>
+                    <input type="number" name="discount" id="editTableDiscount" step="0.01" min="0" max="100" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+                </div>
+                <div class="modal-actions" style="margin-top:24px; justify-content:center;">
+                    <button type="submit" class="edit-field-btn" style="background:#9c27b0; color:#fff;">Guardar</button>
+                    <button type="button" class="edit-field-btn btn-secondary" onclick="closeTableEditModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
+
 
 <!-- Modal eliminar mesa -->
 <div id="tableDeleteModal" class="modal">
@@ -296,34 +338,40 @@
             el.classList.add("hidden");
             el.removeAttribute('name');
             el.removeAttribute('required');
+            el.style.display = 'none'; // Oculta por style también
         });
 
         if (field === 'zone') {
             const select = document.getElementById('zoneSelect');
+            select.classList.remove("hidden");
             select.style.display = 'block';
             select.name = 'value';
             select.required = true;
             select.value = value;
         } else if (field === 'musicGenre') {
             const select = document.getElementById('musicGenreSelect');
+            select.classList.remove("hidden");
             select.style.display = 'block';
             select.name = 'value';
             select.required = true;
             select.value = value;
         } else if (field === 'priceRange') {
             const select = document.getElementById('priceSelect');
+            select.classList.remove("hidden");
             select.style.display = 'block';
             select.name = 'value';
             select.required = true;
             select.value = value;
         } else {
             const input = document.getElementById('editFieldValue');
+            input.classList.remove("hidden");
             input.style.display = 'block';
             input.name = 'value';
             input.required = true;
             input.value = value;
         }
     }
+
 
     function closeEditModal() {
         document.getElementById('editModal').style.display = 'none';

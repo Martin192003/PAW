@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.io.IOException;
@@ -397,6 +398,35 @@ public class ClubController {
         tableService.delete(tableId);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
+    @PostMapping("/club/{clubId}/photos")
+    public String upload(@PathVariable UUID clubId,
+                         @RequestParam("file") MultipartFile file,
+                         Principal principal) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) throw new UserNotFoundException("No se encontró el usuario logueado.");
+
+        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
+        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+
+        UUID photoId = photoService.upload(
+                clubId,
+                user.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
 
 
     /*
