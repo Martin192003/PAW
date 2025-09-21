@@ -8,12 +8,13 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/sidebar.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/activity.css' />"><!-- nuevo -->
+    <link rel="stylesheet" href="<c:url value='/resources/css/activity.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
 </head>
 
 <body>
+
 <div class="top-bar">
     <a href="<c:url value='/clubs' />" class="logo-link">
         <div class="app-title">
@@ -22,52 +23,64 @@
     </a>
 </div>
 
-<div class="panel-container">
-    <div class="panel-content">
-        <button type="button" class="btn btn-back"
-                onclick="window.location.href='<c:url value="/clubs/activity?userId=${club.contactInfo.id}"/>'">
-            <i class="fa-solid fa-arrow-left"></i>
-        </button>
+<div class="panel-content">
+    <button type="button" class="btn btn-success"
+            onclick="window.location.href='<c:url value="/clubs/activity?userId=${club.contactInfo.id}"/>'">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
 
-        <h1 class="club-title">
-            <c:out value="${club.clubName}" />
-            <button type="button" class="edit-field-btn"
-                    onclick="openEditModal('clubName', '<c:out value="${club.clubName}" />')">Editar</button>
-        </h1>
-
-        <div class="club-image-container">
-            <c:if test="${not empty coverPhotoUrl}">
+    <div class="club-image-container">
+        <c:choose>
+            <c:when test="${not empty coverPhotoUrl}">
                 <img src="<c:url value='${coverPhotoUrl}' />"
                      alt="${club.clubName}" class="club-image" />
-            </c:if>
-        </div>
+            </c:when>
+            <c:otherwise>
+                <div class="card-no-image">
+                    Bling <br>&nbsp;&nbsp;Bling
+                </div>
+            </c:otherwise>
+        </c:choose>
+    </div>
 
-        <div class="club-info">
-            <div><strong>Ubicación:</strong> <c:out value="${club.location}" />
-                <button type="button" class="edit-field-btn"
-                        onclick="openEditModal('location', '<c:out value="${club.location}" />')">Editar</button>
-            </div>
-            <div><strong>Zona:</strong> <c:out value="${club.zone}" />
-                <button type="button" class="edit-field-btn"
-                        onclick="openEditModal('zone', '<c:out value="${club.zone}" />')">Editar</button>
-            </div>
-            <div><strong>Género musical:</strong> <c:out value="${club.musicGenre}" />
-                <button type="button" class="edit-field-btn"
-                        onclick="openEditModal('musicGenre', '<c:out value="${club.musicGenre}" />')">Editar</button>
-            </div>
-            <div><strong>Precio:</strong> <c:out value="${club.priceRange}" />
-                <button type="button" class="edit-field-btn"
-                        onclick="openEditModal('priceRange', '<c:out value="${club.priceRange}" />')">Editar</button>
-            </div>
-            <div><strong>Descripción:</strong> <c:out value="${club.description}" />
-                <button type="button" class="edit-field-btn"
-                        onclick="openEditModal('description', '<c:out value="${club.description}" />')">Editar</button>
-            </div>
+    <div class="club-info">
+        <div><strong>Nombre:</strong> <c:out value="${club.clubName}" />
+            <button type="button" class="btn btn-success btn-edit-small"
+                    onclick="openEditModal('location', '<c:out value="${club.clubName}" />')">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+        </div>
+        <div><strong>Ubicación:</strong> <c:out value="${club.location}" />
+            <button type="button" class="btn btn-success btn-edit-small"
+                    onclick="openEditModal('location', '<c:out value="${club.location}" />')">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+        </div>
+        <div><strong>Zona:</strong> <c:out value="${club.zone}" />
+            <button type="button" class="btn btn-success btn-edit-small"
+                    onclick="openEditModal('zone', '<c:out value="${club.zone}" />')">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+        </div>
+        <div><strong>Género musical:</strong> <c:out value="${club.musicGenre}" />
+            <button type="button" class="btn btn-success btn-edit-small"
+                    onclick="openEditModal('musicGenre', '<c:out value="${club.musicGenre}" />')">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+        </div>
+        <div><strong>Precio:</strong> <c:out value="${club.priceRange}" />
+            <button type="button" class="btn btn-success btn-edit-small"
+                    onclick="openEditModal('priceRange', '<c:out value="${club.priceRange}" />')">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+        </div>
+        <div><strong>Descripción:</strong> <c:out value="${club.description}" />
+            <button type="button" class="btn btn-success btn-edit-small"
+                    onclick="openEditModal('description', '<c:out value="${club.description}" />')">
+                <i class="fa-solid fa-pen"></i>
+            </button>
         </div>
     </div>
-</div>
-
-<div class="menu">
     <h2>Menú</h2>
     <table class="styled-table">
         <thead>
@@ -76,30 +89,43 @@
             <th>Descripción</th>
             <th>Precio</th>
             <th>Tipo</th>
-            <th>Acciones</th>
+            <th></th>
         </tr>
         </thead>
         <tbody>
+        <c:if test="${empty menu}">
+            <tr>
+                <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
+                    No tiene productos en este momento
+                </td>
+            </tr>
+        </c:if>
         <c:forEach var="product" items="${menu}">
             <tr>
                 <td><c:out value="${product.productName}" /></td>
                 <td><c:out value="${product.description}" /></td>
                 <td>
-                    <form method="post" action="<c:url value='/clubs/editProductPrice' />">
+                    <form method="post" action="<c:url value='/clubs/editProductPrice' />" style="display:flex; gap:2px; align-items:center;">
                         <input type="hidden" name="productId" value="${product.productId}" />
                         <input type="number" name="basePrice" value="${product.basePrice}" step="0.01" required class="input-price"/>
-                        <button type="submit" class="edit-field-btn">Actualizar</button>
+                        <button type="submit" class="btn btn-success btn-sm" title="Actualizar">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
                     </form>
                 </td>
                 <td><c:out value="${product.productType}" /></td>
                 <td>
-                    <button type="button" class="edit-field-btn btn-danger"
-                            onclick="openDeleteModal('${product.productId}')">Eliminar</button>
+                    <div style="display: flex; justify-content: right; margin-right: 12px">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="openDeleteModal('${product.productId}')">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         </c:forEach>
         </tbody>
     </table>
+
 
     <h3>Agregar producto</h3>
     <form method="post" action="<c:url value='/clubs/addProduct' />" class="add-product-form">
@@ -112,7 +138,7 @@
             <option value="noAlcoholicas">Bebida sin alcohol</option>
             <option value="tragos">Trago</option>
         </select>
-        <button type="submit" class="edit-field-btn">Agregar</button>
+        <button type="submit" class="btn btn-success">Agregar</button>
     </form>
 </div>
 
@@ -187,18 +213,33 @@
             el.removeAttribute('required');
         });
 
-        let active;
-        if (field === 'zone') active = 'zoneSelect';
-        else if (field === 'musicGenre') active = 'musicGenreSelect';
-        else if (field === 'priceRange') active = 'priceSelect';
-        else active = 'editFieldValue';
-
-        const el = document.getElementById(active);
-        el.classList.remove("hidden");
-        el.name = "value";
-        el.required = true;
-        el.value = value;
+        if (field === 'zone') {
+            const select = document.getElementById('zoneSelect');
+            select.style.display = 'block';
+            select.name = 'value';
+            select.required = true;
+            select.value = value;
+        } else if (field === 'musicGenre') {
+            const select = document.getElementById('musicGenreSelect');
+            select.style.display = 'block';
+            select.name = 'value';
+            select.required = true;
+            select.value = value;
+        } else if (field === 'priceRange') {
+            const select = document.getElementById('priceSelect');
+            select.style.display = 'block';
+            select.name = 'value';
+            select.required = true;
+            select.value = value;
+        } else {
+            const input = document.getElementById('editFieldValue');
+            input.style.display = 'block';
+            input.name = 'value';
+            input.required = true;
+            input.value = value;
+        }
     }
+
     function closeEditModal() {
         document.getElementById('editModal').style.display = 'none';
     }
@@ -206,6 +247,5 @@
 
 </body>
 </html>
-
 
 
