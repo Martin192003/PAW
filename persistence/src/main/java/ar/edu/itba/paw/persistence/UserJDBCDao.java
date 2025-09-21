@@ -129,4 +129,9 @@ public class UserJDBCDao implements UserDao {
         final String sql = "SELECT * FROM users WHERE role = ? ORDER BY user_name ASC";
         return jdbc.query(sql, ROW_MAPPER, role);
     }
+
+    @Override
+    public RowMapper<User> getRowMapper() {
+        return ROW_MAPPER;
+    }
 }

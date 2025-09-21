@@ -5,9 +5,7 @@ import ar.edu.itba.paw.model.MusicalGenre;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.*;
-import ar.edu.itba.paw.model.exceptions.BadRequestException;
-import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
-import ar.edu.itba.paw.model.exceptions.NotFoundException;
+import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.AddClubForm;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -259,6 +257,17 @@ public class ClubController {
             @RequestParam("basePrice") BigDecimal basePrice,
             @RequestParam("productType") String type
     ) {
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) {
+            throw new UserNotFoundException("No se encontró el usuario logueado.");
+        }
+
+        List<User> clubUsers = clubService.getAdminsByClub(clubId);
+
+        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+
         var club = clubService.getClubById(clubId).orElseThrow();
         productService.create(club, name, description, basePrice, ProductType.fromDb(type), true);
         return "redirect:/clubs/handle?clubId=" + clubId;

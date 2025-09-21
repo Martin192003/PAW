@@ -7,7 +7,7 @@
     <c:if test="${showRightButtons}">
         <div class="right-buttons">
             <a href="<c:url value='/clubs/new' />" class="add-club-btn">Añadir Boliche</a>
-            <a href="<c:url value='/clubs/profile?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />" class="profile-btn" title="Mi perfil">
+            <a href="<c:url value='/clubs/profile?userId=${user.userId}' />" class="profile-btn" title="Mi perfil">
                 <i class="fa-solid fa-user"></i>
             </a>
         </div>

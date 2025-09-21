@@ -79,5 +79,9 @@ public class ClubServiceImpl implements ClubService{
         return clubDao.findByUserId(userId);
     }
 
+    @Override
+    public List<User> getAdminsByClub(UUID clubId) {
+        return clubDao.findAdminsByClubId(clubId);
+    }
 
 }

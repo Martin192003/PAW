@@ -11,16 +11,6 @@ CREATE TABLE IF NOT EXISTS users (
                                      role          VARCHAR(20) NOT NULL CHECK (role IN ('admin','user')),
                                      created_at    TIMESTAMPTZ DEFAULT NOW()
 );
-    user_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_name     VARCHAR(100) NOT NULL,
-    surname       VARCHAR(100) NOT NULL,
-    email         TEXT NOT NULL UNIQUE,
-    password_hash VARCHAR(100) NOT NULL,
-    cellphone     VARCHAR(30) NOT NULL,
-    role          VARCHAR(20) NOT NULL CHECK (role IN ('admin','user')),
-    created_at    TIMESTAMPTZ DEFAULT NOW()
-    );
-
 
 CREATE TABLE IF NOT EXISTS clubs (
                                      club_id UUID PRIMARY KEY ,
@@ -36,17 +26,6 @@ CREATE TABLE IF NOT EXISTS clubs (
                                      zone VARCHAR(50) CHECK (zone IN ('ZONA_CABA','ZONA_NORTE', 'ZONA_OESTE', 'ZONA_SUR')),
                                      created_at TIMESTAMPTZ DEFAULT NOW()
 );
-    club_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    club_name VARCHAR(100) NOT NULL,
-    location VARCHAR(255) NOT NULL,
-    rating NUMERIC(2,1) CHECK (rating >= 1 AND rating <= 5),
-    quantity_ratings INT DEFAULT 0,
-    price_range VARCHAR(20) CHECK (price_range IN ('bajo','medio','alto')),
-    description TEXT,
-    contact_info UUID REFERENCES users(user_id) ON DELETE SET NULL,
-    music_genre VARCHAR(50),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-    );
 
 CREATE TABLE IF NOT EXISTS club_tables (
                                            table_id     UUID PRIMARY KEY ,
@@ -71,18 +50,6 @@ CREATE TABLE IF NOT EXISTS bookings (
                                         total_amount  NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
                                         CHECK (booking_end > booking_start)
 );
-    booking_id    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id       UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    table_id      UUID NOT NULL REFERENCES club_tables(table_id) ON DELETE CASCADE,
-    booking_start TIMESTAMPTZ NOT NULL,
-    booking_end   TIMESTAMPTZ NOT NULL,
-    status        VARCHAR(20) NOT NULL CHECK (status IN ('confirmada','pendiente','disponible')),
-    created_at    TIMESTAMPTZ DEFAULT NOW(),
-    total_amount  NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
-    CHECK (booking_end > booking_start)
-    );
-
-
 
 CREATE TABLE IF NOT EXISTS activity (
                                         activity_id   UUID PRIMARY KEY ,
@@ -91,12 +58,6 @@ CREATE TABLE IF NOT EXISTS activity (
                                         activity_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                                         details       TEXT
 );
-    activity_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    booking_id    UUID NOT NULL REFERENCES bookings(booking_id) ON DELETE CASCADE,
-    activity_type VARCHAR(50) NOT NULL,
-    activity_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    details       TEXT
-    );
 
 CREATE TABLE IF NOT EXISTS reviews (
                                        review_id   UUID PRIMARY KEY ,
@@ -107,15 +68,6 @@ CREATE TABLE IF NOT EXISTS reviews (
                                        created_at  TIMESTAMPTZ DEFAULT NOW(),
                                        UNIQUE (user_id, club_id)
 );
-    review_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id     UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    club_id     UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
-    rating      INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    description TEXT,
-    created_at  TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (user_id, club_id)
-    );
-
 
 CREATE TABLE IF NOT EXISTS photos
 (
@@ -140,13 +92,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMPTZ DEFAULT NOW()
     );
 CREATE INDEX ON notifications (user_id, is_read);
-                                             notification_id UUID PRIMARY KEY ,
-                                             user_id    UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-                                             type       VARCHAR(30) NOT NULL,
-                                             message    TEXT NOT NULL,
-                                             is_read    BOOLEAN DEFAULT FALSE,
-                                             created_at TIMESTAMPTZ DEFAULT NOW()
-);
+
 CREATE INDEX IF NOT EXISTS notifications_user_read_idx ON notifications (user_id, is_read);
 
 CREATE TABLE IF NOT EXISTS products (
@@ -159,16 +105,6 @@ CREATE TABLE IF NOT EXISTS products (
     is_available BOOLEAN DEFAULT TRUE,
     created_at   TIMESTAMPTZ DEFAULT NOW()
     );
-                                        product_id   UUID PRIMARY KEY ,
-                                        club_id      UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
-                                        product_name VARCHAR(100) NOT NULL,
-                                        description  TEXT,
-                                        base_price   NUMERIC(10,2) NOT NULL,
-                                        product_type VARCHAR(50) NOT NULL CHECK (product_type IN ('alcoholicas','noAlcoholicas','tragos')),
-                                        is_available BOOLEAN DEFAULT TRUE,
-                                        created_at   TIMESTAMPTZ DEFAULT NOW()
-);
-
 
 
 CREATE TABLE IF NOT EXISTS promotions (
@@ -181,15 +117,6 @@ CREATE TABLE IF NOT EXISTS promotions (
     discount      NUMERIC(5,2) DEFAULT 0 CHECK (discount >= 0 AND discount <= 100),
     CHECK (end_date >= start_date)
     );
-                                          promotion_id  UUID PRIMARY KEY ,
-                                          club_id       UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
-                                          promotion_name VARCHAR(100) NOT NULL,
-                                          description   TEXT,
-                                          start_date    DATE NOT NULL,
-                                          end_date      DATE NOT NULL,
-                                          discount      NUMERIC(5,2) DEFAULT 0 CHECK (discount >= 0 AND discount <= 100),
-                                          CHECK (end_date >= start_date)
-);
 
 
 CREATE TABLE IF NOT EXISTS booking_items (

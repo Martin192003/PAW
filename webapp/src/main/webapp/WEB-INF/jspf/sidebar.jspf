@@ -1,9 +1,9 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <div class="sidebar">
-    <a href="<c:url value='/clubs/profile?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />"
+    <a href="<c:url value='/clubs/profile?userId=${user.userId}' />"
        class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">Mi perfil</a>
     <c:if test="${user.role.name() == 'ADMIN'}">
-        <a href="<c:url value='/clubs/activity?userId=737d9292-ace9-4c34-be06-905e4aca0cd0' />"
+        <a href="<c:url value='/clubs/activity?userId=${user.userId}' />"
            class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">Mis boliches</a>
     </c:if>
     <a href="#"

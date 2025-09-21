@@ -9,7 +9,9 @@ import java.util.UUID;
 
 public interface ClubService {
     List<Club> getAllClubs();
+
     Optional<Club> getClubById(UUID clubId);
+
     List<Club> advancedSearch(String nameLike, Zone location, String musicGenre, String priceRange, BigDecimal minRating, BigDecimal maxRating);
 
     Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone);
@@ -19,4 +21,6 @@ public interface ClubService {
     Club updateClub(Club club);
 
     List<Club> getClubsByUser(UUID userId);
+
+    List<User> getAdminsByClub(UUID clubId);
 }

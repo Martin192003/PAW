@@ -238,4 +238,12 @@ public class ClubJDBCDao implements ClubDao {
         return jdbc.query(sql, ROW_MAPPER, userId);
     }
 
+    @Override
+    public List<User> findAdminsByClubId(UUID clubId) {
+        final String sql = "SELECT u.* FROM users u " +
+                "JOIN clubs c ON u.user_id = c.contact_info " +
+                "WHERE c.club_id = ?";
+        return jdbc.query(sql, userDao.getRowMapper(), clubId);
+    }
+
 }

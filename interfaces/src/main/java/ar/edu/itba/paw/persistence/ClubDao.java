@@ -24,4 +24,6 @@ public interface ClubDao {
     List<Club> search(String nameLike, Zone location, String musicGenre, String priceRange, BigDecimal minRating, BigDecimal maxRating);
 
     List<Club> findByUserId(UUID userId);
+
+    List<User> findAdminsByClubId(UUID clubId);
 }
