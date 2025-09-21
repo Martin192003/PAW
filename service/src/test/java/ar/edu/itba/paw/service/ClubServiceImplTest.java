@@ -41,8 +41,8 @@ public class ClubServiceImplTest {
 
     @Test
     public void testGetAllClubs() {
-        Club club1 = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA);
-        Club club2 = new Club(UUID.randomUUID(), "OtroClub", "OtraUbicación", RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA);
+        Club club1 = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club2 = new Club(UUID.randomUUID(), "OtroClub", "OtraUbicación", RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
 
         Mockito.when(mockDao.findAll()).thenReturn(Arrays.asList(club1, club2));
 
@@ -56,7 +56,7 @@ public class ClubServiceImplTest {
 
     @Test
     public void testGetClubByIdFound() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA);
+        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
 
         Mockito.when(mockDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
 

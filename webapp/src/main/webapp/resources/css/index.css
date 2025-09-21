@@ -6,7 +6,7 @@
 }
 body {
     font-family: Arial, sans-serif;
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 20px;
     background-color: #1b1a1a;
@@ -270,3 +270,73 @@ select.filter-item option {
     top: 0;
     right: 0;
 }
+
+.boliche-card {
+    position: relative; /* importante: referencia para el badge */
+}
+
+.bar-badge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #6a1b9a; /* violeta base */
+    color: #fff;
+}
+
+.bar-badge.bar {
+    background-color: #6a1b9a;
+}
+
+.bar-badge.nightclub {
+    background-color: #6a1b9a;
+}
+
+/* barra de filtros compacta y responsiva */
+.filter-bar{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;              /* si no entra, baja a otra línea */
+}
+
+/* tamaño base de cada control */
+.filter-item{
+    flex:0 1 160px;              /* no crecer demasiado, tope aprox 160px */
+    max-width:220px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    overflow:hidden;
+}
+
+/* el campo de nombre puede crecer más */
+.filter-item.filter-name{
+    flex:1 1 260px;              /* que sea el elástico */
+    max-width:none;
+}
+
+/* el select de tipo de venue más chiquito */
+.filter-item.filter-isbar{
+    flex:0 0 140px;              /* ancho fijo y compacto */
+}
+
+/* que el botón quede pegado a la derecha */
+.btn.btn-filter{
+    margin-left:auto;
+}
+
+/* opcional: quita padding horizontal exagerado en selects */
+.filter-item select,
+.filter-item{
+    padding-right:10px;
+}
+
+@media (min-width: 1280px) {
+    .filter-bar { flex-wrap: nowrap; }
+}
+

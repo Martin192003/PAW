@@ -12,11 +12,11 @@ public interface ClubService {
 
     Optional<Club> getClubById(UUID clubId);
 
-    List<Club> advancedSearch(String nameLike, Zone location, String musicGenre, String priceRange, BigDecimal minRating, BigDecimal maxRating);
+    List<Club> advancedSearch(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar, String sort);
 
-    Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone);
+    Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar);
 
-    Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone);
+    Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar);
 
     Club updateClub(Club club);
 
