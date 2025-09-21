@@ -67,3 +67,10 @@
         font-size: 1.3rem;
     }
 }
+
+.profile-page .detail-back {
+    position: static; /* or relative */
+    align-self: flex-start; /* override container centering */
+    margin: 0px 0 0 170px; /* spacing from top/left */
+    z-index: auto;
+}

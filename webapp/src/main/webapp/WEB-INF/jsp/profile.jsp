@@ -23,6 +23,12 @@
 <c:set var="activePage" value="profile" />
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 <div class="profile-page">
+    <div class="detail-back">
+        <button type="button" class="btn btn-success"
+                onclick="window.location.href='<c:url value="/clubs"/>'">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+    </div>
     <h1 class="profile-title">Mi perfil</h1>
     <div class="profile-card">
         <div class="profile-info-row">

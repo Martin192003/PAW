@@ -155,7 +155,7 @@ public class ClubController {
             throw new DuplicateEntityException("No se pudo crear el club");
         }
 
-        return "redirect:/clubs/" + newClub.getClubId();
+        return "redirect:/clubs/handle?clubId=" + newClub.getClubId();
     }
 
     @GetMapping("/handle")
