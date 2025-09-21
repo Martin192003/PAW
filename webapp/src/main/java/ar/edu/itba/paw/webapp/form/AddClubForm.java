@@ -35,6 +35,9 @@ public class AddClubForm {
     @NotNull(message = "{club.image.notnull}")
     private MultipartFile image;
 
+    @NotNull(message = "{club.isBar.notnull}")
+    private Boolean isBar;
+
     // --- Getters y Setters ---
     public UUID getClubId() {
         return clubId;
@@ -99,5 +102,9 @@ public class AddClubForm {
     public void setImage(MultipartFile image) {
         this.image = image;
     }
+
+    public Boolean getIsBar() { return isBar; }
+    public void setIsBar(Boolean isBar) { this.isBar = isBar; }
+
 }
 

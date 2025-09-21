@@ -132,3 +132,49 @@ textarea.form-control {
     border-color: #545b62;
     box-shadow: 0 4px 15px rgba(108, 117, 125, 0.5);
 }
+/* === Checkbox con estilo de input === */
+.form-control-checkbox{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    height:56px;                 /* altura similar a los inputs */
+    cursor:pointer;
+    user-select:none;
+}
+
+/* oculto el checkbox nativo pero accesible dentro del label */
+.checkbox-native{
+    position:absolute;
+    opacity:0;
+    width:0;
+    height:0;
+}
+
+/* “cajita” del check */
+.checkbox-custom{
+    width:22px;
+    height:22px;
+    border:1.5px solid #ccc;
+    border-radius:6px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    transition:all .15s ease;
+    color:transparent;           /* icono invisible hasta checkear */
+}
+
+/* texto */
+.checkbox-label{
+    font-size:15px;
+    color:#fff;
+}
+
+
+.form-control-checkbox:hover .checkbox-custom{
+    border-color:#bbb;
+}
+
+.checkbox-native:focus + .checkbox-custom{
+    box-shadow:0 0 0 3px rgba(33,150,243,.25);
+    border-color:#2196f3;
+}
