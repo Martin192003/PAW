@@ -18,11 +18,11 @@
 <body>
 <c:set var="showRightButtons" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
-<div class="contact-page">
-    <t:card size="card-lg" cssClass="contact-card">
-        <div class="contact-title">
-            Añadir Boliche
-            <span class="contact-icon"><i class="fa-solid fa-martini-glass-citrus"></i></span>
+<div class="club-form-page">
+    <t:card size="card-lg" cssClass="club-form-card">
+        <div class="club-form-title">
+            <spring:message code="title.addClub"/>
+            <span class="club-form-icon"><i class="fa-solid fa-martini-glass-citrus"></i></span>
         </div>
         <spring:message code="placeholder.name" var="phName"/>
         <spring:message code="placeholder.location" var="phLocation"/>
