@@ -178,3 +178,19 @@ textarea.form-control {
     box-shadow:0 0 0 3px rgba(33,150,243,.25);
     border-color:#2196f3;
 }
+
+/* Botón “volver” fijo bajo el top bar */
+.detail-back {
+    position: fixed;
+    top: 100px;     /* 90px del top bar + 10px de margen visual */
+    left: 20px;
+    z-index: 100;   /* arriba del contenido, debajo del top bar (que tiene 99) */
+}
+
+/* Ajuste responsivo opcional */
+@media (max-width: 768px) {
+    .detail-back {
+        top: 96px;  /* un poco más pegado en mobile si querés */
+        left: 12px;
+    }
+}

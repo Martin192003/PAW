@@ -51,10 +51,6 @@
             <span class="profile-label">Rol:</span>
             <span class="profile-value">${user.role}</span>
         </div>
-        <div class="profile-info-row">
-            <span class="profile-label">Fecha de creación:</span>
-            <span class="profile-value">${user.createdAt}</span>
-        </div>
     </div>
 </div>
 </body>

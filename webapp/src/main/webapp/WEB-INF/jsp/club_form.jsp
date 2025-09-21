@@ -19,6 +19,12 @@
 <c:set var="showRightButtons" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="club-form-page">
+    <div class="detail-back">
+        <button type="button" class="btn btn-success"
+                onclick="window.location.href='<c:url value="/clubs"/>'">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+    </div>
     <t:card size="card-lg" cssClass="club-form-card">
         <div class="club-form-title">
             <spring:message code="title.addClub"/>

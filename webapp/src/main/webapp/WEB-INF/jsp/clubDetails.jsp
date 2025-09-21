@@ -166,12 +166,14 @@
 
         </div>
 
+        <spring:message code="tables.selectdate" var="msgSelectDate"/>
+        <spring:message code="tables.invaliddate" var="msgInvalidDate"/>
+        <spring:message code="tables.fixedrange" var="msgFixedRange"/>
+        <spring:message code="tables.pastdate" var="msgPastDate"/>
+
         <script>
-            <spring:message code="tables.selectdate" var="msgSelectDate"/>
-            <spring:message code="tables.invaliddate" var="msgInvalidDate"/>
-            <spring:message code="tables.fixedrange" var="msgFixedRange"/>
             document.addEventListener('DOMContentLoaded', () => {
-                // Dropdowns (igual que tu script)
+                // Dropdowns
                 const dropdowns = Array.from(document.querySelectorAll('.bb-dropdown'));
                 function closeAll() {
                     dropdowns.forEach(dd => {
@@ -193,13 +195,14 @@
                     if (!e.target.closest('.bb-dropdown')) closeAll();
                 });
 
-                // --- Lógica de fecha permitida (Jue=4, Vie=5, Sáb=6) ---
+                // Date rules (Thu=4, Fri=5, Sat=6)
                 const ALLOWED_DAYS = [4,5,6];
                 const reserveBtn = document.getElementById('reserveBtn');
                 const form = document.getElementById('reserveForm');
                 const bookingDate = document.getElementById('bookingDate');
                 const dateHelp = document.getElementById('dateHelp');
 
+                // Ensure min=today (browser UI) but still validate manually
                 const today = new Date();
                 const yyyy = today.getFullYear();
                 const mm = String(today.getMonth()+1).padStart(2,'0');
@@ -210,21 +213,33 @@
 
                 function isAllowedDay(isoDate){
                     if(!isoDate) return false;
-                    // usar mediodía para evitar problemas de TZ
-                    const d = new Date(isoDate + 'T12:00:00');
-                    const dow = d.getDay(); // 0=Dom..6=Sáb
+                    const d = new Date(isoDate + 'T12:00:00'); // avoid TZ issues
+                    const dow = d.getDay(); // 0..6
                     return ALLOWED_DAYS.includes(dow);
+                }
+                function isPastDate(isoDate){
+                    if(!isoDate) return false;
+                    const d = new Date(isoDate + 'T12:00:00');
+                    const now = new Date();
+                    now.setHours(12,0,0,0);
+                    return d < now;
                 }
 
                 function updateReserveButtonState(){
                     const hasTable = !!(form && form.querySelector('input[name="tableId"]:checked'));
-                    const hasValidDate = bookingDate && isAllowedDay(bookingDate.value);
+                    const past = bookingDate && bookingDate.value && isPastDate(bookingDate.value);
+                    const allowed = bookingDate && bookingDate.value && isAllowedDay(bookingDate.value);
+                    const hasValidDate = bookingDate && bookingDate.value && !past && allowed;
+
                     reserveBtn.disabled = !(hasTable && hasValidDate);
 
                     if (!bookingDate.value) {
                         dateHelp.innerHTML = '${msgSelectDate}';
                         bookingDate.classList.remove('invalid');
-                    } else if (!hasValidDate) {
+                    } else if (past) {
+                        dateHelp.innerHTML = '${msgPastDate}';
+                        bookingDate.classList.add('invalid');
+                    } else if (!allowed) {
                         dateHelp.innerHTML = '${msgInvalidDate}';
                         bookingDate.classList.add('invalid');
                     } else {
@@ -235,7 +250,15 @@
 
                 updateReserveButtonState();
 
-                bookingDate.addEventListener('change', updateReserveButtonState);
+                bookingDate.addEventListener('change', () => {
+                    updateReserveButtonState();
+                    // Only reload tables when the chosen date is valid; otherwise keep the user's date and show error
+                    const past = bookingDate && bookingDate.value && isPastDate(bookingDate.value);
+                    const allowed = bookingDate && bookingDate.value && isAllowedDay(bookingDate.value);
+                    if (bookingDate.value && !past && allowed) {
+                        window.location.href = "${clubUrl}?date=" + bookingDate.value + "#dd-tables";
+                    }
+                });
 
                 if (form && reserveBtn){
                     form.addEventListener('change', (e) => {
@@ -247,28 +270,22 @@
                         const radio = li.querySelector('input[type=radio]');
                         if (radio){ radio.checked = true; updateReserveButtonState(); }
                     });
-
-                    // Guardia final en submit (defensa extra)
+                    // Final guard: keep user's date and block submit if invalid
                     form.addEventListener('submit', (e) => {
-                        if (!isAllowedDay(bookingDate.value)) {
+                        const value = bookingDate.value;
+                        if (!value || isPastDate(value) || !isAllowedDay(value)) {
                             e.preventDefault();
-                            alert('Solo se puede reservar jueves, viernes o sábado.');
+                            // Keep the date as-is and surface the error inline
+                            updateReserveButtonState();
                         }
                     });
                 }
 
-                // recargar al cambiar la fecha
-                bookingDate.addEventListener('change', () => {
-                    if (!bookingDate.value) return;
-                    // si querés forzar solo jue/vie/sáb, podés chequear antes; si no, que el servidor decida
-                    window.location.href = "${clubUrl}?date=" + bookingDate.value + "#dd-tables";
-                });
-
                 if (location.hash === "#dd-tables") {
-                    const dd = document.getElementById('dd-tables');
-                    if (dd) {
-                        dd.querySelector('.bb-btn')?.classList.add('active');
-                        dd.querySelector('.bb-panel')?.classList.add('show');
+                    const ddEl = document.getElementById('dd-tables');
+                    if (ddEl) {
+                        ddEl.querySelector('.bb-btn')?.classList.add('active');
+                        ddEl.querySelector('.bb-panel')?.classList.add('show');
                     }
                 }
             });

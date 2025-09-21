@@ -82,3 +82,33 @@
     box-shadow: none;
 }
 
+/* Estilos para el botón de inicio de sesión */
+.login-btn {
+    --purple: #9c27b0;
+    --pink: #d800b7;
+    --shadow: rgba(156, 39, 176, 0.35);
+
+    background: linear-gradient(45deg, var(--purple), var(--pink));
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 999px; /* Borde muy redondeado para un look de píldora */
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px var(--shadow);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.login-btn:hover {
+    transform: translateY(-3px); /* Efecto de levitación */
+    box-shadow: 0 8px 20px var(--shadow); /* Sombra más grande al pasar el cursor */
+}
+
+.login-btn:active {
+    transform: translateY(-1px); /* Efecto de "presión" al hacer clic */
+    box-shadow: 0 2px 10px var(--shadow);
+}
