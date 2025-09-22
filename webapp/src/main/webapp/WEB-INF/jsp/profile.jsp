@@ -1,10 +1,11 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Mi perfil</title>
+    <title><spring:message code="title.myProfile"/></title>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
@@ -17,7 +18,7 @@
 <body>
 <div class="top-bar">
     <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
+        <div class="app-title"><spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/></div>
     </a>
 </div>
 <c:set var="activePage" value="profile" />
@@ -29,26 +30,26 @@
             <i class="fa-solid fa-arrow-left"></i>
         </button>
     </div>
-    <h1 class="profile-title">Mi perfil</h1>
+    <h1 class="profile-title"><spring:message code="title.myProfile"/></h1>
     <div class="profile-card">
         <div class="profile-info-row">
-            <span class="profile-label">Nombre:</span>
+            <span class="profile-label"><spring:message code="form.name"/>:</span>
             <span class="profile-value">${user.username}</span>
         </div>
         <div class="profile-info-row">
-            <span class="profile-label">Apellido:</span>
+            <span class="profile-label"><spring:message code="form.surname"/>:</span>
             <span class="profile-value">${user.surname}</span>
         </div>
         <div class="profile-info-row">
-            <span class="profile-label">Email:</span>
+            <span class="profile-label"><spring:message code="form.email"/>:</span>
             <span class="profile-value">${user.email}</span>
         </div>
         <div class="profile-info-row">
-            <span class="profile-label">Celular:</span>
+            <span class="profile-label"><spring:message code="form.cellphone"/>:</span>
             <span class="profile-value">${user.cellphone}</span>
         </div>
         <div class="profile-info-row">
-            <span class="profile-label">Rol:</span>
+            <span class="profile-label"><spring:message code="label.role"/>:</span>
             <span class="profile-value">${user.role}</span>
         </div>
     </div>

@@ -219,6 +219,10 @@ html, body {
     background: #1a1a1a;
     color: #fff;
     margin: 4px;
+    outline: none;
+}
+.add-product-name, .add-product-input {
+    outline: none;
 }
 .add-product-form {
     margin-top: 20px;
@@ -270,7 +274,6 @@ html, body {
 .modal-content select {
     background: #1a1a1a;
     color: #fff;
-    border: 1px solid #444;
     border-radius: 6px;
     padding: 10px 12px;
     font-size: 16px;

@@ -1,10 +1,11 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Mis boliches</title>
+    <title><spring:message code="title.myClubs"/></title>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
@@ -16,14 +17,14 @@
 <body>
 <div class="top-bar">
     <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title">Bling <br>&nbsp;&nbsp;Bling</div>
+        <div class="app-title"><spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/></div>
     </a>
 </div>
 <c:set var="activePage" value="clubs" />
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 
 <div class="app-boliches">
-    <h1 class="clubActivity-title">Mis boliches</h1>
+    <h1 class="clubActivity-title"><spring:message code="title.myClubs"/></h1>
     <c:forEach var="club" items="${clubs}">
         <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">
             <div class="card-content">
@@ -35,7 +36,7 @@
                         </c:when>
                         <c:otherwise>
                             <div class="card-no-image">
-                                Bling <br>&nbsp;&nbsp;Bling
+                                <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
                             </div>
                         </c:otherwise>
                     </c:choose>
@@ -69,3 +70,4 @@
 </script>
 </body>
 </html>
+

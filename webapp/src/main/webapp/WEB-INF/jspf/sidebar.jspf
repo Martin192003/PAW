@@ -1,15 +1,24 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <c:if test="${user != null}">
     <div class="sidebar">
         <a href="<c:url value='/clubs/profile?userId=${user.id}' />"
-           class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">Mi perfil</a>
+           class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">
+            <spring:message code="title.myProfile"/>
+        </a>
 
         <c:if test="${user.role != null and user.role.name() == 'ADMIN'}">
             <a href="<c:url value='/clubs/activity?userId=${user.id}' />"
-               class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">Mis boliches</a>
+               class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">
+                <spring:message code="title.myClubs"/>
+            </a>
         </c:if>
 
-        <a href="#" class="sidebar-btn ${activePage == 'reservas' ? 'active' : ''}">Mis reservas</a>
-        <a href="#" class="sidebar-btn ${activePage == 'ayuda' ? 'active' : ''}">Ayuda</a>
+        <a href="#" class="sidebar-btn ${activePage == 'reservas' ? 'active' : ''}">
+            <spring:message code="menu.reservations"/>
+        </a>
+        <a href="#" class="sidebar-btn ${activePage == 'ayuda' ? 'active' : ''}">
+            <spring:message code="menu.help"/>
+        </a>
     </div>
 </c:if>

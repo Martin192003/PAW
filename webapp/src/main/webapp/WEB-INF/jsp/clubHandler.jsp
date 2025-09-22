@@ -1,9 +1,10 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <title>Mi actividad</title>
+    <title><spring:message code="title.myActivity"/></title>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />">
@@ -18,7 +19,7 @@
 <div class="top-bar">
     <a href="<c:url value='/clubs' />" class="logo-link">
         <div class="app-title">
-            Bling <br>&nbsp;&nbsp;Bling
+            <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
         </div>
     </a>
 </div>
@@ -38,7 +39,7 @@
             </c:when>
             <c:otherwise>
                 <div class="card-no-image">
-                    Bling <br>&nbsp;&nbsp;Bling
+                    <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
                 </div>
             </c:otherwise>
         </c:choose>
@@ -50,51 +51,51 @@
     </div>
 
     <div class="club-info">
-        <div><strong>Nombre:&nbsp;</strong> <c:out value="${club.clubName}" />
+        <div><strong><spring:message code="form.name"/>:&nbsp;</strong> <c:out value="${club.clubName}" />
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('clubName', '<c:out value="${club.clubName}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Ubicación:&nbsp;</strong> <c:out value="${club.location}" />
+        <div><strong><spring:message code="form.location"/>:&nbsp;</strong> <c:out value="${club.location}" />
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('location', '<c:out value="${club.location}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Zona:&nbsp;</strong> <c:out value="${club.zone}" />
+        <div><strong><spring:message code="label.zone"/>:&nbsp;</strong> <spring:message code="zone.${club.zone}"/>
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('zone', '<c:out value="${club.zone}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Género musical:&nbsp;</strong> <c:out value="${club.musicGenre}" />
+        <div><strong><spring:message code="label.musicGenre"/>:&nbsp;</strong> <spring:message code="genre.${club.musicGenre}"/>
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('musicGenre', '<c:out value="${club.musicGenre}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Precio:&nbsp;</strong> <c:out value="${club.priceRange}" />
+        <div><strong><spring:message code="label.price"/>:&nbsp;</strong> <spring:message code="price.${club.priceRange}"/>
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('priceRange', '<c:out value="${club.priceRange}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Descripción:&nbsp;</strong> <c:out value="${club.description}" />
+        <div><strong><spring:message code="form.description"/>:&nbsp;</strong> <c:out value="${club.description}" />
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('description', '<c:out value="${club.description}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
     </div>
-    <h2>Menú</h2>
+    <h2><spring:message code="menu.menu"/></h2>
     <table class="styled-table">
         <thead>
         <tr>
-            <th>Producto</th>
-            <th>Descripción</th>
-            <th>Precio</th>
-            <th>Tipo</th>
+            <th><spring:message code="label.product"/></th>
+            <th><spring:message code="form.description"/></th>
+            <th><spring:message code="label.price"/></th>
+            <th><spring:message code="label.type"/></th>
             <th></th>
         </tr>
         </thead>
@@ -102,7 +103,7 @@
         <c:if test="${empty menu}">
             <tr>
                 <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
-                    No tiene productos en este momento
+                    <spring:message code="error.noproducts"/>
                 </td>
             </tr>
         </c:if>
@@ -114,7 +115,7 @@
                     <form method="post" action="<c:url value='/clubs/editProductPrice' />" style="display:flex; gap:2px; align-items:center;">
                         <input type="hidden" name="productId" value="${product.productId}" />
                         <input type="number" name="basePrice" value="${product.basePrice}" step="0.01" required class="input-price"/>
-                        <button type="submit" class="btn btn-success btn-sm" title="Actualizar">
+                        <button type="submit" class="btn btn-success btn-sm" title="<spring:message code='button.update'/>">
                             <i class="fa-solid fa-arrows-rotate"></i>
                         </button>
                     </form>
@@ -132,29 +133,32 @@
         </tbody>
     </table>
 
+    <spring:message code="placeholder.name" var="phProductName"/>
+    <spring:message code="placeholder.description" var="phDescription"/>
+    <spring:message code="placeholder.price" var="phPrice"/>
 
     <form method="post" action="<c:url value='/clubs/addProduct' />" class="add-product-bar">
         <input type="hidden" name="clubId" value="${club.clubId}" />
-        <input type="text" class="add-product-name" name="productName" placeholder="Nombre" required />
-        <input type="text" class="add-product-input" name="description" placeholder="Descripción" />
-        <input type="number" class="add-product-input" name="basePrice" placeholder="Precio" step="0.01" required />
+        <input type="text" class="add-product-name" name="productName" placeholder="${phProductName}" required />
+        <input type="text" class="add-product-input" name="description" placeholder="${phDescription}" />
+        <input type="number" class="add-product-input" name="basePrice" placeholder="${phPrice}" step="0.01" required />
         <select class="add-product-input" name="productType" required>
-            <option value="alcoholicas">Bebida alcohólica</option>
-            <option value="noAlcoholicas">Bebida sin alcohol</option>
-            <option value="tragos">Trago</option>
+            <option value="alcoholicas"><spring:message code="label.alcoholicDrink"/></option>
+            <option value="noAlcoholicas"><spring:message code="label.nonAlcoholicDrink"/></option>
+            <option value="tragos"><spring:message code="label.cocktail"/></option>
         </select>
-        <button type="submit" class="btn btn-success btn-edit-small" title="Agregar">
+        <button type="submit" class="btn btn-success btn-edit-small" title="<spring:message code='button.add'/>">
             <i class="fa-solid fa-plus"></i>
         </button>
     </form>
-    <h2>Mesas</h2>
+    <h2><spring:message code="button.tables"/></h2>
     <table class="styled-table">
         <thead>
         <tr>
-            <th>Número</th>
-            <th>Capacidad</th>
-            <th>Precio</th>
-            <th>Descuento (%)</th>
+            <th><spring:message code="label.number"/></th>
+            <th><spring:message code="label.capacity"/></th>
+            <th><spring:message code="label.price"/></th>
+            <th><spring:message code="label.discount"/> (%)</th>
             <th></th>
         </tr>
         </thead>
@@ -162,7 +166,7 @@
         <c:if test="${empty tables}">
             <tr>
                 <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
-                    No tiene mesas en este momento
+                    <spring:message code="error.notables"/>
                 </td>
             </tr>
         </c:if>
@@ -174,14 +178,9 @@
                 <td><c:out value="${table.discount}" /></td>
                 <td>
                     <div style="display: flex; justify-content: right; margin-right: 12px">
-<%--                        <button type="button" class="btn btn-success btn-sm"--%>
-<%--                                onclick="openTableEditModal('${table.tableId}', '${table.tableNumber}', '${table.capacity}', '${table.price}', '${table.discount}')"--%>
-<%--                                title="Editar">--%>
-<%--                            <i class="fa-solid fa-pen"></i>--%>
-<%--                        </button>--%>
                         <button type="button" class="btn btn-danger btn-edit-small"
                                 onclick="openTableDeleteModal('${table.tableId}')"
-                                title="Eliminar">
+                                title="<spring:message code='button.delete'/>">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -191,19 +190,21 @@
         </tbody>
     </table>
 
+    <spring:message code="placeholder.tableNumber" var="phTableNumber"/>
+    <spring:message code="placeholder.capacity" var="phCapacity"/>
+    <spring:message code="placeholder.discount" var="phDiscount"/>
+
     <form method="post" action="<c:url value='/clubs/addTable' />" class="add-product-bar">
         <input type="hidden" name="clubId" value="${club.clubId}" />
-        <input type="number" class="add-product-name" name="tableNumber" placeholder="Número de mesa" required min="1" />
-        <input type="number" class="add-product-input" name="capacity" placeholder="Capacidad" required min="1" />
-        <input type="number" class="add-product-input" name="price" placeholder="Precio" step="0.01" required min="0" />
-        <input type="number" class="add-product-input" name="discount" placeholder="Descuento (%)" step="0.01" min="0" max="100" value="0" />
-        <button type="submit" class="btn btn-success btn-edit-small" title="Agregar">
+        <input type="number" class="add-product-name" name="tableNumber" placeholder="${phTableNumber}" required min="1" />
+        <input type="number" class="add-product-input" name="capacity" placeholder="${phCapacity}" required min="1" />
+        <input type="number" class="add-product-input" name="price" placeholder="${phPrice}" step="0.01" required min="0" />
+        <input type="number" class="add-product-input" name="discount" placeholder="${phDiscount}" step="0.01" min="0" max="100" value="0" />
+        <button type="submit" class="btn btn-success btn-edit-small" title="<spring:message code='button.add'/>">
             <i class="fa-solid fa-plus"></i>
         </button>
     </form>
 </div>
-
-
 
 <!-- Modales -->
 <div id="editModal" class="modal">
@@ -213,30 +214,36 @@
             <input type="hidden" name="clubId" value="${club.clubId}" />
             <input type="hidden" name="field" id="editFieldName" value="" />
 
-            <label>Nuevo valor:</label>
+            <label><spring:message code="label.newValue"/>:</label>
             <input type="text" name="value" id="editFieldValue" required />
 
             <select name="value" id="zoneSelect" class="hidden">
                 <c:forEach var="z" items="${zones}">
-                    <option value="${z}">${z.displayName}</option>
+                    <option value="${z.dbValue}" ${zone == z.dbValue ? 'selected' : ''}>
+                        <spring:message code="zone.${z.dbValue}"/>
+                    </option>
                 </c:forEach>
             </select>
 
             <select name="value" id="musicGenreSelect" class="hidden">
                 <c:forEach var="g" items="${genres}">
-                    <option value="${g}">${g.label}</option>
+                    <option value="${g}" ${genre == g ? 'selected' : ''}>
+                        <spring:message code="genre.${g}"/>
+                    </option>
                 </c:forEach>
             </select>
 
             <select name="value" id="priceSelect" class="hidden">
                 <c:forEach var="p" items="${prices}">
-                    <option value="${p}">${p.label}</option>
+                    <option value="${p}" ${price == p ? 'selected' : ''}>
+                        <spring:message code="price.${p}"/>
+                    </option>
                 </c:forEach>
             </select>
 
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
-                <button type="submit" class="btn btn-success">Guardar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()"><spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
             </div>
         </form>
     </div>
@@ -246,12 +253,12 @@
 <div id="editImageModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="document.getElementById('editImageModal').style.display='none'">&times;</span>
-        <h3>Modificar imagen del club</h3>
+        <h3><spring:message code="title.editImage"/></h3>
         <form method="post" action="<c:url value='/clubs/club/${club.clubId}/photos' />" enctype="multipart/form-data">
             <input type="file" name="file" accept="image/*" required />
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editImageModal').style.display='none'">Cancelar</button>
-                <button type="submit" class="btn btn-success">Guardar</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editImageModal').style.display='none'"><spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
             </div>
         </form>
     </div>
@@ -260,59 +267,58 @@
 <div id="deleteModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
-        <h3>¿Seguro que querés eliminar este producto?</h3>
+        <h3><spring:message code="confirm.deleteProduct"/></h3>
         <form id="deleteForm" method="post" action="<c:url value='/clubs/deleteProduct' />">
             <input type="hidden" name="productId" id="deleteProductId" value="" />
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
-                <button type="submit" class="btn btn-danger">Eliminar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()"><spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-danger"><spring:message code="button.delete"/></button>
             </div>
         </form>
     </div>
 </div>
 
-    <!-- Modal editar mesa  -->
-    <div id="tableEditModal" class="modal">
-        <div class="modal-content" style="background:#232323; color:#fff; border-radius:14px; padding:32px 28px; width:440px;">
-            <span class="modal-close" onclick="closeTableEditModal()" style="color:#fff;">&times;</span>
-            <h2 style="margin-bottom:18px; text-align:center; color:#9c27b0;">Editar mesa</h2>
-            <form method="post" id="tableEditForm" style="display:flex; flex-direction:column; gap:18px;">
-                <input type="hidden" name="clubId" value="${club.clubId}" />
-                <div style="display:flex; flex-direction:column; gap:6px;">
-                    <label for="editTableNumber" style="font-weight:500;">Número</label>
-                    <input type="number" name="tableNumber" id="editTableNumber" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:6px;">
-                    <label for="editTableCapacity" style="font-weight:500;">Capacidad</label>
-                    <input type="number" name="capacity" id="editTableCapacity" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:6px;">
-                    <label for="editTablePrice" style="font-weight:500;">Precio</label>
-                    <input type="number" name="price" id="editTablePrice" step="0.01" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:6px;">
-                    <label for="editTableDiscount" style="font-weight:500;">Descuento (%)</label>
-                    <input type="number" name="discount" id="editTableDiscount" step="0.01" min="0" max="100" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
-                </div>
-                <div class="modal-actions" style="margin-top:24px; justify-content:center;">
-                    <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Guardar</button>
-                </div>
-            </form>
-        </div>
+<!-- Modal editar mesa  -->
+<div id="tableEditModal" class="modal">
+    <div class="modal-content" style="background:#232323; color:#fff; border-radius:14px; padding:32px 28px; width:440px;">
+        <span class="modal-close" onclick="closeTableEditModal()" style="color:#fff;">&times;</span>
+        <h2 style="margin-bottom:18px; text-align:center; color:#9c27b0;"><spring:message code="title.editTable"/></h2>
+        <form method="post" id="tableEditForm" style="display:flex; flex-direction:column; gap:18px;">
+            <input type="hidden" name="clubId" value="${club.clubId}" />
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editTableNumber" style="font-weight:500;"><spring:message code="label.number"/></label>
+                <input type="number" name="tableNumber" id="editTableNumber" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editTableCapacity" style="font-weight:500;"><spring:message code="label.capacity"/></label>
+                <input type="number" name="capacity" id="editTableCapacity" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editTablePrice" style="font-weight:500;"><spring:message code="label.price"/></label>
+                <input type="number" name="price" id="editTablePrice" step="0.01" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editTableDiscount" style="font-weight:500;"><spring:message code="label.discount"/> (%)</label>
+                <input type="number" name="discount" id="editTableDiscount" step="0.01" min="0" max="100" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+            </div>
+            <div class="modal-actions" style="margin-top:24px; justify-content:center;">
+                <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()"><spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
+            </div>
+        </form>
     </div>
-
+</div>
 
 <!-- Modal eliminar mesa -->
 <div id="tableDeleteModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeTableDeleteModal()">&times;</span>
-        <h3>¿Seguro que quiere eliminar esta mesa?</h3>
+        <h3><spring:message code="confirm.deleteTable"/></h3>
         <form method="post" id="tableDeleteForm">
             <input type="hidden" name="clubId" value="${club.clubId}" />
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeTableDeleteModal()">Cancelar</button>
-                <button type="submit" class="btn btn-danger">Eliminar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeTableDeleteModal()"><spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-danger"><spring:message code="button.delete"/></button>
             </div>
         </form>
     </div>
@@ -336,7 +342,7 @@
             el.classList.add("hidden");
             el.removeAttribute('name');
             el.removeAttribute('required');
-            el.style.display = 'none'; // Oculta por style también
+            el.style.display = 'none';
         });
 
         if (field === 'zone') {
@@ -370,7 +376,6 @@
         }
     }
 
-
     function closeEditModal() {
         document.getElementById('editModal').style.display = 'none';
     }
@@ -392,7 +397,6 @@
     function closeTableDeleteModal() {
         document.getElementById('tableDeleteModal').style.display = 'none';
     }
-
 </script>
 
 </body>
