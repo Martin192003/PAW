@@ -250,27 +250,39 @@ public class ClubController {
         return "clubActivity";
     }
 
-    @PostMapping("/editProductPrice")
-    public String editProductPrice(
+    @PostMapping("/editProduct")
+    public String editProduct(
             @RequestParam("productId") UUID productId,
+            @RequestParam("productName") String productName,
+            @RequestParam("description") String description,
             @RequestParam("basePrice") BigDecimal basePrice,
+            @RequestParam("productType") String productType,
             RedirectAttributes ra
     ) {
-
         var product = productService.findById(productId).orElseThrow();
         UUID clubId = product.getClub().getClubId();
 
         checkLoggedUser(clubId);
 
         try {
-            productService.update(productId, clubId, product.getProductName(),
-                    product.getDescription(), basePrice, product.getProductType(), product.getIsAvailable());
+            productService.update(
+                    productId,
+                    clubId,
+                    productName,
+                    description,
+                    basePrice,
+                    ProductType.fromDb(productType),
+                    product.getIsAvailable()
+            );
         } catch (ValidationException e) {
             ra.addAttribute("err", "price_max_product");
+        } catch (IllegalArgumentException e) {
+            ra.addAttribute("err", "name");
         }
 
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
 
 
     @PostMapping("/deleteProduct")

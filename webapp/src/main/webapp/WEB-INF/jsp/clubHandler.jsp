@@ -121,18 +121,15 @@
             <tr>
                 <td><c:out value="${product.productName}" /></td>
                 <td><c:out value="${product.description}" /></td>
-                <td>
-                    <form method="post" action="<c:url value='/clubs/editProductPrice' />" style="display:flex; gap:2px; align-items:center;">
-                        <input type="hidden" name="productId" value="${product.productId}" />
-                        <input type="number" name="basePrice" value="${product.basePrice}" step="0.01" required class="input-price"/>
-                        <button type="submit" class="btn btn-success btn-sm" title="<spring:message code='button.update'/>">
-                            <i class="fa-solid fa-arrows-rotate"></i>
-                        </button>
-                    </form>
-                </td>
+                <td><c:out value="${product.basePrice}" /></td>
                 <td><spring:message code="productType.${product.productType}"/></td>
                 <td>
                     <div style="display: flex; justify-content: right; margin-right: 12px">
+                        <button type="button" class="btn btn-success btn-edit-small"
+                                onclick="openProductEditModal('${product.productId}', '${product.productName}', '${product.description}', '${product.basePrice}', '${product.productType}')"
+                                title="Editar producto">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
                         <button type="button" class="btn btn-danger btn-edit-small" onclick="openDeleteModal('${product.productId}')">
                             <i class="fa-solid fa-trash"></i>
                         </button>
@@ -290,6 +287,40 @@
         </form>
     </div>
 </div>
+
+<div id="productEditModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeProductEditModal()">&times;</span>
+        <h2>Editar producto</h2>
+        <form method="post" id="productEditForm" action="<c:url value='/clubs/editProduct' />" style="display:flex; flex-direction:column; gap:18px;">
+            <input type="hidden" name="productId" id="editProductId" />
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editProductName">Nombre:</label>
+                <input type="text" name="productName" id="editProductName" required />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editProductDescription">Descripción:</label>
+                <input type="text" name="description" id="editProductDescription" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editProductPrice">Precio:</label>
+                <input type="number" name="basePrice" id="editProductPrice" step="0.01" required />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editProductType">Tipo:</label>
+                <select name="productType" id="editProductType" required>
+                    <option value="alcoholicas">Alcoholicas</option>
+                    <option value="noAlcoholicas">No alcoholicas</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeProductEditModal()">Cancelar</button>
+                <button type="submit" class="btn btn-success">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 <!-- Modal editar imagen -->
 <div id="editImageModal" class="modal">
@@ -479,6 +510,17 @@
             '${pageContext.request.contextPath}/clubs/tables/' + tableId + '/delete';    }
     function closeTableDeleteModal() {
         document.getElementById('tableDeleteModal').style.display = 'none';
+    }
+    function openProductEditModal(productId, productName, description, basePrice, productType) {
+        document.getElementById('productEditModal').style.display = 'flex';
+        document.getElementById('editProductId').value = productId;
+        document.getElementById('editProductName').value = productName;
+        document.getElementById('editProductDescription').value = description;
+        document.getElementById('editProductPrice').value = basePrice;
+        document.getElementById('editProductType').value = productType;
+    }
+    function closeProductEditModal() {
+        document.getElementById('productEditModal').style.display = 'none';
     }
 </script>
 
