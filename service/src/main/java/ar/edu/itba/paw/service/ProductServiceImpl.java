@@ -3,6 +3,7 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
+import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import org.springframework.stereotype.Service;
 import ar.edu.itba.paw.service.ProductService;
@@ -23,6 +24,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product create(Club club, String name, String description, BigDecimal basePrice, ProductType type, boolean isAvailable) {
+        if(basePrice.compareTo(BigDecimal.valueOf(1000000000)) >= 0)
+            throw new ValidationException("Precio demasiado alto");
+        if(name.length() > 100)
+            throw new IllegalArgumentException("Nombre demasiado largo");
         return productsDao.create(club, name, description, basePrice, type, isAvailable);
     }
 

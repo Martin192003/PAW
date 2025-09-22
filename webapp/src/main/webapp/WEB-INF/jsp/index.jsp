@@ -2,6 +2,8 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,8 +26,8 @@
         <spring:message code="filter.maxRating" var="phMaxrating"/>
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
             <div class="filter-bar">
-                <input type="text" name="name" placeholder="${phName}"
-                       class="filter-item" value="${name != null ? name : ''}" />
+                <input type="text" name="name" placeholder="<c:out value='${phName}'/>"
+                       class="filter-item" <c:out value="${name != null ? name : ''}"/> />
 
                 <select name="zone" class="filter-item">
                     <option value=""><spring:message code="filter.zone"/></option>
@@ -111,7 +113,7 @@
                     <c:choose>
                         <c:when test="${not empty photoUrlByClub[club.clubId]}">
                             <img src="<c:url value='${photoUrlByClub[club.clubId]}' />"
-                                 alt="${club.clubName}" class="card-image" />
+                                 alt="<c:out value='${club.clubName}'/>" class="card-image" />
                         </c:when>
                         <c:otherwise>
                             <div class="card-no-image">
@@ -121,7 +123,16 @@
                     </c:choose>
                 </div>
                 <div class="card-right">
-                    <div class="card-text-title"><c:out value="${club.clubName}"/></div>
+                    <div class="card-text-title">
+                        <c:choose>
+                            <c:when test="${not empty club.clubName and fn:length(club.clubName) > 30}">
+                                <c:out value="${fn:substring(club.clubName, 0, 30)}"/>...
+                            </c:when>
+                            <c:otherwise>
+                                <c:out value="${club.clubName}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                     <span class="card-text-body">
                     <i class="fa-solid fa-location-dot"></i> <c:out value="${club.location}"/><br>
                     <i class="fa-solid fa-music"></i> <spring:message code="genre.${club.musicGenre}"/><br>
@@ -143,7 +154,14 @@
                     </c:forEach>
 
                             ${club.rating}<br>
-                    <c:out value="${club.description}"/>
+                    <c:choose>
+                        <c:when test="${not empty club.description and fn:length(club.description) > 80}">
+                            <c:out value="${fn:substring(club.description, 0, 80)}"/>...
+                        </c:when>
+                        <c:otherwise>
+                            <c:out value="${club.description}"/>
+                        </c:otherwise>
+                    </c:choose>
                 </span>
                 </div>
 

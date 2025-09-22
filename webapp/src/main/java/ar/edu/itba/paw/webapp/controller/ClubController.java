@@ -2,13 +2,13 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.MusicalGenre;
-import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.AddClubForm;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.io.IOException;
@@ -285,12 +286,19 @@ public class ClubController {
             @RequestParam("productName") String name,
             @RequestParam("description") String description,
             @RequestParam("basePrice") BigDecimal basePrice,
-            @RequestParam("productType") String type
+            @RequestParam("productType") String type,
+            RedirectAttributes ra
     ) {
         checkLoggedUser(clubId);
 
         var club = clubService.getClubById(clubId).orElseThrow();
-        productService.create(club, name, description, basePrice, ProductType.fromDb(type), true);
+        try {
+            productService.create(club, name, description, basePrice, ProductType.fromDb(type), true);
+        } catch (ValidationException e) {
+            ra.addAttribute("err", "price_max_product");
+        } catch (IllegalArgumentException e) {
+            ra.addAttribute("err", "name");
+        }
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
@@ -311,7 +319,8 @@ public class ClubController {
             @RequestParam("tableNumber") int tableNumber,
             @RequestParam("capacity") int capacity,
             @RequestParam("price") BigDecimal price,
-            @RequestParam("discount") BigDecimal discount
+            @RequestParam("discount") BigDecimal discount,
+            RedirectAttributes ra
     ) {
 
         checkLoggedUser(clubId);
@@ -320,9 +329,23 @@ public class ClubController {
             throw new IllegalArgumentException("Datos inválidos para la mesa.");
         }
 
+        //ESTO IRIA EN SERVICE CUETA COMO LOGICA DE NEGOCIO
+        if (price.compareTo(new BigDecimal("1000000000")) >= 0) {
+            ra.addAttribute("err", "price_max");
+            return "redirect:/clubs/handle?clubId=" + clubId;
+        }
+
         var club = clubService.getClubById(clubId).orElseThrow();
-        TableState state = TableState.DISPONIBLE; // Estado fijo
-        tableService.create(tableNumber, capacity, club.getClubId(), state, price, discount);
+        TableState state = TableState.DISPONIBLE;
+        try {
+            tableService.create(tableNumber, capacity, club.getClubId(), state, price, discount);
+        } catch (DuplicateEntityException e) {
+            ra.addAttribute("err", "dup");
+        } catch (ValidationException e) {
+            ra.addAttribute("err", "price_max");
+        } catch (DataIntegrityViolationException e) {
+            ra.addAttribute("err", "dup");
+        }
 
         return "redirect:/clubs/handle?clubId=" + clubId;
     }

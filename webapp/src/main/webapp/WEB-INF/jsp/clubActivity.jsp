@@ -2,6 +2,8 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <html>
 <head>
     <meta charset="UTF-8">
@@ -32,7 +34,7 @@
                     <c:choose>
                         <c:when test="${not empty photoUrlByClub[club.clubId]}">
                             <img src="<c:url value='${photoUrlByClub[club.clubId]}' />"
-                                 alt="${club.clubName}" class="card-image" />
+                                 alt="<c:out value='${club.clubName}'/>" class="card-image" />
                         </c:when>
                         <c:otherwise>
                             <div class="card-no-image">
@@ -42,11 +44,27 @@
                     </c:choose>
                 </div>
                 <div class="card-right">
-                    <div class="card-text-title"><c:out value="${club.clubName}"/></div>
+                    <div class="card-text-title">
+                        <c:choose>
+                            <c:when test="${not empty club.clubName and fn:length(club.clubName) > 20}">
+                                <c:out value="${fn:substring(club.clubName, 0, 20)}"/>...
+                            </c:when>
+                            <c:otherwise>
+                                <c:out value="${club.clubName}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                     <span class="card-text-body">
                         <i class="fa-solid fa-location-dot"></i> <c:out value="${club.location}"/><br>
                             ${club.rating}<br>
-                        <c:out value="${club.description}"/>
+                        <c:choose>
+                            <c:when test="${not empty club.description and fn:length(club.description) > 75}">
+                                <c:out value="${fn:substring(club.description, 0, 75)}"/>...
+                            </c:when>
+                            <c:otherwise>
+                                <c:out value="${club.description}"/>
+                            </c:otherwise>
+                        </c:choose>
                     </span>
                 </div>
             </div>

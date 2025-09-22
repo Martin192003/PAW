@@ -1,6 +1,8 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -35,7 +37,7 @@
         <c:choose>
             <c:when test="${not empty coverPhotoUrl}">
                 <img src="<c:url value='${coverPhotoUrl}' />"
-                     alt="${club.clubName}" class="club-image" />
+                     alt="<c:out value='${club.clubName}'/>" class="club-image" />
             </c:when>
             <c:otherwise>
                 <div class="card-no-image">
@@ -81,7 +83,15 @@
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong><spring:message code="form.description"/>:&nbsp;</strong> <c:out value="${club.description}" />
+        <div><strong><spring:message code="form.description"/>:&nbsp;</strong>
+            <c:choose>
+                <c:when test="${not empty club.description and fn:length(club.description) > 100}">
+                    <c:out value="${fn:substring(club.description, 0, 100)}"/>...
+                </c:when>
+                <c:otherwise>
+                    <c:out value="${club.description}"/>
+                </c:otherwise>
+            </c:choose>
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('description', '<c:out value="${club.description}" />')">
                 <i class="fa-solid fa-pen"></i>
@@ -151,6 +161,16 @@
             <i class="fa-solid fa-plus"></i>
         </button>
     </form>
+    <c:if test="${param.err == 'price_max_product'}">
+        <div style="color:#e53935; font-size:0.9rem;">
+            <spring:message code="error.table.price_max" text="El precio debe ser menor a 1.000.000.000."/>
+        </div>
+    </c:if>
+    <c:if test="${param.err == 'name'}">
+        <div style="color:#e53935; font-size:0.9rem;">
+            <spring:message code="error.name" text="El nombre es demasiado largo debe ser menor a 100 cáracteres"/>
+        </div>
+    </c:if>
     <h2><spring:message code="button.tables"/></h2>
     <table class="styled-table">
         <thead>
@@ -196,14 +216,33 @@
 
     <form method="post" action="<c:url value='/clubs/addTable' />" class="add-product-bar">
         <input type="hidden" name="clubId" value="${club.clubId}" />
-        <input type="number" class="add-product-name" name="tableNumber" placeholder="${phTableNumber}" required min="1" />
+
+        <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
+            <input type="number" class="add-product-name" name="tableNumber" placeholder="${phTableNumber}" required min="1" />
+        </div>
+
         <input type="number" class="add-product-input" name="capacity" placeholder="${phCapacity}" required min="1" />
-        <input type="number" class="add-product-input" name="price" placeholder="${phPrice}" step="0.01" required min="0" />
+
+        <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
+            <input type="number" class="add-product-input" name="price" placeholder="${phPrice}" step="0.01" required min="0" />
+        </div>
+
         <input type="number" class="add-product-input" name="discount" placeholder="${phDiscount}" step="0.01" min="0" max="100" value="0" />
+
         <button type="submit" class="btn btn-success btn-edit-small" title="<spring:message code='button.add'/>">
             <i class="fa-solid fa-plus"></i>
         </button>
     </form>
+    <c:if test="${param.err == 'dup'}">
+        <div style="color:#e53935; font-size:0.9rem;">
+            <spring:message code="error.table.duplicate" text="Ya existe una mesa con ese número."/>
+        </div>
+    </c:if>
+    <c:if test="${param.err == 'price_max'}">
+        <div style="color:#e53935; font-size:0.9rem;">
+            <spring:message code="error.table.price_max" text="El precio debe ser menor a 1.000.000.000."/>
+        </div>
+    </c:if>
 </div>
 
 <!-- Modales -->
@@ -373,6 +412,11 @@
             input.name = 'value';
             input.required = true;
             input.value = value;
+            if (field === 'clubName' || field === 'location') {
+                input.setAttribute('maxlength', '100');
+            } else {
+                input.removeAttribute('maxlength');
+            }
         }
     }
 
