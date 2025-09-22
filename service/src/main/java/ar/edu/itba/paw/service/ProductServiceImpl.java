@@ -24,7 +24,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product create(Club club, String name, String description, BigDecimal basePrice, ProductType type, boolean isAvailable) {
-        if(basePrice.compareTo(BigDecimal.valueOf(1000000000)) >= 0)
+        if(basePrice.compareTo(BigDecimal.valueOf(100000000)) >= 0)
             throw new ValidationException("Precio demasiado alto");
         if(name.length() > 100)
             throw new IllegalArgumentException("Nombre demasiado largo");

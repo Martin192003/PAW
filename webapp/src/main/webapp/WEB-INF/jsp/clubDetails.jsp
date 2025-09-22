@@ -173,6 +173,32 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', () => {
+                function breakEveryN(str, n) {
+                    if (!str) return '';
+                    const s = String(str).trim();
+                    if (s.length <= n) return s;
+                    const parts = [];
+                    for (let i = 0; i < s.length; i += n) {
+                        parts.push(s.slice(i, i + n));
+                    }
+                    // Usamos <br> para forzar nueva línea, no solo wrap suave
+                    return parts.join('<br>');
+                }
+
+                // Aplica al título (cada 40)
+                const titleEl = document.querySelector('.detail-title');
+                if (titleEl && !titleEl.dataset.broken) {
+                    titleEl.innerHTML = breakEveryN(titleEl.textContent, 25);
+                    titleEl.dataset.broken = '1';
+                }
+
+                // Aplica a la descripción (cada 150)
+                const descEl = document.querySelector('.detail-description p');
+                if (descEl && !descEl.dataset.broken) {
+                    descEl.innerHTML = breakEveryN(descEl.textContent, 100);
+                    descEl.dataset.broken = '1';
+                }
+
                 // Dropdowns
                 const dropdowns = Array.from(document.querySelectorAll('.bb-dropdown'));
                 function closeAll() {

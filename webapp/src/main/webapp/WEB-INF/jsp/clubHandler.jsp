@@ -155,7 +155,6 @@
         <select class="add-product-input" name="productType" required>
             <option value="alcoholicas"><spring:message code="label.alcoholicDrink"/></option>
             <option value="noAlcoholicas"><spring:message code="label.nonAlcoholicDrink"/></option>
-            <option value="tragos"><spring:message code="label.cocktail"/></option>
         </select>
         <button type="submit" class="btn btn-success btn-edit-small" title="<spring:message code='button.add'/>">
             <i class="fa-solid fa-plus"></i>
@@ -163,7 +162,7 @@
     </form>
     <c:if test="${param.err == 'price_max_product'}">
         <div style="color:#e53935; font-size:0.9rem;">
-            <spring:message code="error.table.price_max" text="El precio debe ser menor a 1.000.000.000."/>
+            <spring:message code="error.product.price_max" text="El precio debe ser menor a 100.000.000."/>
         </div>
     </c:if>
     <c:if test="${param.err == 'name'}">
