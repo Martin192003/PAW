@@ -2,13 +2,13 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.MusicalGenre;
-import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.AddClubForm;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.io.IOException;
@@ -71,7 +72,7 @@ public class ClubController {
         Map<UUID, String> photoUrlByClub = new HashMap<>();
         for (Club c : clubs) {
             var photos = photoService.listByClub(c.getClubId(), 0, 1);
-            if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.get(0).getUrl());
+            if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.getFirst().getUrl());
         }
 
         User user = securityService.getVerifiedLoggedUser();
@@ -167,22 +168,14 @@ public class ClubController {
             @RequestParam("clubId") UUID clubId,
             Model model
     ) {
-        User user = securityService.getVerifiedLoggedUser();
-        if(user == null) {
-            throw new UserNotFoundException("No se encontró el usuario logueado.");
-        }
+        checkLoggedUser(clubId);
 
-        List<User> clubUsers = clubService.getAdminsByClub(clubId);
-
-        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
-        }
         var maybeClub = clubService.getClubById(clubId);
         if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
         var club = maybeClub.get();
 
         var photos = photoService.listByClub(clubId, 0, 1);
-        String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
+        String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
 
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("club", club);
@@ -202,16 +195,8 @@ public class ClubController {
             @RequestParam("value") String value,
             Model model
     ) {
-        User user = securityService.getVerifiedLoggedUser();
-        if(user == null) {
-            throw new UserNotFoundException("No se encontró el usuario logueado.");
-        }
+        checkLoggedUser(clubId);
 
-        List<User> clubUsers = clubService.getAdminsByClub(clubId);
-
-        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
-        }
         var maybeClub = clubService.getClubById(clubId);
         if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
         Club club = maybeClub.get();
@@ -268,41 +253,33 @@ public class ClubController {
     @PostMapping("/editProductPrice")
     public String editProductPrice(
             @RequestParam("productId") UUID productId,
-            @RequestParam("basePrice") BigDecimal basePrice
+            @RequestParam("basePrice") BigDecimal basePrice,
+            RedirectAttributes ra
     ) {
-        User user = securityService.getVerifiedLoggedUser();
-        if(user == null) {
-            throw new UserNotFoundException("No se encontró el usuario logueado.");
-        }
 
         var product = productService.findById(productId).orElseThrow();
         UUID clubId = product.getClub().getClubId();
-        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
 
-        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
+        checkLoggedUser(clubId);
+
+        try {
+            productService.update(productId, clubId, product.getProductName(),
+                    product.getDescription(), basePrice, product.getProductType(), product.getIsAvailable());
+        } catch (ValidationException e) {
+            ra.addAttribute("err", "price_max_product");
         }
 
-        productService.update(productId, clubId, product.getProductName(),
-                product.getDescription(), basePrice, product.getProductType(), product.getIsAvailable());
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
 
     @PostMapping("/deleteProduct")
     public String deleteProduct(@RequestParam("productId") UUID productId) {
-        User user = securityService.getVerifiedLoggedUser();
-        if(user == null) {
-            throw new UserNotFoundException("No se encontró el usuario logueado.");
-        }
 
         var product = productService.findById(productId).orElseThrow();
         UUID clubId = product.getClub().getClubId();
-        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
 
-        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
-        }
+        checkLoggedUser(clubId);
 
         productService.delete(productId);
         return "redirect:/clubs/handle?clubId=" + clubId;
@@ -315,21 +292,19 @@ public class ClubController {
             @RequestParam("productName") String name,
             @RequestParam("description") String description,
             @RequestParam("basePrice") BigDecimal basePrice,
-            @RequestParam("productType") String type
+            @RequestParam("productType") String type,
+            RedirectAttributes ra
     ) {
-        User user = securityService.getVerifiedLoggedUser();
-        if(user == null) {
-            throw new UserNotFoundException("No se encontró el usuario logueado.");
-        }
-
-        List<User> clubUsers = clubService.getAdminsByClub(clubId);
-
-        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
-        }
+        checkLoggedUser(clubId);
 
         var club = clubService.getClubById(clubId).orElseThrow();
-        productService.create(club, name, description, basePrice, ProductType.fromDb(type), true);
+        try {
+            productService.create(club, name, description, basePrice, ProductType.fromDb(type), true);
+        } catch (ValidationException e) {
+            ra.addAttribute("err", "price_max_product");
+        } catch (IllegalArgumentException e) {
+            ra.addAttribute("err", "name");
+        }
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
@@ -350,15 +325,31 @@ public class ClubController {
             @RequestParam("tableNumber") int tableNumber,
             @RequestParam("capacity") int capacity,
             @RequestParam("price") BigDecimal price,
-            @RequestParam("discount") BigDecimal discount
+            @RequestParam("discount") BigDecimal discount,
+            RedirectAttributes ra
     ) {
+
+        checkLoggedUser(clubId);
+
         if (tableNumber < 1 || capacity < 1 || price.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0) {
             throw new IllegalArgumentException("Datos inválidos para la mesa.");
         }
 
+        //ESTO IRIA EN SERVICE CUETA COMO LOGICA DE NEGOCIO
+        if (price.compareTo(new BigDecimal("1000000000")) >= 0) {
+            ra.addAttribute("err", "price_max");
+            return "redirect:/clubs/handle?clubId=" + clubId;
+        }
+
         var club = clubService.getClubById(clubId).orElseThrow();
-        TableState state = TableState.DISPONIBLE; // Estado fijo
-        tableService.create(tableNumber, capacity, club.getClubId(), state, price, discount);
+        TableState state = TableState.DISPONIBLE;
+        try {
+            tableService.create(tableNumber, capacity, club.getClubId(), state, price, discount);
+        } catch (DuplicateEntityException | DataIntegrityViolationException e) {
+            ra.addAttribute("err", "dup");
+        } catch (ValidationException e) {
+            ra.addAttribute("err", "price_max");
+        }
 
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
@@ -373,13 +364,7 @@ public class ClubController {
             @RequestParam("price") BigDecimal price,
             @RequestParam("discount") BigDecimal discount
     ) {
-        User user = securityService.getVerifiedLoggedUser();
-        if(user == null) throw new UserNotFoundException("No se encontró el usuario logueado.");
-
-        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
-        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
-        }
+        checkLoggedUser(clubId);
 
         tableService.update(tableId, clubId, tableNumber, capacity, TableState.DISPONIBLE, price, discount);
         return "redirect:/clubs/handle?clubId=" + clubId;
@@ -387,13 +372,7 @@ public class ClubController {
 
     @PostMapping("/tables/{tableId}/delete")
     public String deleteTable(@PathVariable UUID tableId, @RequestParam("clubId") UUID clubId) {
-        User user = securityService.getVerifiedLoggedUser();
-        if(user == null) throw new UserNotFoundException("No se encontró el usuario logueado.");
-
-        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
-        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
-        }
+        checkLoggedUser(clubId);
 
         tableService.delete(tableId);
         return "redirect:/clubs/handle?clubId=" + clubId;
@@ -409,12 +388,7 @@ public class ClubController {
         }
 
         User user = securityService.getVerifiedLoggedUser();
-        if(user == null) throw new UserNotFoundException("No se encontró el usuario logueado.");
-
-        List<User> clubAdmins = clubService.getAdminsByClub(clubId);
-        if(clubAdmins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
-        }
+        checkLoggedUser(clubId);
 
         UUID photoId = photoService.upload(
                 clubId,
@@ -442,7 +416,7 @@ public class ClubController {
             model.addAttribute("user", user);
             return "clubTables";
         }
-
+    */
 
     private void checkLoggedUser(UUID clubId){
         User user = securityService.getVerifiedLoggedUser();
@@ -455,7 +429,7 @@ public class ClubController {
         if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
             throw new UnauthorizedException("El usuario no es admin del club.");
         }
-    }*/
+    }
 
 
 }

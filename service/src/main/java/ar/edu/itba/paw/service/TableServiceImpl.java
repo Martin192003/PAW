@@ -2,6 +2,7 @@ package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Table;
 import ar.edu.itba.paw.model.TableState;
+import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.model.exceptions.TableNotFoundException;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
@@ -58,6 +59,13 @@ public class TableServiceImpl implements TableService {
     @Override
     @Transactional
     public Table create(int number, int capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount) {
+        if(!clubDao.findById(clubId).isPresent()) throw new IllegalArgumentException("Club no existente");
+        if(number <= 0 || capacity <= 0 || price.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0)
+            throw new IllegalArgumentException("Parámetros inválidos");
+        if(clubTablesDao.findByClub(clubDao.findById(clubId).get()).stream().anyMatch(t -> t.getTableNumber() == number))
+            throw new DuplicateEntityException("Número de mesa ya existente en el club");
+        if(price.compareTo(BigDecimal.valueOf(1000000000)) >= 0)
+            throw new IllegalArgumentException("Precio demasiado alto");
         return clubTablesDao.create(number, capacity, clubId, tableState, price, discount);
     }
 
