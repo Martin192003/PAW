@@ -120,7 +120,7 @@
                         </button>
                     </form>
                 </td>
-                <td><c:out value="${product.productType}" /></td>
+                <td><spring:message code="productType.${product.productType}"/></td>
                 <td>
                     <div style="display: flex; justify-content: right; margin-right: 12px">
                         <button type="button" class="btn btn-danger btn-edit-small" onclick="openDeleteModal('${product.productId}')">
@@ -145,7 +145,6 @@
         <select class="add-product-input" name="productType" required>
             <option value="alcoholicas"><spring:message code="label.alcoholicDrink"/></option>
             <option value="noAlcoholicas"><spring:message code="label.nonAlcoholicDrink"/></option>
-            <option value="tragos"><spring:message code="label.cocktail"/></option>
         </select>
         <button type="submit" class="btn btn-success btn-edit-small" title="<spring:message code='button.add'/>">
             <i class="fa-solid fa-plus"></i>
@@ -178,6 +177,10 @@
                 <td><c:out value="${table.discount}" /></td>
                 <td>
                     <div style="display: flex; justify-content: right; margin-right: 12px">
+                        <button type="button" class="btn btn-success btn-edit-small"
+                                onclick="openTableEditModal('${table.tableId}', '${table.tableNumber}', '${table.capacity}', '${table.price}', '${table.discount}')">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
                         <button type="button" class="btn btn-danger btn-edit-small"
                                 onclick="openTableDeleteModal('${table.tableId}')"
                                 title="<spring:message code='button.delete'/>">
@@ -278,36 +281,72 @@
     </div>
 </div>
 
-<!-- Modal editar mesa  -->
 <div id="tableEditModal" class="modal">
-    <div class="modal-content" style="background:#232323; color:#fff; border-radius:14px; padding:32px 28px; width:440px;">
+    <div class="modal-content">
         <span class="modal-close" onclick="closeTableEditModal()" style="color:#fff;">&times;</span>
-        <h2 style="margin-bottom:18px; text-align:center; color:#9c27b0;"><spring:message code="title.editTable"/></h2>
+        <h2><spring:message code="title.editTable"/></h2>
         <form method="post" id="tableEditForm" style="display:flex; flex-direction:column; gap:18px;">
             <input type="hidden" name="clubId" value="${club.clubId}" />
             <div style="display:flex; flex-direction:column; gap:6px;">
-                <label for="editTableNumber" style="font-weight:500;"><spring:message code="label.number"/></label>
-                <input type="number" name="tableNumber" id="editTableNumber" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+                <label for="editTableNumber" style="font-weight:500;"><spring:message code="label.number"/>:</label>
+                <input type="number" name="tableNumber" id="editTableNumber" required class="input-price"/>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
-                <label for="editTableCapacity" style="font-weight:500;"><spring:message code="label.capacity"/></label>
-                <input type="number" name="capacity" id="editTableCapacity" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+                <label for="editTableCapacity"><spring:message code="label.capacity"/>:</label>
+                <input type="number" name="capacity" id="editTableCapacity" required class="input-price"/>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
-                <label for="editTablePrice" style="font-weight:500;"><spring:message code="label.price"/></label>
-                <input type="number" name="price" id="editTablePrice" step="0.01" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+                <label for="editTablePrice"><spring:message code="label.price"/>:</label>
+                <input type="number" name="price" id="editTablePrice" step="0.01" required class="input-price"/>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
-                <label for="editTableDiscount" style="font-weight:500;"><spring:message code="label.discount"/> (%)</label>
-                <input type="number" name="discount" id="editTableDiscount" step="0.01" min="0" max="100" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
+                <label for="editTableDiscount"><spring:message code="label.discount"/>:</label>
+                <input type="number" name="discount" id="editTableDiscount" step="0.01" min="0" max="100" required class="input-price"/>
             </div>
-            <div class="modal-actions" style="margin-top:24px; justify-content:center;">
+            <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()"><spring:message code="button.cancel"/></button>
-                <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.update"/></button>
             </div>
         </form>
     </div>
 </div>
+
+
+<div id="tableEditModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeTableEditModal()">&times;</span>
+        <h3><spring:message code="title.editTable"/></h3>
+        <form id="tableEditForm" method="post">
+            <div>
+                <label for="editTableNumber"><spring:message code="label.number"/>:</label>
+                <input type="number" id="editTableNumber" name="tableNumber" required>
+            </div>
+            <div>
+                <label for="editTableCapacity"><spring:message code="label.capacity"/>:</label>
+                <input type="number" id="editTableCapacity" name="capacity" required>
+            </div>
+            <div>
+                <label for="editTablePrice"><spring:message code="label.price"/>:</label>
+                <input type="number" id="editTablePrice" name="price" step="0.01" required>
+            </div>
+            <div>
+                <label for="editTableDiscount"><spring:message code="label.discount"/>:</label>
+                <input type="number" id="editTableDiscount" name="discount" min="0" max="100">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <spring:message code="button.update"/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
 
 <!-- Modal eliminar mesa -->
 <div id="tableDeleteModal" class="modal">

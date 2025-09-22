@@ -233,7 +233,6 @@ html, body {
     align-items: center;
 }
 
-/* MODALES */
 .modal {
     display: none;
     position: fixed;
