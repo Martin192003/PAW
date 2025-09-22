@@ -72,7 +72,7 @@ public class ClubController {
         Map<UUID, String> photoUrlByClub = new HashMap<>();
         for (Club c : clubs) {
             var photos = photoService.listByClub(c.getClubId(), 0, 1);
-            if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.get(0).getUrl());
+            if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.getFirst().getUrl());
         }
 
         User user = securityService.getVerifiedLoggedUser();
@@ -175,7 +175,7 @@ public class ClubController {
         var club = maybeClub.get();
 
         var photos = photoService.listByClub(clubId, 0, 1);
-        String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
+        String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
 
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("club", club);
@@ -339,12 +339,10 @@ public class ClubController {
         TableState state = TableState.DISPONIBLE;
         try {
             tableService.create(tableNumber, capacity, club.getClubId(), state, price, discount);
-        } catch (DuplicateEntityException e) {
+        } catch (DuplicateEntityException | DataIntegrityViolationException e) {
             ra.addAttribute("err", "dup");
         } catch (ValidationException e) {
             ra.addAttribute("err", "price_max");
-        } catch (DataIntegrityViolationException e) {
-            ra.addAttribute("err", "dup");
         }
 
         return "redirect:/clubs/handle?clubId=" + clubId;
