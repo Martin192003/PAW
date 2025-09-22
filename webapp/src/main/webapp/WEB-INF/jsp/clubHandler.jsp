@@ -50,37 +50,37 @@
     </div>
 
     <div class="club-info">
-        <div><strong>Nombre:</strong> <c:out value="${club.clubName}" />
+        <div><strong>Nombre:&nbsp;</strong> <c:out value="${club.clubName}" />
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('clubName', '<c:out value="${club.clubName}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Ubicación:</strong> <c:out value="${club.location}" />
+        <div><strong>Ubicación:&nbsp;</strong> <c:out value="${club.location}" />
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('location', '<c:out value="${club.location}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Zona:</strong> <c:out value="${club.zone}" />
+        <div><strong>Zona:&nbsp;</strong> <c:out value="${club.zone}" />
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('zone', '<c:out value="${club.zone}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Género musical:</strong> <c:out value="${club.musicGenre}" />
+        <div><strong>Género musical:&nbsp;</strong> <c:out value="${club.musicGenre}" />
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('musicGenre', '<c:out value="${club.musicGenre}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Precio:</strong> <c:out value="${club.priceRange}" />
+        <div><strong>Precio:&nbsp;</strong> <c:out value="${club.priceRange}" />
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('priceRange', '<c:out value="${club.priceRange}" />')">
                 <i class="fa-solid fa-pen"></i>
             </button>
         </div>
-        <div><strong>Descripción:</strong> <c:out value="${club.description}" />
+        <div><strong>Descripción:&nbsp;</strong> <c:out value="${club.description}" />
             <button type="button" class="btn btn-success btn-edit-small"
                     onclick="openEditModal('description', '<c:out value="${club.description}" />')">
                 <i class="fa-solid fa-pen"></i>
@@ -122,7 +122,7 @@
                 <td><c:out value="${product.productType}" /></td>
                 <td>
                     <div style="display: flex; justify-content: right; margin-right: 12px">
-                        <button type="button" class="btn btn-danger btn-sm" onclick="openDeleteModal('${product.productId}')">
+                        <button type="button" class="btn btn-danger btn-edit-small" onclick="openDeleteModal('${product.productId}')">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -133,24 +133,21 @@
     </table>
 
 
-    <h3>Agregar producto</h3>
-    <form method="post" action="<c:url value='/clubs/addProduct' />" class="add-product-form">
+    <form method="post" action="<c:url value='/clubs/addProduct' />" class="add-product-bar">
         <input type="hidden" name="clubId" value="${club.clubId}" />
-        <input type="text" name="productName" placeholder="Nombre" required />
-        <input type="text" name="description" placeholder="Descripción" />
-        <input type="number" name="basePrice" placeholder="Precio" step="0.01" required />
-        <select name="productType" required>
+        <input type="text" class="add-product-name" name="productName" placeholder="Nombre" required />
+        <input type="text" class="add-product-input" name="description" placeholder="Descripción" />
+        <input type="number" class="add-product-input" name="basePrice" placeholder="Precio" step="0.01" required />
+        <select class="add-product-input" name="productType" required>
             <option value="alcoholicas">Bebida alcohólica</option>
             <option value="noAlcoholicas">Bebida sin alcohol</option>
             <option value="tragos">Trago</option>
         </select>
-        <button type="submit" class="btn btn-success">Agregar</button>
+        <button type="submit" class="btn btn-success btn-edit-small" title="Agregar">
+            <i class="fa-solid fa-plus"></i>
+        </button>
     </form>
-</div>
-
-<!--Mesas-->
-<div class="club-section" style="margin-top:40px;">
-    <h2 class="club-title">Mesas</h2>
+    <h2>Mesas</h2>
     <table class="styled-table">
         <thead>
         <tr>
@@ -164,7 +161,7 @@
         <tbody>
         <c:if test="${empty tables}">
             <tr>
-                <td colspan="5" class="styled-table-th-empty">
+                <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
                     No tiene mesas en este momento
                 </td>
             </tr>
@@ -176,13 +173,13 @@
                 <td><c:out value="${table.price}" /></td>
                 <td><c:out value="${table.discount}" /></td>
                 <td>
-                    <div style="display: flex; gap: 8px; justify-content: right;">
-                        <button type="button" class="btn btn-success btn-sm"
-                                onclick="openTableEditModal('${table.tableId}', '${table.tableNumber}', '${table.capacity}', '${table.price}', '${table.discount}')"
-                                title="Editar">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm"
+                    <div style="display: flex; justify-content: right; margin-right: 12px">
+<%--                        <button type="button" class="btn btn-success btn-sm"--%>
+<%--                                onclick="openTableEditModal('${table.tableId}', '${table.tableNumber}', '${table.capacity}', '${table.price}', '${table.discount}')"--%>
+<%--                                title="Editar">--%>
+<%--                            <i class="fa-solid fa-pen"></i>--%>
+<%--                        </button>--%>
+                        <button type="button" class="btn btn-danger btn-edit-small"
                                 onclick="openTableDeleteModal('${table.tableId}')"
                                 title="Eliminar">
                             <i class="fa-solid fa-trash"></i>
@@ -194,14 +191,15 @@
         </tbody>
     </table>
 
-    <h3 style="margin-top:32px;">Agregar mesa</h3>
-    <form method="post" action="<c:url value='/clubs/addTable' />" class="add-product-form" style="margin-bottom:24px;">
+    <form method="post" action="<c:url value='/clubs/addTable' />" class="add-product-bar">
         <input type="hidden" name="clubId" value="${club.clubId}" />
-        <input type="number" name="tableNumber" placeholder="Número de mesa" required min="1" />
-        <input type="number" name="capacity" placeholder="Capacidad" required min="1" />
-        <input type="number" name="price" placeholder="Precio" step="0.01" required min="0" />
-        <input type="number" name="discount" placeholder="Descuento (%)" step="0.01" min="0" max="100" value="0" />
-        <button type="submit" class="btn btn-success">Agregar</button>
+        <input type="number" class="add-product-name" name="tableNumber" placeholder="Número de mesa" required min="1" />
+        <input type="number" class="add-product-input" name="capacity" placeholder="Capacidad" required min="1" />
+        <input type="number" class="add-product-input" name="price" placeholder="Precio" step="0.01" required min="0" />
+        <input type="number" class="add-product-input" name="discount" placeholder="Descuento (%)" step="0.01" min="0" max="100" value="0" />
+        <button type="submit" class="btn btn-success btn-edit-small" title="Agregar">
+            <i class="fa-solid fa-plus"></i>
+        </button>
     </form>
 </div>
 
@@ -237,8 +235,8 @@
             </select>
 
             <div class="modal-actions">
-                <button type="submit" class="edit-field-btn">Guardar</button>
-                <button type="button" class="edit-field-btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                <button type="submit" class="btn btn-success">Guardar</button>
             </div>
         </form>
     </div>
@@ -252,8 +250,8 @@
         <form method="post" action="<c:url value='/clubs/club/${club.clubId}/photos' />" enctype="multipart/form-data">
             <input type="file" name="file" accept="image/*" required />
             <div class="modal-actions">
-                <button type="submit" class="edit-field-btn">Guardar</button>
-                <button type="button" class="edit-field-btn btn-secondary" onclick="document.getElementById('editImageModal').style.display='none'">Cancelar</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editImageModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-success">Guardar</button>
             </div>
         </form>
     </div>
@@ -266,8 +264,8 @@
         <form id="deleteForm" method="post" action="<c:url value='/clubs/deleteProduct' />">
             <input type="hidden" name="productId" id="deleteProductId" value="" />
             <div class="modal-actions">
-                <button type="submit" class="edit-field-btn btn-danger">Eliminar</button>
-                <button type="button" class="edit-field-btn btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
             </div>
         </form>
     </div>
@@ -297,8 +295,8 @@
                     <input type="number" name="discount" id="editTableDiscount" step="0.01" min="0" max="100" required class="input-price" style="background:#1a1a1a; color:#fff;"/>
                 </div>
                 <div class="modal-actions" style="margin-top:24px; justify-content:center;">
-                    <button type="submit" class="edit-field-btn" style="background:#9c27b0; color:#fff;">Guardar</button>
-                    <button type="button" class="edit-field-btn btn-secondary" onclick="closeTableEditModal()">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
                 </div>
             </form>
         </div>
@@ -309,12 +307,12 @@
 <div id="tableDeleteModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeTableDeleteModal()">&times;</span>
-        <h3>¿Seguro que querés eliminar esta mesa?</h3>
+        <h3>¿Seguro que quiere eliminar esta mesa?</h3>
         <form method="post" id="tableDeleteForm">
             <input type="hidden" name="clubId" value="${club.clubId}" />
             <div class="modal-actions">
-                <button type="submit" class="edit-field-btn btn-danger">Eliminar</button>
-                <button type="button" class="edit-field-btn btn-secondary" onclick="closeTableDeleteModal()">Cancelar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeTableDeleteModal()">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
             </div>
         </form>
     </div>
