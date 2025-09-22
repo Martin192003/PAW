@@ -253,7 +253,8 @@ public class ClubController {
     @PostMapping("/editProductPrice")
     public String editProductPrice(
             @RequestParam("productId") UUID productId,
-            @RequestParam("basePrice") BigDecimal basePrice
+            @RequestParam("basePrice") BigDecimal basePrice,
+            RedirectAttributes ra
     ) {
 
         var product = productService.findById(productId).orElseThrow();
@@ -261,8 +262,13 @@ public class ClubController {
 
         checkLoggedUser(clubId);
 
-        productService.update(productId, clubId, product.getProductName(),
-                product.getDescription(), basePrice, product.getProductType(), product.getIsAvailable());
+        try {
+            productService.update(productId, clubId, product.getProductName(),
+                    product.getDescription(), basePrice, product.getProductType(), product.getIsAvailable());
+        } catch (ValidationException e) {
+            ra.addAttribute("err", "price_max_product");
+        }
+
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 

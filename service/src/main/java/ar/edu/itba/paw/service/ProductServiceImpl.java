@@ -33,6 +33,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product update(UUID productId, UUID clubId, String name, String description, BigDecimal basePrice, ProductType type, Boolean isAvailable) {
+        if(basePrice.compareTo(BigDecimal.valueOf(100000000)) >= 0)
+            throw new ValidationException("Precio demasiado alto");
         return productsDao.update(productId, clubId, name, description, basePrice, type, isAvailable);
     }
 
