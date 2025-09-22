@@ -1,6 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" isErrorPage="true" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -29,14 +31,24 @@
         </div>
         <p class="card-text-body">
             <c:choose>
-                <c:when test="${not empty message}">
-                    <c:out value="${message}" />
+                <c:when test="${not empty errorMessage}">
+                    <c:out value="${errorMessage}"/>
                 </c:when>
+
+                <c:when test="${not empty message and fn:startsWith(message, 'error.')}">
+                    <spring:message code="${message}" text="${message}"/>
+                </c:when>
+
+                <c:when test="${not empty message}">
+                    <c:out value="${message}"/>
+                </c:when>
+
                 <c:otherwise>
                     <spring:message code="error.default" text="Ha ocurrido un error inesperado."/>
                 </c:otherwise>
             </c:choose>
         </p>
+
         <a class="error-btn" href="<c:url value='/'/>">
             <spring:message code="button.return.main" text="Volver al inicio"/>
         </a>
