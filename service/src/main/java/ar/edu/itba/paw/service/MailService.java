@@ -86,6 +86,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -119,6 +120,7 @@ public class MailService {
         LOGGER.info("MailService defaultFrom={}", this.defaultFrom);
     }
 
+    @Async
     public boolean sendContact(String to, String clubName, String fromEmail, String name, String phone, String message) {
         try {
             // First email using "booking-inquiry-club.html"
@@ -170,6 +172,7 @@ public class MailService {
         }
     }
 
+    @Async
     public void sendClubCreationConfirmation(String to, String clubName){
         try{
             MimeMessage mail = mailSender.createMimeMessage();
@@ -192,6 +195,7 @@ public class MailService {
         }
     }
 
+    @Async
     public void sendUserRegistrationConfirmation(String to, String username){
         try{
             MimeMessage mail = mailSender.createMimeMessage();

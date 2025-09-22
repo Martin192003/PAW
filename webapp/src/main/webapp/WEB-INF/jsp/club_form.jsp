@@ -37,8 +37,8 @@
         <spring:message code="form.musicGenre" var="phMusicGenre"/>
         <spring:message code="form.zone" var="phZone"/>
         <spring:message code="form.venueType" var="phvenueType"/>
-        <spring:message code="label.bar" var="phbar"></spring:message>
-        <spring:message code="label.notBar" var="phclub"></spring:message>
+        <spring:message code="label.bar" var="phbar"/>
+        <spring:message code="label.notBar" var="phclub"/>
 
         <form:form modelAttribute="clubForm" method="post" action="${pageContext.request.contextPath}${postPath}" enctype="multipart/form-data">
             <span class="form-text-required"><spring:message code="form.required"/></span>
@@ -139,7 +139,7 @@
                 <a href="<c:url value='/clubs' />" class="btn btn-secondary">
                     <spring:message code="button.cancel"/>
                 </a>
-                <button type="submit" class="btn btn-success">
+                <button id="saveClubBtn" type="submit" class="btn btn-success">
                     <spring:message code="button.save"/>
                 </button>
             </div>
@@ -148,3 +148,20 @@
 </div>
 </body>
 </html>
+<script>
+    (function () {
+        const form = document.getElementById('clubForm');
+        const btn = document.getElementById('saveClubBtn');
+        if (!form || !btn) return;
+
+        form.addEventListener('submit', function (e) {
+            if (form.dataset.submitted === 'true') {
+                e.preventDefault();
+                return false;
+            }
+            form.dataset.submitted = 'true';
+            btn.disabled = true;
+            btn.setAttribute('aria-busy', 'true');
+        });
+    })();
+</script>
