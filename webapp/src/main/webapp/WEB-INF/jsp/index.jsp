@@ -26,57 +26,72 @@
         <spring:message code="filter.maxRating" var="phMaxrating"/>
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
             <div class="filter-bar">
-                <input type="text" name="name" placeholder="<c:out value='${phName}'/>"
-                       class="filter-item" <c:out value="${name != null ? name : ''}"/> />
+                <!-- Name -->
+                <input
+                        type="text"
+                        name="name"
+                        placeholder="<c:out value='${phName}'/>"
+                        class="filter-item"
+                        value="<c:out value='${not empty param.name ? param.name : name}'/>"
+                />
 
+                <!-- Zone -->
                 <select name="zone" class="filter-item">
                     <option value=""><spring:message code="filter.zone"/></option>
-                    <c:forEach var="z" items="${zones}" >
-                        <option value="${z.dbValue}" ${zone == z.dbValue ? 'selected' : ''}>
+                    <c:forEach var="z" items="${zones}">
+                        <option value="${z.dbValue}"
+                            ${ (zone == z.dbValue || param.zone == z.dbValue) ? 'selected' : '' }>
                             <spring:message code="zone.${z.dbValue}"/>
                         </option>
                     </c:forEach>
                 </select>
 
+                <!-- Genre -->
                 <select name="genre" class="filter-item">
                     <option value=""><spring:message code="filter.genre"/></option>
                     <c:forEach var="g" items="${genres}">
-                        <option value="${g}" ${genre == g ? 'selected' : ''}>
+                        <option value="${g}"
+                            ${ (genre == g || param.genre == g) ? 'selected' : '' }>
                             <spring:message code="genre.${g}"/>
                         </option>
                     </c:forEach>
                 </select>
 
+                <!-- Price -->
                 <select name="price" class="filter-item">
                     <option value=""><spring:message code="filter.price"/></option>
-                    <option value="alto" ${price == 'alto' ? 'selected' : ''}><spring:message code="filter.price.high"/></option>
-                    <option value="medio" ${price == 'medio' ? 'selected' : ''}><spring:message code="filter.price.medium"/></option>
-                    <option value="bajo" ${price == 'bajo' ? 'selected' : ''}><spring:message code="filter.price.low"/></option>
+                    <option value="alto"  ${ (price == 'alto'  || param.price == 'alto')  ? 'selected' : '' }><spring:message code="filter.price.high"/></option>
+                    <option value="medio" ${ (price == 'medio' || param.price == 'medio') ? 'selected' : '' }><spring:message code="filter.price.medium"/></option>
+                    <option value="bajo"  ${ (price == 'bajo'  || param.price == 'bajo')  ? 'selected' : '' }><spring:message code="filter.price.low"/></option>
                 </select>
+
+                <!-- Venue type -->
                 <select name="isBar" class="filter-item">
                     <option value=""><spring:message code="filter.venueType"/></option>
-                    <option value="true" ${isBar == true ? 'selected' : ''}>
+                    <option value="true"
+                    ${ (isBar == true || isBar == 'true' || param.isBar == 'true') ? 'selected' : '' }>
                         <spring:message code="label.bar"/>
                     </option>
-                    <option value="false" ${isBar == false ? 'selected' : ''}>
+                    <option value="false"
+                    ${ (isBar == false || isBar == 'false' || param.isBar == 'false') ? 'selected' : '' }>
                         <spring:message code="label.notBar"/>
                     </option>
                 </select>
+
+                <!-- Sort -->
                 <select name="sort" class="filter-item filter-sort">
                     <option value=""><spring:message code="filter.sort" text="Ordenar por"/></option>
-                    <option value="rating_desc" ${sort == 'rating_desc' ? 'selected' : ''}>
+                    <option value="rating_desc" ${ (sort == 'rating_desc' || param.sort == 'rating_desc') ? 'selected' : '' }>
                         <spring:message code="filter.sort.ratingDesc" text="Rating (mayor a menor)"/>
                     </option>
-                    <option value="rating_asc" ${sort == 'rating_asc' ? 'selected' : ''}>
+                    <option value="rating_asc"  ${ (sort == 'rating_asc'  || param.sort == 'rating_asc')  ? 'selected' : '' }>
                         <spring:message code="filter.sort.ratingAsc" text="Rating (menor a mayor)"/>
                     </option>
                 </select>
             </div>
 
             <button type="submit" class="btn btn-filter">
-                <i class="fa-solid fa-filter"></i>
-                &nbsp;
-                <spring:message code="button.filter"/>
+                <i class="fa-solid fa-filter"></i>&nbsp;<spring:message code="button.filter"/>
             </button>
         </form>
         <button type="button" class="btn-reset" onclick="window.location.href='<c:url value="/clubs"/>'">
