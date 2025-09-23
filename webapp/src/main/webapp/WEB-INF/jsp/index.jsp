@@ -52,10 +52,13 @@
                 <!-- Genre -->
                 <select name="genre" class="filter-item">
                     <option value=""><spring:message code="filter.genre"/></option>
+
                     <c:forEach var="g" items="${genres}">
-                        <option value="${g}"
-                            ${ (genre == g || param.genre == g) ? 'selected' : '' }>
-                            <spring:message code="genre.${g}"/>
+                        <!-- si g es enum: usar name(); si ya es String código, esto mismo funciona -->
+                        <c:set var="code" value="${g.name() != null ? g.name() : g}" />
+                        <option value="${code}"
+                            ${ (genre == code || param.genre == code) ? 'selected' : '' }>
+                            <spring:message code="genre.${code}" text="${code}"/>
                         </option>
                     </c:forEach>
                 </select>

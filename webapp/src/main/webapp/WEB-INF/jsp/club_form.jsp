@@ -98,6 +98,8 @@
                     <option value="ELECTRONICA" ${musicGenre == 'ELECTRONICA' ? 'selected' : ''}>
                         <spring:message code="genre.ELECTRONICA"/>
                     </option>
+                    <option value="AFROBEAT" ${musicGenre == 'AFROBEAT' ? 'selected' : ''}>
+                        <spring:message code="genre.AFROBEAT"/>
                     <option value="OTRO" ${musicGenre == 'OTRO' ? 'selected' : ''}>
                         <spring:message code="genre.OTRO"/>
                     </option>
