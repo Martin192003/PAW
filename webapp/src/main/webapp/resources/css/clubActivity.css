@@ -16,7 +16,26 @@ body {
     color: #fff;
     overflow-x: hidden;
 }
-
+.add-club-btn {
+    position: absolute;
+    right: 30px;
+    top: 20px;
+    color: #ffffff;
+    font-family: 'Darklinos', Arial, sans-serif;
+    letter-spacing: 1px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.3s ease, background 0.2s;
+    z-index: 101;
+}
+.add-club-btn:hover {
+    background: rgba(225, 0, 255, 0.1);
+    transform: scale(1.05);
+    color: #fff;
+}
 .top-bar {
     position: fixed;
     top: 0;

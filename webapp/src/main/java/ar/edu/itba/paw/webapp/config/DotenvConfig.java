@@ -42,7 +42,6 @@ public class DotenvConfig {
             env.entries().forEach(e -> props.put(e.getKey(), e.getValue()));
 
             if (!props.isEmpty()) {
-                System.out.println("Dotenv loaded from: " + d + "/.env");
                 break;
             }
         }

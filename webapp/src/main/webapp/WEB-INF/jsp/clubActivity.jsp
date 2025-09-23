@@ -14,14 +14,14 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/clubActivity.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/sidebar.css' />">
+    <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div class="top-bar">
-    <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title"><spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/></div>
-    </a>
-</div>
+<c:set var="showRightButtons" value="true" />
+<c:set var="showProfileButton" value="false" />
+<c:set var="showAddClubButton" value="true" />
+<%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <c:set var="activePage" value="clubs" />
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 

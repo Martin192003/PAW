@@ -102,7 +102,6 @@ public class UserServiceImpl implements UserService {
         User user = userDao.findByUserName(usernameOrEmail).orElse(null);
         if(user == null){
             user = userDao.findByEmail(usernameOrEmail).orElse(null);
-            System.out.println("User not found: " + usernameOrEmail); // Debug log
 
             if(user == null) return false;
         }

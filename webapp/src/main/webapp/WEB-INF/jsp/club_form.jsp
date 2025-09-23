@@ -16,7 +16,6 @@
     <meta charset="UTF-8">
 </head>
 <body>
-<c:set var="showRightButtons" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="club-form-page">
     <div class="detail-back">

@@ -160,27 +160,6 @@ select.filter-item option {
     margin-top: 10px;
 }
 
-.add-club-btn {
-    position: absolute;
-    right: 30px;
-    top: 20px;
-    color: #ffffff;
-    font-family: 'Darklinos', Arial, sans-serif;
-    letter-spacing: 1px;
-    padding: 12px 22px;
-    border-radius: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
-    text-decoration: none;
-    transition: all 0.3s ease, background 0.2s;
-    z-index: 101;
-}
-.add-club-btn:hover {
-    background: rgba(225, 0, 255, 0.1);
-    transform: scale(1.05);
-    color: #fff;
-}
-
 .edit-club-btn {
     font-family: 'Darklinos', Arial, sans-serif;
     background: #000;
@@ -235,41 +214,6 @@ select.filter-item option {
     background: #d500f9;
     color: #fff700;
 }
-.profile-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #9c27b0, #d500f9);
-    color: #fff;
-    font-size: 1.6rem;
-    margin-left: 18px;
-    border: none;
-    box-shadow: 0 0 12px rgba(156, 39, 176, 0.7);
-    transition: box-shadow 0.3s, transform 0.2s;
-    text-decoration: none;
-    position: relative;
-    top: 0px;
-}
-.profile-btn:hover {
-    box-shadow: 0 0 20px rgba(213, 0, 249, 0.9);
-    transform: scale(1.08);
-}
-.right-buttons {
-    display: flex;
-    align-items: center;
-    position: absolute;
-    right: 30px;
-    top: 20px;
-}
-.add-club-btn {
-    position: static;
-    margin-right: 12px;
-    top: 0;
-    right: 0;
-}
 
 .boliche-card {
     position: relative; /* importante: referencia para el badge */
@@ -301,8 +245,7 @@ select.filter-item option {
 .filter-bar{
     display:flex;
     align-items:center;
-    gap:12px;
-    flex-wrap:wrap;              /* si no entra, baja a otra línea */
+    flex-wrap:wrap;
 }
 
 /* tamaño base de cada control */
