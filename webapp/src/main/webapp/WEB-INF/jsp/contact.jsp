@@ -17,11 +17,8 @@
     <meta charset="UTF-8">
 </head>
 <body>
-<div class="top-bar">
-    <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title"><spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/> </div>
-    </a>
-</div>
+<c:set var="showRightButtons" value="false" />
+<%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 
 <div class="contact-page">
     <t:card size="card-lg" cssClass="contact-card">

@@ -29,6 +29,7 @@ public class ClubJDBCDao implements ClubDao {
         c.setPriceRange(rs.getString("price_range") == null ? null : Price.valueOf(rs.getString("price_range").toUpperCase()));
         c.setDescription(rs.getString("description"));
         c.setZone(rs.getString("zone") == null ? null : Zone.valueOf(rs.getString("zone")));
+        c.setIsBar(rs.getObject("is_bar", Boolean.class));
 
         UUID contactId = rs.getObject("contact_info", UUID.class);
         if (contactId != null) {
@@ -49,12 +50,12 @@ public class ClubJDBCDao implements ClubDao {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("clubs")
-                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre","zone");
+                .usingColumns("club_id","club_name","location","rating","quantity_ratings","price_range","description","contact_info","music_genre","zone","is_bar");
         this.userDao = userDao;
     }
 
     @Override
-    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone) {
+    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
         UUID id = UUID.randomUUID();
         Map<String,Object> params = new HashMap<>();
         params.put("club_id", id);
@@ -67,6 +68,7 @@ public class ClubJDBCDao implements ClubDao {
         params.put("contact_info", contactInfo != null ? contactInfo.getId() : null);
         params.put("music_genre", musicGenre != null ? musicGenre.name().toLowerCase() : null);
         params.put("zone", zone != null ? zone.name() : null);
+        params.put("is_bar", isBar != null ? isBar : Boolean.FALSE);
 
         insert.execute(params);
 
@@ -87,7 +89,8 @@ public class ClubJDBCDao implements ClubDao {
                        String description,
                        UUID contactInfoId,
                        MusicalGenre musicGenre,
-                       Zone zone) {
+                       Zone zone,
+                       Boolean isBar) {
 
         Objects.requireNonNull(clubId, "clubId is required");
         Objects.requireNonNull(name, "name is required");
@@ -109,7 +112,7 @@ public class ClubJDBCDao implements ClubDao {
 
         final String sql = "UPDATE clubs " +
                 "SET club_name = ?, location = ?, rating = ?, quantity_ratings = ?, price_range = ?, " +
-                "    description = ?, contact_info = ?, music_genre = ?, zone = ? " +
+                "    description = ?, contact_info = ?, music_genre = ?, zone = ?, is_bar = ? " +
                 "WHERE club_id = ?";
 
         int upd = jdbc.update(sql,
@@ -122,7 +125,9 @@ public class ClubJDBCDao implements ClubDao {
                 contactInfoId,
                 musicGenre != null ? musicGenre.name().toLowerCase() : null,
                 zone != null ? zone.name() : null,
+                isBar,
                 clubId
+
         );
 
         return (upd > 0) ? findById(clubId).orElse(null) : null;
@@ -181,8 +186,8 @@ public class ClubJDBCDao implements ClubDao {
                              Zone location,
                              String musicGenre,
                              String priceRange,
-                             BigDecimal minRating,
-                             BigDecimal maxRating) {
+                             Boolean isBar,
+                             String sort) {
 
         StringBuilder sql = new StringBuilder("SELECT * FROM clubs WHERE 1=1");
         List<Object> args = new ArrayList<>();
@@ -206,15 +211,17 @@ public class ClubJDBCDao implements ClubDao {
             sql.append(" AND price_range = ?");
             args.add(priceRange);
         }
-        if (minRating != null) {
-            sql.append(" AND rating >= ?");
-            args.add(minRating);
+        if (isBar != null) {
+            sql.append(" AND is_bar = ?");
+            args.add(isBar);
         }
-        if (maxRating != null) {
-            sql.append(" AND rating <= ?");
-            args.add(maxRating);
+        if ("rating_desc".equals(sort)) {
+            sql.append(" ORDER BY rating DESC NULLS LAST");
+        } else if ("rating_asc".equals(sort)) {
+            sql.append(" ORDER BY rating ASC NULLS LAST");
+        } else {
+            sql.append(" ORDER BY club_name ASC");
         }
-        sql.append(" ORDER BY club_name ASC");
 
         return jdbc.query(sql.toString(), ROW_MAPPER, args.toArray());
     }
@@ -230,6 +237,20 @@ public class ClubJDBCDao implements ClubDao {
 
     private static String likeContains(String s) {
         return "%" + escapeLike(s.trim()) + "%";
+    }
+
+    @Override
+    public List<Club> findByUserId(UUID userId) {
+        final String sql = "SELECT * FROM clubs WHERE contact_info = ? ORDER BY club_name ASC";
+        return jdbc.query(sql, ROW_MAPPER, userId);
+    }
+
+    @Override
+    public List<User> findAdminsByClubId(UUID clubId) {
+        final String sql = "SELECT u.* FROM users u " +
+                "JOIN clubs c ON u.user_id = c.contact_info " +
+                "WHERE c.club_id = ?";
+        return jdbc.query(sql, userDao.getRowMapper(), clubId);
     }
 
 }

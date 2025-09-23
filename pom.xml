@@ -22,7 +22,7 @@
     <logback.version>1.1.2</logback.version>
     <logback-ext-spring.version>0.1.1</logback-ext-spring.version>
     <maven-war-plugin.version>2.6</maven-war-plugin.version>
-
+    <maven-war-plugin.version>2.6</maven-war-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -116,16 +116,16 @@
           <artifactId>slf4j-api</artifactId>
           <version>${org.slf4j.version}</version>
       </dependency>
-      <dependency>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-          <version>${logback.version}</version>
-      </dependency>
-      <dependency>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-core</artifactId>
-          <version>${logback.version}</version>
-      </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
       <dependency>
           <groupId>org.slf4j</groupId>
           <artifactId>jcl-over-slf4j</artifactId>
@@ -139,6 +139,20 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-war-plugin</artifactId>
+                    <version>${maven-war-plugin.version}</version>
+                    <configuration>
+                        <packagingExcludes>**/logback-test.xml</packagingExcludes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
   <modules>
     <module>webapp</module>

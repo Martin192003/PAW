@@ -46,7 +46,7 @@ public class ClubJDBCDaoTest {
     @Test
     public void testCreate() {
         User contact = userDao.create("user", "pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA);
+        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, null);
         assertNotNull(club);
         assertEquals(NAME, club.getClubName());
         assertEquals(DESCRIPTION, club.getDescription());

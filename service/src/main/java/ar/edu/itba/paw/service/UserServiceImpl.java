@@ -1,8 +1,10 @@
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.model.Role;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ar.edu.itba.paw.model.User;
@@ -38,9 +40,18 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User create(String username, String password, String surname, String email, String cellphone, String role) {
-        User newUser = userDao.create(username, passwordEncoder.encode(password), surname, email, cellphone, Role.USER);
-        mailService.sendUserRegistrationConfirmation(email, username);
-        return newUser;
+        try {
+            return userDao.create(
+                    username,
+                    passwordEncoder.encode(password),
+                    surname,
+                    email,
+                    cellphone,
+                    Role.USER
+            );
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateEntityException("user.email.duplicate", ex);
+        }
     }
 
     @Override

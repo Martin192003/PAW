@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 
+import org.springframework.jdbc.core.RowMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,4 +19,6 @@ public interface UserDao {
 
     List<User> findAll();
     List<User> findByRole(String role);
+
+    RowMapper<User> getRowMapper();
 }

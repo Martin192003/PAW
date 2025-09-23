@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,14 +30,15 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .and().authorizeRequests()
                 //.antMatchers("/login", "/register").anonymous()
                 .antMatchers("/clubs/create", "/reservations/**", "/clubs/new").authenticated()
-                .antMatchers("/","/clubs", "/clubs/{id}", "/contact" , "/login", "/register").permitAll()
+                .antMatchers("/","/clubs", "/clubs/{id}", "/contact" , "/login", "/register", "/photos/**").permitAll()
                 .antMatchers("/admin/**").hasRole("ADMIN")
+                .antMatchers(HttpMethod.GET, "/clubs/**").permitAll() //PREGUNTAR SI ESTO ES LEGAL
                 //.anyRequest().authenticated()
                 .antMatchers("/**").authenticated()
                 .and().formLogin()
                 .usernameParameter("usernameOrEmail")
                 .passwordParameter("password")
-                .defaultSuccessUrl("/login", false)
+                .defaultSuccessUrl("/clubs", false)
                 .failureUrl("/login?error")
                 .loginPage("/login")
                 .and().rememberMe()

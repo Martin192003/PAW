@@ -3,11 +3,13 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ProductsDao;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
+@Service
 public class MenuServiceImpl implements MenuService {
 
     private final ProductsDao productsDao;

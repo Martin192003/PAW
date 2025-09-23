@@ -42,6 +42,9 @@ public class UserServiceImplTest {
     @InjectMocks
     private UserServiceImpl userService;
 
+    @Mock
+    private MailService mailService;
+
     @Test
     public void testCreate() {
         // 1. Setup!

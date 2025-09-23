@@ -61,6 +61,6 @@ public class SecurityServiceImpl implements SecurityService{
 
     @Override
     public User getVerifiedLoggedUser() {
-        return getLoggedUser().orElseThrow(UserNotFoundException::new);
+        return getLoggedUser().orElse(null);
     }
 }

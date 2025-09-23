@@ -16,12 +16,13 @@ public class Club {
     private MusicalGenre musicGenre;
     private OffsetDateTime createdAt;
     private Zone zone;
+    private Boolean isBar;
 
     public Club() {}
 
     public Club(UUID clubId, String clubName, String location, java.math.BigDecimal rating,
                 Integer quantityRatings, Price priceRange, String description,
-                User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone) {
+                User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone, Boolean isBar) {
         this.clubId = clubId;
         this.clubName = clubName;
         this.location = location;
@@ -33,6 +34,7 @@ public class Club {
         this.musicGenre = musicGenre;
         this.createdAt = createdAt;
         this.zone = zone;
+        this.isBar = isBar;
     }
 
     public UUID getClubId() { return clubId; }
@@ -67,4 +69,7 @@ public class Club {
 
     public Zone getZone() { return zone; }
     public void setZone(Zone zone) { this.zone = zone; }
+
+    public Boolean getIsBar() { return isBar; }
+    public void setIsBar(Boolean isBar) { this.isBar = isBar; }
 }
