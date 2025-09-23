@@ -128,10 +128,7 @@
                                 </p>
                             </div>
 
-                            <button id="reserveBtn" type="submit" class="btn btn-success" disabled
-                                    style="height:40px; align-self:end;">
-                                <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
-                            </button>
+
                         </div>
 
                         <c:choose>
@@ -157,8 +154,13 @@
                                         </li>
                                     </c:forEach>
                                 </ul>
+
                             </c:otherwise>
                         </c:choose>
+                        <button id="reserveBtn" type="submit" class="btn btn-success" disabled
+                                style="height:40px; align-self:end;">
+                            <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
+                        </button>
                     </form>
                 </div>
             </div>

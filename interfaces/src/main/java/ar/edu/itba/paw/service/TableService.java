@@ -15,8 +15,8 @@ public interface TableService {
     List<Table> findAll();
     List<Table> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to);
 
-    Table create(int number, int capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount);
-    Table update(UUID tableId, UUID clubId, Integer tableNumber, Integer capacity, TableState state, BigDecimal price, BigDecimal discount);
+    Table create(BigDecimal number, BigDecimal capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount);
+    Table update(UUID tableId, UUID clubId, BigDecimal tableNumber, BigDecimal capacity, TableState state, BigDecimal price, BigDecimal discount);
     boolean delete(UUID id);
 
 }

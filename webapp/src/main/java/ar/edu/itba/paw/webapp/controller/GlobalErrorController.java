@@ -66,6 +66,9 @@ public class GlobalErrorController {
         EXCEPTION_CODE_MAP.put(InvalidDateRangeException.class,            "error.invalid_date_range");
         EXCEPTION_CODE_MAP.put(MethodArgumentNotValidException.class,      "error.validation");
         EXCEPTION_CODE_MAP.put(BindException.class,                        "error.validation");
+        EXCEPTION_CODE_MAP.put(InvalidCapacityException.class,             "error.validation");
+        EXCEPTION_CODE_MAP.put(InvalidTableNumberException.class,          "error.validation");
+        EXCEPTION_CODE_MAP.put(InvalidPriceException.class,                "error.validation");
 
         // 502
         EXCEPTION_CODE_MAP.put(EmailWasntSentException.class,              "error.bad_gateway");
@@ -73,6 +76,19 @@ public class GlobalErrorController {
 
     public GlobalErrorController(MessageSource messageSource) {
         this.messageSource = messageSource;
+    }
+
+    /* ------------ 400 (request mal formado) ------------ */
+    @ExceptionHandler({
+            MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class, // @RequestParam enum/boolean/number inválido
+            ConversionFailedException.class,
+            TypeMismatchException.class,
+            BadRequestException.class,
+            NumberFormatException.class
+    })
+    public ModelAndView badRequest(Exception ex, HttpServletRequest req) {
+        return view(HttpStatus.BAD_REQUEST, ex, req);
     }
 
     /* ------------ 401 (no autenticado) ------------ */
@@ -116,29 +132,27 @@ public class GlobalErrorController {
             InvalidDateRangeException.class,
             DateTimeParseException.class,
             MethodArgumentNotValidException.class,
-            BindException.class
+            BindException.class,
+            InvalidCapacityException.class,
+            InvalidTableNumberException.class,
+            InvalidPriceException.class
     })
     public ModelAndView unprocessable(Exception ex, HttpServletRequest req) {
         return view(HttpStatus.UNPROCESSABLE_ENTITY, ex, req);
     }
 
-    /* ------------ 400 (request mal formado) ------------ */
-    @ExceptionHandler({
-            MissingServletRequestParameterException.class,
-            MethodArgumentTypeMismatchException.class, // @RequestParam enum/boolean/number inválido
-            ConversionFailedException.class,
-            TypeMismatchException.class,
-            BadRequestException.class,
-            NumberFormatException.class
-    })
-    public ModelAndView badRequest(Exception ex, HttpServletRequest req) {
-        return view(HttpStatus.BAD_REQUEST, ex, req);
-    }
+
 
     @ExceptionHandler(NoHandlerFoundException.class)
     public ModelAndView noHandler(NoHandlerFoundException ex,
                                   HttpServletRequest req) {
         return view(HttpStatus.NOT_FOUND, ex, req);
+    }
+
+    /* ------------ 500 fallback ------------ */
+    @ExceptionHandler(Exception.class)
+    public ModelAndView serverError(Exception ex, HttpServletRequest req) {
+        return view(HttpStatus.INTERNAL_SERVER_ERROR, ex, req);
     }
 
     /* ------------ 502/503 (servicios externos) ------------ */
@@ -147,11 +161,6 @@ public class GlobalErrorController {
         return view(HttpStatus.BAD_GATEWAY, ex, req);
     }
 
-    /* ------------ 500 fallback ------------ */
-    @ExceptionHandler(Exception.class)
-    public ModelAndView serverError(Exception ex, HttpServletRequest req) {
-        return view(HttpStatus.INTERNAL_SERVER_ERROR, ex, req);
-    }
 
     private ModelAndView view(HttpStatus status, Exception ex, HttpServletRequest req) {
         // Log level según familia de código

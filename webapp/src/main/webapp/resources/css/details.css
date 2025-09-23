@@ -312,13 +312,18 @@
     color: #9c27b0;
 }
 
-/* Ensure the date input fits within the bb-row layout */
 .bb-row {
     display: flex;
     gap: 16px;
     align-items: flex-start;
     width: 100%;
     justify-content: space-between;
+}
+
+#bookingDate::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(200%);
+    opacity: 1;
+    cursor: pointer;
 }
 
 @media (max-width: 768px) {

@@ -334,33 +334,29 @@ public class ClubController {
     @PostMapping("/addTable")
     public String addTable(
             @RequestParam("clubId") UUID clubId,
-            @RequestParam("tableNumber") int tableNumber,
-            @RequestParam("capacity") int capacity,
+            @RequestParam("tableNumber") BigDecimal tableNumber,
+            @RequestParam("capacity") BigDecimal capacity,
             @RequestParam("price") BigDecimal price,
             @RequestParam("discount") BigDecimal discount,
             RedirectAttributes ra
     ) {
-
         checkLoggedUser(clubId);
 
-        if (tableNumber < 1 || capacity < 1 || price.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0) {
-            throw new IllegalArgumentException("Datos inválidos para la mesa.");
-        }
-
-        //ESTO IRIA EN SERVICE CUETA COMO LOGICA DE NEGOCIO
-        if (price.compareTo(new BigDecimal("1000000000")) >= 0) {
-            ra.addAttribute("err", "price_max");
-            return "redirect:/clubs/handle?clubId=" + clubId;
-        }
-
         var club = clubService.getClubById(clubId).orElseThrow();
-        TableState state = TableState.DISPONIBLE;
         try {
-            tableService.create(tableNumber, capacity, club.getClubId(), state, price, discount);
+            tableService.create(tableNumber, capacity, club.getClubId(), TableState.DISPONIBLE, price, discount);
         } catch (DuplicateEntityException | DataIntegrityViolationException e) {
             ra.addAttribute("err", "dup");
         } catch (ValidationException e) {
             ra.addAttribute("err", "price_max");
+        } catch (InvalidTableNumberException e) {
+            ra.addAttribute("err", "table_number");
+        } catch (InvalidCapacityException e) {
+            ra.addAttribute("err", "capacity");
+        } catch (InvalidPriceException e) {
+            ra.addAttribute("err", "price");
+        } catch (IllegalArgumentException e) {
+            ra.addAttribute("err", "discount");
         }
 
         return "redirect:/clubs/handle?clubId=" + clubId;
@@ -371,14 +367,28 @@ public class ClubController {
     public String editTable(
             @PathVariable UUID tableId,
             @RequestParam("clubId") UUID clubId,
-            @RequestParam("tableNumber") int tableNumber,
-            @RequestParam("capacity") int capacity,
+            @RequestParam("tableNumber") BigDecimal tableNumber,
+            @RequestParam("capacity") BigDecimal capacity,
             @RequestParam("price") BigDecimal price,
-            @RequestParam("discount") BigDecimal discount
+            @RequestParam("discount") BigDecimal discount,
+            RedirectAttributes ra
     ) {
         checkLoggedUser(clubId);
-
-        tableService.update(tableId, clubId, tableNumber, capacity, TableState.DISPONIBLE, price, discount);
+        try{
+            tableService.update(tableId, clubId, tableNumber, capacity, TableState.DISPONIBLE, price, discount);
+        } catch (DuplicateEntityException | DataIntegrityViolationException e) {
+            ra.addAttribute("err", "dup");
+        } catch (ValidationException e) {
+            ra.addAttribute("err", "price_max");
+        } catch (InvalidTableNumberException e) {
+            ra.addAttribute("err", "table_number");
+        } catch (InvalidCapacityException e) {
+            ra.addAttribute("err", "capacity");
+        } catch (InvalidPriceException e) {
+            ra.addAttribute("err", "price");
+        } catch (IllegalArgumentException e) {
+            ra.addAttribute("err", "discount");
+        }
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
