@@ -10,6 +10,7 @@ public enum MusicalGenre {
     TRAP("Trap"),
     JAZZ("Jazz"),
     ELECTRONICA("Electrónica"),
+    AFROBEAT("Afrobeat"),
     OTRO("Otro");
 
     private final String label;
