@@ -7,20 +7,21 @@
         <div class="app-title"><spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/></div>
     </a>
 
-    <c:if test="${not empty showRightButtons}">
+    <c:if test="${showRightButtons == true}">
         <div class="right-buttons">
-            <a href="<c:url value='/clubs/new' />" class="add-club-btn"><spring:message code="menu.addClub"/></a>
-
-            <c:if test="${not empty user}">
-                <a href="<c:url value='/clubs/profile?userId=${user.id}' />" class="profile-btn" title="<spring:message code='title.myProfile'/>">
-                    <i class="fa-solid fa-user"></i>
-                </a>
+            <c:if test="${showAddClubButton == true}">
+                <a href="<c:url value='/clubs/new' />" class="add-club-btn"><spring:message code="menu.addClub"/></a>
             </c:if>
-
-            <c:if test="${empty user}">
-                <a href="<c:url value='/login' />" class="login-btn"><spring:message code="button.login"/></a>
+            <c:if test="${showProfileButton == true}">
+                <c:if test="${not empty user}">
+                    <a href="<c:url value='/clubs/profile?userId=${user.id}' />" class="profile-btn" title="<spring:message code='title.myProfile'/>">
+                        <i class="fa-solid fa-user"></i>
+                    </a>
+                </c:if>
+                <c:if test="${empty user}">
+                    <a href="<c:url value='/login' />" class="login-btn"><spring:message code="button.login"/></a>
+                </c:if>
             </c:if>
-
         </div>
     </c:if>
 </div>

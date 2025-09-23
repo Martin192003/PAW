@@ -16,6 +16,14 @@ body {
     display: flex;
     flex-direction: column;
 }
+.detail-back button.btn-success {
+    height: 40px;
+    min-width: 40px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 .form-text-required {
     margin-left: auto;
     color: #c1bfbf;

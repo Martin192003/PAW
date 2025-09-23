@@ -14,11 +14,14 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/details.css' />" />
+    <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 <c:url var="clubUrl" value="/clubs/${club.clubId}"/>
-<c:set var="showRightButtons" value="false" />
+<c:set var="showRightButtons" value="true" />
+<c:set var="showProfileButton" value="true" />
+<c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="detail-page">
     <div class="detail-back">
