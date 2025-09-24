@@ -50,20 +50,45 @@
                 <form:errors path="location" cssClass="error" element="div"/>
             </div>
             <div class="form-group">
-                <form:select path="priceRange" class="form-control">
-                    <option value=""><spring:message code="form.priceRange"/></option>
-                    <option value="BAJO" ${priceRange == 'BAJO' ? 'selected' : ''}>
-                        <spring:message code="price.BAJO"/>
-                    </option>
-                    <option value="MEDIO" ${priceRange == 'MEDIO' ? 'selected' : ''}>
-                        <spring:message code="price.MEDIO"/>
-                    </option>
-                    <option value="ALTO" ${priceRange == 'ALTO' ? 'selected' : ''}>
-                        <spring:message code="price.ALTO"/>
-                    </option>
-                </form:select>
+                <div class="select-with-tooltip">
+                    <form:select path="priceRange" id="priceRange" class="form-control" aria-describedby="tt-price">
+                        <option value=""><spring:message code="form.priceRange"/></option>
+                        <option value="BAJO" ${priceRange == 'BAJO' ? 'selected' : ''}>
+                            <spring:message code="price.BAJO"/>
+                        </option>
+                        <option value="MEDIO" ${priceRange == 'MEDIO' ? 'selected' : ''}>
+                            <spring:message code="price.MEDIO"/>
+                        </option>
+                        <option value="ALTO" ${priceRange == 'ALTO' ? 'selected' : ''}>
+                            <spring:message code="price.ALTO"/>
+                        </option>
+                    </form:select>
+
+                    <!-- Botón/info dentro de la "caja" -->
+                    <button type="button"
+                            class="info-btn"
+                            aria-label="<spring:message code='form.priceRange'/>"
+                            aria-haspopup="true"
+                            aria-controls="tt-price"
+                            aria-expanded="false">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                    </button>
+
+                    <!-- Tooltip -->
+                    <div id="tt-price" class="tooltip-content" role="tooltip">
+                        <div class="tip"></div>
+                        <strong><spring:message code="form.priceRange"/></strong><br/>
+                        <span>
+                            <spring:message code="price.BAJO"/> ($) – <spring:message code="price.drinks.low"/>.<br/>
+                            <spring:message code="price.MEDIO"/> ($$) – <spring:message code="price.drinks.medium"/>.<br/>
+                            <spring:message code="price.ALTO"/> ($$$) – <spring:message code="price.drinks.high"/>.
+                        </span>
+                    </div>
+                </div>
+
                 <form:errors path="priceRange" cssClass="error"/>
             </div>
+
             <div class="form-group">
                 <form:textarea path="description" class="form-control" placeholder="${phDescription}"/>
                 <form:errors path="description" cssClass="error" element="div"/>
@@ -163,6 +188,26 @@
             form.dataset.submitted = 'true';
             btn.disabled = true;
             btn.setAttribute('aria-busy', 'true');
+        });
+    })();
+    (function () {
+        document.querySelectorAll('.select-with-tooltip .info-btn').forEach(function(btn){
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var tip = btn.parentElement.querySelector('.tooltip-content');
+                var isOpen = tip.classList.toggle('show');
+                btn.setAttribute('aria-expanded', String(isOpen));
+            });
+        });
+
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('.select-with-tooltip .tooltip-content.show').forEach(function(tip){
+                if (!tip.parentElement.contains(e.target)) {
+                    tip.classList.remove('show');
+                    var btn = tip.parentElement.querySelector('.info-btn');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                }
+            });
         });
     })();
 </script>

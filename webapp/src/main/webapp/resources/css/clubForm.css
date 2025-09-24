@@ -195,6 +195,87 @@ textarea.form-control {
     z-index: 100;   /* arriba del contenido, debajo del top bar (que tiene 99) */
 }
 
+.select-with-tooltip {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+/* Aumentar padding para no tapar el caret del select */
+.select-with-tooltip .form-control {
+    padding-right: 44px; /* espacio para el ícono */
+}
+
+/* Ícono dentro del select */
+.select-with-tooltip .info-btn {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.select-with-tooltip .info-btn i {
+    font-size: 16px;
+    color: #ccc;
+    margin-right: 10px;
+    margin-bottom: 5px;
+    opacity: 0.8;
+}
+
+/* Tooltip base */
+.select-with-tooltip .tooltip-content {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    max-width: 320px;
+    background: #151a24;          /* combina con tu dark theme */
+    color: #f2f4f8;
+    border: 1px solid #232b36;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    z-index: 20;
+    display: none;
+}
+
+/* Flechita del tooltip */
+.select-with-tooltip .tooltip-content .tip {
+    position: absolute;
+    top: -6px;
+    right: 18px;
+    width: 10px;
+    height: 10px;
+    background: #151a24;
+    border-left: 1px solid #232b36;
+    border-top: 1px solid #232b36;
+    transform: rotate(45deg);
+}
+
+/* Mostrar por hover/focus keyboard */
+.select-with-tooltip:hover .tooltip-content,
+.select-with-tooltip:focus-within .tooltip-content,
+.select-with-tooltip .tooltip-content.show {
+    display: block;
+}
+
+/* Evita que el tooltip tape el clic del select si pasa por encima */
+.select-with-tooltip .tooltip-content {
+    pointer-events: none; /* solo visual al pasar, para click se usa el botón */
+}
+.select-with-tooltip .tooltip-content.show {
+    pointer-events: auto; /* cuando se abre con click, sí permite interactuar */
+}
+
 /* Ajuste responsivo opcional */
 @media (max-width: 768px) {
     .detail-back {
