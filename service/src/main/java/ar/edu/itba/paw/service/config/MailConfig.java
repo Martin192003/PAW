@@ -3,14 +3,17 @@ package ar.edu.itba.paw.service.config;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 @Configuration
@@ -113,5 +116,14 @@ public class MailConfig {
         } catch (Exception e) {
             return def;
         }
+    }
+    @Bean("mailMessageSource")
+    public MessageSource mailMessageSource() {
+        final ReloadableResourceBundleMessageSource messageSource = new
+                ReloadableResourceBundleMessageSource();
+        messageSource.setBasename("classpath:mail_messages");
+        messageSource.setDefaultEncoding(StandardCharsets.UTF_8.displayName());
+        messageSource.setCacheSeconds(5);
+        return messageSource;
     }
 }

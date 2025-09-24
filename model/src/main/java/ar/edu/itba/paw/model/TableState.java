@@ -4,8 +4,8 @@ import java.util.Locale;
 
 public enum TableState {
     DISPONIBLE("disponible"),
-    CONFIRMADA("confirmada"),
-    RESERVADA("reservada");
+    RESERVADA("reservada"),
+    PENDIENTE("pendiente");
 
     private final String dbValue;
 
@@ -17,8 +17,8 @@ public enum TableState {
         if (raw == null) return null;
         return switch (raw.toLowerCase(Locale.ROOT)) {
             case "disponible" -> DISPONIBLE;
-            case "confirmada" -> CONFIRMADA;
             case "reservada"  -> RESERVADA;
+            case "pendiente"  -> PENDIENTE;
             default -> throw new IllegalArgumentException("Unknown table_state: " + raw);
         };
     }

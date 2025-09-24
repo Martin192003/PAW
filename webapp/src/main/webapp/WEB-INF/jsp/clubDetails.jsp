@@ -1,6 +1,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 
 <!DOCTYPE html>
@@ -14,19 +15,15 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/details.css' />" />
+    <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 <c:url var="clubUrl" value="/clubs/${club.clubId}"/>
-
-<div class="top-bar">
-    <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title">
-            <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
-        </div>
-    </a>
-</div>
-
+<c:set var="showRightButtons" value="true" />
+<c:set var="showProfileButton" value="true" />
+<c:set var="showAddClubButton" value="false" />
+<%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="detail-page">
     <div class="detail-back">
         <button type="button" class="btn btn-success"
@@ -41,7 +38,6 @@
             <i class="fa-solid fa-envelope"></i> <spring:message code="button.contact"/>
         </button>
     </div>
-
 
     <div class="detail-content">
         <c:if test="${not empty coverPhotoUrl}">
@@ -91,9 +87,19 @@
                         <c:otherwise>
                             <c:forEach var="entry" items="${productsByCategory}">
                                 <div class="drink-category">
-                                    <h3><c:out value="${entry.key}"/></h3>
-                                    <ul>
-                                        <c:forEach var="p" items="${entry.value}">
+                                    <c:catch var="messageError">
+                                        <spring:message code="productType.${entry.key}" var="catName" htmlEscape="true"/>
+                                    </c:catch>
+                                    <h3>
+                                        <c:choose>
+                                            <c:when test="${empty messageError and not empty catName and not fn:startsWith(catName, 'productType.')}">
+                                                <c:out value="${catName}"/>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:out value="${entry.key}"/>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </h3>                                <c:forEach var="p" items="${entry.value}">
                                             <li>
                                                 <span class="drink-name"><c:out value="${p.productName}"/></span>
                                                 <span class="drink-price">
@@ -135,10 +141,7 @@
                                 </p>
                             </div>
 
-                            <button id="reserveBtn" type="submit" class="btn btn-success" disabled
-                                    style="height:40px; align-self:end;">
-                                <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
-                            </button>
+
                         </div>
 
                         <c:choose>
@@ -164,8 +167,13 @@
                                         </li>
                                     </c:forEach>
                                 </ul>
+
                             </c:otherwise>
                         </c:choose>
+                        <button id="reserveBtn" type="submit" class="btn btn-success" disabled
+                                style="height:40px; align-self:end;">
+                            <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -173,12 +181,40 @@
 
         </div>
 
+        <spring:message code="tables.selectdate" var="msgSelectDate"/>
+        <spring:message code="tables.invaliddate" var="msgInvalidDate"/>
+        <spring:message code="tables.fixedrange" var="msgFixedRange"/>
+        <spring:message code="tables.pastdate" var="msgPastDate"/>
+
         <script>
-            <spring:message code="tables.selectdate" var="msgSelectDate"/>
-            <spring:message code="tables.invaliddate" var="msgInvalidDate"/>
-            <spring:message code="tables.fixedrange" var="msgFixedRange"/>
             document.addEventListener('DOMContentLoaded', () => {
-                // Dropdowns (igual que tu script)
+                function breakEveryN(str, n) {
+                    if (!str) return '';
+                    const s = String(str).trim();
+                    if (s.length <= n) return s;
+                    const parts = [];
+                    for (let i = 0; i < s.length; i += n) {
+                        parts.push(s.slice(i, i + n));
+                    }
+                    // Usamos <br> para forzar nueva línea, no solo wrap suave
+                    return parts.join('\n');
+                }
+
+                // Aplica al título (cada 40)
+                const titleEl = document.querySelector('.detail-title');
+                if (titleEl && !titleEl.dataset.broken) {
+                    titleEl.innerText = breakEveryN(titleEl.textContent, 30);
+                    titleEl.dataset.broken = '1';
+                }
+
+                // Aplica a la descripción (cada 150)
+                const descEl = document.querySelector('.detail-description p');
+                if (descEl && !descEl.dataset.broken) {
+                    descEl.innerText = breakEveryN(descEl.textContent, 100);
+                    descEl.dataset.broken = '1';
+                }
+
+                // Dropdowns
                 const dropdowns = Array.from(document.querySelectorAll('.bb-dropdown'));
                 function closeAll() {
                     dropdowns.forEach(dd => {
@@ -200,13 +236,14 @@
                     if (!e.target.closest('.bb-dropdown')) closeAll();
                 });
 
-                // --- Lógica de fecha permitida (Jue=4, Vie=5, Sáb=6) ---
+                // Date rules (Thu=4, Fri=5, Sat=6)
                 const ALLOWED_DAYS = [4,5,6];
                 const reserveBtn = document.getElementById('reserveBtn');
                 const form = document.getElementById('reserveForm');
                 const bookingDate = document.getElementById('bookingDate');
                 const dateHelp = document.getElementById('dateHelp');
 
+                // Ensure min=today (browser UI) but still validate manually
                 const today = new Date();
                 const yyyy = today.getFullYear();
                 const mm = String(today.getMonth()+1).padStart(2,'0');
@@ -217,21 +254,33 @@
 
                 function isAllowedDay(isoDate){
                     if(!isoDate) return false;
-                    // usar mediodía para evitar problemas de TZ
-                    const d = new Date(isoDate + 'T12:00:00');
-                    const dow = d.getDay(); // 0=Dom..6=Sáb
+                    const d = new Date(isoDate + 'T12:00:00'); // avoid TZ issues
+                    const dow = d.getDay(); // 0..6
                     return ALLOWED_DAYS.includes(dow);
+                }
+                function isPastDate(isoDate){
+                    if(!isoDate) return false;
+                    const d = new Date(isoDate + 'T12:00:00');
+                    const now = new Date();
+                    now.setHours(12,0,0,0);
+                    return d < now;
                 }
 
                 function updateReserveButtonState(){
                     const hasTable = !!(form && form.querySelector('input[name="tableId"]:checked'));
-                    const hasValidDate = bookingDate && isAllowedDay(bookingDate.value);
+                    const past = bookingDate && bookingDate.value && isPastDate(bookingDate.value);
+                    const allowed = bookingDate && bookingDate.value && isAllowedDay(bookingDate.value);
+                    const hasValidDate = bookingDate && bookingDate.value && !past && allowed;
+
                     reserveBtn.disabled = !(hasTable && hasValidDate);
 
                     if (!bookingDate.value) {
                         dateHelp.innerHTML = '${msgSelectDate}';
                         bookingDate.classList.remove('invalid');
-                    } else if (!hasValidDate) {
+                    } else if (past) {
+                        dateHelp.innerHTML = '${msgPastDate}';
+                        bookingDate.classList.add('invalid');
+                    } else if (!allowed) {
                         dateHelp.innerHTML = '${msgInvalidDate}';
                         bookingDate.classList.add('invalid');
                     } else {
@@ -242,7 +291,15 @@
 
                 updateReserveButtonState();
 
-                bookingDate.addEventListener('change', updateReserveButtonState);
+                bookingDate.addEventListener('change', () => {
+                    updateReserveButtonState();
+                    // Only reload tables when the chosen date is valid; otherwise keep the user's date and show error
+                    const past = bookingDate && bookingDate.value && isPastDate(bookingDate.value);
+                    const allowed = bookingDate && bookingDate.value && isAllowedDay(bookingDate.value);
+                    if (bookingDate.value && !past && allowed) {
+                        window.location.href = "${clubUrl}?date=" + bookingDate.value + "#dd-tables";
+                    }
+                });
 
                 if (form && reserveBtn){
                     form.addEventListener('change', (e) => {
@@ -254,28 +311,22 @@
                         const radio = li.querySelector('input[type=radio]');
                         if (radio){ radio.checked = true; updateReserveButtonState(); }
                     });
-
-                    // Guardia final en submit (defensa extra)
+                    // Final guard: keep user's date and block submit if invalid
                     form.addEventListener('submit', (e) => {
-                        if (!isAllowedDay(bookingDate.value)) {
+                        const value = bookingDate.value;
+                        if (!value || isPastDate(value) || !isAllowedDay(value)) {
                             e.preventDefault();
-                            alert('Solo se puede reservar jueves, viernes o sábado.');
+                            // Keep the date as-is and surface the error inline
+                            updateReserveButtonState();
                         }
                     });
                 }
 
-                // recargar al cambiar la fecha
-                bookingDate.addEventListener('change', () => {
-                    if (!bookingDate.value) return;
-                    // si querés forzar solo jue/vie/sáb, podés chequear antes; si no, que el servidor decida
-                    window.location.href = "${clubUrl}?date=" + bookingDate.value + "#dd-tables";
-                });
-
                 if (location.hash === "#dd-tables") {
-                    const dd = document.getElementById('dd-tables');
-                    if (dd) {
-                        dd.querySelector('.bb-btn')?.classList.add('active');
-                        dd.querySelector('.bb-panel')?.classList.add('show');
+                    const ddEl = document.getElementById('dd-tables');
+                    if (ddEl) {
+                        ddEl.querySelector('.bb-btn')?.classList.add('active');
+                        ddEl.querySelector('.bb-panel')?.classList.add('show');
                     }
                 }
             });

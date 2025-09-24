@@ -45,7 +45,7 @@ public class ClubAdminsJDBCDaoTest {
     @Test
     public void testAddAdmin() {
         User admin = userDao.create("admin", "pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA);
+        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
         boolean added = clubAdminsDao.addAdmin(club, admin);
         assertTrue(added);
         assertEquals(1, JdbcTestUtils.countRowsInTable(jdbcTemplate, "club_admins"));

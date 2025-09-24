@@ -3,6 +3,7 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -16,6 +17,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import java.time.ZonedDateTime;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -56,7 +58,12 @@ public class EmailServiceImpl implements EmailService {
                 helper.setTo(to);
                 helper.setSubject(subject);
 
-                Context context = new Context();
+                Locale userLocale = LocaleContextHolder.getLocale();
+                if (model != null && model.containsKey("userLocale")) {
+                    userLocale = (java.util.Locale) model.get("userLocale");
+                }
+
+                Context context = new Context(userLocale);
                 if (model != null) {
                     model.forEach(context::setVariable);
                 }
@@ -79,6 +86,8 @@ public class EmailServiceImpl implements EmailService {
     @Async
     public boolean sendContact(String to, String clubName, String fromEmail, String name, String phone, String message) {
         try {
+            Locale userLocale = LocaleContextHolder.getLocale();
+
             // First email using "booking-inquiry-club.html"
             MimeMessage clubMail = mailSender.createMimeMessage();
             MimeMessageHelper clubHelper = new MimeMessageHelper(clubMail, true);
@@ -87,7 +96,7 @@ public class EmailServiceImpl implements EmailService {
             clubHelper.setSubject("Contacto para " + clubName);
             clubHelper.setReplyTo(fromEmail);
 
-            Context clubContext = new Context();
+            Context clubContext = new Context(userLocale);
             clubContext.setVariable("clubName", clubName);
             clubContext.setVariable("name", name);
             clubContext.setVariable("fromEmail", fromEmail);
@@ -104,7 +113,7 @@ public class EmailServiceImpl implements EmailService {
             userHelper.setTo(fromEmail);
             userHelper.setSubject("Confirmación de contacto - " + clubName);
 
-            Context userContext = new Context();
+            Context userContext = new Context(userLocale);
             userContext.setVariable("clubName", clubName);
             userContext.setVariable("name", name);
             userContext.setVariable("submittedAt", ZonedDateTime.now());

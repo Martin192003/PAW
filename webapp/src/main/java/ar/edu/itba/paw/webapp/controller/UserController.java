@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Role;
+import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.form.UserForm;
 import ar.edu.itba.paw.service.UserService;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
 
@@ -34,11 +36,24 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ModelAndView register(@Valid @ModelAttribute("userForm") final UserForm userForm, BindingResult bindingResult) {
-        if(bindingResult.hasErrors()) {
-            return new ModelAndView("register");
+    public String register(
+            @Valid @ModelAttribute("userForm") final UserForm form,
+            final BindingResult binding,
+            final RedirectAttributes ra
+    ) {
+        if (binding.hasErrors()) {
+            return "register";
         }
-        userService.create(userForm.getUsername(), userForm.getPassword(), userForm.getSurname(), userForm.getEmail(), userForm.getCellphone(), Role.USER.toString());
-        return new ModelAndView("redirect:/login");
+        try {
+            userService.create(form.getUsername(), form.getPassword(), form.getSurname(),
+                    form.getEmail(), form.getCellphone(), "USER");
+        } catch (DuplicateEntityException ex) {
+            binding.rejectValue("email", "user.email.duplicate", "Email already in use");
+            return "register";
+        }
+        ra.addFlashAttribute("success", "Account created. Please check your email.");
+        return "redirect:/login";
     }
+
+
 }

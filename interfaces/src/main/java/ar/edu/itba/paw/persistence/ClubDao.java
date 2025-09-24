@@ -7,9 +7,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ClubDao {
-    Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone);
+    Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar);
 
-    Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone);
+    Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar);
 
     boolean delete(UUID clubId);
 
@@ -21,5 +21,9 @@ public interface ClubDao {
 
     Integer incrementQuantityRatings(UUID clubId, int delta);
 
-    List<Club> search(String nameLike, Zone location, String musicGenre, String priceRange, BigDecimal minRating, BigDecimal maxRating);
+    List<Club> search(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar, String sort);
+
+    List<Club> findByUserId(UUID userId);
+
+    List<User> findAdminsByClubId(UUID clubId);
 }

@@ -13,20 +13,21 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/contactForm.css' />" />
+    <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
 </head>
 <body>
-<div class="top-bar">
-    <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title"><spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/> </div>
-    </a>
-</div>
+<c:set var="showAddClubButton" value="false" />
+<c:set var="showProfileButton" value="true" />
+<c:set var="showRightButtons" value="true" />
+<%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 
 <div class="contact-page">
     <t:card size="card-lg" cssClass="contact-card">
         <div class="contact-title">
-            <spring:message code="contact.title" arguments="${clubName}"/>
+            <c:set var="clubNameEsc"><c:out value='${clubName}'/></c:set>
+            <spring:message code="contact.title" arguments="${clubNameEsc}"/>
             <span class="contact-icon"><i class="fa-solid fa-headphones"></i></span>
         </div>
         <spring:message code="form.fullname" var="phName"/>
@@ -65,6 +66,27 @@
     </div>
 </div>
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        function breakEveryN(str, n) {
+            if (!str) return '';
+            const s = String(str).trim();
+            if (s.length <= n) return s;
+            const parts = [];
+            for (let i = 0; i < s.length; i += n) {
+                parts.push(s.slice(i, i + n));
+            }
+            // Usamos <br> para forzar nueva línea, no solo wrap suave
+            return parts.join('\n');
+        }
+
+        // Aplica al título (cada 40)
+        const titleEl = document.querySelector('.contact-title');
+        if (titleEl && !titleEl.dataset.broken) {
+            titleEl.innerText = breakEveryN(titleEl.textContent, 30);
+            titleEl.dataset.broken = '1';
+        }
+    });
+
     var sent = ${sent ? 'true' : 'false'};
     if (sent) {
         document.addEventListener("DOMContentLoaded", function() {

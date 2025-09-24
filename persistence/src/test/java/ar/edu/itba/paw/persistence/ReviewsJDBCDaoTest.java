@@ -49,7 +49,7 @@ public class ReviewsJDBCDaoTest {
     @Test
     public void testCreateReview() {
         User user = userDao.create("user", "pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, user, MusicalGenre.ROCK, Zone.ZONA_CABA);
+        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, user, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
         Review review = reviewsDao.create(user, club, RATING, DESCRIPTION);
 
         assertNotNull(review);

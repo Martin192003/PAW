@@ -3,10 +3,12 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
 import ar.edu.itba.paw.model.TableState;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import ar.edu.itba.paw.service.ClubService;
+import ar.edu.itba.paw.service.SecurityService;
 import ar.edu.itba.paw.service.TableService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.time.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,13 +31,15 @@ public class ClubDetailsController {
     private final ProductsDao productsDao;
     private final PhotoService photoService;
     private final TableService clubTables;
+    private final SecurityService securityService;
 
     // Constructor injection (recomendado con Spring 5.x)
-    public ClubDetailsController(final ClubService clubService, final ProductsDao productsDao, final PhotoService photoService, TableService clubTables) {
+    public ClubDetailsController(final ClubService clubService, final ProductsDao productsDao, final PhotoService photoService, TableService clubTables, SecurityService securityService) {
         this.clubService = clubService;
         this.productsDao = productsDao;
         this.photoService = photoService;
         this.clubTables = clubTables;
+        this.securityService = securityService;
     }
 
     @GetMapping("/{clubId}")
@@ -46,15 +51,15 @@ public class ClubDetailsController {
         if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
         var club = maybeClub.get();
 
-        var zone = java.time.ZoneId.of("America/Argentina/Buenos_Aires");
-        java.time.LocalDate selectedDate;
+        var zone = ZoneId.of("America/Argentina/Buenos_Aires");
+        LocalDate selectedDate;
         if (dateStr == null || dateStr.isBlank()) {
-            var today = java.time.LocalDate.now(zone);
+            var today = LocalDate.now(zone);
             selectedDate = nextAllowedThuFriSat(today);
         } else {
-            selectedDate = java.time.LocalDate.parse(dateStr);
+            selectedDate = LocalDate.parse(dateStr);
             if (!isThuFriSat(selectedDate)) {
-                selectedDate = nextAllowedThuFriSat(selectedDate);
+               throw new InvalidDateRangeException("La fecha de inicio es incorrecta");
             }
         }
 
@@ -83,6 +88,11 @@ public class ClubDetailsController {
         var photos = photoService.listByClub(clubId, 0, 1);
         String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
 
+        User user = securityService.getVerifiedLoggedUser();
+        if(user!=null){
+            model.addAttribute("user", user);
+        }
+
         model.addAttribute("club", club);
         model.addAttribute("productsByCategory", ordered);
         model.addAttribute("availableTables", available);
@@ -106,17 +116,17 @@ public class ClubDetailsController {
 
         if (name.contains("cerveza") || name.contains("ipa") || name.contains("lager")
                 || name.contains("stout") || name.contains("apa")) {
-            return "Cervezas";
+            return "CERVEZAS";
         }
         if (name.contains("champ") || name.contains("espum") || name.contains("brut")) {
-            return "Champagne";
+            return "CHAMPAGNE";
         }
 
-
         ProductType type = p.getProductType();
-        if (type == ProductType.NO_ALCOHOLICA) return "Sin Alcohol";
+        if (type == ProductType.NO_ALCOHOLICA) return "NO_ALCOHOLICA";
+        if (type == ProductType.ALCOHOLICA) return "ALCOHOLICA";
 
-        return "Tragos";
+        return "TRAGOS";
     }
 
     /** Para tus datos actuales, location ya es String. */

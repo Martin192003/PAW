@@ -2,10 +2,9 @@ package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Table;
 import ar.edu.itba.paw.model.TableState;
-import ar.edu.itba.paw.model.exceptions.TableNotFoundException;
+import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
-import ar.edu.itba.paw.persistence.ReviewsDao;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,14 +56,24 @@ public class TableServiceImpl implements TableService {
 
     @Override
     @Transactional
-    public Table create(int number, int capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount) {
-        return clubTablesDao.create(number, capacity, clubId, tableState, price, discount);
+    public Table create(BigDecimal number, BigDecimal capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount) {
+        if (clubDao.findById(clubId).isEmpty()) throw new NotFoundException("Club no existente");
+        if ( number == null || number.compareTo(BigDecimal.ZERO) < 0 || number.compareTo(BigDecimal.valueOf(1_000_000)) >=  0) throw new InvalidTableNumberException("Número de mesa inválido");
+        if ( capacity == null || capacity.compareTo(BigDecimal.ZERO) <= 0 || capacity.compareTo(BigDecimal.valueOf(10_000)) >= 0) throw new InvalidCapacityException("Capacidad inválida");
+        if (price.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(BigDecimal.valueOf(1_000_000)) >= 0) throw new InvalidPriceException("Precio inválido");
+        if (discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0) throw new ValidationException("Descuento inválido");
+        return clubTablesDao.create(number.intValueExact(), capacity.intValueExact(), clubId, tableState, price, discount);
     }
 
     @Override
     @Transactional
-    public Table update(UUID tableId, UUID clubId, Integer tableNumber, Integer capacity, TableState state, BigDecimal price, BigDecimal discount) {
-        return clubTablesDao.update(tableId, clubId, tableNumber, capacity, state, price, discount);
+    public Table update(UUID tableId, UUID clubId, BigDecimal tableNumber, BigDecimal capacity, TableState state, BigDecimal price, BigDecimal discount) {
+        if (clubDao.findById(clubId).isEmpty()) throw new NotFoundException("Club no existente");
+        if ( tableNumber == null || tableNumber.compareTo(BigDecimal.ZERO) < 0 || tableNumber.compareTo(BigDecimal.valueOf(1_000_000)) >=  0) throw new InvalidTableNumberException("Número de mesa inválido");
+        if ( capacity == null || capacity.compareTo(BigDecimal.ZERO) <= 0 || capacity.compareTo(BigDecimal.valueOf(10_000)) >= 0) throw new InvalidCapacityException("Capacidad inválida");
+        if (price.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(BigDecimal.valueOf(1_000_000)) >= 0) throw new InvalidPriceException("Precio inválido");
+        if (discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0) throw new ValidationException("Descuento inválido");
+        return clubTablesDao.update(tableId, clubId, tableNumber.intValueExact(), capacity.intValueExact(), state, price, discount);
     }
 
     @Override

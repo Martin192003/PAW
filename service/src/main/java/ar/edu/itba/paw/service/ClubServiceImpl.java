@@ -30,8 +30,8 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     @Transactional
-    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone){
-        Club newClub = clubDao.create(name, description, location, priceRange, contactInfo, musicGenre, zone);
+    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
+        Club newClub = clubDao.create(name, description, location, priceRange, contactInfo, musicGenre, zone, isBar);
         mailService.sendClubCreationConfirmation(contactInfo.getEmail(), name);
         return newClub;
     }
@@ -48,8 +48,41 @@ public class ClubServiceImpl implements ClubService{
                                      Zone location,
                                      String musicGenre,
                                      String priceRange,
-                                     BigDecimal minRating,
-                                     BigDecimal maxRating) {
-        return clubDao.search(nameLike, location, musicGenre, priceRange, minRating, maxRating);
+                                     Boolean isBar,
+                                     String sort) {
+        return clubDao.search(nameLike, location, musicGenre, priceRange, isBar, sort);
     }
+
+    @Override
+    public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
+        return clubDao.update(clubId, name, location, rating, quantityRatings, priceRange, description, contactInfoId, musicGenre, zone, isBar);
+    }
+
+    // ClubService.java
+    public Club updateClub(Club club) {
+        return clubDao.update(
+                club.getClubId(),
+                club.getClubName(),
+                club.getLocation(),
+                club.getRating(),
+                club.getQuantityRatings(),
+                club.getPriceRange(),
+                club.getDescription(),
+                club.getContactInfo() != null ? club.getContactInfo().getId() : null,
+                club.getMusicGenre(),
+                club.getZone(),
+                club.getIsBar()
+        );
+    }
+
+    @Override
+    public List<Club> getClubsByUser(UUID userId) {
+        return clubDao.findByUserId(userId);
+    }
+
+    @Override
+    public List<User> getAdminsByClub(UUID clubId) {
+        return clubDao.findAdminsByClubId(clubId);
+    }
+
 }
