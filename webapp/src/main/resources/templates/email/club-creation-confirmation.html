@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <style>
         body {
@@ -11,7 +11,7 @@
             padding: 0;
         }
 
-        h2 {
+        h2, h1 {
             color: #a64ca6; /* Violet */
             text-align: center;
             font-size: 24px;
@@ -70,20 +70,17 @@
 </head>
 <body>
 <div class="email-container">
-    <h2>Confirmación de Creación de Club</h2>
-    <p>¡Club Creado Exitosamente!</p>
-    <p>Estimado usuario,</p>
-    <p>
-        Nos complace informarle que su club
-        "<span th:text="${clubName}"></span>" ha sido creado exitosamente.
-    </p>
-    <p>
-        Fecha de creación:
-        <span th:text="${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')}"></span>
-    </p>
-    <p>¡Gracias por usar nuestra plataforma!</p>
-    <p>Bling Bling</p>
-    <p class="footer">Este es un mensaje automático, por favor no respondas a este correo.</p>
+    <h2 th:text="#{email.club.creation.heading}"></h2>
+    <p th:text="#{email.club.creation.greeting}"></p>
+    <p th:text="#{email.club.creation.body(${clubName})}"></p>
+    <p th:text="#{email.club.creation.date(${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')})}"></p>
+    <p th:text="#{email.club.creation.thankyou}"></p>
+    <p th:text="#{email.club.creation.signature}"></p>
+<!--    <p>Estimado usuario,</p>-->
+<!--    <p>Nos complace informarle que su club "<span th:text="${clubName}"></span>" ha sido creado exitosamente.</p>-->
+<!--    <p>Fecha de creación: <span th:text="${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')}"></span></p>-->
+<!--    <p>¡Gracias por usar nuestra plataforma!</p>-->
+<!--    <p>Bling Bling</p>-->
 </div>
 </body>
 </html>

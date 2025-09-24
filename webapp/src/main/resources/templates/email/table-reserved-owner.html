@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8"/>
-    <title>Nueva reserva de mesa</title>
+    <title th:text="#{email.table.owner.title}"></title>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <style>
         body{margin:0;padding:0;background:#0d0f15;color:#F2F4F8;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;}
@@ -56,36 +56,36 @@
         <div class="brand" th:text="${brandName != null ? brandName : 'NightClub'}">NightClub</div>
     </div>
     <div class="card">
-        <span class="tag">Nueva reserva</span>
-        <h1>Nueva reserva de mesa</h1>
-        <p>Se registró una nueva reserva en <b th:text="${clubName}">Club</b>. Detalles:</p>
+        <span class="tag" th:text="#{email.table.owner.tag}"></span>
+        <h1 th:text="#{email.table.owner.heading}"></h1>
+        <p th:text="#{email.table.owner.body(${clubName})}"></p>
         <table class="meta" role="presentation">
             <tr>
-                <td class="label">Mesa</td>
+                <td class="label" th:text="#{email.table.owner.table.label}"></td>
                 <td><span class="value"> #<span class="value" th:text="${tableNumber}">1</span> (cap. <span class="value" th:text="${capacity}">4</span>)</span></td>
             </tr>
             <tr th:if="${dateTime != null}">
-                <td class="label">Horario</td>
+                <td class="label" th:text="#{email.table.owner.schedule.label}"></td>
                 <td><span class="value" th:text="${dateTime}">22:30</span></td>
             </tr>
             <tr th:if="${areaName != null}">
-                <td class="label">Sector</td>
+                <td class="label" th:text="#{email.table.owner.area.label}"></td>
                 <td><span class="value" th:text="${areaName}">VIP</span></td>
             </tr>
             <tr>
-                <td class="label">Usuario</td>
+                <td class="label" th:text="#{email.table.owner.user.label}"></td>
                 <td><span class="value" th:text="${username}">user</span> (<a class="value" th:href="'mailto:'+${userEmail}" th:text="${userEmail}">mail</a>)</td>
             </tr>
         </table>
         <p style="text-align:center;margin:26px 0 6px;">
-            <a class="cta" th:href="${ctaUrl}" th:text="${ctaText}">Abrir panel</a>
+            <a class="cta" th:href="${ctaUrl}" th:text="${ctaText != null ? ctaText : #{email.table.owner.cta}}"></a>
         </p>
         <hr class="divider"/>
-        <p class="muted">Generado el <span th:text="${#temporals.format(sentAt, 'dd/MM/yyyy HH:mm')}">fecha</span>.</p>
+        <p class="muted" th:text="#{email.table.owner.generated(${#temporals.format(sentAt, 'dd/MM/yyyy HH:mm')})}"></p>
     </div>
     <div class="footer">
-        <p th:text="${brandFooter != null ? brandFooter : '© 2025 BlingBling. Panel de administración.'}">© 2025 NightClub. Panel de administración.</p>
-        <p>Este correo es automático. No responder.</p>
+        <p th:text="${brandFooter != null ? brandFooter : #{email.table.owner.footer}}"></p>
+        <p th:text="#{email.table.owner.disclaimer}"></p>
     </div>
 </div>
 </body>
