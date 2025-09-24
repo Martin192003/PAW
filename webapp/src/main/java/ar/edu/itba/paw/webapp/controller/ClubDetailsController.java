@@ -116,17 +116,17 @@ public class ClubDetailsController {
 
         if (name.contains("cerveza") || name.contains("ipa") || name.contains("lager")
                 || name.contains("stout") || name.contains("apa")) {
-            return "Cervezas";
+            return "CERVEZAS";
         }
         if (name.contains("champ") || name.contains("espum") || name.contains("brut")) {
-            return "Champagne";
+            return "CHAMPAGNE";
         }
 
-
         ProductType type = p.getProductType();
-        if (type == ProductType.NO_ALCOHOLICA) return "Sin Alcohol";
+        if (type == ProductType.NO_ALCOHOLICA) return "NO_ALCOHOLICA";
+        if (type == ProductType.ALCOHOLICA) return "ALCOHOLICA";
 
-        return "Tragos";
+        return "TRAGOS";
     }
 
     /** Para tus datos actuales, location ya es String. */
