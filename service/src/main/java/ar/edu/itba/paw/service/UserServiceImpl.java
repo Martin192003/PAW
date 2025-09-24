@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User create(String username, String password, String surname, String email, String cellphone, String role) {
         try {
-            return userDao.create(
+            User user = userDao.create(
                     username,
                     passwordEncoder.encode(password),
                     surname,
@@ -49,6 +49,8 @@ public class UserServiceImpl implements UserService {
                     cellphone,
                     Role.USER
             );
+            mailService.sendUserRegistrationConfirmation(email,username);
+            return user;
         } catch (DataIntegrityViolationException ex) {
             throw new DuplicateEntityException("user.email.duplicate", ex);
         }
