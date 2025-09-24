@@ -53,25 +53,25 @@
         <div class="brand" th:text="${brandName != null ? brandName : 'NightClub'}">NightClub</div>
     </div>
     <div class="card">
-        <span class="tag">Reserva confirmada</span>
-        <h1>¡Tu reserva está lista!</h1>
-        <p>Tu mesa fue confirmada en <b th:text="${clubName}">Club</b>. Estos son los detalles:</p>
+        <span class="tag" th:text="#{email.table.user.tag}"></span>
+        <h1 th:text="#{email.table.user.heading}"></h1>
+        <p th:text="#{email.table.user.body(${clubName})}"></p>
         <ul>
-            <li><span class="value">Mesa #<span th:text="${tableNumber}">1</span></span></li>
-            <li><span class="value">Capacidad: <span class="value" th:text="${capacity}">4</span> personas</span></li>
-            <li th:if="${dateTime != null}">Horario: <span class="value" th:text="${dateTime}">22:30</span></li>
-            <li th:if="${areaName != null}">Sector: <span class="value" th:text="${areaName}">VIP</span></li>
+            <li><span class="value" th:text="#{email.table.user.table(${tableNumber})}"></span></li>
+            <li><span class="value" th:text="#{email.table.user.capacity(${capacity})}"></span></li>
+            <li th:if="${dateTime != null}" th:text="#{email.table.user.schedule(${dateTime})}"></li>
+            <li th:if="${areaName != null}" th:text="#{email.table.user.area(${areaName})}"></li>
         </ul>
-        <p>Mostrá este mail o tu código en la entrada para agilizar el acceso.</p>
+        <p th:text="#{email.table.user.instructions}"></p>
         <p style="text-align:center;margin:28px 0 6px;">
-            <a class="cta" th:href="${ctaUrl}" th:text="${ctaText}">Ver reserva</a>
+            <a class="cta" th:href="${ctaUrl}" th:text="${ctaText != null ? ctaText : #{email.table.user.cta}}"></a>
         </p>
         <hr class="divider"/>
-        <p class="muted">Enviado el <span th:text="${#temporals.format(sentAt, 'dd/MM/yyyy HH:mm')}">fecha</span>.</p>
+        <p class="muted" th:text="#{email.table.user.sent(${#temporals.format(sentAt, 'dd/MM/yyyy HH:mm')})}"></p>
     </div>
     <div class="footer">
-        <p th:text="${brandFooter != null ? brandFooter : '© 2025 BlingBling. Todos los derechos reservados.'}">© 2025 NightClub. Todos los derechos reservados.</p>
-        <p>Si no realizaste esta acción, ignorá este correo.</p>
+        <p th:text="${brandFooter != null ? brandFooter : #{email.table.user.footer}}"></p>
+        <p th:text="#{email.table.user.disclaimer}"></p>
     </div>
 </div>
 </body>

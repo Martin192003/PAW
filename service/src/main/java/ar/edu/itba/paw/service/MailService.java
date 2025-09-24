@@ -90,11 +90,14 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.springframework.context.i18n.LocaleContextHolder;
+
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import java.time.ZonedDateTime;
+import java.util.Locale;
 import java.util.UUID;
 
 
@@ -123,6 +126,8 @@ public class MailService {
     @Async
     public boolean sendContact(String to, String clubName, String fromEmail, String name, String phone, String message) {
         try {
+            Locale userLocale = LocaleContextHolder.getLocale();
+
             // First email using "booking-inquiry-club.html"
             MimeMessage clubMail = mailSender.createMimeMessage();
             MimeMessageHelper clubHelper = new MimeMessageHelper(clubMail, true);
@@ -131,7 +136,7 @@ public class MailService {
             clubHelper.setSubject("Contacto para " + clubName);
             clubHelper.setReplyTo(fromEmail);
 
-            Context clubContext = new Context();
+            Context clubContext = new Context(userLocale);
             clubContext.setVariable("clubName", clubName);
             clubContext.setVariable("name", name);
             clubContext.setVariable("fromEmail", fromEmail);
@@ -148,7 +153,7 @@ public class MailService {
             userHelper.setTo(fromEmail);
             userHelper.setSubject("Confirmación de contacto - " + clubName);
 
-            Context userContext = new Context();
+            Context userContext = new Context(userLocale);
             userContext.setVariable("clubName", clubName);
             userContext.setVariable("name", name);
             userContext.setVariable("submittedAt", ZonedDateTime.now());
@@ -175,13 +180,15 @@ public class MailService {
     @Async
     public void sendClubCreationConfirmation(String to, String clubName){
         try{
+            Locale userLocale = LocaleContextHolder.getLocale();
+
             MimeMessage mail = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mail, true);
             helper.setFrom(defaultFrom);
             helper.setTo(to);
             helper.setSubject("Confirmación de creación de club - " + clubName);
 
-            Context context = new Context();
+            Context context = new Context(userLocale);
             context.setVariable("clubName", clubName);
             context.setVariable("createdAt", ZonedDateTime.now());
 
@@ -198,13 +205,15 @@ public class MailService {
     @Async
     public void sendUserRegistrationConfirmation(String to, String username){
         try{
+            Locale userLocale = LocaleContextHolder.getLocale();
+
             MimeMessage mail = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mail, true);
             helper.setFrom(defaultFrom);
             helper.setTo(to);
             helper.setSubject("Confirmación de registro - " + username);
 
-            Context context = new Context();
+            Context context = new Context(userLocale);
             context.setVariable("username", username);
             context.setVariable("registeredAt", ZonedDateTime.now());
 

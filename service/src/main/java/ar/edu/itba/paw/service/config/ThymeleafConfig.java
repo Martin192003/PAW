@@ -1,8 +1,13 @@
 package ar.edu.itba.paw.service.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.spring5.SpringTemplateEngine;
+import org.thymeleaf.messageresolver.IMessageResolver;
+import org.thymeleaf.messageresolver.StandardMessageResolver;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
@@ -10,9 +15,10 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
 public class ThymeleafConfig {
 
     @Bean
-    public TemplateEngine templateEngine() {
-        TemplateEngine templateEngine = new TemplateEngine();
+    public TemplateEngine templateEngine(@Qualifier("mailMessageSource") MessageSource messageSource) {
+        SpringTemplateEngine templateEngine = new SpringTemplateEngine();
         templateEngine.setTemplateResolver(emailTemplateResolver());
+        templateEngine.setTemplateEngineMessageSource(messageSource);
         return templateEngine;
     }
 

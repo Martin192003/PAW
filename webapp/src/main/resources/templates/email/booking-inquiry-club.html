@@ -5,15 +5,15 @@
 </head>
 <body>
 <div class="email-container">
-    <h2>Consulta para [[${clubName}]]</h2>
-    <p><b>Nombre:</b> [[${name}]]</p>
-    <p><b>Email:</b> [[${fromEmail}]]</p>
-    <p><b>Teléfono:</b> [[${phone}]]</p>
-    <p><b>Mensaje:</b><br>[[${message}]]</p>
+    <h2 th:text="#{email.booking.club.title(${clubName})}"></h2>
+    <p><b th:text="#{email.booking.club.name(${name})}"></b></p>
+    <p><b th:text="#{email.booking.club.email(${fromEmail})}"></b></p>
+    <p><b th:text="#{email.booking.club.phone(${phone})}"></b></p>
+    <p><b th:text="#{email.booking.club.message}"></b><br>[[${message}]]</p>
     <p style="margin-top:16px;">
         <a th:href="${ctaUrl}" class="button">[[${ctaText}]]</a>
     </p>
-    <p class="footer">Enviado: [[${submittedAt}]]</p>
+    <p class="footer" th:text="#{email.booking.club.sent(${submittedAt})}"></p>
 </div>
 </body>
 </html>
