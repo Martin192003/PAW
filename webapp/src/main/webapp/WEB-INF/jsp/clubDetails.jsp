@@ -1,6 +1,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 
 <!DOCTYPE html>
@@ -86,9 +87,19 @@
                         <c:otherwise>
                             <c:forEach var="entry" items="${productsByCategory}">
                                 <div class="drink-category">
-                                    <h3><c:out value="${entry.key}"/></h3>
-                                    <ul>
-                                        <c:forEach var="p" items="${entry.value}">
+                                    <c:catch var="messageError">
+                                        <spring:message code="productType.${entry.key}" var="catName" htmlEscape="true"/>
+                                    </c:catch>
+                                    <h3>
+                                        <c:choose>
+                                            <c:when test="${empty messageError and not empty catName and not fn:startsWith(catName, 'productType.')}">
+                                                <c:out value="${catName}"/>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:out value="${entry.key}"/>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </h3>                                <c:forEach var="p" items="${entry.value}">
                                             <li>
                                                 <span class="drink-name"><c:out value="${p.productName}"/></span>
                                                 <span class="drink-price">
