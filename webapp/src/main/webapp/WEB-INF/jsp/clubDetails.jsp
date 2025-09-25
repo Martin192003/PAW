@@ -9,6 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <title><c:out value="${club.clubName}"/> - <spring:message code="title.details"/></title>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />" />
