@@ -155,11 +155,6 @@ select.filter-item option {
     text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.3);
     font-family: 'Darklinos', Arial, sans-serif;
 }
-#formError {
-    color: red;
-    margin-top: 10px;
-}
-
 .edit-club-btn {
     font-family: 'Darklinos', Arial, sans-serif;
     background: #000;
@@ -283,3 +278,9 @@ select.filter-item option {
     .filter-bar { flex-wrap: nowrap; }
 }
 
+.formError {
+    color: #ff4d4f;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: block;
+}

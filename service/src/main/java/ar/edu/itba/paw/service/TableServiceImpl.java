@@ -60,7 +60,7 @@ public class TableServiceImpl implements TableService {
         if (clubDao.findById(clubId).isEmpty()) throw new NotFoundException("Club no existente");
         if ( number == null || number.compareTo(BigDecimal.ZERO) < 0 || number.compareTo(BigDecimal.valueOf(1_000_000)) >=  0) throw new InvalidTableNumberException("Número de mesa inválido");
         if ( capacity == null || capacity.compareTo(BigDecimal.ZERO) <= 0 || capacity.compareTo(BigDecimal.valueOf(10_000)) >= 0) throw new InvalidCapacityException("Capacidad inválida");
-        if (price.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(BigDecimal.valueOf(1_000_000)) >= 0) throw new InvalidPriceException("Precio inválido");
+        if (price.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(new BigDecimal("99999999.99")) >= 0) throw new InvalidPriceException("Precio inválido");
         if (discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0) throw new ValidationException("Descuento inválido");
         return clubTablesDao.create(number.intValueExact(), capacity.intValueExact(), clubId, tableState, price, discount);
     }
@@ -71,7 +71,7 @@ public class TableServiceImpl implements TableService {
         if (clubDao.findById(clubId).isEmpty()) throw new NotFoundException("Club no existente");
         if ( tableNumber == null || tableNumber.compareTo(BigDecimal.ZERO) < 0 || tableNumber.compareTo(BigDecimal.valueOf(1_000_000)) >=  0) throw new InvalidTableNumberException("Número de mesa inválido");
         if ( capacity == null || capacity.compareTo(BigDecimal.ZERO) <= 0 || capacity.compareTo(BigDecimal.valueOf(10_000)) >= 0) throw new InvalidCapacityException("Capacidad inválida");
-        if (price.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(BigDecimal.valueOf(1_000_000)) >= 0) throw new InvalidPriceException("Precio inválido");
+        if (price.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(new BigDecimal("99999999.99")) >= 0) throw new InvalidPriceException("Precio inválido");
         if (discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0) throw new ValidationException("Descuento inválido");
         return clubTablesDao.update(tableId, clubId, tableNumber.intValueExact(), capacity.intValueExact(), state, price, discount);
     }

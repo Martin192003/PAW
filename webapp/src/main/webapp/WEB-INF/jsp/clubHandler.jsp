@@ -2,6 +2,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <!DOCTYPE html>
 <html lang="es">
 <head><title><spring:message code="title.myActivity"/></title>
@@ -108,29 +109,30 @@
             </tr>
         </c:forEach></tbody>
     </table>
-    <spring:message code="placeholder.name" var="phProductName"/> <spring:message code="placeholder.description"
-                                                                                  var="phDescription"/> <spring:message
-        code="placeholder.price" var="phPrice"/>
-    <form method="post" action="<c:url value='/clubs/addProduct' />" class="add-product-bar"><input type="hidden"
-                                                                                                    name="clubId"
-                                                                                                    value="${club.clubId}"/>
-        <input type="text" class="add-product-name" name="productName" placeholder="${phProductName}" required/> <input
-                type="text" class="add-product-input" name="description" placeholder="${phDescription}"/> <input
-                type="number" class="add-product-input" name="basePrice" placeholder="${phPrice}" step="0.01" required/>
-        <select class="add-product-input" name="productType" required>
-            <option value="alcoholicas"><spring:message code="label.alcoholicDrink"/></option>
-            <option value="noAlcoholicas"><spring:message code="label.nonAlcoholicDrink"/></option>
-        </select>
-        <button type="submit" class="btn btn-success btn-edit-small" title="<spring:message code='button.add'/>"><i
-                class="fa-solid fa-plus"></i></button>
-    </form>
-    <c:if test="${param.err == 'price_max_product'}">
-        <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.product.price_max"
-                                                                      text="El precio debe ser menor a 100.000.000."/></div>
-    </c:if> <c:if test="${param.err == 'name'}">
-    <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.name"
-                                                                  text="El nombre es demasiado largo debe ser menor a 100 cáracteres"/></div>
-</c:if><h2><spring:message code="button.tables"/></h2>
+    <spring:message code="placeholder.name" var="phProductName"/>
+    <spring:message code="placeholder.description" var="phDescription"/>
+    <spring:message code="placeholder.price" var="phPrice"/>
+    <form:form method="post" modelAttribute="productForm" action="${pageContext.request.contextPath}/clubs/addProduct" class="add-product-bar">
+        <form:hidden path="clubId" value="${club.clubId}" />
+        <form:input path="productName" cssClass="add-product-name" placeholder="${phProductName}" />
+        <form:errors path="productName" cssClass="formError"/>
+
+        <form:input path="description" cssClass="add-product-input" placeholder="${phDescription}" />
+        <form:errors path="description" cssClass="formError"/>
+
+        <form:input path="basePrice" type="number" cssClass="add-product-input" placeholder="${phPrice}" step="0.01" />
+        <form:errors path="basePrice" cssClass="formError"/>
+
+        <form:select path="productType" cssClass="input-text">
+            <form:option value="ALCOHOLICA" label="Alcohólica"/>
+            <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+        </form:select>
+        <form:errors path="productType" cssClass="formError"/>
+
+        <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
+    </form:form>
+
+    <h2><spring:message code="button.tables"/></h2>
     <table class="styled-table">
         <thead>
         <tr>
@@ -170,42 +172,28 @@
     <spring:message code="placeholder.tableNumber" var="phTableNumber"/> <spring:message code="placeholder.capacity"
                                                                                          var="phCapacity"/>
     <spring:message code="placeholder.discount" var="phDiscount"/>
-    <form method="post" action="<c:url value='/clubs/addTable' />" class="add-product-bar"><input type="hidden"
-                                                                                                  name="clubId"
-                                                                                                  value="${club.clubId}"/>
-        <div style="display:flex; flex-direction:column; gap:4px; width:100%;"><input type="number"
-                                                                                      class="add-product-name"
-                                                                                      name="tableNumber"
-                                                                                      placeholder="${phTableNumber}"
-                                                                                      required min="1"/></div>
-        <input type="number" class="add-product-input" name="capacity" placeholder="${phCapacity}" required min="1"/>
-        <div style="display:flex; flex-direction:column; gap:4px; width:100%;"><input type="number"
-                                                                                      class="add-product-input"
-                                                                                      name="price"
-                                                                                      placeholder="${phPrice}"
-                                                                                      step="0.01" required min="0"/>
-        </div>
-        <input type="number" class="add-product-input" name="discount" placeholder="${phDiscount}" step="0.01" min="0"
-               max="100" value="0"/>
-        <button type="submit" class="btn btn-success btn-edit-small" title="<spring:message code='button.add'/>"><i
-                class="fa-solid fa-plus"></i></button>
-    </form>
+    <form:form method="post" modelAttribute="tableForm" action="${pageContext.request.contextPath}/clubs/addTable" class="add-product-bar">
+        <form:hidden path="clubId" value="${club.clubId}" />
+
+        <form:input path="tableNumber" type="number" cssClass="add-product-name" placeholder="${phTableNumber}" />
+        <form:errors path="tableNumber" cssClass="formError"/>
+
+        <form:input path="capacity" type="number" cssClass="add-product-input" placeholder="${phCapacity}" />
+        <form:errors path="capacity" cssClass="formError"/>
+
+        <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}" step="0.01"/>
+        <form:errors path="price" cssClass="formError"/>
+
+        <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}" step="0.01"/>
+        <form:errors path="discount" cssClass="formError"/>
+
+        <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
+    </form:form>
+
     <c:if test="${param.err == 'dup'}">
-        <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.duplicate"
-                                                                      text="Ya existe una mesa con ese número."/></div>
-    </c:if> <c:if test="${param.err == 'price_max'}">
-    <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.price_max"
-                                                                  text="El precio debe ser menor a 1.000.000.000."/></div>
-</c:if> <c:if test="${param.err == 'table_number'}">
-    <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.invalid.table.number"
-                                                                  text="El número de mesa debe ser valido"/></div>
-</c:if> <c:if test="${param.err == 'capacity'}">
-    <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.invalid.capacity"
-                                                                  text="La capacidad debe ser valida"/></div>
-</c:if> <c:if test="${param.err == 'discount'}">
-    <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.invalid.discount"
-                                                                  text="El descuento debe estar entre 0 y 100."/></div>
-</c:if></div>
+        <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.duplicate" text="Ya existe una mesa con ese número."/></div>
+    </c:if>
+</div>
 <!-- Modales -->
 <div id="editModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeEditModal()">&times;</span>

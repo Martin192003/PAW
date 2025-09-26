@@ -7,6 +7,8 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.AddClubForm;
+import ar.edu.itba.paw.webapp.form.AddProductForm;
+import ar.edu.itba.paw.webapp.form.AddTableForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
@@ -184,6 +186,8 @@ public class ClubController {
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
         model.addAttribute("menu", menuService.getMenuByClub(clubId));
+        model.addAttribute("productForm", new AddProductForm());
+        model.addAttribute("tableForm", new AddTableForm());
 
         return "clubHandler";
     }
@@ -300,25 +304,44 @@ public class ClubController {
 
     @PostMapping("/addProduct")
     public String addProduct(
-            @RequestParam("clubId") UUID clubId,
-            @RequestParam("productName") String name,
-            @RequestParam("description") String description,
-            @RequestParam("basePrice") BigDecimal basePrice,
-            @RequestParam("productType") String type,
-            RedirectAttributes ra
+            @Valid @ModelAttribute("productForm") AddProductForm productForm,
+            BindingResult errors,
+            Model model
     ) {
+        UUID clubId = productForm.getClubId();
         checkLoggedUser(clubId);
 
-        var club = clubService.getClubById(clubId).orElseThrow();
-        try {
-            productService.create(club, name, description, basePrice, ProductType.fromDb(type), true);
-        } catch (ValidationException e) {
-            ra.addAttribute("err", "price_max_product");
-        } catch (IllegalArgumentException e) {
-            ra.addAttribute("err", "name");
+        if (errors.hasErrors()) {
+            // volvés a armar el modelo igual que en handleClub
+            var club = clubService.getClubById(clubId).orElseThrow();
+            model.addAttribute("club", club);
+            model.addAttribute("tables", tableService.findByClubId(clubId));
+            model.addAttribute("menu", menuService.getMenuByClub(clubId));
+            model.addAttribute("zones", Zone.values());
+            model.addAttribute("genres", MusicalGenre.values());
+            model.addAttribute("prices", Price.values());
+            model.addAttribute("coverPhotoUrl",
+                    photoService.listByClub(clubId, 0, 1).stream()
+                            .findFirst().map(p -> p.getUrl()).orElse(null));
+            model.addAttribute("tableForm", new AddTableForm());
+            model.addAttribute("productForm", productForm);
+            return "clubHandler"; // ⚡ así Spring re-renderiza con BindingResult
         }
+
+        // si no hay errores → guardar
+        var club = clubService.getClubById(clubId).orElseThrow();
+        productService.create(
+                club,
+                productForm.getProductName(),
+                productForm.getDescription(),
+                productForm.getBasePrice(),
+                productForm.getProductType(),
+                productForm.getIsAvailable()
+        );
+
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
 
     @GetMapping("/profile")
     public String showProfile(@RequestParam UUID userId, Model model) {
@@ -333,30 +356,46 @@ public class ClubController {
 
     @PostMapping("/addTable")
     public String addTable(
-            @RequestParam("clubId") UUID clubId,
-            @RequestParam("tableNumber") BigDecimal tableNumber,
-            @RequestParam("capacity") BigDecimal capacity,
-            @RequestParam("price") BigDecimal price,
-            @RequestParam("discount") BigDecimal discount,
-            RedirectAttributes ra
+            @Valid @ModelAttribute("tableForm") AddTableForm tableForm,
+            BindingResult errors,
+            Model model
     ) {
+        UUID clubId = tableForm.getClubId();
         checkLoggedUser(clubId);
+
+        if (tableForm.getDiscount() == null) {
+            tableForm.setDiscount(BigDecimal.ZERO);
+        }
+
+        if (errors.hasErrors()) {
+            // volvés a armar el modelo igual que en handleClub
+            var club = clubService.getClubById(clubId).orElseThrow();
+            model.addAttribute("club", club);
+            model.addAttribute("tables", tableService.findByClubId(clubId));
+            model.addAttribute("menu", menuService.getMenuByClub(clubId));
+            model.addAttribute("zones", Zone.values());
+            model.addAttribute("genres", MusicalGenre.values());
+            model.addAttribute("prices", Price.values());
+            model.addAttribute("coverPhotoUrl",
+                    photoService.listByClub(clubId, 0, 1).stream()
+                            .findFirst().map(p -> p.getUrl()).orElse(null));
+            model.addAttribute("tableForm", tableForm);
+            model.addAttribute("productForm", new AddProductForm());
+            return "clubHandler"; // ⚡ así Spring re-renderiza con BindingResult
+        }
 
         var club = clubService.getClubById(clubId).orElseThrow();
         try {
-            tableService.create(tableNumber, capacity, club.getClubId(), TableState.DISPONIBLE, price, discount);
+            tableService.create(
+                    tableForm.getTableNumber(),
+                    tableForm.getCapacity(),
+                    club.getClubId(),
+                    TableState.DISPONIBLE,
+                    tableForm.getPrice(),
+                    tableForm.getDiscount()
+            );
         } catch (DuplicateEntityException | DataIntegrityViolationException e) {
-            ra.addAttribute("err", "dup");
-        } catch (ValidationException e) {
-            ra.addAttribute("err", "price_max");
-        } catch (InvalidTableNumberException e) {
-            ra.addAttribute("err", "table_number");
-        } catch (InvalidCapacityException e) {
-            ra.addAttribute("err", "capacity");
-        } catch (InvalidPriceException e) {
-            ra.addAttribute("err", "price");
-        } catch (IllegalArgumentException e) {
-            ra.addAttribute("err", "discount");
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=dup";
         }
 
         return "redirect:/clubs/handle?clubId=" + clubId;
