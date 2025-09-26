@@ -100,8 +100,8 @@ public class ClubController {
                 isBar
         );
 
-        Map<String, Object> filters = new LinkedHashMap<>();
-        if (nameLike != null && !nameLike.isBlank()) filters.put("q", nameLike);
+        Map<String, String> filters = new LinkedHashMap<>();
+        if (nameLike != null && !nameLike.isBlank()) filters.put("name", nameLike);
         if (zone != null) filters.put("zone", zone.name());
         if (musicGenre != null && !musicGenre.isBlank()) filters.put("genre", musicGenre);
         if (priceRange != null && !priceRange.isBlank()) filters.put("price", priceRange);
@@ -109,7 +109,7 @@ public class ClubController {
         if (sort != null && !sort.isBlank()) filters.put("sort", sort);
 
         String queryParams = filters.entrySet().stream()
-                .map(e -> e.getKey() + "=" + e.getValue())
+                .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
 
         int totalPages = (int) Math.ceil((double) totalClubs / size);
@@ -122,8 +122,6 @@ public class ClubController {
         model.addAttribute("queryParams", queryParams);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("name", nameLike);
-
-        model.addAttribute("q", nameLike);
         model.addAttribute("zone", zone);
         model.addAttribute("genre", musicGenre);
         model.addAttribute("price", priceRange);

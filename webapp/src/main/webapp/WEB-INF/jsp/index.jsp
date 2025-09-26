@@ -205,7 +205,7 @@
     <c:if test="${totalPages > 1}">
         <div class="pagination">
             <c:if test="${page > 1}">
-                <a href="?q=${q}&zone=${zone}&genre=${genre}&price=${price}&isBar=${isBar}&sort=${sort}&page=${page - 1}" class="page-btn">
+                <a href="?${queryParams}&page=${page - 1}" class="page-btn">
                     <i class="fa-solid fa-chevron-left"></i>
                 </a>
             </c:if>
@@ -215,7 +215,7 @@
             </span>
 
             <c:if test="${page < totalPages}">
-                <a href="?q=${q}&zone=${zone}&genre=${genre}&price=${price}&isBar=${isBar}&sort=${sort}&page=${page + 1}" class="page-btn">
+                <a href="?${queryParams}&page=${page + 1}" class="page-btn">
                     <i class="fa-solid fa-chevron-right"></i>
                 </a>
             </c:if>
