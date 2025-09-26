@@ -85,4 +85,36 @@ public class ClubServiceImpl implements ClubService{
         return clubDao.findAdminsByClubId(clubId);
     }
 
+    public List<Club> getAllClubsPaginated(int limit, int offset) {
+        return clubDao.findAllPaginated(limit, offset);
+    }
+    public int countAllClubs() {
+        return clubDao.countAll();
+    }
+    public List<Club> getClubsByUserPaginated(UUID userId, int limit, int offset) {
+        return clubDao.findByUserIdPaginated(userId, limit, offset);
+    }
+    public int countClubsByUser(UUID userId) {
+        return clubDao.countByUserId(userId);
+    }
+    @Transactional(readOnly = true)
+    public List<Club> searchPaginated(String nameLike,
+                                      Zone location,
+                                      String musicGenre,
+                                      String priceRange,
+                                      Boolean isBar,
+                                      String sort,
+                                      int limit,
+                                      int offset) {
+        return clubDao.searchPaginated(nameLike, location, musicGenre, priceRange, isBar, sort, limit, offset);
+    }
+
+    @Transactional(readOnly = true)
+    public int countSearch(String nameLike,
+                           Zone location,
+                           String musicGenre,
+                           String priceRange,
+                           Boolean isBar) {
+        return clubDao.countSearch(nameLike, location, musicGenre, priceRange, isBar);
+    }
 }

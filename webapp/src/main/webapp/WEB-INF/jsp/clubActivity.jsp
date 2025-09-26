@@ -71,6 +71,23 @@
             </div>
         </t:card>
     </c:forEach>
+    <c:if test="${totalPages > 1}">
+        <div class="pagination">
+            <c:if test="${page > 1}">
+                <a href="?userId=${userId}&page=${page - 1}" class="page-btn">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            </c:if>
+
+            <span class="page-info">${page} de ${totalPages}</span>
+
+            <c:if test="${page < totalPages}">
+                <a href="?userId=${userId}&page=${page + 1}" class="page-btn">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            </c:if>
+        </div>
+    </c:if>
 </div>
 
 <script>

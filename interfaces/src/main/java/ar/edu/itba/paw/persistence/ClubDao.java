@@ -26,4 +26,16 @@ public interface ClubDao {
     List<Club> findByUserId(UUID userId);
 
     List<User> findAdminsByClubId(UUID clubId);
+
+    List<Club> findAllPaginated(int limit, int offset);
+
+    int countAll();
+
+    List<Club> searchPaginated(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar, String sort, int limit, int offset);
+
+    int countSearch(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar);
+
+    List<Club> findByUserIdPaginated(UUID userId, int limit, int offset);
+
+    int countByUserId(UUID userId);
 }
