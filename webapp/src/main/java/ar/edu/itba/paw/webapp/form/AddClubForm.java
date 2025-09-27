@@ -3,6 +3,7 @@ package ar.edu.itba.paw.webapp.form;
 import ar.edu.itba.paw.model.MusicalGenre;
 import ar.edu.itba.paw.model.Price;
 import ar.edu.itba.paw.model.Zone;
+import ar.edu.itba.paw.webapp.form.validation.ValidImage;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
@@ -32,6 +33,7 @@ public class AddClubForm {
     @NotNull(message = "{club.zone.notnull}")
     private Zone zone; // Enum con ZONA_CABA, ZONA_NORTE, ZONA_OESTE, ZONA_SUR
 
+    @ValidImage
     @NotNull(message = "{club.image.notnull}")
     private MultipartFile image;
 

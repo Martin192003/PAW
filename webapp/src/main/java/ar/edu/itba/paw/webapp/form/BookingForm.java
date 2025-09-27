@@ -6,7 +6,9 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import ar.edu.itba.paw.webapp.form.validation.ValidBookingTime;
 
+@ValidBookingTime
 public class BookingForm {
 
     @NotNull

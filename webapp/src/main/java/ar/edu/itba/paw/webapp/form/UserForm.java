@@ -1,9 +1,11 @@
 package ar.edu.itba.paw.webapp.form;
 
 import javax.validation.constraints.*;
+import ar.edu.itba.paw.webapp.form.validation.UnusedUsername;
 
 public class UserForm {
 
+    @UnusedUsername
     @NotEmpty(message = "{register.username.notempty}")
     @Pattern(regexp = "^$|^[A-Za-z0-9_]+$", message = "{register.username.pattern}")
     private String username;
