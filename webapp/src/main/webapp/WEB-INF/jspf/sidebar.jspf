@@ -20,5 +20,9 @@
         <a href="#" class="sidebar-btn ${activePage == 'ayuda' ? 'active' : ''}">
             <spring:message code="menu.help"/>
         </a>
+
+        <a href="<c:url value='/logout'/>" class="sidebar-btn">
+            <spring:message code="button.logout"/>
+        </a>
     </div>
 </c:if>
