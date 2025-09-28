@@ -17,6 +17,8 @@ public interface EmailService {
     boolean sendContact(String to, String clubName, String fromEmail, String name, String phone, String message);
     void sendBookingConfirmationToUser(User user, Club club, Table table, Booking booking);
     void sendBookingNotificationToOwner(Club club, Table table, Booking booking);
+    void sendClubCreationConfirmation(String to, String clubName);
+    void sendUserRegistrationConfirmation(String to, String username);
 
 }
 

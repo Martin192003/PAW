@@ -79,7 +79,7 @@ public class MailService {
                 (phone == null || phone.isEmpty() ? "" : "\nTel: " + phone) +
                 "\n\nMensaje:\n" + msg;
     }
-}*/
+}
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,4 +227,4 @@ public class MailService {
         }
     }
 
-}
+}*/

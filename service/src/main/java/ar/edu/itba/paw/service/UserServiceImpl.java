@@ -21,11 +21,11 @@ public class UserServiceImpl implements UserService {
 
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
-    private final MailService mailService;
+    private final EmailServiceImpl mailService;
 
 
     @Autowired
-    public UserServiceImpl(final UserDao userDao, final PasswordEncoder passwordEncoder, final MailService mailService) {
+    public UserServiceImpl(final UserDao userDao, final PasswordEncoder passwordEncoder, final EmailServiceImpl mailService) {
         this.passwordEncoder = passwordEncoder;
         this.userDao = userDao;
         this.mailService = mailService;

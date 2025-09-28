@@ -15,9 +15,9 @@ import java.util.UUID;
 public class ClubServiceImpl implements ClubService{
 
     private final ClubDao clubDao;
-    private final MailService mailService;
+    private final EmailServiceImpl mailService;
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, MailService mailService) {
+    public ClubServiceImpl(ClubDao clubDao, EmailServiceImpl mailService) {
         this.mailService = mailService;
         this.clubDao = clubDao;
     }
