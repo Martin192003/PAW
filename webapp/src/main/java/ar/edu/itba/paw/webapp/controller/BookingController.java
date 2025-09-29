@@ -125,7 +125,7 @@ public class BookingController {
         } else {
             throw new UserNotFoundException("Email del dueño inválido: " + ownerEmail);
         }
-
+        ra.addFlashAttribute("reservationSent", true);
         ra.addFlashAttribute("success", "¡Reserva creada para " + selectedDate + " (23:59–06:00)!");
         return "redirect:/clubs/" + clubId + "?date=" + selectedDate; // volvemos con la fecha elegida
     }
