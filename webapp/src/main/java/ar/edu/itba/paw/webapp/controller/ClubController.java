@@ -378,9 +378,9 @@ public class ClubController {
 
     @GetMapping("/profile")
     public String showProfile(@RequestParam UUID userId, Model model) {
-        User user = userService.findById(userId);
-        if (user == null) {
-            return "redirect:/error";
+        User user = securityService.getVerifiedLoggedUser();
+        if (user == null || !user.getId().equals(userId)) {
+            return "redirect:/403";
         }
         model.addAttribute("user", user);
         model.addAttribute("activePage", "profile");

@@ -49,10 +49,6 @@
             <span class="profile-label"><spring:message code="form.cellphone"/>:</span>
             <span class="profile-value">${user.cellphone}</span>
         </div>
-        <div class="profile-info-row">
-            <span class="profile-label"><spring:message code="label.role"/>:</span>
-            <span class="profile-value">${user.role}</span>
-        </div>
     </div>
 </div>
 </body>
