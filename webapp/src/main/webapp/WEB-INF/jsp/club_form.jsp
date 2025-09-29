@@ -53,19 +53,20 @@
             <div class="form-group">
                 <div class="select-with-tooltip">
                     <form:select path="priceRange" id="priceRange" class="form-control" aria-describedby="tt-price">
-                        <option value=""><spring:message code="form.priceRange"/></option>
-                        <option value="BAJO" ${priceRange == 'BAJO' ? 'selected' : ''}>
+                        <option value="" ${empty clubForm.priceRange ? 'selected' : ''}>
+                            <spring:message code="form.priceRange"/>
+                        </option>
+                        <option value="BAJO" ${clubForm.priceRange == 'BAJO' ? 'selected' : ''}>
                             <spring:message code="price.BAJO"/>
                         </option>
-                        <option value="MEDIO" ${priceRange == 'MEDIO' ? 'selected' : ''}>
+                        <option value="MEDIO" ${clubForm.priceRange == 'MEDIO' ? 'selected' : ''}>
                             <spring:message code="price.MEDIO"/>
                         </option>
-                        <option value="ALTO" ${priceRange == 'ALTO' ? 'selected' : ''}>
+                        <option value="ALTO" ${clubForm.priceRange == 'ALTO' ? 'selected' : ''}>
                             <spring:message code="price.ALTO"/>
                         </option>
                     </form:select>
 
-                    <!-- Botón/info dentro de la "caja" -->
                     <button type="button"
                             class="info-btn"
                             aria-label="<spring:message code='form.priceRange'/>"
@@ -75,7 +76,6 @@
                         <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
                     </button>
 
-                    <!-- Tooltip -->
                     <div id="tt-price" class="tooltip-content" role="tooltip">
                         <div class="tip"></div>
                         <strong><spring:message code="form.priceRange"/></strong><br/>
@@ -96,37 +96,40 @@
             </div>
             <div class="form-group">
                 <form:select path="musicGenre" class="form-control">
-                    <option value=""><spring:message code="form.musicGenre"/></option>
-                    <option value="ROCK" ${musicGenre == 'ROCK' ? 'selected' : ''}>
+                    <option value="" ${empty clubForm.musicGenre ? 'selected' : ''}>
+                        <spring:message code="form.musicGenre"/>
+                    </option>
+                    <option value="ROCK" ${clubForm.musicGenre == 'ROCK' ? 'selected' : ''}>
                         <spring:message code="genre.ROCK"/>
                     </option>
-                    <option value="POP" ${musicGenre == 'POP' ? 'selected' : ''}>
+                    <option value="POP" ${clubForm.musicGenre == 'POP' ? 'selected' : ''}>
                         <spring:message code="genre.POP"/>
                     </option>
-                    <option value="CACHENGUE" ${musicGenre == 'CACHENGUE' ? 'selected' : ''}>
+                    <option value="CACHENGUE" ${clubForm.musicGenre == 'CACHENGUE' ? 'selected' : ''}>
                         <spring:message code="genre.CACHENGUE"/>
                     </option>
-                    <option value="TECHNO" ${musicGenre == 'TECHNO' ? 'selected' : ''}>
+                    <option value="TECHNO" ${clubForm.musicGenre == 'TECHNO' ? 'selected' : ''}>
                         <spring:message code="genre.TECHNO"/>
                     </option>
-                    <option value="REGGAETON" ${musicGenre == 'REGGAETON' ? 'selected' : ''}>
+                    <option value="REGGAETON" ${clubForm.musicGenre == 'REGGAETON' ? 'selected' : ''}>
                         <spring:message code="genre.REGGAETON"/>
                     </option>
-                    <option value="CUMBIA" ${musicGenre == 'CUMBIA' ? 'selected' : ''}>
+                    <option value="CUMBIA" ${clubForm.musicGenre == 'CUMBIA' ? 'selected' : ''}>
                         <spring:message code="genre.CUMBIA"/>
                     </option>
-                    <option value="TRAP" ${musicGenre == 'TRAP' ? 'selected' : ''}>
+                    <option value="TRAP" ${clubForm.musicGenre == 'TRAP' ? 'selected' : ''}>
                         <spring:message code="genre.TRAP"/>
                     </option>
-                    <option value="JAZZ" ${musicGenre == 'JAZZ' ? 'selected' : ''}>
+                    <option value="JAZZ" ${clubForm.musicGenre == 'JAZZ' ? 'selected' : ''}>
                         <spring:message code="genre.JAZZ"/>
                     </option>
-                    <option value="ELECTRONICA" ${musicGenre == 'ELECTRONICA' ? 'selected' : ''}>
+                    <option value="ELECTRONICA" ${clubForm.musicGenre == 'ELECTRONICA' ? 'selected' : ''}>
                         <spring:message code="genre.ELECTRONICA"/>
                     </option>
-                    <option value="AFROBEAT" ${musicGenre == 'AFROBEAT' ? 'selected' : ''}>
+                    <option value="AFROBEAT" ${clubForm.musicGenre == 'AFROBEAT' ? 'selected' : ''}>
                         <spring:message code="genre.AFROBEAT"/>
-                    <option value="OTRO" ${musicGenre == 'OTRO' ? 'selected' : ''}>
+                    </option>
+                    <option value="OTRO" ${clubForm.musicGenre == 'OTRO' ? 'selected' : ''}>
                         <spring:message code="genre.OTRO"/>
                     </option>
                 </form:select>
@@ -134,17 +137,19 @@
             </div>
             <div class="form-group">
                 <select name="zone" class="form-control">
-                    <option value=""><spring:message code="form.zone"/></option>
-                    <option value="ZONA_NORTE" ${zone == 'ZONA_NORTE' ? 'selected' : ''}>
+                    <option value="" ${empty clubForm.zone ? 'selected' : ''}>
+                        <spring:message code="form.zone"/>
+                    </option>
+                    <option value="ZONA_NORTE" ${clubForm.zone == 'ZONA_NORTE' ? 'selected' : ''}>
                         <spring:message code="zone.ZONA_NORTE"/>
                     </option>
-                    <option value="ZONA_OESTE" ${zone == 'ZONA_OESTE' ? 'selected' : ''}>
+                    <option value="ZONA_OESTE" ${clubForm.zone == 'ZONA_OESTE' ? 'selected' : ''}>
                         <spring:message code="zone.ZONA_OESTE"/>
                     </option>
-                    <option value="ZONA_SUR" ${zone == 'ZONA_SUR' ? 'selected' : ''}>
+                    <option value="ZONA_SUR" ${clubForm.zone == 'ZONA_SUR' ? 'selected' : ''}>
                         <spring:message code="zone.ZONA_SUR"/>
                     </option>
-                    <option value="ZONA_CABA" ${zone == 'ZONA_CABA' ? 'selected' : ''}>
+                    <option value="ZONA_CABA" ${clubForm.zone == 'ZONA_CABA' ? 'selected' : ''}>
                         <spring:message code="zone.ZONA_CABA"/>
                     </option>
                 </select>

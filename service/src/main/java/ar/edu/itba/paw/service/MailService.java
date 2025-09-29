@@ -83,6 +83,9 @@ public class MailService {
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -108,6 +111,8 @@ public class MailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
     private final String defaultFrom;
+    @Autowired
+    private MessageSource messageSource;
 
     public MailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
         this.mailSender = mailSender;
@@ -133,7 +138,7 @@ public class MailService {
             MimeMessageHelper clubHelper = new MimeMessageHelper(clubMail, true);
             clubHelper.setFrom(defaultFrom);
             clubHelper.setTo(to);
-            clubHelper.setSubject("Contacto para " + clubName);
+            clubHelper.setSubject(messageSource.getMessage("email.table.user.contact", null, userLocale) + "-" + clubName);
             clubHelper.setReplyTo(fromEmail);
 
             Context clubContext = new Context(userLocale);
@@ -151,7 +156,7 @@ public class MailService {
             MimeMessageHelper userHelper = new MimeMessageHelper(userMail, true);
             userHelper.setFrom(defaultFrom);
             userHelper.setTo(fromEmail);
-            userHelper.setSubject("Confirmación de contacto - " + clubName);
+            userHelper.setSubject(messageSource.getMessage("email.table.user.confirmation", null, userLocale) + "-" + clubName);
 
             Context userContext = new Context(userLocale);
             userContext.setVariable("clubName", clubName);
@@ -160,7 +165,7 @@ public class MailService {
 
             String ctaUrl = "" + UUID.randomUUID(); //Falta URL deployment
             userContext.setVariable("ctaUrl", ctaUrl);
-            userContext.setVariable("ctaText", "Confirmar mi correo");
+            userContext.setVariable("ctaText", messageSource.getMessage("email.table.title.button", null, userLocale));
 
             String userHtmlBody = templateEngine.process("booking-inquiry-user", userContext);
             userHelper.setText(userHtmlBody, true);
@@ -178,7 +183,7 @@ public class MailService {
     }
 
     @Async
-    public void sendClubCreationConfirmation(String to, String clubName){
+    public void sendClubCreationConfirmation(String to, String clubName, UUID clubId){
         try{
             Locale userLocale = LocaleContextHolder.getLocale();
 
@@ -186,11 +191,13 @@ public class MailService {
             MimeMessageHelper helper = new MimeMessageHelper(mail, true);
             helper.setFrom(defaultFrom);
             helper.setTo(to);
-            helper.setSubject("Confirmación de creación de club - " + clubName);
-
+            helper.setSubject(messageSource.getMessage("email.club.creation.title", null, userLocale) + "-" + clubName);
             Context context = new Context(userLocale);
             context.setVariable("clubName", clubName);
             context.setVariable("createdAt", ZonedDateTime.now());
+            context.setVariable("clubId", clubId);
+            context.setVariable("ctaUrl", "http://pawserver.it.itba.edu.ar/paw-2025b-06/clubs/handle?=" + clubId); // URL a tu panel de gestión
+
 
             String htmlBody = templateEngine.process("club-creation-confirmation", context);
             helper.setText(htmlBody, true);
@@ -211,7 +218,7 @@ public class MailService {
             MimeMessageHelper helper = new MimeMessageHelper(mail, true);
             helper.setFrom(defaultFrom);
             helper.setTo(to);
-            helper.setSubject("Confirmación de registro - " + username);
+            helper.setSubject(messageSource.getMessage("email.registration.title.header", null, userLocale) + "-" + username);
 
             Context context = new Context(userLocale);
             context.setVariable("username", username);
