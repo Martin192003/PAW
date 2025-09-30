@@ -53,7 +53,7 @@ public class SecurityServiceImpl implements SecurityService{
                 return Optional.of((User) principal);
             } else if (principal instanceof org.springframework.security.core.userdetails.User) {
                 String username = ((org.springframework.security.core.userdetails.User) principal).getUsername();
-                return Optional.ofNullable(userDao.findByUserName(username).orElse(null));
+                return userDao.findByUserName(username).or(() -> userDao.findByEmail(username));
             }
         }
         return Optional.empty();

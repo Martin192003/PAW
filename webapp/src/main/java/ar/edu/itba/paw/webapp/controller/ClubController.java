@@ -28,6 +28,7 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/clubs")
@@ -53,23 +54,34 @@ public class ClubController {
     }
 
     @GetMapping({"", "/"})
-    public String list(
-            Model model,
-            @RequestParam(value = "name", required = false) String nameLike,
-            @RequestParam(value = "zone", required = false) Zone zone,
-            @RequestParam(value = "genre", required = false) String musicGenre,
-            @RequestParam(value = "price", required = false) String priceRange,
-            @RequestParam(value = "sort", required = false) String sort,
-            @RequestParam(value = "isBar", required = false) Boolean isBar
-    ) {
+    public String list(@RequestParam(value = "name", required = false) String nameLike,
+                       @RequestParam(value = "zone", required = false) Zone zone,
+                       @RequestParam(value = "genre", required = false) String musicGenre,
+                       @RequestParam(value = "price", required = false) String priceRange,
+                       @RequestParam(value = "isBar", required = false) Boolean isBar,
+                       @RequestParam(value = "sort", required = false) String sort,
+                       @RequestParam(value = "page", defaultValue = "1") int page,
+                       @RequestParam(value = "size", defaultValue = "10") int size,
+                       Model model) {
 
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+
+        int offset = (page - 1) * size;
+
+        List<Club> clubs = clubService.searchPaginated(
+                nameLike,
+                zone,
+                musicGenre,
+                priceRange,
+                isBar,
+                sort,
+                size,
+                offset
+        );
 
         boolean any = (nameLike != null || zone != null || musicGenre != null ||
                 priceRange != null || sort != null || isBar != null);
-
-        List<Club> clubs = any
-                ? clubService.advancedSearch(nameLike, zone, musicGenre, priceRange, isBar, sort)
-                : clubService.getAllClubs();
 
         Map<UUID, String> photoUrlByClub = new HashMap<>();
         for (Club c : clubs) {
@@ -82,20 +94,47 @@ public class ClubController {
             model.addAttribute("user", user);
         }
 
+        int totalClubs = clubService.countSearch(
+                nameLike,
+                zone,
+                musicGenre,
+                priceRange,
+                isBar
+        );
+
+        Map<String, String> filters = new LinkedHashMap<>();
+        if (nameLike != null && !nameLike.isBlank()) filters.put("name", nameLike);
+        if (zone != null) filters.put("zone", zone.name());
+        if (musicGenre != null && !musicGenre.isBlank()) filters.put("genre", musicGenre);
+        if (priceRange != null && !priceRange.isBlank()) filters.put("price", priceRange);
+        if (isBar != null) filters.put("isBar", isBar.toString());
+        if (sort != null && !sort.isBlank()) filters.put("sort", sort);
+
+        String queryParams = filters.entrySet().stream()
+                .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
+                .collect(Collectors.joining("&"));
+
+        int totalPages = (int) Math.ceil((double) totalClubs / size);
+
         model.addAttribute("clubs", clubs);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalResults", totalClubs);
+        model.addAttribute("page", page);
+        model.addAttribute("queryParams", queryParams);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("name", nameLike);
         model.addAttribute("zone", zone);
         model.addAttribute("genre", musicGenre);
         model.addAttribute("price", priceRange);
-        model.addAttribute("sort", sort);
         model.addAttribute("isBar", isBar);
-
+        model.addAttribute("sort", sort);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
 
         return "index";
     }
+
 
     @GetMapping("/new")
     public String showClubForm(Model model) {
@@ -122,6 +161,7 @@ public class ClubController {
             BindingResult errors) {
 
         if (errors.hasErrors()) {
+            model.addAttribute("clubForm", addClubForm);
             model.addAttribute("postPath", "/clubs/create");
             model.addAttribute("priceValues", Price.values());
             model.addAttribute("genreValues", MusicalGenre.values());
@@ -235,21 +275,37 @@ public class ClubController {
     @GetMapping("/activity")
     public String userClubs(
             @RequestParam("userId") UUID userId,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
             Model model
     ) {
-        List<Club> clubs = clubService.getClubsByUser(userId);
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+
+        int offset = (page - 1) * size;
+
+        List<Club> clubs = clubService.getClubsByUserPaginated(userId, size, offset);
+
+        int totalClubs = clubService.countClubsByUser(userId);
+        int totalPages = (int) Math.ceil((double) totalClubs / size);
 
         Map<UUID, String> photoUrlByClub = new HashMap<>();
         for (Club c : clubs) {
             var photos = photoService.listByClub(c.getClubId(), 0, 1);
             if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.get(0).getUrl());
         }
+
         model.addAttribute("user", userService.findById(userId));
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("activePage", "clubs");
+        model.addAttribute("userId", userId);
+
+        model.addAttribute("page", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalResults", totalClubs);
 
         return "clubActivity";
     }
@@ -345,9 +401,9 @@ public class ClubController {
 
     @GetMapping("/profile")
     public String showProfile(@RequestParam UUID userId, Model model) {
-        User user = userService.findById(userId);
-        if (user == null) {
-            return "redirect:/error";
+        User user = securityService.getVerifiedLoggedUser();
+        if (user == null || !user.getId().equals(userId)) {
+            return "redirect:/403";
         }
         model.addAttribute("user", user);
         model.addAttribute("activePage", "profile");

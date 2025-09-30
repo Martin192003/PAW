@@ -75,10 +75,4 @@ public class ContactController {
         return "contact";
     }
 
-
-    @GetMapping("/verify-email")
-    public String verifyEmail(@RequestParam("id") Long userId, Model model) {
-        //a futuro verificara
-        return "verifiedMail";
-    }
 }

@@ -23,4 +23,16 @@ public interface ClubService {
     List<Club> getClubsByUser(UUID userId);
 
     List<User> getAdminsByClub(UUID clubId);
+
+    List<Club> searchPaginated(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar, String sort, int limit, int offset);
+
+    int countSearch(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar);
+
+    List<Club> getAllClubsPaginated(int limit, int offset);
+
+    int countAllClubs();
+
+    List<Club> getClubsByUserPaginated(UUID userId, int limit, int offset);
+
+    int countClubsByUser(UUID userId);
 }

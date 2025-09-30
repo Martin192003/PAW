@@ -72,6 +72,12 @@
 <div class="email-container">
     <h1 th:text="#{email.registration.title(${username})}"></h1>
     <p th:text="#{email.registration.body}"></p>
+    <p style="text-align: center;">
+        <a th:href="${verificationUrl}"
+           class="button"
+           th:text="#{email.registration.cta}">
+        </a>
+    </p>
     <p th:text="#{email.registration.date(${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')})}"></p>
     <p th:text="#{email.registration.closing}"></p>
     <p th:text="#{email.registration.signature}"></p>

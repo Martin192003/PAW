@@ -6,6 +6,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />" />
@@ -26,7 +27,7 @@
             <div class="login-title">
                 <spring:message code="title.login"/>
             </div>
-            <spring:message code="form.username" var="phUser"/>
+            <spring:message code="placeholder.usernameMail" var="phUser"/>
             <spring:message code="form.password" var="phPassword"/>
 
             <form method="post" action="${pageContext.request.contextPath}/login">

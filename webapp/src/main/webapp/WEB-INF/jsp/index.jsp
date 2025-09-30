@@ -9,6 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <title><spring:message code="app.title"/> <spring:message code="app.title"/></title>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
@@ -201,7 +202,25 @@
             </div>
         </t:card>
     </c:forEach>
+    <c:if test="${totalPages > 1}">
+        <div class="pagination">
+            <c:if test="${page > 1}">
+                <a href="?${queryParams}&page=${page - 1}" class="page-btn">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            </c:if>
 
+            <span class="page-info">
+                    ${page} de ${totalPages}
+            </span>
+
+            <c:if test="${page < totalPages}">
+                <a href="?${queryParams}&page=${page + 1}" class="page-btn">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            </c:if>
+        </div>
+    </c:if>
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {

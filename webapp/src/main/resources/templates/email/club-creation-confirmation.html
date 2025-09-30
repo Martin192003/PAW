@@ -75,12 +75,14 @@
     <p th:text="#{email.club.creation.body(${clubName})}"></p>
     <p th:text="#{email.club.creation.date(${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')})}"></p>
     <p th:text="#{email.club.creation.thankyou}"></p>
+    <p style="text-align:center;margin:28px 0 6px;">
+        <a th:href="${ctaUrl}"
+           style="display:inline-block;padding:12px 20px;background:#9c27b0;color:#fff;text-decoration:none;border-radius:8px"
+           th:text="${ctaText} ?: #{email.club.creation.manage.button}"></a>
+    </p>
     <p th:text="#{email.club.creation.signature}"></p>
-<!--    <p>Estimado usuario,</p>-->
-<!--    <p>Nos complace informarle que su club "<span th:text="${clubName}"></span>" ha sido creado exitosamente.</p>-->
-<!--    <p>Fecha de creación: <span th:text="${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')}"></span></p>-->
-<!--    <p>¡Gracias por usar nuestra plataforma!</p>-->
-<!--    <p>Bling Bling</p>-->
-</div>
+    <div class="footer">
+        <p th:text="#{email.club.creation.footer}"></p>
+    </div></div>
 </body>
 </html>

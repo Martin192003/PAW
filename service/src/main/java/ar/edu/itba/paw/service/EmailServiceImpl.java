@@ -3,6 +3,8 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -31,6 +33,8 @@ public class EmailServiceImpl implements EmailService {
     private final TemplateEngine templateEngine;
     private final String defaultFrom;
     private final UserService userDao;
+    @Autowired
+    private MessageSource messageSource;
 
     public EmailServiceImpl(JavaMailSender mailSender, TemplateEngine templateEngine, UserService userDao) {
         this.mailSender = mailSender;
@@ -198,7 +202,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Async
-    public void sendClubCreationConfirmation(String to, String clubName){
+    public void sendClubCreationConfirmation(String to, String clubName, UUID clubId){
         try{
             Locale userLocale = LocaleContextHolder.getLocale();
 
@@ -206,11 +210,13 @@ public class EmailServiceImpl implements EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(mail, true);
             helper.setFrom(defaultFrom);
             helper.setTo(to);
-            helper.setSubject("Confirmación de creación de club - " + clubName);
-
+            helper.setSubject(messageSource.getMessage("email.club.creation.title", null, userLocale) + "-" + clubName);
             Context context = new Context(userLocale);
             context.setVariable("clubName", clubName);
             context.setVariable("createdAt", ZonedDateTime.now());
+            context.setVariable("clubId", clubId);
+            context.setVariable("ctaUrl", "http://pawserver.it.itba.edu.ar/paw-2025b-06/clubs/handle?=" + clubId); // URL a tu panel de gestión
+
 
             String htmlBody = templateEngine.process("club-creation-confirmation", context);
             helper.setText(htmlBody, true);
@@ -223,7 +229,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Async
-    public void sendUserRegistrationConfirmation(String to, String username){
+    public void sendUserRegistrationConfirmation(String to, String username, String verificationToken){
         try{
             Locale userLocale = LocaleContextHolder.getLocale();
 
@@ -231,11 +237,12 @@ public class EmailServiceImpl implements EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(mail, true);
             helper.setFrom(defaultFrom);
             helper.setTo(to);
-            helper.setSubject("Confirmación de registro - " + username);
+            helper.setSubject(messageSource.getMessage("email.registration.title.header", null, userLocale) + "-" + username);
 
             Context context = new Context(userLocale);
             context.setVariable("username", username);
             context.setVariable("registeredAt", ZonedDateTime.now());
+            context.setVariable("verificationUrl", "http://pawserver.it.itba.edu.ar/paw-2025b-06/verify?token=" + verificationToken);
 
             String htmlBody = templateEngine.process("user-registration-confirmation", context);
             helper.setText(htmlBody, true);
@@ -246,5 +253,6 @@ public class EmailServiceImpl implements EmailService {
             LOGGER.error("SMTP user registration confirmation FAILED to {}: {}", to, e.getMessage(), e);
         }
     }
+
 
 }

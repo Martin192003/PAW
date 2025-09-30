@@ -32,7 +32,7 @@ public class ClubServiceImpl implements ClubService{
     @Transactional
     public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
         Club newClub = clubDao.create(name, description, location, priceRange, contactInfo, musicGenre, zone, isBar);
-        mailService.sendClubCreationConfirmation(contactInfo.getEmail(), name);
+        mailService.sendClubCreationConfirmation(contactInfo.getEmail(), name, newClub.getClubId());
         return newClub;
     }
 
@@ -85,4 +85,36 @@ public class ClubServiceImpl implements ClubService{
         return clubDao.findAdminsByClubId(clubId);
     }
 
+    public List<Club> getAllClubsPaginated(int limit, int offset) {
+        return clubDao.findAllPaginated(limit, offset);
+    }
+    public int countAllClubs() {
+        return clubDao.countAll();
+    }
+    public List<Club> getClubsByUserPaginated(UUID userId, int limit, int offset) {
+        return clubDao.findByUserIdPaginated(userId, limit, offset);
+    }
+    public int countClubsByUser(UUID userId) {
+        return clubDao.countByUserId(userId);
+    }
+    @Transactional(readOnly = true)
+    public List<Club> searchPaginated(String nameLike,
+                                      Zone location,
+                                      String musicGenre,
+                                      String priceRange,
+                                      Boolean isBar,
+                                      String sort,
+                                      int limit,
+                                      int offset) {
+        return clubDao.searchPaginated(nameLike, location, musicGenre, priceRange, isBar, sort, limit, offset);
+    }
+
+    @Transactional(readOnly = true)
+    public int countSearch(String nameLike,
+                           Zone location,
+                           String musicGenre,
+                           String priceRange,
+                           Boolean isBar) {
+        return clubDao.countSearch(nameLike, location, musicGenre, priceRange, isBar);
+    }
 }

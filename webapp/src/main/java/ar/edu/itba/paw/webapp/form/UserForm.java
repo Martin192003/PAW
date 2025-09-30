@@ -1,12 +1,18 @@
 package ar.edu.itba.paw.webapp.form;
 
 import javax.validation.constraints.*;
+import ar.edu.itba.paw.webapp.form.validation.UnusedUsername;
 
 public class UserForm {
 
+    @UnusedUsername
     @NotEmpty(message = "{register.username.notempty}")
     @Pattern(regexp = "^$|^[A-Za-z0-9_]+$", message = "{register.username.pattern}")
     private String username;
+
+    @NotEmpty(message = "{register.name.notempty}")
+    @Pattern(regexp = "^$|^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$", message = "{register.name.pattern}")
+    private String name;
 
     @NotEmpty(message = "{register.surname.notempty}")
     @Pattern(regexp = "^$|^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$", message = "{register.surname.pattern}")
@@ -26,6 +32,9 @@ public class UserForm {
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
     public String getSurname() { return surname; }
     public void setSurname(String surname) { this.surname = surname; }

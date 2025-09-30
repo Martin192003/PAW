@@ -6,6 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <title><spring:message code="title.myProfile"/></title>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
@@ -47,10 +48,6 @@
         <div class="profile-info-row">
             <span class="profile-label"><spring:message code="form.cellphone"/>:</span>
             <span class="profile-value">${user.cellphone}</span>
-        </div>
-        <div class="profile-info-row">
-            <span class="profile-label"><spring:message code="label.role"/>:</span>
-            <span class="profile-value">${user.role}</span>
         </div>
     </div>
 </div>

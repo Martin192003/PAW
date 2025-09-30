@@ -32,6 +32,7 @@ public class HelloWorldController {
     @RequestMapping("/create")
     public ModelAndView create(
             @RequestParam(value = "username") final String username,
+            @RequestParam(value = "name") final String name,
             @RequestParam(value = "password") final String password,
             @RequestParam(value = "surname") final String surname,
             @RequestParam(value = "email") final String email,
@@ -39,7 +40,7 @@ public class HelloWorldController {
             @RequestParam(value = "role") final String role
     ) {
         //final String userRole = Role.valueOf(role.toUpperCase()); // Convertir a mayúsculas
-        final User u = us.create(username, password, surname, email, cellphone, role);
+        final User u = us.create(username, name, password, surname, email, cellphone, role);
         return new ModelAndView("redirect:/user?id=" + u.getId());
     }
 

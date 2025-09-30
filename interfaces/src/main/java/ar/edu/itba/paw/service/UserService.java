@@ -11,8 +11,7 @@ public interface UserService {
     User findById(UUID id);
 
 
-    User create(String username, String password, String surname, String email, String cellphone, String role);
-
+    User create(String username, String name, String password, String surname, String email, String cellphone, String role);
     User update(User user);
     boolean delete(UUID id);
 
@@ -21,5 +20,7 @@ public interface UserService {
 
     List<User> findAll();
     List<User> findByRole(String role);
+    User findByVerificationToken(String token);
+    void verifyUser(String token);
     boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
 }
