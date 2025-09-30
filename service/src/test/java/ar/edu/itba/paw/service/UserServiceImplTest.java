@@ -27,6 +27,7 @@ public class UserServiceImplTest {
     private static final String PASSWORD = "Password";
     private static final String USERNAME = "Username";
     private static final String EMAIL = "Email";
+    private static final String NAME = "Name";
     private static final String LASTNAME = "LastName";
     private static final String CELLPHONE = "cellphone";
     private static final String ROLE1 = "user";
@@ -48,11 +49,11 @@ public class UserServiceImplTest {
     @Test
     public void testCreate() {
         // 1. Setup!
-        Mockito.when(mockDao.create(USERNAME, PASSWORD,LASTNAME, EMAIL, CELLPHONE, ROLE))
-                .thenReturn(new User(UUID.randomUUID(), USERNAME, LASTNAME, EMAIL, PASSWORD, CELLPHONE, ROLE, now));
+        Mockito.when(mockDao.create(USERNAME, NAME, PASSWORD,LASTNAME, EMAIL, CELLPHONE, ROLE))
+                .thenReturn(new User(UUID.randomUUID(), USERNAME, NAME, LASTNAME, EMAIL, PASSWORD, CELLPHONE, ROLE, now));
         Mockito.when(passwordEncoder.encode(PASSWORD)).thenReturn(PASSWORD);
         // 2. "ejercito" la class under test
-        User maybeUser = userService.create(USERNAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, ROLE1);
+        User maybeUser = userService.create(USERNAME, NAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, ROLE1);
         // 3. Asserts!
         Assert.assertNotNull(maybeUser);
         //Assert.assertTrue(maybeUser.isPresent());
@@ -63,7 +64,7 @@ public class UserServiceImplTest {
     public void testCreateEmptyPassword() {
         // 1. Setup!
         // 2. "ejercito" la class under test
-        User maybeUser = userService.create(USERNAME, "", LASTNAME, EMAIL, CELLPHONE, ROLE1);
+        User maybeUser = userService.create(USERNAME, NAME,"", LASTNAME, EMAIL, CELLPHONE, ROLE1);
         // 3. Asserts!
         Assert.assertNull(maybeUser);
         //Assert.assertFalse(maybeUser.isPresent());
@@ -72,9 +73,9 @@ public class UserServiceImplTest {
     public void testCreateAlreadyExists() {
         // 1. Setup!
         Mockito.lenient().when(mockDao.findByUserName(Mockito.eq(USERNAME)))
-                .thenReturn(Optional.of(new User(UUID.randomUUID(), USERNAME, LASTNAME, EMAIL, PASSWORD, CELLPHONE, ROLE, now)));
+                .thenReturn(Optional.of(new User(UUID.randomUUID(), USERNAME, NAME, LASTNAME, EMAIL, PASSWORD, CELLPHONE, ROLE, now)));
         // 2. "ejercito" la class under test
-        User maybeUser = userService.create(USERNAME, "", LASTNAME, EMAIL, CELLPHONE, ROLE1);
+        User maybeUser = userService.create(USERNAME, NAME,"", LASTNAME, EMAIL, CELLPHONE, ROLE1);
         // 3. Asserts!
         Assert.assertNull(maybeUser);
         //Assert.assertFalse(maybeUser.isPresent());

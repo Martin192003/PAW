@@ -203,7 +203,7 @@ public class MailService {
     }
 
     @Async
-    public void sendUserRegistrationConfirmation(String to, String username){
+    public void sendUserRegistrationConfirmation(String to, String username, String verificationToken){
         try{
             Locale userLocale = LocaleContextHolder.getLocale();
 
@@ -216,6 +216,7 @@ public class MailService {
             Context context = new Context(userLocale);
             context.setVariable("username", username);
             context.setVariable("registeredAt", ZonedDateTime.now());
+            context.setVariable("verificationUrl", "http://pawserver.it.itba.edu.ar/paw-2025b-06/verify?token=" + verificationToken);
 
             String htmlBody = templateEngine.process("user-registration-confirmation", context);
             helper.setText(htmlBody, true);

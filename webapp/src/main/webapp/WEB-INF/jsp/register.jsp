@@ -28,7 +28,8 @@
                 <spring:message code="title.register"/>
             </div>
             <c:url var="registerUrl" value="/register" />
-            <spring:message code="form.username" var="phName"/>
+            <spring:message code="form.username" var="phUsername"/>
+            <spring:message code="form.name" var="phName"/>
             <spring:message code="form.surname" var="phSurname"/>
             <spring:message code="form.password" var="phPassword"/>
             <spring:message code="form.email" var="phEmail"/>
@@ -38,9 +39,13 @@
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
 
             <div class="form-group">
-                <form:input path="username" cssClass="form-control" placeholder="${phName}"/>
+                <form:input path="username" cssClass="form-control" placeholder="${phUsername}"/>
                 <form:errors path="username" cssClass="error"/>
             </div>
+                <div class="form-group">
+                    <form:input path="name" cssClass="form-control" placeholder="${phName}"/>
+                    <form:errors path="name" cssClass="error"/>
+                </div>
                 <div class="form-group">
                     <form:input path="surname" cssClass="form-control" placeholder="${phSurname}"/>
                     <form:errors path="surname" cssClass="error"/>

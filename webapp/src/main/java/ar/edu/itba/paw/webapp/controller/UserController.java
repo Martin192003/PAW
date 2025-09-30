@@ -45,8 +45,7 @@ public class UserController {
             return "register";
         }
         try {
-            userService.create(form.getUsername(), form.getPassword(), form.getSurname(),
-                    form.getEmail(), form.getCellphone(), "USER");
+            userService.create(form.getUsername(), form.getName(), form.getPassword(), form.getSurname(), form.getEmail(), form.getCellphone(), "USER");
         } catch (DuplicateEntityException ex) {
             binding.rejectValue("email", "user.email.duplicate", "Email already in use");
             return "register";
@@ -55,5 +54,15 @@ public class UserController {
         return "redirect:/login";
     }
 
+    @GetMapping("/verify")
+    public String verifyUser(@RequestParam("token") final String token, RedirectAttributes ra){
+        try{
+            userService.verifyUser(token);
+            ra.addFlashAttribute("success", "Account verified successfully.");
+        } catch(IllegalAccessError e){
+            ra.addFlashAttribute("error", "Invalid verification token.");
+        }
+        return "redirect:/login";
+    }
 
 }

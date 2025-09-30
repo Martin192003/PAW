@@ -23,12 +23,15 @@ public class UserJDBCDao implements UserDao {
         User u = new User();
         u.setUserId(UUID.fromString(rs.getString("user_id")));
         u.setUserName(rs.getString("user_name"));
+        u.setName(rs.getString("name"));
         u.setSurname(rs.getString("surname"));
         u.setEmail(rs.getString("email"));
         u.setPasswordHash(rs.getString("password_hash"));
         u.setCellphone(rs.getString("cellphone"));
         final String roleStr = rs.getString("role");
         u.setRole(roleStr == null ? null : Role.valueOf(roleStr.trim().toUpperCase(Locale.ROOT)));
+        u.setVerified(rs.getBoolean("is_verified"));
+        u.setVerificationToken(rs.getString("verification_token"));
         u.setCreatedAt(rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(java.time.ZoneOffset.UTC));
         return u;
     };
@@ -38,45 +41,50 @@ public class UserJDBCDao implements UserDao {
         this.jdbc = new JdbcTemplate(ds);
         this.insert = new SimpleJdbcInsert(jdbc)
                 .withTableName("users")
-                .usingColumns("user_id","user_name","surname","email","password_hash","cellphone","role");
-    }
+                .usingColumns("user_id", "user_name", "name", "surname", "email", "password_hash", "cellphone", "role", "is_verified", "verification_token");    }
 
     @Override
-    public User create(String username, String passwordHash, String surname, String email, String cellphone, Role role) {
+    public User create(String username, String name, String passwordHash, String surname, String email, String cellphone, Role role) {
 
         final String dbRole = role.name().toLowerCase(Locale.ROOT);
         final String dbEmail = email.trim().toLowerCase(Locale.ROOT);
+        final String verificationToken = UUID.randomUUID().toString();
 
         Map<String, Object> params = new HashMap<>();
         params.put("user_id", UUID.randomUUID());
         params.put("user_name", username);
+        params.put("name", name);
         params.put("surname", surname);
         params.put("email", dbEmail);
         params.put("password_hash", passwordHash);
         params.put("cellphone", cellphone);
         params.put("role", dbRole);
+        params.put("is_verified", false);
+        params.put("verification_token", verificationToken);
         insert.execute(params);
         return findByEmail(email).orElseThrow();
     }
 
     @Override
-    public User update(UUID userId, String userName, String surname, String email,
+    public User update(UUID userId, String userName, String name, String surname, String email,
                        String passwordHash, String cellphone, Role role) {
         Objects.requireNonNull(userId, "userId is required");
         Objects.requireNonNull(userName, "userName is required");
+        Objects.requireNonNull(name, "name is required");
         Objects.requireNonNull(surname, "surname is required");
         Objects.requireNonNull(email, "email is required");
         Objects.requireNonNull(passwordHash, "passwordHash is required");
         Objects.requireNonNull(cellphone, "cellphone is required");
         Objects.requireNonNull(role, "role is required");
 
-        final String sql = "UPDATE users SET user_name=?, surname=?, email=?, password_hash=?, cellphone=?, role=? " +
+        final String sql = "UPDATE users SET user_name=?, name=?, surname=?, email=?, password_hash=?, cellphone=?, role=? " +
                 "WHERE user_id=?";
 
         int upd;
         try {
             upd = jdbc.update(sql,
                     userName,
+                    name,
                     surname,
                     email.trim().toLowerCase(Locale.ROOT),
                     passwordHash,
@@ -116,6 +124,12 @@ public class UserJDBCDao implements UserDao {
     }
 
     @Override
+    public Optional<User> findByVerificationToken(String token) {
+        final String sql = "SELECT * FROM users WHERE verification_token = ?";
+        return jdbc.query(sql, ROW_MAPPER, token).stream().findFirst();
+    }
+
+    @Override
     public List<User> findAll() {
         final String sql = "SELECT * FROM users ORDER BY user_name ASC";
         return jdbc.query(sql, ROW_MAPPER);
@@ -130,5 +144,17 @@ public class UserJDBCDao implements UserDao {
     @Override
     public RowMapper<User> getRowMapper() {
         return ROW_MAPPER;
+    }
+
+    @Override
+    public void updateVerificationStatus(UUID userId, boolean isVerified) {
+        final String sql = "UPDATE users SET is_verified = ? WHERE user_id = ?";
+        jdbc.update(sql, isVerified, userId);
+    }
+
+    @Override
+    public void updateVerificationToken(UUID userId, String token) {
+        final String sql = "UPDATE users SET verification_token = ? WHERE user_id = ?";
+        jdbc.update(sql, token, userId);
     }
 }

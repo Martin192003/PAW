@@ -8,19 +8,23 @@ public class User {
 
     private UUID userId;
     private String username;
+    private String name;
     private String surname;
     private String email;
     private String passwordHash;
     private String cellphone;
     private Role role; // 'admin' | 'user' (validado por la DB)
     private OffsetDateTime createdAt;
+    private boolean isVerified;
+    private String verificationToken;
 
     public User(){}
 
-    public User(UUID userId, String userName, String surname, String email, String passwordHash,
+    public User(UUID userId, String userName, String name,String surname, String email, String passwordHash,
                 String cellphone, Role role, OffsetDateTime createdAt) {
         this.userId = userId;
         this.username = userName;
+        this.name = name;
         this.surname = surname;
         this.email = email;
         this.passwordHash = passwordHash;
@@ -34,6 +38,9 @@ public class User {
 
     public String getUsername() { return username; }
     public void setUserName(String userName) { this.username = userName; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
     public String getSurname() { return surname; }
     public void setSurname(String surname) { this.surname = surname; }
@@ -52,4 +59,10 @@ public class User {
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+    public boolean isVerified() { return isVerified; }
+    public void setVerified(boolean isVerified) { this.isVerified = isVerified; }
+
+    public String getVerificationToken() { return verificationToken; }
+    public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken;}
 }

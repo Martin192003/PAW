@@ -39,16 +39,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User create(String username, String password, String surname, String email, String cellphone, String role) {
+    public User create(String username, String name, String password, String surname, String email, String cellphone, String role){
         try {
-            return userDao.create(
+            User user = userDao.create(
                     username,
+                    name,
                     passwordEncoder.encode(password),
                     surname,
                     email,
                     cellphone,
                     Role.USER
             );
+            mailService.sendUserRegistrationConfirmation(email, username, user.getVerificationToken());
+            return user;
         } catch (DataIntegrityViolationException ex) {
             throw new DuplicateEntityException("user.email.duplicate", ex);
         }
@@ -57,9 +60,15 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User update(User user) {
+        User existingUser = userDao.findById(user.getId()).orElseThrow(() ->
+                new IllegalArgumentException("User not found")
+        );
+        user.setVerified(existingUser.isVerified());
+        user.setVerificationToken(existingUser.getVerificationToken());
         return userDao.update(
                 user.getId(),
                 user.getUsername(),
+                user.getName(),
                 user.getSurname(),
                 user.getEmail(),
                 user.getPassword(),
@@ -98,12 +107,29 @@ public class UserServiceImpl implements UserService {
         return userDao.findByRole(role);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public User findByVerificationToken(String token) {
+        return userDao.findByVerificationToken(token).orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public void verifyUser(String token) {
+        User user = userDao.findByVerificationToken(token).orElseThrow(() ->
+                new IllegalArgumentException("Invalid verification token")
+        );
+        userDao.updateVerificationStatus(user.getId(), true);
+    }
+
     public boolean authenticateUsernameOrEmail(String usernameOrEmail, String password){
         User user = userDao.findByUserName(usernameOrEmail).orElse(null);
         if(user == null){
             user = userDao.findByEmail(usernameOrEmail).orElse(null);
-
             if(user == null) return false;
+        }
+        if(!user.isVerified()){
+            throw new IllegalStateException("User not verified");
         }
         return passwordEncoder.matches(password, user.getPassword());
     }

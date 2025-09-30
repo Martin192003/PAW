@@ -51,7 +51,7 @@ public class ProductsJDBCDaoTest {
     @Test
     public void testCreateProduct() {
         // Crear usuario de contacto
-        User contact = userDao.create("admin", "pass", "last", "email@email.com", "123456", Role.USER);
+        User contact = userDao.create("admin", "name","pass", "last", "email@email.com", "123456", Role.USER);
 
         // Crear club con usuario de contacto
         Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
