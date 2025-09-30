@@ -32,7 +32,7 @@ public class ClubServiceImpl implements ClubService{
     @Transactional
     public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
         Club newClub = clubDao.create(name, description, location, priceRange, contactInfo, musicGenre, zone, isBar);
-        mailService.sendClubCreationConfirmation(contactInfo.getEmail(), name);
+        mailService.sendClubCreationConfirmation(contactInfo.getEmail(), name, newClub.getClubId());
         return newClub;
     }
 

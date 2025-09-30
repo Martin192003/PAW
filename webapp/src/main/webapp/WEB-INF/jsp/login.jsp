@@ -27,7 +27,7 @@
             <div class="login-title">
                 <spring:message code="title.login"/>
             </div>
-            <spring:message code="form.username" var="phUser"/>
+            <spring:message code="placeholder.usernameMail" var="phUser"/>
             <spring:message code="form.password" var="phPassword"/>
 
             <form method="post" action="${pageContext.request.contextPath}/login">

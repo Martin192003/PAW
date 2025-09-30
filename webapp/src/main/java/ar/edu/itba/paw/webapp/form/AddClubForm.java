@@ -31,16 +31,14 @@ public class AddClubForm {
     private MusicalGenre musicGenre;
 
     @NotNull(message = "{club.zone.notnull}")
-    private Zone zone; // Enum con ZONA_CABA, ZONA_NORTE, ZONA_OESTE, ZONA_SUR
+    private Zone zone;
 
     @ValidImage
-    @NotNull(message = "{club.image.notnull}")
     private MultipartFile image;
 
     @NotNull(message = "{club.isBar.notnull}")
     private Boolean isBar;
 
-    // --- Getters y Setters ---
     public UUID getClubId() {
         return clubId;
     }

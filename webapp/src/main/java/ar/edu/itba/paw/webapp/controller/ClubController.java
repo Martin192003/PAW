@@ -159,6 +159,7 @@ public class ClubController {
             BindingResult errors) {
 
         if (errors.hasErrors()) {
+            model.addAttribute("clubForm", addClubForm);
             model.addAttribute("postPath", "/clubs/create");
             model.addAttribute("priceValues", Price.values());
             model.addAttribute("genreValues", MusicalGenre.values());
