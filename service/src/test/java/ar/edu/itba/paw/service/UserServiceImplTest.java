@@ -44,7 +44,7 @@ public class UserServiceImplTest {
     private UserServiceImpl userService;
 
     @Mock
-    private MailService mailService;
+    private EmailServiceImpl mailService;
 
     @Test
     public void testCreate() {

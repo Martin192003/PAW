@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.persistence.UserDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +33,17 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
     private final String defaultFrom;
-    private final UserService userDao;
+
+    private UserDao userDao;
+
+    @Autowired
+    public void setUserDao(final UserDao userDao) {
+        this.userDao = userDao;
+    }
     @Autowired
     private MessageSource messageSource;
 
-    public EmailServiceImpl(JavaMailSender mailSender, TemplateEngine templateEngine, UserService userDao) {
+    public EmailServiceImpl(JavaMailSender mailSender, TemplateEngine templateEngine, UserDao userDao) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
         this.userDao = userDao;
@@ -175,7 +182,7 @@ public class EmailServiceImpl implements EmailService {
         // Asumo club.getContactInfo() referencia a un user_id dueño/manager
         User owner = null;
         if (club.getContactInfo() != null) {
-            owner = userDao.findById(club.getContactInfo().getId());
+            owner = userDao.findById(club.getContactInfo().getId()).get();
         }
         final String ownerMail = owner != null ? owner.getEmail() : "owner@" + club.getClubName().toLowerCase().replace(" ","") + ".com";
 
