@@ -86,7 +86,7 @@ public class ClubTablesJDBCDao implements ClubTablesDao {
                     SELECT 1
                     FROM bookings b
                     WHERE b.table_id = ct.table_id
-                      AND b.status IN ('pendiente','reservada')
+                      AND b.status IN ('pendiente','confirmada')
                       AND b.booking_start < ?   
                       AND b.booking_end   > ?    
               )

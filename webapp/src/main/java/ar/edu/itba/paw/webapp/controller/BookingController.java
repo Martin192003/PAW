@@ -12,8 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
 import java.security.Principal;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Controller
 @RequestMapping
@@ -23,16 +22,18 @@ public class BookingController {
     private final TableService tableService;
     private final UserService userService;
     private final ClubService clubService;
-    private  final EmailService emailService;
+    private final EmailService emailService;
+    private final SecurityService securityService;
 
     public BookingController(BookingService bookingService,
                              TableService tableService,
-                             UserService userService, ClubService clubService, EmailService emailService) {
+                             UserService userService, ClubService clubService, EmailService emailService, SecurityService securityService) {
         this.bookingService = bookingService;
         this.tableService = tableService;
         this.userService = userService;
         this.clubService = clubService;
         this.emailService = emailService;
+        this.securityService = securityService;
     }
 
     @PostMapping("/clubs/{clubId}/reserve")
@@ -203,24 +204,149 @@ public class BookingController {
     }
 
     /** Confirmar reserva → RESERVADA */
-    @PostMapping("/bookings/{bookingId}/confirm")
+    @PostMapping("/admin/bookings/{bookingId}/confirm")
     public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
-        final Booking updated = bookingService.updateStatus(bookingId, Status.RESERVADA);
+        final Booking updated = bookingService.updateStatus(bookingId, Status.CONFIRMADA);
         if(updated == null) {
             throw new BookingNotFoundException("La reserva no existe");
         }
         ra.addFlashAttribute("success", "Reserva confirmada");
-        return "redirect:/bookings/" + updated.getBookingId();
+        return "redirect:/admin/booking?bookingId=" + updated.getBookingId();
     }
 
     /** Cancelar / liberar → DISPONIBLE */
-    @PostMapping("/bookings/{bookingId}/cancel")
+    @PostMapping("/admin/bookings/{bookingId}/cancel")
     public String cancel(@PathVariable UUID bookingId, RedirectAttributes ra) {
-        final Booking updated = bookingService.updateStatus(bookingId, Status.DISPONIBLE);
-        if(updated == null) {
-            throw new BookingNotFoundException("La reserva no existe");
+        try{
+            bookingService.cancel(bookingId);
+        } catch (InvalidStatusTransitionException e) {
+            throw new BadRequestException("No se puede cancelar una reserva que ya está DISPONIBLE");
         }
         ra.addFlashAttribute("success", "Reserva cancelada y mesa liberada");
-        return "redirect:/bookings/" + updated.getBookingId();
+        return "redirect:/admin/booking?bookingId=" + bookingId;
     }
+
+    /*
+    ---------- VISTAS DE ADMIN ----------
+     */
+
+    //Lista las reservas de los clubes administrados por un usuario
+    @GetMapping("/admin/clubs/bookings")
+    public String bookingsOfMyClubs(@RequestParam UUID userId, Model model) {
+        // Buscar los clubes administrados por el usuario
+        List<Club> myClubs = clubService.getClubsByUser(userId);
+        List<Booking> allBookings = new ArrayList<>();
+        Map<UUID, String> clubNames = new HashMap<>();
+        for (Club club : myClubs) {
+            List<Table> tables = tableService.findByClubId(club.getClubId());
+            for (Table table : tables) {
+                List<Booking> bookings = bookingService.findByTable(table.getTableId());
+                for (Booking booking : bookings) {
+                    allBookings.add(booking);
+                    clubNames.put(booking.getBookingId(), club.getClubName());
+                }
+            }
+        }
+        User user = securityService.getVerifiedLoggedUser();
+        model.addAttribute("user", user);
+        model.addAttribute("bookings", allBookings);
+        model.addAttribute("clubNames", clubNames);
+        model.addAttribute("activePage", "clubsBookings");
+        return "clubsBookings";
+    }
+
+    //Handler para listar los datos de una reserva y poder confirmarla o cancelarla.
+    @GetMapping("/admin/booking")
+    public String bookingAdminHandler(
+            @RequestParam UUID bookingId,
+            Model model
+    ) {
+        Optional<Booking> bookingOpt = bookingService.findById(bookingId);
+        if (bookingOpt.isEmpty()) {
+            // Manejo de error: reserva no encontrada
+            model.addAttribute("error", "Reserva no encontrada");
+            return "error/error";
+        }
+        Booking booking = bookingOpt.get();
+
+        // Obtener la mesa asociada
+        Optional<Table> tableOpt = tableService.findById(booking.getTableId());
+        Table table = tableOpt.orElse(null);
+
+        // Obtener el club asociado
+        String clubName = "";
+        if (table != null) {
+            Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
+            clubName = clubOpt.map(Club::getClubName).orElse("");
+        }
+
+        model.addAttribute("booking", booking);
+        model.addAttribute("table", table);
+        model.addAttribute("clubName", clubName);
+
+        return "bookingAdminHandler";
+    }
+
+    /*
+    ---------- VISTAS DE USUARIO ----------
+     */
+
+    //Lista las reservas hechas por un usuario
+    @GetMapping("/bookings")
+    public String listUserBookings(
+            @RequestParam UUID userId,
+            Model model) {
+        List<Booking> bookings = bookingService.findByUser(userId);
+
+        // Map para bookingId -> clubName
+        Map<UUID, String> clubNames = new HashMap<>();
+        for (Booking booking : bookings) {
+            Optional<Table> tableOpt = tableService.findById(booking.getTableId());
+            if (tableOpt.isPresent()) {
+                Table table = tableOpt.get();
+                UUID clubId = table.getClubId();
+                Optional<Club> clubOpt = clubService.getClubById(clubId);
+                clubOpt.ifPresent(club -> clubNames.put(booking.getBookingId(), club.getClubName()));
+            }
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        model.addAttribute("user", user);
+        model.addAttribute("bookings", bookings);
+        model.addAttribute("clubNames", clubNames);
+        return "userBookings";
+    }
+
+    //Handler para listar los datos de una reserva y poder confirmarla o cancelarla.
+    @GetMapping("/booking")
+    public String bookingUserHandler(
+            @RequestParam UUID bookingId,
+            Model model
+    ) {
+        Optional<Booking> bookingOpt = bookingService.findById(bookingId);
+        if (bookingOpt.isEmpty()) {
+            // Manejo de error: reserva no encontrada
+            model.addAttribute("error", "Reserva no encontrada");
+            return "error/error";
+        }
+        Booking booking = bookingOpt.get();
+
+        // Obtener la mesa asociada
+        Optional<Table> tableOpt = tableService.findById(booking.getTableId());
+        Table table = tableOpt.orElse(null);
+
+        // Obtener el club asociado
+        String clubName = "";
+        if (table != null) {
+            Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
+            clubName = clubOpt.map(Club::getClubName).orElse("");
+        }
+
+        model.addAttribute("booking", booking);
+        model.addAttribute("table", table);
+        model.addAttribute("clubName", clubName);
+
+        return "bookingUserHandler";
+    }
+
 }

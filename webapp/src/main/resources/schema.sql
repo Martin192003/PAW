@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS bookings (
                                         table_id      UUID NOT NULL REFERENCES club_tables(table_id) ON DELETE CASCADE,
                                         booking_start TIMESTAMPTZ NOT NULL,
                                         booking_end   TIMESTAMPTZ NOT NULL,
-                                        status        VARCHAR(20) NOT NULL CHECK (status IN ('confirmada','pendiente','disponible')),
+                                        status        VARCHAR(20) NOT NULL CHECK (status IN ('confirmada','pendiente','disponible', 'cancelada')),
                                         created_at    TIMESTAMPTZ DEFAULT NOW(),
                                         total_amount  NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
                                         CHECK (booking_end > booking_start)

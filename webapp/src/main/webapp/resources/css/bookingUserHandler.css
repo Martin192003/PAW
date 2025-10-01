@@ -1,0 +1,141 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1b1a1a;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+.app-boliches {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    min-height: 60vh;
+    padding-top: 100px;
+}
+
+.clubActivity-title {
+    font-size: 2.2rem;
+    color: #9c27b0;
+    margin-bottom: 32px;
+    font-family: 'Darklinos', Arial, sans-serif;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-lg.booking-details {
+    background: #222;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
+    margin-bottom: 24px;
+    padding: 24px 32px;
+    width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+}
+
+.card-lg.booking-details:hover {
+    box-shadow: 0 4px 16px rgba(156, 39, 176, 0.25);
+    transform: scale(1.03);
+    background: #292929;
+}
+
+.card-lg.booking-details span {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.booking-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 4px 0;
+}
+
+.booking-label {
+    min-width: 110px;
+    font-weight: bold;
+    color: #9c27b0;
+    font-family: 'Darklinos', Arial, sans-serif;
+    font-size: 1.08rem;
+    margin-right: 12px;
+    letter-spacing: 1px;
+}
+
+.booking-value {
+    font-size: 1.08rem;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+.booking-status {
+    background: #e0e0e0;
+    color: #333;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: 1px solid #bdbdbd;
+}
+
+.booking-status-pending {
+    background: #fff3cd;
+    color: #856404;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: 1px solid #ffeeba;
+}
+
+.booking-status-confirmed {
+    background: #d4edda;
+    color: #155724;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: 1px solid #c3e6cb;
+}
+
+.booking-status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: 1px solid #f5c6cb;
+}
+
+.booking-status-container {
+    position: absolute;
+    right: 18px;
+    bottom: 14px;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+}
+
+.booking-card {
+    min-height: 90px;
+    padding-bottom: 32px;
+}
+
+@media (max-width: 900px) {
+    .app-boliches {
+        margin-left: 100px;
+    }
+    .clubActivity-title {
+        font-size: 1.3rem;
+    }
+    .card-lg.booking-details {
+        width: 95vw;
+        padding: 16px 8px;
+    }
+}
