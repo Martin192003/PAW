@@ -19,7 +19,7 @@
 </head>
 <body>
 <c:set var="showAddClubButton" value="false" />
-<c:set var="showProfileButton" value="true" />
+<c:set var="showProfileButton" value="false" />
 <c:set var="showRightButtons" value="true" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 
@@ -75,7 +75,6 @@
             for (let i = 0; i < s.length; i += n) {
                 parts.push(s.slice(i, i + n));
             }
-            // Usamos <br> para forzar nueva línea, no solo wrap suave
             return parts.join('\n');
         }
 

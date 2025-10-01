@@ -130,6 +130,17 @@ public class PhotoJDBCDao implements PhotoDao {
     }
 
     @Override
+    public Optional<Photo> findByBooking(UUID bookingId){
+        final String sql = """
+            SELECT p.*
+            FROM photos p
+            JOIN bookings b ON p.posted_by = b.user_id
+            WHERE b.booking_id = ?
+            """;
+        return jdbc.query(sql, METADATA_MAPPER, bookingId).stream().findFirst();
+    }
+
+    @Override
     public boolean delete(UUID photoId) {
         int updated = jdbc.update("DELETE FROM photos WHERE photo_id = ?", photoId);
         return updated > 0;

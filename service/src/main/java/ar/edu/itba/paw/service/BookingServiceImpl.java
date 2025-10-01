@@ -157,8 +157,6 @@ public class BookingServiceImpl implements BookingService {
         return bookingDao.delete(bookingId);
     }
 
-
-
     private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
         if (!start.isBefore(end)) throw new InvalidDateRangeException("Rango inválido: " + start + " - " + end);
     }

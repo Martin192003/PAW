@@ -23,4 +23,7 @@ public interface PhotoDao {
     UUID save(Photo photo);
 
     boolean delete(UUID photoId);
+
+    public Optional<Photo> findByBooking(UUID bookingId);
+
 }
