@@ -4,13 +4,19 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.BookingForm;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
 
@@ -24,16 +30,18 @@ public class BookingController {
     private final ClubService clubService;
     private final EmailService emailService;
     private final SecurityService securityService;
+    private final ReceiptService receiptService;
 
     public BookingController(BookingService bookingService,
                              TableService tableService,
-                             UserService userService, ClubService clubService, EmailService emailService, SecurityService securityService) {
+                             UserService userService, ClubService clubService, EmailService emailService, SecurityService securityService, ReceiptService receiptService) {
         this.bookingService = bookingService;
         this.tableService = tableService;
         this.userService = userService;
         this.clubService = clubService;
         this.emailService = emailService;
         this.securityService = securityService;
+        this.receiptService = receiptService;
     }
 
     @PostMapping("/clubs/{clubId}/reserve")
@@ -167,14 +175,6 @@ public class BookingController {
         return "bookings/new"; // JSP: /WEB-INF/jsp/bookings/new.jsp
     }
 
-    /** Detalle de una reserva */
-    @GetMapping("/bookings/{bookingId}")
-    public String show(@PathVariable UUID bookingId, Model model) {
-        final Optional<Booking> b = bookingService.findById(bookingId);
-        if (b.isEmpty()) throw new BookingNotFoundException("La reserva no existe");
-        model.addAttribute("booking", b.get());
-        return "bookings/show"; // JSP: /WEB-INF/jsp/bookings/show.jsp
-    }
 
     /* ---------- Acciones ---------- */
 
@@ -206,12 +206,14 @@ public class BookingController {
     /** Confirmar reserva → RESERVADA */
     @PostMapping("/admin/bookings/{bookingId}/confirm")
     public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
-        final Booking updated = bookingService.updateStatus(bookingId, Status.CONFIRMADA);
-        if(updated == null) {
-            throw new BookingNotFoundException("La reserva no existe");
+
+        try {
+             bookingService.updateStatus(bookingId, Status.CONFIRMADA);
+        } catch (InvalidStatusTransitionException e) {
+            ra.addFlashAttribute("error", e.getMessage());
         }
         ra.addFlashAttribute("success", "Reserva confirmada");
-        return "redirect:/admin/booking?bookingId=" + updated.getBookingId();
+        return "redirect:/admin/booking?bookingId=" + bookingId;
     }
 
     /** Cancelar / liberar → DISPONIBLE */
@@ -224,6 +226,17 @@ public class BookingController {
         }
         ra.addFlashAttribute("success", "Reserva cancelada y mesa liberada");
         return "redirect:/admin/booking?bookingId=" + bookingId;
+    }
+
+    @PostMapping("/bookings/{bookingId}/cancel")
+    public String cancelUser(@PathVariable UUID bookingId, RedirectAttributes ra) {
+        try{
+            bookingService.cancel(bookingId);
+        } catch (InvalidStatusTransitionException e) {
+            throw new BadRequestException("No se puede cancelar una reserva que ya está DISPONIBLE");
+        }
+        ra.addFlashAttribute("success", "Reserva cancelada y mesa liberada");
+        return "redirect:/booking?bookingId=" + bookingId;
     }
 
     /*
@@ -253,38 +266,6 @@ public class BookingController {
         model.addAttribute("clubNames", clubNames);
         model.addAttribute("activePage", "clubsBookings");
         return "clubsBookings";
-    }
-
-    //Handler para listar los datos de una reserva y poder confirmarla o cancelarla.
-    @GetMapping("/admin/booking")
-    public String bookingAdminHandler(
-            @RequestParam UUID bookingId,
-            Model model
-    ) {
-        Optional<Booking> bookingOpt = bookingService.findById(bookingId);
-        if (bookingOpt.isEmpty()) {
-            // Manejo de error: reserva no encontrada
-            model.addAttribute("error", "Reserva no encontrada");
-            return "error/error";
-        }
-        Booking booking = bookingOpt.get();
-
-        // Obtener la mesa asociada
-        Optional<Table> tableOpt = tableService.findById(booking.getTableId());
-        Table table = tableOpt.orElse(null);
-
-        // Obtener el club asociado
-        String clubName = "";
-        if (table != null) {
-            Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
-            clubName = clubOpt.map(Club::getClubName).orElse("");
-        }
-
-        model.addAttribute("booking", booking);
-        model.addAttribute("table", table);
-        model.addAttribute("clubName", clubName);
-
-        return "bookingAdminHandler";
     }
 
     /*
@@ -317,36 +298,155 @@ public class BookingController {
         return "userBookings";
     }
 
-    //Handler para listar los datos de una reserva y poder confirmarla o cancelarla.
     @GetMapping("/booking")
-    public String bookingUserHandler(
-            @RequestParam UUID bookingId,
-            Model model
-    ) {
+    public String bookingUserHandler(@RequestParam UUID bookingId, Model model) {
         Optional<Booking> bookingOpt = bookingService.findById(bookingId);
         if (bookingOpt.isEmpty()) {
-            // Manejo de error: reserva no encontrada
             model.addAttribute("error", "Reserva no encontrada");
             return "error/error";
         }
         Booking booking = bookingOpt.get();
 
-        // Obtener la mesa asociada
+        var tableOpt = tableService.findById(booking.getTableId());
+        Table table = tableOpt.orElse(null);
+
+        String clubName = "";
+        if (table != null) {
+            clubName = clubService.getClubById(table.getClubId())
+                    .map(Club::getClubName).orElse("");
+        }
+
+        var rOpt = receiptService.findByBooking(bookingId);
+        model.addAttribute("hasReceipt", rOpt.isPresent());
+        rOpt.ifPresent(r -> model.addAttribute("receipt", r));
+
+        model.addAttribute("booking", booking);
+        model.addAttribute("table", table);
+        model.addAttribute("clubName", clubName);
+        return "bookingUserHandler";
+    }
+
+    @PostMapping(path = "/bookings/{bookingId}/receipt", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String uploadReceipt(@PathVariable UUID bookingId,
+                                @RequestParam("file") MultipartFile file,
+                                RedirectAttributes ra,
+                                @RequestHeader(value = "Referer", required = false) String referer) throws IOException {
+
+        var booking = bookingService.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+
+        if (file == null || file.isEmpty()) {
+            ra.addFlashAttribute("error", "Select an image to upload");
+            return referer != null ? "redirect:" + referer : "redirect:/bookings/" + bookingId;
+        }
+
+        if (receiptService.findByBooking(bookingId).isPresent()) {
+            ra.addFlashAttribute("info", "A receipt is already uploaded. Delete it to upload a new one.");
+            return referer != null ? "redirect:" + referer : "redirect:/bookings/" + bookingId;
+        }
+
+        try {
+            receiptService.upload(
+                    bookingId,
+                    securityService.getVerifiedLoggedUser().getId(),
+                    file.getOriginalFilename() != null ? file.getOriginalFilename() : "receipt",
+                    file.getContentType(),
+                    file.getBytes()
+            );
+            ra.addFlashAttribute("success", "Receipt uploaded");
+        } catch (DuplicateKeyException e) {
+            ra.addFlashAttribute("info", "A receipt is already uploaded. Delete it to upload a new one.");
+        }
+        return referer != null ? "redirect:" + referer : "redirect:/bookings/" + bookingId;
+    }
+
+
+    @GetMapping("/admin/booking")
+    public String bookingAdminHandler(@RequestParam UUID bookingId, Model model, @ModelAttribute("error") String error, @ModelAttribute("success") String success) {
+        Optional<Booking> bookingOpt = bookingService.findById(bookingId);
+        if (bookingOpt.isEmpty()) {
+            model.addAttribute("error", "Reserva no encontrada");
+            return "error/error";
+        }
+        Booking booking = bookingOpt.get();
+
         Optional<Table> tableOpt = tableService.findById(booking.getTableId());
         Table table = tableOpt.orElse(null);
 
-        // Obtener el club asociado
         String clubName = "";
         if (table != null) {
             Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
             clubName = clubOpt.map(Club::getClubName).orElse("");
         }
 
+        var rOpt = receiptService.findByBooking(bookingId);
+        model.addAttribute("hasReceipt", rOpt.isPresent());
+        rOpt.ifPresent(r -> model.addAttribute("receipt", r));
+
         model.addAttribute("booking", booking);
         model.addAttribute("table", table);
         model.addAttribute("clubName", clubName);
-
-        return "bookingUserHandler";
+        if (error != null && !error.isEmpty()) {
+            model.addAttribute("error", error);
+        }
+        if (success != null && !success.isEmpty()) {
+            model.addAttribute("success", success);
+        }
+        return "bookingAdminHandler";
     }
+
+    @PostMapping("/admin/bookings/{bookingId}/receipt/delete")
+    public String deleteReceipt(@PathVariable UUID bookingId, RedirectAttributes ra) {
+        boolean deleted = receiptService.deleteByBooking(bookingId);
+        ra.addFlashAttribute(deleted ? "success" : "info",
+                deleted ? "Receipt deleted" : "No receipt to delete");
+        return "redirect:/admin/booking?bookingId=" + bookingId;
+    }
+
+    @GetMapping("/bookings/{bookingId}")
+    public String show(@PathVariable UUID bookingId, Model model) {
+        final Optional<Booking> b = bookingService.findById(bookingId);
+        if (b.isEmpty()) throw new BookingNotFoundException("La reserva no existe");
+        model.addAttribute("booking", b.get());
+
+        var rOpt = receiptService.findByBooking(bookingId);
+        model.addAttribute("hasReceipt", rOpt.isPresent());
+        rOpt.ifPresent(r -> model.addAttribute("receipt", r));
+
+        return "bookings/show";
+    }
+
+    @GetMapping("/bookings/{bookingId}/receipt")
+    @ResponseBody
+    public ResponseEntity<byte[]> getReceipt(@PathVariable UUID bookingId) {
+        var rOpt = receiptService.findByBooking(bookingId);
+        if (rOpt.isEmpty()) return ResponseEntity.notFound().build();
+
+        var rMeta = rOpt.get();
+        var r = receiptService.getWithId(rMeta.getReceiptId()).orElse(rMeta);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + r.getFilename() + "\"")
+                .contentType(MediaType.parseMediaType(r.getContentType()))
+                .body(r.getData());
+    }
+
+    @PostMapping("/bookings/{bookingId}/receipt/delete")
+    public String deleteReceiptForUser(@PathVariable UUID bookingId, RedirectAttributes ra) {
+        var booking = bookingService.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+
+        var current = securityService.getVerifiedLoggedUser();
+        if (booking.getUser() == null || !booking.getUser().getId().equals(current.getId())) {
+            throw new BadRequestException("Not allowed to delete this receipt");
+        }
+
+        boolean deleted = receiptService.deleteByBooking(bookingId);
+        ra.addFlashAttribute(deleted ? "success" : "info",
+                deleted ? "Receipt deleted" : "No receipt to delete");
+        return "redirect:/bookings/" + bookingId;
+    }
+
+
 
 }

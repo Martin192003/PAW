@@ -129,6 +129,21 @@ CREATE TABLE IF NOT EXISTS booking_items (
                                              line_total  NUMERIC(10,2) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS receipts (
+    receipt_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    booking_id   UUID NOT NULL REFERENCES bookings (booking_id) ON DELETE CASCADE,
+    uploaded_by  UUID NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+    url          TEXT NOT NULL,
+    data         BYTEA,
+    filename     TEXT,
+    content_type TEXT,
+    size_bytes   BIGINT,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (booking_id)
+    );
+
+CREATE INDEX IF NOT EXISTS receipts_booking_id_idx ON receipts (booking_id);
+
 
 CREATE TABLE IF NOT EXISTS club_admins (
                                            club_id  UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,

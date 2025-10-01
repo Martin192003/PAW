@@ -34,8 +34,8 @@
             <div style="color:#e53935; font-size:1.1rem; margin-top:24px;">No hay reservas en tus clubes.</div>
         </c:if>
         <c:forEach var="booking" items="${bookings}">
+        <a href="<c:url value='/admin/booking?bookingId=${booking.bookingId}' />" style="text-decoration:none; color:inherit;">
             <div class="card-lg booking-card" style="position:relative; margin-bottom:24px;">
-                <a href="<c:url value='/admin/booking?bookingId=${booking.bookingId}' />" style="text-decoration:none; color:inherit;">
                     <span><b>ID Reserva:</b> <c:out value="${booking.bookingId}"/></span><br/>
                     <span><b>Boliche:</b> <c:out value="${clubNames[booking.bookingId]}"/></span><br/>
                     <div class="booking-status-container">
@@ -54,8 +54,8 @@
                             </c:otherwise>
                         </c:choose>
                     </div>
-                </a>
             </div>
+        </a>
         </c:forEach>
     </div>
 </body>

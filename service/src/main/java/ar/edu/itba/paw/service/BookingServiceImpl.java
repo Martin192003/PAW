@@ -201,12 +201,6 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    /**
-     * Reglas con tus estados:
-     * - DISPONIBLE  -> PENDIENTE | RESERVADA
-     * - PENDIENTE   -> RESERVADA | DISPONIBLE
-     * - RESERVADA   -> DISPONIBLE
-     */
     private void validateStatusTransition(Status from, Status to) {
         if (from == to) return;
 

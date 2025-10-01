@@ -30,12 +30,12 @@
 <div class="app-bookings">
     <h1>Mis reservas</h1>
     <c:forEach var="booking" items="${bookings}">
-        <div class="card-lg booking-card" style="position:relative;">
-            <a href="<c:url value='/booking?bookingId=${booking.bookingId}' />" style="text-decoration:none; color:inherit;">
+        <a href="<c:url value='/booking?bookingId=${booking.bookingId}' />" style="text-decoration:none; color:inherit;">
+            <div class="card-lg booking-card" style="position:relative;">
                 <span><b>ID Reserva:</b> <c:out value="${booking.bookingId}"/></span><br/>
                 <span><b>Boliche:</b> <c:out value="${clubNames[booking.bookingId]}"/></span>
-            </a>
-            <div class="booking-status-container">
+
+                <div class="booking-status-container">
                 <c:choose>
                     <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'PENDIENTE'}">
                         <span class="booking-status booking-status-pending">Pendiente</span>
@@ -50,8 +50,9 @@
                         <span class="booking-status">${booking.status}</span>
                     </c:otherwise>
                 </c:choose>
+                </div>
             </div>
-        </div>
+        </a>
     </c:forEach>
 </div>
 

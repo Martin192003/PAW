@@ -55,20 +55,48 @@
             <span class="booking-label">Total:</span>
             <span class="booking-value"><c:out value="${booking.totalAmount}"/></span>
         </div>
-        <!--
+
+        <div class="booking-row">
+            <span class="booking-label">Comprobante:</span>
+            <span class="booking-value">
+        <c:choose>
+        <c:when test="${hasReceipt}">
+            <a href="<c:url value='/bookings/${booking.bookingId}/receipt'/>" target="_blank">Ver</a>
+            &nbsp;|&nbsp;
+            <form method="post"
+                  action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>"
+                  style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+            </form>
+            <div style="margin-top:8px;">
+          <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>"
+               alt="Receipt"
+               style="max-height:200px;border:1px solid #ddd;border-radius:4px;padding:2px;"/>
+        </div>
+        </c:when>
+        <c:otherwise>
+            No hay comprobante cargado
+        </c:otherwise>
+        </c:choose>
+        </span>
+        </div>
+
+        <c:if test="${!hasReceipt}">
+            <form method="post"
+                  enctype="multipart/form-data"
+                  action="<c:url value='/bookings/${booking.bookingId}/receipt'/>"
+                  style="margin-top:12px;">
+                <input type="file" name="file" accept="image/*,application/pdf" required />
+                <button type="submit" class="btn btn-primary btn-sm">Subir comprobante</button>
+            </form>
+        </c:if>
         <div class="booking-actions">
             <form method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />" style="display:inline;">
                 <button type="submit" class="btn btn-danger">
                     <i class="fa fa-trash"></i> Cancelar reserva
                 </button>
             </form>
-            <form method="post" action="<c:url value='/bookings/${booking.bookingId}/confirm' />" style="display:inline; margin-left:10px;">
-                <button type="submit" class="btn btn-success">
-                    <i class="fa fa-check"></i> Confirmar reserva
-                </button>
-            </form>
         </div>
-        -->
     </div>
 </div>
 

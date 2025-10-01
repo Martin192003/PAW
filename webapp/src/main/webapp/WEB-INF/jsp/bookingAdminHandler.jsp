@@ -69,6 +69,32 @@
                 <span class="booking-label">Total:</span>
                 <span class="booking-value"><c:out value="${booking.totalAmount}"/></span>
             </div>
+
+
+            <div class="booking-row">
+                <span class="booking-label">Comprobante:</span>
+                <span class="booking-value">
+                    <c:choose>
+            <c:when test="${hasReceipt}">
+                <a href="<c:url value='/bookings/${booking.bookingId}/receipt'/>" target="_blank">Ver</a>
+                &nbsp;|&nbsp;
+                <form method="post"
+                      action="<c:url value='/admin/bookings/${booking.bookingId}/receipt/delete'/>"
+                      style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                </form>
+                <div style="margin-top:8px;">
+                    <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>"
+                         alt="Receipt"
+                         style="max-height:200px;border:1px solid #ddd;border-radius:4px;padding:2px;"/>
+                </div>
+                </c:when>
+                    <c:otherwise>
+                        No hay comprobante cargado
+                    </c:otherwise>
+                </c:choose>
+            </span>
+            </div>
             <div class="booking-actions">
                 <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />" style="display:inline;">
                     <button type="submit" class="btn btn-danger">
@@ -81,6 +107,9 @@
                     </button>
                 </form>
             </div>
+            <c:if test="${not empty error}">
+                <div class="alert alert-danger">${error}</div>
+            </c:if>
         </div>
     </div>
 </body>
