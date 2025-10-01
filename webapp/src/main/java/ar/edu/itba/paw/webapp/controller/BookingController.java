@@ -316,6 +316,10 @@ public class BookingController {
                     .map(Club::getClubName).orElse("");
         }
 
+        User u = userService.findById(booking.getUser().getId());
+
+        model.addAttribute("user", u);
+
         var rOpt = receiptService.findByBooking(bookingId);
         model.addAttribute("hasReceipt", rOpt.isPresent());
         rOpt.ifPresent(r -> model.addAttribute("receipt", r));
@@ -382,6 +386,9 @@ public class BookingController {
         var rOpt = receiptService.findByBooking(bookingId);
         model.addAttribute("hasReceipt", rOpt.isPresent());
         rOpt.ifPresent(r -> model.addAttribute("receipt", r));
+
+        User u = userService.findById(booking.getUser().getId());
+        model.addAttribute("user", u);
 
         model.addAttribute("booking", booking);
         model.addAttribute("table", table);

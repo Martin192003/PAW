@@ -29,7 +29,15 @@
     <div class="card-lg booking-details" dataId="${booking.bookingId}">
         <div class="booking-row">
             <span class="booking-label">Usuario:</span>
-            <span class="booking-value"><c:out value="${booking.user.username}"/></span>
+            <span class="booking-value"><c:out value="${user.username}"/></span>
+        </div>
+        <div class="booking-row">
+            <span class="booking-label">Email:</span>
+            <span class="booking-value"><c:out value="${user.email}"/></span>
+        </div>
+        <div class="booking-row">
+            <span class="booking-label">Apellido:</span>
+            <span class="booking-value"><c:out value="${user.surname}"/></span>
         </div>
         <div class="booking-row">
             <span class="booking-label">Mesa:</span>
