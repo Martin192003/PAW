@@ -7,6 +7,8 @@ import ar.edu.itba.paw.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -87,35 +89,54 @@ public class UserController {
         userForm.setEmail(user.getEmail());
         userForm.setCellphone(user.getCellphone());
         model.addAttribute("userForm", userForm);
-        return "profileEdit";
+        return "profile";
+    }
+
+    @GetMapping("/profile")
+    public String showProfile(Model model) {
+        User user = userService.findById(getCurrentUserId());
+        model.addAttribute("user", user);
+        return "profile";
     }
 
     @PostMapping("/profile/edit")
     public String updateProfile(
             @RequestParam("fieldName") String fieldName,
             @RequestParam("fieldValue") String fieldValue,
-            final RedirectAttributes ra
+            final RedirectAttributes ra,
+            Model model
     ) {
         User user = userService.findById(getCurrentUserId());
 
-        switch (fieldName) {
-            case "username":
-                user.setUserName(fieldValue);
-                break;
-            case "name":
-                user.setName(fieldValue);
-                break;
-            case "surname":
-                user.setSurname(fieldValue);
-                break;
-            case "cellphone":
-                user.setCellphone(fieldValue);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid field name");
+        if ("username".equals(fieldName)) {
+            User existing = userService.findByUserName(fieldValue);
+            if (existing != null && !existing.getId().equals(user.getId())) {
+                model.addAttribute("user", user);
+                model.addAttribute("usernameError", "El nombre de usuario ya está en uso.");
+                model.addAttribute("openModal", true);
+                model.addAttribute("editField", "username");
+                return "profile";
+            }
+            user.setUserName(fieldValue);
+        } else if ("name".equals(fieldName)) {
+            user.setName(fieldValue);
+        } else if ("surname".equals(fieldName)) {
+            user.setSurname(fieldValue);
+        } else if ("cellphone".equals(fieldName)) {
+            user.setCellphone(fieldValue);
+        } else {
+            throw new IllegalArgumentException("Invalid field name");
         }
 
         userService.update(user);
+        if (fieldName.equals("username")) {
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    user.getUsername(), // nuevo username
+                    user.getPassword(),
+                    SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
         ra.addFlashAttribute("success", "Profile updated successfully.");
         return "redirect:/profile";
     }

@@ -1,6 +1,7 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <html>
 <head>
@@ -24,6 +25,7 @@
 </div>
 <c:set var="activePage" value="profile" />
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
+
 <div class="profile-page">
     <div class="detail-back">
         <button type="button" class="btn btn-success"
@@ -31,7 +33,9 @@
             <i class="fa-solid fa-arrow-left"></i>
         </button>
     </div>
+
     <h1 class="profile-title"><spring:message code="title.myProfile"/></h1>
+
     <div class="profile-card">
         <div class="profile-info-row">
             <span class="profile-label"><spring:message code="form.username"/>:</span>
@@ -66,42 +70,62 @@
             </button>
         </div>
     </div>
-
 </div>
+
 <div id="editProfileModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEditProfileModal()">&times;</span>
-        <form:form modelAttribute="userForm" method="post" action="<c:url value='/profile/edit'/>" style="display:flex; flex-direction:column; gap:18px;">
+        <h2>Editar perfil</h2>
+        <form method="post" action="${pageContext.request.contextPath}/profile/edit" style="display:flex; flex-direction:column; gap:18px;">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-            <input type="hidden" id="editFieldName" name="fieldName" />
+            <input type="hidden" id="editFieldName" name="fieldName"/>
             <div style="display:flex; flex-direction:column; gap:6px;">
-                <form:label id="editFieldLabel" path=""></form:label>
-                <form:input id="editFieldValue" path="" cssClass="form-control" />
-                <form:errors id="fieldErrorSpan" path="" cssClass="error" />
+                <label for="editFieldValue" id="editFieldLabel" style="font-weight:500;"></label>
+                <input type="text" id="editFieldValue" name="fieldValue" class="form-control"/>
+                <c:if test="${not empty usernameError and editField == 'username'}">
+                    <div style="color: #e53935; font-size: 0.95em; margin-top: 4px;">
+                            ${usernameError}
+                    </div>
+                </c:if>
+                <div id="modalErrorContainer"></div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeEditProfileModal()">
-                    <spring:message code="modal.edit.cancel"/>
-                </button>
-                <button type="submit" class="btn btn-success">
-                    <spring:message code="modal.edit.save"/>
-                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditProfileModal()">Cancelar</button>
+                <button type="submit" class="btn btn-success">Guardar</button>
             </div>
-        </form:form>
+        </form>
     </div>
 </div>
+
 
 <script>
     function openEditProfileModal(field, value) {
         document.getElementById('editProfileModal').style.display = 'flex';
         document.getElementById('editFieldName').value = field;
+        document.getElementById('editFieldLabel').innerText =
+            field.charAt(0).toUpperCase() + field.slice(1);
         document.getElementById('editFieldValue').value = value;
-        document.getElementById('editFieldLabel').innerText = field.charAt(0).toUpperCase() + field.slice(1);
+
+        if (field !== 'username') {
+            var errorDiv = document.querySelector('div[style*="color: #e53935"]');
+            if (errorDiv) errorDiv.innerHTML = '';
+        }
     }
 
     function closeEditProfileModal() {
         document.getElementById('editProfileModal').style.display = 'none';
     }
+
+    function capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+</script>
+<script>
+    window.addEventListener('DOMContentLoaded', function() {
+        <c:if test="${openModal and editField == 'username'}">
+        openEditProfileModal('username', '${user.username}');
+        </c:if>
+    });
 </script>
 </body>
 </html>

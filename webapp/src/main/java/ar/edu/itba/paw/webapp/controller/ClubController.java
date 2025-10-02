@@ -9,6 +9,7 @@ import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.AddClubForm;
 import ar.edu.itba.paw.webapp.form.AddProductForm;
 import ar.edu.itba.paw.webapp.form.AddTableForm;
+import ar.edu.itba.paw.webapp.form.UserForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
@@ -405,8 +406,19 @@ public class ClubController {
         if (user == null || !user.getId().equals(userId)) {
             return "redirect:/403";
         }
+
         model.addAttribute("user", user);
         model.addAttribute("activePage", "profile");
+
+        UserForm userForm = new UserForm();
+        userForm.setUsername(user.getUsername());
+        userForm.setName(user.getName());
+        userForm.setSurname(user.getSurname());
+        userForm.setEmail(user.getEmail());
+        userForm.setCellphone(user.getCellphone());
+
+        model.addAttribute("userForm", userForm);
+
         return "profile";
     }
 
