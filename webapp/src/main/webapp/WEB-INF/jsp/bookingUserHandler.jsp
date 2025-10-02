@@ -24,89 +24,141 @@
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 
-<div class="app-boliches">
-    <h1 class="clubActivity-title">Reserva #<c:out value="${booking.bookingId}"/></h1>
-    <div class="card-lg booking-details" dataId="${booking.bookingId}">
-        <div class="booking-row">
-            <span class="booking-label">Usuario:</span>
-            <span class="booking-value"><c:out value="${user.username}"/></span>
-        </div>
-        <div class="booking-row">
-            <span class="booking-label">Email:</span>
-            <span class="booking-value"><c:out value="${user.email}"/></span>
-        </div>
-        <div class="booking-row">
-            <span class="booking-label">Apellido:</span>
-            <span class="booking-value"><c:out value="${user.surname}"/></span>
-        </div>
-        <div class="booking-row">
-            <span class="booking-label">Mesa:</span>
-            <span class="booking-value"><c:out value="${table.tableNumber}"/></span>
-        </div>
-        <div class="booking-row">
-            <span class="booking-label">Boliche:</span>
-            <span class="booking-value"><c:out value="${clubName}"/></span>
-        </div>
-        <div class="booking-row">
-            <span class="booking-label">Inicio:</span>
-            <span class="booking-value"><c:out value="${booking.bookingStart}"/></span>
-        </div>
-        <div class="booking-row">
-            <span class="booking-label">Fin:</span>
-            <span class="booking-value"><c:out value="${booking.bookingEnd}"/></span>
-        </div>
-        <div class="booking-row">
-            <span class="booking-label">Estado:</span>
-            <span class="booking-value"><c:out value="${booking.status}"/></span>
-        </div>
-        <div class="booking-row">
-            <span class="booking-label">Total:</span>
-            <span class="booking-value"><c:out value="${booking.totalAmount}"/></span>
-        </div>
+<div class="app-boliches booking-page">
+    <!-- Flash messages -->
+    <c:if test="${not empty errorKey}">
+        <div class="alert alert-danger"><spring:message code="${errorKey}" /></div>
+    </c:if>
+    <c:if test="${not empty error}">
+        <div class="alert alert-danger"><c:out value="${error}"/></div>
+    </c:if>
+    <c:if test="${not empty success}">
+        <div class="alert alert-success"><c:out value="${success}"/></div>
+    </c:if>
+    <c:if test="${not empty info}">
+        <div class="alert alert-info"><c:out value="${info}"/></div>
+    </c:if>
 
-        <div class="booking-row">
-            <span class="booking-label">Comprobante:</span>
-            <span class="booking-value">
+    <!-- Título + badge -->
+    <h1 class="clubActivity-title">
+        <span>Reserva #<c:out value="${booking.bookingId}"/></span>
         <c:choose>
-        <c:when test="${hasReceipt}">
-            <a href="<c:url value='/bookings/${booking.bookingId}/receipt'/>" target="_blank">Ver</a>
-            &nbsp;|&nbsp;
-            <form method="post"
-                  action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>"
-                  style="display:inline;">
-                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-            </form>
-            <div style="margin-top:8px;">
-          <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>"
-               alt="Receipt"
-               style="max-height:200px;border:1px solid #ddd;border-radius:4px;padding:2px;"/>
-        </div>
-        </c:when>
-        <c:otherwise>
-            No hay comprobante cargado
-        </c:otherwise>
+            <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'PENDIENTE'}">
+                <span class="status-badge is-pending"><spring:message code="booking.status.pending" text="Pendiente"/></span>
+            </c:when>
+            <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'CONFIRMADA'}">
+                <span class="status-badge is-confirmed"><spring:message code="booking.status.confirmed" text="Confirmada"/></span>
+            </c:when>
+            <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'CANCELADA'}">
+                <span class="status-badge is-cancelled"><spring:message code="booking.status.cancelled" text="Cancelada"/></span>
+            </c:when>
+            <c:otherwise>
+                <span class="status-badge"><c:out value="${booking.status}"/></span>
+            </c:otherwise>
         </c:choose>
-        </span>
-        </div>
+    </h1>
 
-        <c:if test="${!hasReceipt}">
-            <form method="post"
-                  enctype="multipart/form-data"
-                  action="<c:url value='/bookings/${booking.bookingId}/receipt'/>"
-                  style="margin-top:12px;">
-                <input type="file" name="file" accept="image/*,application/pdf" required />
-                <button type="submit" class="btn btn-primary btn-sm">Subir comprobante</button>
-            </form>
-        </c:if>
-        <div class="booking-actions">
-            <form method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />" style="display:inline;">
-                <button type="submit" class="btn btn-danger">
-                    <i class="fa fa-trash"></i> Cancelar reserva
-                </button>
-            </form>
-        </div>
-    </div>
+    <!-- GRID PRINCIPAL -->
+    <section class="booking-grid">
+        <!-- Columna izquierda: detalles -->
+        <article class="card panel">
+            <h2 class="panel-title"><spring:message code="booking.details.title" text="Detalles de la reserva"/></h2>
+            <dl class="details">
+                <div class="row">
+                    <dt><spring:message code="user.username" text="Usuario"/></dt>
+                    <dd><c:out value="${user.username}"/></dd>
+                </div>
+                <div class="row">
+                    <dt>Email</dt>
+                    <dd><c:out value="${user.email}"/></dd>
+                </div>
+                <div class="row">
+                    <dt><spring:message code="user.surname" text="Apellido"/></dt>
+                    <dd><c:out value="${user.surname}"/></dd>
+                </div>
+                <div class="row">
+                    <dt><spring:message code="table.number" text="Mesa"/></dt>
+                    <dd><c:out value="${table.tableNumber}"/></dd>
+                </div>
+                <div class="row">
+                    <dt><spring:message code="club.name" text="Boliche"/></dt>
+                    <dd class="truncate"><c:out value="${clubName}"/></dd>
+                </div>
+                <div class="row">
+                    <dt><spring:message code="booking.start" text="Inicio"/></dt>
+                    <dd><c:out value="${booking.bookingStart}"/></dd>
+                </div>
+                <div class="row">
+                    <dt><spring:message code="booking.end" text="Fin"/></dt>
+                    <dd><c:out value="${booking.bookingEnd}"/></dd>
+                </div>
+                <div class="row total">
+                    <dt><spring:message code="booking.total" text="Total"/></dt>
+                    <dd>$ <c:out value="${booking.totalAmount}"/></dd>
+                </div>
+            </dl>
+        </article>
+
+        <!-- Columna derecha: comprobante + acciones -->
+        <aside class="right-col">
+            <!-- Comprobante -->
+            <article class="card panel">
+                <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>
+
+                <c:choose>
+                    <c:when test="${hasReceipt}">
+                        <div class="receipt-thumb">
+                            <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>" alt="Receipt"/>
+                        </div>
+
+                        <div class="receipt-actions">
+                            <a class="btn btn-outline" href="<c:url value='/bookings/${booking.bookingId}/receipt'/>" target="_blank">
+                                <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
+                            </a>
+                            <form method="post" action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <spring:message code="receipt.delete" text="Eliminar"/>
+                                </button>
+                            </form>
+                        </div>
+
+                    </c:when>
+
+                    <c:otherwise>
+                        <p class="muted"><spring:message code="receipt.missing" text="No hay comprobante cargado."/></p>
+                    </c:otherwise>
+                </c:choose>
+
+                <!-- Upload si no hay receipt -->
+                <c:if test="${!hasReceipt}">
+                    <form method="post"
+                          enctype="multipart/form-data"
+                          action="<c:url value='/bookings/${booking.bookingId}/receipt'/>"
+                          class="upload-form">
+                        <input type="file" name="file" accept="image/*,application/pdf" required />
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <spring:message code="receipt.upload" text="Subir comprobante"/>
+                        </button>
+                    </form>
+                </c:if>
+            </article>
+
+            <!-- Acciones -->
+            <article class="card panel">
+                <h2 class="panel-title"><spring:message code="booking.actions.title" text="Acciones"/></h2>
+                <div class="booking-actions">
+                    <form method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-trash"></i>
+                            <spring:message code="booking.action.cancel" text="Cancelar reserva"/>
+                        </button>
+                    </form>
+                </div>
+            </article>
+        </aside>
+    </section>
 </div>
+
 
 </body>
 </html>

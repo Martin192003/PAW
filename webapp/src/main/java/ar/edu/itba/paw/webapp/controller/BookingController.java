@@ -393,8 +393,9 @@ public class BookingController {
         model.addAttribute("booking", booking);
         model.addAttribute("table", table);
         model.addAttribute("clubName", clubName);
+
         if (error != null && !error.isEmpty()) {
-            model.addAttribute("error", error);
+            model.addAttribute("error", "error.booking.cannotConfirmCancelled");
         }
         if (success != null && !success.isEmpty()) {
             model.addAttribute("success", success);
