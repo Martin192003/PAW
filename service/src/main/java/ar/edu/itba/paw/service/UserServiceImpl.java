@@ -139,4 +139,30 @@ public class UserServiceImpl implements UserService {
         }
         return passwordEncoder.matches(password, user.getPassword());
     }
+
+    @Override
+    @Transactional
+    public boolean resendVerificationToken(String usernameOrEmail) {
+        User user = userDao.findByUserName(usernameOrEmail).orElse(null);
+        if (user == null) {
+            user = userDao.findByEmail(usernameOrEmail).orElse(null);
+            if (user == null) {
+                return false;
+            }
+        }
+
+        if (user.isVerified()) {
+            return false;
+        }
+
+        String newToken = UUID.randomUUID().toString();
+        userDao.updateVerificationToken(user.getId(), newToken);
+
+        try {
+            mailService.sendUserRegistrationConfirmation(user.getEmail(), user.getUsername(), newToken);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

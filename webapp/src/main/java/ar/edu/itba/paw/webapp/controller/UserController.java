@@ -140,4 +140,18 @@ public class UserController {
         ra.addFlashAttribute("success", "Profile updated successfully.");
         return "redirect:/profile";
     }
+
+    @PostMapping("/resend-verification")
+    public String resendVerification(@RequestParam("usernameOrEmail") String usernameOrEmail,
+                                     Model model) {
+        boolean success = userService.resendVerificationToken(usernameOrEmail);
+        if (success) {
+            model.addAttribute("success", "Verification email sent successfully.");
+            return "verifyMailNotice"; // Redirige a la página de confirmación
+        } else {
+            model.addAttribute("error", "User not found or already verified.");
+            model.addAttribute("username", usernameOrEmail);
+            return "unverified";
+        }
+    }
 }

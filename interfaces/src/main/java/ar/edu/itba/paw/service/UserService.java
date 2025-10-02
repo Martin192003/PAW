@@ -23,4 +23,5 @@ public interface UserService {
     User findByVerificationToken(String token);
     boolean verifyUser(String token);
     boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
+    boolean resendVerificationToken(String usernameOrEmail);
 }
