@@ -4,6 +4,17 @@
     <title>Booking Details</title>
 </head>
 <body>
+<!-- Flash messages -->
+<c:if test="${not empty error}">
+    <div class="alert alert-danger">${error}</div>
+</c:if>
+<c:if test="${not empty success}">
+    <div class="alert alert-success">${success}</div>
+</c:if>
+<c:if test="${not empty info}">
+    <div class="alert alert-info">${info}</div>
+</c:if>
+
 <h1>Booking Details</h1>
 <p>Booking ID: ${booking.bookingId}</p>
 <c:if test="${hasReceipt}">
@@ -15,4 +26,3 @@
 </c:if>
 </body>
 </html>
-

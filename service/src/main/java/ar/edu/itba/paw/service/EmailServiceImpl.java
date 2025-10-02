@@ -1,8 +1,11 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.persistence.UserDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -30,9 +33,17 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
     private final String defaultFrom;
-    private final UserService userDao;
 
-    public EmailServiceImpl(JavaMailSender mailSender, TemplateEngine templateEngine, UserService userDao) {
+    private UserDao userDao;
+
+    @Autowired
+    public void setUserDao(final UserDao userDao) {
+        this.userDao = userDao;
+    }
+    @Autowired
+    private MessageSource messageSource;
+
+    public EmailServiceImpl(JavaMailSender mailSender, TemplateEngine templateEngine, UserDao userDao) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
         this.userDao = userDao;
@@ -171,7 +182,7 @@ public class EmailServiceImpl implements EmailService {
         // Asumo club.getContactInfo() referencia a un user_id dueño/manager
         User owner = null;
         if (club.getContactInfo() != null) {
-            owner = userDao.findById(club.getContactInfo().getId());
+            owner = userDao.findById(club.getContactInfo().getId()).get();
         }
         final String ownerMail = owner != null ? owner.getEmail() : "owner@" + club.getClubName().toLowerCase().replace(" ","") + ".com";
 
@@ -196,5 +207,58 @@ public class EmailServiceImpl implements EmailService {
         ));
         mailSender.send(msg);
     }
+
+    @Async
+    public void sendClubCreationConfirmation(String to, String clubName, UUID clubId){
+        try{
+            Locale userLocale = LocaleContextHolder.getLocale();
+
+            MimeMessage mail = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
+            helper.setFrom(defaultFrom);
+            helper.setTo(to);
+            helper.setSubject(messageSource.getMessage("email.club.creation.title", null, userLocale) + "-" + clubName);
+            Context context = new Context(userLocale);
+            context.setVariable("clubName", clubName);
+            context.setVariable("createdAt", ZonedDateTime.now());
+            context.setVariable("clubId", clubId);
+            context.setVariable("ctaUrl", "http://pawserver.it.itba.edu.ar/paw-2025b-06/clubs/handle?=" + clubId); // URL a tu panel de gestión
+
+
+            String htmlBody = templateEngine.process("club-creation-confirmation", context);
+            helper.setText(htmlBody, true);
+
+            mailSender.send(mail);
+            LOGGER.info("SMTP club creation confirmation OK to {}", to);
+        } catch (MessagingException e) {
+            LOGGER.error("SMTP club creation confirmation FAILED to {}: {}", to, e.getMessage(), e);
+        }
+    }
+
+    @Async
+    public void sendUserRegistrationConfirmation(String to, String username, String verificationToken){
+        try{
+            Locale userLocale = LocaleContextHolder.getLocale();
+
+            MimeMessage mail = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
+            helper.setFrom(defaultFrom);
+            helper.setTo(to);
+            helper.setSubject(messageSource.getMessage("email.registration.title.header", null, userLocale) + "-" + username);
+
+            Context context = new Context(userLocale);
+            context.setVariable("username", username);
+            context.setVariable("registeredAt", ZonedDateTime.now());
+            context.setVariable("verificationUrl", "http://localhost:8080/webapp_war_exploded/verify");            context.setVariable("token", verificationToken);
+            String htmlBody = templateEngine.process("user-registration-confirmation", context);
+            helper.setText(htmlBody, true);
+
+            mailSender.send(mail);
+            LOGGER.info("SMTP user registration confirmation OK to {}", to);
+        } catch (MessagingException e) {
+            LOGGER.error("SMTP user registration confirmation FAILED to {}: {}", to, e.getMessage(), e);
+        }
+    }
+
 
 }

@@ -78,7 +78,15 @@ public class BookingController {
             throw new BadRequestException("La mesa no está disponible en el rango indicado.");
         }
 
-        var user = userService.findByUserName(principal.getName());
+        var username = principal != null ? principal.getName() : null;
+        if (username == null) {
+            throw new IllegalArgumentException("El usuario no está autenticado.");
+        }
+
+        var user = userService.findByUserName(username);
+        if (user == null) {
+            throw new UserNotFoundException("No se encontró el usuario: " + username);
+        }
         var total = table.getPrice() != null ? table.getPrice() : java.math.BigDecimal.ZERO;
         var booking = bookingService.create(user, tableId, start, end, total);
 
@@ -134,7 +142,7 @@ public class BookingController {
         } else {
             throw new UserNotFoundException("Email del dueño inválido: " + ownerEmail);
         }
-
+        ra.addFlashAttribute("reservationSent", true);
         ra.addFlashAttribute("success", "¡Reserva creada para " + selectedDate + " (23:59–06:00)!");
         return "redirect:/clubs/" + clubId + "?date=" + selectedDate; // volvemos con la fecha elegida
     }
@@ -412,7 +420,10 @@ public class BookingController {
     }
 
     @GetMapping("/bookings/{bookingId}")
-    public String show(@PathVariable UUID bookingId, Model model) {
+    public String show(@PathVariable UUID bookingId, Model model,
+                       @ModelAttribute("error") String error,
+                       @ModelAttribute("success") String success,
+                       @ModelAttribute("info") String info) {
         final Optional<Booking> b = bookingService.findById(bookingId);
         if (b.isEmpty()) throw new BookingNotFoundException("La reserva no existe");
         model.addAttribute("booking", b.get());
@@ -421,6 +432,15 @@ public class BookingController {
         model.addAttribute("hasReceipt", rOpt.isPresent());
         rOpt.ifPresent(r -> model.addAttribute("receipt", r));
 
+        if (error != null && !error.isEmpty()) {
+            model.addAttribute("error", error);
+        }
+        if (success != null && !success.isEmpty()) {
+            model.addAttribute("success", success);
+        }
+        if (info != null && !info.isEmpty()) {
+            model.addAttribute("info", info);
+        }
         return "bookings/show";
     }
 

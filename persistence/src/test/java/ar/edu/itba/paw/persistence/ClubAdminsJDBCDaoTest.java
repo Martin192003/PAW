@@ -44,7 +44,7 @@ public class ClubAdminsJDBCDaoTest {
 
     @Test
     public void testAddAdmin() {
-        User admin = userDao.create("admin", "pass", "last", "email", "cell", Role.USER);
+        User admin = userDao.create("admin", "name","pass", "last", "email", "cell", Role.USER);
         Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
         boolean added = clubAdminsDao.addAdmin(club, admin);
         assertTrue(added);

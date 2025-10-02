@@ -3,6 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />" />

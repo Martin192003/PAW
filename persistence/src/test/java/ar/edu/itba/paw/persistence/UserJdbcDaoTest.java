@@ -25,6 +25,7 @@ public class UserJdbcDaoTest {
     private static final String PASSWORD = "Password";
     private static final String USERNAME = "Username";
     private static final String EMAIL = "Email";
+    private static final String NAME = "Name";
     private static final String LASTNAME = "LastName";
     private static final String CELLPHONE = "cellphone";
 
@@ -40,7 +41,7 @@ public class UserJdbcDaoTest {
     }
     @Test
     public void testCreate() {
-        final User user = userDao.create(USERNAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, Role.USER);
+        final User user = userDao.create(USERNAME, NAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, Role.USER);
         assertNotNull(user);
         assertEquals(USERNAME, user.getUsername());
         assertEquals(PASSWORD, user.getPassword());

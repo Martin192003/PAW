@@ -4,12 +4,16 @@ CREATE EXTENSION IF NOT EXISTS plpgsql;
 CREATE TABLE IF NOT EXISTS users (
                                      user_id       UUID PRIMARY KEY ,
                                      user_name     VARCHAR(100) NOT NULL,
+                                     name          VARCHAR(100) NOT NULL NOT NULL DEFAULT '',
                                      surname       VARCHAR(100) NOT NULL,
                                      email         TEXT NOT NULL UNIQUE,
                                      password_hash VARCHAR(100) NOT NULL,
                                      cellphone     VARCHAR(30) NOT NULL,
                                      role          VARCHAR(20) NOT NULL CHECK (role IN ('admin','user')),
-                                     created_at    TIMESTAMPTZ DEFAULT NOW()
+                                     created_at    TIMESTAMPTZ DEFAULT NOW(),
+                                     is_verified   BOOLEAN DEFAULT FALSE,
+                                     verification_token VARCHAR(100)
+
 );
 
 CREATE TABLE IF NOT EXISTS clubs (

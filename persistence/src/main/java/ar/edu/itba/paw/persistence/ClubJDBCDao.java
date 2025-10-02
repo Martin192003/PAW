@@ -253,4 +253,105 @@ public class ClubJDBCDao implements ClubDao {
         return jdbc.query(sql, userDao.getRowMapper(), clubId);
     }
 
+    @Override
+    public List<Club> findAllPaginated(int limit, int offset) {
+        final String sql = "SELECT * FROM clubs ORDER BY club_name ASC LIMIT ? OFFSET ?";
+        return jdbc.query(sql, ROW_MAPPER, limit, offset);
+    }
+
+    @Override
+    public int countAll() {
+        final String sql = "SELECT COUNT(*) FROM clubs";
+        return jdbc.queryForObject(sql, Integer.class);
+    }
+
+    @Override
+    public List<Club> searchPaginated(String nameLike, Zone location, String musicGenre,
+                                      String priceRange, Boolean isBar, String sort,
+                                      int limit, int offset) {
+
+        StringBuilder sql = new StringBuilder("SELECT * FROM clubs WHERE 1=1");
+        List<Object> args = new ArrayList<>();
+
+        if (nameLike != null && !nameLike.isBlank()) {
+            sql.append(" AND LOWER(club_name) ILIKE ? ESCAPE '\\'");
+            args.add(likeContains(nameLike));
+        }
+        if (location != null) {
+            sql.append(" AND LOWER(zone) = LOWER(?)");
+            args.add(location.name());
+        }
+        if (musicGenre != null && !musicGenre.isBlank()) {
+            sql.append(" AND LOWER(music_genre) = LOWER(?)");
+            args.add(musicGenre.trim());
+        }
+        if (priceRange != null && !priceRange.isBlank()) {
+            if (!Set.of("bajo","medio","alto").contains(priceRange)) {
+                throw new IllegalArgumentException("priceRange inválido");
+            }
+            sql.append(" AND price_range = ?");
+            args.add(priceRange);
+        }
+        if (isBar != null) {
+            sql.append(" AND is_bar = ?");
+            args.add(isBar);
+        }
+
+        if ("rating_desc".equals(sort)) {
+            sql.append(" ORDER BY rating DESC NULLS LAST");
+        } else if ("rating_asc".equals(sort)) {
+            sql.append(" ORDER BY rating ASC NULLS LAST");
+        } else {
+            sql.append(" ORDER BY club_name ASC");
+        }
+
+        sql.append(" LIMIT ? OFFSET ?");
+        args.add(limit);
+        args.add(offset);
+
+        return jdbc.query(sql.toString(), ROW_MAPPER, args.toArray());
+    }
+
+    @Override
+    public int countSearch(String nameLike, Zone location, String musicGenre,
+                           String priceRange, Boolean isBar) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM clubs WHERE 1=1");
+        List<Object> args = new ArrayList<>();
+
+        if (nameLike != null && !nameLike.isBlank()) {
+            sql.append(" AND LOWER(club_name) ILIKE ? ESCAPE '\\'");
+            args.add(likeContains(nameLike));
+        }
+        if (location != null) {
+            sql.append(" AND LOWER(zone) = LOWER(?)");
+            args.add(location.name());
+        }
+        if (musicGenre != null && !musicGenre.isBlank()) {
+            sql.append(" AND LOWER(music_genre) = LOWER(?)");
+            args.add(musicGenre.trim());
+        }
+        if (priceRange != null && !priceRange.isBlank()) {
+            sql.append(" AND price_range = ?");
+            args.add(priceRange);
+        }
+        if (isBar != null) {
+            sql.append(" AND is_bar = ?");
+            args.add(isBar);
+        }
+
+        return jdbc.queryForObject(sql.toString(), Integer.class, args.toArray());
+    }
+
+    @Override
+    public List<Club> findByUserIdPaginated(UUID userId, int limit, int offset) {
+        final String sql = "SELECT * FROM clubs WHERE contact_info = ? ORDER BY club_name ASC LIMIT ? OFFSET ?";
+        return jdbc.query(sql, ROW_MAPPER, userId, limit, offset);
+    }
+
+    @Override
+    public int countByUserId(UUID userId) {
+        final String sql = "SELECT COUNT(*) FROM clubs WHERE contact_info = ?";
+        return jdbc.queryForObject(sql, Integer.class, userId);
+    }
+
 }

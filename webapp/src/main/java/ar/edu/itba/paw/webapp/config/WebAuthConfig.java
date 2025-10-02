@@ -28,13 +28,17 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement()
                 .invalidSessionUrl("/clubs")
                 .and().authorizeRequests()
-                //.antMatchers("/login", "/register").anonymous()
-                .antMatchers("/clubs/create", "/reservations/**", "/clubs/new").authenticated()
-                .antMatchers("/","/clubs", "/clubs/{id}", "/contact" , "/login", "/register", "/photos/**").permitAll()
+
+                // Authenticated routes
+                .antMatchers("/clubs/new", "/clubs/create", "/reservations/**").authenticated()
                 .antMatchers("/admin/**").hasRole("ADMIN")
-                .antMatchers(HttpMethod.GET, "/clubs/**").permitAll() //PREGUNTAR SI ESTO ES LEGAL
-                //.anyRequest().authenticated()
-                .antMatchers("/**").authenticated()
+
+                // Public routes
+                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify").permitAll()
+                .antMatchers(HttpMethod.GET, "/clubs").permitAll()
+                .antMatchers(HttpMethod.GET, "/clubs/{id}").permitAll()
+
+                .anyRequest().authenticated()
                 .and().formLogin()
                 .usernameParameter("usernameOrEmail")
                 .passwordParameter("password")

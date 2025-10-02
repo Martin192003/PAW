@@ -46,7 +46,7 @@ public class BookingsJDBCDaoTest {
     @Test
     public void testCreate() {
         // Crear usuario
-        User user = userDao.create("user", "pass", "last", "email", "cell", Role.USER);
+        User user = userDao.create("user", "name","pass", "last", "email", "cell", Role.USER);
 
         // Crear club
         UUID clubId = UUID.randomUUID();

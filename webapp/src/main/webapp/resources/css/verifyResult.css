@@ -1,0 +1,95 @@
+@font-face {
+    font-family: 'Darklinos';
+    src: url('../fonts/DARKLINOS.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+.verify-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    width: 100%;
+    background-color: #1b1a1a;
+    padding-top: 80px;
+}
+
+.app-title {
+    font-family: 'Darklinos', sans-serif;
+    text-align: center;
+    margin-bottom: 32px;
+    font-size: 3rem;
+    font-weight: bold;
+    color: #9c27b0;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.3);
+}
+
+.verify-card {
+    background-color: #3c3c3c;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 1.5px 12px rgba(140,0,183,0.35);
+    width: 500px;
+    text-align: center;
+}
+
+.verify-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+}
+
+.verify-title {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.verify-success {
+    color: #fff;
+    font-size: 28px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.verify-error {
+    color: #ff1744;
+    font-size: 16px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.verify-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.return-index {
+    background: none;
+    border: none;
+    color: #9c27b0;
+    font-size: 17px;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    padding: 0 12px;
+    transition: color 0.2s ease;
+    text-decoration: none;
+}
+
+.return-index:hover {
+    text-decoration: underline;
+}

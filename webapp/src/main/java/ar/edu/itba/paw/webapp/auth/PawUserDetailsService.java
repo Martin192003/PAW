@@ -28,6 +28,10 @@ public class PawUserDetailsService implements UserDetailsService {
             }
         }
 
+        if(!user.isVerified()){
+            throw new UsernameNotFoundException("User is not verified");
+        }
+
         final Collection<? extends GrantedAuthority> authorities = Arrays.asList(
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase())
         );

@@ -1,11 +1,8 @@
 package ar.edu.itba.paw.service;
 
-import ar.edu.itba.paw.model.Booking;
-import ar.edu.itba.paw.model.Status;
-import ar.edu.itba.paw.model.Table;
-import ar.edu.itba.paw.model.TableState;
-import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.persistence.BookingDao;
+import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import ar.edu.itba.paw.model.exceptions.*;
 import org.springframework.stereotype.Service;
@@ -24,10 +21,14 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingDao bookingDao;
     private final ClubTablesDao tablesDao;
+    private final ClubDao clubDao;
+    private final EmailServiceImpl emailService;
 
-    public BookingServiceImpl(final BookingDao bookingDao, final ClubTablesDao tablesDao) {
+    public BookingServiceImpl(final BookingDao bookingDao, final ClubTablesDao tablesDao, final ClubDao clubDao, final EmailServiceImpl emailService) {
         this.bookingDao = bookingDao;
         this.tablesDao = tablesDao;
+        this.clubDao = clubDao;
+        this.emailService = emailService;
     }
 
     @Override
@@ -56,6 +57,10 @@ public class BookingServiceImpl implements BookingService {
         final Status initial = Status.PENDIENTE;
         final Booking booking = bookingDao.create(user, tableId, initial, totalAmount, bookingStart, bookingEnd);
 
+        Club club = clubDao.findById(table.getClubId()).orElseThrow(()->new ClubNotFoundException(table.getClubId().toString()));
+
+        emailService.sendBookingConfirmationToUser(user, club, table, booking);
+        emailService.sendBookingNotificationToOwner(club, table, booking);
         return booking;
     }
 

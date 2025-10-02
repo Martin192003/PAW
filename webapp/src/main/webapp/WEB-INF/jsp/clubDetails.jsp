@@ -9,6 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <title><c:out value="${club.clubName}"/> - <spring:message code="title.details"/></title>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />" />
@@ -177,9 +178,22 @@
                     </form>
                 </div>
             </div>
-
-
         </div>
+        <div id="reservationModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+            <div style="background:#222; color:#fff; padding:32px; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.6); width:400px; text-align:center;">
+                <div style="font-size:22px; margin-bottom:18px;">
+                    <spring:message code="reservation.sent"/>
+                </div>
+                <button class="btn btn-success" onclick="cerrarModal()"><spring:message code="button.back"/></button>
+            </div>
+        </div>
+        <c:if test="${not empty reservationSent}">
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    document.getElementById("reservationModal").style.display = "flex";
+                });
+            </script>
+        </c:if>
 
         <spring:message code="tables.selectdate" var="msgSelectDate"/>
         <spring:message code="tables.invaliddate" var="msgInvalidDate"/>
@@ -329,7 +343,16 @@
                         ddEl.querySelector('.bb-panel')?.classList.add('show');
                     }
                 }
+                if (reservationSent) {
+                    document.addEventListener("DOMContentLoaded", function() {
+                        document.getElementById("reservationModal").style.display = "flex";
+                    });
+                }
+
             });
+            function cerrarModal() {
+                window.location.href = "${clubUrl}";
+            }
         </script>
     </div>
 </div>
