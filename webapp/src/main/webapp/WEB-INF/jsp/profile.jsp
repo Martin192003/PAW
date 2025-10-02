@@ -75,7 +75,6 @@
 <div id="editProfileModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEditProfileModal()">&times;</span>
-        <h2>Editar perfil</h2>
         <form method="post" action="${pageContext.request.contextPath}/profile/edit" style="display:flex; flex-direction:column; gap:18px;">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" id="editFieldName" name="fieldName"/>
@@ -90,8 +89,8 @@
                 <div id="modalErrorContainer"></div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeEditProfileModal()">Cancelar</button>
-                <button type="submit" class="btn btn-success">Guardar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditProfileModal()"><spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
             </div>
         </form>
     </div>
