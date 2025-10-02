@@ -63,6 +63,10 @@ public class UserServiceImpl implements UserService {
         User existingUser = userDao.findById(user.getId()).orElseThrow(() ->
                 new IllegalArgumentException("User not found")
         );
+
+        if(!existingUser.getUsername().equals(user.getUsername()) && userDao.findByUserName(user.getUsername()).isPresent()){
+            throw new DuplicateEntityException("user.username.duplicate");
+        }
         user.setVerified(existingUser.isVerified());
         user.setVerificationToken(existingUser.getVerificationToken());
         return userDao.update(
@@ -71,9 +75,9 @@ public class UserServiceImpl implements UserService {
                 user.getName(),
                 user.getSurname(),
                 user.getEmail(),
-                user.getPassword(),
+                existingUser.getPassword(),
                 user.getCellphone(),
-                user.getRole()
+                existingUser.getRole()
         );
     }
 
@@ -115,11 +119,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void verifyUser(String token) {
-        User user = userDao.findByVerificationToken(token).orElseThrow(() ->
-                new IllegalArgumentException("Invalid verification token")
-        );
+    public boolean verifyUser(String token) {
+        User user = userDao.findByVerificationToken(token).orElse(null);
+        if (user == null) {
+            return false;
+        }
         userDao.updateVerificationStatus(user.getId(), true);
+        return true;
     }
 
     public boolean authenticateUsernameOrEmail(String usernameOrEmail, String password){

@@ -69,7 +69,15 @@ public class BookingController {
             throw new BadRequestException("La mesa no está disponible en el rango indicado.");
         }
 
-        var user = userService.findByUserName(principal.getName());
+        var username = principal != null ? principal.getName() : null;
+        if (username == null) {
+            throw new IllegalArgumentException("El usuario no está autenticado.");
+        }
+
+        var user = userService.findByUserName(username);
+        if (user == null) {
+            throw new UserNotFoundException("No se encontró el usuario: " + username);
+        }
         var total = table.getPrice() != null ? table.getPrice() : java.math.BigDecimal.ZERO;
         var booking = bookingService.create(user, tableId, start, end, total);
 

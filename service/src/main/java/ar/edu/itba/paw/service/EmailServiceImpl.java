@@ -249,8 +249,7 @@ public class EmailServiceImpl implements EmailService {
             Context context = new Context(userLocale);
             context.setVariable("username", username);
             context.setVariable("registeredAt", ZonedDateTime.now());
-            context.setVariable("verificationUrl", "http://pawserver.it.itba.edu.ar/paw-2025b-06/verify?token=" + verificationToken);
-
+            context.setVariable("verificationUrl", "http://localhost:8080/webapp_war_exploded/verify");            context.setVariable("token", verificationToken);
             String htmlBody = templateEngine.process("user-registration-confirmation", context);
             helper.setText(htmlBody, true);
 

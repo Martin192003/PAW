@@ -21,6 +21,6 @@ public interface UserService {
     List<User> findAll();
     List<User> findByRole(String role);
     User findByVerificationToken(String token);
-    void verifyUser(String token);
+    boolean verifyUser(String token);
     boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
 }

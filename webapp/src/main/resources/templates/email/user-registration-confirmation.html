@@ -72,6 +72,7 @@
 <div class="email-container">
     <h1 th:text="#{email.registration.title(${username})}"></h1>
     <p th:text="#{email.registration.body}"></p>
+    <p th:text="#{email.registration.token} + ': ' + ${token}"></p>
     <p style="text-align: center;">
         <a th:href="${verificationUrl}"
            class="button"
