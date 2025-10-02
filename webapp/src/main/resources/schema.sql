@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS bookings (
                                         table_id      UUID NOT NULL REFERENCES club_tables(table_id) ON DELETE CASCADE,
                                         booking_start TIMESTAMPTZ NOT NULL,
                                         booking_end   TIMESTAMPTZ NOT NULL,
-                                        status        VARCHAR(20) NOT NULL CHECK (status IN ('confirmada','pendiente','disponible')),
+                                        status        VARCHAR(20) NOT NULL CHECK (status IN ('confirmada','pendiente','disponible', 'cancelada')),
                                         created_at    TIMESTAMPTZ DEFAULT NOW(),
                                         total_amount  NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
                                         CHECK (booking_end > booking_start)
@@ -132,6 +132,21 @@ CREATE TABLE IF NOT EXISTS booking_items (
                                              unit_price  NUMERIC(10,2) NOT NULL CHECK (unit_price >= 0),
                                              line_total  NUMERIC(10,2) NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS receipts (
+    receipt_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    booking_id   UUID NOT NULL REFERENCES bookings (booking_id) ON DELETE CASCADE,
+    uploaded_by  UUID NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+    url          TEXT NOT NULL,
+    data         BYTEA,
+    filename     TEXT,
+    content_type TEXT,
+    size_bytes   BIGINT,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (booking_id)
+    );
+
+CREATE INDEX IF NOT EXISTS receipts_booking_id_idx ON receipts (booking_id);
 
 
 CREATE TABLE IF NOT EXISTS club_admins (

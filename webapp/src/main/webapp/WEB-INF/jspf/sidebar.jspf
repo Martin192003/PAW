@@ -12,11 +12,16 @@
                class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">
                 <spring:message code="title.myClubs"/>
             </a>
+            <a href="<c:url value='/admin/clubs/bookings?userId=${user.id}' />"
+               class="sidebar-btn ${activePage == 'clubsBookings' ? 'active' : ''}">
+                <spring:message code="menu.clubReservations" text="Reservas"/>
+            </a>
         </c:if>
 
-        <a href="#" class="sidebar-btn ${activePage == 'reservas' ? 'active' : ''}">
-            <spring:message code="menu.reservations"/>
+        <a href="<c:url value='/bookings?userId=${user.id}' />" class="sidebar-btn ${activePage == 'bookings' ? 'active' : ''}">
+            <spring:message code="menu.reservations" text="Reservas"/>
         </a>
+
         <a href="#" class="sidebar-btn ${activePage == 'ayuda' ? 'active' : ''}">
             <spring:message code="menu.help"/>
         </a>

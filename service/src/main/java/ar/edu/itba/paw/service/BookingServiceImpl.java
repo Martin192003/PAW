@@ -72,8 +72,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Booking> findByUser(User user) {
-        return bookingDao.findByUser(user);
+    public List<Booking> findByUser(UUID userId) {
+        return bookingDao.findByUser(userId);
     }
 
     @Override
@@ -142,13 +142,13 @@ public class BookingServiceImpl implements BookingService {
     public boolean cancel(UUID bookingId) {
         final Booking existing = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
-        validateStatusTransition(existing.getStatus(), Status.DISPONIBLE);
+        validateStatusTransition(existing.getStatus(), Status.CANCELADA);
 
         bookingDao.update(
                 bookingId,
                 existing.getUser(),
                 existing.getTableId(),
-                Status.DISPONIBLE,
+                Status.CANCELADA,
                 existing.getTotalAmount(),
                 existing.getBookingStart(),
                 existing.getBookingEnd()
@@ -161,8 +161,6 @@ public class BookingServiceImpl implements BookingService {
     public boolean delete(UUID bookingId) {
         return bookingDao.delete(bookingId);
     }
-
-
 
     private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
         if (!start.isBefore(end)) throw new InvalidDateRangeException("Rango inválido: " + start + " - " + end);
@@ -193,7 +191,7 @@ public class BookingServiceImpl implements BookingService {
     private void maybeFreeTable(Table table) {
         final List<Booking> bookings = bookingDao.findByTable(table.getTableId());
         final boolean stillBlocked = bookings.stream()
-                .anyMatch(b -> b.getStatus() == Status.PENDIENTE || b.getStatus() == Status.RESERVADA);
+                .anyMatch(b -> b.getStatus() == Status.PENDIENTE || b.getStatus() == Status.CONFIRMADA);
 
         if (!stillBlocked) {
             tablesDao.update(
@@ -208,30 +206,27 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    /**
-     * Reglas con tus estados:
-     * - DISPONIBLE  -> PENDIENTE | RESERVADA
-     * - PENDIENTE   -> RESERVADA | DISPONIBLE
-     * - RESERVADA   -> DISPONIBLE
-     */
     private void validateStatusTransition(Status from, Status to) {
         if (from == to) return;
 
         switch (from) {
             case DISPONIBLE -> {
-                if (!(to == Status.PENDIENTE || to == Status.RESERVADA)) {
+                if (!(to == Status.PENDIENTE || to == Status.CONFIRMADA)) {
                     throw new InvalidStatusTransitionException(from, to);
                 }
             }
             case PENDIENTE -> {
-                if (!(to == Status.RESERVADA || to == Status.DISPONIBLE)) {
+                if (!(to == Status.CONFIRMADA || to == Status.DISPONIBLE || to == Status.CANCELADA)) {
                     throw new InvalidStatusTransitionException(from, to);
                 }
             }
-            case RESERVADA -> {
-                if (to != Status.DISPONIBLE) {
+            case CONFIRMADA -> {
+                if (!(to == Status.PENDIENTE || to == Status.CANCELADA)) {
                     throw new InvalidStatusTransitionException(from, to);
                 }
+            }
+            case CANCELADA -> {
+                throw new InvalidStatusTransitionException(from, to);
             }
             default -> throw new InvalidStatusTransitionException(from, to);
         }

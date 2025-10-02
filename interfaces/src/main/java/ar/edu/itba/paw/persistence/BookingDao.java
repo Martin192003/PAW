@@ -14,7 +14,7 @@ public interface BookingDao {
     Optional<Booking> findById(UUID id);
     List<Booking> findAll();
 
-    List<Booking> findByUser(User user);
+    List<Booking> findByUser(UUID userId);
     List<Booking> findByTable(UUID tableId);
 
     public Booking create(User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);

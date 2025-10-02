@@ -20,7 +20,7 @@ public interface BookingService {
 
     Optional<Booking> findById(UUID bookingId);
 
-    List<Booking> findByUser(User user);
+    List<Booking> findByUser(UUID userId);
 
     List<Booking> findByTable(UUID tableId);
 

@@ -5,7 +5,8 @@ import java.util.Locale;
 public enum Status {
     PENDIENTE("pendiente"),
     DISPONIBLE("disponible"),
-    RESERVADA("reservada");
+    CONFIRMADA("confirmada"),
+    CANCELADA("cancelada");
 
     private final String dbValue;
 
@@ -22,7 +23,8 @@ public enum Status {
         return switch (raw.toLowerCase(Locale.ROOT)) {
             case "pendiente"  -> PENDIENTE;
             case "disponible" -> DISPONIBLE;
-            case "reservada"  -> RESERVADA;
+            case "confirmada"  -> CONFIRMADA;
+            case "cancelada" -> CANCELADA;
             default -> throw new IllegalArgumentException("Unknown status: " + raw);
         };
     }

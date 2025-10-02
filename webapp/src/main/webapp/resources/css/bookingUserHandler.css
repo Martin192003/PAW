@@ -1,0 +1,320 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1b1a1a;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor clásico de tus vistas */
+.app-boliches {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    min-height: 60vh;
+    padding-top: 100px;
+}
+
+/* Título clásico */
+.clubActivity-title {
+    font-size: 2.2rem;
+    color: #9c27b0;
+    margin-bottom: 32px;
+    font-family: 'Darklinos', Arial, sans-serif;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Card original (se deja para pantallas que la usen) */
+.card-lg.booking-details {
+    background: #222;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
+    margin-bottom: 24px;
+    padding: 24px 32px;
+    width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+}
+.card-lg.booking-details:hover {
+    box-shadow: 0 4px 16px rgba(156, 39, 176, 0.25);
+    transform: scale(1.03);
+    background: #292929;
+}
+.card-lg.booking-details span {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+/* Filas clásicas (pares etiqueta/valor) */
+.booking-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 4px 0;
+}
+.booking-label {
+    min-width: 110px;
+    font-weight: bold;
+    color: #9c27b0;
+    font-family: 'Darklinos', Arial, sans-serif;
+    font-size: 1.08rem;
+    margin-right: 12px;
+    letter-spacing: 1px;
+}
+.booking-value {
+    font-size: 1.08rem;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+/* Badges clásicos (compatibilidad) */
+.booking-status {
+    background: #e0e0e0;
+    color: #333;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+.booking-status-pending   { background: #7c5e00; color: #856404; }
+.booking-status-confirmed { background: #056800; color: #155724; }
+.booking-status-cancelled { background: #700012; color: #721c24; }
+
+.booking-status-container {
+    position: absolute;
+    right: 18px;
+    bottom: 14px;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+}
+
+.booking-card span {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Global responsive base (legacy) */
+@media (max-width: 900px) {
+    .app-boliches { margin-left: 100px; }
+    .clubActivity-title { font-size: 1.3rem; }
+    .card-lg.booking-details {
+        width: 95vw;
+        padding: 16px 8px;
+    }
+}
+
+
+
+/* Contenedor y grid centrados y contenidos */
+.booking-page {
+    width: 100%;
+    padding-top: 110px;
+    display: flex;
+    justify-content: center;
+}
+.booking-page .booking-grid {
+    width: 100%;
+    max-width: 960px;            /* ancho cómodo de lectura */
+    padding: 0 16px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 0.8fr; /* derecha levemente más angosta */
+    gap: 20px;
+    align-items: start;          /* evita que una card estire a la otra */
+}
+
+/* Neutralizar estilos globales dentro de booking-page */
+.booking-page .card,
+.booking-page .card-lg {
+    width: auto !important;
+    height: auto !important;     /* evita alturas fijas tipo 180px */
+    margin: 0 !important;        /* usamos gap del grid, no márgenes externos */
+    box-sizing: border-box;
+}
+
+/* Tarjetas / paneles */
+.booking-page .card.panel {
+    background: #1f1f1f;
+    border: 1px solid rgba(156,39,176,.25);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.35);
+}
+.booking-page .panel-title {
+    margin: 0 0 12px;
+    font-size: 1.05rem;
+    letter-spacing: .5px;
+    color: #cfa3d8;
+    font-family: 'Darklinos', Arial, sans-serif;
+}
+
+/* Título de la página con ancho limitado */
+.booking-page .clubActivity-title {
+    width: 100%;
+    max-width: 960px;
+    padding: 0 16px;
+    margin: 0 auto 16px;
+    font-size: 1.8rem; /* levemente más compacto en esta vista */
+}
+
+/* Definición de detalles (semántica dl/dt/dd) */
+.booking-page .details { margin: 0; }
+.booking-page .details .row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(255,255,255,.06);
+}
+.booking-page .details .row:last-child { border-bottom: 0; }
+.booking-page dt {
+    color: #a96ec0;
+    font-weight: 700;
+    letter-spacing: .4px;
+}
+.booking-page dd {
+    margin: 0;
+    color: #f4f4f4;
+    word-break: break-word;
+}
+.booking-page .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.booking-page .details .total dt,
+.booking-page .details .total dd {
+    font-size: 1.05rem;
+}
+
+/* Badges de estado (nuevos, alto contraste) */
+.booking-page .status-badge {
+    display: inline-block;
+    margin-left: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: .9rem;
+    letter-spacing: .3px;
+    border: 1px solid transparent;
+}
+.booking-page .status-badge.is-pending   { background:#3a2b00; color:#ffd666; border-color:#816400; }
+.booking-page .status-badge.is-confirmed { background:#0a3a0a; color:#a7f3a7; border-color:#1f7a1f; }
+.booking-page .status-badge.is-cancelled { background:#3a0a15; color:#ffb3c1; border-color:#8a233b; }
+
+/* Comprobante */
+.booking-page .receipt-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.booking-page .receipt-thumb {
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #151515;
+}
+.booking-page .receipt-thumb img {
+    display: block;
+    width: 100%;
+    max-height: 280px; /* más bajo para no dominar visualmente */
+    object-fit: contain;
+}
+
+/* Acciones */
+.booking-page .booking-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Botón outline rápido (en theme) */
+.booking-page .btn.btn-outline {
+    background: transparent;
+    border: 1px solid rgba(156,39,176,.5);
+    color: #e9d8f1;
+}
+.booking-page .btn.btn-outline:hover {
+    background: rgba(156,39,176,.12);
+}
+
+/* Topbar local para el botón Volver */
+.booking-page .booking-topbar {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto 10px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+}
+
+/* Botón Volver (ghost / outline) */
+.booking-page .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    border: 1px solid rgba(156,39,176,.45);
+    color: #e9d8f1;
+    background: rgba(156,39,176,.08);
+    font-weight: 600;
+    letter-spacing: .2px;
+    transition: background .2s, transform .1s, box-shadow .2s;
+}
+.booking-page .btn-back:hover {
+    background: rgba(156,39,176,.16);
+    box-shadow: 0 4px 12px rgba(0,0,0,.35);
+}
+.booking-page .btn-back:active { transform: translateY(1px); }
+
+/* Alerts (usadas por flashes y errores i18n) */
+.alert {
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-weight: 700;
+    margin: 8px auto 14px;
+    max-width: 960px;
+}
+.alert-danger  { background:#3a0a15; color:#ffd7de; border:1px solid #8a233b; }
+.alert-success { background:#0a3a0a; color:#a7f3a7; border:1px solid #1f7a1f; }
+.alert-info    { background:#0a233a; color:#b8e3ff; border:1px solid #1b5f8a; }
+
+
+@media (max-width: 980px) {
+    .booking-page .booking-grid {
+        max-width: 720px;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .booking-page .details .row {
+        grid-template-columns: 120px 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .booking-page .booking-grid { padding: 0 12px; }
+    .booking-page .clubActivity-title { font-size: 1.4rem; padding: 0 12px; }
+    .booking-page .details .row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+    .booking-page dt { opacity: .9; }
+}

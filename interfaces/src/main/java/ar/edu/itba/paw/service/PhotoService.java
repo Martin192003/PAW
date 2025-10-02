@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public interface PhotoService {
 
-    UUID upload(UUID clubId,
+    UUID upload(UUID id,
                 UUID postedBy,
                 String filename,
                 String contentType,
@@ -23,4 +23,5 @@ public interface PhotoService {
     UUID save(Photo photo);
 
     boolean delete(UUID photoId);
+    public Optional<Photo> findByBooking(UUID userId);
 }

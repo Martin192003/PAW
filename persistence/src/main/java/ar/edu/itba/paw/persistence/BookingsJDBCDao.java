@@ -111,9 +111,9 @@ public class BookingsJDBCDao implements BookingDao {
     }
 
     @Override
-    public List<Booking> findByUser(User user) {
+    public List<Booking> findByUser(UUID userId) {
         final String sql = "SELECT * FROM bookings WHERE user_id = ?";
-        return jdbc.query(sql, ROW_MAPPER, user.getId());
+        return jdbc.query(sql, ROW_MAPPER, userId);
     }
 
     @Override

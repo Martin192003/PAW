@@ -28,7 +28,7 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID upload(UUID clubId,
+    public UUID upload(UUID id,
                        UUID postedBy,
                        String filename,
                        String contentType,
@@ -47,7 +47,7 @@ public class PhotoServiceImpl implements PhotoService {
             throw new IllegalArgumentException("Filename inválido");
         }
 
-        return photoDao.create(clubId, postedBy, filename, contentType, data);
+        return photoDao.create(id, postedBy, filename, contentType, data);
     }
 
     @Override
@@ -58,6 +58,13 @@ public class PhotoServiceImpl implements PhotoService {
         int offset = safePage * safeSize;
         return photoDao.findByClub(clubId, safeSize, offset);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Photo> findByBooking(UUID bookingId){
+        return photoDao.findByBooking(bookingId);
+    }
+
 
     @Override
     @Transactional(readOnly = true)

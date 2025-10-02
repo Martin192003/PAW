@@ -1,0 +1,13 @@
+package ar.edu.itba.paw.service;
+
+import ar.edu.itba.paw.model.Receipt;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface ReceiptService {
+    UUID upload(UUID bookingId, UUID uploadedBy, String filename, String contentType, byte[] data);
+    Optional<Receipt> findByBooking(UUID bookingId);
+    Optional<Receipt> getWithId(UUID receiptId);
+    boolean deleteByBooking(UUID bookingId);
+}
