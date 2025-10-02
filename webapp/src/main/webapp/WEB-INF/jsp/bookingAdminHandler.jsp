@@ -26,6 +26,23 @@
 <div class="app-boliches">
     <div class="app-boliches booking-page">
 
+        <c:if test="${not empty errorKey}">
+            <div class="alert alert-danger">
+                <spring:message code="${errorKey}" text="${errorKey}"/>
+            </div>
+        </c:if>
+
+        <c:if test="${not empty success}">
+            <div class="alert alert-success">
+                <spring:message code="${success}" text="${success}"/>
+            </div>
+        </c:if>
+
+        <c:if test="${not empty info}">
+            <div class="alert alert-info">
+                <spring:message code="${info}" text="${info}"/>
+            </div>
+        </c:if>
         <!-- Título + badge de estado -->
         <h1 class="clubActivity-title">
             <span><spring:message code="booking.title.prefix" text="Reserva"/> #<c:out value="${booking.bookingId}"/></span>
@@ -121,29 +138,19 @@
                     <h2 class="panel-title"><spring:message code="booking.actions.title" text="Acciones"/></h2>
                     <div class="booking-actions">
                         <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/confirm' />">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-success">
                                 <i class="fa fa-check"></i> <spring:message code="booking.action.confirm" text="Confirmar"/>
                             </button>
                         </form>
 
                         <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-danger">
                                 <i class="fa fa-trash"></i> <spring:message code="booking.action.cancel" text="Cancelar"/>
                             </button>
                         </form>
                     </div>
-
-
-                    <c:if test="${not empty error}">
-                        <div class="alert alert-danger">
-                            <c:out value="${error}"/>
-                        </div>
-                    </c:if>
-                    <c:if test="${not empty success}">
-                        <div class="alert alert-success">
-                            <c:out value="${success}"/>
-                        </div>
-                    </c:if>
                 </article>
         </section>
     </div>

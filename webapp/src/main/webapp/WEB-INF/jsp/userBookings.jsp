@@ -38,13 +38,13 @@
                 <div class="booking-status-container">
                 <c:choose>
                     <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'PENDIENTE'}">
-                        <span class="booking-status booking-status-pending">Pendiente</span>
+                        <span class="booking-status booking-status-pending"><spring:message code="booking.status.pending" text="Pendiente"/></span>
                     </c:when>
                     <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'CONFIRMADA'}">
-                        <span class="booking-status booking-status-confirmed">Confirmada</span>
+                        <span class="booking-status booking-status-confirmed"><spring:message code="booking.status.confirmed" text="Confirmada"/></span>
                     </c:when>
                     <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'CANCELADA'}">
-                        <span class="booking-status booking-status-cancelled">Cancelada</span>
+                        <span class="booking-status booking-status-cancelled"><spring:message code="booking.status.cancelled" text="Cancelada"/></span>
                     </c:when>
                     <c:otherwise>
                         <span class="booking-status">${booking.status}</span>

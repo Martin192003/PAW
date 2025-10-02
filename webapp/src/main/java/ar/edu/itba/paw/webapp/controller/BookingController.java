@@ -214,36 +214,74 @@ public class BookingController {
     /** Confirmar reserva → RESERVADA */
     @PostMapping("/admin/bookings/{bookingId}/confirm")
     public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
-
         try {
-             bookingService.updateStatus(bookingId, Status.CONFIRMADA);
+            var booking = bookingService.findById(bookingId)
+                    .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
+            if (booking.getStatus() == Status.CANCELADA) {
+                ra.addFlashAttribute("error", "error.booking.cannotConfirmCancelled");
+            } else {
+                bookingService.updateStatus(bookingId, Status.CONFIRMADA);
+                ra.addFlashAttribute("success", "booking.confirmed");
+            }
         } catch (InvalidStatusTransitionException e) {
-            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("error", "error.booking.cannotConfirm");
+        } catch (BookingNotFoundException e) {
+            ra.addFlashAttribute("error", "booking.notfound");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "error.internal");
         }
-        ra.addFlashAttribute("success", "Reserva confirmada");
         return "redirect:/admin/booking?bookingId=" + bookingId;
     }
 
-    /** Cancelar / liberar → DISPONIBLE */
     @PostMapping("/admin/bookings/{bookingId}/cancel")
     public String cancel(@PathVariable UUID bookingId, RedirectAttributes ra) {
-        try{
+        try {
+            // Opcional: validar existencia para dar error amable
+            bookingService.findById(bookingId)
+                    .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
+
             bookingService.cancel(bookingId);
+            ra.addFlashAttribute("success", "booking.cancelled");
         } catch (InvalidStatusTransitionException e) {
-            throw new BadRequestException("No se puede cancelar una reserva que ya está DISPONIBLE");
+            // No conviertas a BadRequestException; devolvé mensaje de usuario y redirigí
+            ra.addFlashAttribute("error", "error.booking.cannotCancel");
+        } catch (BookingNotFoundException e) {
+            ra.addFlashAttribute("error", "booking.notfound");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "error.internal");
         }
-        ra.addFlashAttribute("success", "Reserva cancelada y mesa liberada");
         return "redirect:/admin/booking?bookingId=" + bookingId;
     }
+
 
     @PostMapping("/bookings/{bookingId}/cancel")
     public String cancelUser(@PathVariable UUID bookingId, RedirectAttributes ra) {
+        // Validate booking exists and user is allowed to cancel
+        var booking = bookingService.findById(bookingId)
+                .orElse(null);
+        if (booking == null) {
+            ra.addFlashAttribute("error", "booking.notfound");
+            return "redirect:/booking?bookingId=" + bookingId;
+        }
+
+        var current = securityService.getVerifiedLoggedUser();
+        if (booking.getUser() == null || !booking.getUser().getId().equals(current.getId())) {
+            ra.addFlashAttribute("error", "booking.notAllowedToCancel");
+            return "redirect:/booking?bookingId=" + bookingId;
+        }
+
         try{
             bookingService.cancel(bookingId);
+            ra.addFlashAttribute("success", "booking.cancelled");
         } catch (InvalidStatusTransitionException e) {
-            throw new BadRequestException("No se puede cancelar una reserva que ya está DISPONIBLE");
+            // flash a user-friendly message (use message code)
+            ra.addFlashAttribute("error", "error.booking.cannotCancel");
+        } catch (BookingNotFoundException e) {
+            ra.addFlashAttribute("error", "booking.notfound");
+        } catch (Exception e) {
+            // generic catch to avoid 500 and provide feedback
+            ra.addFlashAttribute("error", "error.internal");
         }
-        ra.addFlashAttribute("success", "Reserva cancelada y mesa liberada");
         return "redirect:/booking?bookingId=" + bookingId;
     }
 
@@ -403,7 +441,7 @@ public class BookingController {
         model.addAttribute("clubName", clubName);
 
         if (error != null && !error.isEmpty()) {
-            model.addAttribute("error", "error.booking.cannotConfirmCancelled");
+            model.addAttribute("errorKey", error);
         }
         if (success != null && !success.isEmpty()) {
             model.addAttribute("success", success);
@@ -415,15 +453,12 @@ public class BookingController {
     public String deleteReceipt(@PathVariable UUID bookingId, RedirectAttributes ra) {
         boolean deleted = receiptService.deleteByBooking(bookingId);
         ra.addFlashAttribute(deleted ? "success" : "info",
-                deleted ? "Receipt deleted" : "No receipt to delete");
+                deleted ? "receipt.deleted" : "receipt.notfound");
         return "redirect:/admin/booking?bookingId=" + bookingId;
     }
 
     @GetMapping("/bookings/{bookingId}")
-    public String show(@PathVariable UUID bookingId, Model model,
-                       @ModelAttribute("error") String error,
-                       @ModelAttribute("success") String success,
-                       @ModelAttribute("info") String info) {
+    public String show(@PathVariable UUID bookingId, Model model) {
         final Optional<Booking> b = bookingService.findById(bookingId);
         if (b.isEmpty()) throw new BookingNotFoundException("La reserva no existe");
         model.addAttribute("booking", b.get());
@@ -432,15 +467,6 @@ public class BookingController {
         model.addAttribute("hasReceipt", rOpt.isPresent());
         rOpt.ifPresent(r -> model.addAttribute("receipt", r));
 
-        if (error != null && !error.isEmpty()) {
-            model.addAttribute("error", error);
-        }
-        if (success != null && !success.isEmpty()) {
-            model.addAttribute("success", success);
-        }
-        if (info != null && !info.isEmpty()) {
-            model.addAttribute("info", info);
-        }
         return "bookings/show";
     }
 
@@ -471,8 +497,8 @@ public class BookingController {
 
         boolean deleted = receiptService.deleteByBooking(bookingId);
         ra.addFlashAttribute(deleted ? "success" : "info",
-                deleted ? "Receipt deleted" : "No receipt to delete");
-        return "redirect:/bookings/" + bookingId;
+                deleted ? "receipt.deleted" : "receipt.notfound");
+        return "redirect:/booking?bookingId=" + bookingId;
     }
 
 

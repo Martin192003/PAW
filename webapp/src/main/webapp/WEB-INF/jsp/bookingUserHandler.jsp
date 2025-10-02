@@ -33,10 +33,10 @@
         <div class="alert alert-danger"><c:out value="${error}"/></div>
     </c:if>
     <c:if test="${not empty success}">
-        <div class="alert alert-success"><c:out value="${success}"/></div>
+        <div class="alert alert-success"><spring:message code="${success}" /></div>
     </c:if>
     <c:if test="${not empty info}">
-        <div class="alert alert-info"><c:out value="${info}"/></div>
+        <div class="alert alert-info"><spring:message code="${info}" /></div>
     </c:if>
 
     <!-- Título + badge -->
