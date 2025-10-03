@@ -22,10 +22,6 @@
             <spring:message code="menu.reservations" text="Reservas"/>
         </a>
 
-        <a href="#" class="sidebar-btn ${activePage == 'ayuda' ? 'active' : ''}">
-            <spring:message code="menu.help"/>
-        </a>
-
         <a href="<c:url value='/logout'/>" class="sidebar-btn logout-btn">
             <i class="fa-solid fa-right-from-bracket"></i>&nbsp;&nbsp;<spring:message code="button.logout"/>
         </a>

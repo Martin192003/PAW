@@ -6,16 +6,15 @@
 
 <html>
 <head>
-    <title>Reservas de mis clubes</title>
+    <title><spring:message code="bookings.title.myclubs"/></title>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/clubActivity.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/sidebar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/bookings.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/bookingUserHandler.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -23,34 +22,39 @@
 
 <c:set var="showRightButtons" value="true" />
 <c:set var="showProfileButton" value="false" />
-<c:set var="showAddClubButton" value="true" />
+<c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <c:set var="activePage" value="clubsBookings" />
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 
     <div class="app-bookings">
-        <h1>Reservas de mis clubes</h1>
+        <div class="detail-back">
+            <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/clubs"/>'">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+        </div>
+        <h1><spring:message code="bookings.reservations.myclubs"/></h1>
         <c:if test="${empty bookings}">
-            <div style="color:#e53935; font-size:1.1rem; margin-top:24px;">No hay reservas en tus clubes.</div>
+            <div style="color:#ffffff; font-size:1.1rem; margin-top:24px;"><spring:message code="bookings.reservations.nobookings"/></div>
         </c:if>
         <c:forEach var="booking" items="${bookings}">
         <a href="<c:url value='/admin/booking?bookingId=${booking.bookingId}' />" style="text-decoration:none; color:inherit;">
             <div class="card-lg booking-card" style="position:relative; margin-bottom:24px;">
-                    <span><b>ID Reserva:</b> <c:out value="${booking.bookingId}"/></span><br/>
-                    <span><b>Boliche:</b> <c:out value="${clubNames[booking.bookingId]}"/></span><br/>
+                    <span><b><spring:message code="bookings.id"/></b> <c:out value="${booking.bookingId}"/></span><br/>
+                    <span><b><spring:message code="bookings.club"/></b> <c:out value="${clubNames[booking.bookingId]}"/></span><br/>
                     <div class="booking-status-container">
                         <c:choose>
                             <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'PENDIENTE'}">
-                                <span class="booking-status booking-status-pending"><spring:message code="booking.status.pending" text="Pendiente"/></span>
+                                <p class="status-badge is-pending"><spring:message code="booking.status.pending" text="Pendiente"/></p>
                             </c:when>
                             <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'CONFIRMADA'}">
-                                <span class="booking-status booking-status-confirmed"><spring:message code="booking.status.confirmed" text="Confirmada"/></span>
+                                <p class="status-badge is-confirmed"><spring:message code="booking.status.confirmed" text="Confirmada"/></p>
                             </c:when>
                             <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'CANCELADA'}">
-                                <span class="booking-status booking-status-cancelled"><spring:message code="booking.status.cancelled" text="Cancelada"/></span>
+                                <p class="status-badge is-cancelled"><spring:message code="booking.status.cancelled" text="Cancelada"/></p>
                             </c:when>
                             <c:otherwise>
-                                <span class="booking-status">${booking.status}</span>
+                                <p class="status-badge">${booking.status}</p>
                             </c:otherwise>
                         </c:choose>
                     </div>
