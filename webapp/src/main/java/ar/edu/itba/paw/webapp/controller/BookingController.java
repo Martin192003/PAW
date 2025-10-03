@@ -403,7 +403,7 @@ public class BookingController {
                     file.getContentType(),
                     file.getBytes()
             );
-            ra.addFlashAttribute("success", "Receipt uploaded");
+            ra.addFlashAttribute("success", "receipt.uploaded");
         } catch (DuplicateKeyException e) {
             ra.addFlashAttribute("info", "A receipt is already uploaded. Delete it to upload a new one.");
         }
