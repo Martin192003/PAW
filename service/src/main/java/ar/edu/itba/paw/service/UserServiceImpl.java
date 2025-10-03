@@ -165,4 +165,47 @@ public class UserServiceImpl implements UserService {
             return false;
         }
     }
+
+    @Override
+    @Transactional
+    public boolean requestPasswordReset(String email) {
+        User user = userDao.findByEmail(email).orElse(null);
+        if (user == null) {
+            return false; // No revelar si el email existe o no
+        }
+
+        String resetToken = UUID.randomUUID().toString();
+        userDao.updateResetPasswordToken(user.getId(), resetToken);
+
+        try {
+            mailService.sendPasswordResetEmail(user.getEmail(), user.getUsername(), resetToken);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean resetPassword(String token, String newPassword) {
+        User user = userDao.findByResetPasswordToken(token).orElse(null);
+        if (user == null) {
+            return false;
+        }
+
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        userDao.update(
+                user.getId(),
+                user.getUsername(),
+                user.getName(),
+                user.getSurname(),
+                user.getEmail(),
+                encodedPassword,
+                user.getCellphone(),
+                user.getRole()
+        );
+
+        userDao.clearResetPasswordToken(user.getId());
+        return true;
+    }
 }

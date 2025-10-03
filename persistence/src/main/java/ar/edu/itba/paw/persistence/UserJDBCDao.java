@@ -32,6 +32,7 @@ public class UserJDBCDao implements UserDao {
         u.setRole(roleStr == null ? null : Role.valueOf(roleStr.trim().toUpperCase(Locale.ROOT)));
         u.setVerified(rs.getBoolean("is_verified"));
         u.setVerificationToken(rs.getString("verification_token"));
+        u.setResetPasswordToken(rs.getString("reset_password_token")); // AGREGAR ESTA LÍNEA
         u.setCreatedAt(rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(java.time.ZoneOffset.UTC));
         return u;
     };
@@ -156,5 +157,23 @@ public class UserJDBCDao implements UserDao {
     public void updateVerificationToken(UUID userId, String token) {
         final String sql = "UPDATE users SET verification_token = ? WHERE user_id = ?";
         jdbc.update(sql, token, userId);
+    }
+
+    @Override
+    public void updateResetPasswordToken(UUID userId, String token) {
+        final String sql = "UPDATE users SET reset_password_token = ? WHERE user_id = ?";
+        jdbc.update(sql, token, userId);
+    }
+
+    @Override
+    public Optional<User> findByResetPasswordToken(String token) {
+        final String sql = "SELECT * FROM users WHERE reset_password_token = ?";
+        return jdbc.query(sql, ROW_MAPPER, token).stream().findFirst();
+    }
+
+    @Override
+    public void clearResetPasswordToken(UUID userId) {
+        final String sql = "UPDATE users SET reset_password_token = NULL WHERE user_id = ?";
+        jdbc.update(sql, userId);
     }
 }

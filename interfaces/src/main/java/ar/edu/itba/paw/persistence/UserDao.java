@@ -26,4 +26,8 @@ public interface UserDao {
 
     void updateVerificationStatus(UUID userId, boolean isVerified);
     void updateVerificationToken(UUID userId, String token);
+
+    void updateResetPasswordToken(UUID userId, String token);
+    Optional<User> findByResetPasswordToken(String token);
+    void clearResetPasswordToken(UUID userId);
 }
