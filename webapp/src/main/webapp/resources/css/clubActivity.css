@@ -147,12 +147,22 @@ body {
     border-radius: 4px;
     transition: all 0.2s;
 }
-
 .page-btn:hover {
     color: #b1b1b1;
 }
-
-
+.app-boliches .detail-back {
+    position: fixed;
+    top:  106px;
+    left:  190px;
+    z-index: 120;
+    margin: 0;
+}
+.detail-back .btn-success {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 @media (max-width: 900px) {
     .app-boliches {
         margin-left: 100px;

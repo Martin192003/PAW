@@ -1,3 +1,9 @@
+@font-face {
+    font-family: 'Darklinos';
+    src: url('../fonts/DARKLINOS.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 body {
     font-family: Arial, sans-serif;
     background-color: #1b1a1a;
@@ -10,10 +16,51 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
+    justify-content: flex-start;
+    width: 100vw;
     min-height: 60vh;
     padding-top: 100px;
+    box-sizing: border-box;
 }
+.app-bookings h1{
+    font-size: 2.2rem;
+    color: #9c27b0;
+    margin-bottom: 32px;
+    font-family: 'Darklinos', Arial, sans-serif;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.app-bookings .detail-back {
+    position: fixed;
+    top:  106px;
+    left:  190px;
+    z-index: 120;
+    margin: 0;
+}
+.detail-back .btn-success {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-badge {
+    display: inline-block;
+    margin-left: 12px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.3px;
+    border: 1px solid transparent;
+    font-family: 'Darklinos', Arial, sans-serif;
+}
+.status-badge.is-pending   { background:#3a2b00; color:#ffd666; border-color:#816400; }
+.status-badge.is-confirmed { background:#0a3a0a; color:#a7f3a7; border-color:#1f7a1f; }
+.status-badge.is-cancelled { background:#3a0a15; color:#ffb3c1; border-color:#8a233b; }
 
 .clubActivity-title {
     font-size: 2.2rem;
@@ -28,7 +75,7 @@ body {
 }
 
 .card-lg.booking-card {
-    background: #222;
+    background: #3c3c3c;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
     margin-bottom: 24px;
@@ -43,7 +90,6 @@ body {
 .card-lg.booking-card:hover {
     box-shadow: 0 4px 16px rgba(156, 39, 176, 0.25);
     transform: scale(1.03);
-    background: #292929;
 }
 
 .card-lg.booking-card a {
@@ -57,6 +103,14 @@ body {
     font-size: 1.1rem;
     margin-bottom: 8px;
     color: #fff;
+}
+.booking-status-container {
+    position: absolute;
+    right: 18px;
+    bottom: 14px;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
 }
 
 @media (max-width: 900px) {

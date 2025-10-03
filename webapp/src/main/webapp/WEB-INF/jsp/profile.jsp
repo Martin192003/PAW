@@ -19,11 +19,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div class="top-bar">
-    <a href="<c:url value='/clubs' />" class="logo-link">
-        <div class="app-title"><spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/></div>
-    </a>
-</div>
+<c:set var="showRightButtons" value="true" />
+<c:set var="showProfileButton" value="false" />
+<c:set var="showAddClubButton" value="false" />
+<%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <c:set var="activePage" value="profile" />
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 
@@ -37,31 +36,34 @@
 
     <div class="profile-card">
         <div class="profile-info-row">
-            <span class="profile-label"><spring:message code="profile.username"/>:<br> ${user.username}</span>
+            <span class="profile-label"><spring:message code="profile.username"/>:</span>
+            <span class="profile-value">${user.username}</span>
             <button class="btn btn-success btn-edit-small" onclick="openModal('editUsernameModal')"><i class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
-            <span class="profile-label"><spring:message code="profile.name"/>:<br> ${user.name}</span>
+            <span class="profile-label"><spring:message code="profile.name"/>:</span>
+            <span class="profile-value">${user.name}</span>
             <button class="btn btn-success btn-edit-small" onclick="openModal('editNameModal')"><i class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
-            <span class="profile-label"><spring:message code="profile.surname"/>:<br> ${user.surname}</span>
+            <span class="profile-label"><spring:message code="profile.surname"/>:</span>
+            <span class="profile-value">${user.surname}</span>
             <button class="btn btn-success btn-edit-small" onclick="openModal('editSurnameModal')"><i class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
-            <span class="profile-label"><spring:message code="profile.email"/>:<br> ${user.email}</span>
+            <span class="profile-label"><spring:message code="profile.email"/>:</span>
+            <span class="profile-value">${user.email}</span>
             <button class="btn btn-success btn-edit-small" onclick="openModal('editEmailModal')"><i class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
-            <span class="profile-label"><spring:message code="profile.cellphone"/>:<br> ${user.cellphone}</span>
+            <span class="profile-label"><spring:message code="profile.cellphone"/>:</span>
+            <span class="profile-value">${user.cellphone}</span>
             <button class="btn btn-success btn-edit-small" onclick="openModal('editCellphoneModal')"><i class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
-            <span class="profile-label"><spring:message code="profile.password"/>:</span>
+            <span class="profile-label"><spring:message code="form.password"/>:</span>
             <span class="profile-value">••••••••</span>
-            <button type="button" class="btn btn-success btn-edit-small" onclick="window.location.href='<c:url value='/forgot-password' />'" title="<spring:message code='profile.password.change'/>">
-                <i class="fa-solid fa-key"></i>
-            </button>
+            <button type="button" class="btn btn-success btn-edit-small" onclick="window.location.href='<c:url value='/forgot-password' />'"><i class="fa-solid fa-key"></i></button>
         </div>
     </div>
 </div>

@@ -27,6 +27,11 @@
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 
 <div class="app-boliches">
+    <div class="detail-back">
+        <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/clubs"/>'">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+    </div>
     <h1 class="clubActivity-title"><spring:message code="title.myClubs"/></h1>
     <c:forEach var="club" items="${clubs}">
         <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">

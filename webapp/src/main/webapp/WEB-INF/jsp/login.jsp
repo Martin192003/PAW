@@ -50,7 +50,7 @@
                 <div class="login-buttons">
                     <button type="submit" class="btn btn-success"> <spring:message code="button.login"/> </button>
                     <a href="<c:url value='/register' />" class="login-forgot"><spring:message code="login.noaccount"/></a>
-                    <a href="<c:url value='/forgot-password' />" class="login-forgot"><spring:message code="login.forgotpassword"/></a>
+                    <a href="<c:url value='/forgot-password' />" class="login-forgot"><spring:message code="login.forgot.password"/></a>
                 </div>
             </form>
         </div>
