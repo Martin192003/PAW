@@ -171,7 +171,7 @@ public class UserServiceImpl implements UserService {
     public boolean requestPasswordReset(String email) {
         User user = userDao.findByEmail(email).orElse(null);
         if (user == null) {
-            return false; // No revelar si el email existe o no
+            return false;
         }
 
         String resetToken = UUID.randomUUID().toString();

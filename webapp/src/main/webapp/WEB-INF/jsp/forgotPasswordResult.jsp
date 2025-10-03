@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/contactForm.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/login.css' />" />
     <meta charset="UTF-8">
-    <title>Recuperar Contraseña</title>
+    <title><spring:message code="forgot.password.title"/></title>
 </head>
 <body>
 <div class="login-page">
@@ -23,17 +23,27 @@
         </div>
         <div class="login-card">
             <div class="login-title">
-                Recuperar Contraseña
+                <spring:message code="forgot.password.title"/>
             </div>
-            <p>Ingresa tu email y te enviaremos instrucciones para recuperar tu contraseña.</p>
+            <p class="login-description"><spring:message code="forgot.password.description"/></p>
+
+            <spring:message code="forgot.password.email.placeholder" var="phEmail"/>
 
             <form method="post" action="${pageContext.request.contextPath}/forgot-password">
                 <div class="form-group">
-                    <input id="email" name="email" type="email" class="form-control" placeholder="Email" required/>
+                    <input id="email" name="email" type="email" class="form-control"
+                           placeholder="${phEmail}" required/>
                 </div>
+
+                <c:if test="${not empty success}">
+                    <div class="success" role="alert">
+                            ${success}
+                    </div>
+                </c:if>
+
                 <div class="login-buttons">
-                    <button type="submit" class="btn btn-success">Enviar</button>
-                    <a href="<c:url value='/login' />" class="login-forgot">Volver al Login</a>
+                    <button type="submit" class="btn btn-success"><spring:message code="forgot.password.button"/></button>
+                    <a href="<c:url value='/login' />" class="login-forgot"><spring:message code="forgot.password.back.login"/></a>
                 </div>
             </form>
         </div>
