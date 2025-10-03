@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.config;
 
+import ar.edu.itba.paw.webapp.auth.CustomAuthenticationFailureHandler;
 import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,10 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private PawUserDetailsService userDetailsService;
 
+    @Autowired
+    private CustomAuthenticationFailureHandler customAuthenticationFailureHandler; // AGREGAR ESTO
+
+
     @Override
     protected void configure(final HttpSecurity http) throws Exception {
         http.userDetailsService(userDetailsService)
@@ -34,8 +39,7 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/admin/**").hasRole("ADMIN")
 
                 // Public routes
-                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify").permitAll()
-                .antMatchers(HttpMethod.GET, "/clubs").permitAll()
+                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify", "/unverified", "/resend-verification", "/forgot-password", "/reset-password").permitAll()                .antMatchers(HttpMethod.GET, "/clubs").permitAll()
                 .antMatchers(HttpMethod.GET, "/clubs/{id}").permitAll()
 
                 .anyRequest().authenticated()
@@ -43,8 +47,7 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .usernameParameter("usernameOrEmail")
                 .passwordParameter("password")
                 .defaultSuccessUrl("/clubs", false)
-                .failureUrl("/login?error")
-                .loginPage("/login")
+                .failureHandler(customAuthenticationFailureHandler)                .loginPage("/login")
                 .and().rememberMe()
                 .rememberMeParameter("j_rememberme")
                 .userDetailsService(userDetailsService)

@@ -56,6 +56,13 @@
             <span class="profile-label"><spring:message code="profile.cellphone"/>:<br> ${user.cellphone}</span>
             <button class="btn btn-success btn-edit-small" onclick="openModal('editCellphoneModal')"><i class="fa-solid fa-pen"></i></button>
         </div>
+        <div class="profile-info-row">
+            <span class="profile-label">Contraseña:</span>
+            <span class="profile-value">••••••••</span>
+            <button type="button" class="btn btn-success btn-edit-small" onclick="window.location.href='<c:url value='/forgot-password' />'">
+                <i class="fa-solid fa-key"></i>
+            </button>
+        </div>
     </div>
 </div>
 

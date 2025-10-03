@@ -17,6 +17,7 @@ public class User {
     private OffsetDateTime createdAt;
     private boolean isVerified;
     private String verificationToken;
+    private String resetPasswordToken;
 
     public User(){}
 
@@ -65,4 +66,7 @@ public class User {
 
     public String getVerificationToken() { return verificationToken; }
     public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken;}
+
+    public String getResetPasswordToken() { return resetPasswordToken; }
+    public void setResetPasswordToken(String resetPasswordToken) { this.resetPasswordToken = resetPasswordToken; }
 }
