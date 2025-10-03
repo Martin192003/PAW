@@ -11,9 +11,7 @@ import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional
@@ -162,6 +160,40 @@ public class BookingServiceImpl implements BookingService {
         return bookingDao.delete(bookingId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Booking> searchPaginated(UUID userId,
+                                         UUID clubId,
+                                         UUID bookingId,
+                                         Status status,
+                                         String sort,
+                                         int limit,
+                                         int offset) {
+        return bookingDao.searchPaginated(userId, clubId, bookingId, status, sort, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countSearch(UUID userId,
+                           UUID clubId,
+                           UUID bookingId,
+                           Status status) {
+        return bookingDao.countSearch(userId, clubId, bookingId, status);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Booking> findAllPaginated(int limit, int offset) {
+        return bookingDao.findAllPaginated(limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countAll() {
+        return bookingDao.countAll();
+    }
+
+
     private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
         if (!start.isBefore(end)) throw new InvalidDateRangeException("Rango inválido: " + start + " - " + end);
     }
@@ -231,4 +263,5 @@ public class BookingServiceImpl implements BookingService {
             default -> throw new InvalidStatusTransitionException(from, to);
         }
     }
+
 }

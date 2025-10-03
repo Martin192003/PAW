@@ -1,0 +1,119 @@
+/* filters.css - styles for the filters area in clubsBookings.jsp */
+
+.filter-container {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    width: 100%;
+    margin: 8px 0; /* reduced gap under title */
+    max-width: 1200px;
+}
+
+/* When there is a sidebar, shift content to the right so sidebar doesn't overlap.
+   Use a breakpoint so on small screens we don't add left margin. */
+@media (min-width: 900px) {
+    .filter-container {
+        margin-left: 180px; /* keep space for sidebar */
+        max-width: calc(100% - 200px);
+    }
+}
+
+/* compact, dark filter bar like index.css */
+.filter-bar {
+    display: flex;
+    align-items: start;
+    background: #3c3c3c;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    overflow: hidden;
+    gap: 8px;
+    padding: 6px;
+    width: 100%;
+    flex-wrap: wrap;
+    position: relative; /* allow z-index to work */
+    z-index: 110; /* above sidebar (100) and topbar (99) */
+}
+
+/* prevent unwanted wrapping when there's sufficient horizontal space */
+@media (min-width: 1024px) {
+    .filter-bar { flex-wrap: nowrap; }
+}
+
+.filter-item {
+    flex: 1; /* let items share available space like index.css */
+    padding: 0 12px;
+    border: none;
+    font-size: 14px;
+    height: 48px; /* match index.css and datetime height */
+    color: #fff;
+    background: #3c3c3c;
+    outline: none;
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-width: 100px;
+    white-space: nowrap; /* prevent long content from pushing layout */
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+/* specific input styles to ensure consistent height */
+.filter-item input[type="datetime-local"],
+.filter-item input[type="text"] {
+    height: 48px;
+    padding: 6px 10px;
+}
+
+/* placeholders and options in selects */
+.filter-item::placeholder,
+.filter-item option[disabled] {
+    color: white;
+    opacity: 1;
+}
+
+select.filter-item { color: #fff; }
+select.filter-item option { color: #fff; }
+select.filter-item option[disabled] { display: none; }
+select.filter-item:invalid { color: #aaa; }
+
+/* allow one item (like name) to grow more if needed */
+.filter-item.filter-name { flex: 1 1 260px; max-width: none; }
+
+/* compact specific controls */
+.filter-item.filter-isbar { flex: 0 0 140px; }
+.filter-sort { min-width: 180px; max-width: 280px; flex: 0 0 220px; }
+
+/* align apply button to the right similar to index.css */
+.btn.btn-filter { margin-left: auto; }
+
+/* Reset button style consistent with index.css */
+.btn-reset {
+    background: none;
+    border: none;
+    color: #9c27b0;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 12px;
+    transition: color 0.2s ease;
+}
+.btn-reset:hover { color: #540761; }
+
+/* reduce h1 spacing so title and filters are closer */
+.app-bookings h1 {
+    margin: 6px 0 10px 0;
+    padding-left: 8px; /* small left padding to align with content area */
+}
+
+/* responsive: stack vertically on small screens */
+@media (max-width: 720px) {
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .filter-item { width: 100%; max-width: 100%; }
+    .filter-sort { width: 100%; }
+    .btn.btn-filter { width: 100%; justify-content: center; margin-left: 0; }
+    .btn-reset { width: 100%; margin-left: 0; }
+}
+
+/* minor helpers */
+.no-results { text-align: center; color: #666; padding: 18px; }
+
+.field-error { color:#e53935; font-size:.9rem; margin-top:4px; }

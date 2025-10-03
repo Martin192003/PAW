@@ -2,7 +2,6 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Status;
-import ar.edu.itba.paw.model.Table;
 import ar.edu.itba.paw.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -121,5 +120,107 @@ public class BookingsJDBCDao implements BookingDao {
         final String sql = "SELECT * FROM bookings WHERE table_id = ?";
         return jdbc.query(sql, ROW_MAPPER, tableId);
     }
+
+    @Override
+    public List<Booking> findAllPaginated(int limit, int offset) {
+        final String sql = "SELECT * FROM bookings ORDER BY created_at DESC NULLS LAST LIMIT ? OFFSET ?";
+        return jdbc.query(sql, ROW_MAPPER, limit, offset);
+    }
+
+    @Override
+    public int countAll() {
+        final String sql = "SELECT COUNT(*) FROM bookings";
+        return jdbc.queryForObject(sql, Integer.class);
+    }
+
+    private static String resolveOrderBy(String sort) {
+        // Whitelist para evitar SQL injection
+        return switch (sort == null ? "" : sort) {
+            case "created_asc" -> "b.created_at ASC NULLS LAST";
+            case "start_desc"  -> "b.booking_start DESC";
+            case "start_asc"   -> "b.booking_start ASC";
+            case "status_asc"  -> "b.status ASC";
+            default             -> "b.created_at DESC NULLS LAST"; // created_desc (default)
+        };
+    }
+
+    @Override
+    public List<Booking> searchPaginated(UUID userId,
+                                         UUID clubId,
+                                         UUID bookingId,
+                                         Status status,
+                                         String sort,
+                                         int limit,
+                                         int offset) {
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT b.* " +
+                        "FROM bookings b " +
+                        // JOIN opcional para filtrar por club:
+                        "LEFT JOIN club_tables t ON t.table_id = b.table_id " +
+                        "WHERE 1=1"
+        );
+        List<Object> args = new ArrayList<>();
+
+        if (userId != null) {
+            sql.append(" AND b.user_id = ?");
+            args.add(userId);
+        }
+        if (clubId != null) {
+            sql.append(" AND t.club_id = ?");
+            args.add(clubId);
+        }
+        if (bookingId != null) {
+            sql.append(" AND b.booking_id = ?");
+            args.add(bookingId);
+        }
+        if (status != null) {
+            sql.append(" AND LOWER(b.status) = LOWER(?)");
+            args.add(status.db()); // en tu Status.db() devolvés "pendiente", "confirmada", etc.
+        }
+
+        sql.append(" ORDER BY ").append(resolveOrderBy(sort));
+        sql.append(" LIMIT ? OFFSET ?");
+        args.add(limit);
+        args.add(offset);
+
+        return jdbc.query(sql.toString(), ROW_MAPPER, args.toArray());
+    }
+
+    @Override
+    public int countSearch(UUID userId,
+                           UUID clubId,
+                           UUID bookingId,
+                           Status status) {
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(*) " +
+                        "FROM bookings b " +
+                        "LEFT JOIN club_tables t ON t.table_id = b.table_id " +
+                        "WHERE 1=1"
+        );
+        List<Object> args = new ArrayList<>();
+
+        if (userId != null) {
+            sql.append(" AND b.user_id = ?");
+            args.add(userId);
+        }
+        if (clubId != null) {
+            sql.append(" AND t.club_id = ?");
+            args.add(clubId);
+        }
+        if (bookingId != null) {
+            sql.append(" AND b.booking_id = ?");
+            args.add(bookingId);
+        }
+        if (status != null) {
+            sql.append(" AND LOWER(b.status) = LOWER(?)");
+            args.add(status.db());
+        }
+
+        return jdbc.queryForObject(sql.toString(), Integer.class, args.toArray());
+    }
+
+
 
 }

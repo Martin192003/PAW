@@ -59,12 +59,45 @@ body {
     color: #fff;
 }
 
+/* Pagination styles: match index.css pagination appearance */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 2px;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.page-btn:hover {
+    color: #b1b1b1;
+    background: rgba(255,255,255,0.02);
+}
+
+.page-info {
+    color: #bdbdbd;
+    margin: 0 10px;
+    font-size: 0.95rem;
+}
+
 @media (max-width: 900px) {
     .clubActivity-title {
         font-size: 1.3rem;
     }
-    .card-lg.booking-card {
+ x   .card-lg.booking-card {
         width: 95vw;
         padding: 16px 8px;
     }
+    .pagination { gap: 8px; }
 }

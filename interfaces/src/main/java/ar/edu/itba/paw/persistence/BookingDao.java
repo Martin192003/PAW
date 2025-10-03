@@ -22,4 +22,23 @@ public interface BookingDao {
     Booking update(UUID bookingId, User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
 
     boolean delete(UUID bookingId);
+
+    int countAll();
+
+    List<Booking> searchPaginated(UUID userId,
+                                  UUID clubId,
+                                  UUID bookingId,
+                                  Status status,
+                                  String sort,       // created_desc | created_asc | start_desc | start_asc | status_asc
+                                  int limit,
+                                  int offset);
+
+    int countSearch(UUID userId,
+                    UUID clubId,
+                    UUID bookingId,
+                    Status status);
+
+    List<Booking> findAllPaginated(int limit, int offset);
+
+
 }

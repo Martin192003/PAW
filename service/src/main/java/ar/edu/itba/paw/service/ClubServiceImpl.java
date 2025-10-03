@@ -2,22 +2,23 @@ package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.persistence.ClubDao;
+import ar.edu.itba.paw.persistence.ClubTablesDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ClubServiceImpl implements ClubService{
 
     private final ClubDao clubDao;
     private final EmailServiceImpl mailService;
+    private final ClubTablesDao tablesDao;
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, EmailServiceImpl mailService) {
+    public ClubServiceImpl(ClubDao clubDao, EmailServiceImpl mailService, ClubTablesDao tablesDao) {
+        this.tablesDao = tablesDao;
         this.mailService = mailService;
         this.clubDao = clubDao;
     }
@@ -58,7 +59,6 @@ public class ClubServiceImpl implements ClubService{
         return clubDao.update(clubId, name, location, rating, quantityRatings, priceRange, description, contactInfoId, musicGenre, zone, isBar);
     }
 
-    // ClubService.java
     public Club updateClub(Club club) {
         return clubDao.update(
                 club.getClubId(),
@@ -116,5 +116,19 @@ public class ClubServiceImpl implements ClubService{
                            String priceRange,
                            Boolean isBar) {
         return clubDao.countSearch(nameLike, location, musicGenre, priceRange, isBar);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Map<UUID, String> mapClubNames(List<Booking> bookings) {
+        var out = new HashMap<UUID, String>(Math.max(16, bookings.size()*2));
+        for (var b : bookings) {
+            tablesDao.findById(b.getTableId()).ifPresent(t ->
+                    clubDao.findById(t.getClubId()).ifPresent(c ->
+                            out.put(b.getBookingId(), c.getClubName())
+                    )
+            );
+        }
+        return out;
     }
 }

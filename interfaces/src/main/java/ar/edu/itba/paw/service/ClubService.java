@@ -1,9 +1,11 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,4 +37,6 @@ public interface ClubService {
     List<Club> getClubsByUserPaginated(UUID userId, int limit, int offset);
 
     int countClubsByUser(UUID userId);
+
+    Map<UUID, String> mapClubNames(List<Booking> bookings);
 }
