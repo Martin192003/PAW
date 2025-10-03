@@ -132,6 +132,15 @@ public class BookingServiceImpl implements BookingService {
         );
 
 
+        // If status became CANCELADA, try freeing the table
+        if (newStatus == Status.CANCELADA) {
+            try {
+                final Table table = ensureTableExists(updated.getTableId());
+                maybeFreeTable(table);
+            } catch (TableNotFoundException ignored) {
+            }
+        }
+
         return updated;
     }
 
@@ -151,6 +160,14 @@ public class BookingServiceImpl implements BookingService {
                 existing.getBookingStart(),
                 existing.getBookingEnd()
         );
+
+        // After cancelling, possibly free the table if no other active bookings exist
+        try {
+            final Table table = ensureTableExists(existing.getTableId());
+            maybeFreeTable(table);
+        } catch (TableNotFoundException ignored) {
+            // If table disappeared, nothing to free
+        }
 
         return true;
     }
@@ -212,7 +229,8 @@ public class BookingServiceImpl implements BookingService {
         final boolean overlaps = bookings.stream()
                 .filter(b -> excludeBookingId == null || !b.getBookingId().equals(excludeBookingId))
                 .anyMatch(b ->
-                        b.getStatus() != Status.DISPONIBLE &&
+                        // only consider active bookings (pending or confirmed) when checking overlap
+                        (b.getStatus() == Status.PENDIENTE || b.getStatus() == Status.CONFIRMADA) &&
                                 b.getBookingStart().isBefore(end) &&
                                 b.getBookingEnd().isAfter(start)
                 );
