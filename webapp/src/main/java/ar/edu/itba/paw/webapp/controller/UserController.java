@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.webapp.form.EditUserForm;
 import ar.edu.itba.paw.webapp.form.UserForm;
 import ar.edu.itba.paw.service.UserService;
 import org.slf4j.Logger;
@@ -47,12 +48,6 @@ public class UserController {
         if (binding.hasErrors()) {
             return "register";
         }
-        try {
-            userService.create(form.getUsername(), form.getName(), form.getPassword(), form.getSurname(), form.getEmail(), form.getCellphone(), "USER");
-        } catch (DuplicateEntityException ex) {
-            binding.rejectValue("email", "user.email.duplicate", "Email already in use");
-            return "register";
-        }
         return "verifyMailNotice";
     }
 
@@ -82,13 +77,13 @@ public class UserController {
     @GetMapping("/profile/edit")
     public String editProfile(Model model) {
         User user = userService.findById(getCurrentUserId());
-        UserForm userForm = new UserForm();
-        userForm.setUsername(user.getUsername());
-        userForm.setName(user.getName());
-        userForm.setSurname(user.getSurname());
-        userForm.setEmail(user.getEmail());
-        userForm.setCellphone(user.getCellphone());
-        model.addAttribute("userForm", userForm);
+        EditUserForm editUserForm = new EditUserForm();
+        editUserForm.setUsername(user.getUsername());
+        editUserForm.setName(user.getName());
+        editUserForm.setSurname(user.getSurname());
+        editUserForm.setEmail(user.getEmail());
+        editUserForm.setCellphone(user.getCellphone());
+        model.addAttribute("editUserForm", editUserForm);
         return "profile";
     }
 
@@ -96,48 +91,132 @@ public class UserController {
     public String showProfile(Model model) {
         User user = userService.findById(getCurrentUserId());
         model.addAttribute("user", user);
+
+        EditUserForm editUserForm = new EditUserForm();
+        editUserForm.setUsername(user.getUsername());
+        editUserForm.setName(user.getName());
+        editUserForm.setSurname(user.getSurname());
+        editUserForm.setEmail(user.getEmail());
+        editUserForm.setCellphone(user.getCellphone());
+        model.addAttribute("editUserForm", editUserForm);
+
         return "profile";
     }
 
-    @PostMapping("/profile/edit")
-    public String updateProfile(
-            @RequestParam("fieldName") String fieldName,
-            @RequestParam("fieldValue") String fieldValue,
-            final RedirectAttributes ra,
-            Model model
-    ) {
+    @PostMapping("/profile/edit/username")
+    public String editUsername(@Valid @ModelAttribute("editUserForm") EditUserForm form,
+                               BindingResult errors,
+                               Model model,
+                               RedirectAttributes ra) {
         User user = userService.findById(getCurrentUserId());
 
-        if ("username".equals(fieldName)) {
-            User existing = userService.findByUserName(fieldValue);
-            if (existing != null && !existing.getId().equals(user.getId())) {
-                model.addAttribute("user", user);
-                model.addAttribute("usernameError", "El nombre de usuario ya está en uso.");
-                model.addAttribute("openModal", true);
-                model.addAttribute("editField", "username");
-                return "profile";
-            }
-            user.setUserName(fieldValue);
-        } else if ("name".equals(fieldName)) {
-            user.setName(fieldValue);
-        } else if ("surname".equals(fieldName)) {
-            user.setSurname(fieldValue);
-        } else if ("cellphone".equals(fieldName)) {
-            user.setCellphone(fieldValue);
-        } else {
-            throw new IllegalArgumentException("Invalid field name");
+        if (errors.hasFieldErrors("username")) {
+            model.addAttribute("user", user);
+            model.addAttribute("openModal", true);
+            model.addAttribute("editField", "username");
+            return "profile";
         }
 
+        user.setUserName(form.getUsername());
         userService.update(user);
-        if (fieldName.equals("username")) {
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    user.getUsername(), // nuevo username
-                    user.getPassword(),
-                    SecurityContextHolder.getContext().getAuthentication().getAuthorities()
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
-        ra.addFlashAttribute("success", "Profile updated successfully.");
+
+        // actualizar auth con nuevo username
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        user.getUsername(),
+                        user.getPassword(),
+                        SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        ra.addFlashAttribute("success", "Usuario actualizado correctamente.");
         return "redirect:/profile";
     }
+
+    @PostMapping("/profile/edit/name")
+    public String editName(@Valid @ModelAttribute("editUserForm") EditUserForm form,
+                           BindingResult errors,
+                           Model model,
+                           RedirectAttributes ra) {
+        User user = userService.findById(getCurrentUserId());
+
+        if (errors.hasFieldErrors("name")) {
+            model.addAttribute("user", user);
+            model.addAttribute("openModal", true);
+            model.addAttribute("editField", "name");
+            return "profile";
+        }
+
+        user.setName(form.getName());
+        userService.update(user);
+
+        ra.addFlashAttribute("success", "Nombre actualizado correctamente.");
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/edit/surname")
+    public String editSurname(@Valid @ModelAttribute("editUserForm") EditUserForm form,
+                              BindingResult errors,
+                              Model model,
+                              RedirectAttributes ra) {
+        User user = userService.findById(getCurrentUserId());
+
+        if (errors.hasFieldErrors("surname")) {
+            model.addAttribute("user", user);
+            model.addAttribute("openModal", true);
+            model.addAttribute("editField", "surname");
+            return "profile";
+        }
+
+        user.setSurname(form.getSurname());
+        userService.update(user);
+
+        ra.addFlashAttribute("success", "Apellido actualizado correctamente.");
+        return "redirect:/profile";
+    }
+
+
+
+    @PostMapping("/profile/edit/cellphone")
+    public String editCellphone(@Valid @ModelAttribute("editUserForm") EditUserForm form,
+                                BindingResult errors,
+                                Model model,
+                                RedirectAttributes ra) {
+        User user = userService.findById(getCurrentUserId());
+
+        if (errors.hasFieldErrors("cellphone")) {
+            model.addAttribute("user", user);
+            model.addAttribute("openModal", true);
+            model.addAttribute("editField", "cellphone");
+            return "profile";
+        }
+
+        user.setCellphone(form.getCellphone());
+        userService.update(user);
+
+        ra.addFlashAttribute("success", "Celular actualizado correctamente.");
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/edit/email")
+    public String editEmail(@Valid @ModelAttribute("editUserForm") EditUserForm form,
+                              BindingResult errors,
+                              Model model,
+                              RedirectAttributes ra) {
+        User user = userService.findById(getCurrentUserId());
+
+        if (errors.hasFieldErrors("email")) {
+            model.addAttribute("user", user);
+            model.addAttribute("openModal", true);
+            model.addAttribute("editField", "email");
+            return "profile";
+        }
+
+        user.setEmail(form.getEmail());
+        userService.update(user);
+
+        ra.addFlashAttribute("success", "Email actualizado correctamente.");
+        return "redirect:/profile";
+    }
+
 }
