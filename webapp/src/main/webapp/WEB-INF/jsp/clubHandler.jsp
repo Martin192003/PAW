@@ -198,8 +198,7 @@
 <!-- Modales -->
 <div id="editModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeEditModal()">&times;</span>
-        <form method="post" action="<c:url value='/clubs/editField' />"><input type="hidden" name="clubId"
-                                                                               value="${club.clubId}"/> <input
+        <form method="post" action="<c:url value='/clubs/editField' />"><input type="hidden" name="clubId" value="${club.clubId}"/> <input
                 type="hidden" name="field" id="editFieldName" value=""/> <label><spring:message
                 code="label.newValue"/>:</label> <input type="text" name="value" id="editFieldValue" required/> <select
                 name="value" id="zoneSelect" class="hidden"> <c:forEach var="z" items="${zones}">

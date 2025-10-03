@@ -74,7 +74,7 @@
 
                 <!-- Venue type -->
                 <select name="isBar" class="filter-item">
-                    <option value=""><spring:message code="filter.venueType"/></option>
+                    <option value=""><spring:message code="form.venueType"/></option>
                     <option value="true"
                     ${ (isBar == true || isBar == 'true' || param.isBar == 'true') ? 'selected' : '' }>
                         <spring:message code="label.bar"/>

@@ -23,7 +23,7 @@
     background: #3c3c3c;
     border-radius: 16px;
     box-shadow: 0 4px 24px rgba(156, 39, 176, 0.12);
-    padding: 38px 44px;
+    padding: 30px 30px;
     min-width: 340px;
     max-width: 420px;
     width: 100%;
@@ -33,6 +33,18 @@
     flex-direction: column;
     gap: 18px;
 }
+.profile-card > div{
+    padding: 6px 6px;
+    background: #3c3c3c;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.profile-card > div .btn-edit-small {
+    margin-left: auto;
+    flex-shrink: 0;
+}
 
 .profile-info-row {
     display: flex;
@@ -41,18 +53,17 @@
 }
 
 .profile-label {
-    width: 160px;
+    width: 120px;
     color: #ffffff;
     font-weight: bold;
     font-size: 1.05em;
     display: flex;
     align-items: center;
-    gap: 8px;
 }
 
 .profile-value {
     color: #fff;
-    margin-left: 10px;
+    margin-left: 5px;
     word-break: break-all;
     font-size: 0.9em;
 }
@@ -98,14 +109,11 @@
 .modal {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.75);
-    justify-content: center;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 999;
     align-items: center;
-    z-index: 9999;
+    justify-content: center;
 }
 .modal-content {
     background: #222;
@@ -134,9 +142,6 @@
     position: absolute;
     top: 10px;
     right: 14px;
-}
-.modal-close:hover {
-    color: #9c27b0;
 }
 
 .modal-content .modal-actions {
@@ -169,6 +174,19 @@
 }
 .btn-secondary:hover {
     background: #777;
+}
+
+.form-control{
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    background: #3c3c3c;
+    color: #fff;
+    font-size: 16px;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    margin: 0;
 }
 
 @keyframes fadeIn {

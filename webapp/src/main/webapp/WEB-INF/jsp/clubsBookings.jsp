@@ -7,27 +7,25 @@
 
 <html>
 <head>
-    <title>Reservas de mis clubes</title>
+    <title><spring:message code="bookings.title.myclubs"/></title>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/clubActivity.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/sidebar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/bookings.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/bookingUserHandler.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/filters.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .field-error { color:#e53935; font-size:.9rem; margin-top:4px; }
-    </style>
 </head>
 <body>
 
+
 <c:set var="showRightButtons" value="true" />
 <c:set var="showProfileButton" value="false" />
-<c:set var="showAddClubButton" value="true" />
+<c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <c:set var="activePage" value="clubsBookings" />
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>

@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.webapp.form;
 
 import javax.validation.constraints.*;
+
+import ar.edu.itba.paw.webapp.form.validation.UnusedEmail;
 import ar.edu.itba.paw.webapp.form.validation.UnusedUsername;
 
 public class UserForm {
@@ -18,6 +20,7 @@ public class UserForm {
     @Pattern(regexp = "^$|^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$", message = "{register.surname.pattern}")
     private String surname;
 
+    @UnusedEmail
     @NotBlank(message = "{register.email.notblank}")
     @Email(message = "{register.email.invalid}")
     private String email;

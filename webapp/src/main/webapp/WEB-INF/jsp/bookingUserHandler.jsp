@@ -7,6 +7,7 @@
 <html>
 <head>
     <title>Gestion de reserva</title>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/bookingUserHandler.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/bookings.css' />">

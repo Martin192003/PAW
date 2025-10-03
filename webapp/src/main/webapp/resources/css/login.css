@@ -67,6 +67,13 @@ body{
     font-family: Arial, sans-serif;
 }
 
+.login-description {
+    margin-bottom: 20px;
+    text-align: center;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
 .login-card .form-group {
     margin-bottom: 1rem;
 }

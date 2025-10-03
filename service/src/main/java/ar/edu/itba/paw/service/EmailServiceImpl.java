@@ -260,5 +260,35 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+    @Override
+    @Async
+    public void sendPasswordResetEmail(String toEmail, String username, String resetToken) {
+        try {
+            Locale userLocale = LocaleContextHolder.getLocale();
+
+            MimeMessage mail = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
+            helper.setFrom(defaultFrom);
+            helper.setTo(toEmail);
+
+            String subject = messageSource.getMessage("email.password.reset.subject", null, userLocale) +
+                    " - " + messageSource.getMessage("app.title", null, userLocale);
+            helper.setSubject(subject);
+
+            Context context = new Context(userLocale);
+            context.setVariable("username", username);
+            context.setVariable("requestedAt", ZonedDateTime.now());
+            context.setVariable("resetUrl", "http://localhost:8080/webapp_war_exploded/reset-password");
+            context.setVariable("token", resetToken);
+
+            String htmlBody = templateEngine.process("password-reset-email", context);
+            helper.setText(htmlBody, true);
+
+            mailSender.send(mail);
+            LOGGER.info("SMTP password reset email OK to {}", toEmail);
+        } catch (MessagingException e) {
+            LOGGER.error("SMTP password reset email FAILED to {}: {}", toEmail, e.getMessage(), e);
+        }
+    }
 
 }

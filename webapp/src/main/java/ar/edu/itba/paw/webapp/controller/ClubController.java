@@ -6,12 +6,11 @@ import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
-import ar.edu.itba.paw.webapp.form.AddClubForm;
-import ar.edu.itba.paw.webapp.form.AddProductForm;
-import ar.edu.itba.paw.webapp.form.AddTableForm;
+import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
+import ar.edu.itba.paw.webapp.form.EditUserForm;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -405,8 +404,19 @@ public class ClubController {
         if (user == null || !user.getId().equals(userId)) {
             return "redirect:/403";
         }
+
         model.addAttribute("user", user);
         model.addAttribute("activePage", "profile");
+
+        EditUserForm editUserForm = new EditUserForm();
+        editUserForm.setUsername(user.getUsername());
+        editUserForm.setName(user.getName());
+        editUserForm.setSurname(user.getSurname());
+        editUserForm.setEmail(user.getEmail());
+        editUserForm.setCellphone(user.getCellphone());
+
+        model.addAttribute("editUserForm", editUserForm);
+
         return "profile";
     }
 

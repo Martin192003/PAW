@@ -55,7 +55,6 @@ body {
     color: #fff;
 }
 
-/* Filas clásicas (pares etiqueta/valor) */
 .booking-row {
     display: flex;
     flex-direction: row;
@@ -202,8 +201,7 @@ body {
     font-size: 1.05rem;
 }
 
-/* Badges de estado (nuevos, alto contraste) */
-.booking-page .status-badge {
+.status-badge {
     display: inline-block;
     margin-left: 12px;
     padding: 4px 10px;

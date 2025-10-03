@@ -6,12 +6,12 @@
 
 <html>
 <head>
-    <title>Mis reservas</title>
+    <title><spring:message code="bookings.list"/></title>
+    <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/clubActivity.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/sidebar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/bookings.css' />">
@@ -23,7 +23,7 @@
 <body>
 
 <c:set var="showRightButtons" value="true" />
-<c:set var="showProfileButton" value="true" />
+<c:set var="showProfileButton" value="false" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <c:set var="activePage" value="bookings" />
