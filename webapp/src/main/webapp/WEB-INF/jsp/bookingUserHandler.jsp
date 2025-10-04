@@ -21,7 +21,11 @@
 <c:set var="showProfileButton" value="false" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
-
+<div class="detail-back">
+    <button type="button" class="btn btn-success" onclick="window.history.back();">
+        <i class="fa fa-arrow-left"></i>
+    </button>
+</div>
 <div class="app-boliches booking-page">
     <h1 class="clubActivity-title">
         <span>Reserva <br>#<c:out value="${booking.bookingId}"/></span>

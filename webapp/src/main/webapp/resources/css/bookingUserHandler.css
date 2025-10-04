@@ -267,11 +267,11 @@ body {
     object-fit: contain;
 }
 /* Acciones */
-.booking-page .booking-actions {
+.booking-actions {
     margin-top: 12px;
     display: flex;
     width: 100%;
-    justify-content: flex-end;
+    justify-content: space-between;
 }
 .btn-left{
     margin-left: auto;
@@ -282,7 +282,19 @@ body {
     align-items: center;
     gap: 1rem; /* Opcional, para separar un poco más */
 }
-
+.detail-back {
+    position: fixed;
+    top:  106px;
+    left:  20px;
+    z-index: 120;
+    margin-right: auto;
+}
+.detail-back .btn-success {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 /* Topbar local para el botón Volver */
 .booking-page .booking-topbar {
@@ -328,7 +340,7 @@ body {
 .alert-info    { background:#0a233a; color:#b8e3ff; border:1px solid #1b5f8a; }
 
 
-.btn {
+.app-boliches.btn {
     font-size: 16px;
     padding: 8px 16px;
     text-decoration: none;
@@ -341,7 +353,7 @@ body {
     box-sizing: border-box;
     width: 80px;
 }
-.btn-success {
+.app-boliches .btn-success {
     background-color: #9c27b0;
     color: #fff;
     border: none;
