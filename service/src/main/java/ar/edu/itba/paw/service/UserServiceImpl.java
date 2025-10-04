@@ -50,6 +50,9 @@ public class UserServiceImpl implements UserService {
                     cellphone,
                     Role.USER
             );
+            if(user == null) {
+                return null;
+            }
             mailService.sendUserRegistrationConfirmation(email, username, user.getVerificationToken());
             return user;
         } catch (DataIntegrityViolationException ex) {

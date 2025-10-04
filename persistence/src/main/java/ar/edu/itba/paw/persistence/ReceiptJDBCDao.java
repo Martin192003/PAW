@@ -45,14 +45,20 @@ public class ReceiptJDBCDao implements ReceiptDao {
 
     @Override
     public UUID create(UUID bookingId, UUID uploadedBy, String filename, String contentType, byte[] data) {
+        UUID id = UUID.randomUUID();
         final String insertSql = """
-            INSERT INTO receipts (booking_id, uploaded_by, url, created_at, data, content_type, filename, size_bytes)
-            VALUES (?, ?, '/receipts/pending', NOW(), ?, ?, ?, ?)
-            RETURNING receipt_id
+            INSERT INTO receipts (receipt_id, booking_id, uploaded_by, url, created_at, data, content_type, filename, size_bytes)
+            VALUES (?, ?, ?, '/receipts/pending', NOW(), ?, ?, ?, ?)
             """;
-        UUID id = jdbc.queryForObject(insertSql,
-                (rs, i) -> rs.getObject("receipt_id", UUID.class),
-                bookingId, uploadedBy, data, contentType, filename, (long) data.length
+        jdbc.update(
+            insertSql,
+            id,
+            bookingId,
+            uploadedBy,
+            data,
+            contentType,
+            filename,
+            (long) data.length
         );
         jdbc.update("UPDATE receipts SET url = ? WHERE receipt_id = ?", "/receipts/" + id, id);
         return id;
