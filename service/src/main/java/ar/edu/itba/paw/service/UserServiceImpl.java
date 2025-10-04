@@ -127,7 +127,7 @@ public class UserServiceImpl implements UserService {
         userDao.updateVerificationStatus(user.getId(), true);
         return true;
     }
-
+/*
     public boolean authenticateUsernameOrEmail(String usernameOrEmail, String password){
         User user = userDao.findByUserName(usernameOrEmail).orElse(null);
         if(user == null){
@@ -138,7 +138,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalStateException("User not verified");
         }
         return passwordEncoder.matches(password, user.getPassword());
-    }
+    }*/
 
     @Override
     @Transactional
@@ -207,5 +207,27 @@ public class UserServiceImpl implements UserService {
 
         userDao.clearResetPasswordToken(user.getId());
         return true;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User authenticateAndGetUser(String usernameOrEmail, String password) throws IllegalStateException {
+        User user = userDao.findByUserName(usernameOrEmail).orElse(null);
+        if (user == null) {
+            user = userDao.findByEmail(usernameOrEmail).orElse(null);
+            if (user == null) {
+                return null; // Usuario no encontrado
+            }
+        }
+
+        if (!user.isVerified()) {
+            throw new IllegalStateException("User not verified");
+        }
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            return null; // Contraseña incorrecta
+        }
+
+        return user;
     }
 }

@@ -1,12 +1,8 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.form.EditUserForm;
-import ar.edu.itba.paw.webapp.form.UserForm;
 import ar.edu.itba.paw.service.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,81 +10,30 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
 import java.util.UUID;
 
 @Controller
-public class UserController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+@RequestMapping("/profile")
+public class ProfileController {
 
     private final UserService userService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public ProfileController(UserService userService) {
         this.userService = userService;
     }
 
-    @RequestMapping("/register")
-    public ModelAndView register() {
-        ModelAndView mav = new ModelAndView("register");
-        mav.addObject("userForm", new UserForm());
-        return mav;
-    }
-
-    @PostMapping("/register")
-    public String register(
-            @Valid @ModelAttribute("userForm") final UserForm form,
-            final BindingResult binding,
-            final RedirectAttributes ra
-    ) {
-        if (binding.hasErrors()) {
-            return "register";
-        }
-        return "verifyMailNotice";
-    }
-
-    @GetMapping("/verify")
-    public String showVerificationPage() {
-        return "verify"; // Page with the form to input the token
-    }
-
-    @PostMapping("/verify")
-    public String verifyToken(@RequestParam("token") final String token, Model model) {
-        boolean success = userService.verifyUser(token);
-        if (success) {
-            model.addAttribute("success", "Account verified successfully.");
-        } else {
-            model.addAttribute("error", "Invalid verification token.");
-        }
-        return "verifyResult"; // Page showing the verification result
-    }
-
     private UUID getCurrentUserId() {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+        String username = SecurityContextHolder.getContext()
                 .getAuthentication().getName();
         User user = userService.findByUserName(username);
         return user.getId();
     }
 
-    @GetMapping("/profile/edit")
-    public String editProfile(Model model) {
-        User user = userService.findById(getCurrentUserId());
-        EditUserForm editUserForm = new EditUserForm();
-        editUserForm.setUsername(user.getUsername());
-        editUserForm.setName(user.getName());
-        editUserForm.setSurname(user.getSurname());
-        editUserForm.setEmail(user.getEmail());
-        editUserForm.setCellphone(user.getCellphone());
-        model.addAttribute("editUserForm", editUserForm);
-        return "profile";
-    }
-
-    @GetMapping("/profile")
-    public String showProfile(Model model) {
+    private void prepareProfileModel(Model model) {
         User user = userService.findById(getCurrentUserId());
         model.addAttribute("user", user);
 
@@ -99,11 +44,21 @@ public class UserController {
         editUserForm.setEmail(user.getEmail());
         editUserForm.setCellphone(user.getCellphone());
         model.addAttribute("editUserForm", editUserForm);
+    }
 
+    @GetMapping("/edit")
+    public String editProfile(Model model) {
+        prepareProfileModel(model);
         return "profile";
     }
 
-    @PostMapping("/profile/edit/username")
+    @GetMapping
+    public String showProfile(Model model) {
+        prepareProfileModel(model);
+        return "profile";
+    }
+
+    @PostMapping("/edit/username")
     public String editUsername(@Valid @ModelAttribute("editUserForm") EditUserForm form,
                                BindingResult errors,
                                Model model,
@@ -133,7 +88,7 @@ public class UserController {
         return "redirect:/profile";
     }
 
-    @PostMapping("/profile/edit/name")
+    @PostMapping("/edit/name")
     public String editName(@Valid @ModelAttribute("editUserForm") EditUserForm form,
                            BindingResult errors,
                            Model model,
@@ -154,7 +109,7 @@ public class UserController {
         return "redirect:/profile";
     }
 
-    @PostMapping("/profile/edit/surname")
+    @PostMapping("/edit/surname")
     public String editSurname(@Valid @ModelAttribute("editUserForm") EditUserForm form,
                               BindingResult errors,
                               Model model,
@@ -175,9 +130,7 @@ public class UserController {
         return "redirect:/profile";
     }
 
-
-
-    @PostMapping("/profile/edit/cellphone")
+    @PostMapping("/edit/cellphone")
     public String editCellphone(@Valid @ModelAttribute("editUserForm") EditUserForm form,
                                 BindingResult errors,
                                 Model model,
@@ -198,11 +151,11 @@ public class UserController {
         return "redirect:/profile";
     }
 
-    @PostMapping("/profile/edit/email")
+    @PostMapping("/edit/email")
     public String editEmail(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                              BindingResult errors,
-                              Model model,
-                              RedirectAttributes ra) {
+                            BindingResult errors,
+                            Model model,
+                            RedirectAttributes ra) {
         User user = userService.findById(getCurrentUserId());
 
         if (errors.hasFieldErrors("email")) {
@@ -218,19 +171,4 @@ public class UserController {
         ra.addFlashAttribute("success", "Email actualizado correctamente.");
         return "redirect:/profile";
     }
-
-    @PostMapping("/resend-verification")
-    public String resendVerification(@RequestParam("usernameOrEmail") String usernameOrEmail,
-                                     Model model) {
-        boolean success = userService.resendVerificationToken(usernameOrEmail);
-        if (success) {
-            model.addAttribute("success", "Verification email sent successfully.");
-            return "verifyMailNotice"; // Redirige a la página de confirmación
-        } else {
-            model.addAttribute("error", "User not found or already verified.");
-            model.addAttribute("username", usernameOrEmail);
-            return "unverified";
-        }
-    }
-
 }

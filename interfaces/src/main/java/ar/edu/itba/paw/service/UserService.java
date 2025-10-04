@@ -22,9 +22,11 @@ public interface UserService {
     List<User> findByRole(String role);
     User findByVerificationToken(String token);
     boolean verifyUser(String token);
-    boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
+    //boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
     boolean resendVerificationToken(String usernameOrEmail);
 
     boolean requestPasswordReset(String email);
     boolean resetPassword(String token, String newPassword);
-}
+    User authenticateAndGetUser(String usernameOrEmail, String password) throws IllegalStateException;
+
+    }
