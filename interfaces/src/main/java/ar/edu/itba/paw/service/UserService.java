@@ -2,6 +2,7 @@ package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,4 +28,7 @@ public interface UserService {
 
     boolean requestPasswordReset(String email);
     boolean resetPassword(String token, String newPassword);
+
+    User updateUserField(UUID userId, String field, String value) throws DuplicateEntityException;
+
 }

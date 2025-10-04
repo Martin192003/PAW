@@ -48,12 +48,36 @@ public class UserController {
         if (binding.hasErrors()) {
             return "register";
         }
-        return "verifyMailNotice";
+
+        try {
+            userService.create(
+                    form.getUsername(),
+                    form.getName(),
+                    form.getPassword(),
+                    form.getSurname(),
+                    form.getEmail(),
+                    form.getCellphone(),
+                    "USER"
+            );
+            ra.addFlashAttribute("success", "Usuario registrado correctamente. Revisa tu email para verificar tu cuenta.");
+            return "redirect:/verify";
+        } catch (DuplicateEntityException e) {
+            if (e.getMessage().contains("email")) {
+                binding.rejectValue("email", "duplicate.email", "Este email ya está registrado");
+            } else {
+                binding.rejectValue("username", "duplicate.username", "Este nombre de usuario ya está registrado");
+            }
+            return "register";
+        } catch (Exception e) {
+            LOGGER.error("Error during registration", e);
+            binding.reject("registration.error", "Error durante el registro. Intenta nuevamente.");
+            return "register";
+        }
     }
 
     @GetMapping("/verify")
     public String showVerificationPage() {
-        return "verify"; // Page with the form to input the token
+        return "verify";
     }
 
     @PostMapping("/verify")
@@ -64,31 +88,17 @@ public class UserController {
         } else {
             model.addAttribute("error", "Invalid verification token.");
         }
-        return "verifyResult"; // Page showing the verification result
+        return "verifyResult";
     }
 
     private UUID getCurrentUserId() {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+        String username = SecurityContextHolder.getContext()
                 .getAuthentication().getName();
         User user = userService.findByUserName(username);
         return user.getId();
     }
 
-    @GetMapping("/profile/edit")
-    public String editProfile(Model model) {
-        User user = userService.findById(getCurrentUserId());
-        EditUserForm editUserForm = new EditUserForm();
-        editUserForm.setUsername(user.getUsername());
-        editUserForm.setName(user.getName());
-        editUserForm.setSurname(user.getSurname());
-        editUserForm.setEmail(user.getEmail());
-        editUserForm.setCellphone(user.getCellphone());
-        model.addAttribute("editUserForm", editUserForm);
-        return "profile";
-    }
-
-    @GetMapping("/profile")
-    public String showProfile(Model model) {
+    private void prepareProfileModel(Model model) {
         User user = userService.findById(getCurrentUserId());
         model.addAttribute("user", user);
 
@@ -99,124 +109,96 @@ public class UserController {
         editUserForm.setEmail(user.getEmail());
         editUserForm.setCellphone(user.getCellphone());
         model.addAttribute("editUserForm", editUserForm);
+    }
 
+    @GetMapping("/profile/edit")
+    public String editProfile(Model model) {
+        prepareProfileModel(model);
         return "profile";
+    }
+
+    @GetMapping("/profile")
+    public String showProfile(Model model) {
+        prepareProfileModel(model);
+        return "profile";
+    }
+
+    private String handleFieldUpdate(String field, String value, String fieldName,
+                                     BindingResult errors, Model model,
+                                     RedirectAttributes ra, boolean requiresAuthUpdate) {
+        if (errors.hasFieldErrors(field)) {
+            return handleValidationError(field, model);
+        }
+
+        try {
+            User updatedUser = userService.updateUserField(getCurrentUserId(), field, value);
+
+            if (requiresAuthUpdate) {
+                updateAuthenticationContext(updatedUser);
+            }
+
+            ra.addFlashAttribute("success", fieldName + " actualizado correctamente.");
+            return "redirect:/profile";
+        } catch (DuplicateEntityException e) {
+            return handleDuplicateError(field, model);
+        }
+    }
+
+    private String handleValidationError(String field, Model model) {
+        User user = userService.findById(getCurrentUserId());
+        model.addAttribute("user", user);
+        model.addAttribute("openModal", true);
+        model.addAttribute("editField", field);
+        return "profile";
+    }
+
+    private String handleDuplicateError(String field, Model model) {
+        User user = userService.findById(getCurrentUserId());
+        model.addAttribute("user", user);
+        model.addAttribute("openModal", true);
+        model.addAttribute("editField", field);
+        model.addAttribute("error", field.equals("username") ? "Username already exists" : "Email already exists");
+        return "profile";
+    }
+
+    private void updateAuthenticationContext(User updatedUser) {
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        updatedUser.getUsername(),
+                        updatedUser.getPassword(),
+                        SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     @PostMapping("/profile/edit/username")
     public String editUsername(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                               BindingResult errors,
-                               Model model,
-                               RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
-
-        if (errors.hasFieldErrors("username")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "username");
-            return "profile";
-        }
-
-        user.setUserName(form.getUsername());
-        userService.update(user);
-
-        // actualizar auth con nuevo username
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        user.getUsername(),
-                        user.getPassword(),
-                        SecurityContextHolder.getContext().getAuthentication().getAuthorities()
-                );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        ra.addFlashAttribute("success", "Usuario actualizado correctamente.");
-        return "redirect:/profile";
+                               BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("username", form.getUsername(), "Usuario", errors, model, ra, true);
     }
 
     @PostMapping("/profile/edit/name")
     public String editName(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                           BindingResult errors,
-                           Model model,
-                           RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
-
-        if (errors.hasFieldErrors("name")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "name");
-            return "profile";
-        }
-
-        user.setName(form.getName());
-        userService.update(user);
-
-        ra.addFlashAttribute("success", "Nombre actualizado correctamente.");
-        return "redirect:/profile";
+                           BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("name", form.getName(), "Nombre", errors, model, ra, false);
     }
 
     @PostMapping("/profile/edit/surname")
     public String editSurname(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                              BindingResult errors,
-                              Model model,
-                              RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
-
-        if (errors.hasFieldErrors("surname")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "surname");
-            return "profile";
-        }
-
-        user.setSurname(form.getSurname());
-        userService.update(user);
-
-        ra.addFlashAttribute("success", "Apellido actualizado correctamente.");
-        return "redirect:/profile";
+                              BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("surname", form.getSurname(), "Apellido", errors, model, ra, false);
     }
-
-
 
     @PostMapping("/profile/edit/cellphone")
     public String editCellphone(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                                BindingResult errors,
-                                Model model,
-                                RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
-
-        if (errors.hasFieldErrors("cellphone")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "cellphone");
-            return "profile";
-        }
-
-        user.setCellphone(form.getCellphone());
-        userService.update(user);
-
-        ra.addFlashAttribute("success", "Celular actualizado correctamente.");
-        return "redirect:/profile";
+                                BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("cellphone", form.getCellphone(), "Celular", errors, model, ra, false);
     }
 
     @PostMapping("/profile/edit/email")
     public String editEmail(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                              BindingResult errors,
-                              Model model,
-                              RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
-
-        if (errors.hasFieldErrors("email")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "email");
-            return "profile";
-        }
-
-        user.setEmail(form.getEmail());
-        userService.update(user);
-
-        ra.addFlashAttribute("success", "Email actualizado correctamente.");
-        return "redirect:/profile";
+                            BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("email", form.getEmail(), "Email", errors, model, ra, false);
     }
 
     @PostMapping("/resend-verification")
@@ -225,12 +207,11 @@ public class UserController {
         boolean success = userService.resendVerificationToken(usernameOrEmail);
         if (success) {
             model.addAttribute("success", "Verification email sent successfully.");
-            return "verifyMailNotice"; // Redirige a la página de confirmación
+            return "verifyMailNotice";
         } else {
             model.addAttribute("error", "User not found or already verified.");
             model.addAttribute("username", usernameOrEmail);
             return "unverified";
         }
     }
-
 }

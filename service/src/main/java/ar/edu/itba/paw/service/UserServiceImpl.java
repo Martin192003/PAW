@@ -208,4 +208,51 @@ public class UserServiceImpl implements UserService {
         userDao.clearResetPasswordToken(user.getId());
         return true;
     }
+
+    @Override
+    @Transactional
+    public User updateUserField(UUID userId, String field, String value) throws DuplicateEntityException {
+        User existingUser = userDao.findById(userId).orElseThrow(() ->
+                new IllegalArgumentException("User not found")
+        );
+
+        switch (field.toLowerCase()) {
+            case "username":
+                if (!existingUser.getUsername().equals(value) && userDao.findByUserName(value).isPresent()) {
+                    throw new DuplicateEntityException("user.username.duplicate");
+                }
+                existingUser.setUserName(value);
+                break;
+            case "name":
+                existingUser.setName(value);
+                break;
+            case "surname":
+                existingUser.setSurname(value);
+                break;
+            case "email":
+                if (!existingUser.getEmail().equals(value) && userDao.findByEmail(value).isPresent()) {
+                    throw new DuplicateEntityException("user.email.duplicate");
+                }
+                existingUser.setEmail(value);
+                break;
+            case "cellphone":
+                existingUser.setCellphone(value);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid field: " + field);
+        }
+
+        return userDao.update(
+                existingUser.getId(),
+                existingUser.getUsername(),
+                existingUser.getName(),
+                existingUser.getSurname(),
+                existingUser.getEmail(),
+                existingUser.getPassword(),
+                existingUser.getCellphone(),
+                existingUser.getRole()
+        );
+    }
+
+
 }
