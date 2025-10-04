@@ -10,12 +10,9 @@
     <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/bookingUserHandler.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/bookings.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/buttons.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/input.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/card.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/clubActivity.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -24,25 +21,14 @@
 <c:set var="showProfileButton" value="false" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
-
+<div class="detail-back">
+    <button type="button" class="btn btn-success" onclick="window.history.back();">
+        <i class="fa fa-arrow-left"></i>
+    </button>
+</div>
 <div class="app-boliches booking-page">
-    <!-- Flash messages -->
-    <c:if test="${not empty errorKey}">
-        <div class="alert alert-danger"><spring:message code="${errorKey}" /></div>
-    </c:if>
-    <c:if test="${not empty error}">
-        <div class="alert alert-danger"><c:out value="${error}"/></div>
-    </c:if>
-    <c:if test="${not empty success}">
-        <div class="alert alert-success"><spring:message code="${success}" /></div>
-    </c:if>
-    <c:if test="${not empty info}">
-        <div class="alert alert-info"><spring:message code="${info}" /></div>
-    </c:if>
-
-    <!-- Título + badge -->
     <h1 class="clubActivity-title">
-        <span>Reserva #<c:out value="${booking.bookingId}"/></span>
+        <span>Reserva <br>#<c:out value="${booking.bookingId}"/></span>
         <c:choose>
             <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'PENDIENTE'}">
                 <span class="status-badge is-pending"><spring:message code="booking.status.pending" text="Pendiente"/></span>
@@ -61,8 +47,7 @@
 
     <!-- GRID PRINCIPAL -->
     <section class="booking-grid">
-        <!-- Columna izquierda: detalles -->
-        <article class="card panel">
+        <article class="card-lg booking-card">
             <h2 class="panel-title"><spring:message code="booking.details.title" text="Detalles de la reserva"/></h2>
             <dl class="details">
                 <div class="row">
@@ -98,12 +83,19 @@
                     <dd>$ <c:out value="${booking.totalAmount}"/></dd>
                 </div>
             </dl>
+            <div class="booking-actions">
+                <form method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fa fa-trash"></i>
+                        <spring:message code="booking.action.cancel" text="Cancelar reserva"/>
+                    </button>
+                </form>
+            </div>
         </article>
 
         <!-- Columna derecha: comprobante + acciones -->
         <aside class="right-col">
-            <!-- Comprobante -->
-            <article class="card panel">
+            <article class="card-lg booking-card">
                 <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>
 
                 <c:choose>
@@ -111,18 +103,18 @@
                         <div class="receipt-thumb">
                             <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>" alt="Receipt"/>
                         </div>
-
                         <div class="receipt-actions">
-                            <a class="btn btn-outline" href="<c:url value='/bookings/${booking.bookingId}/receipt'/>" target="_blank">
-                                <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
-                            </a>
                             <form method="post" action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>">
-                                <button type="submit" class="btn btn-danger btn-sm">
+                                <button type="submit" class="btn btn-secondary">
                                     <spring:message code="receipt.delete" text="Eliminar"/>
                                 </button>
                             </form>
+                            <form>
+                                <button type="button" class="btn btn-success" onclick="window.open('<c:url value="/bookings/${booking.bookingId}/receipt"/>', '_blank')">
+                                    <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
+                                </button>
+                            </form>
                         </div>
-
                     </c:when>
 
                     <c:otherwise>
@@ -132,29 +124,13 @@
 
                 <!-- Upload si no hay receipt -->
                 <c:if test="${!hasReceipt}">
-                    <form method="post"
-                          enctype="multipart/form-data"
-                          action="<c:url value='/bookings/${booking.bookingId}/receipt'/>"
-                          class="upload-form">
+                    <form method="post" enctype="multipart/form-data" action="<c:url value='/bookings/${booking.bookingId}/receipt'/>" class="upload-form">
                         <input type="file" name="file" accept="image/*,application/pdf" required />
-                        <button type="submit" class="btn btn-primary btn-sm">
+                        <button type="submit" class="btn btn-success btn-sm">
                             <spring:message code="receipt.upload" text="Subir comprobante"/>
                         </button>
                     </form>
                 </c:if>
-            </article>
-
-            <!-- Acciones -->
-            <article class="card panel">
-                <h2 class="panel-title"><spring:message code="booking.actions.title" text="Acciones"/></h2>
-                <div class="booking-actions">
-                    <form method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fa fa-trash"></i>
-                            <spring:message code="booking.action.cancel" text="Cancelar reserva"/>
-                        </button>
-                    </form>
-                </div>
             </article>
         </aside>
     </section>
