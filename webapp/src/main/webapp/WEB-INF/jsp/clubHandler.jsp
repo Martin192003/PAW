@@ -115,20 +115,30 @@
     <spring:message code="placeholder.price" var="phPrice"/>
     <form:form method="post" modelAttribute="productForm" action="${pageContext.request.contextPath}/clubs/addProduct" class="add-product-bar">
         <form:hidden path="clubId" value="${club.clubId}" />
+
+        <div class="form-group">
         <form:input path="productName" cssClass="add-product-name" placeholder="${phProductName}" />
         <form:errors path="productName" cssClass="formError"/>
+        </div>
 
-        <form:input path="description" cssClass="add-product-input" placeholder="${phDescription}" />
+    <div class="form-group">
+
+    <form:input path="description" cssClass="add-product-input" placeholder="${phDescription}" />
         <form:errors path="description" cssClass="formError"/>
+    </div>
 
+        <div class="form-group">
         <form:input path="basePrice" type="number" cssClass="add-product-input" placeholder="${phPrice}" step="0.01" />
         <form:errors path="basePrice" cssClass="formError"/>
+        </div>
 
+        <div class="form-group">
         <form:select path="productType" cssClass="input-text">
-            <form:option value="ALCOHOLICA" label="Alcohólica"/>
-            <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+         <form:option value="ALCOHOLICA" label="Alcohólica"/>
+         <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
         </form:select>
         <form:errors path="productType" cssClass="formError"/>
+        </div>
 
         <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
     </form:form>
