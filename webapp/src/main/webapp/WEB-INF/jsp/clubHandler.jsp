@@ -186,17 +186,25 @@
     <form:form method="post" modelAttribute="tableForm" action="${pageContext.request.contextPath}/clubs/addTable" class="add-product-bar">
         <form:hidden path="clubId" value="${club.clubId}" />
 
+    <div class="form-group">
         <form:input path="tableNumber" type="number" cssClass="add-product-name" placeholder="${phTableNumber}" />
         <form:errors path="tableNumber" cssClass="formError"/>
+    </div>
 
+    <div class="form-group">
         <form:input path="capacity" type="number" cssClass="add-product-input" placeholder="${phCapacity}" />
         <form:errors path="capacity" cssClass="formError"/>
+    </div>
 
+    <div class="form-group">
         <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}" step="0.01"/>
         <form:errors path="price" cssClass="formError"/>
+    </div>
 
+    <div class="form-group">
         <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}" step="0.01"/>
         <form:errors path="discount" cssClass="formError"/>
+    </div>
 
         <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
     </form:form>
