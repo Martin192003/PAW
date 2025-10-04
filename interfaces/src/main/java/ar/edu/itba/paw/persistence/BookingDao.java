@@ -19,7 +19,9 @@ public interface BookingDao {
 
     public Booking create(User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
 
-    Booking update(UUID bookingId, User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
+    Optional<Booking> update(UUID bookingId, User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
+
+    Optional<Booking> updateStatus(UUID bookingId, Status newStatus);
 
     boolean delete(UUID bookingId);
 

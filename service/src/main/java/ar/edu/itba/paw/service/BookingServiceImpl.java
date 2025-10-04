@@ -10,7 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -19,12 +22,20 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingDao bookingDao;
     private final ClubTablesDao tablesDao;
+    private final UserService userService;
+    private final ClubService clubService;
+    private final TableService tableService;
     private final ClubDao clubDao;
     private final EmailServiceImpl emailService;
+    private static final ZoneId ZONE_ID = ZoneId.of("America/Argentina/Buenos_Aires");
+    private static final Set<DayOfWeek> ALLOWED_DAYS = EnumSet.of(DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
 
-    public BookingServiceImpl(final BookingDao bookingDao, final ClubTablesDao tablesDao, final ClubDao clubDao, final EmailServiceImpl emailService) {
+    public BookingServiceImpl(final BookingDao bookingDao, final ClubTablesDao tablesDao, UserService userService, ClubService clubService, TableService tableService, final ClubDao clubDao, final EmailServiceImpl emailService) {
         this.bookingDao = bookingDao;
         this.tablesDao = tablesDao;
+        this.userService = userService;
+        this.clubService = clubService;
+        this.tableService = tableService;
         this.clubDao = clubDao;
         this.emailService = emailService;
     }
@@ -44,6 +55,7 @@ public class BookingServiceImpl implements BookingService {
         Assert.notNull(totalAmount, "totalAmount no puede ser null");
 
         validateDateRange(bookingStart, bookingEnd);
+
         final Table table = ensureTableExists(tableId);
 
         if (table.getTableState() != null && table.getTableState() != TableState.DISPONIBLE) {
@@ -55,12 +67,14 @@ public class BookingServiceImpl implements BookingService {
         final Status initial = Status.PENDIENTE;
         final Booking booking = bookingDao.create(user, tableId, initial, totalAmount, bookingStart, bookingEnd);
 
-        Club club = clubDao.findById(table.getClubId()).orElseThrow(()->new ClubNotFoundException(table.getClubId().toString()));
-
+        Club club = clubDao.findById(table.getClubId()).orElseThrow();
         emailService.sendBookingConfirmationToUser(user, club, table, booking);
         emailService.sendBookingNotificationToOwner(club, table, booking);
         return booking;
     }
+
+
+
 
     @Override
     @Transactional(readOnly = true)
@@ -108,9 +122,7 @@ public class BookingServiceImpl implements BookingService {
         }
         validateStatusTransition(existing.getStatus(), status);
 
-        final Booking updated = bookingDao.update(bookingId, user, tableId, status, totalAmount, bookingStart, bookingEnd);
-
-        return updated;
+        return bookingDao.update(bookingId, user, tableId, status, totalAmount, bookingStart, bookingEnd).orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
     }
 
     @Override
@@ -129,10 +141,9 @@ public class BookingServiceImpl implements BookingService {
                 current.getTotalAmount(),
                 current.getBookingStart(),
                 current.getBookingEnd()
-        );
+        ).orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
 
 
-        // If status became CANCELADA, try freeing the table
         if (newStatus == Status.CANCELADA) {
             try {
                 final Table table = ensureTableExists(updated.getTableId());
@@ -161,16 +172,56 @@ public class BookingServiceImpl implements BookingService {
                 existing.getBookingEnd()
         );
 
-        // After cancelling, possibly free the table if no other active bookings exist
         try {
             final Table table = ensureTableExists(existing.getTableId());
             maybeFreeTable(table);
         } catch (TableNotFoundException ignored) {
-            // If table disappeared, nothing to free
         }
 
         return true;
     }
+    @Transactional
+    @Override
+    public void cancelByUser(UUID bookingId, UUID userId){
+        final Booking existing = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+        if(!existing.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("El usuario no puede cancelar esta reserva");
+        }
+        validateStatusTransition(existing.getStatus(), Status.CANCELADA);
+        bookingDao.update(
+                bookingId,
+                existing.getUser(),
+                existing.getTableId(),
+                Status.CANCELADA,
+                existing.getTotalAmount(),
+                existing.getBookingStart(),
+                existing.getBookingEnd()
+        );
+    }
+
+    @Transactional
+    @Override
+    public void confirm(UUID bookingId) {
+        Booking b = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
+
+        if (b.getStatus() == Status.CANCELADA) {
+            throw new InvalidStatusTransitionException(b.getStatus(),Status.CANCELADA);
+        }
+        if (b.getStatus() == Status.CONFIRMADA) {
+            return; // idempotencia
+        }
+        if (b.getStatus() != Status.PENDIENTE) {
+            throw new InvalidStatusTransitionException(b.getStatus(),Status.PENDIENTE);
+        }
+
+        b.setStatus(Status.CONFIRMADA);
+        bookingDao.updateStatus(bookingId,b.getStatus()).orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+
+
+    }
+
 
     @Override
     public boolean delete(UUID bookingId) {
@@ -238,6 +289,53 @@ public class BookingServiceImpl implements BookingService {
         if (overlaps) throw new TableAlreadyBookedException();
     }
 
+    @Transactional
+    @Override
+    public void reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username) {
+        // Mesa
+        var tableOpt = tableService.findById(tableId);
+        if (tableOpt.isEmpty()) throw new TableNotFoundException(tableId);
+        var table = tableOpt.get();
+        if (!clubId.equals(table.getClubId())) {
+            throw new BadRequestException("El club no existe");
+        }
+
+        // Día permitido
+        DayOfWeek dow = date.getDayOfWeek();
+        if (!ALLOWED_DAYS.contains(dow)) {
+            throw new InvalidDateRangeException("Solo se puede reservar para jueves, viernes o sábado.");
+        }
+
+        // Ventana 23:59–06:00 en es-AR
+        OffsetDateTime start = date.atTime(23, 59).atZone(ZONE_ID).toOffsetDateTime();
+        OffsetDateTime end   = date.plusDays(1).atTime(6, 0).atZone(ZONE_ID).toOffsetDateTime();
+
+        // Disponibilidad
+        var libres = tableService.findAvailableByClubAndRange(clubId, start, end);
+        boolean disponible = libres.stream().anyMatch(t -> t.getTableId().equals(tableId));
+        if (!disponible) throw new BadRequestException("La mesa no está disponible en el rango indicado.");
+
+        // Usuario
+        var user = userService.findByUserName(username);
+        if (user == null) throw new UserNotFoundException("No se encontró el usuario: " + username);
+
+        // Precio
+        BigDecimal total = table.getPrice() != null ? table.getPrice() : BigDecimal.ZERO;
+
+        // Crear booking (el service debe re-validar disponibilidad en la transacción)
+        Booking booking = create(user, tableId, start, end, total);
+
+        // Datos de club y notificaciones
+        var club = clubService.getClubById(clubId).orElseThrow(IllegalArgumentException::new);
+        String ownerEmail = clubService.getAdminsByClub(clubId).getFirst().getEmail();
+
+
+        Locale locale = new Locale("es", "AR");
+        emailService.notifyTableReservedToUser(booking, club, table, locale);
+        emailService.notifyTableReservedToOwner(booking, club, table, ownerEmail, locale);
+
+    }
+
     private void maybeFreeTable(Table table) {
         final List<Booking> bookings = bookingDao.findByTable(table.getTableId());
         final boolean stillBlocked = bookings.stream()
@@ -281,5 +379,17 @@ public class BookingServiceImpl implements BookingService {
             default -> throw new InvalidStatusTransitionException(from, to);
         }
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Booking getForUser(UUID bookingId, UUID userId) {
+        Booking b = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
+        if (b.getUser() == null || !b.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
+        return b;
+    }
+
 
 }

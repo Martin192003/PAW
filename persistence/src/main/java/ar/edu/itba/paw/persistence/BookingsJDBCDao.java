@@ -70,7 +70,7 @@ public class BookingsJDBCDao implements BookingDao {
 
 
     @Override
-    public Booking update(UUID bookingId, User user, UUID tableId, Status status, BigDecimal totalAmount,
+    public Optional<Booking> update(UUID bookingId, User user, UUID tableId, Status status, BigDecimal totalAmount,
                           OffsetDateTime bookingStart, OffsetDateTime bookingEnd) {
         final String sql = "UPDATE bookings " +
                 "SET user_id = ?, table_id = ?, booking_start = ?, booking_end = ?, status = ?, total_amount = ? " +
@@ -86,7 +86,7 @@ public class BookingsJDBCDao implements BookingDao {
                 bookingId
         );
 
-        return updated > 0 ? findById(bookingId).orElse(null) : null;
+        return updated > 0 ? findById(bookingId) : Optional.empty();
     }
 
 
@@ -102,6 +102,14 @@ public class BookingsJDBCDao implements BookingDao {
         Booking b = jdbc.query(sql, ROW_MAPPER, id).stream().findFirst().orElse(null);
         return Optional.ofNullable(b);
     }
+
+    @Override
+    public Optional<Booking> updateStatus(UUID bookingId, Status newStatus){
+        final String sql = "UPDATE bookings SET status = ? WHERE booking_id = ?";
+        int updated = jdbc.update(sql, newStatus.db(), bookingId);
+        return updated > 0 ? findById(bookingId) : Optional.empty();
+    }
+
 
     @Override
     public List<Booking> findAll() {

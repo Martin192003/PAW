@@ -14,6 +14,21 @@ public class Receipt {
     private OffsetDateTime createdAt;
     private byte[] data;
 
+
+    public Receipt(UUID receiptId, UUID bookingId, UUID uploadedBy, String url, String filename, String contentType, Long sizeBytes, OffsetDateTime createdAt, byte[] data) {
+        this.receiptId = receiptId;
+        this.bookingId = bookingId;
+        this.uploadedBy = uploadedBy;
+        this.url = url;
+        this.filename = filename;
+        this.contentType = contentType;
+        this.sizeBytes = sizeBytes;
+        this.createdAt = createdAt;
+        this.data = data;
+    }
+
+    public Receipt() {}
+
     public UUID getReceiptId() { return receiptId; }
     public void setReceiptId(UUID receiptId) { this.receiptId = receiptId; }
 

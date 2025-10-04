@@ -20,7 +20,6 @@ public class DotenvConfig {
         // 2. Tomcat catalina.base/conf
         String catalinaBase = System.getProperty("catalina.base");
 
-        // 3. user.dir (donde corrés el mvn o IntelliJ)
         String userDir = System.getProperty("user.dir");
 
         String[] dirs = new String[] {

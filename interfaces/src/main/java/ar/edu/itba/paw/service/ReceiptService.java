@@ -10,4 +10,7 @@ public interface ReceiptService {
     Optional<Receipt> findByBooking(UUID bookingId);
     Optional<Receipt> getWithId(UUID receiptId);
     boolean deleteByBooking(UUID bookingId);
+    void uploadForBooking(UUID bookingId, UUID userId, String filename, String contentType, byte[] data);
+    boolean deleteByBookingForUser(UUID bookingId, UUID userId);
+
 }

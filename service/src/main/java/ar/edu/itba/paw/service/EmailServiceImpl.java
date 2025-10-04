@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.BadRequestException;
 import ar.edu.itba.paw.persistence.UserDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,16 +20,19 @@ import org.thymeleaf.context.Context;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
+    private static final ZoneId ZONE_ID = ZoneId.of("America/Argentina/Buenos_Aires");
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
@@ -289,6 +293,80 @@ public class EmailServiceImpl implements EmailService {
         } catch (MessagingException e) {
             LOGGER.error("SMTP password reset email FAILED to {}: {}", toEmail, e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void notifyTableReservedToUser(Booking booking, Club club, Table table, Locale locale) {
+        LocalDate selectedDate = booking.getBookingStart().atZoneSameInstant(ZONE_ID).toLocalDate();
+        sendTemplatedEmail(
+                booking.getUser().getEmail(),
+                "Reserva confirmada - " + club.getClubName(),
+                "table-reserved-user",
+                Map.of(
+                        "clubName", club.getClubName(),
+                        "tableNumber", table.getTableNumber(),
+                        "capacity", table.getCapacity(),
+                        "date", selectedDate.toString(),
+                        "from", "23:59",
+                        "to", "06:00"
+                ),
+                "Ver reserva", "/booking?bookingId=" + booking.getBookingId()
+        );
+    }
+
+    @Override
+    public void notifyTableReservedToOwner(Booking booking, Club club, Table table, String ownerEmail, Locale locale) {
+        if (!isLikelyEmail(ownerEmail)) {
+            throw new BadRequestException("Email del dueño inválido: " + ownerEmail);
+        }
+
+        // ---- Fail-fast con mensajes claros ----
+        Objects.requireNonNull(booking, "booking es null");
+        Objects.requireNonNull(booking.getUser(), "booking.user es null");
+        Objects.requireNonNull(club, "club es null");
+        Objects.requireNonNull(table, "table es null");
+
+        // Campos que suelen ser nulos en datos incompletos:
+        final String clubName   = Objects.requireNonNullElse(club.getClubName(), "Club");
+        final String tableNum   = String.valueOf(table.getTableNumber());
+        final Integer capacity  = table.getCapacity();
+        final String username   = Objects.requireNonNullElse(booking.getUser().getUsername(), "usuario");
+        final String userEmail  = Objects.requireNonNullElse(booking.getUser().getEmail(), "no-reply@example.test");
+
+        final LocalDate date = Objects.requireNonNull(
+                booking.getBookingStart(), "booking.bookingStart es null"
+        ).atZoneSameInstant(ZONE_ID).toLocalDate();
+
+        final DateTimeFormatter df = DateTimeFormatter.ofPattern("EEE dd/MM", locale);
+        final String dateTimePretty = df.format(date) + " 23:59–06:00";
+        final String ctaUrl = "/clubs/" + club.getClubId() + "?date=" + date;
+
+        // ---- Evitar Map.ofEntries por posibles nulls ----
+        Map<String, Object> ownerModel = new HashMap<>();
+        ownerModel.put("clubName", clubName);
+        ownerModel.put("tableNumber", tableNum);
+        ownerModel.put("capacity", capacity);
+        ownerModel.put("dateTime", dateTimePretty);
+        ownerModel.put("username", username);
+        ownerModel.put("userEmail", userEmail);
+        ownerModel.put("ctaUrl", ctaUrl);
+        ownerModel.put("ctaText", "Abrir panel");
+        ownerModel.put("brandName", "BlingBling");
+        ownerModel.put("brandFooter", "© 2025 BlingBling. Panel de administración.");
+        ownerModel.put("sentAt", OffsetDateTime.now(ZONE_ID));
+
+        sendTemplatedEmail(
+                ownerEmail,
+                "Nueva reserva de mesa - " + clubName,
+                "table-reserved-owner",
+                ownerModel,
+                "Abrir panel", ctaUrl
+        );
+    }
+
+
+    private boolean isLikelyEmail(String s) {
+        return s != null && s.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     }
 
 }

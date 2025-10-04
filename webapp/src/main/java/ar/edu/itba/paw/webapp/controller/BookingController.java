@@ -19,6 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,7 +32,6 @@ public class BookingController {
     private final TableService tableService;
     private final UserService userService;
     private final ClubService clubService;
-    private final EmailService emailService;
     private final SecurityService securityService;
     private final ReceiptService receiptService;
 
@@ -42,7 +42,6 @@ public class BookingController {
         this.tableService = tableService;
         this.userService = userService;
         this.clubService = clubService;
-        this.emailService = emailService;
         this.securityService = securityService;
         this.receiptService = receiptService;
     }
@@ -54,184 +53,25 @@ public class BookingController {
                           Principal principal,
                           RedirectAttributes ra) {
 
-        var maybeTable = tableService.findById(tableId);
-        if (maybeTable.isEmpty()) {
-            throw new TableNotFoundException(tableId);
-        }
-        var table = maybeTable.get();
-        if (!clubId.equals(table.getClubId())) {
-            throw new BadRequestException("El club no existe");
-        }
+        var username = Optional.ofNullable(principal).map(Principal::getName)
+                .orElseThrow(() -> new IllegalArgumentException("El usuario no está autenticado."));
+        bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
 
-        var zone = java.time.ZoneId.of("America/Argentina/Buenos_Aires");
-        var selectedDate = java.time.LocalDate.parse(date);
-        var dow = selectedDate.getDayOfWeek();
-        if (!(dow == java.time.DayOfWeek.THURSDAY
-                || dow == java.time.DayOfWeek.FRIDAY
-                || dow == java.time.DayOfWeek.SATURDAY)) {
-            throw new InvalidDateRangeException("Solo se puede reservar para jueves, viernes o sábado.");
-        }
-
-        var start = selectedDate.atTime(23, 59).atZone(zone).toOffsetDateTime();
-        var end   = selectedDate.plusDays(1).atTime(6, 0).atZone(zone).toOffsetDateTime();
-
-        var libres = tableService.findAvailableByClubAndRange(clubId, start, end);
-        boolean disponible = libres.stream().anyMatch(t -> t.getTableId().equals(tableId));
-        if (!disponible) {
-            throw new BadRequestException("La mesa no está disponible en el rango indicado.");
-        }
-
-        var username = principal != null ? principal.getName() : null;
-        if (username == null) {
-            throw new IllegalArgumentException("El usuario no está autenticado.");
-        }
-
-        var user = userService.findByUserName(username);
-        if (user == null) {
-            throw new UserNotFoundException("No se encontró el usuario: " + username);
-        }
-        var total = table.getPrice() != null ? table.getPrice() : java.math.BigDecimal.ZERO;
-        var booking = bookingService.create(user, tableId, start, end, total);
-
-        var club = clubService.getClubById(clubId).orElseThrow(IllegalArgumentException::new);
-
-        emailService.sendTemplatedEmail(
-                user.getEmail(),
-                "Reserva confirmada - " + club.getClubName(),
-                "table-reserved-user",
-                java.util.Map.of(
-                        "clubName", club.getClubName(),
-                        "tableNumber", table.getTableNumber(),
-                        "capacity", table.getCapacity(),
-                        "date", selectedDate.toString(),
-                        "from", "23:59",
-                        "to", "06:00"
-                ),
-                "Ver reserva", "/booking?bookingId=" + booking.getBookingId()
-        );
-
-        String ownerEmail = resolveOwnerEmail(club); // método de abajo
-
-        var esAR = new java.util.Locale("es", "AR");
-        var df = java.time.format.DateTimeFormatter.ofPattern("EEE dd/MM", esAR);
-        String dateTimePretty = df.format(selectedDate) + " 23:59–06:00";
-
-        String ctaUrl = "/clubs/" + clubId + "?date=" + selectedDate;
-
-        java.util.Map<String, Object> ownerModel = new java.util.HashMap<>();
-        ownerModel.put("clubName", club.getClubName());
-        ownerModel.put("tableNumber", table.getTableNumber());
-        ownerModel.put("capacity", table.getCapacity());
-        ownerModel.put("dateTime", dateTimePretty);
-
-        ownerModel.put("username", user.getUsername());
-        ownerModel.put("userEmail", user.getEmail());
-        ownerModel.put("ctaUrl", ctaUrl);
-        ownerModel.put("ctaText", "Abrir panel");
-
-
-        ownerModel.put("brandName", "BlingBling");
-        ownerModel.put("brandFooter", "© 2025 BlingBling. Panel de administración.");
-        ownerModel.put("sentAt", java.time.OffsetDateTime.now(zone)); // para #temporals.format
-
-        if (isLikelyEmail(ownerEmail)) {
-            emailService.sendTemplatedEmail(
-                    ownerEmail,
-                    "Nueva reserva de mesa - " + club.getClubName(),
-                    "table-reserved-owner",
-                    ownerModel,
-                    "Abrir panel", ctaUrl
-            );
-        } else {
-            throw new UserNotFoundException("Email del dueño inválido: " + ownerEmail);
-        }
         ra.addFlashAttribute("reservationSent", true);
-        ra.addFlashAttribute("success", "¡Reserva creada para " + selectedDate + " (23:59–06:00)!");
-        return "redirect:/clubs/" + clubId + "?date=" + selectedDate; // volvemos con la fecha elegida
-    }
-
-    private String resolveOwnerEmail(Club club) {
-        String email = null;
-        if (club.getContactInfo() != null) {
-            email = club.getContactInfo().getEmail();
-        }
-        email = (email == null) ? "" : email.trim();
-        if (email.isEmpty()) {
-            email = "owner@" + club.getClubName()
-                    .toLowerCase(java.util.Locale.ROOT)
-                    .replaceAll("[^a-z0-9]+", "") + ".test";
-        }
-        return email;
-    }
-
-    private boolean isLikelyEmail(String s) {
-        return s != null && s.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
-    }
-
-
-
-    /* ---------- Vistas ---------- */
-
-    /** Form para crear reserva de una mesa */
-    @GetMapping("/tables/{tableId}/bookings/new")
-    public String newBooking(@PathVariable UUID tableId, Model model) {
-        final Optional<Table> tableOpt = tableService.findById(tableId);
-        if (tableOpt.isEmpty()) {
-            throw new TableNotFoundException(tableId);
-        }
-        if (!model.containsAttribute("bookingForm")) {
-            model.addAttribute("bookingForm", new BookingForm());
-        }
-        model.addAttribute("table", tableOpt.get());
-        return "bookings/new"; // JSP: /WEB-INF/jsp/bookings/new.jsp
-    }
-
-
-    /* ---------- Acciones ---------- */
-
-    /** Crear reserva (queda PENDIENTE y bloquea la mesa) */
-    @PostMapping("/tables/{tableId}/bookings")
-    public String create(@PathVariable UUID tableId,
-                         @Valid @ModelAttribute("bookingForm") BookingForm form,
-                         BindingResult br,
-                         Principal principal,
-                         RedirectAttributes ra) {
-
-        if (br.hasErrors()) {
-            throw new ValidationException(br.getAllErrors().get(0).getDefaultMessage());
-        }
-
-        final User user = userService.findByUserName(principal.getName());
-        final Booking b = bookingService.create(
-                user,
-                tableId,
-                form.getStart(),
-                form.getEnd(),
-                form.getTotal()
-        );
-
-        ra.addFlashAttribute("success", "Reserva creada en estado PENDIENTE");
-        return "redirect:/booking?bookingId=" + b.getBookingId();
+        ra.addFlashAttribute("success", "¡Reserva creada para " + date + " (23:59–06:00)!");
+        return "redirect:/clubs/" + clubId + "?date=" + date;
     }
 
     /** Confirmar reserva → RESERVADA */
     @PostMapping("/admin/bookings/{bookingId}/confirm")
     public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
         try {
-            var booking = bookingService.findById(bookingId)
-                    .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
-            if (booking.getStatus() == Status.CANCELADA) {
-                ra.addFlashAttribute("error", "error.booking.cannotConfirmCancelled");
-            } else {
-                bookingService.updateStatus(bookingId, Status.CONFIRMADA);
-                ra.addFlashAttribute("success", "booking.confirmed");
-            }
+            bookingService.confirm(bookingId);
+            ra.addFlashAttribute("success", "booking.confirmed");
         } catch (InvalidStatusTransitionException e) {
             ra.addFlashAttribute("error", "error.booking.cannotConfirm");
         } catch (BookingNotFoundException e) {
             ra.addFlashAttribute("error", "booking.notfound");
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", "error.internal");
         }
         return "redirect:/admin/booking?bookingId=" + bookingId;
     }
@@ -239,19 +79,12 @@ public class BookingController {
     @PostMapping("/admin/bookings/{bookingId}/cancel")
     public String cancel(@PathVariable UUID bookingId, RedirectAttributes ra) {
         try {
-            // Opcional: validar existencia para dar error amable
-            bookingService.findById(bookingId)
-                    .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
-
             bookingService.cancel(bookingId);
             ra.addFlashAttribute("success", "booking.cancelled");
         } catch (InvalidStatusTransitionException e) {
-            // No conviertas a BadRequestException; devolvé mensaje de usuario y redirigí
             ra.addFlashAttribute("error", "error.booking.cannotCancel");
         } catch (BookingNotFoundException e) {
             ra.addFlashAttribute("error", "booking.notfound");
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", "error.internal");
         }
         return "redirect:/admin/booking?bookingId=" + bookingId;
     }
@@ -259,33 +92,18 @@ public class BookingController {
 
     @PostMapping("/bookings/{bookingId}/cancel")
     public String cancelUser(@PathVariable UUID bookingId, RedirectAttributes ra) {
-        // Validate booking exists and user is allowed to cancel
-        var booking = bookingService.findById(bookingId)
-                .orElse(null);
-        if (booking == null) {
-            ra.addFlashAttribute("error", "booking.notfound");
-            return "redirect:/booking?bookingId=" + bookingId;
-        }
-
         var current = securityService.getVerifiedLoggedUser();
-        if (booking.getUser() == null || !booking.getUser().getId().equals(current.getId())) {
-            ra.addFlashAttribute("error", "booking.notAllowedToCancel");
-            return "redirect:/booking?bookingId=" + bookingId;
-        }
-
-        try{
-            bookingService.cancel(bookingId);
+        try {
+            bookingService.cancelByUser(bookingId, current.getId());
             ra.addFlashAttribute("success", "booking.cancelled");
+        } catch (UnauthorizedException e) {
+            ra.addFlashAttribute("error", "booking.notAllowedToCancel");
         } catch (InvalidStatusTransitionException e) {
-            // flash a user-friendly message (use message code)
             ra.addFlashAttribute("error", "error.booking.cannotCancel");
         } catch (BookingNotFoundException e) {
             ra.addFlashAttribute("error", "booking.notfound");
-        } catch (Exception e) {
-            // generic catch to avoid 500 and provide feedback
-            ra.addFlashAttribute("error", "error.internal");
         }
-        return "redirect:/booking?bookingId=" + bookingId;  // Cambia a query param consistente
+        return "redirect:/booking?bookingId=" + bookingId;
     }
 
     /*
@@ -308,7 +126,6 @@ public class BookingController {
             try {
                 bookingUuid = UUID.fromString(form.getBookingId().trim());
             } catch (IllegalArgumentException e) {
-                // agregamos error de campo y seguimos (no 422)
                 br.rejectValue("bookingId", "bookingId.invalid", "El ID de reserva ingresado no es válido.");
             }
         }
@@ -326,7 +143,6 @@ public class BookingController {
 
         int totalPages = (int) Math.ceil((double) totalBookings / size);
 
-        // construir queryParams (para mantener filtros en paginación)
         Map<String, String> filters = new LinkedHashMap<>();
         if (form.getUserId() != null) filters.put("userId", form.getUserId().toString());
         if (form.getClubId() != null) filters.put("clubId", form.getClubId().toString());
@@ -455,49 +271,27 @@ public class BookingController {
                                 RedirectAttributes ra,
                                 @RequestHeader(value = "Referer", required = false) String referer) {
 
-        var booking = bookingService.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
-
-        // Validación de user (como sugerí antes)
-        var current = securityService.getVerifiedLoggedUser();
-        if (!booking.getUser().getId().equals(current.getId())) {
-            ra.addFlashAttribute("error", "receipt.upload.notAllowed");  // Código nuevo
-            return safeRedirect(referer, bookingId);
-        }
-
-        if (file == null || file.isEmpty()) {
-            ra.addFlashAttribute("error", "receipt.select.file");  // Código
-            return safeRedirect(referer, bookingId);
-        }
-
-        if (receiptService.findByBooking(bookingId).isPresent()) {
-            ra.addFlashAttribute("info", "receipt.already.exists");  // Código
-            return safeRedirect(referer, bookingId);
-        }
-
+            var current = securityService.getVerifiedLoggedUser();
         try {
-            receiptService.upload(
-                    bookingId,
-                    current.getId(),
-                    file.getOriginalFilename() != null ? file.getOriginalFilename() : "receipt",
-                    file.getContentType(),
-                    file.getBytes()
-            );
-            ra.addFlashAttribute("success", "receipt.uploaded");  // Código
+            String filename = Optional.ofNullable(file.getOriginalFilename()).orElse("receipt");
+            receiptService.uploadForBooking(
+                    bookingId, current.getId(), filename, file.getContentType(), file.getBytes());
+            ra.addFlashAttribute("success", "receipt.uploaded");
+        } catch (UnauthorizedException e) {
+            ra.addFlashAttribute("error", "receipt.upload.notAllowed");
+        } catch (InvalidReceiptException e) {
+            ra.addFlashAttribute("error", "receipt.select.file");
         } catch (DuplicateKeyException e) {
-            ra.addFlashAttribute("info", "receipt.already.exists");  // Código
+            ra.addFlashAttribute("info", "receipt.already.exists");
         } catch (IOException e) {
-            ra.addFlashAttribute("error", "receipt.upload.ioError");  // Código nuevo para IO
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", "error.internal");  // Reusa código existente
+            ra.addFlashAttribute("error", "receipt.upload.ioError");
+        } catch (BookingNotFoundException e) {
+            ra.addFlashAttribute("error", "booking.notfound");
         }
-
         return safeRedirect(referer, bookingId);
     }
 
-// Helper safeRedirect como antes
 
-    // Helper privado para redirects consistentes
     private String safeRedirect(String referer, UUID bookingId) {
         if (referer != null && !referer.isEmpty() && referer.contains("/booking")) {
             return "redirect:" + referer;
@@ -559,17 +353,16 @@ public class BookingController {
                                      @ModelAttribute("success") String success,
                                      @ModelAttribute("info") String info) {
 
-        final Booking booking = bookingService.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("La reserva no existe"));
-
-
-        //ESTO SEGURO HAY QUE CAMBIARLO
         var current = securityService.getVerifiedLoggedUser();
-        if (booking.getUser() == null || !booking.getUser().getId().equals(current.getId())) {
-            // Podés redirigir al listado con un mensaje
-            model.addAttribute("error", "booking.notAllowedToView");
+        final Booking booking;
+        try {
+            booking = bookingService.getForUser(bookingId, current.getId());
+        } catch (BookingNotFoundException e) {
+            model.addAttribute("errorKey", "booking.notfound");
             return "error/error";
-
+        } catch (UnauthorizedException e) {
+            model.addAttribute("errorKey", "booking.notAllowedToView");
+            return "error/error";
         }
 
         User u = userService.findById(booking.getUser().getId());
@@ -620,20 +413,20 @@ public class BookingController {
 
     @PostMapping("/bookings/{bookingId}/receipt/delete")
     public String deleteReceiptForUser(@PathVariable UUID bookingId, RedirectAttributes ra) {
-        var booking = bookingService.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
-
-        var current = securityService.getVerifiedLoggedUser();
-        if (booking.getUser() == null || !booking.getUser().getId().equals(current.getId())) {
-            throw new BadRequestException("Not allowed to delete this receipt");
-        }
-
-        boolean deleted = receiptService.deleteByBooking(bookingId);
+            var current = securityService.getVerifiedLoggedUser();
+            boolean deleted;
+            try {
+                    deleted = receiptService.deleteByBookingForUser(bookingId, current.getId());
+                } catch (UnauthorizedException e) {
+                    ra.addFlashAttribute("error", "receipt.delete.notAllowed");
+                    return "redirect:/booking?bookingId=" + bookingId;
+                } catch (BookingNotFoundException e) {
+                    ra.addFlashAttribute("error", "booking.notfound");
+                    return "redirect:/booking?bookingId=" + bookingId;
+                }
         ra.addFlashAttribute(deleted ? "success" : "info",
                 deleted ? "receipt.deleted" : "receipt.notfound");
-        return "redirect:/booking?bookingId=" + bookingId;  // Cambia a query param
+        return "redirect:/booking?bookingId=" + bookingId;
     }
-
-
 
 }
