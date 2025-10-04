@@ -44,4 +44,7 @@ public interface ClubService {
 
     void updateField(UUID clubId, String field, String value, UUID editorId);
 
+    boolean sendContactMessage(UUID clubId, String senderEmail, String senderName, String senderPhone, String message);
+
+
 }

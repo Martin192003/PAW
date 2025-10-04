@@ -4,9 +4,7 @@ import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.exceptions.EmailWasntSentException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.service.ClubService;
-import ar.edu.itba.paw.service.EmailService;
 import ar.edu.itba.paw.webapp.form.ClubForm;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,19 +18,18 @@ import java.util.UUID;
 public class ContactController {
 
     private final ClubService clubService;
-    private final EmailService mailService;
 
-    public ContactController(ClubService clubService, EmailService mailService) {
+    public ContactController(ClubService clubService) {
         this.clubService = clubService;
-        this.mailService = mailService;
     }
 
     @GetMapping("/contact")
     public String showContact(@RequestParam("id") UUID clubId, Model model) {
         Club club = clubService.getClubById(clubId).orElse(null);
-        if (club == null) throw new NotFoundException("El boliche no existe.");
-        ClubForm clubForm = new ClubForm();
-        clubForm.setClubId(clubId);
+        if (club == null) {
+            throw new NotFoundException("El boliche no existe.");
+        }
+
         model.addAttribute("clubId", club.getClubId());
         model.addAttribute("clubName", club.getClubName());
         model.addAttribute("clubForm", new ClubForm());
@@ -45,9 +42,11 @@ public class ContactController {
                               BindingResult bindingResult,
                               Model model,
                               RedirectAttributes ra) {
-        var clubOpt = clubService.getClubById(clubId);
-        if (clubOpt.isEmpty()) throw new NotFoundException("El boliche no existe.");
-        var club = clubOpt.get();
+
+        Club club = clubService.getClubById(clubId).orElse(null);
+        if (club == null) {
+            throw new NotFoundException("El boliche no existe.");
+        }
 
         model.addAttribute("clubId", club.getClubId());
         model.addAttribute("clubName", club.getClubName());
@@ -56,23 +55,20 @@ public class ContactController {
             return "contact";
         }
 
-        String to = club.getContactInfo() != null ? club.getContactInfo().getEmail() : "test@local";
-        boolean sent = mailService.sendContact(
-                to,
-                club.getClubName(),
+        boolean sent = clubService.sendContactMessage(
+                clubId,
                 clubForm.getEmail(),
                 clubForm.getName(),
                 clubForm.getPhone(),
                 clubForm.getMessage()
         );
 
-        model.addAttribute("sent", sent);
         if (!sent) {
             throw new EmailWasntSentException("No se pudo enviar el email, intente nuevamente más tarde.");
-        }else {
-            model.addAttribute("clubForm", new ClubForm());
         }
+
+        model.addAttribute("sent", true);
+        model.addAttribute("clubForm", new ClubForm());
         return "contact";
     }
-
 }

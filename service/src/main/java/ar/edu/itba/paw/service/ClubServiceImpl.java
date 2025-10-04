@@ -203,4 +203,25 @@ public class ClubServiceImpl implements ClubService{
         s = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
         return s.toUpperCase(Locale.ROOT);
     }
+
+    @Override
+    @Transactional
+    public boolean sendContactMessage(UUID clubId, String senderEmail, String senderName, String senderPhone, String message) {
+        Optional<Club> clubOpt = clubDao.findById(clubId);
+        if (clubOpt.isEmpty()) {
+            return false;
+        }
+
+        Club club = clubOpt.get();
+        String recipientEmail = club.getContactInfo() != null ? club.getContactInfo().getEmail() : "test@local";
+
+        return mailService.sendContact(
+                recipientEmail,
+                club.getClubName(),
+                senderEmail,
+                senderName,
+                senderPhone,
+                message
+        );
+    }
 }
