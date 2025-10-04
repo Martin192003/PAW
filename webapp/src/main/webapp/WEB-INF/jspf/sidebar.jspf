@@ -2,7 +2,7 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <c:if test="${user != null}">
     <div class="sidebar">
-        <a href="<c:url value='/clubs/profile?userId=${user.id}' />"
+        <a href="<c:url value='/profile?userId=${user.id}' />"
            class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">
             <spring:message code="title.myProfile"/>
         </a>

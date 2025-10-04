@@ -341,7 +341,6 @@ public class EmailServiceImpl implements EmailService {
         final String dateTimePretty = df.format(date) + " 23:59–06:00";
         final String ctaUrl = "/clubs/" + club.getClubId() + "?date=" + date;
 
-        // ---- Evitar Map.ofEntries por posibles nulls ----
         Map<String, Object> ownerModel = new HashMap<>();
         ownerModel.put("clubName", clubName);
         ownerModel.put("tableNumber", tableNum);

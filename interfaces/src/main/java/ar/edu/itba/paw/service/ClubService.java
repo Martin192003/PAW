@@ -39,4 +39,9 @@ public interface ClubService {
     int countClubsByUser(UUID userId);
 
     Map<UUID, String> mapClubNames(List<Booking> bookings);
+
+    void assertAdmin(UUID clubId, UUID userId);
+
+    void updateField(UUID clubId, String field, String value, UUID editorId);
+
 }

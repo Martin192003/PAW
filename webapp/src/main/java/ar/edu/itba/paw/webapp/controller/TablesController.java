@@ -1,0 +1,137 @@
+package ar.edu.itba.paw.webapp.controller;
+
+
+import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.*;
+import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.form.AddProductForm;
+import ar.edu.itba.paw.webapp.form.AddTableForm;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import javax.validation.Valid;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+@Controller
+@RequestMapping("/clubs/tables")
+public class TablesController {
+
+     private final TableService tableService;
+     private final BookingService bookingService;
+     private  final SecurityService securityService;
+     private final ClubService clubService;
+     private final PhotoService photoService;
+     private final MenuService menuService;
+
+     @Autowired
+     public TablesController(TableService tableService, BookingService bookingService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService) {
+         this.tableService = tableService;
+         this.bookingService = bookingService;
+         this.securityService = securityService;
+         this.clubService = clubService;
+         this.photoService = photoService;
+         this.menuService = menuService;
+     }
+
+
+    @PostMapping("/{tableId}/edit")
+    public String editTable(
+            @PathVariable UUID tableId,
+            @RequestParam("clubId") UUID clubId,
+            @RequestParam("tableNumber") BigDecimal tableNumber,
+            @RequestParam("capacity") BigDecimal capacity,
+            @RequestParam("price") BigDecimal price,
+            @RequestParam("discount") BigDecimal discount,
+            RedirectAttributes ra
+    ) {
+        checkLoggedUser(clubId);
+        try{
+            tableService.update(tableId, clubId, tableNumber, capacity, TableState.DISPONIBLE, price, discount);
+        } catch (DuplicateEntityException | DataIntegrityViolationException e) {
+            ra.addAttribute("err", "dup");
+        } catch (ValidationException e) {
+            ra.addAttribute("err", "price_max");
+        } catch (InvalidTableNumberException e) {
+            ra.addAttribute("err", "table_number");
+        } catch (InvalidCapacityException e) {
+            ra.addAttribute("err", "capacity");
+        } catch (InvalidPriceException e) {
+            ra.addAttribute("err", "price");
+        } catch (IllegalArgumentException e) {
+            ra.addAttribute("err", "discount");
+        }
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @PostMapping("/{tableId}/delete")
+    public String deleteTable(@PathVariable UUID tableId, @RequestParam("clubId") UUID clubId) {
+        checkLoggedUser(clubId);
+        tableService.delete(tableId);
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    private void checkLoggedUser(UUID clubId){
+        User user = securityService.getVerifiedLoggedUser();
+        if(user == null) {
+            throw new UserNotFoundException("No se encontró el usuario logueado.");
+        }
+        List<User> clubUsers = clubService.getAdminsByClub(clubId);
+        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+    }
+
+    @PostMapping("/addTable")
+    public String addTable(
+            @Valid @ModelAttribute("tableForm") AddTableForm tableForm,
+            BindingResult errors,
+            Model model
+    ) {
+        UUID clubId = tableForm.getClubId();
+        checkLoggedUser(clubId);
+
+        if (tableForm.getDiscount() == null) {
+            tableForm.setDiscount(BigDecimal.ZERO);
+        }
+
+        if (errors.hasErrors()) {
+            // volvés a armar el modelo igual que en handleClub
+            var club = clubService.getClubById(clubId).orElseThrow();
+            model.addAttribute("club", club);
+            model.addAttribute("tables", tableService.findByClubId(clubId));
+            model.addAttribute("menu", menuService.getMenuByClub(clubId));
+            model.addAttribute("zones", Zone.values());
+            model.addAttribute("genres", MusicalGenre.values());
+            model.addAttribute("prices", Price.values());
+            model.addAttribute("coverPhotoUrl",
+                    photoService.listByClub(clubId, 0, 1).stream()
+                            .findFirst().map(p -> p.getUrl()).orElse(null));
+            model.addAttribute("tableForm", tableForm);
+            model.addAttribute("productForm", new AddProductForm());
+            return "clubHandler";
+        }
+
+        try {
+            tableService.create(
+                    tableForm.getTableNumber(),
+                    tableForm.getCapacity(),
+                    clubId,
+                    TableState.DISPONIBLE,
+                    tableForm.getPrice(),
+                    tableForm.getDiscount()
+            );
+        } catch (DuplicateEntityException | DataIntegrityViolationException e) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=dup";
+        }
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+}

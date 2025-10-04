@@ -14,7 +14,7 @@
             </c:if>
             <c:if test="${showProfileButton == true}">
                 <c:if test="${not empty user}">
-                    <a href="<c:url value='/clubs/profile?userId=${user.id}' />" class="profile-btn" title="<spring:message code='title.myProfile'/>">
+                    <a href="<c:url value='/profile?userId=${user.id}' />" class="profile-btn" title="<spring:message code='title.myProfile'/>">
                         <i class="fa-solid fa-user"></i>
                     </a>
                 </c:if>

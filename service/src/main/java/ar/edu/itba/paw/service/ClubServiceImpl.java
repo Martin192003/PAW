@@ -1,6 +1,9 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.ClubNotFoundException;
+import ar.edu.itba.paw.model.exceptions.NotFoundException;
+import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.util.*;
 
 @Service
@@ -130,5 +134,73 @@ public class ClubServiceImpl implements ClubService{
             );
         }
         return out;
+    }
+
+    @Override
+    public void assertAdmin(UUID clubId, UUID userId) {
+        List<User> admins = clubDao.findAdminsByClubId(clubId);
+        admins.stream().filter(a -> a.getId().equals(userId)).findAny().orElseThrow(UnauthorizedException::new);
+    }
+
+
+    @Override
+    @Transactional
+    public void updateField(UUID clubId, String field, String value, UUID editorId){
+        assertAdmin(clubId, editorId);
+
+        Club club = clubDao.findById(clubId).orElseThrow(ClubNotFoundException::new);
+
+        switch (field) {
+            case "clubName":
+                club.setClubName(value);
+                break;
+            case "location":
+                club.setLocation(value);
+                break;
+            case "priceRange":
+                club.setPriceRange(Price.valueOf(value.toUpperCase(Locale.ROOT)));
+                break;
+            case "description":
+                club.setDescription(value);
+                break;
+            case "zone":
+                club.setZone(parseZoneFlexible(value)); // <-- acepta name() o dbValue
+                break;
+            case "musicGenre":
+                club.setMusicGenre(MusicalGenre.valueOf(value));
+                break;
+            default:
+                throw new IllegalArgumentException("Campo inválido: " + field);
+        }
+
+        // IMPORTANTÍSIMO: persistí la instancia MODIFICADA
+        updateClub(club);
+    }
+
+    private Zone parseZoneFlexible(String raw) {
+        if (raw == null) throw new IllegalArgumentException("Zona vacía");
+        // 1) Intento por name() del enum (con normalización básica)
+        String normalized = normalizeEnumToken(raw);
+        try {
+            return Zone.valueOf(normalized);
+        } catch (IllegalArgumentException ignore) {
+            // 2) Fallback por dbValue (lo que envía el JSP)
+            for (Zone z : Zone.values()) {
+                // si tu enum tiene getDbValue(); si no, reemplazá por el método/prop correcto
+                String db = z.getDbValue();
+                if (db != null && db.equalsIgnoreCase(raw)) {
+                    return z;
+                }
+            }
+            // 3) No hubo match
+            throw new IllegalArgumentException("Zona inválida: " + raw);
+        }
+    }
+
+    private String normalizeEnumToken(String v) {
+        String s = v.trim().replace('-', '_').replace(' ', '_');
+        // si querés tolerar acentos:
+        s = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        return s.toUpperCase(Locale.ROOT);
     }
 }

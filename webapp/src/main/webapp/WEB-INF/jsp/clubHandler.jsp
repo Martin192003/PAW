@@ -113,7 +113,7 @@
     <spring:message code="placeholder.name" var="phProductName"/>
     <spring:message code="placeholder.description" var="phDescription"/>
     <spring:message code="placeholder.price" var="phPrice"/>
-    <form:form method="post" modelAttribute="productForm" action="${pageContext.request.contextPath}/clubs/addProduct" class="add-product-bar">
+    <form:form method="post" modelAttribute="productForm" action="${pageContext.request.contextPath}/clubs/products/addProduct" class="add-product-bar">
         <form:hidden path="clubId" value="${club.clubId}" />
 
         <div class="form-group">
@@ -183,7 +183,7 @@
     <spring:message code="placeholder.tableNumber" var="phTableNumber"/> <spring:message code="placeholder.capacity"
                                                                                          var="phCapacity"/>
     <spring:message code="placeholder.discount" var="phDiscount"/>
-    <form:form method="post" modelAttribute="tableForm" action="${pageContext.request.contextPath}/clubs/addTable" class="add-product-bar">
+    <form:form method="post" modelAttribute="tableForm" action="${pageContext.request.contextPath}/clubs/tables/addTable" class="add-product-bar">
         <form:hidden path="clubId" value="${club.clubId}" />
 
         <form:input path="tableNumber" type="number" cssClass="add-product-name" placeholder="${phTableNumber}" />
@@ -232,7 +232,7 @@
 <div id="productEditModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeProductEditModal()">&times;</span>
         <h2>Editar producto</h2>
-        <form method="post" id="productEditForm" action="<c:url value='/clubs/editProduct' />"
+        <form method="post" id="productEditForm" action="<c:url value='/clubs/products/editProduct' />"
               style="display:flex; flex-direction:column; gap:18px;"><input type="hidden" name="productId"
                                                                             id="editProductId"/>
             <div style="display:flex; flex-direction:column; gap:6px;"><label for="editProductName">Nombre:</label>
@@ -273,7 +273,7 @@
 <div id="deleteModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeDeleteModal()">&times;</span>
         <h3><spring:message code="confirm.deleteProduct"/></h3>
-        <form id="deleteForm" method="post" action="<c:url value='/clubs/deleteProduct' />"><input type="hidden"
+        <form id="deleteForm" method="post" action="<c:url value='/clubs/products/deleteProduct' />"><input type="hidden"
                                                                                                    name="productId"
                                                                                                    id="deleteProductId"
                                                                                                    value=""/>

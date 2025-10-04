@@ -22,6 +22,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.UUID;
 
@@ -37,7 +39,6 @@ public class ClubController {
     private final PhotoService photoService;
     private final UserService userService;
     private final MenuService menuService;
-    private final ProductService productService;
     private final SecurityService securityService;
     private final TableService tableService;
 
@@ -47,7 +48,6 @@ public class ClubController {
         this.clubService = clubService;
         this.userService = userService;
         this.menuService = menuService;
-        this.productService = productService;
         this.securityService = securityService;
         this.tableService = tableService;
     }
@@ -63,44 +63,27 @@ public class ClubController {
                        @RequestParam(value = "size", defaultValue = "10") int size,
                        Model model) {
 
-        if (page < 1) page = 1;
         if (size < 1) size = 10;
+        if (page < 1) page = 1;
+
+        int totalClubs = clubService.countSearch(nameLike, zone, musicGenre, priceRange, isBar);
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
+        if (page > totalPages) page = totalPages;
 
         int offset = (page - 1) * size;
 
         List<Club> clubs = clubService.searchPaginated(
-                nameLike,
-                zone,
-                musicGenre,
-                priceRange,
-                isBar,
-                sort,
-                size,
-                offset
+                nameLike, zone, musicGenre, priceRange, isBar, sort, size, offset
         );
 
-        boolean any = (nameLike != null || zone != null || musicGenre != null ||
-                priceRange != null || sort != null || isBar != null);
-
-        Map<UUID, String> photoUrlByClub = new HashMap<>();
-        for (Club c : clubs) {
-            var photos = photoService.listByClub(c.getClubId(), 0, 1);
-            if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.getFirst().getUrl());
-        }
-
-        User user = securityService.getVerifiedLoggedUser();
-        if(user!=null) {
-            model.addAttribute("user", user);
-        }
-
-        int totalClubs = clubService.countSearch(
-                nameLike,
-                zone,
-                musicGenre,
-                priceRange,
-                isBar
+        Map<UUID, String> photoUrlByClub = photoService.getCoverUrls(
+                clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
         );
 
+        var user = securityService.getVerifiedLoggedUser();
+        if (user != null) model.addAttribute("user", user);
+
+        // Armás queryParams SIN 'page' pero CON 'size'
         Map<String, String> filters = new LinkedHashMap<>();
         if (nameLike != null && !nameLike.isBlank()) filters.put("name", nameLike);
         if (zone != null) filters.put("zone", zone.name());
@@ -108,20 +91,26 @@ public class ClubController {
         if (priceRange != null && !priceRange.isBlank()) filters.put("price", priceRange);
         if (isBar != null) filters.put("isBar", isBar.toString());
         if (sort != null && !sort.isBlank()) filters.put("sort", sort);
-
+        filters.put("size", String.valueOf(size)); // <--- importante
         String queryParams = filters.entrySet().stream()
-                .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
+                .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
 
-        int totalPages = (int) Math.ceil((double) totalClubs / size);
-
+        // Atributos que el JSP puede estar esperando
         model.addAttribute("clubs", clubs);
-        model.addAttribute("currentPage", page);
+        model.addAttribute("photoUrlByClub", photoUrlByClub);
+
+        model.addAttribute("currentPage", page); // lo que ya tenías
+        model.addAttribute("page", page);        // compatibilidad con JSP
+        model.addAttribute("size", size);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
-        model.addAttribute("page", page);
+        model.addAttribute("pages",
+                java.util.stream.IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList())
+        );
+
         model.addAttribute("queryParams", queryParams);
-        model.addAttribute("photoUrlByClub", photoUrlByClub);
+
         model.addAttribute("name", nameLike);
         model.addAttribute("zone", zone);
         model.addAttribute("genre", musicGenre);
@@ -139,10 +128,7 @@ public class ClubController {
     public String showClubForm(Model model) {
 
         User user = securityService.getVerifiedLoggedUser();
-        if(user!=null) {
-            model.addAttribute("user", user);
-        }
-
+        if(user!=null) model.addAttribute("user", user);
         model.addAttribute("clubForm", new AddClubForm());
         model.addAttribute("postPath", "/clubs/create");
         model.addAttribute("priceValues", Price.values());
@@ -152,15 +138,12 @@ public class ClubController {
         return "club_form";
     }
 
-
     @PostMapping("/create")
-    public String createClub(
-            Model model,
-            @Valid @ModelAttribute("clubForm") AddClubForm addClubForm,
-            BindingResult errors) {
-
+    public String createClub(Model model,
+                             @Valid @ModelAttribute("clubForm") AddClubForm f,
+                             BindingResult errors) throws IOException {
         if (errors.hasErrors()) {
-            model.addAttribute("clubForm", addClubForm);
+            model.addAttribute("clubForm", f);
             model.addAttribute("postPath", "/clubs/create");
             model.addAttribute("priceValues", Price.values());
             model.addAttribute("genreValues", MusicalGenre.values());
@@ -168,131 +151,69 @@ public class ClubController {
             return "club_form";
         }
 
-        User contactInfo = securityService.getVerifiedLoggedUser();
-        if(contactInfo == null) {
-            throw new IllegalStateException("No se encontró el usuario de contacto por defecto.");
-        }
+        var contact = securityService.getVerifiedLoggedUser();
+        if (contact == null) throw new IllegalStateException("No se encontró el usuario de contacto.");
+
         Club newClub = clubService.create(
-                addClubForm.getName(),
-                addClubForm.getDescription(),
-                addClubForm.getLocation(),
-                addClubForm.getPriceRange(),
-                contactInfo,
-                addClubForm.getMusicGenre(),
-                addClubForm.getZone(),
-                addClubForm.getIsBar()
+                f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
+                contact, f.getMusicGenre(), f.getZone(), f.getIsBar()
         );
 
-        var image = addClubForm.getImage();
+        var image = f.getImage();
         if (image != null && !image.isEmpty()) {
-            try {
-                photoService.upload(
-                        newClub.getClubId(),
-                        contactInfo.getId(),
-                        image.getOriginalFilename(),
-                        image.getContentType() != null ? image.getContentType() : "application/octet-stream",
-                        image.getBytes()
-                );
-            } catch (IOException e) {
-                throw new BadRequestException("Error al crear el imagen");
-            }
+            photoService.upload(newClub.getClubId(), contact.getId(),
+                    image.getOriginalFilename(), image.getContentType(), image.getBytes());
         }
-        if (newClub == null) {
-            throw new DuplicateEntityException("No se pudo crear el club");
-        }
-
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();
     }
 
     @GetMapping("/handle")
-    public String handleClub(
-            @RequestParam("clubId") UUID clubId,
-            Model model
-    ) {
-        checkLoggedUser(clubId);
+    public String handleClub(@RequestParam("clubId") UUID clubId, Model model) {
+        var user = securityService.getVerifiedLoggedUser();
+        if (user == null) throw new UserNotFoundException("No logueado");
+        clubService.assertAdmin(clubId, user.getId());
 
-        var maybeClub = clubService.getClubById(clubId);
-        if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
-        var club = maybeClub.get();
+        var club = clubService.getClubById(clubId).orElseThrow(() -> new NotFoundException("El boliche no existe."));
+        var cover = photoService.getCoverUrl(clubId).orElse(null);
 
-        var photos = photoService.listByClub(clubId, 0, 1);
-        String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
-
-        model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("club", club);
-        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("tables", tableService.findByClubId(clubId));
+        model.addAttribute("coverPhotoUrl", cover);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
         model.addAttribute("menu", menuService.getMenuByClub(clubId));
         model.addAttribute("productForm", new AddProductForm());
         model.addAttribute("tableForm", new AddTableForm());
-
         return "clubHandler";
     }
 
     @PostMapping("/editField")
-    public String editField(
-            @RequestParam("clubId") UUID clubId,
-            @RequestParam("field") String field,
-            @RequestParam("value") String value,
-            Model model
-    ) {
-        checkLoggedUser(clubId);
-
-        var maybeClub = clubService.getClubById(clubId);
-        if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
-        Club club = maybeClub.get();
-
-        switch (field) {
-            case "clubName":
-                club.setClubName(value);
-                break;
-            case "location":
-                club.setLocation(value);
-                break;
-            case "priceRange":
-                club.setPriceRange(Price.valueOf(value.toUpperCase()));
-                break;
-            case "description":
-                club.setDescription(value);
-                break;
-            case "zone":
-                club.setZone(Zone.valueOf(value));
-                break;
-            case "musicGenre":
-                club.setMusicGenre(MusicalGenre.valueOf(value));
-                break;
-            default:
-                throw new IllegalArgumentException("Campo inválido: " + field);
-        }
-
-        clubService.updateClub(club);
+    public String editField(@RequestParam("clubId") UUID clubId,
+                            @RequestParam("field") String field,
+                            @RequestParam("value") String value) {
+        var user = securityService.getVerifiedLoggedUser();
+        if (user == null) throw new UserNotFoundException("No logueado");
+        clubService.updateField(clubId, field, value, user.getId());
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
     @GetMapping("/activity")
-    public String userClubs(
-            @RequestParam("userId") UUID userId,
-            @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size,
-            Model model
-    ) {
+    public String userClubs(@RequestParam("userId") UUID userId,
+                            @RequestParam(value = "page", defaultValue = "1") int page,
+                            @RequestParam(value = "size", defaultValue = "10") int size,
+                            Model model) {
         if (page < 1) page = 1;
         if (size < 1) size = 10;
-
         int offset = (page - 1) * size;
 
         List<Club> clubs = clubService.getClubsByUserPaginated(userId, size, offset);
-
         int totalClubs = clubService.countClubsByUser(userId);
         int totalPages = (int) Math.ceil((double) totalClubs / size);
 
-        Map<UUID, String> photoUrlByClub = new HashMap<>();
-        for (Club c : clubs) {
-            var photos = photoService.listByClub(c.getClubId(), 0, 1);
-            if (!photos.isEmpty()) photoUrlByClub.put(c.getClubId(), photos.get(0).getUrl());
-        }
+        Map<UUID,String> photoUrlByClub = photoService.getCoverUrls(
+                clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
+        );
 
         model.addAttribute("user", userService.findById(userId));
         model.addAttribute("clubs", clubs);
@@ -301,208 +222,10 @@ public class ClubController {
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("activePage", "clubs");
         model.addAttribute("userId", userId);
-
         model.addAttribute("page", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
-
         return "clubActivity";
-    }
-
-    @PostMapping("/editProduct")
-    public String editProduct(
-            @RequestParam("productId") UUID productId,
-            @RequestParam("productName") String productName,
-            @RequestParam("description") String description,
-            @RequestParam("basePrice") BigDecimal basePrice,
-            @RequestParam("productType") String productType,
-            RedirectAttributes ra
-    ) {
-        var product = productService.findById(productId).orElseThrow();
-        UUID clubId = product.getClub().getClubId();
-
-        checkLoggedUser(clubId);
-
-        try {
-            productService.update(
-                    productId,
-                    clubId,
-                    productName,
-                    description,
-                    basePrice,
-                    ProductType.fromDb(productType),
-                    product.getIsAvailable()
-            );
-        } catch (ValidationException e) {
-            ra.addAttribute("err", "price_max_product");
-        } catch (IllegalArgumentException e) {
-            ra.addAttribute("err", "name");
-        }
-
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
-
-
-    @PostMapping("/deleteProduct")
-    public String deleteProduct(@RequestParam("productId") UUID productId) {
-
-        var product = productService.findById(productId).orElseThrow();
-        UUID clubId = product.getClub().getClubId();
-
-        checkLoggedUser(clubId);
-
-        productService.delete(productId);
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
-
-    @PostMapping("/addProduct")
-    public String addProduct(
-            @Valid @ModelAttribute("productForm") AddProductForm productForm,
-            BindingResult errors,
-            Model model
-    ) {
-        UUID clubId = productForm.getClubId();
-        checkLoggedUser(clubId);
-
-        if (errors.hasErrors()) {
-            // volvés a armar el modelo igual que en handleClub
-            var club = clubService.getClubById(clubId).orElseThrow();
-            model.addAttribute("club", club);
-            model.addAttribute("tables", tableService.findByClubId(clubId));
-            model.addAttribute("menu", menuService.getMenuByClub(clubId));
-            model.addAttribute("zones", Zone.values());
-            model.addAttribute("genres", MusicalGenre.values());
-            model.addAttribute("prices", Price.values());
-            model.addAttribute("coverPhotoUrl",
-                    photoService.listByClub(clubId, 0, 1).stream()
-                            .findFirst().map(p -> p.getUrl()).orElse(null));
-            model.addAttribute("tableForm", new AddTableForm());
-            model.addAttribute("productForm", productForm);
-            return "clubHandler"; // ⚡ así Spring re-renderiza con BindingResult
-        }
-
-        // si no hay errores → guardar
-        var club = clubService.getClubById(clubId).orElseThrow();
-        productService.create(
-                club,
-                productForm.getProductName(),
-                productForm.getDescription(),
-                productForm.getBasePrice(),
-                productForm.getProductType(),
-                productForm.getIsAvailable()
-        );
-
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
-
-    @GetMapping("/profile")
-    public String showProfile(@RequestParam UUID userId, Model model) {
-        User user = securityService.getVerifiedLoggedUser();
-        if (user == null || !user.getId().equals(userId)) {
-            return "redirect:/403";
-        }
-
-        model.addAttribute("user", user);
-        model.addAttribute("activePage", "profile");
-
-        EditUserForm editUserForm = new EditUserForm();
-        editUserForm.setUsername(user.getUsername());
-        editUserForm.setName(user.getName());
-        editUserForm.setSurname(user.getSurname());
-        editUserForm.setEmail(user.getEmail());
-        editUserForm.setCellphone(user.getCellphone());
-
-        model.addAttribute("editUserForm", editUserForm);
-
-        return "profile";
-    }
-
-    @PostMapping("/addTable")
-    public String addTable(
-            @Valid @ModelAttribute("tableForm") AddTableForm tableForm,
-            BindingResult errors,
-            Model model
-    ) {
-        UUID clubId = tableForm.getClubId();
-        checkLoggedUser(clubId);
-
-        if (tableForm.getDiscount() == null) {
-            tableForm.setDiscount(BigDecimal.ZERO);
-        }
-
-        if (errors.hasErrors()) {
-            // volvés a armar el modelo igual que en handleClub
-            var club = clubService.getClubById(clubId).orElseThrow();
-            model.addAttribute("club", club);
-            model.addAttribute("tables", tableService.findByClubId(clubId));
-            model.addAttribute("menu", menuService.getMenuByClub(clubId));
-            model.addAttribute("zones", Zone.values());
-            model.addAttribute("genres", MusicalGenre.values());
-            model.addAttribute("prices", Price.values());
-            model.addAttribute("coverPhotoUrl",
-                    photoService.listByClub(clubId, 0, 1).stream()
-                            .findFirst().map(p -> p.getUrl()).orElse(null));
-            model.addAttribute("tableForm", tableForm);
-            model.addAttribute("productForm", new AddProductForm());
-            return "clubHandler"; // ⚡ así Spring re-renderiza con BindingResult
-        }
-
-        var club = clubService.getClubById(clubId).orElseThrow();
-        try {
-            tableService.create(
-                    tableForm.getTableNumber(),
-                    tableForm.getCapacity(),
-                    club.getClubId(),
-                    TableState.DISPONIBLE,
-                    tableForm.getPrice(),
-                    tableForm.getDiscount()
-            );
-        } catch (DuplicateEntityException | DataIntegrityViolationException e) {
-            return "redirect:/clubs/handle?clubId=" + clubId + "&err=dup";
-        }
-
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
-
-    @PostMapping("/tables/{tableId}/edit")
-    public String editTable(
-            @PathVariable UUID tableId,
-            @RequestParam("clubId") UUID clubId,
-            @RequestParam("tableNumber") BigDecimal tableNumber,
-            @RequestParam("capacity") BigDecimal capacity,
-            @RequestParam("price") BigDecimal price,
-            @RequestParam("discount") BigDecimal discount,
-            RedirectAttributes ra
-    ) {
-        checkLoggedUser(clubId);
-        try{
-            tableService.update(tableId, clubId, tableNumber, capacity, TableState.DISPONIBLE, price, discount);
-        } catch (DuplicateEntityException | DataIntegrityViolationException e) {
-            ra.addAttribute("err", "dup");
-        } catch (ValidationException e) {
-            ra.addAttribute("err", "price_max");
-        } catch (InvalidTableNumberException e) {
-            ra.addAttribute("err", "table_number");
-        } catch (InvalidCapacityException e) {
-            ra.addAttribute("err", "capacity");
-        } catch (InvalidPriceException e) {
-            ra.addAttribute("err", "price");
-        } catch (IllegalArgumentException e) {
-            ra.addAttribute("err", "discount");
-        }
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
-    @PostMapping("/tables/{tableId}/delete")
-    public String deleteTable(@PathVariable UUID tableId, @RequestParam("clubId") UUID clubId) {
-        checkLoggedUser(clubId);
-
-        tableService.delete(tableId);
-        return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
     @PostMapping("/club/{clubId}/photos")
@@ -528,35 +251,15 @@ public class ClubController {
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
-
-
-    /*
-        @GetMapping("/club/tables")
-        public String showTables(@RequestParam("userId") UUID userId, Model model) {
-            User user = userService.findById(userId);
-            List<Club> clubs = clubService.getClubsByUser(userId);
-            List<Table> allTables = new ArrayList<>();
-            for (Club club : clubs) {
-                allTables.addAll(tableService.findByClubId(club.getClubId()));
-            }
-            model.addAttribute("tables", allTables);
-            model.addAttribute("user", user);
-            return "clubTables";
-        }
-    */
-
     private void checkLoggedUser(UUID clubId){
         User user = securityService.getVerifiedLoggedUser();
         if(user == null) {
             throw new UserNotFoundException("No se encontró el usuario logueado.");
         }
-
         List<User> clubUsers = clubService.getAdminsByClub(clubId);
-
         if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
             throw new UnauthorizedException("El usuario no es admin del club.");
         }
     }
-
 
 }

@@ -10,10 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class PhotoServiceImpl implements PhotoService {
@@ -118,5 +116,25 @@ public class PhotoServiceImpl implements PhotoService {
                 file.getContentType() != null ? file.getContentType() : "application/octet-stream",
                 file.getBytes()
         );
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<String> getCoverUrl(UUID clubId) {
+        List<Photo> photos = photoDao.findByClub(clubId, 1, 0);
+        if (photos.isEmpty()) return Optional.empty();
+        return Optional.ofNullable(photos.get(0).getUrl());
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<UUID, String> getCoverUrls(Set<UUID> clubIds) {
+        Map<UUID, String> result = new HashMap<>();
+        for (UUID clubId : clubIds) {
+            getCoverUrl(clubId).ifPresent(url -> result.put(clubId, url));
+        }
+        return result;
     }
 }
