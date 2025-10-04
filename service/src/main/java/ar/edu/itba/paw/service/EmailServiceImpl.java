@@ -260,6 +260,7 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+    @Override
     @Async
     public void sendPasswordResetEmail(String toEmail, String username, String resetToken) {
         try {
@@ -269,7 +270,10 @@ public class EmailServiceImpl implements EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(mail, true);
             helper.setFrom(defaultFrom);
             helper.setTo(toEmail);
-            helper.setSubject("Recuperar Contraseña - " + messageSource.getMessage("app.title", null, userLocale));
+
+            String subject = messageSource.getMessage("email.password.reset.subject", null, userLocale) +
+                    " - " + messageSource.getMessage("app.title", null, userLocale);
+            helper.setSubject(subject);
 
             Context context = new Context(userLocale);
             context.setVariable("username", username);
