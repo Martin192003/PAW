@@ -1,7 +1,9 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Photo;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,5 +25,7 @@ public interface PhotoService {
     UUID save(Photo photo);
 
     boolean delete(UUID photoId);
-    public Optional<Photo> findByBooking(UUID userId);
+    Optional<Photo> findByBooking(UUID userId);
+    UUID uploadPhotoForClub(UUID clubId, String userEmail, MultipartFile file) throws IOException;
+
 }

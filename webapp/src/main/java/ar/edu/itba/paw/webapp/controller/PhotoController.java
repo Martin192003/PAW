@@ -23,11 +23,9 @@ public class PhotoController {
     private static final Logger log = LoggerFactory.getLogger(PhotoController.class);
 
     private final PhotoService photoService;
-    private final UserService userService;
 
-    public PhotoController(PhotoService photoService, UserService userService) {
+    public PhotoController(PhotoService photoService) {
         this.photoService = photoService;
-        this.userService = userService;
     }
 
     @PostMapping("/clubs/{clubId}/photos")
@@ -35,54 +33,46 @@ public class PhotoController {
                          @RequestParam("file") MultipartFile file,
                          Principal principal) throws IOException {
 
-        if (file == null || file.isEmpty()) {
-            return "redirect:/clubs/" + clubId + "?err=empty";
+        try {
+            String userEmail = principal != null ? principal.getName() : null;
+            UUID photoId = photoService.uploadPhotoForClub(clubId, userEmail, file);
+            return "redirect:/clubs/" + clubId + "?photo=" + photoId;
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("empty")) {
+                return "redirect:/clubs/" + clubId + "?err=empty";
+            } else if (e.getMessage().contains("User not found")) {
+                return "redirect:/clubs/" + clubId + "?err=user";
+            } else {
+                return "redirect:/clubs/" + clubId + "?err=invalid";
+            }
         }
-
-        var effectiveUser = (principal != null)
-                ? userService.findByEmail(principal.getName())
-                : userService.findByEmail("dev@local");
-
-        if (effectiveUser == null) {
-            return "redirect:/clubs/" + clubId + "?err=user";
-        }
-
-        UUID photoId = photoService.upload(
-                clubId,
-                effectiveUser.getId(),
-                file.getOriginalFilename(),
-                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
-        );
-
-        return "redirect:/clubs/" + clubId + "?photo=" + photoId;
     }
-
 
     @GetMapping("/photos/{photoId}")
     @ResponseBody
     public ResponseEntity<byte[]> getPhoto(@PathVariable UUID photoId) {
-        var opt = photoService.getWithId(photoId);
+        Optional<Photo> opt = photoService.getWithId(photoId);
         if (opt.isEmpty()) {
             log.warn("Photo {} not found", photoId);
             return ResponseEntity.notFound().build();
         }
-        var p = opt.get();
-        if (p.getData() == null || p.getData().length == 0) {
+
+        Photo photo = opt.get();
+        if (photo.getData() == null || photo.getData().length == 0) {
             log.warn("Photo {} has no data", photoId);
             return ResponseEntity.notFound().build();
         }
-        var mt = sniff(p.getData());
-        log.info("Serving photo {} ({} bytes, {})", photoId, p.getData().length, mt);
-        return ResponseEntity.ok().contentType(mt).body(p.getData());
+
+        MediaType mediaType = sniff(photo.getData());
+        log.info("Serving photo {} ({} bytes, {})", photoId, photo.getData().length, mediaType);
+        return ResponseEntity.ok().contentType(mediaType).body(photo.getData());
     }
+
     private static MediaType sniff(byte[] d) {
-        if (d.length >= 4
-                && (d[0] & 0xFF) == 0x89 && d[1] == 'P' && d[2] == 'N' && d[3] == 'G') {
+        if (d.length >= 4 && (d[0] & 0xFF) == 0x89 && d[1] == 'P' && d[2] == 'N' && d[3] == 'G') {
             return MediaType.IMAGE_PNG;
         }
-        if (d.length >= 2
-                && (d[0] & 0xFF) == 0xFF && (d[1] & 0xFF) == 0xD8) { // JPEG SOI
+        if (d.length >= 2 && (d[0] & 0xFF) == 0xFF && (d[1] & 0xFF) == 0xD8) {
             return MediaType.IMAGE_JPEG;
         }
         if (d.length >= 12) {
