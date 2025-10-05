@@ -38,10 +38,10 @@
             <form:form modelAttribute="userForm" method="post" action="${registerUrl}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
 
-            <div class="form-group">
-                <form:input path="username" cssClass="form-control" placeholder="${phUsername}"/>
-                <form:errors path="username" cssClass="error"/>
-            </div>
+                <div class="form-group">
+                    <form:input path="username" cssClass="form-control" placeholder="${phUsername}"/>
+                    <form:errors path="username" cssClass="error"/>
+                </div>
                 <div class="form-group">
                     <form:input path="name" cssClass="form-control" placeholder="${phName}"/>
                     <form:errors path="name" cssClass="error"/>
