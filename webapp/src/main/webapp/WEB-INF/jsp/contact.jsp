@@ -31,59 +31,128 @@
             <spring:message code="contact.title" arguments="${clubNameEsc}"/>
             <span class="contact-icon"><i class="fa-solid fa-headphones"></i></span>
         </div>
+
         <spring:message code="form.fullname" var="phName"/>
         <spring:message code="placeholder.email" var="phEmail"/>
         <spring:message code="placeholder.phone" var="phPhone"/>
         <spring:message code="placeholder.message" var="phMessage"/>
-        <form:form modelAttribute="clubForm" method="post" id="contactForm">
+        <spring:message code="button.sending" var="msgSending"/>
+
+        <!-- RUTAS/ACCION: NO CAMBIADAS -->
+        <form:form modelAttribute="clubForm" method="post" id="contactForm" autocomplete="off">
             <span class="form-text-required"><spring:message code="form.required"/></span>
+
             <div class="form-group">
                 <form:input path="name" class="form-control" placeholder="${phName}" />
                 <form:errors path="name" cssClass="error" element="div"/>
             </div>
+
             <div class="form-group">
                 <form:input path="email" class="form-control" placeholder="${phEmail}" />
                 <form:errors path="email" cssClass="error" element="div"/>
             </div>
+
             <div class="form-group">
                 <form:input path="phone" class="form-control" placeholder="${phPhone}"/>
                 <form:errors path="phone" cssClass="error" element="div"/>
             </div>
+
             <div class="form-group">
                 <form:textarea path="message" class="form-control" placeholder="${phMessage}" />
                 <form:errors path="message" cssClass="error" element="div"/>
             </div>
+
             <div class="contact-buttons">
-                <button type="button" class="btn btn-secondary" onclick="window.history.back()"><spring:message code="button.cancel"/></button>
-                <button type="submit" class="btn btn-success"><spring:message code="button.send"/></button>
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button id="sendBtn" type="submit" class="btn btn-success">
+                    <i class="fa-solid fa-paper-plane"></i> <spring:message code="button.send"/>
+                </button>
             </div>
         </form:form>
     </t:card>
 </div>
+
 <div id="sentModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
     <div style="background:#222; color:#fff; padding:32px; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.6); width:400px; text-align:center;">
         <div style="font-size:22px; margin-bottom:18px;"><spring:message code="contact.sent"/></div>
         <button class="btn btn-success" onclick="volverADetalles()"><spring:message code="menu.back"/></button>
     </div>
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- estética del título (sin cambios de rutas) ---
         function breakEveryN(str, n) {
             if (!str) return '';
             const s = String(str).trim();
             if (s.length <= n) return s;
             const parts = [];
-            for (let i = 0; i < s.length; i += n) {
-                parts.push(s.slice(i, i + n));
-            }
+            for (let i = 0; i < s.length; i += n) parts.push(s.slice(i, i + n));
             return parts.join('\n');
         }
-
-        // Aplica al título (cada 40)
         const titleEl = document.querySelector('.contact-title');
         if (titleEl && !titleEl.dataset.broken) {
             titleEl.innerText = breakEveryN(titleEl.textContent, 30);
             titleEl.dataset.broken = '1';
+        }
+
+        // ========= BLOQUEO DE ENVÍO (mismo estilo que el JSP de reservas) =========
+        const form = document.getElementById('contactForm');
+        const sendBtn = document.getElementById('sendBtn');
+        const SENDING = "<c:out value='${msgSending}'/>";
+
+        function cloneHidden(name, value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value != null ? value : '';
+            form.appendChild(input);
+            return input;
+        }
+
+        if (form && sendBtn) {
+            let submitting = false;
+
+            form.addEventListener('submit', (e) => {
+                if (submitting) { e.preventDefault(); return; }
+
+                if (!form.checkValidity()) return;
+
+                const nameEl    = form.querySelector('[name="name"]');
+                const emailEl   = form.querySelector('[name="email"]');
+                const phoneEl   = form.querySelector('[name="phone"]');
+                const messageEl = form.querySelector('[name="message"]');
+
+                const hName    = cloneHidden('name',    nameEl ? nameEl.value    : '');
+                const hEmail   = cloneHidden('email',   emailEl ? emailEl.value   : '');
+                const hPhone   = cloneHidden('phone',   phoneEl ? phoneEl.value   : '');
+                const hMessage = cloneHidden('message', messageEl ? messageEl.value : '');
+
+                submitting = true;
+                form.dataset.submitting = '1';
+
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + (SENDING || '');
+
+                form.querySelectorAll('input, textarea, select, button').forEach(el => {
+                    const keep = (el === hName || el === hEmail || el === hPhone || el === hMessage);
+                    if (!keep) el.disabled = true;
+                });
+            });
+
+            window.addEventListener('pageshow', (evt) => {
+                if (evt.persisted) {
+                    submitting = false;
+                    form.dataset.submitting = '0';
+                    form.querySelectorAll('input, textarea, select, button').forEach(el => {
+                        // no tocar hiddens extra antiguos; el server ya los ignorará en GET
+                        if (el.type !== 'hidden') el.disabled = false;
+                    });
+                    sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ' + "<spring:message code='button.send'/>";
+                }
+            });
         }
     });
 
@@ -93,6 +162,7 @@
             document.getElementById("sentModal").style.display = "flex";
         });
     }
+
     function volverADetalles() {
         window.location.href = "<c:url value='/clubs/${clubId}' />";
     }
