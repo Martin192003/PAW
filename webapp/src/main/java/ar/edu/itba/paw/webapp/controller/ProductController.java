@@ -9,6 +9,8 @@ import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.AddProductForm;
 import ar.edu.itba.paw.webapp.form.AddTableForm;
+import ar.edu.itba.paw.webapp.form.EditProductForm;
+import ar.edu.itba.paw.webapp.form.EditTableForm;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -62,6 +64,8 @@ public class ProductController {
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
             model.addAttribute("tableForm", new AddTableForm());
             model.addAttribute("productForm", form);
+            model.addAttribute("editProductForm", new EditProductForm());
+            model.addAttribute("editTableForm", new EditTableForm());
             return "clubHandler";
         }
 
@@ -85,22 +89,44 @@ public class ProductController {
     }
 
     @PostMapping("/editProduct")
-    public String editProduct(@RequestParam("productId") UUID productId,
-                              @RequestParam("productName") String productName,
-                              @RequestParam("description") String description,
-                              @RequestParam("basePrice") BigDecimal basePrice,
-                              @RequestParam("productType") String productType,
-                              RedirectAttributes ra) {
-
-        var product = productService.findById(productId).orElseThrow();
-        UUID clubId = product.getClub().getClubId();
-
+    public String editProduct(
+            @Valid @ModelAttribute("editProductForm") EditProductForm form,
+            BindingResult errors,
+            RedirectAttributes ra,
+            Model model
+    ) {
+        UUID clubId = form.getClubId();
         var user = securityService.getVerifiedLoggedUser();
         if (user == null) throw new UserNotFoundException("No logueado");
         clubService.assertAdmin(clubId, user.getId());
 
+        if (errors.hasErrors()) {
+            var club = clubService.getClubById(clubId).orElseThrow();
+            model.addAttribute("club", club);
+            model.addAttribute("tables", tableService.findByClubId(clubId));
+            model.addAttribute("menu", menuService.getMenuByClub(clubId));
+            model.addAttribute("zones", Zone.values());
+            model.addAttribute("genres", MusicalGenre.values());
+            model.addAttribute("prices", Price.values());
+            model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
+            model.addAttribute("tableForm", new AddTableForm());
+            model.addAttribute("productForm", new AddProductForm());
+            model.addAttribute("editTableForm", new EditTableForm());
+            model.addAttribute("editProductForm", form);
+            model.addAttribute("editField", "Product");
+            return "clubHandler";
+        }
+
         try {
-            productService.update(productId, clubId, productName, description, basePrice, ProductType.fromDb(productType), product.getIsAvailable());
+            productService.update(
+                    form.getProductId(),
+                    clubId,
+                    form.getProductName(),
+                    form.getDescription(),
+                    form.getBasePrice(),
+                    form.getProductType(),
+                    form.getIsAvailable()
+            );
         } catch (ValidationException e) {
             ra.addAttribute("err", "price_max_product");
         } catch (IllegalArgumentException e) {

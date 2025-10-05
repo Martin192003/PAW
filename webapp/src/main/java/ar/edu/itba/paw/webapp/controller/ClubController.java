@@ -8,9 +8,7 @@ import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
-import ar.edu.itba.paw.webapp.form.EditUserForm;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.math.BigDecimal;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -135,7 +131,7 @@ public class ClubController {
         model.addAttribute("genreValues", MusicalGenre.values());
         model.addAttribute("zoneValues", Zone.values());
 
-        return "club_form";
+        return "clubForm";
     }
 
     @PostMapping("/create")
@@ -148,7 +144,7 @@ public class ClubController {
             model.addAttribute("priceValues", Price.values());
             model.addAttribute("genreValues", MusicalGenre.values());
             model.addAttribute("zoneValues", Zone.values());
-            return "club_form";
+            return "clubForm";
         }
 
         var contact = securityService.getVerifiedLoggedUser();
@@ -185,6 +181,8 @@ public class ClubController {
         model.addAttribute("menu", menuService.getMenuByClub(clubId));
         model.addAttribute("productForm", new AddProductForm());
         model.addAttribute("tableForm", new AddTableForm());
+        model.addAttribute("editTableForm", new EditTableForm());
+        model.addAttribute("editProductForm", new EditProductForm());
         return "clubHandler";
     }
 

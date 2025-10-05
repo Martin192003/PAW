@@ -231,27 +231,48 @@
 </div>
 <div id="productEditModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeProductEditModal()">&times;</span>
-        <h2>Editar producto</h2>
-        <form method="post" id="productEditForm" action="<c:url value='/clubs/products/editProduct' />"
-              style="display:flex; flex-direction:column; gap:18px;"><input type="hidden" name="productId"
-                                                                            id="editProductId"/>
-            <div style="display:flex; flex-direction:column; gap:6px;"><label for="editProductName">Nombre:</label>
-                <input type="text" name="productName" id="editProductName" required/></div>
-            <div style="display:flex; flex-direction:column; gap:6px;"><label
-                    for="editProductDescription">Descripción:</label> <input type="text" name="description"
-                                                                             id="editProductDescription"/></div>
-            <div style="display:flex; flex-direction:column; gap:6px;"><label for="editProductPrice">Precio:</label>
-                <input type="number" name="basePrice" id="editProductPrice" step="0.01" required/></div>
-            <div style="display:flex; flex-direction:column; gap:6px;"><label for="editProductType">Tipo:</label>
-                <select name="productType" id="editProductType" required>
-                    <option value="alcoholicas">Alcoholicas</option>
-                    <option value="noAlcoholicas">No alcoholicas</option>
-                </select></div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeProductEditModal()">Cancelar</button>
-                <button type="submit" class="btn btn-success">Actualizar</button>
+        <h2><spring:message code="title.editProduct"/></h2>
+        <form:form method="post" modelAttribute="editProductForm" id="productEditForm"
+                   action="${pageContext.request.contextPath}/clubs/products/editProduct"
+                   cssStyle="display:flex; flex-direction:column; gap:18px;">
+
+            <form:hidden path="clubId" value="${club.clubId}"/>
+            <form:hidden path="productId" id="editProductId"/>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editProductName"><spring:message code="form.name"/>:</label>
+                <form:input path="productName" id="editProductName"/>
+                <form:errors path="productName" cssClass="formError"/>
             </div>
-        </form>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editProductDescription"><spring:message code="form.description"/>:</label>
+                <form:input path="description" id="editProductDescription"/>
+                <form:errors path="description" cssClass="formError"/>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editProductPrice"><spring:message code="label.price"/>:</label>
+                <form:input path="basePrice" type="number" step="0.01" id="editProductPrice"/>
+                <form:errors path="basePrice" cssClass="formError"/>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editProductType"><spring:message code="label.type"/>:</label>
+                <form:select path="productType" id="editProductType">
+                    <form:option value="ALCOHOLICA" label="Alcohólica"/>
+                    <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+                </form:select>
+                <form:errors path="productType" cssClass="formError"/>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeProductEditModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.update"/></button>
+            </div>
+        </form:form>
     </div>
 </div>
 <!-- Modal editar imagen -->
@@ -289,58 +310,41 @@
     <div class="modal-content"><span class="modal-close" onclick="closeTableEditModal()"
                                      style="color:#fff;">&times;</span>
         <h2><spring:message code="title.editTable"/></h2>
-        <form method="post" id="tableEditForm" style="display:flex; flex-direction:column; gap:18px;"><input
-                type="hidden" name="clubId" value="${club.clubId}"/>
-            <div style="display:flex; flex-direction:column; gap:6px;"><label for="editTableNumber"
-                                                                              style="font-weight:500;"><spring:message
-                    code="label.number"/>:</label> <input type="number" name="tableNumber" id="editTableNumber" required
-                                                          class="input-price"/></div>
-            <div style="display:flex; flex-direction:column; gap:6px;"><label for="editTableCapacity"><spring:message
-                    code="label.capacity"/>:</label> <input type="number" name="capacity" id="editTableCapacity"
-                                                            required class="input-price"/></div>
-            <div style="display:flex; flex-direction:column; gap:6px;"><label for="editTablePrice"><spring:message
-                    code="label.price"/>:</label> <input type="number" name="price" id="editTablePrice" step="0.01"
-                                                         required class="input-price"/></div>
-            <div style="display:flex; flex-direction:column; gap:6px;"><label for="editTableDiscount"><spring:message
-                    code="label.discount"/>:</label> <input type="number" name="discount" id="editTableDiscount"
-                                                            step="0.01" min="0" max="100" required class="input-price"/>
+        <form:form method="post" modelAttribute="editTableForm" id="tableEditForm"
+                   cssStyle="display:flex; flex-direction:column; gap:18px;">
+            <form:hidden path="clubId" value="${club.clubId}"/>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editTableNumber"><spring:message code="label.number"/>:</label>
+                <form:input path="tableNumber" type="number" id="editTableNumber"/>
+                <form:errors path="tableNumber" cssClass="formError"/>
             </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editTableCapacity"><spring:message code="label.capacity"/>:</label>
+                <form:input path="capacity" type="number" id="editTableCapacity"/>
+                <form:errors path="capacity" cssClass="formError"/>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editTablePrice"><spring:message code="label.price"/>:</label>
+                <form:input path="price" type="number" step="0.01" id="editTablePrice"/>
+                <form:errors path="price" cssClass="formError"/>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editTableDiscount"><spring:message code="label.discount"/>:</label>
+                <form:input path="discount" type="number" step="0.01" min="0" max="100" id="editTableDiscount"/>
+                <form:errors path="discount" cssClass="formError"/>
+            </div>
+
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()"><spring:message
-                        code="button.cancel"/></button>
+                <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
                 <button type="submit" class="btn btn-success"><spring:message code="button.update"/></button>
             </div>
-        </form>
-    </div>
-</div>
-<div id="tableEditModal" class="modal">
-    <div class="modal-content"><span class="modal-close" onclick="closeTableEditModal()">&times;</span>
-        <h3><spring:message code="title.editTable"/></h3>
-        <form id="tableEditForm" method="post">
-            <div><label for="editTableNumber"><spring:message code="label.number"/>:</label> <input type="number"
-                                                                                                    id="editTableNumber"
-                                                                                                    name="tableNumber"
-                                                                                                    required></div>
-            <div><label for="editTableCapacity"><spring:message code="label.capacity"/>:</label> <input type="number"
-                                                                                                        id="editTableCapacity"
-                                                                                                        name="capacity"
-                                                                                                        required></div>
-            <div><label for="editTablePrice"><spring:message code="label.price"/>:</label> <input type="number"
-                                                                                                  id="editTablePrice"
-                                                                                                  name="price"
-                                                                                                  step="0.01" required>
-            </div>
-            <div><label for="editTableDiscount"><spring:message code="label.discount"/>:</label> <input type="number"
-                                                                                                        id="editTableDiscount"
-                                                                                                        name="discount"
-                                                                                                        min="0"
-                                                                                                        max="100"></div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()"><spring:message
-                        code="button.cancel"/></button>
-                <button type="submit" class="btn btn-success"><spring:message code="button.update"/></button>
-            </div>
-        </form>
+        </form:form>
     </div>
 </div>
 <!-- Modal eliminar mesa -->
@@ -357,6 +361,12 @@
     </div>
 </div>
 <script>
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
     function openDeleteModal(productId) {
         document.getElementById('deleteProductId').value = productId;
         document.getElementById('deleteModal').style.display = 'flex';
@@ -428,6 +438,7 @@
 
     function closeTableEditModal() {
         document.getElementById('tableEditModal').style.display = 'none';
+        clearFormErrors('tableEditModal');
     }
 
     function openTableDeleteModal(tableId) {
@@ -451,7 +462,31 @@
 
     function closeProductEditModal() {
         document.getElementById('productEditModal').style.display = 'none';
+        clearFormErrors('productEditModal');
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // abrir modal según editField
+        <%-- Si hay un editField definido en el modelo --%>
+        <c:if test="${not empty editField}">
+        const field = '${editField}';
+        let modalId = '';
+        if (field === 'Product') modalId = 'productEditModal';
+        else if (field === 'Table') modalId = 'tableEditModal';
+        else modalId = 'editModal'; // para clubName, location, zone, etc.
+        openModal(modalId);
+        </c:if>
+    });
+
+    function clearFormErrors(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        // limpiar todos los spans/divs con class="formError" dentro del modal
+        modal.querySelectorAll('.formError').forEach(el => {
+            el.innerHTML = '';
+        });
+    }
+
 </script>
 </body>
 </html>

@@ -1,9 +1,6 @@
 package ar.edu.itba.paw.webapp.form;
 
-import javax.validation.constraints.DecimalMax;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Min;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -11,15 +8,17 @@ public class AddTableForm {
     private UUID clubId;
 
     @NotNull(message = "{table.number.notnull}")
-    @Min(value = 1, message = "{table.number.min}")
+    @Min(value = 1, message = "{error.invalid.number}")
+    @Max(value = 9999, message = "{error.invalid.number}")
     private BigDecimal tableNumber;
 
     @NotNull(message = "{table.capacity.notnull}")
-    @Min(value = 1, message = "{table.capacity.min}")
+    @Min(value = 1, message = "{error.invalid.capacity}")
+    @Max(value = 9999, message = "{error.invalid.capacity}")
     private BigDecimal capacity;
 
     @NotNull(message = "{table.price.notnull}")
-    @DecimalMax(value = "100000000", message = "{table.price.max}")
+    @DecimalMax(value = "99999999.99", message = "{table.price.max}")
     @DecimalMin(value = "0", message = "{table.price.min}")
     private BigDecimal price;
 

@@ -6,6 +6,8 @@ import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.AddProductForm;
 import ar.edu.itba.paw.webapp.form.AddTableForm;
+import ar.edu.itba.paw.webapp.form.EditProductForm;
+import ar.edu.itba.paw.webapp.form.EditTableForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
@@ -44,16 +46,46 @@ public class TablesController {
     @PostMapping("/{tableId}/edit")
     public String editTable(
             @PathVariable UUID tableId,
-            @RequestParam("clubId") UUID clubId,
-            @RequestParam("tableNumber") BigDecimal tableNumber,
-            @RequestParam("capacity") BigDecimal capacity,
-            @RequestParam("price") BigDecimal price,
-            @RequestParam("discount") BigDecimal discount,
-            RedirectAttributes ra
+            @Valid @ModelAttribute("editTableForm") EditTableForm form,
+            BindingResult errors,
+            RedirectAttributes ra,
+            Model model
     ) {
+        UUID clubId = form.getClubId();
         checkLoggedUser(clubId);
-        try{
-            tableService.update(tableId, clubId, tableNumber, capacity, TableState.DISPONIBLE, price, discount);
+
+        if (errors.hasErrors()) {
+            // volvés a cargar el modelo como en addTable()
+            var club = clubService.getClubById(clubId).orElseThrow();
+            model.addAttribute("club", club);
+            model.addAttribute("tables", tableService.findByClubId(clubId));
+            model.addAttribute("menu", menuService.getMenuByClub(clubId));
+            model.addAttribute("zones", Zone.values());
+            model.addAttribute("genres", MusicalGenre.values());
+            model.addAttribute("prices", Price.values());
+            model.addAttribute("coverPhotoUrl", photoService.listByClub(clubId, 0, 1)
+                    .stream()
+                    .findFirst()
+                    .map(p -> p.getUrl())
+                    .orElse(null));
+            model.addAttribute("tableForm", new AddTableForm());
+            model.addAttribute("productForm", new AddProductForm());
+            model.addAttribute("editProductForm", new EditProductForm());
+            model.addAttribute("editTableForm", form);
+            model.addAttribute("editField", "Table");
+            return "clubHandler";
+        }
+
+        try {
+            tableService.update(
+                    tableId,
+                    clubId,
+                    form.getTableNumber(),
+                    form.getCapacity(),
+                    TableState.DISPONIBLE,
+                    form.getPrice(),
+                    form.getDiscount()
+            );
         } catch (DuplicateEntityException | DataIntegrityViolationException e) {
             ra.addAttribute("err", "dup");
         } catch (ValidationException e) {
@@ -69,6 +101,7 @@ public class TablesController {
         }
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
 
     @PostMapping("/{tableId}/delete")
     public String deleteTable(@PathVariable UUID tableId, @RequestParam("clubId") UUID clubId) {
@@ -115,6 +148,8 @@ public class TablesController {
                             .findFirst().map(p -> p.getUrl()).orElse(null));
             model.addAttribute("tableForm", tableForm);
             model.addAttribute("productForm", new AddProductForm());
+            model.addAttribute("editProductForm", new EditProductForm());
+            model.addAttribute("editTableForm", new EditTableForm());
             return "clubHandler";
         }
 
