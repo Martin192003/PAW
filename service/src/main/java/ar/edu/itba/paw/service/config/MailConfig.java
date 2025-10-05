@@ -1,8 +1,8 @@
 package ar.edu.itba.paw.service.config;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +11,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import javax.mail.MessagingException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
@@ -21,27 +19,33 @@ public class MailConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MailConfig.class);
 
-    private static final Dotenv DOTENV = Dotenv.configure()
-            .ignoreIfMalformed()
-            .ignoreIfMissing()
-            .load();
+    // === Leído tal cual de tu application.properties ===
+    @Value("${SMTP_HOST:smtp.gmail.com}")
+    private String host;
+
+    @Value("${SMTP_PORT:587}")
+    private int port;
+
+    @Value("${SMTP_USER:}")
+    private String username;
+
+    @Value("${SMTP_PASS:}")
+    private String password;
+
+    @Value("${MAIL_DEBUG:false}")
+    private boolean debug;
+
+    @Value("${MAIL_OPTIONAL:false}")
+    private boolean optional;
+
+    @Value("${MAIL_TEST_CONNECTION:false}")
+    private boolean testConnection;
 
     @Bean
     public JavaMailSender mailSender() {
-        Properties cp = loadClasspathProps("mail.properties"); // optional
+        boolean credsPresent = !isBlank(username) && !isBlank(password);
 
-        String user = pick("SMTP_USER", cp);
-        String pass = pick("SMTP_PASS", cp);
-        String host = orEmpty(pick("SMTP_HOST", cp));
-        String portStr = orEmpty(pick("SMTP_PORT", cp));
-        String debug = orEmpty(pick("MAIL_DEBUG", cp));
-        String optional = orEmpty(pick("MAIL_OPTIONAL", cp)); // MAIL_OPTIONAL=true to not fail
-
-        if (host.isBlank()) host = "smtp.gmail.com";
-        int port = parseInt(portStr, 587);
-        boolean credsPresent = !user.isBlank() && !pass.isBlank();
-
-        if (!credsPresent && !"true".equalsIgnoreCase(optional)) {
+        if (!credsPresent && !optional) {
             throw new IllegalStateException("Missing SMTP_USER / SMTP_PASS (cannot send email)");
         }
         if (!credsPresent) {
@@ -52,8 +56,8 @@ public class MailConfig {
         impl.setHost(host);
         impl.setPort(port);
         if (credsPresent) {
-            impl.setUsername(user);
-            impl.setPassword(pass);
+            impl.setUsername(username);
+            impl.setPassword(password);
         }
 
         Properties p = impl.getJavaMailProperties();
@@ -67,12 +71,12 @@ public class MailConfig {
         p.put("mail.smtp.timeout", "10000");
         p.put("mail.smtp.writetimeout", "10000");
         p.put("mail.smtp.auth.mechanisms", "LOGIN PLAIN");
-        p.put("mail.debug", debug.isBlank() ? "false" : debug);
+        p.put("mail.debug", String.valueOf(debug));
 
         LOGGER.info("SMTP config host={} port={} user={} auth={} starttls=true debug={} optional={}",
-                host, port, user, credsPresent, p.getProperty("mail.debug"), optional);
+                host, port, username, credsPresent, debug, optional);
 
-        if (credsPresent) {
+        if (credsPresent && testConnection) {
             try {
                 impl.testConnection();
                 LOGGER.info("SMTP connection test OK");
@@ -83,47 +87,16 @@ public class MailConfig {
         return impl;
     }
 
-    private String pick(String key, Properties cp) {
-        String v = System.getenv(key);
-        if (isBlank(v)) v = System.getProperty(key);
-        if (isBlank(v)) v = DOTENV.get(key);
-        if (isBlank(v) && cp != null) v = cp.getProperty(key);
-        return v == null ? "" : v.trim();
-    }
-
-    private Properties loadClasspathProps(String name) {
-        Properties props = new Properties();
-        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(name)) {
-            if (in != null) {
-                props.load(in);
-                LOGGER.info("Loaded classpath {}", name);
-            }
-        } catch (IOException e) {
-            LOGGER.warn("Could not load {}: {}", name, e.getMessage());
-        }
-        return props;
+    @Bean("mailMessageSource")
+    public MessageSource mailMessageSource() {
+        ReloadableResourceBundleMessageSource ms = new ReloadableResourceBundleMessageSource();
+        ms.setBasename("classpath:mail_messages");
+        ms.setDefaultEncoding(StandardCharsets.UTF_8.displayName());
+        ms.setCacheSeconds(5);
+        return ms;
     }
 
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
-    }
-    private String orEmpty(String s) {
-        return s == null ? "" : s;
-    }
-    private int parseInt(String s, int def) {
-        try {
-            return Integer.parseInt(s.trim());
-        } catch (Exception e) {
-            return def;
-        }
-    }
-    @Bean("mailMessageSource")
-    public MessageSource mailMessageSource() {
-        final ReloadableResourceBundleMessageSource messageSource = new
-                ReloadableResourceBundleMessageSource();
-        messageSource.setBasename("classpath:mail_messages");
-        messageSource.setDefaultEncoding(StandardCharsets.UTF_8.displayName());
-        messageSource.setCacheSeconds(5);
-        return messageSource;
     }
 }
