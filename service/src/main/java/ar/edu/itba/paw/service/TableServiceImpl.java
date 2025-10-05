@@ -9,13 +9,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class TableServiceImpl implements TableService {
+
+    private static final Set<DayOfWeek> ALLOWED = Set.of(DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
 
 
     private final ClubDao clubDao;
@@ -81,4 +84,42 @@ public class TableServiceImpl implements TableService {
     public boolean delete(UUID id) {
         return clubTablesDao.delete(id);
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Table> findAvailableOnDate(UUID clubId, LocalDate date, ZoneId tz, Clock clock) {
+        // Validaciones de negocio que estaban en el JSP/JS
+        if (!isAllowedDay(date)) {
+            throw new ValidationException("Fecha no permitida para reservas");
+        }
+        if (isPastDate(date, clock, tz)) {
+            throw new ValidationException("Fecha en el pasado");
+        }
+        var from = windowStart(date, tz);
+        var to   = windowEnd(date, tz);
+        return findAvailableByClubAndRange(clubId, from, to);
+    }
+
+    @Override
+    public boolean isAllowedDay(LocalDate date) {
+        return ALLOWED.contains(date.getDayOfWeek());
+    }
+
+    @Override
+    public boolean isPastDate(LocalDate date, Clock clock, ZoneId tz) {
+        var today = ZonedDateTime.now(clock).withHour(0).withMinute(0).withSecond(0).withNano(0).toLocalDate();
+        return date.isBefore(today);
+    }
+
+    @Override
+    public OffsetDateTime windowStart(LocalDate date, ZoneId tz) {
+        return date.atTime(23,59).atZone(tz).toOffsetDateTime();
+    }
+
+    @Override
+    public OffsetDateTime windowEnd(LocalDate date, ZoneId tz) {
+        return date.plusDays(1).atTime(6,0).atZone(tz).toOffsetDateTime();
+    }
+
 }
