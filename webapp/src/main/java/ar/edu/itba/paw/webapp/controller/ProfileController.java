@@ -5,6 +5,7 @@ import ar.edu.itba.paw.webapp.form.EditUserForm;
 import ar.edu.itba.paw.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,9 +28,25 @@ public class ProfileController {
     }
 
     private UUID getCurrentUserId() {
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication().getName();
-        User user = userService.findByUserName(username);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated() ||
+                "anonymousUser".equals(authentication.getName())) {
+            throw new SecurityException("Usuario no autenticado");
+        }
+
+        String identifier = authentication.getName();
+        User user = userService.findByUserName(identifier);
+
+        // Si no se encuentra por username, buscar por email
+        if (user == null) {
+            user = userService.findByEmail(identifier);
+        }
+
+        if (user == null) {
+            throw new SecurityException("Usuario no encontrado: " + identifier);
+        }
+
         return user.getId();
     }
 
