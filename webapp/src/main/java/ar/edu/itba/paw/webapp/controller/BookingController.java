@@ -434,7 +434,7 @@ public class BookingController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("queryParams", queryParams);
-
+        model.addAttribute("clubs", clubService.getClubsByUser(form.getUserId()));
         // echo de filtros
         model.addAttribute("sort", form.getSort());
         model.addAttribute("status", form.getStatus());
