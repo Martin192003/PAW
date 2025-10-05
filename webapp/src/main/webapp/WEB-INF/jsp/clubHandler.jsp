@@ -110,8 +110,8 @@
             </tr>
         </c:forEach></tbody>
     </table>
-    <spring:message code="placeholder.name" var="phProductName"/>
-    <spring:message code="placeholder.description" var="phDescription"/>
+    <spring:message code="placeholder.menu.name" var="phProductName"/>
+    <spring:message code="placeholder.menu.description" var="phDescription"/>
     <spring:message code="placeholder.price" var="phPrice"/>
     <form:form method="post" modelAttribute="productForm" action="${pageContext.request.contextPath}/clubs/addProduct" class="add-product-bar">
         <form:hidden path="clubId" value="${club.clubId}" />
@@ -133,11 +133,11 @@
         </div>
 
         <div class="form-group">
-        <form:select path="productType" cssClass="input-text">
-         <form:option value="ALCOHOLICA" label="Alcohólica"/>
-         <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
-        </form:select>
-        <form:errors path="productType" cssClass="formError"/>
+            <form:select path="productType" cssClass="input-text">
+                <form:option value="ALCOHOLICA" label="Alcohólica"/>
+                <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+            </form:select>
+            <form:errors path="productType" cssClass="formError"/>
         </div>
 
         <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
@@ -180,55 +180,106 @@
             </tr>
         </c:forEach></tbody>
     </table>
-    <spring:message code="placeholder.tableNumber" var="phTableNumber"/> <spring:message code="placeholder.capacity"
-                                                                                         var="phCapacity"/>
+    <spring:message code="placeholder.tableNumber" var="phTableNumber"/> <spring:message code="placeholder.capacity" var="phCapacity"/>
     <spring:message code="placeholder.discount" var="phDiscount"/>
     <form:form method="post" modelAttribute="tableForm" action="${pageContext.request.contextPath}/clubs/addTable" class="add-product-bar">
         <form:hidden path="clubId" value="${club.clubId}" />
-
-        <form:input path="tableNumber" type="number" cssClass="add-product-name" placeholder="${phTableNumber}" />
-        <form:errors path="tableNumber" cssClass="formError"/>
-
-        <form:input path="capacity" type="number" cssClass="add-product-input" placeholder="${phCapacity}" />
-        <form:errors path="capacity" cssClass="formError"/>
-
-        <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}" step="0.01"/>
-        <form:errors path="price" cssClass="formError"/>
-
-        <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}" step="0.01"/>
-        <form:errors path="discount" cssClass="formError"/>
-
+        <div class="form-group">
+            <form:input path="tableNumber" type="number" cssClass="add-product-name" placeholder="${phTableNumber}" />
+            <form:errors path="tableNumber" cssClass="formError"/>
+        </div>
+        <div class="form-group">
+            <form:input path="capacity" type="number" cssClass="add-product-input" placeholder="${phCapacity}" />
+            <form:errors path="capacity" cssClass="formError"/>
+        </div>
+        <div class="form-group">
+            <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}" step="0.01"/>
+            <form:errors path="price" cssClass="formError"/>
+        </div>
+        <div class="form-group">
+            <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}" step="0.01"/>
+            <form:errors path="discount" cssClass="formError"/>
+        </div>
         <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
     </form:form>
-
     <c:if test="${param.err == 'dup'}">
         <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.duplicate" text="Ya existe una mesa con ese número."/></div>
     </c:if>
 </div>
-<!-- Modales -->
 <div id="editModal" class="modal">
-    <div class="modal-content"><span class="modal-close" onclick="closeEditModal()">&times;</span>
-        <form method="post" action="<c:url value='/clubs/editField' />"><input type="hidden" name="clubId" value="${club.clubId}"/> <input
-                type="hidden" name="field" id="editFieldName" value=""/> <label><spring:message
-                code="label.newValue"/>:</label> <input type="text" name="value" id="editFieldValue" required/> <select
-                name="value" id="zoneSelect" class="hidden"> <c:forEach var="z" items="${zones}">
-            <option value="${z.dbValue}" ${zone == z.dbValue ? 'selected' : ''}><spring:message
-                    code="zone.${z.dbValue}"/></option>
-        </c:forEach> </select> <select name="value" id="musicGenreSelect" class="hidden"> <c:forEach var="g"
-                                                                                                     items="${genres}">
-            <option value="${g}" ${genre == g ? 'selected' : ''}><spring:message code="genre.${g}"/></option>
-        </c:forEach> </select> <select name="value" id="priceSelect" class="hidden"> <c:forEach var="p"
-                                                                                                items="${prices}">
-            <option value="${p}" ${price == p ? 'selected' : ''}><spring:message code="price.${p}"/></option>
-        </c:forEach> </select>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeEditModal()"><spring:message
-                        code="button.cancel"/></button>
-                <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeEditModal()">&times;</span>
+        <form:form modelAttribute="clubHandlerForm" method="post" action="${pageContext.request.contextPath}/clubs/editClub">
+            <form:hidden path="clubId" value="${club.clubId}" />
+            <form:hidden path="editedField" id="editedField" />
+
+            <div id="editField_clubName" style="display:none;">
+                <label><spring:message code="form.name"/>:</label>
+                <form:input path="name" id="editFieldValue_clubName" cssClass="input-modal"/>
+                <form:errors path="name" cssClass="formError"/>
             </div>
-        </form>
+
+            <div id="editField_location" style="display:none;">
+                <label><spring:message code="form.location"/>:</label>
+                <form:input path="location" id="editFieldValue_location" cssClass="input-modal"/>
+                <form:errors path="location" cssClass="formError"/>
+            </div>
+
+            <div id="editField_zone" style="display:none;">
+                <label><spring:message code="label.zone"/>:</label>
+                <form:select path="zone" id="zoneSelectModal" cssClass="input-modal">
+                    <c:forEach var="z" items="${zones}">
+                        <form:option value="${z.dbValue}">
+                            <spring:message code="zone.${z.dbValue}"/>
+                        </form:option>
+                    </c:forEach>
+                </form:select>
+                <form:errors path="zone" cssClass="formError"/>
+            </div>
+
+            <div id="editField_musicGenre" style="display:none;">
+                <label><spring:message code="label.musicGenre"/>:</label>
+                <form:select path="musicGenre" id="musicGenreSelectModal" cssClass="input-modal">
+                    <c:forEach var="g" items="${genres}">
+                        <form:option value="${g}">
+                            <spring:message code="genre.${g}"/>
+                        </form:option>
+                    </c:forEach>
+                </form:select>
+                <form:errors path="musicGenre" cssClass="formError"/>
+            </div>
+
+            <div id="editField_priceRange" style="display:none;">
+                <label><spring:message code="label.price"/>:</label>
+                <form:select path="priceRange" id="priceSelectModal" cssClass="input-modal">
+                    <c:forEach var="p" items="${prices}">
+                        <form:option value="${p}">
+                            <spring:message code="price.${p}"/>
+                        </form:option>
+                    </c:forEach>
+                </form:select>
+                <form:errors path="priceRange" cssClass="formError"/>
+            </div>
+
+            <div id="editField_description" style="display:none;">
+                <label><spring:message code="form.description"/>:</label>
+                <form:input path="description" id="editFieldValue_description" rows="4" cssClass="input-modal"/>
+                <form:errors path="description" cssClass="formError"/>
+            </div>
+
+            <div class="modal-actions" style="margin-top:12px;">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <spring:message code="button.save"/>
+                </button>
+            </div>
+        </form:form>
     </div>
 </div>
+
+
 <div id="productEditModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeProductEditModal()">&times;</span>
         <h2>Editar producto</h2>
@@ -260,7 +311,7 @@
                                      onclick="document.getElementById('editImageModal').style.display='none'">&times;</span>
         <h3><spring:message code="title.editImage"/></h3>
         <form method="post" action="<c:url value='/clubs/club/${club.clubId}/photos' />" enctype="multipart/form-data">
-            <input type="file" name="file" accept="image/*" required/>
+            <input type="file" name="file" accept="image/*"/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary"
                         onclick="document.getElementById('editImageModal').style.display='none'"><spring:message
@@ -273,9 +324,7 @@
 <div id="deleteModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeDeleteModal()">&times;</span>
         <h3><spring:message code="confirm.deleteProduct"/></h3>
-        <form id="deleteForm" method="post" action="<c:url value='/clubs/deleteProduct' />"><input type="hidden"
-                                                                                                   name="productId"
-                                                                                                   id="deleteProductId"
+        <form id="deleteForm" method="post" action="<c:url value='/clubs/deleteProduct' />"><input type="hidden" name="productId" id="deleteProductId"
                                                                                                    value=""/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()"><spring:message
@@ -286,11 +335,9 @@
     </div>
 </div>
 <div id="tableEditModal" class="modal">
-    <div class="modal-content"><span class="modal-close" onclick="closeTableEditModal()"
-                                     style="color:#fff;">&times;</span>
+    <div class="modal-content"><span class="modal-close" onclick="closeTableEditModal()" style="color:#fff;">&times;</span>
         <h2><spring:message code="title.editTable"/></h2>
-        <form method="post" id="tableEditForm" style="display:flex; flex-direction:column; gap:18px;"><input
-                type="hidden" name="clubId" value="${club.clubId}"/>
+        <form method="post" id="tableEditForm" style="display:flex; flex-direction:column; gap:18px;"><input type="hidden" name="clubId" value="${club.clubId}"/>
             <div style="display:flex; flex-direction:column; gap:6px;"><label for="editTableNumber"
                                                                               style="font-weight:500;"><spring:message
                     code="label.number"/>:</label> <input type="number" name="tableNumber" id="editTableNumber" required
@@ -313,36 +360,36 @@
         </form>
     </div>
 </div>
-<div id="tableEditModal" class="modal">
-    <div class="modal-content"><span class="modal-close" onclick="closeTableEditModal()">&times;</span>
-        <h3><spring:message code="title.editTable"/></h3>
-        <form id="tableEditForm" method="post">
-            <div><label for="editTableNumber"><spring:message code="label.number"/>:</label> <input type="number"
-                                                                                                    id="editTableNumber"
-                                                                                                    name="tableNumber"
-                                                                                                    required></div>
-            <div><label for="editTableCapacity"><spring:message code="label.capacity"/>:</label> <input type="number"
-                                                                                                        id="editTableCapacity"
-                                                                                                        name="capacity"
-                                                                                                        required></div>
-            <div><label for="editTablePrice"><spring:message code="label.price"/>:</label> <input type="number"
-                                                                                                  id="editTablePrice"
-                                                                                                  name="price"
-                                                                                                  step="0.01" required>
-            </div>
-            <div><label for="editTableDiscount"><spring:message code="label.discount"/>:</label> <input type="number"
-                                                                                                        id="editTableDiscount"
-                                                                                                        name="discount"
-                                                                                                        min="0"
-                                                                                                        max="100"></div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()"><spring:message
-                        code="button.cancel"/></button>
-                <button type="submit" class="btn btn-success"><spring:message code="button.update"/></button>
-            </div>
-        </form>
-    </div>
-</div>
+<%--<div id="tableEditModal" class="modal">--%>
+<%--    <div class="modal-content"><span class="modal-close" onclick="closeTableEditModal()">&times;</span>--%>
+<%--        <h3><spring:message code="title.editTable"/></h3>--%>
+<%--        <form id="tableEditForm" method="post">--%>
+<%--            <div><label for="editTableNumber"><spring:message code="label.number"/>:</label> <input type="number"--%>
+<%--                                                                                                    id="editTableNumber"--%>
+<%--                                                                                                    name="tableNumber"--%>
+<%--                                                                                                    required></div>--%>
+<%--            <div><label for="editTableCapacity"><spring:message code="label.capacity"/>:</label> <input type="number"--%>
+<%--                                                                                                        id="editTableCapacity"--%>
+<%--                                                                                                        name="capacity"--%>
+<%--                                                                                                        required></div>--%>
+<%--            <div><label for="editTablePrice"><spring:message code="label.price"/>:</label> <input type="number"--%>
+<%--                                                                                                  id="editTablePrice"--%>
+<%--                                                                                                  name="price"--%>
+<%--                                                                                                  step="0.01" required>--%>
+<%--            </div>--%>
+<%--            <div><label for="editTableDiscount"><spring:message code="label.discount"/>:</label> <input type="number"--%>
+<%--                                                                                                        id="editTableDiscount"--%>
+<%--                                                                                                        name="discount"--%>
+<%--                                                                                                        min="0"--%>
+<%--                                                                                                        max="100"></div>--%>
+<%--            <div class="modal-actions">--%>
+<%--                <button type="button" class="btn btn-secondary" onclick="closeTableEditModal()"><spring:message--%>
+<%--                        code="button.cancel"/></button>--%>
+<%--                <button type="submit" class="btn btn-success"><spring:message code="button.update"/></button>--%>
+<%--            </div>--%>
+<%--        </form>--%>
+<%--    </div>--%>
+<%--</div>--%>
 <!-- Modal eliminar mesa -->
 <div id="tableDeleteModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeTableDeleteModal()">&times;</span>
@@ -368,47 +415,34 @@
 
     function openEditModal(field, value) {
         document.getElementById('editModal').style.display = 'flex';
-        document.getElementById('editFieldName').value = field;
-        const inputs = ['editFieldValue', 'zoneSelect', 'musicGenreSelect', 'priceSelect'];
-        inputs.forEach(id => {
-            const el = document.getElementById(id);
-            el.classList.add("hidden");
-            el.removeAttribute('name');
-            el.removeAttribute('required');
-            el.style.display = 'none';
+        document.getElementById('editedField').value = field;
+
+        // ocultar todos los bloques
+        const fields = ['clubName','location','zone','musicGenre','priceRange','description'];
+        fields.forEach(f => {
+            const el = document.getElementById('editField_' + f);
+            if (el) el.style.display = 'none';
         });
-        if (field === 'zone') {
-            const select = document.getElementById('zoneSelect');
-            select.classList.remove("hidden");
-            select.style.display = 'block';
-            select.name = 'value';
-            select.required = true;
-            select.value = value;
-        } else if (field === 'musicGenre') {
-            const select = document.getElementById('musicGenreSelect');
-            select.classList.remove("hidden");
-            select.style.display = 'block';
-            select.name = 'value';
-            select.required = true;
-            select.value = value;
-        } else if (field === 'priceRange') {
-            const select = document.getElementById('priceSelect');
-            select.classList.remove("hidden");
-            select.style.display = 'block';
-            select.name = 'value';
-            select.required = true;
-            select.value = value;
-        } else {
-            const input = document.getElementById('editFieldValue');
-            input.classList.remove("hidden");
-            input.style.display = 'block';
-            input.name = 'value';
-            input.required = true;
-            input.value = value;
-            if (field === 'clubName' || field === 'location') {
-                input.setAttribute('maxlength', '100');
-            } else {
-                input.removeAttribute('maxlength');
+
+        // mostrar el bloque que corresponde
+        const visible = document.getElementById('editField_' + field);
+        if (visible) visible.style.display = 'block';
+
+        // setear valor en el input/select visible
+        // intentamos encontrar input/textarea/select correspondiente
+        const inputIds = {
+            'clubName': 'editFieldValue_clubName',
+            'location': 'editFieldValue_location',
+            'description': 'editFieldValue_description',
+            'zone': 'zoneSelectModal',
+            'musicGenre': 'musicGenreSelectModal',
+            'priceRange': 'priceSelectModal'
+        };
+        const id = inputIds[field];
+        if (id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = (value === undefined || value === null) ? '' : value;
             }
         }
     }
@@ -416,6 +450,7 @@
     function closeEditModal() {
         document.getElementById('editModal').style.display = 'none';
     }
+
 
     function openTableEditModal(tableId, tableNumber, capacity, price, discount) {
         document.getElementById('tableEditModal').style.display = 'flex';
@@ -451,6 +486,11 @@
 
     function closeProductEditModal() {
         document.getElementById('productEditModal').style.display = 'none';
+    }
+    window.onload = function() {
+        <c:if test="${not empty editField}">
+        openEditModal('${editField}', '${fn:escapeXml(editFieldValue)}');
+        </c:if>
     }
 </script>
 </body>

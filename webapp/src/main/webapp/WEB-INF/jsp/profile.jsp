@@ -157,14 +157,12 @@
         document.getElementById(id).style.display = "none";
     }
 
-    // Abrir modal automáticamente si hay error en ese campo
     window.onload = function() {
         <c:if test="${not empty editField}">
         openModal('edit${editField.substring(0,1).toUpperCase()}${editField.substring(1)}Modal');
         </c:if>
     }
 
-    // Cerrar modal haciendo click fuera del contenido
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) {
             event.target.style.display = "none";

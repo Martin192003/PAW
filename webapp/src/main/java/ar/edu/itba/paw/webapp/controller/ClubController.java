@@ -218,25 +218,31 @@ public class ClubController {
         var photos = photoService.listByClub(clubId, 0, 1);
         String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
 
-        model.addAttribute("tables", tableService.findByClubId(clubId));
-        model.addAttribute("club", club);
-        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
-        model.addAttribute("zones", Zone.values());
-        model.addAttribute("genres", MusicalGenre.values());
-        model.addAttribute("prices", Price.values());
-        model.addAttribute("menu", menuService.getMenuByClub(clubId));
-        model.addAttribute("productForm", new AddProductForm());
-        model.addAttribute("tableForm", new AddTableForm());
+        populateClubHandlerModel(model, club);
 
+        ClubHandlerForm form = new ClubHandlerForm();
+        form.setClubId(club.getClubId());
+        form.setName(club.getClubName());
+        form.setLocation(club.getLocation());
+        form.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
+        form.setZone(club.getZone() != null ? club.getZone().name() : null);
+        form.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+        form.setDescription(club.getDescription() != null ? club.getDescription() : "");
+        form.setImage(coverPhotoUrl != null ? coverPhotoUrl : "");
+
+        model.addAttribute("clubHandlerForm", form);
         return "clubHandler";
     }
 
-    @PostMapping("/editField")
-    public String editField(
+
+    @PostMapping("/editClub")
+    public String editClub(
+            @Valid @ModelAttribute("clubHandlerForm") ClubHandlerForm clubHandlerForm,
+            BindingResult errors,
             @RequestParam("clubId") UUID clubId,
-            @RequestParam("field") String field,
-            @RequestParam("value") String value,
-            Model model
+            @RequestParam(value = "editedField", required = false) String editedField,
+            Model model,
+            RedirectAttributes ra
     ) {
         checkLoggedUser(clubId);
 
@@ -244,32 +250,39 @@ public class ClubController {
         if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
         Club club = maybeClub.get();
 
-        switch (field) {
-            case "clubName":
-                club.setClubName(value);
-                break;
-            case "location":
-                club.setLocation(value);
-                break;
-            case "priceRange":
-                club.setPriceRange(Price.valueOf(value.toUpperCase()));
-                break;
-            case "description":
-                club.setDescription(value);
-                break;
-            case "zone":
-                club.setZone(Zone.valueOf(value));
-                break;
-            case "musicGenre":
-                club.setMusicGenre(MusicalGenre.valueOf(value));
-                break;
-            default:
-                throw new IllegalArgumentException("Campo inválido: " + field);
+        if (errors.hasErrors()) {
+            populateClubHandlerModel(model, club);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
+            model.addAttribute("editField", editedField);
+            return "clubHandler";
+        }
+
+        if (clubHandlerForm.getName() != null && !clubHandlerForm.getName().isBlank()) {
+            club.setClubName(clubHandlerForm.getName());
+        }
+        if (clubHandlerForm.getLocation() != null && !clubHandlerForm.getLocation().isBlank()) {
+            club.setLocation(clubHandlerForm.getLocation());
+        }
+        if (clubHandlerForm.getZone() != null && !clubHandlerForm.getZone().isBlank()) {
+            club.setZone(Zone.valueOf(clubHandlerForm.getZone()));
+        }
+        if (clubHandlerForm.getMusicGenre() != null && !clubHandlerForm.getMusicGenre().isBlank()) {
+            club.setMusicGenre(MusicalGenre.valueOf(clubHandlerForm.getMusicGenre()));
+        }
+        if (clubHandlerForm.getPriceRange() != null && !clubHandlerForm.getPriceRange().isBlank()) {
+            club.setPriceRange(Price.valueOf(clubHandlerForm.getPriceRange()));
+        }
+        if (clubHandlerForm.getDescription() != null) {
+            club.setDescription(clubHandlerForm.getDescription());
         }
 
         clubService.updateClub(club);
+
+        ra.addFlashAttribute("successMessage", "Cambios guardados correctamente.");
+
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
 
     @GetMapping("/activity")
     public String userClubs(
@@ -378,6 +391,17 @@ public class ClubController {
             model.addAttribute("coverPhotoUrl",
                     photoService.listByClub(clubId, 0, 1).stream()
                             .findFirst().map(p -> p.getUrl()).orElse(null));
+
+            // 🔹 recreamos el clubHandlerForm
+            ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
+            clubHandlerForm.setClubId(club.getClubId());
+            clubHandlerForm.setName(club.getClubName());
+            clubHandlerForm.setDescription(club.getDescription());
+            clubHandlerForm.setLocation(club.getLocation());
+            clubHandlerForm.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
+            clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
+            clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("tableForm", new AddTableForm());
             model.addAttribute("productForm", productForm);
             return "clubHandler"; // ⚡ así Spring re-renderiza con BindingResult
@@ -445,6 +469,18 @@ public class ClubController {
             model.addAttribute("coverPhotoUrl",
                     photoService.listByClub(clubId, 0, 1).stream()
                             .findFirst().map(p -> p.getUrl()).orElse(null));
+
+            ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
+            clubHandlerForm.setClubId(club.getClubId());
+            clubHandlerForm.setName(club.getClubName());
+            clubHandlerForm.setDescription(club.getDescription());
+            clubHandlerForm.setLocation(club.getLocation());
+            clubHandlerForm.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
+            clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
+            clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
+
+            // 🔹 mantener los forms con errores
             model.addAttribute("tableForm", tableForm);
             model.addAttribute("productForm", new AddProductForm());
             return "clubHandler"; // ⚡ así Spring re-renderiza con BindingResult
@@ -556,6 +592,22 @@ public class ClubController {
         if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
             throw new UnauthorizedException("El usuario no es admin del club.");
         }
+    }
+
+    private void populateClubHandlerModel(Model model, Club club) {
+        UUID clubId = club.getClubId();
+        var photos = photoService.listByClub(clubId, 0, 1);
+        String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
+
+        model.addAttribute("tables", tableService.findByClubId(clubId));
+        model.addAttribute("club", club);
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("zones", Zone.values());
+        model.addAttribute("genres", MusicalGenre.values());
+        model.addAttribute("prices", Price.values());
+        model.addAttribute("menu", menuService.getMenuByClub(clubId));
+        model.addAttribute("productForm", new AddProductForm());
+        model.addAttribute("tableForm", new AddTableForm());
     }
 
 
