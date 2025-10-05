@@ -476,6 +476,16 @@
         else modalId = 'editModal'; // para clubName, location, zone, etc.
         openModal(modalId);
         </c:if>
+
+        document.querySelectorAll("form.add-product-bar").forEach(form => {
+            form.addEventListener("submit", (e) => {
+                const submitBtn = form.querySelector("button[type='submit']");
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = "<i class='fa fa-spinner fa-spin'></i>"; // opcional
+                }
+            });
+        });
     });
 
     function clearFormErrors(modalId) {
