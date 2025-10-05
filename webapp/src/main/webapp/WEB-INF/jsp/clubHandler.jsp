@@ -22,7 +22,7 @@
 <div class="panel-content">
     <button type="button" class="btn btn-success"
             onclick="window.location.href='<c:url value="/clubs/activity?userId=${club.contactInfo.id}"/>'"><i
-            class="fa-solid fa-arrow-left"></i></button> <!-- Botón editar imagen -->
+            class="fa-solid fa-arrow-left"></i></button>
     <div class="club-image-container" style="position:relative;"><c:choose> <c:when test="${not empty coverPhotoUrl}">
         <img src="<c:url value='${coverPhotoUrl}' />" alt="<c:out value='${club.clubName}'/>" class="card-image"/>
     </c:when> <c:otherwise>

@@ -92,8 +92,17 @@ body{
 .login-card .form-control::placeholder {
     color: #888;
 }
+.btn-back{
+    margin-right:auto;
+    margin-left: 40px;
+}
 .login-buttons .btn-success {
     min-width: 160px;
+}
+.success{
+    color: #ffffff;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
 }
 
 .login-buttons {
