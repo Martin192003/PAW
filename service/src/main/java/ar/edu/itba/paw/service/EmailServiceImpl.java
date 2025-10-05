@@ -62,39 +62,43 @@ public class EmailServiceImpl implements EmailService {
         LOGGER.info("MailService defaultFrom={}", this.defaultFrom);
     }
 
-    @Override
-    @Async
-    public CompletableFuture<Void> sendTemplatedEmail(String to, String subject, String templateName, Map<String, Object> model, String ctaText, String ctaUrl) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                MimeMessage mimeMessage = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-                helper.setFrom(defaultFrom);
-                helper.setTo(to);
-                helper.setSubject(subject);
+    private void sendTemplatedEmail(String to, String subject, String templateName,
+                                    Map<String, Object> variables, String ctaText, String ctaUrl) {
+        try {
+            Locale userLocale = LocaleContextHolder.getLocale();
+            Context context = new Context(userLocale);
 
-                Locale userLocale = LocaleContextHolder.getLocale();
-                if (model != null && model.containsKey("userLocale")) {
-                    userLocale = (java.util.Locale) model.get("userLocale");
-                }
+            // Create a mutable copy of the variables map
+            Map<String, Object> mutableVariables = new HashMap<>(variables);
 
-                Context context = new Context(userLocale);
-                if (model != null) {
-                    model.forEach(context::setVariable);
-                }
-                context.setVariable("ctaText", ctaText);
-                context.setVariable("ctaUrl", ctaUrl);
-                context.setVariable("sentAt", ZonedDateTime.now());
-
-                String htmlBody = templateEngine.process(templateName, context);
-                helper.setText(htmlBody, true);
-
-                mailSender.send(mimeMessage);
-                LOGGER.info("SMTP send OK to {}", to);
-            } catch (MessagingException e) {
-                LOGGER.error("SMTP send FAILED to {}: {}", to, e.getMessage(), e);
+            // Add CTA parameters to the mutable copy
+            if (ctaText != null) {
+                mutableVariables.put("ctaText", ctaText);
             }
-        });
+            if (ctaUrl != null) {
+                mutableVariables.put("ctaUrl", ctaUrl);
+            }
+
+            context.setVariables(mutableVariables);
+
+            String htmlContent = templateEngine.process(templateName, context);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            // Use defaultFrom instead of System.getenv("SMTP_USER")
+            helper.setFrom(defaultFrom);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+
+            LOGGER.info("Templated email sent successfully to: {}", to);
+        } catch (Exception e) {
+            LOGGER.error("Failed to send templated email to: {}", to, e);
+            throw new RuntimeException("Failed to send email", e);
+        }
     }
 
     @Override
@@ -103,196 +107,178 @@ public class EmailServiceImpl implements EmailService {
         try {
             Locale userLocale = LocaleContextHolder.getLocale();
 
-            // First email using "booking-inquiry-club.html"
-            MimeMessage clubMail = mailSender.createMimeMessage();
-            MimeMessageHelper clubHelper = new MimeMessageHelper(clubMail, true);
-            clubHelper.setFrom(defaultFrom);
-            clubHelper.setTo(to);
-            clubHelper.setSubject("Contacto para " + clubName);
-            clubHelper.setReplyTo(fromEmail);
+            // Email al club usando template mejorado
+            Map<String, Object> clubModel = Map.of(
+                    "clubName", clubName,
+                    "name", name,
+                    "fromEmail", fromEmail,
+                    "phone", phone,
+                    "message", message,
+                    "submittedAt", ZonedDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                    "brandName", "BlingBling",
+                    "brandFooter", "© 2025 BlingBling. Sistema de contacto."
+            );
 
-            Context clubContext = new Context(userLocale);
-            clubContext.setVariable("clubName", clubName);
-            clubContext.setVariable("name", name);
-            clubContext.setVariable("fromEmail", fromEmail);
-            clubContext.setVariable("phone", phone);
-            clubContext.setVariable("message", message);
-            clubContext.setVariable("submittedAt", ZonedDateTime.now());
-            String clubHtmlBody = templateEngine.process("booking-inquiry-club", clubContext);
-            clubHelper.setText(clubHtmlBody, true);
+            sendTemplatedEmail(
+                    to,
+                    "Nueva consulta de contacto - " + clubName,
+                    "booking-inquiry-club",
+                    clubModel,
+                    "Ver panel de mensajes",
+                    "/clubs/messages"
+            );
 
-            // Second email using "booking-inquiry-user.html"
-            MimeMessage userMail = mailSender.createMimeMessage();
-            MimeMessageHelper userHelper = new MimeMessageHelper(userMail, true);
-            userHelper.setFrom(defaultFrom);
-            userHelper.setTo(fromEmail);
-            userHelper.setSubject("Confirmación de contacto - " + clubName);
+            // Email de confirmación al usuario
+            Map<String, Object> userModel = Map.of(
+                    "clubName", clubName,
+                    "name", name,
+                    "submittedAt", ZonedDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                    "brandName", "BlingBling",
+                    "brandFooter", "© 2025 BlingBling. Tu mensaje fue enviado correctamente."
+            );
 
-            Context userContext = new Context(userLocale);
-            userContext.setVariable("clubName", clubName);
-            userContext.setVariable("name", name);
-            userContext.setVariable("submittedAt", ZonedDateTime.now());
+            sendTemplatedEmail(
+                    fromEmail,
+                    "Confirmación de contacto - " + clubName,
+                    "booking-inquiry-user",
+                    userModel,
+                    "Ver clubs disponibles",
+                    "/clubs"
+            );
 
-            String ctaUrl = "" + UUID.randomUUID(); //Falta URL deployment
-            userContext.setVariable("ctaUrl", ctaUrl);
-            userContext.setVariable("ctaText", "Confirmar mi correo");
-
-            String userHtmlBody = templateEngine.process("booking-inquiry-user", userContext);
-            userHelper.setText(userHtmlBody, true);
-
-            // Send both emails
-            mailSender.send(clubMail);
-            mailSender.send(userMail);
-
-            LOGGER.info("SMTP send OK to {} and {}", to, fromEmail);
+            LOGGER.info("SMTP contact emails sent OK to {} and {}", to, fromEmail);
             return true;
-        } catch (MessagingException e) {
-            LOGGER.error("SMTP send FAILED: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            LOGGER.error("SMTP contact emails FAILED: {}", e.getMessage(), e);
             return false;
         }
     }
 
     @Override
     @Async
-    public void sendBookingConfirmationToUser(User user, Club club, Table table, Booking booking) {
-        final SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(user.getEmail());
-        msg.setSubject("Confirmación de solicitud de reserva - " + club.getClubName());
-        msg.setText("""
-                ¡Hola %s!
+    public void sendClubCreationConfirmation(String to, String clubName, UUID clubId) {
+        Map<String, Object> model = Map.of(
+                "clubName", clubName,
+                "createdAt", ZonedDateTime.now(),
+                "clubId", clubId,
+                "brandName", "BlingBling",
+                "brandFooter", "© 2025 BlingBling. Panel de administración."
+        );
 
-                Recibimos tu solicitud de reserva en %s.
-
-                Detalles:
-                - Mesa: #%d (capacidad %d)
-                - Horario: %s a %s
-                - Estado: %s
-                - Total: %s
-
-                Te avisaremos cuando se confirme. ¡Gracias!
-                """.formatted(
-                user.getUsername(),
-                club.getClubName(),
-                table.getTableNumber(), table.getCapacity(),
-                booking.getBookingStart(), booking.getBookingEnd(),
-                booking.getStatus(), booking.getTotalAmount()
-        ));
-        mailSender.send(msg);
+        sendTemplatedEmail(
+                to,
+                messageSource.getMessage("email.club.creation.title", null, LocaleContextHolder.getLocale()) + " - " + clubName,
+                "club-creation-confirmation",
+                model,
+                "Gestionar mi club",
+                "/clubs/" + clubId + "/manage"
+        );
     }
 
     @Override
     @Async
-    public void sendBookingNotificationToOwner(Club club, Table table, Booking booking) {
-        // Asumo club.getContactInfo() referencia a un user_id dueño/manager
-        User owner = null;
-        if (club.getContactInfo() != null) {
-            owner = userDao.findById(club.getContactInfo().getId()).get();
-        }
-        final String ownerMail = owner != null ? owner.getEmail() : "owner@" + club.getClubName().toLowerCase().replace(" ","") + ".com";
+    public void sendUserRegistrationConfirmation(String to, String username, String verificationToken) {
+        Map<String, Object> model = Map.of(
+                "username", username,
+                "token", verificationToken,
+                "createdAt", ZonedDateTime.now(),
+                "verificationUrl", "http://localhost:8080/webapp_war_exploded/verify",
+                "brandName", "BlingBling",
+                "brandFooter", "© 2025 BlingBling. Bienvenido a nuestra plataforma."
+        );
 
-        final SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(ownerMail);
-        msg.setSubject("Nueva reserva (PENDIENTE) - " + club.getClubName());
-        msg.setText("""
-                Nueva solicitud de reserva:
-                - Mesa: #%d
-                - Horario: %s a %s
-                - Total: %s
-                - Estado actual: %s
-                - Booking ID: %s
-
-                Podés confirmarla desde el panel de reservas.
-                """.formatted(
-                table.getTableNumber(),
-                booking.getBookingStart(), booking.getBookingEnd(),
-                booking.getTotalAmount(),
-                booking.getStatus(),
-                booking.getBookingId()
-        ));
-        mailSender.send(msg);
-    }
-
-    @Async
-    public void sendClubCreationConfirmation(String to, String clubName, UUID clubId){
-        try{
-            Locale userLocale = LocaleContextHolder.getLocale();
-
-            MimeMessage mail = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
-            helper.setFrom(defaultFrom);
-            helper.setTo(to);
-            helper.setSubject(messageSource.getMessage("email.club.creation.title", null, userLocale) + "-" + clubName);
-            Context context = new Context(userLocale);
-            context.setVariable("clubName", clubName);
-            context.setVariable("createdAt", ZonedDateTime.now());
-            context.setVariable("clubId", clubId);
-            context.setVariable("ctaUrl", "http://pawserver.it.itba.edu.ar/paw-2025b-06/clubs/handle?=" + clubId); // URL a tu panel de gestión
-
-
-            String htmlBody = templateEngine.process("club-creation-confirmation", context);
-            helper.setText(htmlBody, true);
-
-            mailSender.send(mail);
-            LOGGER.info("SMTP club creation confirmation OK to {}", to);
-        } catch (MessagingException e) {
-            LOGGER.error("SMTP club creation confirmation FAILED to {}: {}", to, e.getMessage(), e);
-        }
-    }
-
-    @Async
-    public void sendUserRegistrationConfirmation(String to, String username, String verificationToken){
-        try{
-            Locale userLocale = LocaleContextHolder.getLocale();
-
-            MimeMessage mail = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
-            helper.setFrom(defaultFrom);
-            helper.setTo(to);
-            helper.setSubject(messageSource.getMessage("email.registration.title.header", null, userLocale) + "-" + username);
-
-            Context context = new Context(userLocale);
-            context.setVariable("username", username);
-            context.setVariable("registeredAt", ZonedDateTime.now());
-            context.setVariable("verificationUrl", "http://localhost:8080/webapp_war_exploded/verify");            context.setVariable("token", verificationToken);
-            String htmlBody = templateEngine.process("user-registration-confirmation", context);
-            helper.setText(htmlBody, true);
-
-            mailSender.send(mail);
-            LOGGER.info("SMTP user registration confirmation OK to {}", to);
-        } catch (MessagingException e) {
-            LOGGER.error("SMTP user registration confirmation FAILED to {}: {}", to, e.getMessage(), e);
-        }
+        sendTemplatedEmail(
+                to,
+                messageSource.getMessage("email.registration.title.header", null, LocaleContextHolder.getLocale()) + " - " + username,
+                "user-registration-confirmation",
+                model,
+                "Verificar mi cuenta",
+                "http://localhost:8080/webapp_war_exploded/verify?token=" + verificationToken
+        );
     }
 
     @Override
     @Async
     public void sendPasswordResetEmail(String toEmail, String username, String resetToken) {
-        try {
-            Locale userLocale = LocaleContextHolder.getLocale();
+        Map<String, Object> model = Map.of(
+                "username", username,
+                "requestedAt", ZonedDateTime.now(),
+                "resetUrl", "http://localhost:8080/webapp_war_exploded/reset-password",
+                "token", resetToken,
+                "brandName", "BlingBling",
+                "brandFooter", "© 2025 BlingBling. Recuperación de contraseña."
+        );
 
-            MimeMessage mail = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mail, true);
-            helper.setFrom(defaultFrom);
-            helper.setTo(toEmail);
+        String subject = messageSource.getMessage("email.password.reset.subject", null, LocaleContextHolder.getLocale()) +
+                " - " + messageSource.getMessage("app.title", null, LocaleContextHolder.getLocale());
 
-            String subject = messageSource.getMessage("email.password.reset.subject", null, userLocale) +
-                    " - " + messageSource.getMessage("app.title", null, userLocale);
-            helper.setSubject(subject);
+        sendTemplatedEmail(
+                toEmail,
+                subject,
+                "password-reset-email",
+                model,
+                "Restablecer contraseña",
+                "http://localhost:8080/webapp_war_exploded/reset-password?token=" + resetToken
+        );
+    }
 
-            Context context = new Context(userLocale);
-            context.setVariable("username", username);
-            context.setVariable("requestedAt", ZonedDateTime.now());
-            context.setVariable("resetUrl", "http://localhost:8080/webapp_war_exploded/reset-password");
-            context.setVariable("token", resetToken);
+    @Override
+    @Async
+    public void sendBookingConfirmationToUser(User user, Club club, Table table, Booking booking) {
+        Map<String, Object> model = Map.of(
+                "username", user.getUsername(),
+                "clubName", club.getClubName(),
+                "tableNumber", table.getTableNumber(),
+                "capacity", table.getCapacity(),
+                "bookingStart", booking.getBookingStart().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                "bookingEnd", booking.getBookingEnd().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                "status", booking.getStatus(),
+                "totalAmount", booking.getTotalAmount(),
+                "brandName", "BlingBling",
+                "brandFooter", "© 2025 BlingBling. Tu reserva está siendo procesada."
+        );
 
-            String htmlBody = templateEngine.process("password-reset-email", context);
-            helper.setText(htmlBody, true);
+        sendTemplatedEmail(
+                user.getEmail(),
+                "Solicitud de reserva enviada - " + club.getClubName(),
+                "booking-inquiry-user", // Reutilizar template
+                model,
+                "Ver mis reservas",
+                "/bookings/my-bookings"
+        );
+    }
 
-            mailSender.send(mail);
-            LOGGER.info("SMTP password reset email OK to {}", toEmail);
-        } catch (MessagingException e) {
-            LOGGER.error("SMTP password reset email FAILED to {}: {}", toEmail, e.getMessage(), e);
+    @Override
+    @Async
+    public void sendBookingNotificationToOwner(Club club, Table table, Booking booking) {
+        User owner = null;
+        if (club.getContactInfo() != null) {
+            owner = userDao.findById(club.getContactInfo().getId()).orElse(null);
         }
+        final String ownerMail = owner != null ? owner.getEmail() : "owner@" + club.getClubName().toLowerCase().replace(" ","") + ".com";
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("clubName", club.getClubName());
+        model.put("tableNumber", table.getTableNumber());
+        model.put("capacity", table.getCapacity());
+        model.put("bookingStart", booking.getBookingStart().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        model.put("bookingEnd", booking.getBookingEnd().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        model.put("status", booking.getStatus());
+        model.put("totalAmount", booking.getTotalAmount());
+        model.put("bookingId", booking.getBookingId());
+        model.put("username", booking.getUser().getUsername());
+        model.put("userEmail", booking.getUser().getEmail());
+        model.put("brandName", "BlingBling");
+        model.put("brandFooter", "© 2025 BlingBling. Panel de administración.");
+
+        sendTemplatedEmail(
+                ownerMail,
+                "Nueva reserva pendiente - " + club.getClubName(),
+                "table-reserved-owner",
+                model,
+                "Gestionar reservas",
+                "/clubs/" + club.getClubId() + "/bookings"
+        );
     }
 
     @Override
