@@ -329,7 +329,6 @@ public class BookingServiceImpl implements BookingService {
         var club = clubService.getClubById(clubId).orElseThrow(IllegalArgumentException::new);
         String ownerEmail = clubService.getAdminsByClub(clubId).getFirst().getEmail();
 
-
         Locale locale = new Locale("es", "AR");
         emailService.notifyTableReservedToUser(booking, club, table, locale);
         emailService.notifyTableReservedToOwner(booking, club, table, ownerEmail, locale);
@@ -390,6 +389,5 @@ public class BookingServiceImpl implements BookingService {
         }
         return b;
     }
-
 
 }

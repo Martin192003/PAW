@@ -1,0 +1,198 @@
+package ar.edu.itba.paw.webapp.controller;
+
+
+import ar.edu.itba.paw.model.Booking;
+import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.model.Table;
+import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
+import ar.edu.itba.paw.model.exceptions.InvalidStatusTransitionException;
+import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.form.BookingSearchForm;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import javax.validation.Valid;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+@Controller
+@RequestMapping("/admin")
+public class BookingAdminController {
+
+    private final BookingService bookingService;
+    private final SecurityService securityService;
+    private final ClubService clubService;
+    private final TableService tableService;
+    private final UserService userService;
+    private final ReceiptService receiptService;
+
+    public BookingAdminController(BookingService bookingService, SecurityService securityService, ClubService clubService, TableService tableService, UserService userService, ReceiptService receiptService) {
+        this.bookingService = bookingService;
+        this.securityService = securityService;
+        this.clubService = clubService;
+        this.tableService = tableService;
+        this.userService = userService;
+        this.receiptService = receiptService;
+    }
+
+
+    /** Confirmar reserva → RESERVADA */
+    @PostMapping("/bookings/{bookingId}/confirm")
+    public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
+        try {
+            bookingService.confirm(bookingId);
+            ra.addFlashAttribute("success", "booking.confirmed");
+        } catch (InvalidStatusTransitionException e) {
+            ra.addFlashAttribute("error", "error.booking.cannotConfirm");
+        } catch (BookingNotFoundException e) {
+            ra.addFlashAttribute("error", "booking.notfound");
+        }
+        return "redirect:/admin/booking?bookingId=" + bookingId;
+    }
+
+    @PostMapping("/bookings/{bookingId}/cancel")
+    public String cancel(@PathVariable UUID bookingId, RedirectAttributes ra) {
+        try {
+            bookingService.cancel(bookingId);
+            ra.addFlashAttribute("success", "booking.cancelled");
+        } catch (InvalidStatusTransitionException e) {
+            ra.addFlashAttribute("error", "error.booking.cannotCancel");
+        } catch (BookingNotFoundException e) {
+            ra.addFlashAttribute("error", "booking.notfound");
+        }
+        return "redirect:/admin/booking?bookingId=" + bookingId;
+    }
+
+    @GetMapping("/clubs/bookings")
+    public String bookingsOfMyClubs(@Valid @ModelAttribute("bookingSearchForm") BookingSearchForm form,
+                                    BindingResult br,
+                                    Model model) {
+
+        // tamaño y página
+        final int size = 10;
+        int page = Math.max(form.getPage(), 1);
+        int offset = (page - 1) * size;
+
+        // Parseo seguro de bookingId (String -> UUID)
+        UUID bookingUuid = null;
+        if (form.getBookingId() != null && !form.getBookingId().isBlank()) {
+            try {
+                bookingUuid = UUID.fromString(form.getBookingId().trim());
+            } catch (IllegalArgumentException e) {
+                br.rejectValue("bookingId", "bookingId.invalid", "El ID de reserva ingresado no es válido.");
+            }
+        }
+
+        List<Booking> result = List.of();
+        int totalBookings = 0;
+
+        if (!br.hasErrors()) {
+            result = bookingService.searchPaginated(
+                    null, form.getClubId(), bookingUuid, form.getStatus(),
+                    form.getSort(), size, offset
+            );
+            totalBookings = bookingService.countSearch(null, form.getClubId(), bookingUuid, form.getStatus());
+        }
+
+        int totalPages = (int) Math.ceil((double) totalBookings / size);
+
+        Map<String, String> filters = new LinkedHashMap<>();
+        if (form.getUserId() != null) filters.put("userId", form.getUserId().toString());
+        if (form.getClubId() != null) filters.put("clubId", form.getClubId().toString());
+        if (form.getBookingId() != null && !form.getBookingId().isBlank()) filters.put("bookingId", form.getBookingId());
+        if (form.getStatus() != null) filters.put("status", form.getStatus().name());
+        if (form.getSort() != null && !form.getSort().isBlank()) filters.put("sort", form.getSort());
+
+        String queryParams = filters.entrySet().stream()
+                .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
+                .collect(java.util.stream.Collectors.joining("&"));
+
+        // Modelo
+        model.addAttribute("bookings", result);
+        model.addAttribute("clubNames", clubService.mapClubNames(result)); // o clubService.mapClubNames(...)
+        model.addAttribute("totalResults", totalBookings);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("queryParams", queryParams);
+
+        // echo de filtros (no depende de que haya error o no)
+        model.addAttribute("sort", form.getSort());
+        model.addAttribute("status", form.getStatus());
+        model.addAttribute("clubId", form.getClubId());
+        model.addAttribute("bookingId", form.getBookingId());
+
+        // combos
+        model.addAttribute("clubs", clubService.getClubsByUser(form.getUserId()));
+
+        // usuario y nav
+        model.addAttribute("user", securityService.getVerifiedLoggedUser());
+        model.addAttribute("activePage", "clubsBookings");
+
+        // importante: dejar el form en el modelo para <form:form>
+        model.addAttribute("bookingSearchForm", form);
+
+        return "clubsBookings";
+    }
+
+    @GetMapping("/booking")
+    public String bookingAdminHandler(@RequestParam UUID bookingId, Model model, @ModelAttribute("error") String error, @ModelAttribute("success") String success) {
+        Optional<Booking> bookingOpt = bookingService.findById(bookingId);
+        if (bookingOpt.isEmpty()) {
+            model.addAttribute("error", "Reserva no encontrada");
+            return "error/error";
+        }
+        Booking booking = bookingOpt.get();
+
+        Optional<Table> tableOpt = tableService.findById(booking.getTableId());
+        Table table = tableOpt.orElse(null);
+
+        String clubName = "";
+        if (table != null) {
+            Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
+            clubName = clubOpt.map(Club::getClubName).orElse("");
+        }
+
+        var rOpt = receiptService.findByBooking(bookingId);
+        model.addAttribute("hasReceipt", rOpt.isPresent());
+        rOpt.ifPresent(r -> model.addAttribute("receipt", r));
+
+        User u = userService.findById(booking.getUser().getId());
+        model.addAttribute("user", u);
+
+        model.addAttribute("booking", booking);
+        model.addAttribute("table", table);
+        model.addAttribute("clubName", clubName);
+
+
+        ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                .withLocale(new Locale("es","AR"));
+
+        String bookingStartLocal = booking.getBookingStart().atZoneSameInstant(zone).format(fmt);
+        String bookingEndLocal   = booking.getBookingEnd().atZoneSameInstant(zone).format(fmt);
+
+        model.addAttribute("bookingStartLocal", bookingStartLocal);
+        model.addAttribute("bookingEndLocal", bookingEndLocal);
+
+        if (error != null && !error.isEmpty()) {
+            model.addAttribute("errorKey", error);
+        }
+        if (success != null && !success.isEmpty()) {
+            model.addAttribute("success", success);
+        }
+        return "bookingAdminHandler";
+    }
+
+    @PostMapping("/bookings/{bookingId}/receipt/delete")
+    public String deleteReceipt(@PathVariable UUID bookingId, RedirectAttributes ra) {
+        boolean deleted = receiptService.deleteByBooking(bookingId);
+        ra.addFlashAttribute(deleted ? "success" : "info",
+                deleted ? "receipt.deleted" : "receipt.notfound");
+        return "redirect:/admin/booking?bookingId=" + bookingId;
+    }
+}
