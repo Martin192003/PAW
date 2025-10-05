@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.webapp.form.ForgotPasswordForm;
+import ar.edu.itba.paw.webapp.form.ResetPasswordForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -38,45 +39,38 @@ public class PasswordController {
         }
         boolean success = userService.requestPasswordReset(form.getEmail());
         if (success) {
-            model.addAttribute("success", "Si el email existe, recibirás instrucciones para recuperar tu contraseña.");
+            model.addAttribute("success", "forgot.password.sent");
         } else {
-            model.addAttribute("success", "Si el email existe, recibirás instrucciones para recuperar tu contraseña.");
+            model.addAttribute("success", "forgot.password.sent");
         }
         return "forgotPasswordResult";
     }
 
     @GetMapping("/reset-password")
     public String showResetPasswordPage(@RequestParam("token") String token, Model model) {
+        if (!model.containsAttribute("resetPasswordForm")) {
+            model.addAttribute("resetPasswordForm", new ResetPasswordForm());
+        }
         model.addAttribute("token", token);
         return "resetPasswordResult";
     }
 
     @PostMapping("/reset-password")
     public String processResetPassword(@RequestParam("token") String token,
-                                       @RequestParam("password") String password,
-                                       @RequestParam("confirmPassword") String confirmPassword,
+                                       @Valid @ModelAttribute("resetPasswordForm") ResetPasswordForm form,
+                                       BindingResult bindingResult,
                                        Model model) {
-
-        if (!password.equals(confirmPassword)) {
-            model.addAttribute("error", "Las contraseñas no coinciden.");
+        if (bindingResult.hasErrors()) {
             model.addAttribute("token", token);
             return "resetPasswordResult";
         }
-
-        if (password.length() < 6) {
-            model.addAttribute("error", "La contraseña debe tener al menos 6 caracteres.");
-            model.addAttribute("token", token);
-            return "resetPasswordResult";
-        }
-
-        boolean success = userService.resetPassword(token, password);
-        if (success) {
-            model.addAttribute("success", "Contraseña actualizada exitosamente.");
-            return "resetPasswordResult";
-        } else {
+        boolean success = userService.resetPassword(token, form.getNewPassword());
+        if (!success) {
             model.addAttribute("error", "Token inválido o expirado.");
             model.addAttribute("token", token);
             return "resetPasswordResult";
         }
+        model.addAttribute("success", "reset.password.button");
+        return "resetPasswordResult";
     }
 }

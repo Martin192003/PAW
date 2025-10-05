@@ -1,7 +1,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/contactForm.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/login.css' />" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
     <title><spring:message code="reset.password.title"/></title>
 </head>
@@ -29,16 +30,24 @@
             <spring:message code="reset.password.new" var="phNewPassword"/>
             <spring:message code="reset.password.confirm" var="phConfirmPassword"/>
 
-            <form method="post" action="${pageContext.request.contextPath}/reset-password">
+            <form:form method="post"
+                       action="${pageContext.request.contextPath}/reset-password"
+                       modelAttribute="resetPasswordForm">
                 <input type="hidden" name="token" value="${token}"/>
+
                 <div class="form-group">
-                    <input id="password" name="password" type="password" class="form-control"
-                           placeholder="${phNewPassword}" required minlength="6"/>
+                    <form:password path="newPassword" cssClass="form-control"
+                                   placeholder="${phNewPassword}"/>
+                    <form:errors path="newPassword" cssClass="error"/>
                 </div>
+
                 <div class="form-group">
-                    <input id="confirmPassword" name="confirmPassword" type="password" class="form-control"
-                           placeholder="${phConfirmPassword}" required minlength="6"/>
+                    <form:password path="confirmationPassword" cssClass="form-control" placeholder="${phConfirmPassword}"/>
+                    <form:errors path="confirmationPassword" cssClass="error"/>
                 </div>
+
+                <form:errors cssClass="error" element="div"/>
+
 
                 <c:if test="${not empty error}">
                     <div class="error" role="alert">
@@ -48,15 +57,19 @@
 
                 <c:if test="${not empty success}">
                     <div class="success" role="alert">
-                            ${success}
+                        <spring:message code="profile.update.success"/>
                     </div>
                 </c:if>
 
                 <div class="login-buttons">
-                    <button type="submit" class="btn btn-success"><spring:message code="reset.password.button"/></button>
-                    <a href="<c:url value='/login' />" class="login-forgot"><spring:message code="reset.password.back.login"/></a>
+                    <button type="submit" class="btn btn-success">
+                        <spring:message code="reset.password.button"/>
+                    </button>
+                    <a href="<c:url value='/clubs' />" class="login-forgot">
+                        <spring:message code="reset.password.go.home"/>
+                    </a>
                 </div>
-            </form>
+            </form:form>
         </div>
     </div>
 </div>

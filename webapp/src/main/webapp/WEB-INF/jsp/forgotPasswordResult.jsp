@@ -37,11 +37,9 @@
                     <form:input path="email" type="te" cssClass="form-control" placeholder="${phEmail}" />
                     <form:errors path="email" cssClass="error"/>
                 </div>
-
                 <c:if test="${not empty success}">
                     <div class="success" role="alert"><spring:message code="forgot.password.sent"/></div>
                 </c:if>
-
                 <div class="login-buttons">
                     <button type="submit" class="btn btn-success">
                         <spring:message code="forgot.password.button"/>
