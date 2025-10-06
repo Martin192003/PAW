@@ -51,8 +51,7 @@ public class UserBookingController {
                           @RequestParam UUID tableId,
                           @RequestParam String date,
                           Principal principal,
-                          RedirectAttributes ra,
-                          Locale locale) {
+                          RedirectAttributes ra) {
 
         final String username = Optional.ofNullable(principal)
                 .map(Principal::getName)
