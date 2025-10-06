@@ -107,4 +107,69 @@ public class PhotoJDBCDaoTest {
         assertEquals(filename, photo.getFilename());
         assertNull(photo.getData()); // findById no trae los datos binarios
     }
+
+    @Test
+    public void testFindByBooking() {
+        // Simular booking y foto asociada
+        UUID clubId = UUID.randomUUID();
+        insertClub(clubId);
+        UUID userId = UUID.randomUUID();
+        insertUser(userId);
+        String filename = "booking.jpg";
+        String contentType = "image/jpeg";
+        byte[] data = new byte[]{5,6,7};
+        UUID photoId = photoDao.create(clubId, userId, filename, contentType, data);
+        // Crear mesa válida
+        UUID tableId = UUID.randomUUID();
+        jdbcTemplate.update(
+            "INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            tableId, clubId, 1, 4, "disponible", 100, 0
+        );
+        // Insertar booking con ese userId y la mesa creada
+        UUID bookingId = UUID.randomUUID();
+        jdbcTemplate.update(
+            "INSERT INTO bookings (booking_id, user_id, table_id, status, total_amount, booking_start, booking_end) VALUES (?, ?, ?, ?, ?, NOW(), DATEADD('HOUR', 1, NOW()))",
+            bookingId, userId, tableId, "pendiente", 100
+        );
+        Optional<Photo> found = photoDao.findByBooking(bookingId);
+        assertTrue(found.isPresent());
+        assertEquals(photoId, found.get().getPhotoId());
+    }
+
+    @Test
+    public void testDeleteSuccess() {
+        UUID clubId = UUID.randomUUID();
+        insertClub(clubId);
+        UUID postedBy = UUID.randomUUID();
+        insertUser(postedBy);
+        String filename = "delete.jpg";
+        String contentType = "image/jpeg";
+        byte[] data = new byte[]{1,2};
+        UUID photoId = photoDao.create(clubId, postedBy, filename, contentType, data);
+        boolean deleted = photoDao.delete(photoId);
+        assertTrue(deleted);
+        Optional<Photo> found = photoDao.findById(photoId);
+        assertFalse(found.isPresent());
+    }
+
+    @Test
+    public void testDeleteNotFound() {
+        UUID randomId = UUID.randomUUID();
+        boolean deleted = photoDao.delete(randomId);
+        assertFalse(deleted);
+    }
+
+    @Test
+    public void testFindByIdNotFound() {
+        UUID randomId = UUID.randomUUID();
+        Optional<Photo> found = photoDao.findById(randomId);
+        assertFalse(found.isPresent());
+    }
+
+    @Test
+    public void testFindByIdWithDataNotFound() {
+        UUID randomId = UUID.randomUUID();
+        Optional<Photo> found = photoDao.findByIdWithData(randomId);
+        assertFalse(found.isPresent());
+    }
 }
