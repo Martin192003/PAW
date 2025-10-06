@@ -62,6 +62,7 @@ public class UserBookingController {
 
         try {
             bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
+            ra.addFlashAttribute("reservationSent", true);
         } catch (InvalidDateRangeException | ValidationException e) {
             ra.addFlashAttribute("error", "invalid.date");
             ra.addFlashAttribute("reservationError", true);
