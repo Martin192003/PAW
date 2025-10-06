@@ -214,7 +214,7 @@ public class BookingServiceImpl implements BookingService {
             List<User> admins = clubService.getAdminsByClub(club.getClubId());
             if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
                 String ownerEmail = admins.get(0).getEmail();
-                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, ownerEmail, locale);
+                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, admins.getFirst(), locale);
                 LOGGER.info("Successfully sent cancellation email to club owner {}", ownerEmail);
             } else {
                 LOGGER.warn("Cannot send cancellation email to club owner: no valid email found for club {}", club.getClubId());
@@ -285,7 +285,7 @@ public class BookingServiceImpl implements BookingService {
             List<User> admins = clubService.getAdminsByClub(club.getClubId());
             if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
                 String ownerEmail = admins.get(0).getEmail();
-                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, ownerEmail, locale);
+                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, admins.getFirst(), locale);
                 LOGGER.info("Successfully sent cancellation email to club owner {}", ownerEmail);
             } else {
                 LOGGER.warn("Cannot send cancellation email to club owner: no valid email found for club {}", club.getClubId());

@@ -298,10 +298,6 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
-    private String abs(String path) {
-        String b = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-        return path.startsWith("/") ? b + path : b + "/" + path;
-    }
     @Override
     @Async
     public void notifyBookingCancelledToUser(Booking booking, Club club, Table table, Locale locale) {
@@ -329,18 +325,18 @@ public class EmailServiceImpl implements EmailService {
                         "from", "23:59",
                         "to", "06:00",
                         "brandName", "BlingBling",
-                        "brandFooter", "© 2025 BlingBling. Tu reserva ha sido cancelada."
+                        "brandFooter", "© 2025 BlingBling."
                 ),
                 "Ver otros clubs",
-                "/clubs"
+                abs("/clubs")
         );
     }
 
     @Override
     @Async
-    public void notifyBookingCancelledToOwner(Booking booking, Club club, Table table, String ownerEmail, Locale locale) {
-        if (!isLikelyEmail(ownerEmail)) {
-            throw new BadRequestException("Email del dueño inválido: " + ownerEmail);
+    public void notifyBookingCancelledToOwner(Booking booking, Club club, Table table, User owner, Locale locale) {
+        if (!isLikelyEmail(owner.getEmail())) {
+            throw new BadRequestException("Email del dueño inválido: " + owner);
         }
 
         Objects.requireNonNull(booking, "booking es null");
@@ -364,20 +360,24 @@ public class EmailServiceImpl implements EmailService {
                 "capacity", capacity,
                 "dateTime", dateTimePretty,
                 "brandName", "BlingBling",
-                "brandFooter", "© 2025 BlingBling. Notificación de cancelación.",
+                "brandFooter", "© 2025 BlingBling.",
                 "sentAt", OffsetDateTime.now(ZONE_ID)
         );
 
         sendTemplatedEmail(
-                ownerEmail,
+                owner.getEmail(),
                 "Reserva cancelada - " + clubName,
                 "booking-cancelled-owner",
                 ownerModel,
                 "Ver panel",
-                "/clubs/" + club.getClubId()
+                abs("/admin/clubs/bookings?userId=" + owner.getId())
         );
     }
 
+    private String abs(String path) {
+        String b = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        return path.startsWith("/") ? b + path : b + "/" + path;
+    }
 
     private boolean isLikelyEmail(String s) {
         return s != null && s.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
