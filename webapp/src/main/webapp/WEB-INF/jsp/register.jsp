@@ -52,7 +52,7 @@
                 </div>
 
                 <div class="form-group">
-                    <form:password path="password" cssClass="form-control" placeholder="${phPassword}"/>
+                    <form:password path="password" cssClass="form-control" placeholder="${phPassword}" autocomplete="new-password"/>
                     <form:errors path="password" cssClass="error"/>
                 </div>
 
@@ -75,5 +75,11 @@
         </div>
     </div>
 
+<script>
+    window.addEventListener('pageshow', function () {
+        var p = document.getElementById('password');
+        if (p) p.value = '';
+    });
+</script>
 </body>
 </html>

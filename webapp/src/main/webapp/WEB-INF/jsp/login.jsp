@@ -35,7 +35,7 @@
                     <input id="usernameOrEmail" name="usernameOrEmail" type="text" class="form-control" placeholder="${phUser}"/>
                 </div>
                 <div class="form-group">
-                    <input id="password" name="password" type="password" class="form-control" placeholder="${phPassword}"/>
+                    <input id="password" name="password" type="password" class="form-control" placeholder="${phPassword}" autocomplete="current-password"/>
                 </div>
                 <div>
                     <label>
@@ -56,6 +56,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    window.addEventListener('pageshow', function () {
+        var p = document.getElementById('password');
+        if (p) p.value = '';
+    });
+</script>
 </body>
 </html>
 

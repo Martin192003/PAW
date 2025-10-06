@@ -27,10 +27,10 @@ import java.util.Map;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
-public class GlobalErrorController {
+public class GlobalErrorControllerAdvice {
 
     private static final String VIEW = "error/error";
-    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalErrorController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalErrorControllerAdvice.class);
 
     private final MessageSource messageSource;
 
@@ -74,7 +74,7 @@ public class GlobalErrorController {
         EXCEPTION_CODE_MAP.put(EmailWasntSentException.class,              "error.bad_gateway");
     }
 
-    public GlobalErrorController(MessageSource messageSource) {
+    public GlobalErrorControllerAdvice(MessageSource messageSource) {
         this.messageSource = messageSource;
     }
 

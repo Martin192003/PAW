@@ -16,10 +16,6 @@
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 
-    <properties>
-        <org.springframework.version>5.3.33</org.springframework.version>
-    </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -28,7 +24,6 @@
     <dependency>
       <groupId>com.sun.mail</groupId>
       <artifactId>javax.mail</artifactId>
-      <version>1.6.2</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -55,16 +50,9 @@
       <artifactId>hibernate-validator</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.github.cdimascio</groupId>
-      <artifactId>java-dotenv</artifactId>
-      <version>5.2.2</version>
-    </dependency>
-    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.2.13</version>
     </dependency>
-
       <dependency>
           <groupId>org.springframework.security</groupId>
           <artifactId>spring-security-core</artifactId>
@@ -77,13 +65,10 @@
           <groupId>org.springframework.security</groupId>
           <artifactId>spring-security-config</artifactId>
       </dependency>
-
       <dependency>
           <groupId>org.springframework</groupId>
           <artifactId>spring-web</artifactId>
-          <version>${org.springframework.version}</version>
       </dependency>
-
       <dependency>
           <groupId>javax.servlet</groupId>
           <artifactId>javax.servlet-api</artifactId>
@@ -119,10 +104,6 @@
       </dependency>
       <dependency>
           <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-      </dependency>
-      <dependency>
-          <groupId>ch.qos.logback</groupId>
           <artifactId>logback-core</artifactId>
       </dependency>
       <dependency>
@@ -136,7 +117,6 @@
       <dependency>
           <groupId>org.springframework</groupId>
           <artifactId>spring-beans</artifactId>
-          <version>5.3.33</version>
           <scope>compile</scope>
       </dependency>
   </dependencies>

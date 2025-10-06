@@ -45,7 +45,7 @@ public class WebConfig implements WebMvcConfigurer {
         return new PropertySourcesPlaceholderConfigurer();
     }
 
-    @Value("classpath:schema.sql")
+    @Value("classpath:/db/schema.sql")
     private Resource schemaSql;
 
     @Value("${local.db.host}")

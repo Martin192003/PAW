@@ -68,10 +68,8 @@ public class EmailServiceImpl implements EmailService {
             Locale userLocale = LocaleContextHolder.getLocale();
             Context context = new Context(userLocale);
 
-            // Create a mutable copy of the variables map
             Map<String, Object> mutableVariables = new HashMap<>(variables);
 
-            // Add CTA parameters to the mutable copy
             if (ctaText != null) {
                 mutableVariables.put("ctaText", ctaText);
             }
@@ -86,7 +84,6 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            // Use defaultFrom instead of System.getenv("SMTP_USER")
             helper.setFrom(defaultFrom);
             helper.setTo(to);
             helper.setSubject(subject);
@@ -226,7 +223,6 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void notifyTableReservedToUser(Booking booking, Club club, Table table, Locale locale) {
-        // Validate required parameters
         Objects.requireNonNull(booking, "booking cannot be null");
         Objects.requireNonNull(booking.getUser(), "booking.user cannot be null");
         Objects.requireNonNull(club, "club cannot be null");
@@ -292,7 +288,7 @@ public class EmailServiceImpl implements EmailService {
         ownerModel.put("ctaUrl", ctaUrl);
         ownerModel.put("ctaText", "Abrir panel");
         ownerModel.put("brandName", "BlingBling");
-        ownerModel.put("brandFooter", "© 2025 BlingBling. Panel de administración.");
+        ownerModel.put("brandFooter", "© 2025 BlingBling.");
         ownerModel.put("sentAt", OffsetDateTime.now(ZONE_ID));
 
         sendTemplatedEmail(

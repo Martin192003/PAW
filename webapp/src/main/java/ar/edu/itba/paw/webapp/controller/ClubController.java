@@ -152,14 +152,9 @@ public class ClubController {
 
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
-                contact, f.getMusicGenre(), f.getZone(), f.getIsBar()
+                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getImage()
         );
 
-        var image = f.getImage();
-        if (image != null && !image.isEmpty()) {
-            photoService.upload(newClub.getClubId(), contact.getId(),
-                    image.getOriginalFilename(), image.getContentType(), image.getBytes());
-        }
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();
     }
 

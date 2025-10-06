@@ -9,7 +9,9 @@ import ar.edu.itba.paw.persistence.ClubTablesDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.util.*;
@@ -20,12 +22,14 @@ public class ClubServiceImpl implements ClubService{
     private final ClubDao clubDao;
     private final EmailServiceImpl mailService;
     private final ClubTablesDao tablesDao;
+    private final PhotoService photoService;
 
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, EmailServiceImpl mailService, ClubTablesDao tablesDao) {
+    public ClubServiceImpl(ClubDao clubDao, EmailServiceImpl mailService, ClubTablesDao tablesDao, PhotoService photoService) {
         this.tablesDao = tablesDao;
         this.mailService = mailService;
         this.clubDao = clubDao;
+        this.photoService = photoService;
     }
 
     @Override
@@ -36,8 +40,18 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     @Transactional
-    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
+    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, MultipartFile image) {
         Club newClub = clubDao.create(name, description, location, priceRange, contactInfo, musicGenre, zone, isBar);
+
+        if (image != null && !image.isEmpty()) {
+            try {
+                photoService.upload(newClub.getClubId(), contactInfo.getId(),
+                        image.getOriginalFilename(), image.getContentType(), image.getBytes());
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read uploaded image", e);
+            }
+        }
+
         mailService.sendClubCreationConfirmation(contactInfo.getEmail(), name, newClub.getClubId());
         return newClub;
     }
