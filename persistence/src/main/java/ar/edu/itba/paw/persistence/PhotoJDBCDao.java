@@ -49,15 +49,14 @@ public class PhotoJDBCDao implements PhotoDao {
                        String filename,
                        String contentType,
                        byte[] data) {
+        UUID id = UUID.randomUUID();
         final String insertSql = """
-            INSERT INTO photos (club_id, url, posted_by, created_at, data, content_type, filename, size_bytes)
-            VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)
-            RETURNING photo_id
+            INSERT INTO photos (photo_id, club_id, url, posted_by, created_at, data, content_type, filename, size_bytes)
+            VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?)
             """;
-
-        UUID id = jdbc.queryForObject(
+        jdbc.update(
                 insertSql,
-                (rs, i) -> rs.getObject("photo_id", UUID.class),
+                id,
                 clubId,
                 "/photos/pending",
                 postedBy,
@@ -66,7 +65,6 @@ public class PhotoJDBCDao implements PhotoDao {
                 filename,
                 (long) data.length
         );
-
         jdbc.update("UPDATE photos SET url = ? WHERE photo_id = ?",
                 "/photos/" + id, id);
 

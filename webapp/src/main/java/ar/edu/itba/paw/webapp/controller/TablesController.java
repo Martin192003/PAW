@@ -4,10 +4,7 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
-import ar.edu.itba.paw.webapp.form.AddProductForm;
-import ar.edu.itba.paw.webapp.form.AddTableForm;
-import ar.edu.itba.paw.webapp.form.EditProductForm;
-import ar.edu.itba.paw.webapp.form.EditTableForm;
+import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
@@ -146,6 +143,16 @@ public class TablesController {
             model.addAttribute("coverPhotoUrl",
                     photoService.listByClub(clubId, 0, 1).stream()
                             .findFirst().map(p -> p.getUrl()).orElse(null));
+
+            ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
+            clubHandlerForm.setClubId(club.getClubId());
+            clubHandlerForm.setName(club.getClubName());
+            clubHandlerForm.setDescription(club.getDescription());
+            clubHandlerForm.setLocation(club.getLocation());
+            clubHandlerForm.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
+            clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
+            clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("tableForm", tableForm);
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editProductForm", new EditProductForm());

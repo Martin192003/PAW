@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.webapp.form.UserForm;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.webapp.form.VerificationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -79,19 +80,30 @@ public class LoginController {
     }
 
     @GetMapping("/verify")
-    public String showVerificationPage() {
+    public String showVerificationPage(Model model) {
+        if (!model.containsAttribute("verificationForm")) {
+            model.addAttribute("verificationForm", new VerificationForm());
+        }
         return "verify";
     }
 
     @PostMapping("/verify")
-    public String verifyToken(@RequestParam("token") final String token, Model model) {
-        boolean success = userService.verifyUser(token);
-        if (success) {
-            model.addAttribute("success", "Account verified successfully.");
-        } else {
-            model.addAttribute("error", "Invalid verification token.");
+    public String verifyToken(
+            @Valid @ModelAttribute("verificationForm") VerificationForm form,
+            BindingResult bindingResult,
+            Model model
+    ) {
+        if (bindingResult.hasErrors()) {
+            return "verify";
         }
-        return "verifyResult";
+        boolean success = userService.verifyUser(form.getToken());
+        if (success) {
+            model.addAttribute("success", "register.valid.token");
+            return "verifyResult";
+        } else {
+            model.addAttribute("error", "register.invalid.token");
+        }
+        return "verify";
     }
 
     @GetMapping("/unverified")

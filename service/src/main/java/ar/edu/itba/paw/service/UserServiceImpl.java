@@ -50,6 +50,9 @@ public class UserServiceImpl implements UserService {
                     cellphone,
                     Role.USER
             );
+            if(user == null) {
+                return null;
+            }
             mailService.sendUserRegistrationConfirmation(email, username, user.getVerificationToken());
             return user;
         } catch (DataIntegrityViolationException ex) {
@@ -198,6 +201,51 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public User updateUserField(UUID userId, String field, String value) throws DuplicateEntityException {
+        User existingUser = userDao.findById(userId).orElseThrow(() ->
+                new IllegalArgumentException("User not found")
+        );
+
+        switch (field.toLowerCase()) {
+            case "username":
+                if (!existingUser.getUsername().equals(value) && userDao.findByUserName(value).isPresent()) {
+                    throw new DuplicateEntityException("user.username.duplicate");
+                }
+                existingUser.setUserName(value);
+                break;
+            case "name":
+                existingUser.setName(value);
+                break;
+            case "surname":
+                existingUser.setSurname(value);
+                break;
+            case "email":
+                if (!existingUser.getEmail().equals(value) && userDao.findByEmail(value).isPresent()) {
+                    throw new DuplicateEntityException("user.email.duplicate");
+                }
+                existingUser.setEmail(value);
+                break;
+            case "cellphone":
+                existingUser.setCellphone(value);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid field: " + field);
+        }
+
+        return userDao.update(
+                existingUser.getId(),
+                existingUser.getUsername(),
+                existingUser.getName(),
+                existingUser.getSurname(),
+                existingUser.getEmail(),
+                existingUser.getPassword(),
+                existingUser.getCellphone(),
+                existingUser.getRole()
+        );
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public User authenticateAndGetUser(String usernameOrEmail, String password) throws IllegalStateException {
         User user = userDao.findByUserName(usernameOrEmail).orElse(null);
@@ -218,4 +266,20 @@ public class UserServiceImpl implements UserService {
 
         return user;
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean authenticateUsernameOrEmail(String usernameOrEmail, String password){
+        User user = userDao.findByUserName(usernameOrEmail).orElse(null);
+        if(user == null){
+            user = userDao.findByEmail(usernameOrEmail).orElse(null);
+            if(user == null) return false;
+        }
+        if(!user.isVerified()){
+            throw new IllegalStateException("User not verified");
+        }
+        return passwordEncoder.matches(password, user.getPassword());
+    }
+
 }

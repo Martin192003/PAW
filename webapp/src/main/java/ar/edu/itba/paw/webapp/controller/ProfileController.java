@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.form.EditUserForm;
 import ar.edu.itba.paw.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,8 @@ public class ProfileController {
             throw new SecurityException("Usuario no encontrado: " + identifier);
         }
 
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication().getName();
         return user.getId();
     }
 
@@ -75,117 +78,98 @@ public class ProfileController {
         return "profile";
     }
 
+    private String handleDuplicateError(String field, Model model) {
+        User user = userService.findById(getCurrentUserId());
+        model.addAttribute("user", user);
+        model.addAttribute("openModal", true);
+        model.addAttribute("editField", field);
+        model.addAttribute("error", field.equals("username") ? "Username already exists" : "Email already exists");
+        return "profile";
+    }
+
     @PostMapping("/edit/username")
     public String editUsername(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                               BindingResult errors,
-                               Model model,
-                               RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
-
-        if (errors.hasFieldErrors("username")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "username");
-            return "profile";
-        }
-
-        user.setUserName(form.getUsername());
-        userService.update(user);
-
-        // actualizar auth con nuevo username
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        user.getUsername(),
-                        user.getPassword(),
-                        SecurityContextHolder.getContext().getAuthentication().getAuthorities()
-                );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        ra.addFlashAttribute("success", "Usuario actualizado correctamente.");
-        return "redirect:/profile";
+                               BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("username", form.getUsername(), "Usuario", errors, model, ra, true);
     }
 
     @PostMapping("/edit/name")
     public String editName(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                           BindingResult errors,
-                           Model model,
-                           RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
-
-        if (errors.hasFieldErrors("name")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "name");
-            return "profile";
-        }
-
-        user.setName(form.getName());
-        userService.update(user);
-
-        ra.addFlashAttribute("success", "Nombre actualizado correctamente.");
-        return "redirect:/profile";
+                           BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("name", form.getName(), "Nombre", errors, model, ra, false);
     }
 
     @PostMapping("/edit/surname")
     public String editSurname(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                              BindingResult errors,
-                              Model model,
-                              RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
-
-        if (errors.hasFieldErrors("surname")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "surname");
-            return "profile";
-        }
-
-        user.setSurname(form.getSurname());
-        userService.update(user);
-
-        ra.addFlashAttribute("success", "Apellido actualizado correctamente.");
-        return "redirect:/profile";
+                              BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("surname", form.getSurname(), "Apellido", errors, model, ra, false);
     }
 
     @PostMapping("/edit/cellphone")
     public String editCellphone(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                                BindingResult errors,
-                                Model model,
-                                RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
-
-        if (errors.hasFieldErrors("cellphone")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "cellphone");
-            return "profile";
-        }
-
-        user.setCellphone(form.getCellphone());
-        userService.update(user);
-
-        ra.addFlashAttribute("success", "Celular actualizado correctamente.");
-        return "redirect:/profile";
+                                BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("cellphone", form.getCellphone(), "Celular", errors, model, ra, false);
     }
+
 
     @PostMapping("/edit/email")
     public String editEmail(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                            BindingResult errors,
-                            Model model,
-                            RedirectAttributes ra) {
-        User user = userService.findById(getCurrentUserId());
+                            BindingResult errors, Model model, RedirectAttributes ra) {
+        return handleFieldUpdate("email", form.getEmail(), "Email", errors, model, ra, false);
+    }
 
-        if (errors.hasFieldErrors("email")) {
-            model.addAttribute("user", user);
-            model.addAttribute("openModal", true);
-            model.addAttribute("editField", "email");
-            return "profile";
+
+    @PostMapping("/resend-verification")
+    public String resendVerification(@RequestParam("usernameOrEmail") String usernameOrEmail,
+                                     Model model) {
+        boolean success = userService.resendVerificationToken(usernameOrEmail);
+        if (success) {
+            model.addAttribute("success", "Verification email sent successfully.");
+            return "verifyMailNotice";
+        } else {
+            model.addAttribute("error", "User not found or already verified.");
+            model.addAttribute("username", usernameOrEmail);
+            return "unverified";
+        }
+    }
+
+    private String handleFieldUpdate(String field, String value, String fieldName,
+                                     BindingResult errors, Model model,
+                                     RedirectAttributes ra, boolean requiresAuthUpdate) {
+        if (errors.hasFieldErrors(field)) {
+            return handleValidationError(field, model);
         }
 
-        user.setEmail(form.getEmail());
-        userService.update(user);
+        try {
+            User updatedUser = userService.updateUserField(getCurrentUserId(), field, value);
 
-        ra.addFlashAttribute("success", "Email actualizado correctamente.");
-        return "redirect:/profile";
+            if (requiresAuthUpdate) {
+                updateAuthenticationContext(updatedUser);
+            }
+
+            ra.addFlashAttribute("success", fieldName + " actualizado correctamente.");
+            return "redirect:/profile";
+        } catch (DuplicateEntityException e) {
+            return handleDuplicateError(field, model);
+        }
     }
+
+    private String handleValidationError(String field, Model model) {
+        User user = userService.findById(getCurrentUserId());
+        model.addAttribute("user", user);
+        model.addAttribute("openModal", true);
+        model.addAttribute("editField", field);
+        return "profile";
+    }
+    private void updateAuthenticationContext(User updatedUser) {
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        updatedUser.getUsername(),
+                        updatedUser.getPassword(),
+                        SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+
 }

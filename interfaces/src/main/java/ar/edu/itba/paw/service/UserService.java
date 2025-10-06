@@ -26,6 +26,8 @@ public interface UserService {
 
     boolean requestPasswordReset(String email);
     boolean resetPassword(String token, String newPassword);
-    User authenticateAndGetUser(String usernameOrEmail, String password) throws IllegalStateException;
 
-    }
+    User updateUserField(UUID userId, String field, String value);
+    User authenticateAndGetUser(String usernameOrEmail, String password);
+    boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
+}

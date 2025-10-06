@@ -26,22 +26,25 @@
             <h1 class="verify-title"><spring:message code="title.verify"/></h1>
 
             <spring:message code="placeholder.token" var="phToken"/>
-            <form action="${pageContext.request.contextPath}/verify" method="post" class="verify-form">
-                <label for="token"><spring:message code="verify.enterToken"/></label>
-                <input type="text" id="token" name="token" placeholder="${phToken}" class="form-control" required>
+
+            <form:form method="post" modelAttribute="verificationForm" action="${pageContext.request.contextPath}/verify" class="verify-form">
+                <spring:message code="placeholder.token" var="phToken"/>
+                <form:input path="token" cssClass="form-control" placeholder="${phToken}"/>
+                <form:errors path="token" cssClass="verify-error"/>
+                <c:if test="${not empty error}">
+                    <p class="verify-error"><spring:message code="${error}"/></p>
+                </c:if>
                 <div class="verify-buttons">
                     <button type="submit" class="btn btn-success">
                         <spring:message code="button.verify"/>
                     </button>
-                    <a href="<c:url value='/' />" class="return-index"><spring:message code="return.index"/></a>
+                    <a href="<c:url value='/clubs'/>" class="return-index">
+                        <spring:message code="return.index"/>
+                    </a>
                 </div>
-            </form>
-
+            </form:form>
             <c:if test="${not empty success}">
-                <p class="verify-success">${success}</p>
-            </c:if>
-            <c:if test="${not empty error}">
-                <p class="verify-error">${error}</p>
+                <p class="verify-success"><spring:message code="${success}"/></p>
             </c:if>
         </div>
     </div>

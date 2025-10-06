@@ -13,7 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import ar.edu.itba.paw.webapp.form.ReceiptUploadForm;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
@@ -152,6 +152,8 @@ public class UserBookingController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("queryParams", queryParams);
+        model.addAttribute("clubs", clubService.getClubsByUser(form.getUserId()));
+
 
         // echo de filtros
         model.addAttribute("sort", form.getSort());
@@ -169,15 +171,43 @@ public class UserBookingController {
 
     @PostMapping(path = "/bookings/{bookingId}/receipt", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String uploadReceipt(@PathVariable UUID bookingId,
-                                @RequestParam("file") MultipartFile file,
+                                @Valid @ModelAttribute("receiptForm") ReceiptUploadForm form,
+                                BindingResult errors,
                                 RedirectAttributes ra,
-                                @RequestHeader(value = "Referer", required = false) String referer) {
+                                @RequestHeader(value = "Referer", required = false) String referer,
+                                Model model) {
+        if (form.getFile() == null || form.getFile().isEmpty()) {
+            errors.rejectValue("file", "receipt.file.required");
+        }
+        var current = securityService.getVerifiedLoggedUser();
+        if (errors.hasErrors()) {
+            var booking = bookingService.findById(bookingId)
+                    .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
 
-            var current = securityService.getVerifiedLoggedUser();
+            model.addAttribute("booking", booking);
+            model.addAttribute("user", userService.findById(booking.getUser().getId()));
+
+            Table table = tableService.findById(booking.getTableId()).orElse(null);
+            model.addAttribute("table", table);
+
+            String clubName = "";
+            if (table != null) {
+                clubName = clubService.getClubById(table.getClubId())
+                        .map(Club::getClubName)
+                        .orElse("");
+            }
+            model.addAttribute("clubName", clubName);
+
+            var rOpt = receiptService.findByBooking(bookingId);
+            model.addAttribute("hasReceipt", rOpt.isPresent());
+            rOpt.ifPresent(r -> model.addAttribute("receipt", r));
+            model.addAttribute("activePage", "bookings");
+            return "bookingUserHandler";
+        }
         try {
-            String filename = Optional.ofNullable(file.getOriginalFilename()).orElse("receipt");
+            String filename = Optional.ofNullable(form.getFile().getOriginalFilename()).orElse("receipt");
             receiptService.uploadForBooking(
-                    bookingId, current.getId(), filename, file.getContentType(), file.getBytes());
+                    bookingId, current.getId(), filename, form.getFile().getContentType(), form.getFile().getBytes());
             ra.addFlashAttribute("success", "receipt.uploaded");
         } catch (UnauthorizedException e) {
             ra.addFlashAttribute("error", "receipt.upload.notAllowed");
@@ -190,6 +220,8 @@ public class UserBookingController {
         } catch (BookingNotFoundException e) {
             ra.addFlashAttribute("error", "booking.notfound");
         }
+
+
         return safeRedirect(referer, bookingId);
     }
 
@@ -234,6 +266,9 @@ public class UserBookingController {
                     .orElse("");
         }
         model.addAttribute("clubName", clubName);
+        if(!model.containsAttribute("receiptForm")) {
+            model.addAttribute("receiptForm", new ReceiptUploadForm());
+        }
 
         model.addAttribute("booking", booking);
 

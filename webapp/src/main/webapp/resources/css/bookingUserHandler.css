@@ -1,4 +1,9 @@
-
+@font-face {
+    font-family: 'Darklinos';
+    src: url('../fonts/DARKLINOS.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 body {
     font-family: Arial, sans-serif;
     background-color: #1b1a1a;
@@ -32,7 +37,7 @@ body {
 
 /* Card original (se deja para pantallas que la usen) */
 .card-lg.booking-details {
-    background: #222;
+    background: #3c3c3c;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
     margin-bottom: 24px;
@@ -43,11 +48,6 @@ body {
     align-items: flex-start;
     transition: box-shadow 0.2s, transform 0.2s;
     position: relative;
-}
-.card-lg.booking-details:hover {
-    box-shadow: 0 4px 16px rgba(156, 39, 176, 0.25);
-    transform: scale(1.03);
-    background: #292929;
 }
 .card-lg.booking-details span {
     font-size: 1.1rem;
@@ -145,9 +145,28 @@ body {
     box-sizing: border-box;
 }
 
+.card-lg.booking-card {
+    background: #3c3c3c;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
+    margin-bottom: 24px;
+    padding: 24px 32px;
+    width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.card-lg.booking-card a {
+    color: inherit;
+    text-decoration: none;
+    width: 100%;
+    display: block;
+}
+
 /* Tarjetas / paneles */
 .booking-page .card.panel {
-    background: #1f1f1f;
+    background: #3c3c3c;
     border: 1px solid rgba(156,39,176,.25);
     border-radius: 14px;
     padding: 18px 20px;
@@ -156,8 +175,8 @@ body {
 .booking-page .panel-title {
     margin: 0 0 12px;
     font-size: 1.05rem;
-    letter-spacing: .5px;
-    color: #cfa3d8;
+    letter-spacing: 0.5px;
+    color: #9c27b0;
     font-family: 'Darklinos', Arial, sans-serif;
 }
 
@@ -167,7 +186,7 @@ body {
     max-width: 960px;
     padding: 0 16px;
     margin: 0 auto 16px;
-    font-size: 1.8rem; /* levemente más compacto en esta vista */
+    font-size: 1.6rem; /* levemente más compacto en esta vista */
 }
 
 /* Definición de detalles (semántica dl/dt/dd) */
@@ -182,9 +201,10 @@ body {
 }
 .booking-page .details .row:last-child { border-bottom: 0; }
 .booking-page dt {
-    color: #a96ec0;
+    color: #ffffff;
     font-weight: 700;
-    letter-spacing: .4px;
+
+    letter-spacing: 0.4px;
 }
 .booking-page dd {
     margin: 0;
@@ -216,11 +236,17 @@ body {
 .booking-page .status-badge.is-cancelled { background:#3a0a15; color:#ffb3c1; border-color:#8a233b; }
 
 /* Comprobante */
-.booking-page .receipt-actions {
+.receipt-actions {
     display: flex;
+    width: 100%;
+    justify-content: space-between;
     gap: 10px;
     flex-wrap: wrap;
     margin-bottom: 12px;
+    margin-top: 16px;
+}
+.receipt-actions form {
+    flex: 1;
 }
 .booking-page .receipt-thumb {
     border: 1px solid rgba(255,255,255,.08);
@@ -234,22 +260,34 @@ body {
     max-height: 280px; /* más bajo para no dominar visualmente */
     object-fit: contain;
 }
-
 /* Acciones */
-.booking-page .booking-actions {
+.booking-actions {
+    margin-top: 12px;
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-between;
 }
-
-/* Botón outline rápido (en theme) */
-.booking-page .btn.btn-outline {
-    background: transparent;
-    border: 1px solid rgba(156,39,176,.5);
-    color: #e9d8f1;
+.btn-left{
+    margin-left: auto;
 }
-.booking-page .btn.btn-outline:hover {
-    background: rgba(156,39,176,.12);
+.upload-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.detail-back {
+    position: fixed;
+    top:  106px;
+    left:  20px;
+    z-index: 120;
+    margin-right: auto;
+}
+.detail-back .btn-success {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Topbar local para el botón Volver */
@@ -283,7 +321,6 @@ body {
 }
 .booking-page .btn-back:active { transform: translateY(1px); }
 
-/* Alerts (usadas por flashes y errores i18n) */
 .alert {
     border-radius: 6px;
     padding: 10px 14px;
@@ -295,6 +332,38 @@ body {
 .alert-success { background:#0a3a0a; color:#a7f3a7; border:1px solid #1f7a1f; }
 .alert-info    { background:#0a233a; color:#b8e3ff; border:1px solid #1b5f8a; }
 
+
+.app-boliches.btn {
+    font-size: 16px;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    box-sizing: border-box;
+    width: 80px;
+}
+.app-boliches .btn-success {
+    background-color: #9c27b0;
+    color: #fff;
+    border: none;
+    width: 160px;
+}
+
+.btn-secondary {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+    box-shadow: 0 2px 10px rgba(108, 117, 125, 0.4);
+}
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.5);
+}
 
 @media (max-width: 980px) {
     .booking-page .booking-grid {
@@ -309,10 +378,26 @@ body {
 
 @media (max-width: 520px) {
     .booking-page .booking-grid { padding: 0 12px; }
-    .booking-page .clubActivity-title { font-size: 1.4rem; padding: 0 12px; }
+    .booking-page .clubActivity-title { font-size: 1.2rem; padding: 0 6px; }
     .booking-page .details .row {
         grid-template-columns: 1fr;
         gap: 4px;
     }
     .booking-page dt { opacity: .9; }
+}
+.form-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 30px;
+}
+.form-group span,
+.form-group .error,
+.form-group .error-message {
+    display: block;
+    color: #ff0000;
+    font-size: 0.75rem;
+    margin-left: 2px;
+    font-weight: 500;
 }

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -106,7 +107,6 @@ public class ClubController {
         );
 
         model.addAttribute("queryParams", queryParams);
-
         model.addAttribute("name", nameLike);
         model.addAttribute("zone", zone);
         model.addAttribute("genre", musicGenre);
@@ -167,6 +167,10 @@ public class ClubController {
         var club = clubService.getClubById(clubId).orElseThrow(() -> new NotFoundException("El boliche no existe."));
         var cover = photoService.getCoverUrl(clubId).orElse(null);
 
+        var photos = photoService.listByClub(clubId, 0, 1);
+        String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
+
+
         model.addAttribute("club", club);
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("coverPhotoUrl", cover);
@@ -178,18 +182,70 @@ public class ClubController {
         model.addAttribute("tableForm", new AddTableForm());
         model.addAttribute("editTableForm", new EditTableForm());
         model.addAttribute("editProductForm", new EditProductForm());
+
+        ClubHandlerForm form = new ClubHandlerForm();
+        form.setClubId(club.getClubId());
+        form.setName(club.getClubName());
+        form.setLocation(club.getLocation());
+        form.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
+        form.setZone(club.getZone() != null ? club.getZone().name() : null);
+        form.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+        form.setDescription(club.getDescription() != null ? club.getDescription() : "");
+        form.setImage(coverPhotoUrl != null ? coverPhotoUrl : "");
+
+        model.addAttribute("clubHandlerForm", form);
         return "clubHandler";
     }
 
     @PostMapping("/editField")
     public String editField(@RequestParam("clubId") UUID clubId,
-                            @RequestParam("field") String field,
-                            @RequestParam("value") String value) {
+                            @Valid @ModelAttribute("clubHandlerForm") ClubHandlerForm clubHandlerForm,
+                            @RequestParam(value = "editedField", required = false) String editedField,
+                            Model model,
+                            BindingResult errors,
+                            RedirectAttributes ra) {
         var user = securityService.getVerifiedLoggedUser();
         if (user == null) throw new UserNotFoundException("No logueado");
-        clubService.updateField(clubId, field, value, user.getId());
+
+        //LOGICA DE NEGOCIOS
+        var maybeClub = clubService.getClubById(clubId);
+        if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
+        Club club = maybeClub.get();
+
+
+        if (errors.hasErrors()) {
+            populateClubHandlerModel(model, club);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
+            model.addAttribute("editField", editedField);
+            return "clubHandler";
+        }
+
+        if (clubHandlerForm.getName() != null && !clubHandlerForm.getName().isBlank()) {
+            club.setClubName(clubHandlerForm.getName());
+        }
+        if (clubHandlerForm.getLocation() != null && !clubHandlerForm.getLocation().isBlank()) {
+            club.setLocation(clubHandlerForm.getLocation());
+        }
+        if (clubHandlerForm.getZone() != null && !clubHandlerForm.getZone().isBlank()) {
+            club.setZone(Zone.valueOf(clubHandlerForm.getZone()));
+        }
+        if (clubHandlerForm.getMusicGenre() != null && !clubHandlerForm.getMusicGenre().isBlank()) {
+            club.setMusicGenre(MusicalGenre.valueOf(clubHandlerForm.getMusicGenre()));
+        }
+        if (clubHandlerForm.getPriceRange() != null && !clubHandlerForm.getPriceRange().isBlank()) {
+            club.setPriceRange(Price.valueOf(clubHandlerForm.getPriceRange()));
+        }
+        if (clubHandlerForm.getDescription() != null) {
+            club.setDescription(clubHandlerForm.getDescription());
+        }
+
+        clubService.updateClub(club);
+
+        ra.addFlashAttribute("successMessage", "Cambios guardados correctamente.");
+
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
 
     @GetMapping("/activity")
     public String userClubs(@RequestParam("userId") UUID userId,
@@ -254,5 +310,22 @@ public class ClubController {
             throw new UnauthorizedException("El usuario no es admin del club.");
         }
     }
+    private void populateClubHandlerModel(Model model, Club club) {
+        UUID clubId = club.getClubId();
+        var photos = photoService.listByClub(clubId, 0, 1);
+        String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
+
+        model.addAttribute("tables", tableService.findByClubId(clubId));
+        model.addAttribute("club", club);
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("zones", Zone.values());
+        model.addAttribute("genres", MusicalGenre.values());
+        model.addAttribute("prices", Price.values());
+        model.addAttribute("menu", menuService.getMenuByClub(clubId));
+        model.addAttribute("productForm", new AddProductForm());
+        model.addAttribute("tableForm", new AddTableForm());
+    }
+
+
 
 }

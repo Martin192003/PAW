@@ -7,10 +7,7 @@ import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.*;
-import ar.edu.itba.paw.webapp.form.AddProductForm;
-import ar.edu.itba.paw.webapp.form.AddTableForm;
-import ar.edu.itba.paw.webapp.form.EditProductForm;
-import ar.edu.itba.paw.webapp.form.EditTableForm;
+import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -62,12 +59,23 @@ public class ProductController {
             model.addAttribute("genres", MusicalGenre.values());
             model.addAttribute("prices", Price.values());
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
+            ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
+            clubHandlerForm.setClubId(club.getClubId());
+            clubHandlerForm.setName(club.getClubName());
+            clubHandlerForm.setDescription(club.getDescription());
+            clubHandlerForm.setLocation(club.getLocation());
+            clubHandlerForm.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
+            clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
+            clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("tableForm", new AddTableForm());
             model.addAttribute("productForm", form);
             model.addAttribute("editProductForm", new EditProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
             return "clubHandler";
         }
+
+
 
         var club = clubService.getClubById(clubId).orElseThrow();
         productService.create(club, form.getProductName(), form.getDescription(),

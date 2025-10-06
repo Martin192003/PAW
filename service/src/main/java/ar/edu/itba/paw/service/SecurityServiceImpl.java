@@ -49,6 +49,9 @@ public class SecurityServiceImpl implements SecurityService{
             } else if (principal instanceof org.springframework.security.core.userdetails.User) {
                 String username = ((org.springframework.security.core.userdetails.User) principal).getUsername();
                 return userDao.findByUserName(username).or(() -> userDao.findByEmail(username));
+            } else if (principal instanceof String) {
+                String username = (String) principal;
+                return userDao.findByUserName(username).or(() -> userDao.findByEmail(username));
             }
         }
         return Optional.empty();

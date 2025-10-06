@@ -168,7 +168,6 @@ public class BookingServiceImpl implements BookingService {
         Table table = ensureTableExists(existing.getTableId());
         Club club = clubDao.findById(table.getClubId()).orElseThrow();
 
-        // Cargar usuario completo desde UserService - SIN .orElseThrow()
         User completeUser = userService.findById(existing.getUser().getId());
         if (completeUser == null) {
             throw new UserNotFoundException("Usuario no encontrado: " + existing.getUser().getId());
@@ -187,10 +186,9 @@ public class BookingServiceImpl implements BookingService {
                 existing.getBookingEnd()
         );
 
-        // Replace the constructor calls on lines 190 and 265 with this approach:
         Booking bookingForEmail = new Booking();
         bookingForEmail.setBookingId(existing.getBookingId());
-        bookingForEmail.setUser(completeUser);  // Usuario con datos completos
+        bookingForEmail.setUser(completeUser);
         bookingForEmail.setTableId(existing.getTableId());
         bookingForEmail.setBookingStart(existing.getBookingStart());
         bookingForEmail.setBookingEnd(existing.getBookingEnd());
@@ -199,7 +197,6 @@ public class BookingServiceImpl implements BookingService {
 
         Locale locale = new Locale("es", "AR");
 
-        // Notificar al usuario
         try {
             emailService.notifyBookingCancelledToUser(bookingForEmail, club, table, locale);
             LOGGER.info("Successfully sent cancellation email to user {}", completeUser.getEmail());
@@ -209,7 +206,6 @@ public class BookingServiceImpl implements BookingService {
             LOGGER.error("Failed to send cancellation email to user for booking {}", bookingId, e);
         }
 
-        // Notificar al owner
         try {
             List<User> admins = clubService.getAdminsByClub(club.getClubId());
             if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
@@ -226,6 +222,7 @@ public class BookingServiceImpl implements BookingService {
         maybeFreeTable(table);
         return true;
     }
+
     @Transactional
     @Override
     public void cancelByUser(UUID bookingId, UUID userId) {

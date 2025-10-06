@@ -24,22 +24,17 @@
         <div class="verify-content">
             <h1 class="verify-title"><spring:message code="title.accountNotVerified"/></h1>
             <p><spring:message code="message.accountNotVerified"/></p>
-
-            <c:if test="${not empty error}">
-                <div class="error-message">${error}</div>
-            </c:if>
-
             <form action="${pageContext.request.contextPath}/resend-verification" method="post" class="verify-form">
                 <input type="hidden" name="usernameOrEmail" value="${username}">
                 <div class="verify-buttons">
                     <button type="submit" class="btn btn-success">
                         <spring:message code="button.resendVerification"/>
                     </button>
-                    <a href="<c:url value='/verify' />" class="btn btn-secondary">
+                    <a href="<c:url value='/verify' />" class="return-index">
                         <spring:message code="button.verifyNow"/>
                     </a>
-                    <a href="<c:url value='/login' />" class="return-index">
-                        <spring:message code="return.login"/>
+                    <a href="<c:url value='/clubs' />" class="return-index">
+                        <spring:message code="button.return.main"/>
                     </a>
                 </div>
             </form>

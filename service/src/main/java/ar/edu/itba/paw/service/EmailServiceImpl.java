@@ -167,7 +167,7 @@ public class EmailServiceImpl implements EmailService {
                 "club-creation-confirmation",
                 model,
                 "Gestionar mi club",
-                abs("/clubs/" + clubId + "/manage")
+                abs("/clubs/handle?clubId=" + clubId)
         );
     }
 
@@ -199,7 +199,7 @@ public class EmailServiceImpl implements EmailService {
         Map<String, Object> model = Map.of(
                 "username", username,
                 "requestedAt", ZonedDateTime.now(),
-                "resetUrl", abs("/reset-password?token=" + resetToken),
+                "resetUrl", abs("/reset-password"),
                 "token", resetToken,
                 "brandName", "BlingBling",
                 "brandFooter", "© 2025 BlingBling. Recuperación de contraseña."
@@ -214,7 +214,7 @@ public class EmailServiceImpl implements EmailService {
                 "password-reset-email",
                 model,
                 "Restablecer contraseña",
-                abs("/reset-password?token=" + resetToken)
+                abs("/reset-password")
         );
     }
 
