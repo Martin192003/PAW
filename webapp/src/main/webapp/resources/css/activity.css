@@ -193,17 +193,17 @@ html, body {
 }
 .styled-table th:nth-child(1),
 .styled-table td:nth-child(1) {
-    width: 20%; /* Producto */
+    width: 20%;
 }
 
 .styled-table th:nth-child(2),
 .styled-table td:nth-child(2) {
-    width: 25%; /* Descripción */
+    width: 25%;
 }
 
 .styled-table th:nth-child(3),
 .styled-table td:nth-child(3) {
-    width: 30%; /* Precio */
+    width: 30%;
 }
 
 .styled-table th:nth-child(4),
@@ -229,7 +229,6 @@ html, body {
     background: #1f1f1f;
 }
 
-/* INPUTS */
 .input-price, .add-product-form input, .add-product-form select {
     padding: 6px 10px;
     border-radius: 6px;

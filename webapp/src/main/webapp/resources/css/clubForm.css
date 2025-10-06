@@ -140,17 +140,15 @@ textarea.form-control {
     border-color: #545b62;
     box-shadow: 0 4px 15px rgba(108, 117, 125, 0.5);
 }
-/* === Checkbox con estilo de input === */
 .form-control-checkbox{
     display:flex;
     align-items:center;
     gap:12px;
-    height:56px;                 /* altura similar a los inputs */
+    height:56px;
     cursor:pointer;
     user-select:none;
 }
 
-/* oculto el checkbox nativo pero accesible dentro del label */
 .checkbox-native{
     position:absolute;
     opacity:0;
@@ -158,7 +156,6 @@ textarea.form-control {
     height:0;
 }
 
-/* “cajita” del check */
 .checkbox-custom{
     width:22px;
     height:22px;
@@ -168,10 +165,9 @@ textarea.form-control {
     align-items:center;
     justify-content:center;
     transition:all .15s ease;
-    color:transparent;           /* icono invisible hasta checkear */
+    color:transparent;
 }
 
-/* texto */
 .checkbox-label{
     font-size:15px;
     color:#fff;
@@ -187,12 +183,11 @@ textarea.form-control {
     border-color:#2196f3;
 }
 
-/* Botón “volver” fijo bajo el top bar */
 .detail-back {
     position: fixed;
-    top: 100px;     /* 90px del top bar + 10px de margen visual */
+    top: 100px;
     left: 20px;
-    z-index: 100;   /* arriba del contenido, debajo del top bar (que tiene 99) */
+    z-index: 100;
 }
 
 .select-with-tooltip {
@@ -201,12 +196,10 @@ textarea.form-control {
     width: 100%;
 }
 
-/* Aumentar padding para no tapar el caret del select */
 .select-with-tooltip .form-control {
-    padding-right: 44px; /* espacio para el ícono */
+    padding-right: 44px;
 }
 
-/* Ícono dentro del select */
 .select-with-tooltip .info-btn {
     position: absolute;
     top: 50%;
@@ -230,13 +223,12 @@ textarea.form-control {
     opacity: 0.8;
 }
 
-/* Tooltip base */
 .select-with-tooltip .tooltip-content {
     position: absolute;
     right: 0;
     top: calc(100% + 8px);
     max-width: 320px;
-    background: #151a24;          /* combina con tu dark theme */
+    background: #151a24;
     color: #f2f4f8;
     border: 1px solid #232b36;
     border-radius: 10px;
@@ -248,7 +240,6 @@ textarea.form-control {
     display: none;
 }
 
-/* Flechita del tooltip */
 .select-with-tooltip .tooltip-content .tip {
     position: absolute;
     top: -6px;
@@ -261,25 +252,22 @@ textarea.form-control {
     transform: rotate(45deg);
 }
 
-/* Mostrar por hover/focus keyboard */
 .select-with-tooltip:hover .tooltip-content,
 .select-with-tooltip:focus-within .tooltip-content,
 .select-with-tooltip .tooltip-content.show {
     display: block;
 }
 
-/* Evita que el tooltip tape el clic del select si pasa por encima */
 .select-with-tooltip .tooltip-content {
-    pointer-events: none; /* solo visual al pasar, para click se usa el botón */
+    pointer-events: none;
 }
 .select-with-tooltip .tooltip-content.show {
-    pointer-events: auto; /* cuando se abre con click, sí permite interactuar */
+    pointer-events: auto;
 }
 
-/* Ajuste responsivo opcional */
 @media (max-width: 768px) {
     .detail-back {
-        top: 96px;  /* un poco más pegado en mobile si querés */
+        top: 96px;
         left: 12px;
     }
 }

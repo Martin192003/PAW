@@ -211,7 +211,7 @@ select.filter-item option {
 }
 
 .boliche-card {
-    position: relative; /* importante: referencia para el badge */
+    position: relative;
 }
 
 .bar-badge {
@@ -224,7 +224,7 @@ select.filter-item option {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background-color: #6a1b9a; /* violeta base */
+    background-color: #6a1b9a;
     color: #fff;
 }
 
@@ -236,39 +236,33 @@ select.filter-item option {
     background-color: #6a1b9a;
 }
 
-/* barra de filtros compacta y responsiva */
 .filter-bar{
     display:flex;
     align-items:center;
     flex-wrap:wrap;
 }
 
-/* tamaño base de cada control */
 .filter-item{
-    flex:0 1 160px;              /* no crecer demasiado, tope aprox 160px */
+    flex:0 1 160px;
     max-width:220px;
     white-space:nowrap;
     text-overflow:ellipsis;
     overflow:hidden;
 }
 
-/* el campo de nombre puede crecer más */
 .filter-item.filter-name{
-    flex:1 1 260px;              /* que sea el elástico */
+    flex:1 1 260px;
     max-width:none;
 }
 
-/* el select de tipo de venue más chiquito */
 .filter-item.filter-isbar{
-    flex:0 0 140px;              /* ancho fijo y compacto */
+    flex:0 0 140px;
 }
 
-/* que el botón quede pegado a la derecha */
 .btn.btn-filter{
     margin-left:auto;
 }
 
-/* opcional: quita padding horizontal exagerado en selects */
 .filter-item select,
 .filter-item{
     padding-right:10px;

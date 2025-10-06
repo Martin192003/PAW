@@ -12,7 +12,6 @@ body {
     padding: 0;
 }
 
-/* Contenedor clásico de tus vistas */
 .app-boliches {
     display: flex;
     flex-direction: column;
@@ -22,7 +21,6 @@ body {
     padding-top: 100px;
 }
 
-/* Título clásico */
 .clubActivity-title {
     font-size: 2.2rem;
     color: #9c27b0;
@@ -35,7 +33,6 @@ body {
     gap: 12px;
 }
 
-/* Card original (se deja para pantallas que la usen) */
 .card-lg.booking-details {
     background: #3c3c3c;
     border-radius: 12px;
@@ -77,7 +74,6 @@ body {
     font-family: Arial, sans-serif;
 }
 
-/* Badges clásicos (compatibilidad) */
 .booking-status {
     background: #e0e0e0;
     color: #333;
@@ -106,7 +102,6 @@ body {
     text-overflow: ellipsis;
 }
 
-/* Global responsive base (legacy) */
 @media (max-width: 900px) {
     .app-boliches { margin-left: 100px; }
     .clubActivity-title { font-size: 1.3rem; }
@@ -118,7 +113,6 @@ body {
 
 
 
-/* Contenedor y grid centrados y contenidos */
 .booking-page {
     width: 100%;
     padding-top: 110px;
@@ -127,21 +121,20 @@ body {
 }
 .booking-page .booking-grid {
     width: 100%;
-    max-width: 960px;            /* ancho cómodo de lectura */
+    max-width: 960px;
     padding: 0 16px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr 0.8fr; /* derecha levemente más angosta */
+    grid-template-columns: 1fr 0.8fr;
     gap: 20px;
-    align-items: start;          /* evita que una card estire a la otra */
+    align-items: start;
 }
 
-/* Neutralizar estilos globales dentro de booking-page */
 .booking-page .card,
 .booking-page .card-lg {
     width: auto !important;
-    height: auto !important;     /* evita alturas fijas tipo 180px */
-    margin: 0 !important;        /* usamos gap del grid, no márgenes externos */
+    height: auto !important;
+    margin: 0 !important;
     box-sizing: border-box;
 }
 
@@ -164,7 +157,6 @@ body {
     display: block;
 }
 
-/* Tarjetas / paneles */
 .booking-page .card.panel {
     background: #3c3c3c;
     border: 1px solid rgba(156,39,176,.25);
@@ -180,16 +172,14 @@ body {
     font-family: 'Darklinos', Arial, sans-serif;
 }
 
-/* Título de la página con ancho limitado */
 .booking-page .clubActivity-title {
     width: 100%;
     max-width: 960px;
     padding: 0 16px;
     margin: 0 auto 16px;
-    font-size: 1.6rem; /* levemente más compacto en esta vista */
+    font-size: 1.6rem;
 }
 
-/* Definición de detalles (semántica dl/dt/dd) */
 .booking-page .details { margin: 0; }
 .booking-page .details .row {
     display: grid;
@@ -235,7 +225,6 @@ body {
 .booking-page .status-badge.is-confirmed { background:#0a3a0a; color:#a7f3a7; border-color:#1f7a1f; }
 .booking-page .status-badge.is-cancelled { background:#3a0a15; color:#ffb3c1; border-color:#8a233b; }
 
-/* Comprobante */
 .receipt-actions {
     display: flex;
     width: 100%;
@@ -257,10 +246,9 @@ body {
 .booking-page .receipt-thumb img {
     display: block;
     width: 100%;
-    max-height: 280px; /* más bajo para no dominar visualmente */
+    max-height: 280px;
     object-fit: contain;
 }
-/* Acciones */
 .booking-actions {
     margin-top: 12px;
     display: flex;
@@ -290,7 +278,6 @@ body {
     justify-content: center;
 }
 
-/* Topbar local para el botón Volver */
 .booking-page .booking-topbar {
     width: 100%;
     max-width: 960px;
@@ -300,7 +287,6 @@ body {
     align-items: center;
 }
 
-/* Botón Volver (ghost / outline) */
 .booking-page .btn-back {
     display: inline-flex;
     align-items: center;

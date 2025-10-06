@@ -1,4 +1,3 @@
-/* =============== FONT =============== */
 @font-face {
     font-family: 'Darklinos';
     src: url('../fonts/DARKLINOS.ttf') format('truetype');
@@ -6,7 +5,6 @@
     font-style: normal;
 }
 
-/* =============== BASE =============== */
 body {
     font-family: Arial, sans-serif;
     background-color: #1b1a1a;
@@ -17,7 +15,6 @@ body {
 
 }
 
-/* Contenedor principal de páginas de reservas */
 .app-bookings {
     display: flex;
     flex-direction: column;
@@ -41,7 +38,6 @@ body {
     gap: 12px;
 }
 
-/* Botón volver en detalle (si aplica) */
 .app-bookings .detail-back {
     position: fixed;
     top: 106px;
@@ -56,7 +52,6 @@ body {
     justify-content: center;
 }
 
-/* =============== BADGES ESTADO =============== */
 .status-badge {
     display: inline-block;
     margin-left: 12px;
@@ -72,7 +67,6 @@ body {
 .status-badge.is-confirmed { background:#0a3a0a; color:#a7f3a7; border-color:#1f7a1f; }
 .status-badge.is-cancelled { background:#3a0a15; color:#ffb3c1; border-color:#8a233b; }
 
-/* =============== TITULO ACTIVIDAD (si se usa) =============== */
 .clubActivity-title {
     font-size: 2.2rem;
     color: #9c27b0;
@@ -85,7 +79,6 @@ body {
     gap: 12px;
 }
 
-/* =============== TARJETAS RESERVAS =============== */
 .card-lg.booking-card {
     background: #3c3c3c;
     border-radius: 12px;
@@ -123,7 +116,6 @@ body {
     align-items: flex-end;
 }
 
-/* =============== FILTROS (unificados) =============== */
 .filter-container {
     display: flex;
     justify-content: center;
@@ -188,7 +180,6 @@ select.filter-item option {
     opacity: 1;
 }
 
-/* Botón filtrar */
 .btn.btn-filter {
     background: #9c27b0;
     border: none;
@@ -206,7 +197,6 @@ select.filter-item option {
     background: #d500f9;
 }
 
-/* Botón reset */
 .btn-reset {
     display: inline-flex;
     flex-direction: row;
@@ -231,7 +221,6 @@ select.filter-item option {
     transform: rotate(360deg);
 }
 
-/* =============== PAGINACIÓN =============== */
 .pagination {
     display: flex;
     justify-content: center;
@@ -257,7 +246,6 @@ select.filter-item option {
     font-size: 0.95rem;
 }
 
-/* =============== RESPONSIVE BASE =============== */
 @media (min-width: 1280px) {
     .filter-bar {
         flex-wrap: nowrap;
@@ -291,8 +279,8 @@ select.filter-item option {
 }
 
 .app-bookings .filter-bar .filter-item {
-    flex: 1 1 0;         /* todas las casillas ocupan el mismo espacio */
-    min-width: 0;         /* evita overflow en select largos */
+    flex: 1 1 0;
+    min-width: 0;
     height: 52px;
     font-size: 16px;
     padding: 0 10px;
@@ -304,16 +292,14 @@ select.filter-item option {
 }
 
 .app-bookings .filter-bar .filter-item.filter-sort {
-    margin-right:0; /* por si algún estilo externo agrega margen */
+    margin-right:0;
 }
-/* Más angosta en pantallas grandes */
 @media (min-width: 1200px) {
     .app-bookings .filter-container {
         max-width: 950px;
     }
 }
 
-/* Mobile mantiene fluido */
 @media (max-width: 900px) {
     .app-bookings .filter-container {
         max-width: 100%;

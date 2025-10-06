@@ -72,11 +72,11 @@
 .dropdown {
     position: relative;
     display: inline-block;
-    width: 100%; /* Adjusted from 700px to be responsive */
-    max-width: 400px; /* Match the image's narrower width */
+    width: 100%;
+    max-width: 400px;
 }
 .dropdown-btn {
-    background-color: #9c27b0; /* Matches the image's purple */
+    background-color: #9c27b0;
     color: white;
     border: none;
     padding: 10px 15px;
@@ -89,10 +89,10 @@
 }
 
 .dropdown-btn:hover {
-    background-color: #7b1fa2; /* Darker purple on hover */
+    background-color: #7b1fa2;
 }
 .dropdown-content-grid {
-    display: block; /* Changed from grid to block for single-column layout */
+    display: block;
     padding: 0;
 }
 .dropdown-btn i {
@@ -100,12 +100,11 @@
     transition: transform 0.3s;
 }
 .dropdown-content {
-    /* Existing styles remain, but ensure these are set */
     right: 0;
     left: 0;
     background-color: rgba(20, 20, 20, 0.95);
     backdrop-filter: blur(10px);
-    width: 100%; /* Ensure it matches the button width */
+    width: 100%;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     border-radius: 8px;
     border: 1px solid rgba(156, 39, 176, 0.3);
@@ -163,14 +162,13 @@
 .drink-price,
 .table-list li span:last-child {
     font-weight: 700;
-    color: #ba68c8; /* Matches the image's price color */
+    color: #ba68c8;
 }
 .dropdown-btn.active i {
     transform: rotate(180deg);
 }
 
 
-/* Fila contenedora */
 .bb-row{
     display:flex;
     gap:14px;
@@ -178,14 +176,12 @@
     margin:10px 0 16px;
 }
 
-/* Cada dropdown independiente */
 .bb-dropdown{
     position:relative;
     flex:1 1 50%;
-    min-width:0; /* evita desbordes */
+    min-width:0;
 }
 
-/* Botón púrpura */
 .bb-btn{
     width:100%;
     display:flex;
@@ -205,7 +201,6 @@
 .bb-btn:hover{ background:#7b1fa2; }
 .bb-btn.active i{ transform:rotate(180deg); transition:transform .25s; }
 
-/* Panel de cada dropdown: se abre debajo del botón correspondiente */
 .bb-panel{
     position:absolute;
     top: calc(100% + 6px);
@@ -225,16 +220,14 @@
 }
 .bb-panel.show{
     padding:16px;
-    max-height: 70vh;      /* scroll si es muy largo */
+    max-height: 70vh;
     overflow:auto;
     opacity:1;
     transform: scaleY(1);
 }
 
-/* Mensaje vacío */
 .bb-empty{ padding:12px; color:#fff; text-align:center; font-size:16px; margin:0; }
 
-/* Reuso de tus estilos */
 .drink-category{ margin-bottom:20px; border-bottom:1px solid rgba(156,39,176,.3); padding-bottom:15px; }
 .drink-category:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
 .drink-category h3{ font-size:18px; color:#9c27b0; margin:0 0 10px 0; }
@@ -254,18 +247,15 @@
 .bb-actions{ margin-top:14px; }
 .input.invalid { outline: 2px solid #e53935; }
 
-/* Mobile: apila los dos dropdowns */
 @media (max-width: 768px){
     .bb-row{ flex-direction:column; gap:12px; }
     .bb-dropdown{ width:100%; }
 }
-/* Existing styles remain unchanged unless specified */
 
-/* Date selector styling */
 .bb-date {
     position: relative;
     width: 100%;
-    max-width: 300px; /* Match the dropdown width for consistency */
+    max-width: 300px;
     margin: 0;
 }
 
