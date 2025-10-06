@@ -92,9 +92,10 @@ body{
 .login-card .form-control::placeholder {
     color: #888;
 }
-.btn-back{
-    margin-right:auto;
-    margin-left: 40px;
+.btn-back {
+    position: absolute;
+    top: 20px;
+    left: 20px;
 }
 .login-buttons .btn-success {
     min-width: 160px;
