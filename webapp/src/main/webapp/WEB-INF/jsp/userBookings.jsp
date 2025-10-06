@@ -1,3 +1,4 @@
+<%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
@@ -15,10 +16,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/sidebar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/bookings.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/bookingUserHandler.css' />">
-    <link rel="stylesheet" href="<c:url value='/resources/css/filters.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>.field-error { color:#e53935; font-size:.9rem; margin-top:4px; }</style>
 </head>
 <body>
 
@@ -30,59 +28,53 @@
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 
 <div class="app-bookings">
-    <h1>Mis reservas</h1>
+    <h1><spring:message code="menu.reservations"/></h1>
 
-    <!-- ========= FILTROS ========= -->
     <div class="filter-container">
+        <spring:message code="filter.status" var="phStatus" text="Estado"/>
+        <spring:message code="filter.club"   var="phClub"   text="Club"/>
         <spring:message code="booking.id" var="phBookingId" text="ID de la Reserva"/>
-        <form:form method="get" action="${pageContext.request.contextPath}/bookings"
-                   modelAttribute="bookingSearchForm" cssClass="filter-bar">
+        <form:form id="filtersForm" method="get" action="${pageContext.request.contextPath}/bookings" modelAttribute="bookingSearchForm" cssClass="filter-bar">
 
             <form:hidden path="userId"/>
 
-            <!-- Club -->
-            <c:if test="${not empty clubs}">
-                <form:select path="clubId" cssClass="filter-item">
-                    <form:option value=""><spring:message code="filter.club" text="Club"/></form:option>
-                    <c:forEach var="c" items="${clubs}">
-                        <form:option value="${c.clubId}">
-                            <c:out value="${c.clubName}"/>
-                        </form:option>
-                    </c:forEach>
-                </form:select>
-            </c:if>
+            <div class="filter-bar">
+                <c:if test="${not empty clubs}">
+                    <form:select path="clubId" cssClass="filter-item filter-club">
+                        <form:option value=""><spring:message code="filter.club"/></form:option>
+                        <c:forEach var="c" items="${clubs}">
+                            <form:option value="${c.clubId}">
+                                <c:out value="${c.clubName}"/>
+                            </form:option>
+                        </c:forEach>
+                    </form:select>
+                </c:if>
+                <div class="filter-item" style="display:flex; flex-direction:column;">
+                    <form:input path="bookingId" placeholder="${phBookingId}" cssClass="filter-item"/>
+                </div>
 
-            <!-- Booking ID -->
-            <div class="filter-item" style="display:flex; flex-direction:column;">
-                <form:input path="bookingId"
-                            placeholder="${phBookingId}" cssClass="filter-item"/>
-                <form:errors path="bookingId" cssClass="field-error" element="div"/>
+                <form:select path="status" cssClass="filter-item filter-status">
+                    <form:option value=""><spring:message code="filter.status"/></form:option>
+                    <form:option value="PENDIENTE"><spring:message code="booking.status.pending"/></form:option>
+                    <form:option value="CONFIRMADA"><spring:message code="booking.status.confirmed"/></form:option>
+                    <form:option value="CANCELADA"><spring:message code="booking.status.cancelled"/></form:option>
+                </form:select>
+
+                <form:select path="sort" cssClass="filter-item filter-sort">
+                    <form:option value="created_desc"><spring:message code="filter.sort.createdDesc"/></form:option>
+                    <form:option value="created_asc"><spring:message code="filter.sort.createdAsc"/></form:option>
+                    <form:option value="start_desc"><spring:message code="filter.sort.startDesc"/></form:option>
+                    <form:option value="start_asc"><spring:message code="filter.sort.startAsc"/></form:option>
+                </form:select>
+
+                <form:hidden path="page"/>
             </div>
 
-            <!-- Estado -->
-            <form:select path="status" cssClass="filter-item">
-                <form:option value=""><spring:message code="filter.status"/></form:option>
-                <form:option value="PENDIENTE"><spring:message code="booking.status.pending"/></form:option>
-                <form:option value="CONFIRMADA"><spring:message code="booking.status.confirmed"/></form:option>
-                <form:option value="CANCELADA"><spring:message code="booking.status.cancelled"/></form:option>
-            </form:select>
-
-            <!-- Orden -->
-            <form:select path="sort" cssClass="filter-item filter-sort">
-                <form:option value="created_desc"><spring:message code="filter.sort.createdDesc"/></form:option>
-                <form:option value="created_asc"><spring:message code="filter.sort.createdAsc"/></form:option>
-                <form:option value="start_desc"><spring:message code="filter.sort.startDesc"/></form:option>
-                <form:option value="start_asc"><spring:message code="filter.sort.startAsc"/></form:option>
-            </form:select>
-
             <button type="submit" class="btn btn-filter">
-                <i class="fa-solid fa-filter"></i>&nbsp;<spring:message code="button.filter"/>
+                <i class="fa-solid fa-filter"></i><spring:message code="button.filter"/>
             </button>
         </form:form>
-
-        <!-- Reset limpio -->
-        <button type="button" class="btn-reset"
-                onclick="window.location.href='<c:url value="/bookings"><c:param name="userId" value="${bookingSearchForm.userId}"/></c:url>'">
+        <button type="button" class="btn-reset" onclick="window.location.href='<c:url value="/admin/clubs/bookings"><c:param name="userId" value="${bookingSearchForm.userId}"/></c:url>'">
             <i class="fa-solid fa-rotate-right"></i>
             <spring:message code="button.reset"/>
         </button>
@@ -91,7 +83,7 @@
     <!-- ========= LISTA ========= -->
     <c:choose>
         <c:when test="${empty bookings}">
-            <div style="color:#e53935; font-size:1.1rem; margin-top:24px;">
+            <div style="color:#ffffff; font-size:1.1rem; margin-top:24px;">
                 <spring:message code="bookings.empty" text="No hay reservas."/>
             </div>
         </c:when>
@@ -105,22 +97,22 @@
                         <div class="booking-status-container">
                             <c:choose>
                                 <c:when test="${jfn:trim(jfn:toUpperCase(booking.status)) == 'PENDIENTE'}">
-                                    <span class="booking-status booking-status-pending">
+                                    <p class="status-badge is-pending">
                                         <spring:message code="booking.status.pending" text="Pendiente"/>
-                                    </span>
+                                    </p>
                                 </c:when>
                                 <c:when test="${jfn:trim(jfn:toUpperCase(booking.status)) == 'CONFIRMADA'}">
-                                    <span class="booking-status booking-status-confirmed">
+                                    <p class="status-badge is-confirmed">
                                         <spring:message code="booking.status.confirmed" text="Confirmada"/>
-                                    </span>
+                                    </p>
                                 </c:when>
                                 <c:when test="${jfn:trim(jfn:toUpperCase(booking.status)) == 'CANCELADA'}">
-                                    <span class="booking-status booking-status-cancelled">
+                                    <p class="status-badge is-cancelled">
                                         <spring:message code="booking.status.cancelled" text="Cancelada"/>
-                                    </span>
+                                    </p>
                                 </c:when>
                                 <c:otherwise>
-                                    <span class="booking-status"><c:out value="${booking.status}"/></span>
+                                    <p class="status-badge"><c:out value="${booking.status}"/></p>
                                 </c:otherwise>
                             </c:choose>
                         </div>
@@ -138,7 +130,9 @@
                     <i class="fa-solid fa-chevron-left"></i>
                 </a>
             </c:if>
-            <span class="page-info">${currentPage} de ${totalPages}</span>
+            <span class="page-info">
+                    ${currentPage} <spring:message code="pagination.of"/> ${totalPages}
+            </span>
             <c:if test="${currentPage < totalPages}">
                 <a href="?${queryParams}&page=${currentPage + 1}" class="page-btn" title="Siguiente">
                     <i class="fa-solid fa-chevron-right"></i>
@@ -147,6 +141,5 @@
         </div>
     </c:if>
 </div>
-
 </body>
 </html>

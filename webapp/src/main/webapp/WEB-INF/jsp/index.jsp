@@ -211,7 +211,7 @@
             </c:if>
 
             <span class="page-info">
-                    ${page} de ${totalPages}
+                    ${page} <spring:message code="pagination.of"/> ${totalPages}
             </span>
 
             <c:if test="${page < totalPages}">

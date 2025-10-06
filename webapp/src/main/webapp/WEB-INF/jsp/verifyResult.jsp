@@ -19,12 +19,7 @@
 
     <div class="verify-card">
         <div class="verify-content">
-            <c:if test="${not empty success}">
-                <p class="verify-title">${success}</p>
-            </c:if>
-            <c:if test="${not empty error}">
-                <p class="verify-title">${error}</p>
-            </c:if>
+            <p class="verify-title"><spring:message code="register.valid.token"/></p>
             <div class="verify-buttons">
                 <button type="button" class="btn btn-success"
                         onclick="window.location.href='<c:url value='/login' />'">

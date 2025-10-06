@@ -36,7 +36,7 @@
         <spring:message code="form.priceRange" var="phPriceRange"/>
         <spring:message code="form.musicGenre" var="phMusicGenre"/>
         <spring:message code="form.zone" var="phZone"/>
-        <spring:message code="form.venueType" var="phvenueType"/>
+        <spring:message code="placeholder.venueType" var="phvenueType"/>
         <spring:message code="label.bar" var="phbar"/>
         <spring:message code="label.notBar" var="phclub"/>
 

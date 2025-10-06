@@ -5,6 +5,8 @@ import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.BookingForm;
 import ar.edu.itba.paw.webapp.form.BookingSearchForm;
+import ar.edu.itba.paw.webapp.form.ReceiptUploadForm;
+import ar.edu.itba.paw.webapp.form.VerificationForm;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -434,7 +436,7 @@ public class BookingController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("queryParams", queryParams);
-
+        model.addAttribute("clubs", clubService.getClubsByUser(form.getUserId()));
         // echo de filtros
         model.addAttribute("sort", form.getSort());
         model.addAttribute("status", form.getStatus());
@@ -451,9 +453,40 @@ public class BookingController {
 
     @PostMapping(path = "/bookings/{bookingId}/receipt", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String uploadReceipt(@PathVariable UUID bookingId,
-                                @RequestParam("file") MultipartFile file,
+                                @Valid @ModelAttribute("receiptForm") ReceiptUploadForm form,
+                                BindingResult errors,
                                 RedirectAttributes ra,
-                                @RequestHeader(value = "Referer", required = false) String referer) {
+                                @RequestHeader(value = "Referer", required = false) String referer,
+                                Model model) {
+        if (form.getFile() == null || form.getFile().isEmpty()) {
+            errors.rejectValue("file", "receipt.file.required");
+        }
+        if (errors.hasErrors()) {
+            var booking = bookingService.findById(bookingId)
+                    .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+
+            model.addAttribute("booking", booking);
+            model.addAttribute("user", userService.findById(booking.getUser().getId()));
+
+            Table table = tableService.findById(booking.getTableId()).orElse(null);
+            model.addAttribute("table", table);
+
+            String clubName = "";
+            if (table != null) {
+                clubName = clubService.getClubById(table.getClubId())
+                        .map(Club::getClubName)
+                        .orElse("");
+            }
+            model.addAttribute("clubName", clubName);
+
+            var rOpt = receiptService.findByBooking(bookingId);
+            model.addAttribute("hasReceipt", rOpt.isPresent());
+            rOpt.ifPresent(r -> model.addAttribute("receipt", r));
+
+            model.addAttribute("activePage", "bookings");
+
+            return "bookingUserHandler";
+        }
 
         var booking = bookingService.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
@@ -465,7 +498,7 @@ public class BookingController {
             return safeRedirect(referer, bookingId);
         }
 
-        if (file == null || file.isEmpty()) {
+        if (form.getFile() == null || form.getFile().isEmpty()) {
             ra.addFlashAttribute("error", "receipt.select.file");  // Código
             return safeRedirect(referer, bookingId);
         }
@@ -479,9 +512,9 @@ public class BookingController {
             receiptService.upload(
                     bookingId,
                     current.getId(),
-                    file.getOriginalFilename() != null ? file.getOriginalFilename() : "receipt",
-                    file.getContentType(),
-                    file.getBytes()
+                    form.getFile().getOriginalFilename() != null ? form.getFile().getOriginalFilename() : "receipt",
+                    form.getFile().getContentType(),
+                    form.getFile().getBytes()
             );
             ra.addFlashAttribute("success", "receipt.uploaded");  // Código
         } catch (DuplicateKeyException e) {
@@ -494,8 +527,6 @@ public class BookingController {
 
         return safeRedirect(referer, bookingId);
     }
-
-// Helper safeRedirect como antes
 
     // Helper privado para redirects consistentes
     private String safeRedirect(String referer, UUID bookingId) {
@@ -585,7 +616,9 @@ public class BookingController {
                     .orElse("");
         }
         model.addAttribute("clubName", clubName);
-
+        if(!model.containsAttribute("receiptForm")) {
+            model.addAttribute("receiptForm", new ReceiptUploadForm());
+        }
         model.addAttribute("booking", booking);
 
         var rOpt = receiptService.findByBooking(bookingId);
