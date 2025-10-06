@@ -53,16 +53,22 @@ public class UserBookingController {
                           @RequestParam UUID tableId,
                           @RequestParam String date,
                           Principal principal,
-                          RedirectAttributes ra) {
+                          RedirectAttributes ra,
+                          Locale locale) {
 
-        var username = Optional.ofNullable(principal).map(Principal::getName)
+        final String username = Optional.ofNullable(principal)
+                .map(Principal::getName)
                 .orElseThrow(() -> new IllegalArgumentException("El usuario no está autenticado."));
-        bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
 
-        ra.addFlashAttribute("reservationSent", true);
-        ra.addFlashAttribute("success", "¡Reserva creada para " + date + " (23:59–06:00)!");
-        return "redirect:/clubs/" + clubId + "?date=" + date;
+        try {
+            bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
+        } catch (InvalidDateRangeException | ValidationException e) {
+            ra.addFlashAttribute("error", "invalid.date");
+            ra.addFlashAttribute("reservationError", true);
+        }
+        return "redirect:/clubs/" + clubId + "?date=" + date + "#dd-tables";
     }
+
 
     @PostMapping("/bookings/{bookingId}/cancel")
     public String cancelUser(@PathVariable UUID bookingId, RedirectAttributes ra) {

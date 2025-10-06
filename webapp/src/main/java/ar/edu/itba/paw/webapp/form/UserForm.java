@@ -10,14 +10,17 @@ public class UserForm {
     @UnusedUsername
     @NotEmpty(message = "{register.username.notempty}")
     @Pattern(regexp = "^$|^[A-Za-z0-9_]+$", message = "{register.username.pattern}")
+    @Size(max = 100, message = "{error.username}")
     private String username;
 
     @NotEmpty(message = "{register.name.notempty}")
     @Pattern(regexp = "^$|^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$", message = "{register.name.pattern}")
+    @Size(max = 100, message = "{error.name}")
     private String name;
 
     @NotEmpty(message = "{register.surname.notempty}")
     @Pattern(regexp = "^$|^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$", message = "{register.surname.pattern}")
+    @Size(max = 100, message = "{error.surname}")
     private String surname;
 
     @UnusedEmail
@@ -31,6 +34,7 @@ public class UserForm {
 
     @NotEmpty(message = "{register.phone.notempty}")
     @Pattern(regexp = "^[0-9\\-\\+ ]*$", message = "{register.phone.pattern}")
+    @Size(max = 30, message = "{error.cellphone}")
     private String cellphone;
 
     public String getUsername() { return username; }

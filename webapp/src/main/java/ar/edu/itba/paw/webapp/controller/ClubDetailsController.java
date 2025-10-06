@@ -1,3 +1,4 @@
+// java
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Product;
@@ -5,6 +6,7 @@ import ar.edu.itba.paw.model.ProductType;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
+import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.PhotoService;
@@ -15,6 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.*;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.UUID;
@@ -52,25 +55,36 @@ public class ClubDetailsController {
         var club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new NotFoundException("El boliche no existe."));
 
-        // ====== FECHA: ahora delega en TableService ======
-        LocalDate selectedDate;
+        // Defaults for UI
+        LocalDate defaultDate = nextAllowedFrom(LocalDate.now(zone));
+        String selectedDateStr = (dateStr != null && !dateStr.isBlank()) ? dateStr : defaultDate.toString();
+        model.addAttribute("selectedDate", selectedDateStr);
+        model.addAttribute("availableTables", List.of());
+
+        OffsetDateTime start = null;
+        OffsetDateTime end = null;
+        List<ar.edu.itba.paw.model.Table> available = List.of();
+
         if (dateStr == null || dateStr.isBlank()) {
-            // Elegimos la próxima fecha permitida iterando con la regla del servicio
-            selectedDate = nextAllowedFrom(LocalDate.now(zone));
+            // Preload next allowed day
+            var ld = defaultDate;
+            available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
+            start = tableService.windowStart(ld, zone);
+            end   = tableService.windowEnd(ld, zone);
         } else {
-            selectedDate = LocalDate.parse(dateStr);
-            if (!tableService.isAllowedDay(selectedDate)) {
-                throw new InvalidDateRangeException("La fecha no es uno de los días habilitados");
-            }
-            if (tableService.isPastDate(selectedDate, clock, zone)) {
-                throw new InvalidDateRangeException("La fecha está en el pasado");
+            try {
+                var ld = LocalDate.parse(dateStr);
+                available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
+                start = tableService.windowStart(ld, zone);
+                end   = tableService.windowEnd(ld, zone);
+            } catch (ValidationException | InvalidDateRangeException ex) {
+                model.addAttribute("error", "invalid.date");
+            } catch (DateTimeParseException ex) {
+                model.addAttribute("error", "Fecha inválida.");
             }
         }
 
-        var start = tableService.windowStart(selectedDate, zone);
-        var end   = tableService.windowEnd(selectedDate, zone);
-
-        // ====== PRODUCTOS (igual que antes) ======
+        // PRODUCTS
         var products = productsDao.findByClub(club).stream()
                 .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
                 .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))
@@ -88,10 +102,7 @@ public class ClubDetailsController {
                 .forEach(e -> ordered.put(e.getKey(), e.getValue()));
         if (ordered.isEmpty() && !products.isEmpty()) ordered.put("Tragos", products);
 
-        // ====== MESAS DISPONIBLES usando la regla del servicio ======
-        var available = tableService.findAvailableOnDate(clubId, selectedDate, zone, clock);
-
-        // ====== COVER ======
+        // COVER
         var photos = photoService.listByClub(clubId, 0, 1);
         String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
 
@@ -100,7 +111,7 @@ public class ClubDetailsController {
             model.addAttribute("user", user);
         }
 
-        // ====== Modelo esperado por el JSP ======
+        // Model for JSP
         model.addAttribute("club", club);
         model.addAttribute("productsByCategory", ordered);
         model.addAttribute("availableTables", available);
@@ -109,14 +120,15 @@ public class ClubDetailsController {
         model.addAttribute("coverPhotoUrl", coverPhotoUrl);
         model.addAttribute("clubId", clubId);
 
-        model.addAttribute("selectedDate", selectedDate.toString()); // yyyy-MM-dd
-        model.addAttribute("dayStart", start);
-        model.addAttribute("dayEnd", end);
+        if (start != null && end != null) {
+            model.addAttribute("dayStart", start);
+            model.addAttribute("dayEnd", end);
+        }
 
         return "clubDetails";
     }
 
-    // ====== Helpers de presentación (no negocio) ======
+    // ====== Helpers ======
 
     private String classifyCategory(final Product p) {
         final String name = Optional.ofNullable(p.getProductName())
@@ -151,7 +163,7 @@ public class ClubDetailsController {
         int guard = 0;
         while (!tableService.isAllowedDay(d) || tableService.isPastDate(d, clock, zone)) {
             d = d.plusDays(1);
-            if (++guard > 14) break; // por las dudas no quede en loop infinito
+            if (++guard > 14) break;
         }
         return d;
     }
