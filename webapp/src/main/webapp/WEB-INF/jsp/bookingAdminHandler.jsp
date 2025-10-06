@@ -92,11 +92,11 @@
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.start" text="Inicio"/></dt>
-                    <dd><c:out value="${booking.bookingStartLocal}"/></dd>
+                    <dd><c:out value="${bookingStartLocal}"/></dd>
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.end" text="Fin"/></dt>
-                    <dd><c:out value="${booking.bookingEndLocal}"/></dd>
+                    <dd><c:out value="${bookingEndLocal}"/></dd>
                 </div>
                 <div class="row total">
                     <dt><spring:message code="booking.total" text="Total"/></dt>

@@ -197,21 +197,20 @@ public class ClubController {
         return "clubHandler";
     }
 
-    @PostMapping("/editField")
-    public String editField(@RequestParam("clubId") UUID clubId,
-                            @Valid @ModelAttribute("clubHandlerForm") ClubHandlerForm clubHandlerForm,
-                            @RequestParam(value = "editedField", required = false) String editedField,
-                            Model model,
-                            BindingResult errors,
-                            RedirectAttributes ra) {
-        var user = securityService.getVerifiedLoggedUser();
-        if (user == null) throw new UserNotFoundException("No logueado");
+    @PostMapping("/editClub")
+    public String editClub(
+            @Valid @ModelAttribute("clubHandlerForm") ClubHandlerForm clubHandlerForm,
+            BindingResult errors,
+            @RequestParam("clubId") UUID clubId,
+            @RequestParam(value = "editedField", required = false) String editedField,
+            Model model,
+            RedirectAttributes ra
+    ) {
+        checkLoggedUser(clubId);
 
-        //LOGICA DE NEGOCIOS
         var maybeClub = clubService.getClubById(clubId);
         if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
         Club club = maybeClub.get();
-
 
         if (errors.hasErrors()) {
             populateClubHandlerModel(model, club);
@@ -324,6 +323,8 @@ public class ClubController {
         model.addAttribute("menu", menuService.getMenuByClub(clubId));
         model.addAttribute("productForm", new AddProductForm());
         model.addAttribute("tableForm", new AddTableForm());
+        model.addAttribute("editProductForm", new EditProductForm());
+        model.addAttribute("editTableForm", new EditTableForm());
     }
 
 

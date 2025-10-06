@@ -209,7 +209,8 @@
 <div id="editModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEditModal()">&times;</span>
-        <form:form modelAttribute="clubHandlerForm" method="post" action="${pageContext.request.contextPath}/clubs/editField">
+        <form:form modelAttribute="clubHandlerForm" method="post" action="${pageContext.request.contextPath}/clubs/editClub"
+                   cssStyle="display:flex; flex-direction:column; gap:18px;">
             <form:hidden path="clubId" value="${club.clubId}" />
             <form:hidden path="editedField" id="editedField" />
 
@@ -381,7 +382,7 @@
 
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <label for="editTableDiscount"><spring:message code="label.discount"/>:</label>
-                <form:input path="discount" type="number" step="0.01" min="0" max="100" id="editTableDiscount"/>
+                <form:input path="discount" type="number" step="0.01" id="editTableDiscount"/>
                 <form:errors path="discount" cssClass="formError"/>
             </div>
 
@@ -499,22 +500,17 @@
         document.getElementById('productEditModal').style.display = 'none';
         clearFormErrors('productEditModal');
     }
-    window.onload = function() {
-        <c:if test="${not empty editField}">
-        openEditModal('${editField}', '${fn:escapeXml(editFieldValue)}');
-        </c:if>
-    }
 
     document.addEventListener('DOMContentLoaded', () => {
-        // abrir modal según editField
-        <%-- Si hay un editField definido en el modelo --%>
         <c:if test="${not empty editField}">
         const field = '${editField}';
-        let modalId = '';
-        if (field === 'Product') modalId = 'productEditModal';
-        else if (field === 'Table') modalId = 'tableEditModal';
-        else modalId = 'editModal'; // para clubName, location, zone, etc.
-        openModal(modalId);
+        if (field === 'Product') {
+            openModal('productEditModal');
+        } else if (field === 'Table') {
+            openModal('tableEditModal');
+        } else {
+            openEditModal(field, '${fn:escapeXml(editFieldValue)}');
+        }
         </c:if>
 
         document.querySelectorAll("form.add-product-bar").forEach(form => {

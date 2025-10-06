@@ -117,6 +117,15 @@ public class ProductController {
             model.addAttribute("genres", MusicalGenre.values());
             model.addAttribute("prices", Price.values());
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
+            ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
+            clubHandlerForm.setClubId(club.getClubId());
+            clubHandlerForm.setName(club.getClubName());
+            clubHandlerForm.setDescription(club.getDescription());
+            clubHandlerForm.setLocation(club.getLocation());
+            clubHandlerForm.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
+            clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
+            clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("tableForm", new AddTableForm());
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
