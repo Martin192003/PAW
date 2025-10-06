@@ -36,8 +36,7 @@
                 <input type="hidden" name="token" value="${token}"/>
 
                 <div class="form-group">
-                    <form:password path="newPassword" cssClass="form-control"
-                                   placeholder="${phNewPassword}"/>
+                    <form:password path="newPassword" cssClass="form-control" placeholder="${phNewPassword}"/>
                     <form:errors path="newPassword" cssClass="error"/>
                 </div>
 
@@ -45,28 +44,23 @@
                     <form:password path="confirmationPassword" cssClass="form-control" placeholder="${phConfirmPassword}"/>
                     <form:errors path="confirmationPassword" cssClass="error"/>
                 </div>
-
                 <form:errors cssClass="error" element="div"/>
-
-
                 <c:if test="${not empty error}">
                     <div class="error" role="alert">
                             ${error}
                     </div>
                 </c:if>
-
                 <c:if test="${not empty success}">
                     <div class="success" role="alert">
                         <spring:message code="profile.update.success"/>
                     </div>
                 </c:if>
-
                 <div class="login-buttons">
                     <button type="submit" class="btn btn-success">
                         <spring:message code="reset.password.button"/>
                     </button>
                     <a href="<c:url value='/clubs' />" class="login-forgot">
-                        <spring:message code="reset.password.go.home"/>
+                        <spring:message code="button.return.main"/>
                     </a>
                 </div>
             </form:form>
