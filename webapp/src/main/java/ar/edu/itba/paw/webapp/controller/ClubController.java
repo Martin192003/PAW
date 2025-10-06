@@ -80,7 +80,6 @@ public class ClubController {
         var user = securityService.getVerifiedLoggedUser();
         if (user != null) model.addAttribute("user", user);
 
-        // Armás queryParams SIN 'page' pero CON 'size'
         Map<String, String> filters = new LinkedHashMap<>();
         if (nameLike != null && !nameLike.isBlank()) filters.put("name", nameLike);
         if (zone != null) filters.put("zone", zone.name());
@@ -93,7 +92,6 @@ public class ClubController {
                 .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
 
-        // Atributos que el JSP puede estar esperando
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
 
@@ -149,11 +147,17 @@ public class ClubController {
 
         var contact = securityService.getVerifiedLoggedUser();
         if (contact == null) throw new IllegalStateException("No se encontró el usuario de contacto.");
+        var role = contact.getRole();
+
 
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
                 contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getImage()
         );
+
+        if(role == Role.USER){
+            return "clubCreatedModal";
+        }
 
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();
     }
@@ -327,6 +331,9 @@ public class ClubController {
         model.addAttribute("editTableForm", new EditTableForm());
     }
 
-
+    @PostMapping("/confirmClub")
+    private String logout(){
+        return "redirect:/logout";
+    }
 
 }
