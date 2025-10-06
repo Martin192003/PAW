@@ -222,70 +222,23 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
-    @Override
-    @Async
-    public void sendBookingConfirmationToUser(User user, Club club, Table table, Booking booking) {
-        Map<String, Object> model = Map.of(
-                "username", user.getUsername(),
-                "clubName", club.getClubName(),
-                "tableNumber", table.getTableNumber(),
-                "capacity", table.getCapacity(),
-                "bookingStart", booking.getBookingStart().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
-                "bookingEnd", booking.getBookingEnd().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
-                "status", booking.getStatus(),
-                "totalAmount", booking.getTotalAmount(),
-                "brandName", "BlingBling",
-                "brandFooter", "© 2025 BlingBling. Tu reserva está siendo procesada."
-        );
-
-        sendTemplatedEmail(
-                user.getEmail(),
-                "Solicitud de reserva enviada - " + club.getClubName(),
-                "booking-inquiry-user", // Reutilizar template
-                model,
-                "Ver mis reservas",
-                "/bookings/my-bookings"
-        );
-    }
-
-    @Override
-    @Async
-    public void sendBookingNotificationToOwner(Club club, Table table, Booking booking) {
-        User owner = null;
-        if (club.getContactInfo() != null) {
-            owner = userDao.findById(club.getContactInfo().getId()).orElse(null);
-        }
-        final String ownerMail = owner != null ? owner.getEmail() : "owner@" + club.getClubName().toLowerCase().replace(" ","") + ".com";
-
-        Map<String, Object> model = new HashMap<>();
-        model.put("clubName", club.getClubName());
-        model.put("tableNumber", table.getTableNumber());
-        model.put("capacity", table.getCapacity());
-        model.put("bookingStart", booking.getBookingStart().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-        model.put("bookingEnd", booking.getBookingEnd().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-        model.put("status", booking.getStatus());
-        model.put("totalAmount", booking.getTotalAmount());
-        model.put("bookingId", booking.getBookingId());
-        model.put("username", booking.getUser().getUsername());
-        model.put("userEmail", booking.getUser().getEmail());
-        model.put("brandName", "BlingBling");
-        model.put("brandFooter", "© 2025 BlingBling. Panel de administración.");
-
-        sendTemplatedEmail(
-                ownerMail,
-                "Nueva reserva pendiente - " + club.getClubName(),
-                "table-reserved-owner",
-                model,
-                "Gestionar reservas",
-                "/clubs/" + club.getClubId() + "/bookings"
-        );
-    }
 
     @Override
     public void notifyTableReservedToUser(Booking booking, Club club, Table table, Locale locale) {
+        // Validate required parameters
+        Objects.requireNonNull(booking, "booking cannot be null");
+        Objects.requireNonNull(booking.getUser(), "booking.user cannot be null");
+        Objects.requireNonNull(club, "club cannot be null");
+        Objects.requireNonNull(table, "table cannot be null");
+
+        String userEmail = booking.getUser().getEmail();
+        if (userEmail == null || userEmail.trim().isEmpty()) {
+            throw new BadRequestException("User email is required for notification");
+        }
+
         LocalDate selectedDate = booking.getBookingStart().atZoneSameInstant(ZONE_ID).toLocalDate();
         sendTemplatedEmail(
-                booking.getUser().getEmail(),
+                userEmail,
                 "Reserva confirmada - " + club.getClubName(),
                 "table-reserved-user",
                 Map.of(

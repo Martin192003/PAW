@@ -68,8 +68,6 @@ public class BookingServiceImpl implements BookingService {
         final Booking booking = bookingDao.create(user, tableId, initial, totalAmount, bookingStart, bookingEnd);
 
         Club club = clubDao.findById(table.getClubId()).orElseThrow();
-        emailService.sendBookingConfirmationToUser(user, club, table, booking);
-        emailService.sendBookingNotificationToOwner(club, table, booking);
         return booking;
     }
 
@@ -317,13 +315,21 @@ public class BookingServiceImpl implements BookingService {
 
         // Usuario
         var user = userService.findByUserName(username);
+        if (user == null) {
+            user = userService.findByEmail(username);
+        }
         if (user == null) throw new UserNotFoundException("No se encontró el usuario: " + username);
+
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+            throw new BadRequestException("El usuario debe tener un email válido para recibir notificaciones");
+        }
 
         // Precio
         BigDecimal total = table.getPrice() != null ? table.getPrice() : BigDecimal.ZERO;
 
         // Crear booking (el service debe re-validar disponibilidad en la transacción)
         Booking booking = create(user, tableId, start, end, total);
+
 
         // Datos de club y notificaciones
         var club = clubService.getClubById(clubId).orElseThrow(IllegalArgumentException::new);

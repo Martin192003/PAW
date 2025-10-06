@@ -1,38 +1,40 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
+    <title th:text="#{email.registration.title}"></title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
             line-height: 1.6;
-            color: #ffffff; /* White */
-            background-color: #2c2c2c; /* Dark gray */
+            color: #ffffff;
+            background-color: #0d0f15;
             margin: 0;
             padding: 0;
         }
 
         h2, h1 {
-            color: #a64ca6; /* Violet */
+            color: #a64ca6;
             text-align: center;
             font-size: 24px;
             margin-bottom: 20px;
         }
 
         p, li {
-            color: #e6e6e6; /* Soft white */
+            color: #e6e6e6;
             margin: 10px 0;
             font-size: 16px;
         }
 
         a {
-            color: #ffffff; /* White */
+            color: #ffffff;
             text-decoration: none;
         }
 
         a.button {
             display: inline-block;
-            background-color: #a64ca6; /* Violet */
-            color: #ffffff; /* White */
+            background-color: #a64ca6;
+            color: #ffffff;
             padding: 12px 20px;
             border-radius: 5px;
             font-size: 16px;
@@ -43,45 +45,69 @@
         }
 
         a.button:hover {
-            background-color: #922d92; /* Darker violet */
+            background-color: #922d92;
         }
 
         .email-container {
             max-width: 600px;
             margin: 20px auto;
             padding: 20px;
-            border: 1px solid #444; /* Darker gray */
-            border-radius: 8px;
-            background-color: #333333; /* Intermediate gray */
+            border: 1px solid #444;
+            border-radius: 10px;
+            background-color: #333333;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         .footer {
             text-align: center;
             font-size: 12px;
-            color: #999999; /* Light gray */
-            margin-top: 20px;
-            border-top: 1px solid #444; /* Separator line */
-            padding-top: 10px;
+            color: #999999;
+            margin-top: 30px;
+            border-top: 1px solid #444;
+            padding-top: 20px;
+        }
+
+        .token-box {
+            background-color: #444;
+            border: 1px solid #666;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            font-family: monospace;
+            color: #ffffff;
+            font-size: 14px;
+            word-break: break-all;
         }
     </style>
-    <meta charset="UTF-8">
-    <title th:text="#{email.registration.title(${username})}"></title>
 </head>
 <body>
 <div class="email-container">
-    <h1 th:text="#{email.registration.title(${username})}"></h1>
+    <h2 th:text="#{email.registration.title}"></h2>
+    <p th:text="#{email.registration.greeting(${username})}"></p>
     <p th:text="#{email.registration.body}"></p>
-    <p th:text="#{email.registration.token} + ': ' + ${token}"></p>
+    <p th:text="#{email.registration.instructions}"></p>
+
     <p style="text-align: center;">
-        <a th:href="${verificationUrl}"
+        <a th:href="${verificationUrl} + '?token=' + ${token}"
            class="button"
-           th:text="#{email.registration.cta}">
+           th:text="#{email.registration.button}">
         </a>
     </p>
+
+    <p th:text="#{email.registration.alternative}"></p>
+    <div class="token-box">
+        <strong th:text="#{email.registration.token.label}"></strong><br>
+        <span th:text="${token}"></span>
+    </div>
+
+    <p th:text="#{email.registration.expiry}"></p>
     <p th:text="#{email.registration.date(${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')})}"></p>
-    <p th:text="#{email.registration.closing}"></p>
-    <p th:text="#{email.registration.signature}"></p>
+
+    <div class="footer">
+        <p th:text="#{email.registration.footer}"></p>
+        <p th:text="#{email.registration.disclaimer}"></p>
+    </div>
 </div>
 </body>
 </html>

@@ -60,12 +60,23 @@ public class BookingsJDBCDao implements BookingDao {
         params.put("user_id", user.getId());
         params.put("table_id", tableId);
         params.put("booking_start", java.sql.Timestamp.from(bookingStart.toInstant()));
-        params.put("booking_end",   java.sql.Timestamp.from(bookingEnd.toInstant()));
+        params.put("booking_end", java.sql.Timestamp.from(bookingEnd.toInstant()));
         params.put("status", status.db());
         params.put("total_amount", totalAmount);
 
         insert.execute(params);
-        return findById(id).orElseThrow(() -> new IllegalStateException("Inserted booking not found: " + id));
+
+        Booking booking = new Booking();
+        booking.setBookingId(id);
+        booking.setUser(user); // Usar el objeto User completo que ya tienes
+        booking.setTableId(tableId);
+        booking.setBookingStart(bookingStart);
+        booking.setBookingEnd(bookingEnd);
+        booking.setStatus(status);
+        booking.setTotalAmount(totalAmount);
+        booking.setCreatedAt(OffsetDateTime.now()); // O usar el timestamp del DB si lo necesitas exacto
+
+        return booking;
     }
 
 
