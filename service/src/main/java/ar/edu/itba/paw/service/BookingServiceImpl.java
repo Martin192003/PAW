@@ -5,6 +5,8 @@ import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import ar.edu.itba.paw.model.exceptions.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,8 @@ public class BookingServiceImpl implements BookingService {
     private final EmailServiceImpl emailService;
     private static final ZoneId ZONE_ID = ZoneId.of("America/Argentina/Buenos_Aires");
     private static final Set<DayOfWeek> ALLOWED_DAYS = EnumSet.of(DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BookingServiceImpl.class);
+
 
     public BookingServiceImpl(final BookingDao bookingDao, final ClubTablesDao tablesDao, UserService userService, ClubService clubService, TableService tableService, final ClubDao clubDao, final EmailServiceImpl emailService) {
         this.bookingDao = bookingDao;
@@ -161,6 +165,18 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
         validateStatusTransition(existing.getStatus(), Status.CANCELADA);
 
+        Table table = ensureTableExists(existing.getTableId());
+        Club club = clubDao.findById(table.getClubId()).orElseThrow();
+
+        // Cargar usuario completo desde UserService - SIN .orElseThrow()
+        User completeUser = userService.findById(existing.getUser().getId());
+        if (completeUser == null) {
+            throw new UserNotFoundException("Usuario no encontrado: " + existing.getUser().getId());
+        }
+
+        LOGGER.info("Booking user info - ID: {}, Username: {}, Email: {}",
+                completeUser.getId(), completeUser.getUsername(), completeUser.getEmail());
+
         bookingDao.update(
                 bookingId,
                 existing.getUser(),
@@ -171,23 +187,70 @@ public class BookingServiceImpl implements BookingService {
                 existing.getBookingEnd()
         );
 
+        // Replace the constructor calls on lines 190 and 265 with this approach:
+        Booking bookingForEmail = new Booking();
+        bookingForEmail.setBookingId(existing.getBookingId());
+        bookingForEmail.setUser(completeUser);  // Usuario con datos completos
+        bookingForEmail.setTableId(existing.getTableId());
+        bookingForEmail.setBookingStart(existing.getBookingStart());
+        bookingForEmail.setBookingEnd(existing.getBookingEnd());
+        bookingForEmail.setStatus(Status.CANCELADA);
+        bookingForEmail.setTotalAmount(existing.getTotalAmount());
+
+        Locale locale = new Locale("es", "AR");
+
+        // Notificar al usuario
         try {
-            final Table table = ensureTableExists(existing.getTableId());
-            maybeFreeTable(table);
-        } catch (TableNotFoundException ignored) {
+            emailService.notifyBookingCancelledToUser(bookingForEmail, club, table, locale);
+            LOGGER.info("Successfully sent cancellation email to user {}", completeUser.getEmail());
+        } catch (BadRequestException e) {
+            LOGGER.error("User email validation failed for booking {}: {}", bookingId, e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Failed to send cancellation email to user for booking {}", bookingId, e);
         }
 
+        // Notificar al owner
+        try {
+            List<User> admins = clubService.getAdminsByClub(club.getClubId());
+            if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
+                String ownerEmail = admins.get(0).getEmail();
+                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, ownerEmail, locale);
+                LOGGER.info("Successfully sent cancellation email to club owner {}", ownerEmail);
+            } else {
+                LOGGER.warn("Cannot send cancellation email to club owner: no valid email found for club {}", club.getClubId());
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to send cancellation email to club owner for booking {}", bookingId, e);
+        }
+
+        maybeFreeTable(table);
         return true;
     }
+
     @Transactional
     @Override
-    public void cancelByUser(UUID bookingId, UUID userId){
+    public void cancelByUser(UUID bookingId, UUID userId) {
         final Booking existing = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+
         if(!existing.getUser().getId().equals(userId)) {
             throw new UnauthorizedException("El usuario no puede cancelar esta reserva");
         }
+
         validateStatusTransition(existing.getStatus(), Status.CANCELADA);
+
+        Table table = ensureTableExists(existing.getTableId());
+        Club club = clubDao.findById(table.getClubId()).orElseThrow();
+
+        // Cargar usuario completo desde UserService - SIN .orElseThrow()
+        User completeUser = userService.findById(existing.getUser().getId());
+        if (completeUser == null) {
+            throw new UserNotFoundException("Usuario no encontrado: " + existing.getUser().getId());
+        }
+
+        LOGGER.info("Cancel by user - ID: {}, Username: {}, Email: {}",
+                completeUser.getId(), completeUser.getUsername(), completeUser.getEmail());
+
         bookingDao.update(
                 bookingId,
                 existing.getUser(),
@@ -197,6 +260,42 @@ public class BookingServiceImpl implements BookingService {
                 existing.getBookingStart(),
                 existing.getBookingEnd()
         );
+
+        // Replace the constructor calls on lines 190 and 265 with this approach:
+        Booking bookingForEmail = new Booking();
+        bookingForEmail.setBookingId(existing.getBookingId());
+        bookingForEmail.setUser(completeUser);  // Usuario con datos completos
+        bookingForEmail.setTableId(existing.getTableId());
+        bookingForEmail.setBookingStart(existing.getBookingStart());
+        bookingForEmail.setBookingEnd(existing.getBookingEnd());
+        bookingForEmail.setStatus(Status.CANCELADA);
+        bookingForEmail.setTotalAmount(existing.getTotalAmount());
+
+        Locale locale = new Locale("es", "AR");
+
+        // Notificar al usuario
+        try {
+            emailService.notifyBookingCancelledToUser(bookingForEmail, club, table, locale);
+            LOGGER.info("Successfully sent cancellation email to user {}", completeUser.getEmail());
+        } catch (Exception e) {
+            LOGGER.error("Failed to send cancellation email to user for booking {}: {}", bookingId, e.getMessage(), e);
+        }
+
+        // Notificar al owner
+        try {
+            List<User> admins = clubService.getAdminsByClub(club.getClubId());
+            if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
+                String ownerEmail = admins.get(0).getEmail();
+                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, ownerEmail, locale);
+                LOGGER.info("Successfully sent cancellation email to club owner {}", ownerEmail);
+            } else {
+                LOGGER.warn("Cannot send cancellation email to club owner: no valid email found for club {}", club.getClubId());
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to send cancellation email to club owner for booking {}", bookingId, e);
+        }
+
+        maybeFreeTable(table);
     }
 
     @Transactional

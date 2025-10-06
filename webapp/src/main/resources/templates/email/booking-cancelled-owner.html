@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{email.booking.cancelled.owner.title}"></title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            background-color: #2c2c2c;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2, h1 {
+            color: #a64ca6;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p, li {
+            color: #e6e6e6;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        a.button {
+            display: inline-block;
+            background-color: #a64ca6;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        a.button:hover {
+            background-color: #922d92;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background-color: #333333;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .reservation-info {
+            background: #2c2c2c;
+            border: 1px solid #444;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #999999;
+            margin-top: 20px;
+            border-top: 1px solid #444;
+            padding-top: 10px;
+        }
+
+        .divider {
+            height: 1px;
+            background: #444;
+            margin: 24px 0;
+            border: none;
+        }
+
+        b {
+            color: #ffffff;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <h2 th:text="#{email.booking.cancelled.owner.heading}"></h2>
+    <p th:text="#{email.booking.cancelled.owner.body(${clubName})}"></p>
+
+    <div class="reservation-info">
+        <p><b th:text="#{email.table.owner.table(${tableNumber})}"></b></p>
+        <p><b th:text="#{email.table.owner.capacity(${capacity})}"></b></p>
+        <p th:if="${dateTime != null}"><b th:text="#{email.table.owner.schedule(${dateTime})}"></b></p>
+    </div>
+
+    <p style="text-align: center;">
+        <a th:href="${ctaUrl}"
+           class="button"
+           th:text="#{email.booking.cancelled.owner.cta}">
+        </a>
+    </p>
+
+    <hr class="divider"/>
+
+    <p th:text="#{email.booking.cancelled.owner.instructions}"></p>
+    <p th:text="#{email.table.owner.sent(${#temporals.format(sentAt, 'dd/MM/yyyy HH:mm')})}"></p>
+
+</div>
+</body>
+</html>

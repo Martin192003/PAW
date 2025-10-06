@@ -104,7 +104,6 @@ public class EmailServiceImpl implements EmailService {
         try {
             Locale userLocale = LocaleContextHolder.getLocale();
 
-            // Email al club usando template mejorado
             Map<String, Object> clubModel = Map.of(
                     "clubName", clubName,
                     "name", name,
@@ -125,7 +124,6 @@ public class EmailServiceImpl implements EmailService {
                     "/clubs/messages"
             );
 
-            // Email de confirmación al usuario
             Map<String, Object> userModel = Map.of(
                     "clubName", clubName,
                     "name", name,
@@ -297,6 +295,82 @@ public class EmailServiceImpl implements EmailService {
                 "table-reserved-owner",
                 ownerModel,
                 "Abrir panel", ctaUrl
+        );
+    }
+
+    @Override
+    @Async
+    public void notifyBookingCancelledToUser(Booking booking, Club club, Table table, Locale locale) {
+        Objects.requireNonNull(booking, "booking cannot be null");
+        Objects.requireNonNull(booking.getUser(), "booking.user cannot be null");
+        Objects.requireNonNull(club, "club cannot be null");
+        Objects.requireNonNull(table, "table cannot be null");
+
+        String userEmail = booking.getUser().getEmail();
+        if (userEmail == null || userEmail.trim().isEmpty()) {
+            throw new BadRequestException("User email is required for cancellation notification");
+        }
+
+        LocalDate selectedDate = booking.getBookingStart().atZoneSameInstant(ZONE_ID).toLocalDate();
+
+        sendTemplatedEmail(
+                userEmail,
+                "Reserva cancelada - " + club.getClubName(),
+                "booking-cancelled-user",
+                Map.of(
+                        "clubName", club.getClubName(),
+                        "tableNumber", table.getTableNumber(),
+                        "capacity", table.getCapacity(),
+                        "date", selectedDate.toString(),
+                        "from", "23:59",
+                        "to", "06:00",
+                        "brandName", "BlingBling",
+                        "brandFooter", "© 2025 BlingBling. Tu reserva ha sido cancelada."
+                ),
+                "Ver otros clubs",
+                "/clubs"
+        );
+    }
+
+    @Override
+    @Async
+    public void notifyBookingCancelledToOwner(Booking booking, Club club, Table table, String ownerEmail, Locale locale) {
+        if (!isLikelyEmail(ownerEmail)) {
+            throw new BadRequestException("Email del dueño inválido: " + ownerEmail);
+        }
+
+        Objects.requireNonNull(booking, "booking es null");
+        Objects.requireNonNull(club, "club es null");
+        Objects.requireNonNull(table, "table es null");
+
+        final String clubName = Objects.requireNonNullElse(club.getClubName(), "Club");
+        final String tableNum = String.valueOf(table.getTableNumber());
+        final Integer capacity = table.getCapacity();
+
+        final LocalDate date = Objects.requireNonNull(
+                booking.getBookingStart(), "booking.bookingStart es null"
+        ).atZoneSameInstant(ZONE_ID).toLocalDate();
+
+        final DateTimeFormatter df = DateTimeFormatter.ofPattern("EEE dd/MM", locale);
+        final String dateTimePretty = df.format(date) + " 23:59–06:00";
+
+        Map<String, Object> ownerModel = Map.of(
+                "clubName", clubName,
+                "tableNumber", tableNum,
+                "capacity", capacity,
+                "dateTime", dateTimePretty,
+                "brandName", "BlingBling",
+                "brandFooter", "© 2025 BlingBling. Notificación de cancelación.",
+                "sentAt", OffsetDateTime.now(ZONE_ID)
+        );
+
+        sendTemplatedEmail(
+                ownerEmail,
+                "Reserva cancelada - " + clubName,
+                "booking-cancelled-owner",
+                ownerModel,
+                "Ver panel",
+                "/clubs/" + club.getClubId()
         );
     }
 
