@@ -52,7 +52,7 @@
                 </c:if>
                 <c:if test="${not empty success}">
                     <div class="success" role="alert">
-                        <spring:message code="profile.update.success"/>
+                        <spring:message code="password.update.success"/>
                     </div>
                 </c:if>
                 <div class="login-buttons">

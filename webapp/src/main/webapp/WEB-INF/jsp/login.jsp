@@ -21,7 +21,7 @@
 
 <div class="login-page">
     <div class="login-group">
-        <button type="button" class="btn btn-success btn-back" onclick="history.back();">
+        <button type="button" class="btn btn-success btn-back" onclick="window.location.href='<c:url value="/clubs"/>'">
             <i class="fa-solid fa-arrow-left"></i>
         </button>
         <div class="app-title">

@@ -6,6 +6,7 @@ import ar.edu.itba.paw.webapp.form.EditUserForm;
 import ar.edu.itba.paw.webapp.form.VerificationForm;
 import ar.edu.itba.paw.webapp.form.UserForm;
 import ar.edu.itba.paw.service.UserService;
+import ar.edu.itba.paw.webapp.form.VerificationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

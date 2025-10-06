@@ -28,6 +28,11 @@
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 
 <div class="app-bookings">
+    <div class="detail-back">
+        <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/clubs"/>'">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+    </div>
     <h1><spring:message code="menu.reservations"/></h1>
 
     <div class="filter-container">
@@ -122,7 +127,6 @@
         </c:otherwise>
     </c:choose>
 
-    <!-- ========= PAGINACIÓN ========= -->
     <c:if test="${totalPages > 1}">
         <div class="pagination">
             <c:if test="${currentPage > 1}">
