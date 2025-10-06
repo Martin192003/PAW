@@ -177,6 +177,7 @@ public class BookingServiceImpl implements BookingService {
         } catch (TableNotFoundException ignored) {
         }
 
+
         return true;
     }
     @Transactional
@@ -309,7 +310,7 @@ public class BookingServiceImpl implements BookingService {
 
         // Datos de club y notificaciones
         var club = clubService.getClubById(clubId).orElseThrow(IllegalArgumentException::new);
-        String ownerEmail = clubService.getAdminsByClub(clubId).getFirst().getEmail();
+        User ownerEmail = clubService.getAdminsByClub(clubId).getFirst();
 
         Locale locale = new Locale("es", "AR");
         emailService.notifyTableReservedToUser(booking, club, table, locale);
