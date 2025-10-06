@@ -23,16 +23,14 @@ import java.util.UUID;
 public class TablesController {
 
      private final TableService tableService;
-     private final BookingService bookingService;
      private  final SecurityService securityService;
      private final ClubService clubService;
      private final PhotoService photoService;
      private final MenuService menuService;
 
      @Autowired
-     public TablesController(TableService tableService, BookingService bookingService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService) {
+     public TablesController(TableService tableService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService) {
          this.tableService = tableService;
-         this.bookingService = bookingService;
          this.securityService = securityService;
          this.clubService = clubService;
          this.photoService = photoService;
@@ -52,7 +50,6 @@ public class TablesController {
         checkLoggedUser(clubId);
 
         if (errors.hasErrors()) {
-            // volvés a cargar el modelo como en addTable()
             var club = clubService.getClubById(clubId).orElseThrow();
             model.addAttribute("club", club);
             model.addAttribute("tables", tableService.findByClubId(clubId));
@@ -141,7 +138,6 @@ public class TablesController {
         }
 
         if (errors.hasErrors()) {
-            // volvés a armar el modelo igual que en handleClub
             var club = clubService.getClubById(clubId).orElseThrow();
             model.addAttribute("club", club);
             model.addAttribute("tables", tableService.findByClubId(clubId));

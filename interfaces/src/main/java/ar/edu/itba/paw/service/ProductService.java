@@ -20,4 +20,5 @@ public interface ProductService {
     List<Product> findAll();
     List<Product> findByClub(Club club);
     List<Product> findByClubID(UUID clubId);
+   String classifyCategory(Product p);
 }

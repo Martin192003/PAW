@@ -39,7 +39,6 @@ public class ProfileController {
         String identifier = authentication.getName();
         User user = userService.findByUserName(identifier);
 
-        // Si no se encuentra por username, buscar por email
         if (user == null) {
             user = userService.findByEmail(identifier);
         }

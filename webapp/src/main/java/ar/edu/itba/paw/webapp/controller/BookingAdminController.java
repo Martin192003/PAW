@@ -93,10 +93,9 @@ public class BookingAdminController {
         int totalBookings = 0;
 
         if (!br.hasErrors()) {
-            // >>> Nuevo: servicio que filtra por clubes administrados por current <<<
             result = bookingService.searchForAdminPaginated(
                     current.getId(),
-                    form.getClubId(),     // opcional: además limitar a un club puntual del admin
+                    form.getClubId(),
                     bookingUuid,
                     form.getStatus(),
                     form.getSort(),

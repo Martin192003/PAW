@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -76,4 +77,26 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> findByClubID(UUID clubId) {
         return productsDao.findByClubID(clubId);
     }
+
+    @Override
+    public String classifyCategory(final Product p) {
+        final String name = Optional.ofNullable(p.getProductName())
+                .orElse("")
+                .toLowerCase(Locale.ROOT);
+
+        if (name.contains("cerveza") || name.contains("ipa") || name.contains("lager")
+                || name.contains("stout") || name.contains("apa")) {
+            return "CERVEZAS";
+        }
+        if (name.contains("champ") || name.contains("espum") || name.contains("brut")) {
+            return "CHAMPAGNE";
+        }
+
+        ProductType type = p.getProductType();
+        if (type == ProductType.NO_ALCOHOLICA) return "NO_ALCOHOLICA";
+        if (type == ProductType.ALCOHOLICA) return "ALCOHOLICA";
+
+        return "TRAGOS";
+    }
+
 }

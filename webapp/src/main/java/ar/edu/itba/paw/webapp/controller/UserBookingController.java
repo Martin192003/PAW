@@ -3,7 +3,6 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
-import ar.edu.itba.paw.webapp.form.BookingForm;
 import ar.edu.itba.paw.webapp.form.BookingSearchForm;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
@@ -20,7 +19,6 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.security.Principal;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -291,7 +289,7 @@ public class UserBookingController {
         if (success != null && !success.isEmpty())   model.addAttribute("success", success);
         if (info != null && !info.isEmpty())         model.addAttribute("info", info);
 
-        model.addAttribute("activePage", "bookings"); // para resaltar sección en sidebar/topbar
+        model.addAttribute("activePage", "bookings");
 
         return "bookingUserHandler";
     }

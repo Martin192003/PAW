@@ -2,7 +2,6 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.MusicalGenre;
 import ar.edu.itba.paw.model.Price;
-import ar.edu.itba.paw.model.ProductType;
 import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Controller
