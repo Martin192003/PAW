@@ -256,7 +256,6 @@ public class EmailServiceImpl implements EmailService {
             throw new BadRequestException("Email del dueño inválido: " + owner);
         }
 
-        // ---- Fail-fast con mensajes claros ----
         Objects.requireNonNull(booking, "booking es null");
         Objects.requireNonNull(booking.getUser(), "booking.user es null");
         Objects.requireNonNull(club, "club es null");

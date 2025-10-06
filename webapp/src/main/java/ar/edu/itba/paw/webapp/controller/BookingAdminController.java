@@ -77,7 +77,6 @@ public class BookingAdminController {
         final int page = Math.max(form.getPage(), 1);
         final int offset = (page - 1) * size;
 
-        // Siempre usamos el usuario logueado
         final User current = securityService.getVerifiedLoggedUser();
 
         UUID bookingUuid = null;

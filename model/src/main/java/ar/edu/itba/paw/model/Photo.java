@@ -15,7 +15,6 @@ public class Photo {
     private Long sizeBytes;
     private String url;
 
-    // Solo cuando realmente necesites enviar el binario
     private byte[] data;
 
     public UUID getPhotoId() { return photoId; }

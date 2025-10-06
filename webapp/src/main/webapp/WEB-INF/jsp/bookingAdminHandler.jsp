@@ -119,7 +119,6 @@
             </div>
         </article>
 
-        <!-- Comprobante + acciones -->
         <div class="right-col">
             <article class="card-lg booking-card">
                 <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>

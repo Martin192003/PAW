@@ -25,14 +25,12 @@ public class ActivityJDBCDao implements ActivityDao {
         String type = rs.getString("activity_type");
         OffsetDateTime date = rs.getObject("activity_date", OffsetDateTime.class);
         String details = rs.getString("details");
-        // booking se completa en el método a partir de bookingDao para evitar N+1 si hace falta
         Activity a = new Activity();
         a.setActivityId(id);
         a.setActivityType(type);
         a.setActivityDate(date);
         a.setDetails(details);
 
-        // set bookingId temporalmente usando un booking "liviano"
         Booking b = new Booking();
         b.setBookingId(bookingId);
         a.setBooking(b);

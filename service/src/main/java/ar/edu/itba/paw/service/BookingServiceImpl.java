@@ -257,7 +257,6 @@ public class BookingServiceImpl implements BookingService {
                 existing.getBookingEnd()
         );
 
-        // Replace the constructor calls on lines 190 and 265 with this approach:
         Booking bookingForEmail = new Booking();
         bookingForEmail.setBookingId(existing.getBookingId());
         bookingForEmail.setUser(completeUser);  // Usuario con datos completos
@@ -269,7 +268,6 @@ public class BookingServiceImpl implements BookingService {
 
         Locale locale = new Locale("es", "AR");
 
-        // Notificar al usuario
         try {
             emailService.notifyBookingCancelledToUser(bookingForEmail, club, table, locale);
             LOGGER.info("Successfully sent cancellation email to user {}", completeUser.getEmail());
@@ -277,7 +275,6 @@ public class BookingServiceImpl implements BookingService {
             LOGGER.error("Failed to send cancellation email to user for booking {}: {}", bookingId, e.getMessage(), e);
         }
 
-        // Notificar al owner
         try {
             List<User> admins = clubService.getAdminsByClub(club.getClubId());
             if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
@@ -361,7 +358,6 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     @Override
     public void reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username) {
-        // Mesa
         var tableOpt = tableService.findById(tableId);
         if (tableOpt.isEmpty()) throw new TableNotFoundException(tableId);
         var table = tableOpt.get();
@@ -369,22 +365,18 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("El club no existe");
         }
 
-        // Día permitido
         DayOfWeek dow = date.getDayOfWeek();
         if (!ALLOWED_DAYS.contains(dow)) {
             throw new InvalidDateRangeException("Solo se puede reservar para jueves, viernes o sábado.");
         }
 
-        // Ventana 23:59–06:00 en es-AR
         OffsetDateTime start = date.atTime(23, 59).atZone(ZONE_ID).toOffsetDateTime();
         OffsetDateTime end   = date.plusDays(1).atTime(6, 0).atZone(ZONE_ID).toOffsetDateTime();
 
-        // Disponibilidad
         var libres = tableService.findAvailableByClubAndRange(clubId, start, end);
         boolean disponible = libres.stream().anyMatch(t -> t.getTableId().equals(tableId));
         if (!disponible) throw new BadRequestException("La mesa no está disponible en el rango indicado.");
 
-        // Usuario
         var user = userService.findByUserName(username);
         if (user == null) {
             user = userService.findByEmail(username);
@@ -395,14 +387,11 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("El usuario debe tener un email válido para recibir notificaciones");
         }
 
-        // Precio
         BigDecimal total = table.getPrice() != null ? table.getPrice() : BigDecimal.ZERO;
 
-        // Crear booking (el service debe re-validar disponibilidad en la transacción)
         Booking booking = create(user, tableId, start, end, total);
 
 
-        // Datos de club y notificaciones
         var club = clubService.getClubById(clubId).orElseThrow(IllegalArgumentException::new);
         User ownerEmail = clubService.getAdminsByClub(clubId).getFirst();
 

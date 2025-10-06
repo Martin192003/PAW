@@ -24,7 +24,7 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
     private PawUserDetailsService userDetailsService;
 
     @Autowired
-    private CustomAuthenticationFailureHandler customAuthenticationFailureHandler; // AGREGAR ESTO
+    private CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
 
 
     @Override

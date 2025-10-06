@@ -32,7 +32,7 @@ public class UserJDBCDao implements UserDao {
         u.setRole(roleStr == null ? null : Role.valueOf(roleStr.trim().toUpperCase(Locale.ROOT)));
         u.setVerified(rs.getBoolean("is_verified"));
         u.setVerificationToken(rs.getString("verification_token"));
-        u.setResetPasswordToken(rs.getString("reset_password_token")); // AGREGAR ESTA LÍNEA
+        u.setResetPasswordToken(rs.getString("reset_password_token"));
         u.setCreatedAt(rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toInstant().atOffset(java.time.ZoneOffset.UTC));
         return u;
     };

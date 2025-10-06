@@ -74,7 +74,7 @@ public class BookingsJDBCDao implements BookingDao {
         booking.setBookingEnd(bookingEnd);
         booking.setStatus(status);
         booking.setTotalAmount(totalAmount);
-        booking.setCreatedAt(OffsetDateTime.now()); // O usar el timestamp del DB si lo necesitas exacto
+        booking.setCreatedAt(OffsetDateTime.now());
 
         return booking;
     }
@@ -153,7 +153,6 @@ public class BookingsJDBCDao implements BookingDao {
     }
 
     private static String resolveOrderBy(String sort) {
-        // Whitelist para evitar SQL injection
         return switch (sort == null ? "" : sort) {
             case "created_asc" -> "b.created_at ASC NULLS LAST";
             case "start_desc"  -> "b.booking_start DESC";
@@ -195,7 +194,7 @@ public class BookingsJDBCDao implements BookingDao {
         }
         if (status != null) {
             sql.append(" AND LOWER(b.status) = LOWER(?)");
-            args.add(status.db()); // en tu Status.db() devolvés "pendiente", "confirmada", etc.
+            args.add(status.db());
         }
 
         sql.append(" ORDER BY ").append(resolveOrderBy(sort));

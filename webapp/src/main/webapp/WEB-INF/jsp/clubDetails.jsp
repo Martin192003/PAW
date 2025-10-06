@@ -131,7 +131,6 @@
                         </div>
                     </c:if>
                     <form id="reserveForm" method="post" action="${reserveUrl}">
-                        <!-- Fila: Fecha + Botón -->
                         <div class="bb-actions" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
                             <div class="bb-date" style="display:flex; flex-direction:column;">
                                 <label for="bookingDate" class="bb-label" style="margin-bottom:6px;">
@@ -208,7 +207,6 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', () => {
-                // -------- Utils visuales: partir textos largos --------
                 function breakEveryN(str, n) {
                     if (!str) return '';
                     const s = String(str).trim();
@@ -232,7 +230,6 @@
                     descEl.dataset.broken = '1';
                 }
 
-                // -------- Dropdowns --------
                 const dropdowns = Array.from(document.querySelectorAll('.bb-dropdown'));
                 function closeAll() {
                     dropdowns.forEach(dd => {
@@ -254,12 +251,10 @@
                     if (!e.target.closest('.bb-dropdown')) closeAll();
                 });
 
-                // -------- Reserva: refs --------
                 const reserveBtn   = document.getElementById('reserveBtn');
                 const form         = document.getElementById('reserveForm');
                 const bookingDate  = document.getElementById('bookingDate');
 
-                // Min=Hoy (UX); validación real queda en el backend
                 const today = new Date();
                 const yyyy  = today.getFullYear();
                 const mm    = String(today.getMonth()+1).padStart(2,'0');
@@ -268,14 +263,12 @@
                     bookingDate.setAttribute('min', `${yyyy}-${mm}-${dd}`);
                 }
 
-                // Habilita el botón solo si hay mesa elegida
                 function updateReserveButtonState(){
                     if (!reserveBtn || !form) return;
                     const selected = form.querySelector('input[type="radio"][name="tableId"]:checked');
                     reserveBtn.disabled = !selected;
                 }
 
-                // Autoselección: si hay mesas y ninguna marcada, marca la primera
                 (function autoPickFirstIfAny(){
                     if (!form) return;
                     const radios = form.querySelectorAll('input[type="radio"][name="tableId"]');
@@ -285,10 +278,8 @@
                     }
                 })();
 
-                // Estado inicial
                 updateReserveButtonState();
 
-                // Cambio de fecha => recarga; el server calcula disponibilidad
                 if (bookingDate) {
                     bookingDate.addEventListener('change', () => {
                         if (bookingDate.value) {
@@ -299,7 +290,6 @@
 
                 if (form && reserveBtn){
                     form.addEventListener('submit', (e) => {
-                        // Evitar doble submit
                         if (form.dataset.submitting === '1') { e.preventDefault(); return; }
 
                         const selected = form.querySelector('input[type="radio"][name="tableId"]:checked');
@@ -309,7 +299,6 @@
                             return;
                         }
 
-                        // --- tableId hidden (para que viaje seguro) ---
                         let hidTable = form.querySelector('input[type="hidden"][name="tableId"]');
                         if (!hidTable) {
                             hidTable = document.createElement('input');
@@ -319,7 +308,6 @@
                         }
                         hidTable.value = selected.value;
 
-                        // --- date hidden (para que viaje aunque deshabilitemos inputs) ---
                         let hidDate = form.querySelector('input[type="hidden"][name="date"]');
                         if (!hidDate) {
                             hidDate = document.createElement('input');
@@ -327,14 +315,12 @@
                             hidDate.name = 'date';
                             form.appendChild(hidDate);
                         }
-                        // Si no hay bookingDate o no tiene valor, cancelamos para evitar 400
                         if (!bookingDate || !bookingDate.value) {
                             e.preventDefault();
                             return;
                         }
                         hidDate.value = bookingDate.value;
 
-                        // Marcar envío y bloquear UI (sin deshabilitar los hiddens ni el radio elegido)
                         form.dataset.submitting = '1';
                         reserveBtn.disabled = true;
                         reserveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <spring:message code="button.reservation"/>';
@@ -346,7 +332,6 @@
                     });
                 }
 
-                // Mantener abierto el dropdown de mesas si venimos con #dd-tables
                 if (location.hash === "#dd-tables") {
                     const ddEl = document.getElementById('dd-tables');
                     if (ddEl) {
@@ -356,7 +341,6 @@
                 }
             });
 
-            // Cerrar modal (utilizado si reservationSent viene true desde el server)
             function cerrarModal() {
                 window.location.href = "${clubUrl}";
             }

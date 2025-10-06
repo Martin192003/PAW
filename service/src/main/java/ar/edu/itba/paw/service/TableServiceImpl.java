@@ -89,7 +89,6 @@ public class TableServiceImpl implements TableService {
     @Override
     @Transactional(readOnly = true)
     public List<Table> findAvailableOnDate(UUID clubId, LocalDate date, ZoneId tz, Clock clock) {
-        // Validaciones de negocio que estaban en el JSP/JS
         if (!isAllowedDay(date)) {
             throw new ValidationException("Fecha no permitida para reservas");
         }

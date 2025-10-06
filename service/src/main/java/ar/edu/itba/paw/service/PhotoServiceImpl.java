@@ -100,7 +100,6 @@ public class PhotoServiceImpl implements PhotoService {
             throw new IllegalArgumentException("File is empty");
         }
 
-        // Buscar usuario por email o usar dev por defecto
         User effectiveUser = (userEmail != null)
                 ? userService.findByEmail(userEmail)
                 : userService.findByEmail("dev@local");

@@ -527,7 +527,6 @@
     function clearFormErrors(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
-        // limpiar todos los spans/divs con class="formError" dentro del modal
         modal.querySelectorAll('.formError').forEach(el => {
             el.innerHTML = '';
         });

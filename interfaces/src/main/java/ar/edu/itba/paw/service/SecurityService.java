@@ -9,5 +9,4 @@ public interface SecurityService {
     Optional<User> getLoggedUser();
     Optional<String> getLoggedUserEmail();
     User getVerifiedLoggedUser();
-//    UUID getCurrentUserIdOrThrow();
 }

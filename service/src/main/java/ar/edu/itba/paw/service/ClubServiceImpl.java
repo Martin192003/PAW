@@ -233,27 +233,22 @@ public class ClubServiceImpl implements ClubService{
 
     private Zone parseZoneFlexible(String raw) {
         if (raw == null) throw new IllegalArgumentException("Zona vacía");
-        // 1) Intento por name() del enum (con normalización básica)
         String normalized = normalizeEnumToken(raw);
         try {
             return Zone.valueOf(normalized);
         } catch (IllegalArgumentException ignore) {
-            // 2) Fallback por dbValue (lo que envía el JSP)
             for (Zone z : Zone.values()) {
-                // si tu enum tiene getDbValue(); si no, reemplazá por el método/prop correcto
                 String db = z.getDbValue();
                 if (db != null && db.equalsIgnoreCase(raw)) {
                     return z;
                 }
             }
-            // 3) No hubo match
             throw new IllegalArgumentException("Zona inválida: " + raw);
         }
     }
 
     private String normalizeEnumToken(String v) {
         String s = v.trim().replace('-', '_').replace(' ', '_');
-        // si querés tolerar acentos:
         s = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
         return s.toUpperCase(Locale.ROOT);
     }

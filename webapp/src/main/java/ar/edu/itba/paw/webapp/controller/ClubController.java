@@ -95,8 +95,8 @@ public class ClubController {
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
 
-        model.addAttribute("currentPage", page); // lo que ya tenías
-        model.addAttribute("page", page);        // compatibilidad con JSP
+        model.addAttribute("currentPage", page);
+        model.addAttribute("page", page);
         model.addAttribute("size", size);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
