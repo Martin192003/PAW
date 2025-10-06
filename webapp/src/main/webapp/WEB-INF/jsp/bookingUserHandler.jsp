@@ -1,12 +1,13 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <html>
 <head>
-    <title>Gestion de reserva</title>
+    <title><spring:message code="handler.reservation"/></title>
     <link rel="icon" type="image/png" href="<c:url value='/resources/img/favicon.png'/>"/>
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/bookingUserHandler.css' />">
@@ -28,7 +29,7 @@
 </div>
 <div class="app-boliches booking-page">
     <h1 class="clubActivity-title">
-        <span>Reserva <br>#<c:out value="${booking.bookingId}"/></span>
+        <span><spring:message code="booking.title.prefix"/> <br>#<c:out value="${booking.bookingId}"/></span>
         <c:choose>
             <c:when test="${fn:trim(fn:toUpperCase(booking.status)) == 'PENDIENTE'}">
                 <span class="status-badge is-pending"><spring:message code="booking.status.pending" text="Pendiente"/></span>
@@ -93,7 +94,6 @@
             </div>
         </article>
 
-        <!-- Columna derecha: comprobante + acciones -->
         <aside class="right-col">
             <article class="card-lg booking-card">
                 <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>
@@ -122,14 +122,16 @@
                     </c:otherwise>
                 </c:choose>
 
-                <!-- Upload si no hay receipt -->
                 <c:if test="${!hasReceipt}">
-                    <form method="post" enctype="multipart/form-data" action="<c:url value='/bookings/${booking.bookingId}/receipt'/>" class="upload-form">
-                        <input type="file" name="file" accept="image/*,application/pdf" required />
-                        <button type="submit" class="btn btn-success btn-sm">
-                            <spring:message code="receipt.upload" text="Subir comprobante"/>
+                    <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data" action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt" class="upload-form">
+                        <div class="form-group">
+                            <form:input type="file" path="file"/>
+                            <p cssClass="error-message"><form:errors path="file"/></p>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm" >
+                                <spring:message code="receipt.upload" text="Subir comprobante"/>
                         </button>
-                    </form>
+                    </form:form>
                 </c:if>
             </article>
         </aside>

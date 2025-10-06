@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/contactForm.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/login.css' />" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
     <title><spring:message code="title.login"/> </title>
 </head>
@@ -20,6 +21,9 @@
 
 <div class="login-page">
     <div class="login-group">
+        <button type="button" class="btn btn-success btn-back" onclick="history.back();">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
         <div class="app-title">
             <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
         </div>

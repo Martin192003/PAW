@@ -105,15 +105,19 @@ body {
 }
 
 .verify-success {
-    color: #00c853;
+    color: #ffffff;
     font-size: 14px;
     margin-top: 15px;
 }
 
-.verify-error {
-    color: #ff1744;
-    font-size: 14px;
-    margin-top: 15px;
+.verify-error,
+.verify-form .error {
+    display: block;
+    margin: 8px 0 4px;
+    color: #e53935;
+    font-size: 0.9rem;
+    text-align: center;
+    font-weight: 500;
 }
 .verify-card{
     background-color: #3c3c3c;
