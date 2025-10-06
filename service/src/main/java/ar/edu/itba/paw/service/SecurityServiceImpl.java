@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.Optional;
@@ -20,6 +21,8 @@ public class SecurityServiceImpl implements SecurityService{
         this.userDao = userDao;
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public Optional<String> getLoggedUserEmail() {
         final SecurityContext securityContext = SecurityContextHolder.getContext();
         if(securityContext.getAuthentication() != null && securityContext.getAuthentication().isAuthenticated()) {
@@ -34,17 +37,9 @@ public class SecurityServiceImpl implements SecurityService{
         }
         return Optional.empty();
     }
-    /*
-    @Override
-    public Optional<User> getLoggedUser() {
-        final Optional<String> loggedUserEmail = getLoggedUserEmail();
-        if(loggedUserEmail.isPresent()) {
-            return userDao.findByEmail(loggedUserEmail.get());
-        }
-        return Optional.empty();
-    }*/
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<User> getLoggedUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
@@ -60,6 +55,7 @@ public class SecurityServiceImpl implements SecurityService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public User getVerifiedLoggedUser() {
         return getLoggedUser().orElse(null);
     }

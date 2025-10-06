@@ -42,5 +42,12 @@ public interface BookingDao {
 
     List<Booking> findAllPaginated(int limit, int offset);
 
+    List<Booking> searchByClubIdsPaginated(List<UUID> clubIds,
+                                           UUID bookingId,
+                                           Status status,
+                                           String sort,
+                                           int limit, int offset);
+
+    int countByClubIds(List<UUID> clubIds, UUID bookingId, Status status);
 
 }

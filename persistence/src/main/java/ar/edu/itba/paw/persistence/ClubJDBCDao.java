@@ -95,20 +95,8 @@ public class ClubJDBCDao implements ClubDao {
         Objects.requireNonNull(clubId, "clubId is required");
         Objects.requireNonNull(name, "name is required");
         Objects.requireNonNull(location, "location is required");
+        Objects.requireNonNull(location, "location is required");
         Objects.requireNonNull(priceRange, "priceRange is required");
-
-        // validate priceRange using its lowercase name
-        if (!Set.of("bajo","medio","alto").contains(priceRange.name().toLowerCase())) {
-            throw new IllegalArgumentException("priceRange debe ser bajo|medio|alto");
-        }
-        if (rating != null) {
-            if (rating.compareTo(new BigDecimal("1.0")) < 0 || rating.compareTo(new BigDecimal("5.0")) > 0) {
-                throw new IllegalArgumentException("rating fuera de rango (1..5): " + rating);
-            }
-        }
-        if (quantityRatings != null && quantityRatings < 0) {
-            throw new IllegalArgumentException("quantity_ratings debe ser >= 0");
-        }
 
         final String sql = "UPDATE clubs " +
                 "SET club_name = ?, location = ?, rating = ?, quantity_ratings = ?, price_range = ?, " +
@@ -162,7 +150,9 @@ public class ClubJDBCDao implements ClubDao {
     public Optional<Club> findById(UUID clubId) {
         final String sql = "SELECT * FROM clubs WHERE club_id = ?";
         Club c = jdbc.query(sql, ROW_MAPPER, clubId).stream().findFirst().orElse(null);
-        if (c != null) c.setContactInfo(userDao.findById(c.getContactInfo().getId()).orElse(null));
+        if (c != null && c.getContactInfo() != null && c.getContactInfo().getId() != null) {
+            c.setContactInfo(userDao.findById(c.getContactInfo().getId()).orElse(null));
+        }
         return Optional.ofNullable(c);
     }
 
@@ -205,9 +195,6 @@ public class ClubJDBCDao implements ClubDao {
             args.add(musicGenre.trim());
         }
         if (priceRange != null && !priceRange.isBlank()) {
-            if (!Set.of("bajo","medio","alto").contains(priceRange)) {
-                throw new IllegalArgumentException("priceRange inválido");
-            }
             sql.append(" AND price_range = ?");
             args.add(priceRange);
         }
@@ -286,9 +273,6 @@ public class ClubJDBCDao implements ClubDao {
             args.add(musicGenre.trim());
         }
         if (priceRange != null && !priceRange.isBlank()) {
-            if (!Set.of("bajo","medio","alto").contains(priceRange)) {
-                throw new IllegalArgumentException("priceRange inválido");
-            }
             sql.append(" AND price_range = ?");
             args.add(priceRange);
         }
@@ -352,6 +336,12 @@ public class ClubJDBCDao implements ClubDao {
     public int countByUserId(UUID userId) {
         final String sql = "SELECT COUNT(*) FROM clubs WHERE contact_info = ?";
         return jdbc.queryForObject(sql, Integer.class, userId);
+    }
+
+    @Override
+    public List<UUID> findIdsByAdmin(UUID adminUserId) {
+        final String sql = "SELECT club_id FROM clubs WHERE contact_info = ? ORDER BY club_name ASC";
+        return jdbc.query(sql, (rs, i) -> rs.getObject("club_id", UUID.class), adminUserId);
     }
 
 }

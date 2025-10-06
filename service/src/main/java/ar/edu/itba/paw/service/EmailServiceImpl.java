@@ -224,6 +224,7 @@ public class EmailServiceImpl implements EmailService {
 
 
     @Override
+    @Async
     public void notifyTableReservedToUser(Booking booking, Club club, Table table, Locale locale) {
         // Validate required parameters
         Objects.requireNonNull(booking, "booking cannot be null");
@@ -254,6 +255,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    @Async
     public void notifyTableReservedToOwner(Booking booking, Club club, Table table, String ownerEmail, Locale locale) {
         if (!isLikelyEmail(ownerEmail)) {
             throw new BadRequestException("Email del dueño inválido: " + ownerEmail);

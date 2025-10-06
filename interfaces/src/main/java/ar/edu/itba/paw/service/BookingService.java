@@ -59,4 +59,13 @@ public interface BookingService {
     void confirm(UUID bookingId);
 
     Booking getForUser(UUID bookingId, UUID userId);
+
+    List<Booking> searchForAdminPaginated(UUID adminUserId,
+                                          UUID clubId, UUID bookingId,
+                                          Status status, String sort,
+                                          int limit, int offset);
+
+    int countSearchForAdmin(UUID adminUserId,
+                            UUID clubId, UUID bookingId,
+                            Status status);
 }

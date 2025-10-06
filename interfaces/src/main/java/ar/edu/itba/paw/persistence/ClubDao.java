@@ -38,4 +38,7 @@ public interface ClubDao {
     List<Club> findByUserIdPaginated(UUID userId, int limit, int offset);
 
     int countByUserId(UUID userId);
+
+    List<UUID> findIdsByAdmin(UUID adminUserId);
+
 }

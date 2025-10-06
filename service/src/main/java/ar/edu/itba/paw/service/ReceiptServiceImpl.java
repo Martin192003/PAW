@@ -55,10 +55,10 @@ public class ReceiptServiceImpl implements ReceiptService {
     public boolean deleteByBooking(UUID bookingId) { return dao.deleteByBooking(bookingId); }
 
     @Override
+    @Transactional
     public void uploadForBooking(UUID bookingId, UUID userId,
                                  String filename, String contentType, byte[] data) {
 
-        // 1) Entrada básica
         if (data == null || data.length == 0) {
             throw new InvalidReceiptException("receipt.empty");
         }
@@ -74,7 +74,6 @@ public class ReceiptServiceImpl implements ReceiptService {
 
         String safeName = (filename == null || filename.isBlank()) ? "receipt" : filename.trim();
 
-        // 2) Dominio: booking existe y es del usuario
         var bookingOpt = bookingService.findById(bookingId);
         if (bookingOpt.isEmpty()) {
             throw new BookingNotFoundException("booking.notfound");
@@ -86,7 +85,6 @@ public class ReceiptServiceImpl implements ReceiptService {
 
          if (booking.getStatus() == Status.CANCELADA) throw new InvalidReceiptException("receipt.for.cancelled");
 
-        // 3) Regla: un recibo por reserva (duplicado)
         if (receiptDao.findByBooking(bookingId).isPresent()) {
             throw new DuplicateKeyException("receipt.already.exists");
         }
@@ -102,7 +100,6 @@ public class ReceiptServiceImpl implements ReceiptService {
 
         Optional<Receipt> saved = receiptDao.findById(newReceiptId);
 
-        // (Opcional) enviar notificación por email aquí si tu dominio lo requiere
     }
 
     @Override

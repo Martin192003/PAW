@@ -20,6 +20,7 @@ public class ClubServiceImpl implements ClubService{
     private final ClubDao clubDao;
     private final EmailServiceImpl mailService;
     private final ClubTablesDao tablesDao;
+
     @Autowired
     public ClubServiceImpl(ClubDao clubDao, EmailServiceImpl mailService, ClubTablesDao tablesDao) {
         this.tablesDao = tablesDao;
@@ -59,10 +60,13 @@ public class ClubServiceImpl implements ClubService{
     }
 
     @Override
+    @Transactional
     public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
         return clubDao.update(clubId, name, location, rating, quantityRatings, priceRange, description, contactInfoId, musicGenre, zone, isBar);
     }
 
+    @Override
+    @Transactional
     public Club updateClub(Club club) {
         return clubDao.update(
                 club.getClubId(),
@@ -80,27 +84,42 @@ public class ClubServiceImpl implements ClubService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Club> getClubsByUser(UUID userId) {
         return clubDao.findByUserId(userId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<User> getAdminsByClub(UUID clubId) {
         return clubDao.findAdminsByClubId(clubId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public List<Club> getAllClubsPaginated(int limit, int offset) {
         return clubDao.findAllPaginated(limit, offset);
     }
+
+    @Override
+    @Transactional(readOnly = true)
     public int countAllClubs() {
         return clubDao.countAll();
     }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Club> getClubsByUserPaginated(UUID userId, int limit, int offset) {
         return clubDao.findByUserIdPaginated(userId, limit, offset);
     }
+
+    @Override
+    @Transactional(readOnly = true)
     public int countClubsByUser(UUID userId) {
         return clubDao.countByUserId(userId);
     }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Club> searchPaginated(String nameLike,
                                       Zone location,
@@ -113,6 +132,7 @@ public class ClubServiceImpl implements ClubService{
         return clubDao.searchPaginated(nameLike, location, musicGenre, priceRange, isBar, sort, limit, offset);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public int countSearch(String nameLike,
                            Zone location,
@@ -177,6 +197,26 @@ public class ClubServiceImpl implements ClubService{
         updateClub(club);
     }
 
+    @Override
+    public boolean sendContactMessage(UUID clubId, String senderEmail, String senderName, String senderPhone, String message) {
+        Optional<Club> clubOpt = clubDao.findById(clubId);
+        if (clubOpt.isEmpty()) {
+            return false;
+        }
+
+        Club club = clubOpt.get();
+        String recipientEmail = club.getContactInfo() != null ? club.getContactInfo().getEmail() : "test@local";
+
+        return mailService.sendContact(
+                recipientEmail,
+                club.getClubName(),
+                senderEmail,
+                senderName,
+                senderPhone,
+                message
+        );
+    }
+
     private Zone parseZoneFlexible(String raw) {
         if (raw == null) throw new IllegalArgumentException("Zona vacía");
         // 1) Intento por name() del enum (con normalización básica)
@@ -204,24 +244,4 @@ public class ClubServiceImpl implements ClubService{
         return s.toUpperCase(Locale.ROOT);
     }
 
-    @Override
-    @Transactional
-    public boolean sendContactMessage(UUID clubId, String senderEmail, String senderName, String senderPhone, String message) {
-        Optional<Club> clubOpt = clubDao.findById(clubId);
-        if (clubOpt.isEmpty()) {
-            return false;
-        }
-
-        Club club = clubOpt.get();
-        String recipientEmail = club.getContactInfo() != null ? club.getContactInfo().getEmail() : "test@local";
-
-        return mailService.sendContact(
-                recipientEmail,
-                club.getClubName(),
-                senderEmail,
-                senderName,
-                senderPhone,
-                message
-        );
-    }
 }

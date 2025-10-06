@@ -5,6 +5,7 @@ import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import ar.edu.itba.paw.model.exceptions.*;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -222,6 +223,7 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
+    @Transactional
     public boolean delete(UUID bookingId) {
         return bookingDao.delete(bookingId);
     }
@@ -260,32 +262,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
-    private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
-        if (!start.isBefore(end)) throw new InvalidDateRangeException("Rango inválido: " + start + " - " + end);
-    }
-
-    private Table ensureTableExists(UUID tableId) {
-        return tablesDao.findById(tableId).orElseThrow(() -> new TableNotFoundException(tableId));
-    }
-
-
-    private void ensureNoOverlap(UUID tableId,
-                                 OffsetDateTime start,
-                                 OffsetDateTime end,
-                                 UUID excludeBookingId) {
-
-        final List<Booking> bookings = bookingDao.findByTable(tableId);
-        final boolean overlaps = bookings.stream()
-                .filter(b -> excludeBookingId == null || !b.getBookingId().equals(excludeBookingId))
-                .anyMatch(b ->
-                        // only consider active bookings (pending or confirmed) when checking overlap
-                        (b.getStatus() == Status.PENDIENTE || b.getStatus() == Status.CONFIRMADA) &&
-                                b.getBookingStart().isBefore(end) &&
-                                b.getBookingEnd().isAfter(start)
-                );
-
-        if (overlaps) throw new TableAlreadyBookedException();
-    }
 
     @Transactional
     @Override
@@ -341,6 +317,46 @@ public class BookingServiceImpl implements BookingService {
 
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public Booking getForUser(UUID bookingId, UUID userId) {
+        Booking b = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
+        if (b.getUser() == null || !b.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
+        return b;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Booking> searchForAdminPaginated(UUID adminUserId,
+                                                 UUID clubId,
+                                                 UUID bookingId,
+                                                 Status status,
+                                                 String sort,
+                                                 int limit, int offset) {
+
+        List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
+        if (adminClubIds.isEmpty()) return List.of();
+
+        if (clubId != null) {
+            if (!adminClubIds.contains(clubId)) return List.of(); // o AccessDeniedException
+            adminClubIds = List.of(clubId);
+        }
+        return bookingDao.searchByClubIdsPaginated(adminClubIds, bookingId, status, sort, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status) {
+        List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
+        if (adminClubIds.isEmpty()) return 0;
+        if (clubId != null && !adminClubIds.contains(clubId)) return 0;
+        List<UUID> target = (clubId != null) ? List.of(clubId) : adminClubIds;
+        return bookingDao.countByClubIds(target, bookingId, status);
+    }
+
     private void maybeFreeTable(Table table) {
         final List<Booking> bookings = bookingDao.findByTable(table.getTableId());
         final boolean stillBlocked = bookings.stream()
@@ -384,16 +400,35 @@ public class BookingServiceImpl implements BookingService {
             default -> throw new InvalidStatusTransitionException(from, to);
         }
     }
-
-    @Transactional(readOnly = true)
-    @Override
-    public Booking getForUser(UUID bookingId, UUID userId) {
-        Booking b = bookingDao.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
-        if (b.getUser() == null || !b.getUser().getId().equals(userId)) {
-            throw new UnauthorizedException("booking.notAllowedToView");
-        }
-        return b;
+    private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
+        if (!start.isBefore(end)) throw new InvalidDateRangeException("Rango inválido: " + start + " - " + end);
     }
+
+    private Table ensureTableExists(UUID tableId) {
+        return tablesDao.findById(tableId).orElseThrow(() -> new TableNotFoundException(tableId));
+    }
+
+
+    private void ensureNoOverlap(UUID tableId,
+                                 OffsetDateTime start,
+                                 OffsetDateTime end,
+                                 UUID excludeBookingId) {
+
+        final List<Booking> bookings = bookingDao.findByTable(tableId);
+        final boolean overlaps = bookings.stream()
+                .filter(b -> excludeBookingId == null || !b.getBookingId().equals(excludeBookingId))
+                .anyMatch(b ->
+                        // only consider active bookings (pending or confirmed) when checking overlap
+                        (b.getStatus() == Status.PENDIENTE || b.getStatus() == Status.CONFIRMADA) &&
+                                b.getBookingStart().isBefore(end) &&
+                                b.getBookingEnd().isAfter(start)
+                );
+
+        if (overlaps) throw new TableAlreadyBookedException();
+    }
+
+
+
+
 
 }

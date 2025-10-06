@@ -240,6 +240,56 @@ public class BookingsJDBCDao implements BookingDao {
         return jdbc.queryForObject(sql.toString(), Integer.class, args.toArray());
     }
 
+    private static String placeholders(int n) {
+        return String.join(",", Collections.nCopies(n, "?"));
+    }
+
+    @Override
+    public List<Booking> searchByClubIdsPaginated(List<UUID> clubIds,
+                                                  UUID bookingId,
+                                                  Status status,
+                                                  String sort,
+                                                  int limit, int offset) {
+
+        if (clubIds == null || clubIds.isEmpty()) return List.of();
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT b.* " +
+                        "FROM bookings b " +
+                        "JOIN club_tables t ON t.table_id = b.table_id " +
+                        "WHERE t.club_id IN (" + placeholders(clubIds.size()) + ")"
+        );
+        List<Object> args = new ArrayList<>(clubIds);
+
+        if (bookingId != null) { sql.append(" AND b.booking_id = ?"); args.add(bookingId); }
+        if (status != null)    { sql.append(" AND LOWER(b.status) = LOWER(?)"); args.add(status.db()); }
+
+        sql.append(" ORDER BY ").append(resolveOrderBy(sort));
+        sql.append(" LIMIT ? OFFSET ?");
+        args.add(limit); args.add(offset);
+
+        return jdbc.query(sql.toString(), ROW_MAPPER, args.toArray());
+    }
+
+    @Override
+    public int countByClubIds(List<UUID> clubIds, UUID bookingId, Status status) {
+        if (clubIds == null || clubIds.isEmpty()) return 0;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(*) " +
+                        "FROM bookings b " +
+                        "JOIN club_tables t ON t.table_id = b.table_id " +
+                        "WHERE t.club_id IN (" + placeholders(clubIds.size()) + ")"
+        );
+        List<Object> args = new ArrayList<>(clubIds);
+
+        if (bookingId != null) { sql.append(" AND b.booking_id = ?"); args.add(bookingId); }
+        if (status != null)    { sql.append(" AND LOWER(b.status) = LOWER(?)"); args.add(status.db()); }
+
+        return jdbc.queryForObject(sql.toString(), Integer.class, args.toArray());
+    }
+
+
 
 
 }

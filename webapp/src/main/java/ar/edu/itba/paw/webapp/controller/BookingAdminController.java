@@ -68,17 +68,18 @@ public class BookingAdminController {
         return "redirect:/admin/booking?bookingId=" + bookingId;
     }
 
-    @GetMapping("/clubs/bookings")
+    @GetMapping(value = "/clubs/bookings", produces = "text/html;charset=UTF-8")
     public String bookingsOfMyClubs(@Valid @ModelAttribute("bookingSearchForm") BookingSearchForm form,
                                     BindingResult br,
                                     Model model) {
 
-        // tamaño y página
         final int size = 10;
-        int page = Math.max(form.getPage(), 1);
-        int offset = (page - 1) * size;
+        final int page = Math.max(form.getPage(), 1);
+        final int offset = (page - 1) * size;
 
-        // Parseo seguro de bookingId (String -> UUID)
+        // Siempre usamos el usuario logueado
+        final User current = securityService.getVerifiedLoggedUser();
+
         UUID bookingUuid = null;
         if (form.getBookingId() != null && !form.getBookingId().isBlank()) {
             try {
@@ -92,17 +93,27 @@ public class BookingAdminController {
         int totalBookings = 0;
 
         if (!br.hasErrors()) {
-            result = bookingService.searchPaginated(
-                    null, form.getClubId(), bookingUuid, form.getStatus(),
-                    form.getSort(), size, offset
+            // >>> Nuevo: servicio que filtra por clubes administrados por current <<<
+            result = bookingService.searchForAdminPaginated(
+                    current.getId(),
+                    form.getClubId(),     // opcional: además limitar a un club puntual del admin
+                    bookingUuid,
+                    form.getStatus(),
+                    form.getSort(),
+                    size, offset
             );
-            totalBookings = bookingService.countSearch(null, form.getClubId(), bookingUuid, form.getStatus());
+            totalBookings = bookingService.countSearchForAdmin(
+                    current.getId(),
+                    form.getClubId(),
+                    bookingUuid,
+                    form.getStatus()
+            );
         }
 
         int totalPages = (int) Math.ceil((double) totalBookings / size);
 
         Map<String, String> filters = new LinkedHashMap<>();
-        if (form.getUserId() != null) filters.put("userId", form.getUserId().toString());
+
         if (form.getClubId() != null) filters.put("clubId", form.getClubId().toString());
         if (form.getBookingId() != null && !form.getBookingId().isBlank()) filters.put("bookingId", form.getBookingId());
         if (form.getStatus() != null) filters.put("status", form.getStatus().name());
@@ -112,32 +123,27 @@ public class BookingAdminController {
                 .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(java.util.stream.Collectors.joining("&"));
 
-        // Modelo
         model.addAttribute("bookings", result);
-        model.addAttribute("clubNames", clubService.mapClubNames(result)); // o clubService.mapClubNames(...)
+        model.addAttribute("clubNames", clubService.mapClubNames(result));
         model.addAttribute("totalResults", totalBookings);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("queryParams", queryParams);
 
-        // echo de filtros (no depende de que haya error o no)
         model.addAttribute("sort", form.getSort());
         model.addAttribute("status", form.getStatus());
         model.addAttribute("clubId", form.getClubId());
         model.addAttribute("bookingId", form.getBookingId());
 
-        // combos
-        model.addAttribute("clubs", clubService.getClubsByUser(form.getUserId()));
+        model.addAttribute("clubs", clubService.getClubsByUser(current.getId()));
 
-        // usuario y nav
-        model.addAttribute("user", securityService.getVerifiedLoggedUser());
+        model.addAttribute("user", current);
         model.addAttribute("activePage", "clubsBookings");
-
-        // importante: dejar el form en el modelo para <form:form>
         model.addAttribute("bookingSearchForm", form);
 
         return "clubsBookings";
     }
+
 
     @GetMapping("/booking")
     public String bookingAdminHandler(@RequestParam UUID bookingId, Model model, @ModelAttribute("error") String error, @ModelAttribute("success") String success) {

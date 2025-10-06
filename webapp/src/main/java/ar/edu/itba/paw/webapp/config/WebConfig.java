@@ -48,16 +48,16 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("classpath:schema.sql")
     private Resource schemaSql;
 
-    @Value("${app.db.host}")
+    @Value("${local.db.host}")
     private String dbHost;
-    @Value("${app.db.port}")
+    @Value("${local.db.port}")
     private String dbPort;
-    @Value("${app.db.name}")
+    @Value("${local.db.name}")
     private String dbName;
 
-    @Value("${app.db.user}")
+    @Value("${local.db.user}")
     private String dbUser;
-    @Value("${app.db.pass}")
+    @Value("${local.db.pass}")
     private String dbPass;
 
     @Value("${app.schema.init:false}")
