@@ -164,12 +164,6 @@ body {
     display: block;
 }
 
-.card-lg.booking-card span {
-    font-size: 1.1rem;
-    margin-bottom: 8px;
-    color: #fff;
-}
-
 /* Tarjetas / paneles */
 .booking-page .card.panel {
     background: #3c3c3c;
@@ -280,7 +274,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem; /* Opcional, para separar un poco más */
+    gap: 1rem;
 }
 .detail-back {
     position: fixed;
@@ -327,7 +321,6 @@ body {
 }
 .booking-page .btn-back:active { transform: translateY(1px); }
 
-/* Alerts (usadas por flashes y errores i18n) */
 .alert {
     border-radius: 6px;
     padding: 10px 14px;
@@ -391,4 +384,20 @@ body {
         gap: 4px;
     }
     .booking-page dt { opacity: .9; }
+}
+.form-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 30px;
+}
+.form-group span,
+.form-group .error,
+.form-group .error-message {
+    display: block;
+    color: #ff0000;
+    font-size: 0.75rem;
+    margin-left: 2px;
+    font-weight: 500;
 }

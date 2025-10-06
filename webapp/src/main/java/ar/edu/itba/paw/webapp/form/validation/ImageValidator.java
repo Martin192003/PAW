@@ -13,6 +13,6 @@ public class ImageValidator implements ConstraintValidator<ValidImage, Multipart
         }
         String contentType = file.getContentType();
         return contentType != null &&
-                (contentType.equals("image/png") || contentType.equals("image/jpeg"));
+                (contentType.equals("image/png") || contentType.equals("image/jpeg") || contentType.equals("image/jpg") || contentType.equals("image/bmp") || contentType.equals("image/tiff") || contentType.equals("image/webp"));
     }
 }
