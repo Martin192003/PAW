@@ -89,7 +89,7 @@
     <p th:text="#{email.registration.instructions}"></p>
 
     <p style="text-align: center;">
-        <a th:href="${verificationUrl} + '?token=' + ${token}"
+        <a th:href="${verificationUrl}"
            class="button"
            th:text="#{email.registration.button}">
         </a>
