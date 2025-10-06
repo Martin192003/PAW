@@ -2,9 +2,11 @@ package ar.edu.itba.paw.webapp.form;
 
 import javax.validation.constraints.*;
 
+import ar.edu.itba.paw.webapp.form.validation.PasswordsEqual;
 import ar.edu.itba.paw.webapp.form.validation.UnusedEmail;
 import ar.edu.itba.paw.webapp.form.validation.UnusedUsername;
 
+@PasswordsEqual
 public class UserForm {
 
     @UnusedUsername
@@ -32,6 +34,9 @@ public class UserForm {
     @Pattern(regexp = "^$|^.{6,}$", message = "{register.password.size}")
     private String password;
 
+    @NotEmpty(message = "{register.password.notempty}")
+    private String passwordRepeat;
+
     @NotEmpty(message = "{register.phone.notempty}")
     @Pattern(regexp = "^[0-9\\-\\+ ]*$", message = "{register.phone.pattern}")
     @Size(max = 30, message = "{error.cellphone}")
@@ -55,4 +60,10 @@ public class UserForm {
     public String getCellphone() { return cellphone; }
     public void setCellphone(String cellphone) { this.cellphone = cellphone; }
 
+    public String getPasswordRepeat() {
+        return passwordRepeat;
+    }
+    public void setPasswordRepeat(String passwordRepeat) {
+        this.passwordRepeat = passwordRepeat;
+    }
 }

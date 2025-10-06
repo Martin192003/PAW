@@ -32,6 +32,7 @@
             <spring:message code="form.name" var="phName"/>
             <spring:message code="form.surname" var="phSurname"/>
             <spring:message code="form.password" var="phPassword"/>
+            <spring:message code="form.password.repeat" var="phPasswordRepeat"/>
             <spring:message code="form.email" var="phEmail"/>
             <spring:message code="form.cellphone" var="phCellphone"/>
             
@@ -50,22 +51,23 @@
                     <form:input path="surname" cssClass="form-control" placeholder="${phSurname}"/>
                     <form:errors path="surname" cssClass="error"/>
                 </div>
-
                 <div class="form-group">
                     <form:password path="password" cssClass="form-control" placeholder="${phPassword}" autocomplete="new-password"/>
                     <form:errors path="password" cssClass="error"/>
                 </div>
-
+                <div class="form-group">
+                    <form:password path="passwordRepeat" cssClass="form-control" placeholder="${phPasswordRepeat}" autocomplete="new-password"/>
+                    <form:errors path="passwordRepeat" cssClass="error"/>
+                </div>
                 <div class="form-group">
                     <form:input path="email" cssClass="form-control" placeholder="${phEmail}"/>
                     <form:errors path="email" cssClass="error"/>
                 </div>
-
                 <div class="form-group">
                     <form:input path="cellphone" cssClass="form-control" placeholder="${phCellphone}"/>
                     <form:errors path="cellphone" cssClass="error"/>
                 </div>
-
+                <form:errors cssClass="error" element="div"/>
                 <div class="register-buttons">
                     <button type="submit" class="btn btn-success"><spring:message code="button.register"/></button>
                     <a href="<c:url value='/login' />" class="register-login"><spring:message code="register.hasaccount"/></a>
