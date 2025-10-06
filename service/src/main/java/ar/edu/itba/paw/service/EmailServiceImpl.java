@@ -6,9 +6,9 @@ import ar.edu.itba.paw.persistence.UserDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import java.time.LocalDate;
@@ -26,7 +25,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 
 @Service
@@ -37,8 +35,11 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
     private final String defaultFrom;
-
     private UserDao userDao;
+
+
+    @Value("${local.base.url}")
+    private String baseUrl;
 
     @Autowired
     public void setUserDao(final UserDao userDao) {
@@ -121,7 +122,7 @@ public class EmailServiceImpl implements EmailService {
                     "booking-inquiry-club",
                     clubModel,
                     "Ver panel de mensajes",
-                    "/clubs/messages"
+                    abs("/clubs/messages")
             );
 
             Map<String, Object> userModel = Map.of(
@@ -138,7 +139,7 @@ public class EmailServiceImpl implements EmailService {
                     "booking-inquiry-user",
                     userModel,
                     "Ver clubs disponibles",
-                    "/clubs"
+                    abs("/clubs")
             );
 
             LOGGER.info("SMTP contact emails sent OK to {} and {}", to, fromEmail);
@@ -166,7 +167,7 @@ public class EmailServiceImpl implements EmailService {
                 "club-creation-confirmation",
                 model,
                 "Gestionar mi club",
-                "/clubs/" + clubId + "/manage"
+                abs("/clubs/" + clubId + "/manage")
         );
     }
 
@@ -177,7 +178,7 @@ public class EmailServiceImpl implements EmailService {
                 "username", username,
                 "token", verificationToken,
                 "createdAt", ZonedDateTime.now(),
-                "verificationUrl", "http://localhost:8080/webapp_war_exploded/verify",
+                "verificationUrl", abs("/verify?token=" + verificationToken),
                 "brandName", "BlingBling",
                 "brandFooter", "© 2025 BlingBling. Bienvenido a nuestra plataforma."
         );
@@ -188,7 +189,7 @@ public class EmailServiceImpl implements EmailService {
                 "user-registration-confirmation",
                 model,
                 "Verificar mi cuenta",
-                "http://localhost:8080/webapp_war_exploded/verify?token=" + verificationToken
+                abs("/verify?token=" + verificationToken)
         );
     }
 
@@ -198,7 +199,7 @@ public class EmailServiceImpl implements EmailService {
         Map<String, Object> model = Map.of(
                 "username", username,
                 "requestedAt", ZonedDateTime.now(),
-                "resetUrl", "http://localhost:8080/webapp_war_exploded/reset-password",
+                "resetUrl", abs("/reset-password?token=" + resetToken),
                 "token", resetToken,
                 "brandName", "BlingBling",
                 "brandFooter", "© 2025 BlingBling. Recuperación de contraseña."
@@ -213,7 +214,7 @@ public class EmailServiceImpl implements EmailService {
                 "password-reset-email",
                 model,
                 "Restablecer contraseña",
-                "http://localhost:8080/webapp_war_exploded/reset-password?token=" + resetToken
+                abs("/reset-password?token=" + resetToken)
         );
     }
 
@@ -244,15 +245,15 @@ public class EmailServiceImpl implements EmailService {
                         "from", "23:59",
                         "to", "06:00"
                 ),
-                "Ver reserva", "/booking?bookingId=" + booking.getBookingId()
+                "Ver reserva",  abs("/booking?bookingId=" + booking.getBookingId())
         );
     }
 
     @Override
     @Async
-    public void notifyTableReservedToOwner(Booking booking, Club club, Table table, String ownerEmail, Locale locale) {
-        if (!isLikelyEmail(ownerEmail)) {
-            throw new BadRequestException("Email del dueño inválido: " + ownerEmail);
+    public void notifyTableReservedToOwner(Booking booking, Club club, Table table, User owner, Locale locale) {
+        if (!isLikelyEmail(owner.getEmail())) {
+            throw new BadRequestException("Email del dueño inválido: " + owner);
         }
 
         // ---- Fail-fast con mensajes claros ----
@@ -274,8 +275,7 @@ public class EmailServiceImpl implements EmailService {
 
         final DateTimeFormatter df = DateTimeFormatter.ofPattern("EEE dd/MM", locale);
         final String dateTimePretty = df.format(date) + " 23:59–06:00";
-        final String ctaUrl = "/clubs/" + club.getClubId() + "?date=" + date;
-
+        final String ctaUrl = abs("/admin/clubs/bookings?userId=" + owner.getId());
         Map<String, Object> ownerModel = new HashMap<>();
         ownerModel.put("clubName", clubName);
         ownerModel.put("tableNumber", tableNum);
@@ -290,7 +290,7 @@ public class EmailServiceImpl implements EmailService {
         ownerModel.put("sentAt", OffsetDateTime.now(ZONE_ID));
 
         sendTemplatedEmail(
-                ownerEmail,
+                owner.getEmail(),
                 "Nueva reserva de mesa - " + clubName,
                 "table-reserved-owner",
                 ownerModel,
@@ -298,6 +298,10 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
+    private String abs(String path) {
+        String b = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        return path.startsWith("/") ? b + path : b + "/" + path;
+    }
     @Override
     @Async
     public void notifyBookingCancelledToUser(Booking booking, Club club, Table table, Locale locale) {

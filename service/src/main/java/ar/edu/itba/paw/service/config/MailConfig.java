@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -15,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 @Configuration
+@PropertySource("classpath:mail.properties")
 public class MailConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MailConfig.class);
@@ -99,4 +102,10 @@ public class MailConfig {
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
     }
+
+    @Bean
+    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+        return new PropertySourcesPlaceholderConfigurer();
+    }
+
 }
