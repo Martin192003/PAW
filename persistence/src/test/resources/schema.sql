@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
     role          VARCHAR(20) NOT NULL CHECK (role IN ('admin','user')),
     created_at    TIMESTAMPTZ DEFAULT NOW(),
     is_verified   BOOLEAN DEFAULT FALSE,
-    verification_token VARCHAR(100)
+    verification_token VARCHAR(100),
+    reset_password_token VARCHAR(255)
     );
 
 CREATE TABLE IF NOT EXISTS clubs (

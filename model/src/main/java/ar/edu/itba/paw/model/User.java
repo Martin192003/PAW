@@ -34,6 +34,10 @@ public class User {
         this.createdAt = createdAt;
     }
 
+    public User(UUID userId) {
+        this.userId = userId;
+    }
+
     public UUID getId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
 
