@@ -1,0 +1,79 @@
+.modal {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    background: rgba(27,26,26,0.85);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #3c3c3c;
+    color: #fff;
+    border-radius: 20px;
+    padding: 2rem;
+    width: 500px;
+    max-width: 90vw;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 1.5px 12px rgba(140,0,183,0.35); /* igual que login-card */
+    position: relative;
+    animation: fadeIn 0.25s ease;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+.modal-page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    height: 100%;
+    width: 100%;
+    background-color: #1b1a1a;
+    padding-top: 60px;
+}
+.modal-content h2 {
+    margin-bottom: 18px;
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #9c27b0;
+    font-family: 'Darklinos', Arial, sans-serif;
+}
+body{
+    margin: 0;
+    overflow: hidden;
+}
+.modal-body p {
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+.modal-actions {
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-modal {
+    background: #9c27b0;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 32px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.btn-modal:hover {
+    background: #7b1fa2;
+    color: #fff;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
