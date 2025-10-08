@@ -25,7 +25,9 @@
     <maven-war-plugin.version>2.6</maven-war-plugin.version>
     <com.sun.mail.version>1.6.2</com.sun.mail.version>
     <junit.version>4.13.2</junit.version>
-      <org.thymeleaf.version>3.1.2.RELEASE</org.thymeleaf.version>
+    <org.thymeleaf.version>3.1.2.RELEASE</org.thymeleaf.version>
+    <org.hibernate.version>5.1.0.Final</org.hibernate.version>
+    <org.hibernate.jpa.version>1.0.0.Final</org.hibernate.jpa.version>
   </properties>
 
   <dependencyManagement>
@@ -154,6 +156,26 @@
             <groupId>com.sun.mail</groupId>
             <artifactId>javax.mail</artifactId>
             <version>${com.sun.mail.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+            <version>${org.springframework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${org.hibernate.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>${org.hibernate.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.1-api</artifactId>
+            <version>${org.hibernate.jpa.version}</version>
         </dependency>
     </dependencies>
   </dependencyManagement>

@@ -7,11 +7,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.JpaVendorAdapter;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
+
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -22,7 +31,9 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.lang.management.PlatformLoggingMXBean;
 import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 @EnableWebMvc
@@ -48,16 +59,16 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("classpath:/db/schema.sql")
     private Resource schemaSql;
 
-    @Value("${app.db.host}")
+    @Value("${local.db.host}")
     private String dbHost;
-    @Value("${app.db.port}")
+    @Value("${local.db.port}")
     private String dbPort;
-    @Value("${app.db.name}")
+    @Value("${local.db.name}")
     private String dbName;
 
-    @Value("${app.db.user}")
+    @Value("${local.db.user}")
     private String dbUser;
-    @Value("${app.db.pass}")
+    @Value("${local.db.pass}")
     private String dbPass;
 
     @Value("${app.schema.init:false}")
@@ -99,30 +110,37 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public DataSourceInitializer dataSourceInitializer(DataSource ds) {
-        var dsi = new DataSourceInitializer();
-        dsi.setDataSource(ds);
+    public LocalContainerEntityManagerFactoryBean entityManager() {
+        final LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+        emf.setPackagesToScan("ar.edu.itba.paw.webapp.model");
+        emf.setDataSource(dataSource());
 
-        var pop = new ResourceDatabasePopulator();
-        pop.addScript(schemaSql);
-        pop.setContinueOnError(true);
-        pop.setIgnoreFailedDrops(true);
-        dsi.setDatabasePopulator(pop);
-        dsi.setEnabled(runSchema);
-        return dsi;
+        final JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        emf.setJpaVendorAdapter(vendorAdapter);
+
+        final Properties properties = new Properties();
+        properties.setProperty("hibernate.hbm2ddl.auto", "update");
+        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL92Dialect");
+
+        //Esto es para debuggear hibernate, pero nunca en prod
+        //properties.setProperty("hibernate.show_sql", "true");
+        //properties.setProperty("format_sql", "true");
+
+        emf.setJpaProperties(properties);
+        return emf;
     }
 
     @Bean
-    public org.springframework.web.multipart.commons.CommonsMultipartResolver multipartResolver() {
-        var r = new org.springframework.web.multipart.commons.CommonsMultipartResolver();
+    public JpaTransactionManager transactionManager(final EntityManagerFactory emf) {
+        return new JpaTransactionManager(emf);
+    }
+
+    @Bean
+    public CommonsMultipartResolver multipartResolver() {
+        var r = new CommonsMultipartResolver();
         r.setMaxUploadSizePerFile(10 * 1024 * 1024); // 10MB
         return r;
     }
 
-    private DatabasePopulator databasePopulator() {
-        var pop = new ResourceDatabasePopulator();
-        pop.addScript(schemaSql);
-        return pop;
-    }
 
 }
