@@ -31,9 +31,9 @@ public class ClubJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private ClubJDBCDao clubDao;
+    private ClubJpaDao clubDao;
     @Autowired
-    private UserJDBCDao userDao;
+    private UserJpaDao userDao;
     private JdbcTemplate jdbcTemplate;
 
     @Before

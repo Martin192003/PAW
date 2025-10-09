@@ -31,7 +31,7 @@ public class ActivityJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private ActivityJDBCDao activityDao;
+    private ActivityJpaDao activityDao;
     private JdbcTemplate jdbcTemplate;
 
     @Before

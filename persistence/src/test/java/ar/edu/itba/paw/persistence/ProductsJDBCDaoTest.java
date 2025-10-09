@@ -33,7 +33,7 @@ public class ProductsJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private ProductsJDBCDao productsDao;
+    private ProductsJpaDao productsDao;
     @Autowired
     private ClubDao clubDao;
     private JdbcTemplate jdbcTemplate;

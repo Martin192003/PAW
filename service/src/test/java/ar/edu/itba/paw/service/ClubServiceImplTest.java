@@ -185,7 +185,7 @@ public class ClubServiceImplTest {
         ClubTablesDao tablesDao = Mockito.mock(ClubTablesDao.class);
         ClubDao clubDao = Mockito.mock(ClubDao.class);
         Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
-        Table table = Mockito.mock(Table.class);
+        ClubTable table = Mockito.mock(ClubTable.class);
         Mockito.when(table.getClubId()).thenReturn(CLUB_ID);
         Mockito.when(tablesDao.findById(CLUB_ID)).thenReturn(Optional.of(table));
         Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));

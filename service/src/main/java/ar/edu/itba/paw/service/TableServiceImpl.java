@@ -1,6 +1,6 @@
 package ar.edu.itba.paw.service;
 
-import ar.edu.itba.paw.model.Table;
+import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.TableState;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.persistence.ClubDao;
@@ -31,26 +31,26 @@ public class TableServiceImpl implements TableService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Table> findById(UUID id) {
+    public Optional<ClubTable> findById(UUID id) {
         return clubTablesDao.findById(id);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Table> findByClubId(UUID clubId) {
+    public List<ClubTable> findByClubId(UUID clubId) {
         var club = clubDao.findById(clubId).orElseThrow(IllegalArgumentException::new);
         var list = clubTablesDao.findByClub(club);
         return list;
     }
     @Override
     @Transactional(readOnly = true)
-    public List<Table> findAll() {
+    public List<ClubTable> findAll() {
         return clubTablesDao.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Table> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to) {
+    public List<ClubTable> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to) {
         // valida club y normaliza rango
         var club = clubDao.findById(clubId).orElseThrow(IllegalArgumentException::new);
         if (!from.isBefore(to)) throw new IllegalArgumentException("Rango inválido");
@@ -59,7 +59,7 @@ public class TableServiceImpl implements TableService {
 
     @Override
     @Transactional
-    public Table create(BigDecimal number, BigDecimal capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount) {
+    public ClubTable create(BigDecimal number, BigDecimal capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount) {
         if (clubDao.findById(clubId).isEmpty()) throw new NotFoundException("Club no existente");
         if ( number == null || number.compareTo(BigDecimal.ZERO) < 0 || number.compareTo(BigDecimal.valueOf(1_000_000)) >=  0) throw new InvalidTableNumberException("Número de mesa inválido");
         if ( capacity == null || capacity.compareTo(BigDecimal.ZERO) <= 0 || capacity.compareTo(BigDecimal.valueOf(10_000)) >= 0) throw new InvalidCapacityException("Capacidad inválida");
@@ -70,7 +70,7 @@ public class TableServiceImpl implements TableService {
 
     @Override
     @Transactional
-    public Table update(UUID tableId, UUID clubId, BigDecimal tableNumber, BigDecimal capacity, TableState state, BigDecimal price, BigDecimal discount) {
+    public ClubTable update(UUID tableId, UUID clubId, BigDecimal tableNumber, BigDecimal capacity, TableState state, BigDecimal price, BigDecimal discount) {
         if (clubDao.findById(clubId).isEmpty()) throw new NotFoundException("Club no existente");
         if ( tableNumber == null || tableNumber.compareTo(BigDecimal.ZERO) < 0 || tableNumber.compareTo(BigDecimal.valueOf(1_000_000)) >=  0) throw new InvalidTableNumberException("Número de mesa inválido");
         if ( capacity == null || capacity.compareTo(BigDecimal.ZERO) <= 0 || capacity.compareTo(BigDecimal.valueOf(10_000)) >= 0) throw new InvalidCapacityException("Capacidad inválida");
@@ -88,7 +88,7 @@ public class TableServiceImpl implements TableService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Table> findAvailableOnDate(UUID clubId, LocalDate date, ZoneId tz, Clock clock) {
+    public List<ClubTable> findAvailableOnDate(UUID clubId, LocalDate date, ZoneId tz, Clock clock) {
         if (!isAllowedDay(date)) {
             throw new ValidationException("Fecha no permitida para reservas");
         }

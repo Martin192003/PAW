@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.persistence.UserJDBCDao;
+import ar.edu.itba.paw.persistence.UserDao;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +18,7 @@ import java.util.Optional;
 @RunWith(MockitoJUnitRunner.class)
 public class SecurityServiceImplTest {
     @Mock
-    private UserJDBCDao userDao;
+    private UserDao userDao;
 
     @InjectMocks
     private SecurityServiceImpl securityService;

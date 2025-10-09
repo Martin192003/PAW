@@ -1,15 +1,36 @@
 package ar.edu.itba.paw.model;
 
+import org.hibernate.annotations.GenericGenerator;
+
+import javax.persistence.*;
+import javax.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-
+@Entity
+@Table(name = "activity")
 public class Activity {
 
+    @Id
+    @Column(name = "activity_id", columnDefinition = "UUID", nullable = false, updatable = false)
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator"
+    )
     private UUID activityId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;
+
+    @Column(name = "activity_type", nullable = false)
     private String activityType;
+
+    @Column(name = "activity_date", nullable = false)
     private OffsetDateTime activityDate;
+
+    @Column(name = "details")
     private String details;
 
     public Activity() {}

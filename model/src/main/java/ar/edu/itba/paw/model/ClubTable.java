@@ -1,22 +1,42 @@
 package ar.edu.itba.paw.model;
 
+import ar.edu.itba.paw.model.converter.TableStateConverter;
+
+import javax.persistence.*;
 import java.math.BigDecimal;
-import java.util.Objects;
 import java.util.UUID;
 
-public class Table {
+@Entity
+@Table(name = "tables")
+public class ClubTable {
 
+    @Id
+    @Column(name = "table_id", columnDefinition = "UUID", nullable = false, updatable = false)
     private UUID id;
+
+    @Column(name = "club_id", columnDefinition = "UUID", nullable = false)
     private UUID clubId;
+
+    @Column(name = "table_number", nullable = false)
     private int tableNumber;
+
+    @Column(name = "capacity", nullable = false)
     private int capacity;
-    private TableState tableState; //  disponible, pendiente, reservada
+
+    @Convert(converter = TableStateConverter.class)
+    @Column(name = "table_state", nullable = false)
+    private TableState tableState; // disponible, pendiente, reservada
+
+    @Column(name = "price", precision = 12, scale = 2, nullable = false)
     private BigDecimal price;
+
+    @Column(name = "discount", precision = 5, scale = 2, nullable = false)
     private BigDecimal discount;   // porcentaje 0..100
 
-    public Table() {}
+    public ClubTable() {}
 
-    public Table(UUID id,UUID clubID, int tableNumber, int capacity, TableState state, BigDecimal price, BigDecimal discount) {
+    public ClubTable(UUID id, UUID clubID, int tableNumber, int capacity, TableState state,
+                 BigDecimal price, BigDecimal discount) {
         this.id = id;
         this.clubId = clubID;
         this.tableNumber = tableNumber;
@@ -24,6 +44,14 @@ public class Table {
         this.tableState = state == null ? TableState.DISPONIBLE : state;
         this.price = price == null ? BigDecimal.ZERO : price;
         this.discount = discount == null ? BigDecimal.ZERO : discount;
+    }
+
+    @PrePersist
+    private void prePersist() {
+        if (id == null) id = UUID.randomUUID();
+        if (tableState == null) tableState = TableState.DISPONIBLE;
+        if (price == null) price = BigDecimal.ZERO;
+        if (discount == null) discount = BigDecimal.ZERO;
     }
 
     public UUID getTableId() { return id; }
@@ -46,5 +74,4 @@ public class Table {
 
     public BigDecimal getDiscount() { return discount; }
     public void setDiscount(BigDecimal discount) { this.discount = discount; }
-
 }

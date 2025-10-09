@@ -1,10 +1,12 @@
 package ar.edu.itba.paw.webapp.config;
 
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -109,26 +111,41 @@ public class WebConfig implements WebMvcConfigurer {
         return ds;
     }
 
+//    @Bean
+//    public LocalContainerEntityManagerFactoryBean entityManager() {
+//        final LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+//        emf.setPackagesToScan("ar.edu.itba.paw.webapp.model");
+//        emf.setDataSource(dataSource());
+//
+//        final JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+//        emf.setJpaVendorAdapter(vendorAdapter);
+//
+//        final Properties properties = new Properties();
+//        properties.setProperty("hibernate.hbm2ddl.auto", "update");
+//        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL92Dialect");
+//
+//        //Esto es para debuggear hibernate, pero nunca en prod
+//        //properties.setProperty("hibernate.show_sql", "true");
+//        //properties.setProperty("format_sql", "true");
+//
+//        emf.setJpaProperties(properties);
+//        return emf;
+//    }
+
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManager() {
-        final LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
-        emf.setPackagesToScan("ar.edu.itba.paw.webapp.model");
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+        var emf = new LocalContainerEntityManagerFactoryBean();
+        emf.setPackagesToScan("ar.edu.itba.paw.model");
         emf.setDataSource(dataSource());
+        emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
-        final JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
-        emf.setJpaVendorAdapter(vendorAdapter);
-
-        final Properties properties = new Properties();
-        properties.setProperty("hibernate.hbm2ddl.auto", "update");
-        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL92Dialect");
-
-        //Esto es para debuggear hibernate, pero nunca en prod
-        //properties.setProperty("hibernate.show_sql", "true");
-        //properties.setProperty("format_sql", "true");
-
-        emf.setJpaProperties(properties);
+        var props = new Properties();
+        props.setProperty("hibernate.hbm2ddl.auto", "update");
+        props.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL92Dialect");
+        emf.setJpaProperties(props);
         return emf;
     }
+
 
     @Bean
     public JpaTransactionManager transactionManager(final EntityManagerFactory emf) {
@@ -140,6 +157,25 @@ public class WebConfig implements WebMvcConfigurer {
         var r = new CommonsMultipartResolver();
         r.setMaxUploadSizePerFile(10 * 1024 * 1024); // 10MB
         return r;
+    }
+
+    private DatabasePopulator databasePopulator() {
+        var pop = new ResourceDatabasePopulator();
+        pop.addScript(schemaSql);
+        return pop;
+    }
+    @Bean
+    public DataSourceInitializer dataSourceInitializer(DataSource ds) {
+        var dsi = new DataSourceInitializer();
+        dsi.setDataSource(ds);
+
+        var pop = new ResourceDatabasePopulator();
+        pop.addScript(schemaSql);
+        pop.setContinueOnError(true);
+        pop.setIgnoreFailedDrops(true);
+        dsi.setDatabasePopulator(pop);
+        dsi.setEnabled(runSchema);
+        return dsi;
     }
 
 

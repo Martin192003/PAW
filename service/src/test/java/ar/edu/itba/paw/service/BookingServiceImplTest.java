@@ -73,7 +73,7 @@ public class BookingServiceImplTest {
     @Test
     public void testCreateBookingSuccess() {
         User user = Mockito.mock(User.class);
-        Table table = Mockito.mock(Table.class);
+        ClubTable table = Mockito.mock(ClubTable.class);
         Club club = Mockito.mock(Club.class);
         Booking booking = Mockito.mock(Booking.class);
         Mockito.when(tablesDao.findById(TABLE_ID)).thenReturn(Optional.of(table));
@@ -88,7 +88,7 @@ public class BookingServiceImplTest {
     @Test(expected = TableAlreadyBookedException.class)
     public void testCreateBookingTableNotAvailable() {
         User user = Mockito.mock(User.class);
-        Table table = Mockito.mock(Table.class);
+        ClubTable table = Mockito.mock(ClubTable.class);
         Mockito.when(tablesDao.findById(TABLE_ID)).thenReturn(Optional.of(table));
         Mockito.when(table.getTableState()).thenReturn(TableState.RESERVADA);
         bookingService.create(user, TABLE_ID, START, END, AMOUNT);
@@ -127,7 +127,7 @@ public class BookingServiceImplTest {
     @Test
     public void testCancelBookingSuccess() {
         Booking booking = Mockito.mock(Booking.class);
-        Table table = Mockito.mock(Table.class);
+        ClubTable table = Mockito.mock(ClubTable.class);
         Club club = Mockito.mock(Club.class);
         User user = Mockito.mock(User.class);
         Mockito.when(bookingDao.findById(BOOKING_ID)).thenReturn(Optional.of(booking));

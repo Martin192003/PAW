@@ -33,9 +33,9 @@ public class BookingsJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private BookingsJDBCDao bookingsDao;
+    private BookingsJpaDao bookingsDao;
     @Autowired
-    private UserJDBCDao userDao;
+    private UserJpaDao userDao;
     private JdbcTemplate jdbcTemplate;
     private PasswordEncoder passwordEncoder;
 

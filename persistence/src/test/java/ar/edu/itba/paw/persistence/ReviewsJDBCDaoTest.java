@@ -31,11 +31,11 @@ public class ReviewsJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private ReviewsJDBCDao reviewsDao;
+    private ReviewsJpaDao reviewsDao;
     @Autowired
-    private UserJDBCDao userDao;
+    private UserJpaDao userDao;
     @Autowired
-    private ClubJDBCDao clubDao;
+    private ClubJpaDao clubDao;
     private JdbcTemplate jdbcTemplate;
 
     @Before

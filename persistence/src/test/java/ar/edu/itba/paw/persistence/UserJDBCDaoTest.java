@@ -32,7 +32,7 @@ public class UserJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private UserJDBCDao userDao;
+    private UserJpaDao userDao;
     private JdbcTemplate jdbcTemplate;
     @Before
     public void setUp() {

@@ -1,19 +1,44 @@
 package ar.edu.itba.paw.model;
 
+import ar.edu.itba.paw.model.converter.StatusConverter;
+
+import javax.persistence.*;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import javax.persistence.Convert;
 
-
+@Entity
+@Table(name = "bookings")
 public class Booking {
 
+    @Id
+    @Column(name = "booking_id", columnDefinition = "UUID", nullable = false, updatable = false)
     private UUID bookingId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    // No mapeamos la entidad Table; guardamos el UUID como pedís
+    @Column(name = "table_id", columnDefinition = "UUID", nullable = false)
     private UUID table;
+
+    @Column(name = "booking_start", nullable = false)
     private OffsetDateTime bookingStart;
+
+    @Column(name = "booking_end", nullable = false)
     private OffsetDateTime bookingEnd;
-    private Status status; // 'confirmada' | 'pendiente' | 'cancelada'
+
+    @Convert(converter = StatusConverter.class) //ESTO ESTA RARO PREGUNTAR
+    @Column(name = "status", nullable = false)
+    private Status status;
+
+    @Column(name = "created_at")
     private OffsetDateTime createdAt;
+
+    @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
     public Booking() {}
@@ -38,7 +63,7 @@ public class Booking {
     public void setUser(User user) { this.user = user; }
 
     public UUID getTableId() { return table; }
-    public void setTableId(UUID tableId) { this.table= tableId; }
+    public void setTableId(UUID tableId) { this.table = tableId; }
 
     public OffsetDateTime getBookingStart() { return bookingStart; }
     public void setBookingStart(OffsetDateTime bookingStart) { this.bookingStart = bookingStart; }

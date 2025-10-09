@@ -26,7 +26,7 @@ public class ReceiptJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private ReceiptJDBCDao receiptDao;
+    private ReceiptJpaDao receiptDao;
     private JdbcTemplate jdbcTemplate;
 
     @Before

@@ -28,7 +28,7 @@ public class BookingItemsJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private BookingItemsJDBCDao bookingItemsDao;
+    private BookingItemsJpaDao bookingItemsDao;
     private JdbcTemplate jdbcTemplate;
 
     @Before

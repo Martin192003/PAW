@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.Table;
+import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.TableState;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +29,7 @@ public class ClubTablesJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private ClubTablesJDBCDao clubTablesDao;
+    private ClubTablesJpaDao clubTablesDao;
     private JdbcTemplate jdbcTemplate;
 
     private UUID clubId;
@@ -80,7 +80,7 @@ public class ClubTablesJDBCDaoTest {
         BigDecimal price = BigDecimal.valueOf(100);
         BigDecimal discount = BigDecimal.valueOf(10);
 
-        Table table = clubTablesDao.create(number, capacity, clubId, state, price, discount);
+        ClubTable table = clubTablesDao.create(number, capacity, clubId, state, price, discount);
 
         assertNotNull(table);
         assertEquals(number, table.getTableNumber());
@@ -94,13 +94,13 @@ public class ClubTablesJDBCDaoTest {
 
     @Test
     public void testFindByIdReturnsEmpty() {
-        Optional<Table> result = clubTablesDao.findById(UUID.randomUUID());
+        Optional<ClubTable> result = clubTablesDao.findById(UUID.randomUUID());
         assertTrue(result.isEmpty());
     }
 
     @Test
     public void testUpdateReturnsNullIfNotFound() {
-        Table result = clubTablesDao.update(UUID.randomUUID(), UUID.randomUUID(), 2, 6, TableState.RESERVADA, BigDecimal.valueOf(200), BigDecimal.valueOf(20));
+        ClubTable result = clubTablesDao.update(UUID.randomUUID(), UUID.randomUUID(), 2, 6, TableState.RESERVADA, BigDecimal.valueOf(200), BigDecimal.valueOf(20));
         assertNull(result);
     }
 
@@ -114,14 +114,14 @@ public class ClubTablesJDBCDaoTest {
     public void testFindByClubReturnsEmptyList() {
         Club club = new Club();
         club.setClubId(UUID.randomUUID());
-        List<Table> result = clubTablesDao.findByClub(club);
+        List<ClubTable> result = clubTablesDao.findByClub(club);
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }
 
     @Test
     public void testUpdateSuccess() {
-        Table updated = clubTablesDao.update(tableId, clubId, 2, 6, TableState.RESERVADA, BigDecimal.valueOf(200), BigDecimal.valueOf(20));
+        ClubTable updated = clubTablesDao.update(tableId, clubId, 2, 6, TableState.RESERVADA, BigDecimal.valueOf(200), BigDecimal.valueOf(20));
         assertNotNull(updated);
         assertEquals(2, updated.getTableNumber());
         assertEquals(6, updated.getCapacity());
@@ -139,7 +139,7 @@ public class ClubTablesJDBCDaoTest {
 
     @Test
     public void testFindByIdSuccess() {
-        Optional<Table> result = clubTablesDao.findById(tableId);
+        Optional<ClubTable> result = clubTablesDao.findById(tableId);
         assertTrue(result.isPresent());
         assertEquals(tableId, result.get().getTableId());
     }
@@ -152,13 +152,13 @@ public class ClubTablesJDBCDaoTest {
                 "INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 tableId2, clubId, 2, 2, "disponible", 50, 5
         );
-        List<Table> tables = clubTablesDao.findAll();
+        List<ClubTable> tables = clubTablesDao.findAll();
         assertEquals(2, tables.size());
     }
 
     @Test
     public void testFindByClubWithTables() {
-        List<Table> tables = clubTablesDao.findByClub(new Club(clubId, null, null, null, null, null, null, null, null, null, null, null));
+        List<ClubTable> tables = clubTablesDao.findByClub(new Club(clubId, null, null, null, null, null, null, null, null, null, null, null));
         assertEquals(1, tables.size());
         assertEquals(tableId, tables.get(0).getTableId());
     }
@@ -168,7 +168,7 @@ public class ClubTablesJDBCDaoTest {
         // No hay bookings, la mesa debe estar disponible
         java.time.OffsetDateTime from = java.time.OffsetDateTime.now();
         java.time.OffsetDateTime to = from.plusHours(2);
-        List<Table> available = clubTablesDao.findAvailableByClubAndRange(clubId, from, to);
+        List<ClubTable> available = clubTablesDao.findAvailableByClubAndRange(clubId, from, to);
         assertEquals(1, available.size());
         assertEquals(tableId, available.get(0).getTableId());
     }

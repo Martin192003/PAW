@@ -166,10 +166,10 @@ CREATE INDEX IF NOT EXISTS receipts_booking_id_idx ON receipts (booking_id);
 
 
 CREATE TABLE IF NOT EXISTS club_admins (
-                                           club_id  UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
+    club_id  UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
     admin_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     PRIMARY KEY (club_id, admin_id)
-    );
+);
 
 -- por si ya existe, la volamos primero
 DROP FUNCTION IF EXISTS booking_items_set_line_total() CASCADE;

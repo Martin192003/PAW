@@ -61,7 +61,7 @@ public class BookingServiceImpl implements BookingService {
 
         validateDateRange(bookingStart, bookingEnd);
 
-        final Table table = ensureTableExists(tableId);
+        final ClubTable table = ensureTableExists(tableId);
 
         if (table.getTableState() != null && table.getTableState() != TableState.DISPONIBLE) {
             throw new TableAlreadyBookedException();
@@ -118,7 +118,7 @@ public class BookingServiceImpl implements BookingService {
         Assert.notNull(status, "status no puede ser null");
 
         validateDateRange(bookingStart, bookingEnd);
-        final Table table = ensureTableExists(tableId);
+        final ClubTable table = ensureTableExists(tableId);
 
         if (status != Status.DISPONIBLE) {
             ensureNoOverlap(tableId, bookingStart, bookingEnd, bookingId);
@@ -149,7 +149,7 @@ public class BookingServiceImpl implements BookingService {
 
         if (newStatus == Status.CANCELADA) {
             try {
-                final Table table = ensureTableExists(updated.getTableId());
+                final ClubTable table = ensureTableExists(updated.getTableId());
                 maybeFreeTable(table);
             } catch (TableNotFoundException ignored) {
             }
@@ -165,7 +165,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
         validateStatusTransition(existing.getStatus(), Status.CANCELADA);
 
-        Table table = ensureTableExists(existing.getTableId());
+        ClubTable table = ensureTableExists(existing.getTableId());
         Club club = clubDao.findById(table.getClubId()).orElseThrow();
 
         User completeUser = userService.findById(existing.getUser().getId());
@@ -235,7 +235,7 @@ public class BookingServiceImpl implements BookingService {
 
         validateStatusTransition(existing.getStatus(), Status.CANCELADA);
 
-        Table table = ensureTableExists(existing.getTableId());
+        ClubTable table = ensureTableExists(existing.getTableId());
         Club club = clubDao.findById(table.getClubId()).orElseThrow();
 
         // Cargar usuario completo desde UserService - SIN .orElseThrow()
@@ -441,7 +441,7 @@ public class BookingServiceImpl implements BookingService {
         return bookingDao.countByClubIds(target, bookingId, status);
     }
 
-    private void maybeFreeTable(Table table) {
+    private void maybeFreeTable(ClubTable table) {
         final List<Booking> bookings = bookingDao.findByTable(table.getTableId());
         final boolean stillBlocked = bookings.stream()
                 .anyMatch(b -> b.getStatus() == Status.PENDIENTE || b.getStatus() == Status.CONFIRMADA);
@@ -488,7 +488,7 @@ public class BookingServiceImpl implements BookingService {
         if (!start.isBefore(end)) throw new InvalidDateRangeException("Rango inválido: " + start + " - " + end);
     }
 
-    private Table ensureTableExists(UUID tableId) {
+    private ClubTable ensureTableExists(UUID tableId) {
         return tablesDao.findById(tableId).orElseThrow(() -> new TableNotFoundException(tableId));
     }
 

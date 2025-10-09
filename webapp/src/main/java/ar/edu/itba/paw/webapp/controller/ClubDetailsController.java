@@ -56,7 +56,7 @@ public class ClubDetailsController {
 
         OffsetDateTime start = null;
         OffsetDateTime end = null;
-        List<ar.edu.itba.paw.model.Table> available = List.of();
+        List<ar.edu.itba.paw.model.ClubTable> available = List.of();
 
         if (dateStr == null || dateStr.isBlank()) {
             var ld = defaultDate;

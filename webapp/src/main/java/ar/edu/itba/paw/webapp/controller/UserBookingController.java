@@ -184,7 +184,7 @@ public class UserBookingController {
             model.addAttribute("booking", booking);
             model.addAttribute("user", userService.findById(booking.getUser().getId()));
 
-            Table table = tableService.findById(booking.getTableId()).orElse(null);
+            ClubTable table = tableService.findById(booking.getTableId()).orElse(null);
             model.addAttribute("table", table);
 
             String clubName = "";
@@ -253,7 +253,7 @@ public class UserBookingController {
         User u = userService.findById(booking.getUser().getId());
         model.addAttribute("user", u);
 
-        Table table = tableService.findById(booking.getTableId()).orElse(null);
+        ClubTable table = tableService.findById(booking.getTableId()).orElse(null);
         model.addAttribute("table", table);
 
         String clubName = "";

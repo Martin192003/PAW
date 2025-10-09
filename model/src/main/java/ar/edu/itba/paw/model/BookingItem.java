@@ -1,16 +1,33 @@
 package ar.edu.itba.paw.model;
 
+import javax.persistence.*;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-
+@Entity
+@Table(name = "booking_items")
 public class BookingItem {
 
+    @Id
+    @Column(name = "booking_item_id", columnDefinition = "UUID", nullable = false, updatable = false)
     private UUID bookingItemId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    @Column(name = "quantity", nullable = false)
     private Integer quantity;
+
+    @Column(name = "unit_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal unitPrice;
+
+    @Column(name = "line_total", precision = 12, scale = 2, nullable = false)
     private BigDecimal lineTotal;
 
     public BookingItem() {}
@@ -23,6 +40,15 @@ public class BookingItem {
         this.quantity = quantity;
         this.unitPrice = unitPrice;
         this.lineTotal = lineTotal;
+    }
+
+    // Recalcula lineTotal si falta
+    @PrePersist
+    @PreUpdate
+    private void computeLineTotal() {
+        if (unitPrice != null && quantity != null) {
+            this.lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        }
     }
 
     public UUID getBookingItemId() { return bookingItemId; }

@@ -1,6 +1,6 @@
 package ar.edu.itba.paw.service;
 
-import ar.edu.itba.paw.model.Table;
+import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.TableState;
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.exceptions.InvalidTableNumberException;
@@ -31,9 +31,9 @@ public class TableServiceImplTest {
     @Test
     public void testFindById_Found() {
         UUID id = UUID.randomUUID();
-        Table table = Mockito.mock(Table.class);
+        ClubTable table = Mockito.mock(ClubTable.class);
         Mockito.when(clubTablesDao.findById(id)).thenReturn(Optional.of(table));
-        Optional<Table> result = tableService.findById(id);
+        Optional<ClubTable> result = tableService.findById(id);
         Assert.assertTrue(result.isPresent());
         Assert.assertEquals(table, result.get());
     }
@@ -42,7 +42,7 @@ public class TableServiceImplTest {
     public void testFindById_NotFound() {
         UUID id = UUID.randomUUID();
         Mockito.when(clubTablesDao.findById(id)).thenReturn(Optional.empty());
-        Optional<Table> result = tableService.findById(id);
+        Optional<ClubTable> result = tableService.findById(id);
         Assert.assertFalse(result.isPresent());
     }
 
@@ -50,10 +50,10 @@ public class TableServiceImplTest {
     public void testFindByClubId_Found() {
         UUID clubId = UUID.randomUUID();
         Club club = Mockito.mock(Club.class);
-        List<Table> tables = Arrays.asList(Mockito.mock(Table.class));
+        List<ClubTable> tables = Arrays.asList(Mockito.mock(ClubTable.class));
         Mockito.when(clubDao.findById(clubId)).thenReturn(Optional.of(club));
         Mockito.when(clubTablesDao.findByClub(club)).thenReturn(tables);
-        List<Table> result = tableService.findByClubId(clubId);
+        List<ClubTable> result = tableService.findByClubId(clubId);
         Assert.assertEquals(tables, result);
     }
 
@@ -66,9 +66,9 @@ public class TableServiceImplTest {
 
     @Test
     public void testFindAll() {
-        List<Table> tables = Arrays.asList(Mockito.mock(Table.class));
+        List<ClubTable> tables = Arrays.asList(Mockito.mock(ClubTable.class));
         Mockito.when(clubTablesDao.findAll()).thenReturn(tables);
-        List<Table> result = tableService.findAll();
+        List<ClubTable> result = tableService.findAll();
         Assert.assertEquals(tables, result);
     }
 
@@ -79,10 +79,10 @@ public class TableServiceImplTest {
         Mockito.when(club.getClubId()).thenReturn(clubId);
         OffsetDateTime from = OffsetDateTime.now();
         OffsetDateTime to = from.plusHours(2);
-        List<Table> tables = Arrays.asList(Mockito.mock(Table.class));
+        List<ClubTable> tables = Arrays.asList(Mockito.mock(ClubTable.class));
         Mockito.when(clubDao.findById(clubId)).thenReturn(Optional.of(club));
         Mockito.when(clubTablesDao.findAvailableByClubAndRange(clubId, from, to)).thenReturn(tables);
-        List<Table> result = tableService.findAvailableByClubAndRange(clubId, from, to);
+        List<ClubTable> result = tableService.findAvailableByClubAndRange(clubId, from, to);
         Assert.assertEquals(tables, result);
     }
 
@@ -109,7 +109,7 @@ public class TableServiceImplTest {
     public void testCreate_Success() {
         UUID clubId = UUID.randomUUID();
         Club club = Mockito.mock(Club.class);
-        Table table = Mockito.mock(Table.class);
+        ClubTable table = Mockito.mock(ClubTable.class);
         BigDecimal number = BigDecimal.ONE;
         BigDecimal capacity = BigDecimal.TEN;
         TableState state = TableState.DISPONIBLE;
@@ -124,7 +124,7 @@ public class TableServiceImplTest {
                 Mockito.eq(price),
                 Mockito.eq(discount)
         )).thenReturn(table);
-        Table result = tableService.create(number, capacity, clubId, state, price, discount);
+        ClubTable result = tableService.create(number, capacity, clubId, state, price, discount);
         Assert.assertEquals(table, result);
     }
 

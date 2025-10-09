@@ -1,24 +1,75 @@
 package ar.edu.itba.paw.model;
 
+import ar.edu.itba.paw.model.converter.MusicalGenreConverter;
+import ar.edu.itba.paw.model.converter.PriceConverter;
+import org.hibernate.annotations.GenericGenerator;
+
+import javax.persistence.*;
+import javax.persistence.Table;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.math.BigDecimal;
 
+
+@Entity
+@Table(name = "clubs")
 public class Club {
+
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "club_id", updatable = false, nullable = false)
     private UUID clubId;
+
+    @Column(name = "club_name", nullable = false, length = 100)
     private String clubName;
+
+    @Column(nullable = false, length = 255)
     private String location;
+
+    @Column(precision = 3, scale = 1) // 9.9 fits; your 2,1 was too tight
     private BigDecimal rating;
+
+    @Column(name = "quantity_ratings")
     private Integer quantityRatings;
-    private Price priceRange; // 'bajo' | 'medio' | 'alto'
+
+    @Convert(converter = PriceConverter.class)
+    @Column(name = "price_range", length = 20)
+    private Price priceRange;
+
+    @Column
     private String description;
+
+    // If you want ONE contact: store a FK to User (ManyToOne)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contact_user_id")
     private User contactInfo;
+
+    @Convert(converter = MusicalGenreConverter.class)
+    @Column(name = "music_genre", length = 50)
     private MusicalGenre musicGenre;
+
+    @Column(name = "created_at")
     private OffsetDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "zone", length = 50)
     private Zone zone;
+
+    @Column(name = "is_bar", nullable = false)
     private Boolean isBar;
 
-    public Club() {}
+    @ManyToMany
+    @JoinTable(
+            name = "club_admins",
+            joinColumns = @JoinColumn(name = "club_id"),
+            inverseJoinColumns = @JoinColumn(name = "admin_id")
+    )
+    private Set<User> admins = new HashSet<>();
+
+    public Club() { }
 
     public Club(UUID clubId, String clubName, String location, java.math.BigDecimal rating,
                 Integer quantityRatings, Price priceRange, String description,
@@ -72,4 +123,7 @@ public class Club {
 
     public Boolean getIsBar() { return isBar; }
     public void setIsBar(Boolean isBar) { this.isBar = isBar; }
+
+    public Set<User> getAdmins() { return admins; }
+    public void setAdmins(Set<User> admins) { this.admins = admins; }
 }

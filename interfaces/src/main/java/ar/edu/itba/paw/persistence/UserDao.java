@@ -22,8 +22,6 @@ public interface UserDao {
     List<User> findAll();
     List<User> findByRole(String role);
 
-    RowMapper<User> getRowMapper();
-
     void updateVerificationStatus(UUID userId, boolean isVerified);
     void updateVerificationToken(UUID userId, String token);
 

@@ -26,7 +26,7 @@ public class PhotoJDBCDaoTest {
     @Autowired
     private DataSource ds;
     @Autowired
-    private PhotoJDBCDao photoDao;
+    private PhotoJpaDao photoDao;
     private JdbcTemplate jdbcTemplate;
 
     @Before

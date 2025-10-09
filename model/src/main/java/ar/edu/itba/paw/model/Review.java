@@ -1,16 +1,38 @@
 package ar.edu.itba.paw.model;
 
+import javax.persistence.*;
+import javax.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-
+@Entity
+@Table(
+        name = "reviews",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_reviews_user_club", columnNames = {"user_id","club_id"})
+        }
+)
 public class Review {
 
+    @Id
+    @Column(name = "review_id", columnDefinition = "UUID", nullable = false, updatable = false)
     private UUID reviewId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "club_id", nullable = false)
     private Club club;
-    private Integer rating; // 1..5 (validado por la DB)
+
+    @Column(name = "rating", nullable = false)
+    private Integer rating; // 1..5 (validado por DB)
+
+    @Column(name = "description")
     private String description;
+
+    @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
     public Review() {}
@@ -23,6 +45,12 @@ public class Review {
         this.rating = rating;
         this.description = description;
         this.createdAt = createdAt;
+    }
+
+    @PrePersist
+    private void prePersist() {
+        if (reviewId == null) reviewId = UUID.randomUUID();
+        if (createdAt == null) createdAt = OffsetDateTime.now();
     }
 
     public UUID getReviewId() { return reviewId; }

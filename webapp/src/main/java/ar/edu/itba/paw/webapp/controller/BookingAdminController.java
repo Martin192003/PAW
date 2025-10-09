@@ -3,7 +3,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.Table;
+import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
 import ar.edu.itba.paw.model.exceptions.InvalidStatusTransitionException;
@@ -152,8 +152,8 @@ public class BookingAdminController {
         }
         Booking booking = bookingOpt.get();
 
-        Optional<Table> tableOpt = tableService.findById(booking.getTableId());
-        Table table = tableOpt.orElse(null);
+        Optional<ClubTable> tableOpt = tableService.findById(booking.getTableId());
+        ClubTable table = tableOpt.orElse(null);
 
         String clubName = "";
         if (table != null) {

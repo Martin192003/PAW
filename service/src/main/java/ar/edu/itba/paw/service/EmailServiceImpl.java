@@ -221,7 +221,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void notifyTableReservedToUser(Booking booking, Club club, Table table, Locale locale) {
+    public void notifyTableReservedToUser(Booking booking, Club club, ClubTable table, Locale locale) {
         Objects.requireNonNull(booking, "booking cannot be null");
         Objects.requireNonNull(booking.getUser(), "booking.user cannot be null");
         Objects.requireNonNull(club, "club cannot be null");
@@ -251,7 +251,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void notifyTableReservedToOwner(Booking booking, Club club, Table table, User owner, Locale locale) {
+    public void notifyTableReservedToOwner(Booking booking, Club club, ClubTable table, User owner, Locale locale) {
         if (!isLikelyEmail(owner.getEmail())) {
             throw new BadRequestException("Email del dueño inválido: " + owner);
         }
@@ -299,7 +299,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void notifyBookingCancelledToUser(Booking booking, Club club, Table table, Locale locale) {
+    public void notifyBookingCancelledToUser(Booking booking, Club club, ClubTable table, Locale locale) {
         Objects.requireNonNull(booking, "booking cannot be null");
         Objects.requireNonNull(booking.getUser(), "booking.user cannot be null");
         Objects.requireNonNull(club, "club cannot be null");
@@ -333,7 +333,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void notifyBookingCancelledToOwner(Booking booking, Club club, Table table, User owner, Locale locale) {
+    public void notifyBookingCancelledToOwner(Booking booking, Club club, ClubTable table, User owner, Locale locale) {
         if (!isLikelyEmail(owner.getEmail())) {
             throw new BadRequestException("Email del dueño inválido: " + owner);
         }

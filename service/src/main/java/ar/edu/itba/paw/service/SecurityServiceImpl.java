@@ -1,9 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
-import ar.edu.itba.paw.persistence.UserJDBCDao;
-import org.springframework.beans.factory.annotation.Autowired;
+import ar.edu.itba.paw.persistence.UserDao;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -15,9 +13,9 @@ import java.util.Optional;
 @Service
 public class SecurityServiceImpl implements SecurityService{
 
-    private final UserJDBCDao userDao;
+    private final UserDao userDao;
 
-    public SecurityServiceImpl(UserJDBCDao userDao) {
+    public SecurityServiceImpl(UserDao userDao) {
         this.userDao = userDao;
     }
 
