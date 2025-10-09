@@ -48,16 +48,16 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("classpath:/db/schema.sql")
     private Resource schemaSql;
 
-    @Value("${local.db.host}")
+    @Value("${app.db.host}")
     private String dbHost;
-    @Value("${local.db.port}")
+    @Value("${app.db.port}")
     private String dbPort;
-    @Value("${local.db.name}")
+    @Value("${app.db.name}")
     private String dbName;
 
-    @Value("${local.db.user}")
+    @Value("${app.db.user}")
     private String dbUser;
-    @Value("${local.db.pass}")
+    @Value("${app.db.pass}")
     private String dbPass;
 
     @Value("${app.schema.init:false}")
@@ -124,14 +124,5 @@ public class WebConfig implements WebMvcConfigurer {
         pop.addScript(schemaSql);
         return pop;
     }
-
-    @Bean
-    @Override
-    public Validator getValidator() {
-        LocalValidatorFactoryBean factoryBean = new LocalValidatorFactoryBean();
-        factoryBean.setValidationMessageSource(messageSource());
-        return factoryBean;
-    }
-
 
 }
