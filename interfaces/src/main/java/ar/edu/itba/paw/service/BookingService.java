@@ -13,7 +13,11 @@ import java.util.UUID;
 
 public interface BookingService {
 
-    public Booking create(final User user, final UUID tableId, final OffsetDateTime bookingStart, final OffsetDateTime bookingEnd, final BigDecimal totalAmount);
+    Booking create(User user,
+                   UUID tableId,
+                   OffsetDateTime bookingStart,
+                   OffsetDateTime bookingEnd,
+                   BigDecimal totalAmount);
 
     Optional<Booking> findById(UUID bookingId);
 
@@ -31,11 +35,16 @@ public interface BookingService {
                    BigDecimal totalAmount,
                    Status status);
 
-    boolean cancel(UUID bookingId);
+    /** Comando: lanza excepción si no existe o no es cancelable. */
+    void cancel(UUID bookingId);
 
-    boolean delete(UUID bookingId);
+    /** Comando: lanza excepción si no existe. */
+    void delete(UUID bookingId);
+
+    /** Comando: lanza excepción si usuario no es dueño. */
     void cancelByUser(UUID bookingId, UUID userId);
-    /** Lista paginada con filtros */
+
+    /** Búsqueda paginada + filtros básicos */
     List<Booking> searchPaginated(UUID userId,
                                   UUID clubId,
                                   UUID bookingId,
@@ -44,28 +53,35 @@ public interface BookingService {
                                   int limit,
                                   int offset);
 
-    /** Total para los mismos filtros (sin limit/offset) */
     int countSearch(UUID userId,
                     UUID clubId,
                     UUID bookingId,
                     Status status);
 
-    /** Listado simple paginado (sin filtros) */
     List<Booking> findAllPaginated(int limit, int offset);
+
     int countAll();
 
-    void reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username);
+    /** Devuelve la reserva creada (mejor que void). */
+    Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username);
 
+    /** Comando idempotente: confirma si está PENDIENTE. */
     void confirm(UUID bookingId);
 
+    /** Acceso controlado a una reserva por usuario. */
     Booking getForUser(UUID bookingId, UUID userId);
 
+    /** Vista admin con paginado. */
     List<Booking> searchForAdminPaginated(UUID adminUserId,
-                                          UUID clubId, UUID bookingId,
-                                          Status status, String sort,
-                                          int limit, int offset);
+                                          UUID clubId,
+                                          UUID bookingId,
+                                          Status status,
+                                          String sort,
+                                          int limit,
+                                          int offset);
 
     int countSearchForAdmin(UUID adminUserId,
-                            UUID clubId, UUID bookingId,
+                            UUID clubId,
+                            UUID bookingId,
                             Status status);
 }

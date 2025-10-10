@@ -143,8 +143,9 @@ public class BookingServiceImplTest {
         Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
         Mockito.when(user.getId()).thenReturn(USER_ID);
         Mockito.when(userService.findById(USER_ID)).thenReturn(user);
-        boolean result = bookingService.cancel(BOOKING_ID);
-        Assert.assertTrue(result);
+        bookingService.cancel(BOOKING_ID);
+
+
     }
 
     @Test(expected = BookingNotFoundException.class)

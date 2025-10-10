@@ -7,12 +7,12 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tables")
+@Table(name = "club_tables")
 public class ClubTable {
 
     @Id
     @Column(name = "table_id", columnDefinition = "UUID", nullable = false, updatable = false)
-    private UUID id;
+    private UUID tableid;
 
     @Column(name = "club_id", columnDefinition = "UUID", nullable = false)
     private UUID clubId;
@@ -37,7 +37,7 @@ public class ClubTable {
 
     public ClubTable(UUID id, UUID clubID, int tableNumber, int capacity, TableState state,
                  BigDecimal price, BigDecimal discount) {
-        this.id = id;
+        this.tableid = id;
         this.clubId = clubID;
         this.tableNumber = tableNumber;
         this.capacity = capacity;
@@ -48,14 +48,14 @@ public class ClubTable {
 
     @PrePersist
     private void prePersist() {
-        if (id == null) id = UUID.randomUUID();
+        if (tableid == null) tableid = UUID.randomUUID();
         if (tableState == null) tableState = TableState.DISPONIBLE;
         if (price == null) price = BigDecimal.ZERO;
         if (discount == null) discount = BigDecimal.ZERO;
     }
 
-    public UUID getTableId() { return id; }
-    public void setTableId(UUID tableId) { this.id = tableId; }
+    public UUID getTableId() { return tableid; }
+    public void setTableId(UUID tableId) { this.tableid = tableId; }
 
     public UUID getClubId() { return clubId; }
     public void setClubId(UUID club) { this.clubId = club; }

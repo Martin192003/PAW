@@ -25,6 +25,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 
 @Service
@@ -101,7 +102,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public boolean sendContact(String to, String clubName, String fromEmail, String name, String phone, String message) {
+    public void sendContact(String to, String clubName, String fromEmail, String name, String phone, String message) {
         try {
             Locale userLocale = LocaleContextHolder.getLocale();
 
@@ -143,10 +144,8 @@ public class EmailServiceImpl implements EmailService {
             );
 
             LOGGER.info("SMTP contact emails sent OK to {} and {}", to, fromEmail);
-            return true;
         } catch (Exception e) {
             LOGGER.error("SMTP contact emails FAILED: {}", e.getMessage(), e);
-            return false;
         }
     }
 

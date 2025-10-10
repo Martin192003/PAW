@@ -1,9 +1,11 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Booking;
+import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -17,7 +19,7 @@ public interface BookingDao {
     List<Booking> findByUser(UUID userId);
     List<Booking> findByTable(UUID tableId);
 
-    public Booking create(User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
+    public Booking create(User user, UUID table, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
 
     Optional<Booking> update(UUID bookingId, User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
 

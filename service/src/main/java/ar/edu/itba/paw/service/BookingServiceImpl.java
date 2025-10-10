@@ -1,13 +1,12 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
-import ar.edu.itba.paw.model.exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -23,19 +22,26 @@ import java.util.*;
 @Transactional
 public class BookingServiceImpl implements BookingService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(BookingServiceImpl.class);
+    private static final ZoneId ZONE_ID = ZoneId.of("America/Argentina/Buenos_Aires");
+    private static final Set<DayOfWeek> ALLOWED_DAYS =
+            EnumSet.of(DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
+
     private final BookingDao bookingDao;
     private final ClubTablesDao tablesDao;
     private final UserService userService;
     private final ClubService clubService;
     private final TableService tableService;
     private final ClubDao clubDao;
-    private final EmailServiceImpl emailService;
-    private static final ZoneId ZONE_ID = ZoneId.of("America/Argentina/Buenos_Aires");
-    private static final Set<DayOfWeek> ALLOWED_DAYS = EnumSet.of(DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
-    private static final Logger LOGGER = LoggerFactory.getLogger(BookingServiceImpl.class);
+    private final EmailService emailService;
 
-
-    public BookingServiceImpl(final BookingDao bookingDao, final ClubTablesDao tablesDao, UserService userService, ClubService clubService, TableService tableService, final ClubDao clubDao, final EmailServiceImpl emailService) {
+    public BookingServiceImpl(final BookingDao bookingDao,
+                              final ClubTablesDao tablesDao,
+                              final UserService userService,
+                              final ClubService clubService,
+                              final TableService tableService,
+                              final ClubDao clubDao,
+                              final EmailService emailService) {
         this.bookingDao = bookingDao;
         this.tablesDao = tablesDao;
         this.userService = userService;
@@ -46,7 +52,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional
     public Booking create(final User user,
                           final UUID tableId,
                           final OffsetDateTime bookingStart,
@@ -61,6 +66,7 @@ public class BookingServiceImpl implements BookingService {
 
         validateDateRange(bookingStart, bookingEnd);
 
+        // FIX: faltaba el parámetro
         final ClubTable table = ensureTableExists(tableId);
 
         if (table.getTableState() != null && table.getTableState() != TableState.DISPONIBLE) {
@@ -70,14 +76,14 @@ public class BookingServiceImpl implements BookingService {
         ensureNoOverlap(tableId, bookingStart, bookingEnd, null);
 
         final Status initial = Status.PENDIENTE;
+
         final Booking booking = bookingDao.create(user, tableId, initial, totalAmount, bookingStart, bookingEnd);
 
-        Club club = clubDao.findById(table.getClubId()).orElseThrow();
+        LOGGER.info("Booking creado id={} user={} table={} {}-{}",
+                booking.getBookingId(), user.getId(), tableId, bookingStart, bookingEnd);
+
         return booking;
     }
-
-
-
 
     @Override
     @Transactional(readOnly = true)
@@ -98,7 +104,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional
     public Booking update(UUID bookingId,
                           User user,
                           UUID tableId,
@@ -118,40 +123,48 @@ public class BookingServiceImpl implements BookingService {
         Assert.notNull(status, "status no puede ser null");
 
         validateDateRange(bookingStart, bookingEnd);
+
         final ClubTable table = ensureTableExists(tableId);
 
-        if (status != Status.DISPONIBLE) {
+        // Chequear solapamiento sólo si va a quedar 'activa'
+        if (status == Status.PENDIENTE || status == Status.CONFIRMADA) {
             ensureNoOverlap(tableId, bookingStart, bookingEnd, bookingId);
         }
+
         validateStatusTransition(existing.getStatus(), status);
 
-        return bookingDao.update(bookingId, user, tableId, status, totalAmount, bookingStart, bookingEnd).orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+        // Si tenés relación @ManyToOne, preferí pasar la entidad 'table'
+        return bookingDao.update(bookingId, user, tableId, status, totalAmount, bookingStart, bookingEnd)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
     }
 
     @Override
-    @Transactional
     public Booking updateStatus(UUID bookingId, Status newStatus) {
         final Booking current = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
 
         validateStatusTransition(current.getStatus(), newStatus);
 
+        // Si pasa a activa (PENDIENTE/CONFIRMADA) no cambiamos fechas ni mesa,
+        // por lo que no hay chequeo de overlap adicional aquí.
         final Booking updated = bookingDao.update(
-                bookingId,
-                current.getUser(),
-                current.getTableId(),
-                newStatus,
-                current.getTotalAmount(),
-                current.getBookingStart(),
-                current.getBookingEnd()
-        ).orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
-
+                        bookingId,
+                        current.getUser(),
+                        current.getTableId(),
+                        newStatus,
+                        current.getTotalAmount(),
+                        current.getBookingStart(),
+                        current.getBookingEnd()
+                )
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
 
         if (newStatus == Status.CANCELADA) {
+            // Liberar mesa en caso de quedar sin reservas activas
             try {
                 final ClubTable table = ensureTableExists(updated.getTableId());
                 maybeFreeTable(table);
             } catch (TableNotFoundException ignored) {
+                // Si no está la mesa, no hay nada que liberar
             }
         }
 
@@ -159,22 +172,22 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional
-    public boolean cancel(UUID bookingId) {
+    public void cancel(UUID bookingId) {
         final Booking existing = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+
         validateStatusTransition(existing.getStatus(), Status.CANCELADA);
 
-        ClubTable table = ensureTableExists(existing.getTableId());
-        Club club = clubDao.findById(table.getClubId()).orElseThrow();
+        final ClubTable table = ensureTableExists(existing.getTableId());
+        final Club club = clubDao.findById(table.getClubId()).orElseThrow();
 
-        User completeUser = userService.findById(existing.getUser().getId());
+        final User completeUser = userService.findById(existing.getUser().getId());
         if (completeUser == null) {
             throw new UserNotFoundException("Usuario no encontrado: " + existing.getUser().getId());
         }
 
-        LOGGER.info("Booking user info - ID: {}, Username: {}, Email: {}",
-                completeUser.getId(), completeUser.getUsername(), completeUser.getEmail());
+        LOGGER.info("Cancel booking={} by user id={} email={}",
+                existing.getBookingId(), completeUser.getId(), completeUser.getEmail());
 
         bookingDao.update(
                 bookingId,
@@ -189,7 +202,7 @@ public class BookingServiceImpl implements BookingService {
         Booking bookingForEmail = new Booking();
         bookingForEmail.setBookingId(existing.getBookingId());
         bookingForEmail.setUser(completeUser);
-        bookingForEmail.setTableId(existing.getTableId());
+        bookingForEmail.setTable(existing.getTable());
         bookingForEmail.setBookingStart(existing.getBookingStart());
         bookingForEmail.setBookingEnd(existing.getBookingEnd());
         bookingForEmail.setStatus(Status.CANCELADA);
@@ -199,53 +212,42 @@ public class BookingServiceImpl implements BookingService {
 
         try {
             emailService.notifyBookingCancelledToUser(bookingForEmail, club, table, locale);
-            LOGGER.info("Successfully sent cancellation email to user {}", completeUser.getEmail());
-        } catch (BadRequestException e) {
-            LOGGER.error("User email validation failed for booking {}: {}", bookingId, e.getMessage());
         } catch (Exception e) {
-            LOGGER.error("Failed to send cancellation email to user for booking {}", bookingId, e);
+            LOGGER.error("Error enviando email de cancelación al usuario para booking {}", bookingId, e);
         }
 
         try {
             List<User> admins = clubService.getAdminsByClub(club.getClubId());
             if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
-                String ownerEmail = admins.get(0).getEmail();
-                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, admins.getFirst(), locale);
-                LOGGER.info("Successfully sent cancellation email to club owner {}", ownerEmail);
+                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, admins.get(0), locale);
             } else {
-                LOGGER.warn("Cannot send cancellation email to club owner: no valid email found for club {}", club.getClubId());
+                LOGGER.warn("No hay email de owner válido para club {}", club.getClubId());
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to send cancellation email to club owner for booking {}", bookingId, e);
+            LOGGER.error("Error enviando email de cancelación al dueño para booking {}", bookingId, e);
         }
 
         maybeFreeTable(table);
-        return true;
     }
 
-    @Transactional
     @Override
     public void cancelByUser(UUID bookingId, UUID userId) {
         final Booking existing = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
 
-        if(!existing.getUser().getId().equals(userId)) {
+        if (!existing.getUser().getId().equals(userId)) {
             throw new UnauthorizedException("El usuario no puede cancelar esta reserva");
         }
 
         validateStatusTransition(existing.getStatus(), Status.CANCELADA);
 
-        ClubTable table = ensureTableExists(existing.getTableId());
-        Club club = clubDao.findById(table.getClubId()).orElseThrow();
+        final ClubTable table = ensureTableExists(existing.getTableId());
+        final Club club = clubDao.findById(table.getClubId()).orElseThrow();
 
-        // Cargar usuario completo desde UserService - SIN .orElseThrow()
-        User completeUser = userService.findById(existing.getUser().getId());
+        final User completeUser = userService.findById(existing.getUser().getId());
         if (completeUser == null) {
             throw new UserNotFoundException("Usuario no encontrado: " + existing.getUser().getId());
         }
-
-        LOGGER.info("Cancel by user - ID: {}, Username: {}, Email: {}",
-                completeUser.getId(), completeUser.getUsername(), completeUser.getEmail());
 
         bookingDao.update(
                 bookingId,
@@ -259,8 +261,8 @@ public class BookingServiceImpl implements BookingService {
 
         Booking bookingForEmail = new Booking();
         bookingForEmail.setBookingId(existing.getBookingId());
-        bookingForEmail.setUser(completeUser);  // Usuario con datos completos
-        bookingForEmail.setTableId(existing.getTableId());
+        bookingForEmail.setUser(completeUser);
+        bookingForEmail.setTable(existing.getTable());
         bookingForEmail.setBookingStart(existing.getBookingStart());
         bookingForEmail.setBookingEnd(existing.getBookingEnd());
         bookingForEmail.setStatus(Status.CANCELADA);
@@ -270,54 +272,105 @@ public class BookingServiceImpl implements BookingService {
 
         try {
             emailService.notifyBookingCancelledToUser(bookingForEmail, club, table, locale);
-            LOGGER.info("Successfully sent cancellation email to user {}", completeUser.getEmail());
         } catch (Exception e) {
-            LOGGER.error("Failed to send cancellation email to user for booking {}: {}", bookingId, e.getMessage(), e);
+            LOGGER.error("Error enviando email de cancelación al usuario para booking {}: {}", bookingId, e.getMessage(), e);
         }
 
         try {
             List<User> admins = clubService.getAdminsByClub(club.getClubId());
             if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
-                String ownerEmail = admins.get(0).getEmail();
-                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, admins.getFirst(), locale);
-                LOGGER.info("Successfully sent cancellation email to club owner {}", ownerEmail);
+                emailService.notifyBookingCancelledToOwner(bookingForEmail, club, table, admins.get(0), locale);
             } else {
-                LOGGER.warn("Cannot send cancellation email to club owner: no valid email found for club {}", club.getClubId());
+                LOGGER.warn("No hay email de owner válido para club {}", club.getClubId());
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to send cancellation email to club owner for booking {}", bookingId, e);
+            LOGGER.error("Error enviando email de cancelación al dueño para booking {}", bookingId, e);
         }
 
         maybeFreeTable(table);
     }
 
-    @Transactional
     @Override
     public void confirm(UUID bookingId) {
         Booking b = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
 
         if (b.getStatus() == Status.CANCELADA) {
-            throw new InvalidStatusTransitionException(b.getStatus(),Status.CANCELADA);
+            throw new InvalidStatusTransitionException(b.getStatus(), Status.CONFIRMADA);
         }
         if (b.getStatus() == Status.CONFIRMADA) {
-            return; // idempotencia
+            return;
         }
         if (b.getStatus() != Status.PENDIENTE) {
-            throw new InvalidStatusTransitionException(b.getStatus(),Status.PENDIENTE);
+            throw new InvalidStatusTransitionException(b.getStatus(), Status.CONFIRMADA);
         }
 
-        b.setStatus(Status.CONFIRMADA);
-        bookingDao.updateStatus(bookingId,b.getStatus()).orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+        bookingDao.updateStatus(bookingId, Status.CONFIRMADA)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Booking getForUser(UUID bookingId, UUID userId) {
+        final Booking b = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
 
+        if (b.getUser() == null || b.getUser().getId() == null || !b.getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
+        return b;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Booking> searchForAdminPaginated(UUID adminUserId,
+                                                 UUID clubId,
+                                                 UUID bookingId,
+                                                 Status status,
+                                                 String sort,
+                                                 int limit,
+                                                 int offset) {
+
+        List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
+        if (adminClubIds == null || adminClubIds.isEmpty()) {
+            return List.of();
+        }
+
+        if (clubId != null) {
+            if (!adminClubIds.contains(clubId)) {
+                // También podrías lanzar AccessDenied/Unauthorized si preferís
+                return List.of();
+            }
+            adminClubIds = List.of(clubId);
+        }
+
+        return bookingDao.searchByClubIdsPaginated(adminClubIds, bookingId, status, sort, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countSearchForAdmin(UUID adminUserId,
+                                   UUID clubId,
+                                   UUID bookingId,
+                                   Status status) {
+
+        List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
+        if (adminClubIds == null || adminClubIds.isEmpty()) {
+            throw  new UnauthorizedException("booking.notAllowedToView");
+        }
+
+        if (clubId != null && !adminClubIds.contains(clubId)) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
+
+        List<UUID> target = (clubId != null) ? List.of(clubId) : adminClubIds;
+        return bookingDao.countByClubIds(target, bookingId, status);
     }
 
 
     @Override
-    @Transactional
-    public boolean delete(UUID bookingId) {
-        return bookingDao.delete(bookingId);
+    public void delete(UUID bookingId) {
+        bookingDao.delete(bookingId);
     }
 
     @Override
@@ -353,20 +406,17 @@ public class BookingServiceImpl implements BookingService {
         return bookingDao.countAll();
     }
 
-
-
-    @Transactional
     @Override
-    public void reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username) {
+    public Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username) {
         var tableOpt = tableService.findById(tableId);
         if (tableOpt.isEmpty()) throw new TableNotFoundException(tableId);
         var table = tableOpt.get();
+
         if (!clubId.equals(table.getClubId())) {
             throw new BadRequestException("El club no existe");
         }
 
-        DayOfWeek dow = date.getDayOfWeek();
-        if (!ALLOWED_DAYS.contains(dow)) {
+        if (!ALLOWED_DAYS.contains(date.getDayOfWeek())) {
             throw new InvalidDateRangeException("Solo se puede reservar para jueves, viernes o sábado.");
         }
 
@@ -375,14 +425,15 @@ public class BookingServiceImpl implements BookingService {
 
         var libres = tableService.findAvailableByClubAndRange(clubId, start, end);
         boolean disponible = libres.stream().anyMatch(t -> t.getTableId().equals(tableId));
-        if (!disponible) throw new BadRequestException("La mesa no está disponible en el rango indicado.");
-
-        var user = userService.findByUserName(username);
-        if (user == null) {
-            user = userService.findByEmail(username);
+        if (!disponible) {
+            throw new BadRequestException("La mesa no está disponible en el rango indicado.");
         }
-        if (user == null) throw new UserNotFoundException("No se encontró el usuario: " + username);
 
+        var user = Optional.ofNullable(userService.findByUserName(username))
+                .orElseGet(() -> userService.findByEmail(username));
+        if (user == null) {
+            throw new UserNotFoundException("No se encontró el usuario: " + username);
+        }
         if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
             throw new BadRequestException("El usuario debe tener un email válido para recibir notificaciones");
         }
@@ -391,54 +442,21 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = create(user, tableId, start, end, total);
 
-
         var club = clubService.getClubById(clubId).orElseThrow(IllegalArgumentException::new);
-        User ownerEmail = clubService.getAdminsByClub(clubId).getFirst();
+        var admins = clubService.getAdminsByClub(clubId);
+        var owner = admins.isEmpty() ? null : admins.get(0);
 
         Locale locale = new Locale("es", "AR");
-        emailService.notifyTableReservedToUser(booking, club, table, locale);
-        emailService.notifyTableReservedToOwner(booking, club, table, ownerEmail, locale);
-
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public Booking getForUser(UUID bookingId, UUID userId) {
-        Booking b = bookingDao.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
-        if (b.getUser() == null || !b.getUser().getId().equals(userId)) {
-            throw new UnauthorizedException("booking.notAllowedToView");
+        try {
+            emailService.notifyTableReservedToUser(booking, club, table, locale);
+            if (owner != null && owner.getEmail() != null && !owner.getEmail().isBlank()) {
+                emailService.notifyTableReservedToOwner(booking, club, table, owner, locale);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error enviando emails de reserva para booking {}", booking.getBookingId(), e);
         }
-        return b;
-    }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Booking> searchForAdminPaginated(UUID adminUserId,
-                                                 UUID clubId,
-                                                 UUID bookingId,
-                                                 Status status,
-                                                 String sort,
-                                                 int limit, int offset) {
-
-        List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
-        if (adminClubIds.isEmpty()) return List.of();
-
-        if (clubId != null) {
-            if (!adminClubIds.contains(clubId)) return List.of(); // o AccessDeniedException
-            adminClubIds = List.of(clubId);
-        }
-        return bookingDao.searchByClubIdsPaginated(adminClubIds, bookingId, status, sort, limit, offset);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status) {
-        List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
-        if (adminClubIds.isEmpty()) return 0;
-        if (clubId != null && !adminClubIds.contains(clubId)) return 0;
-        List<UUID> target = (clubId != null) ? List.of(clubId) : adminClubIds;
-        return bookingDao.countByClubIds(target, bookingId, status);
+        return booking;
     }
 
     private void maybeFreeTable(ClubTable table) {
@@ -462,19 +480,15 @@ public class BookingServiceImpl implements BookingService {
     private void validateStatusTransition(Status from, Status to) {
         if (from == to) return;
 
+        // Máquina de estados sólo para Booking (PENDIENTE/CONFIRMADA/CANCELADA)
         switch (from) {
-            case DISPONIBLE -> {
-                if (!(to == Status.PENDIENTE || to == Status.CONFIRMADA)) {
-                    throw new InvalidStatusTransitionException(from, to);
-                }
-            }
             case PENDIENTE -> {
-                if (!(to == Status.CONFIRMADA || to == Status.DISPONIBLE || to == Status.CANCELADA)) {
+                if (!(to == Status.CONFIRMADA || to == Status.CANCELADA)) {
                     throw new InvalidStatusTransitionException(from, to);
                 }
             }
             case CONFIRMADA -> {
-                if (!(to == Status.PENDIENTE || to == Status.CANCELADA)) {
+                if (!(to == Status.CANCELADA)) {
                     throw new InvalidStatusTransitionException(from, to);
                 }
             }
@@ -484,14 +498,16 @@ public class BookingServiceImpl implements BookingService {
             default -> throw new InvalidStatusTransitionException(from, to);
         }
     }
+
     private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
-        if (!start.isBefore(end)) throw new InvalidDateRangeException("Rango inválido: " + start + " - " + end);
+        if (!start.isBefore(end)) {
+            throw new InvalidDateRangeException("Rango inválido: " + start + " - " + end);
+        }
     }
 
     private ClubTable ensureTableExists(UUID tableId) {
         return tablesDao.findById(tableId).orElseThrow(() -> new TableNotFoundException(tableId));
     }
-
 
     private void ensureNoOverlap(UUID tableId,
                                  OffsetDateTime start,
@@ -502,17 +518,13 @@ public class BookingServiceImpl implements BookingService {
         final boolean overlaps = bookings.stream()
                 .filter(b -> excludeBookingId == null || !b.getBookingId().equals(excludeBookingId))
                 .anyMatch(b ->
-                        // only consider active bookings (pending or confirmed) when checking overlap
                         (b.getStatus() == Status.PENDIENTE || b.getStatus() == Status.CONFIRMADA) &&
                                 b.getBookingStart().isBefore(end) &&
                                 b.getBookingEnd().isAfter(start)
                 );
 
-        if (overlaps) throw new TableAlreadyBookedException();
+        if (overlaps) {
+            throw new TableAlreadyBookedException();
+        }
     }
-
-
-
-
-
 }

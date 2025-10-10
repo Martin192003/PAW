@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
+import ar.edu.itba.paw.persistence.UserDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,12 +21,12 @@ import java.util.*;
 public class ClubServiceImpl implements ClubService{
 
     private final ClubDao clubDao;
-    private final EmailServiceImpl mailService;
+    private final EmailService mailService;
     private final ClubTablesDao tablesDao;
     private final PhotoService photoService;
 
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, EmailServiceImpl mailService, ClubTablesDao tablesDao, PhotoService photoService) {
+    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, ClubTablesDao tablesDao, PhotoService photoService) {
         this.tablesDao = tablesDao;
         this.mailService = mailService;
         this.clubDao = clubDao;
@@ -212,16 +213,18 @@ public class ClubServiceImpl implements ClubService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean sendContactMessage(UUID clubId, String senderEmail, String senderName, String senderPhone, String message) {
         Optional<Club> clubOpt = clubDao.findById(clubId);
-        if (clubOpt.isEmpty()) {
-            return false;
-        }
+        if (clubOpt.isEmpty()) return false;
 
         Club club = clubOpt.get();
-        String recipientEmail = club.getContactInfo() != null ? club.getContactInfo().getEmail() : "test@local";
 
-        return mailService.sendContact(
+        String recipientEmail = (club.getContactInfo() != null && club.getContactInfo().getEmail() != null)
+                ? club.getContactInfo().getEmail()
+                : fallbackClubEmail(club);
+
+        mailService.sendContact(
                 recipientEmail,
                 club.getClubName(),
                 senderEmail,
@@ -229,6 +232,14 @@ public class ClubServiceImpl implements ClubService{
                 senderPhone,
                 message
         );
+        return true;
+    }
+
+    private String fallbackClubEmail(Club club) {
+        if (club.getContactInfo() != null && club.getContactInfo().getEmail() != null) {
+            return club.getContactInfo().getEmail();
+        }
+        return "paw2025b06@gmail.com";
     }
 
     private Zone parseZoneFlexible(String raw) {

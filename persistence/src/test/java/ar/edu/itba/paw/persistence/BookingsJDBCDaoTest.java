@@ -1,9 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Booking;
-import ar.edu.itba.paw.model.Role;
-import ar.edu.itba.paw.model.Status;
-import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,6 +13,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
+import javax.persistence.Table;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -66,7 +64,6 @@ public class BookingsJDBCDaoTest {
                 "INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 tableId, clubId, 1, 4, "disponible", 100.0, 0.0
         );
-        // Crear booking
         Status status = Status.PENDIENTE;
         BigDecimal totalAmount = BigDecimal.valueOf(200);
         OffsetDateTime start = OffsetDateTime.now();

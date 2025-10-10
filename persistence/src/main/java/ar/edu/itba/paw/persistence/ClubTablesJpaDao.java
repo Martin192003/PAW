@@ -57,19 +57,19 @@ public class ClubTablesJpaDao implements ClubTablesDao {
     @Transactional(readOnly = true)
     public List<ClubTable> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to) {
         return em.createQuery("""
-                SELECT ct
-               FROM ClubTable ct
-               WHERE ct.clubId = :clubId
-               AND NOT EXISTS (
-                   SELECT 1
-                   FROM Booking b
-                   WHERE b.table = ct.id
-                   AND b.status IN (:s1, :s2)
-                   AND b.bookingStart < :to
-                   AND b.bookingEnd   > :from
-               )
-                ORDER BY ct.tableNumber ASC
-               """, ClubTable.class)
+                        SELECT ct
+                        FROM ClubTable ct
+                        WHERE ct.clubId = :clubId
+                          AND NOT EXISTS (
+                            SELECT 1
+                            FROM Booking b
+                            WHERE b.table = ct
+                              AND b.status IN (:s1, :s2)
+                              AND b.bookingStart < :to
+                              AND b.bookingEnd   > :from
+                          )
+                        ORDER BY ct.tableNumber ASC
+                        """, ClubTable.class)
                 .setParameter("clubId", clubId)
                 .setParameter("from", from)
                 .setParameter("to", to)
@@ -79,22 +79,19 @@ public class ClubTablesJpaDao implements ClubTablesDao {
     }
 
     @Override
-    @Transactional
     public boolean delete(UUID id) {
-        Table t = em.find(Table.class, id);
+        ClubTable t = em.find(ClubTable.class, id);
         if (t == null) return false;
         em.remove(t);
         return true;
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<ClubTable> findById(UUID id) {
         return Optional.ofNullable(em.find(ClubTable.class, id));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<ClubTable> findAll() {
         return em.createQuery("""
                 SELECT ct
@@ -104,7 +101,6 @@ public class ClubTablesJpaDao implements ClubTablesDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<ClubTable> findByClub(Club club) {
         return em.createQuery("""
                 SELECT ct

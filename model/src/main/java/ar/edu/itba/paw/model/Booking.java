@@ -21,9 +21,9 @@ public class Booking {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // No mapeamos la entidad Table; guardamos el UUID como pedís
-    @Column(name = "table_id", columnDefinition = "UUID", nullable = false)
-    private UUID table;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "table_id", referencedColumnName = "table_id", nullable = false)
+    private ClubTable table;
 
     @Column(name = "booking_start", nullable = false)
     private OffsetDateTime bookingStart;
@@ -43,7 +43,7 @@ public class Booking {
 
     public Booking() {}
 
-    public Booking(UUID bookingId, User user, UUID table, OffsetDateTime bookingStart,
+    public Booking(UUID bookingId, User user, ClubTable table, OffsetDateTime bookingStart,
                    OffsetDateTime bookingEnd, Status status, OffsetDateTime createdAt,
                    BigDecimal totalAmount) {
         this.bookingId = bookingId;
@@ -62,8 +62,6 @@ public class Booking {
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 
-    public UUID getTableId() { return table; }
-    public void setTableId(UUID tableId) { this.table = tableId; }
 
     public OffsetDateTime getBookingStart() { return bookingStart; }
     public void setBookingStart(OffsetDateTime bookingStart) { this.bookingStart = bookingStart; }
@@ -79,4 +77,9 @@ public class Booking {
 
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+
+    public ClubTable getTable() { return table; }
+    public void setTable(ClubTable table) { this.table = table; }
+
+    public UUID getTableId() { return table != null ? table.getTableId() : null; }
 }

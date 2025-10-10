@@ -14,6 +14,8 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
@@ -37,10 +39,12 @@ import org.springframework.beans.factory.annotation.Value;
 import java.lang.management.PlatformLoggingMXBean;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @EnableWebMvc
 @EnableTransactionManagement
+@EnableAsync
 @ComponentScan({
         "ar.edu.itba.paw.webapp.controller",
         "ar.edu.itba.paw.service",
@@ -178,6 +182,26 @@ public class WebConfig implements WebMvcConfigurer {
         dsi.setDatabasePopulator(pop);
         dsi.setEnabled(runSchema);
         return dsi;
+    }
+
+
+    @Bean
+    @Override
+    public Validator getValidator() {
+        LocalValidatorFactoryBean factoryBean = new LocalValidatorFactoryBean();
+        factoryBean.setValidationMessageSource(messageSource());
+        return factoryBean;
+    }
+
+    @Bean(name = "taskExecutor")
+    public Executor taskExecutor() {
+        var ex = new  ThreadPoolTaskExecutor();
+        ex.setCorePoolSize(4);
+        ex.setMaxPoolSize(8);
+        ex.setQueueCapacity(100);
+        ex.setThreadNamePrefix("Async-");
+        ex.initialize();
+        return ex;
     }
 
 

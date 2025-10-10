@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Booking;
+import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import org.springframework.stereotype.Repository;
@@ -24,7 +25,10 @@ public class BookingsJpaDao implements BookingDao {
         Booking b = new Booking();
         b.setBookingId(UUID.randomUUID());
         b.setUser(user);
-        b.setTableId(tableId);
+
+        ClubTable ref = em.getReference(ClubTable.class, tableId);
+        b.setTable(ref);
+
         b.setBookingStart(bookingStart);
         b.setBookingEnd(bookingEnd);
         b.setStatus(status);
@@ -41,8 +45,12 @@ public class BookingsJpaDao implements BookingDao {
                                     OffsetDateTime bookingEnd) {
         Booking b = em.find(Booking.class, bookingId);
         if (b == null) return Optional.empty();
+
         b.setUser(user);
-        b.setTableId(tableId);
+
+        ClubTable ref = em.getReference(ClubTable.class, tableId);
+        b.setTable(ref);
+
         b.setStatus(status);
         b.setTotalAmount(totalAmount);
         b.setBookingStart(bookingStart);
@@ -92,11 +100,11 @@ public class BookingsJpaDao implements BookingDao {
     @Override
     public List<Booking> findByTable(UUID tableId) {
         return em.createQuery("""
-                SELECT b
-                FROM Booking b
-                WHERE b.table = :tid
-                """, Booking.class)
-                .setParameter("tid", tableId)
+            SELECT b
+            FROM Booking b
+            WHERE b.table.id = :tid
+            """, Booking.class)
+                .setParameter("tid", tableId) // ahora sí, UUID
                 .getResultList();
     }
 
