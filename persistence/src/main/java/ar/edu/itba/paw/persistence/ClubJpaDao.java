@@ -24,8 +24,10 @@ public class ClubJpaDao implements ClubDao {
 
     @Override
     public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
+        final User managed = em.contains(contactInfo) ? contactInfo : em.find(User.class, contactInfo.getId());
         final Club club = new Club(UUID.randomUUID(), name, location, BigDecimal.ZERO, 0, priceRange,
                 description, contactInfo, musicGenre, OffsetDateTime.now(), zone, isBar);
+        club.getAdmins().add(managed);
         em.persist(club);
         return club;
     }
@@ -135,31 +137,53 @@ public class ClubJpaDao implements ClubDao {
 
 
     @Override
-    @Transactional(readOnly = true)
     public List<Club> findByUserId(UUID userId) {
         return em.createQuery("""
-            select distinct c
-            from Club c
-            join c.admins a
-            where a.id = :uid
-            order by c.createdAt desc
-            """, Club.class)
+        select distinct c
+        from Club c
+        left join c.admins a
+        where a.id = :uid
+           or c.contactInfo.id = :uid
+        order by c.createdAt desc
+        """, Club.class)
                 .setParameter("uid", userId)
                 .getResultList();
     }
-
     @Override
-    @Transactional(readOnly = true)
     public List<User> findAdminsByClubId(UUID clubId) {
-        return em.createQuery("""
-            select distinct u
-            from Club c
-            join c.admins u
-            where c.clubId = :cid
-            """, User.class)
+
+        // 1) Admins del many-to-many (INNER JOIN => nunca trae nulls)
+        List<User> admins = em.createQuery("""
+        select distinct u
+        from Club c
+        join c.admins u
+        where c.clubId = :cid
+        """, User.class)
                 .setParameter("cid", clubId)
                 .getResultList();
+
+        // 2) Contacto "legacy" (puede ser null)
+        User contact = em.createQuery("""
+        select c.contactInfo
+        from Club c
+        where c.clubId = :cid
+        """, User.class)
+                .setParameter("cid", clubId)
+                .getSingleResult(); // devuelve 1 fila; el atributo puede ser null
+
+        // 3) Merge sin NPEs ni duplicados (deduplico por UUID)
+        java.util.LinkedHashMap<UUID, User> byId = new java.util.LinkedHashMap<>();
+        if (contact != null && contact.getId() != null) {
+            byId.put(contact.getId(), contact);
+        }
+        for (User u : admins) {
+            if (u != null && u.getId() != null) {
+                byId.putIfAbsent(u.getId(), u);
+            }
+        }
+        return new java.util.ArrayList<>(byId.values());
     }
+
 
 
     @Override
@@ -209,15 +233,15 @@ public class ClubJpaDao implements ClubDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Club> findByUserIdPaginated(UUID userId, int limit, int offset) {
         return em.createQuery("""
-            select distinct c
-            from Club c
-            join c.admins a
-            where a.id = :uid
-            order by c.createdAt desc
-            """, Club.class)
+        select distinct c
+        from Club c
+        left join c.admins a
+        where a.id = :uid
+           or c.contactInfo.id = :uid
+        order by c.createdAt desc
+        """, Club.class)
                 .setParameter("uid", userId)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
@@ -228,25 +252,27 @@ public class ClubJpaDao implements ClubDao {
     @Transactional(readOnly = true)
     public int countByUserId(UUID userId) {
         Long n = em.createQuery("""
-            select count(distinct c)
-            from Club c
-            join c.admins a
-            where a.id = :uid
-            """, Long.class)
+        select count(distinct c)
+        from Club c
+        left join c.admins a
+        where a.id = :uid
+           or c.contactInfo.id = :uid
+        """, Long.class)
                 .setParameter("uid", userId)
                 .getSingleResult();
         return n.intValue();
     }
 
+
     @Override
-    @Transactional(readOnly = true)
     public List<UUID> findIdsByAdmin(UUID adminUserId) {
         return em.createQuery("""
-            select distinct c.clubId
-            from Club c
-            join c.admins a
-            where a.id = :uid
-            """, UUID.class)
+        select distinct c.clubId
+        from Club c
+        left join c.admins a
+        where a.id = :uid
+           or c.contactInfo.id = :uid
+        """, UUID.class)
                 .setParameter("uid", adminUserId)
                 .getResultList();
     }

@@ -44,7 +44,7 @@ public class Club {
 
     // If you want ONE contact: store a FK to User (ManyToOne)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contact_user_id")
+    @JoinColumn(name = "contact_info")
     private User contactInfo;
 
     @Convert(converter = MusicalGenreConverter.class)
@@ -65,7 +65,7 @@ public class Club {
     @JoinTable(
             name = "club_admins",
             joinColumns = @JoinColumn(name = "club_id"),
-            inverseJoinColumns = @JoinColumn(name = "admin_id")
+            inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> admins = new HashSet<>();
 
