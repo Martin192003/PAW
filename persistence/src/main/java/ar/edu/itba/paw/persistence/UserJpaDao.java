@@ -53,7 +53,7 @@ public class UserJpaDao implements UserDao {
         u.setCellphone(cellphone);
         u.setRole(role);
 
-        return u;
+        return em.merge(u);
     }
 
     @Override
