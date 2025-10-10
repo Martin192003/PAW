@@ -161,9 +161,9 @@ public class ClubController {
                 contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getImage()
         );
 
-        if(role == Role.USER){
+        /*if(role == Role.USER){
             return "clubCreatedModal";
-        }
+        }*/
 
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();
     }

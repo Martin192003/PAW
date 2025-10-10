@@ -42,7 +42,6 @@ public class Club {
     @Column
     private String description;
 
-    // If you want ONE contact: store a FK to User (ManyToOne)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_info")
     private User contactInfo;
@@ -64,10 +63,11 @@ public class Club {
     @ManyToMany
     @JoinTable(
             name = "club_admins",
-            joinColumns = @JoinColumn(name = "club_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
+            joinColumns = @JoinColumn(name = "club_id"), // columna que referencia Club
+            inverseJoinColumns = @JoinColumn(name = "admin_id") // columna que referencia User
     )
     private Set<User> admins = new HashSet<>();
+
 
     public Club() { }
 
@@ -75,6 +75,22 @@ public class Club {
                 Integer quantityRatings, Price priceRange, String description,
                 User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone, Boolean isBar) {
         this.clubId = clubId;
+        this.clubName = clubName;
+        this.location = location;
+        this.rating = rating;
+        this.quantityRatings = quantityRatings;
+        this.priceRange = priceRange;
+        this.description = description;
+        this.contactInfo = contactInfo;
+        this.musicGenre = musicGenre;
+        this.createdAt = createdAt;
+        this.zone = zone;
+        this.isBar = isBar;
+    }
+    //ver de sacar el constructor de arriba ya que se genera sola la uuid
+    public Club(String clubName, String location, java.math.BigDecimal rating,
+                Integer quantityRatings, Price priceRange, String description,
+                User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone, Boolean isBar) {
         this.clubName = clubName;
         this.location = location;
         this.rating = rating;
