@@ -25,6 +25,9 @@ public class Booking {
     @JoinColumn(name = "table_id", referencedColumnName = "table_id", nullable = false)
     private ClubTable table;
 
+    @Column(name = "table_id", columnDefinition = "UUID", insertable = false, updatable = false)
+    private UUID tableId;
+
     @Column(name = "booking_start", nullable = false)
     private OffsetDateTime bookingStart;
 
@@ -81,5 +84,5 @@ public class Booking {
     public ClubTable getTable() { return table; }
     public void setTable(ClubTable table) { this.table = table; }
 
-    public UUID getTableId() { return table != null ? table.getTableId() : null; }
+    public UUID getTableId() { return tableId; }
 }
