@@ -273,7 +273,7 @@ public class EmailServiceImpl implements EmailService {
 
         final DateTimeFormatter df = DateTimeFormatter.ofPattern("EEE dd/MM", locale);
         final String dateTimePretty = df.format(date) + " 23:59–06:00";
-        final String ctaUrl = abs("/admin/clubs/bookings?userId=" + owner.getId());
+        final String ctaUrl = abs("/admin/clubs/bookings?userId=" + booking.getBookingId());
         Map<String, Object> ownerModel = new HashMap<>();
         ownerModel.put("clubName", clubName);
         ownerModel.put("tableNumber", tableNum);
@@ -376,6 +376,42 @@ public class EmailServiceImpl implements EmailService {
         String b = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         return path.startsWith("/") ? b + path : b + "/" + path;
     }
+
+    @Override
+    @Async
+    public void notifyConfirmationEmailToUser(Booking booking, Club club, ClubTable table, Locale locale) {
+        Objects.requireNonNull(booking, "booking cannot be null");
+        Objects.requireNonNull(booking.getUser(), "booking.user cannot be null");
+        Objects.requireNonNull(club, "club cannot be null");
+        Objects.requireNonNull(table, "table cannot be null");
+
+        String toEmail = booking.getUser().getEmail();
+        if (toEmail == null || toEmail.isBlank()) {
+            throw new BadRequestException("User email is required for notification");
+        }
+
+        LocalDate selectedDate = booking.getBookingStart().atZoneSameInstant(ZONE_ID).toLocalDate();
+
+        String ctaUrl = abs("/booking?bookingId=" + booking.getBookingId());
+
+        sendTemplatedEmail(
+                toEmail,
+                "email.booking.confirmed.user.subject",
+                "booking-confirm-user",
+                Map.of(
+                        "clubName", club.getClubName(),
+                        "tableNumber", table.getTableNumber(),
+                        "capacity", table.getCapacity(),
+                        "date", selectedDate.toString(),
+                        "from", "23:59",
+                        "to", "06:00",
+                        "ctaUrl", ctaUrl
+                ),
+                "Ver reserva",
+                ctaUrl
+        );
+    }
+
 
     private boolean isLikelyEmail(String s) {
         return s != null && s.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");

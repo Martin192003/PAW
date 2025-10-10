@@ -307,6 +307,16 @@ public class BookingServiceImpl implements BookingService {
 
         bookingDao.updateStatus(bookingId, Status.CONFIRMADA)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+
+        try {
+            final Booking updated = bookingDao.findById(bookingId).orElseThrow();
+            final ClubTable table = ensureTableExists(updated.getTableId());
+            final Club club = clubDao.findById(table.getClubId()).orElseThrow();
+            Locale locale = new Locale("es", "AR");
+            emailService.notifyConfirmationEmailToUser(updated, club, table, locale);
+        } catch (Exception e) {
+            LOGGER.error("Error sending confirmation email for booking {}", bookingId, e);
+        }
     }
 
     @Override
