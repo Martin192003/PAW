@@ -63,14 +63,20 @@ public class ClubController {
         if (size < 1) size = 10;
         if (page < 1) page = 1;
 
-        int totalClubs = clubService.countSearch(nameLike, zone, musicGenre, priceRange, isBar);
+        // Conversión del parámetro priceRange a mayúsculas si corresponde
+        String normalizedPriceRange = priceRange;
+        if (priceRange != null && !priceRange.isBlank()) {
+            normalizedPriceRange = priceRange.toUpperCase();
+        }
+
+        int totalClubs = clubService.countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
         int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
         if (page > totalPages) page = totalPages;
 
         int offset = (page - 1) * size;
 
         List<Club> clubs = clubService.searchPaginated(
-                nameLike, zone, musicGenre, priceRange, isBar, sort, size, offset
+                nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, size, offset
         );
 
         Map<UUID, String> photoUrlByClub = photoService.getCoverUrls(

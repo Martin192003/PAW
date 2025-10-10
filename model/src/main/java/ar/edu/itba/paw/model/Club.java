@@ -29,7 +29,7 @@ public class Club {
     @Column(nullable = false, length = 255)
     private String location;
 
-    @Column(precision = 3, scale = 1) // 9.9 fits; your 2,1 was too tight
+    @Column(precision = 3, scale = 1)
     private BigDecimal rating;
 
     @Column(name = "quantity_ratings")
