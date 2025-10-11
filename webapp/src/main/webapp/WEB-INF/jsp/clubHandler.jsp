@@ -264,7 +264,7 @@
 
             <div id="editField_description" style="display:none;">
                 <label><spring:message code="form.description"/>:</label>
-                <form:input path="description" id="editFieldValue_description" rows="4" cssClass="input-modal"/>
+                <form:textarea path="description" id="editFieldValue_description" cssClass="input-modal textarea-modal" rows="6"/>
                 <form:errors path="description" cssClass="formError"/>
             </div>
 
