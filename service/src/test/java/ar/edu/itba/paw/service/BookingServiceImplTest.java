@@ -74,12 +74,10 @@ public class BookingServiceImplTest {
     public void testCreateBookingSuccess() {
         User user = Mockito.mock(User.class);
         ClubTable table = Mockito.mock(ClubTable.class);
-        Club club = Mockito.mock(Club.class);
         Booking booking = Mockito.mock(Booking.class);
         Mockito.when(tablesDao.findById(TABLE_ID)).thenReturn(Optional.of(table));
         Mockito.when(table.getTableState()).thenReturn(TableState.DISPONIBLE);
         Mockito.when(bookingDao.create(user, TABLE_ID, Status.PENDIENTE, AMOUNT, START, END)).thenReturn(booking);
-        Mockito.when(clubDao.findById(Mockito.any())).thenReturn(Optional.of(club));
         Booking result = bookingService.create(user, TABLE_ID, START, END, AMOUNT);
         Assert.assertNotNull(result);
         Assert.assertEquals(booking, result);

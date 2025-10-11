@@ -19,11 +19,18 @@ public class BookingItemsJpaDao implements BookingItemsDao {
     @Override
     @Transactional
     public BookingItem create(Booking booking, Product product, int quantity, BigDecimal unitPrice) {
+        final Booking managedBooking =
+                em.contains(booking) ? booking : em.getReference(Booking.class, booking.getBookingId());
+        final Product managedProduct =
+                em.contains(product) ? product : em.getReference(Product.class, product.getProductId());
+
         BookingItem bi = new BookingItem();
         bi.setBookingItemId(UUID.randomUUID());
-        bi.setBooking(booking);
+        bi.setBooking(managedBooking);
+        bi.setProduct(managedProduct);
         bi.setQuantity(quantity);
-        bi.setUnitPrice(unitPrice);
+        // si no te pasan precio unitario, tomá el base del producto (ajustá si tu modelo lo requiere)
+        bi.setUnitPrice(unitPrice != null ? unitPrice : managedProduct.getBasePrice());
         em.persist(bi);
         return bi;
     }
@@ -33,8 +40,13 @@ public class BookingItemsJpaDao implements BookingItemsDao {
     public BookingItem update(UUID id, Booking booking, Product product, int quantity, BigDecimal unitPrice) {
         BookingItem bi = em.find(BookingItem.class, id);
         if (bi == null) return null;
-        bi.setBooking(booking);
-        bi.setProduct(product);
+        final Booking managedBooking =
+                em.contains(booking) ? booking : em.getReference(Booking.class, booking.getBookingId());
+        final Product managedProduct =
+                em.contains(product) ? product : em.getReference(Product.class, product.getProductId());
+        bi.setBooking(managedBooking);
+        bi.setProduct(managedProduct);
+
         bi.setQuantity(quantity);
         bi.setUnitPrice(unitPrice);
         return bi;

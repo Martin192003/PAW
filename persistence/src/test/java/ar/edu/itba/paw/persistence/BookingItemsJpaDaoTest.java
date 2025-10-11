@@ -30,7 +30,6 @@ public class BookingItemsJpaDaoTest {
 
     @Before
     public void clean() {
-        // Con @Transactional cada test hace rollback, pero limpiamos por si tu config cambia.
         em.createQuery("DELETE FROM BookingItem bi").executeUpdate();
         em.flush();
     }
@@ -72,8 +71,8 @@ public class BookingItemsJpaDaoTest {
 
     private ClubTable persistTable(Club club) {
         ClubTable t = new ClubTable(
-                null,                    // UUID: se setea en @PrePersist si null
-                club.getClubId(),        // FK por UUID (no ManyToOne)
+                null,
+                club.getClubId(),
                 1,
                 4,
                 TableState.DISPONIBLE,
