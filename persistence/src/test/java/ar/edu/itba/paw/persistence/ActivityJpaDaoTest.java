@@ -1,4 +1,3 @@
-// persistence/src/test/java/ar/edu/itba/paw/persistence/ActivityJDBCDaoTest.java
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Activity;
@@ -13,6 +12,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.jdbc.JdbcTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.time.OffsetDateTime;
@@ -23,7 +23,8 @@ import static org.junit.Assert.*;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
 @Sql("classpath:schema.sql")
-public class ActivityJDBCDaoTest {
+@Transactional
+public class ActivityJpaDaoTest {
 
     private static final String TYPE = "TEST_TYPE";
     private static final String DETAILS = "Detalles";

@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS club_tables (
     price        NUMERIC(10,2) NOT NULL CHECK (price >= 0),
     discount     NUMERIC(5,2) DEFAULT 0 CHECK (discount >= 0 AND discount <= 100),
     UNIQUE (club_id, table_number)
-    );
+);
 
 
 CREATE TABLE IF NOT EXISTS bookings (
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     created_at    TIMESTAMPTZ DEFAULT NOW(),
     total_amount  NUMERIC(10,2) NOT NULL CHECK (total_amount >= 0),
     CHECK (booking_end > booking_start)
-    );
+);
 
 CREATE TABLE IF NOT EXISTS activity (
     activity_id   UUID PRIMARY KEY ,

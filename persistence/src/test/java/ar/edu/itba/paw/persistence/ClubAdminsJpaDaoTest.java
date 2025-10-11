@@ -10,11 +10,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.jdbc.JdbcTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.UUID;
-import java.util.Optional;
 
 
 import static org.junit.Assert.*;
@@ -22,7 +22,8 @@ import static org.junit.Assert.*;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
 @Sql("classpath:schema.sql")
-public class ClubAdminsJDBCDaoTest {
+@Transactional
+public class ClubAdminsJpaDaoTest {
 
     @Autowired
     private DataSource ds;

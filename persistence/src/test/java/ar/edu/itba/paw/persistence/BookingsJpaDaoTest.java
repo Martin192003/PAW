@@ -12,8 +12,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.jdbc.JdbcTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.Table;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -26,7 +26,8 @@ import static org.junit.Assert.*;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
 @Sql("classpath:schema.sql")
-public class BookingsJDBCDaoTest {
+@Transactional
+public class BookingsJpaDaoTest {
 
     @Autowired
     private DataSource ds;

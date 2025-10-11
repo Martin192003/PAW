@@ -13,6 +13,7 @@ import static org.junit.Assert.*;
 import javax.sql.DataSource;
 import ar.edu.itba.paw.model.User;
 import org.junit.runner.RunWith;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -21,7 +22,8 @@ import java.util.UUID;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
 @Sql("classpath:schema.sql")
-public class UserJDBCDaoTest {
+@Transactional
+public class UserJpaDaoTest {
     private static final String PASSWORD = "Password";
     private static final String USERNAME = "Username";
     private static final String EMAIL = "Email";
