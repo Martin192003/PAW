@@ -24,14 +24,16 @@ public class ClubJpaDao implements ClubDao {
 
     @Override
     public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
-        // Asegurarse que el usuario contactInfo existe en la DB
         final User managed = em.contains(contactInfo) ? contactInfo : em.find(User.class, contactInfo.getId());
         if (managed == null) {
             throw new IllegalArgumentException("El usuario contactInfo debe existir en BD");
         }
 
+
         final Club club = new Club(name, location, BigDecimal.ZERO, 0, priceRange,
                 description, managed, musicGenre, OffsetDateTime.now(), zone, isBar);
+
+        if (club.getIsBar() == null) club.setIsBar(Boolean.FALSE);
 
         club.getAdmins().add(managed);
 

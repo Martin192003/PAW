@@ -55,17 +55,26 @@ public class ClubAdminsJpaDao implements ClubAdminDao {
 
     @Override
     public boolean addAdmin(Club club, User admin) {
+        if (club == null || admin == null) return false;
         Club managedClub = em.find(Club.class, club.getClubId());
-        User adminRef = em.getReference(User.class, admin.getId());
-        boolean added = managedClub.getAdmins().add(adminRef);
-        return added;
+        User managedUser = em.find(User.class, admin.getId());
+        if (managedClub == null || managedUser == null) return false;
+        if (managedClub.getAdmins().contains(managedUser)) return true;
+        managedClub.getAdmins().add(managedUser);
+        em.flush();
+        return true;
     }
 
     @Override
     public boolean removeAdmin(Club club, User admin) {
+        if (club == null || admin == null) return false;
         Club managedClub = em.find(Club.class, club.getClubId());
-        User adminRef = em.getReference(User.class, admin.getId());
-        boolean removed = managedClub.getAdmins().remove(adminRef);
-        return removed;
+        if (managedClub == null) return false;
+        User managedUser = em.find(User.class, admin.getId());
+        if (managedUser == null) return false;
+        if (!managedClub.getAdmins().contains(managedUser)) return false;
+        managedClub.getAdmins().remove(managedUser);
+        em.flush();
+        return true;
     }
 }

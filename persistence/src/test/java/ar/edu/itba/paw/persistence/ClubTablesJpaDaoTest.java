@@ -1,21 +1,18 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.ClubTable;
-import ar.edu.itba.paw.model.TableState;
+import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.sql.DataSource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,74 +21,88 @@ import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
-@Sql("classpath:schema.sql")
 @Transactional
 public class ClubTablesJpaDaoTest {
 
     @Autowired
-    private DataSource ds;
-    @Autowired
     private ClubTablesJpaDao clubTablesDao;
-    private JdbcTemplate jdbcTemplate;
+
+    @PersistenceContext
+    private EntityManager em;
 
     private UUID clubId;
     private UUID tableId;
 
     @Before
     public void setUp() {
-        jdbcTemplate = new JdbcTemplate(ds);
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "club_tables");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "clubs");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "users");
-        // Crear usuario y club para los tests
-        UUID userId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO users (user_id, user_name, surname, email, password_hash, cellphone, role) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                userId, "admin", "last", "email@email.com", "pass", "123456", "user"
+        em.createQuery("DELETE FROM ClubTable t").executeUpdate();
+        em.createQuery("DELETE FROM Club c").executeUpdate();
+        em.createQuery("DELETE FROM User u").executeUpdate();
+        em.flush();
+
+        User admin = persistUser("admin", "Admin", "Last", "admin@email.com",
+                "{noop}pass", "123456", Role.USER);
+        Club club = persistClub("Club", "Desc", "Loc",
+                Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, false);
+        clubId = club.getClubId();
+
+        ClubTable t = clubTablesDao.create(
+                1, 4, clubId, TableState.DISPONIBLE,
+                new BigDecimal("100"), new BigDecimal("10")
         );
-        clubId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                clubId, "Club", "Loc", 1.0, 0, "medio", "Desc", userId, "Rock"
-        );
-        // Crear mesa para los tests
-        tableId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                tableId, clubId, 1, 4, "disponible", 100, 10
-        );
+        tableId = t.getTableId();
+        em.flush();
     }
+
+    private User persistUser(String username, String name, String surname, String email,
+                             String passwordHash, String cellphone, Role role) {
+        User u = new User(UUID.randomUUID(), username, name, surname, email,
+                passwordHash, cellphone, role, OffsetDateTime.now());
+        em.persist(u);
+        return u;
+    }
+
+    private Club persistClub(String name, String desc, String loc, Price price,
+                             User contact, MusicalGenre genre, Zone zone, Boolean isBar) {
+        Club c = new Club(
+                name, loc,  null,  null,
+                price, desc, contact, genre, null, zone, isBar
+        );
+        em.persist(c);
+        return c;
+    }
+
+    private long countTables() {
+        return em.createQuery("select count(t) from ClubTable t", Long.class)
+                .getSingleResult();
+    }
+
+    // ---------- Tests ----------
 
     @Test
     public void testCreateTable() {
-        UUID userId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO users (user_id, user_name, surname, email, password_hash, cellphone, role) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                userId, "admin2", "last2", "email2@email.com", "pass2", "654321", "user"
-        );
-
-        UUID clubId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                clubId, "Club2", "Loc2", 1.0, 0, "medio", "Desc2", userId, "Rock"
-        );
+        // Nuevo club para no mezclar con el del setUp
+        User admin2 = persistUser("admin2", "Name2", "Last2", "email2@email.com",
+                "{noop}pass2", "654321", Role.USER);
+        Club club2 = persistClub("Club2", "Desc2", "Loc2",
+                Price.MEDIO, admin2, MusicalGenre.ROCK, Zone.ZONA_CABA, false);
 
         int number = 1;
         int capacity = 4;
         TableState state = TableState.DISPONIBLE;
-        BigDecimal price = BigDecimal.valueOf(100);
-        BigDecimal discount = BigDecimal.valueOf(10);
+        BigDecimal price = new BigDecimal("100");
+        BigDecimal discount = new BigDecimal("10");
 
-        ClubTable table = clubTablesDao.create(number, capacity, clubId, state, price, discount);
+        ClubTable table = clubTablesDao.create(number, capacity, club2.getClubId(), state, price, discount);
 
         assertNotNull(table);
         assertEquals(number, table.getTableNumber());
         assertEquals(capacity, table.getCapacity());
-        assertEquals(clubId, table.getClubId());
+        assertEquals(club2.getClubId(), table.getClubId());
         assertEquals(state, table.getTableState());
-        assertEquals(price, table.getPrice());
-        assertEquals(discount, table.getDiscount());
-        assertEquals(2, JdbcTestUtils.countRowsInTable(jdbcTemplate, "club_tables"));
+        assertEquals(0, price.compareTo(table.getPrice()));
+        assertEquals(0, discount.compareTo(table.getDiscount()));
+        assertEquals(2L, countTables()); // la del setUp + esta
     }
 
     @Test
@@ -102,7 +113,10 @@ public class ClubTablesJpaDaoTest {
 
     @Test
     public void testUpdateReturnsNullIfNotFound() {
-        ClubTable result = clubTablesDao.update(UUID.randomUUID(), UUID.randomUUID(), 2, 6, TableState.RESERVADA, BigDecimal.valueOf(200), BigDecimal.valueOf(20));
+        ClubTable result = clubTablesDao.update(
+                UUID.randomUUID(), UUID.randomUUID(), 2, 6,
+                TableState.RESERVADA, new BigDecimal("200"), new BigDecimal("20")
+        );
         assertNull(result);
     }
 
@@ -123,20 +137,24 @@ public class ClubTablesJpaDaoTest {
 
     @Test
     public void testUpdateSuccess() {
-        ClubTable updated = clubTablesDao.update(tableId, clubId, 2, 6, TableState.RESERVADA, BigDecimal.valueOf(200), BigDecimal.valueOf(20));
+        ClubTable updated = clubTablesDao.update(
+                tableId, clubId, 2, 6,
+                TableState.RESERVADA, new BigDecimal("200"), new BigDecimal("20")
+        );
+
         assertNotNull(updated);
         assertEquals(2, updated.getTableNumber());
         assertEquals(6, updated.getCapacity());
         assertEquals(TableState.RESERVADA, updated.getTableState());
-        assertTrue(BigDecimal.valueOf(200).compareTo(updated.getPrice()) == 0);
-        assertTrue(BigDecimal.valueOf(20).compareTo(updated.getDiscount()) == 0);
+        assertEquals(0, new BigDecimal("200").compareTo(updated.getPrice()));
+        assertEquals(0, new BigDecimal("20").compareTo(updated.getDiscount()));
     }
 
     @Test
     public void testDeleteSuccess() {
         boolean deleted = clubTablesDao.delete(tableId);
         assertTrue(deleted);
-        assertEquals(0, JdbcTestUtils.countRowsInTable(jdbcTemplate, "club_tables"));
+        assertEquals(0L, countTables());
     }
 
     @Test
@@ -148,30 +166,34 @@ public class ClubTablesJpaDaoTest {
 
     @Test
     public void testFindAllWithTables() {
-        // Agregar otra mesa
-        UUID tableId2 = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                tableId2, clubId, 2, 2, "disponible", 50, 5
+        ClubTable t2 = clubTablesDao.create(
+                2, 2, clubId, TableState.DISPONIBLE,
+                new BigDecimal("50"), new BigDecimal("5")
         );
+        em.flush();
+
         List<ClubTable> tables = clubTablesDao.findAll();
         assertEquals(2, tables.size());
+        assertTrue(tables.stream().anyMatch(t -> t.getTableId().equals(t2.getTableId())));
     }
 
     @Test
     public void testFindByClubWithTables() {
-        List<ClubTable> tables = clubTablesDao.findByClub(new Club(clubId, null, null, null, null, null, null, null, null, null, null, null));
+        Club clubProxy = new Club(clubId, null, null, null, null, null, null, null, null, null, null, null);
+        List<ClubTable> tables = clubTablesDao.findByClub(clubProxy);
+
         assertEquals(1, tables.size());
-        assertEquals(tableId, tables.get(0).getTableId());
+        assertEquals(tableId, tables.getFirst().getTableId());
     }
 
     @Test
     public void testFindAvailableByClubAndRange() {
-        // No hay bookings, la mesa debe estar disponible
-        java.time.OffsetDateTime from = java.time.OffsetDateTime.now();
-        java.time.OffsetDateTime to = from.plusHours(2);
+        OffsetDateTime from = OffsetDateTime.now();
+        OffsetDateTime to = from.plusHours(2);
+
         List<ClubTable> available = clubTablesDao.findAvailableByClubAndRange(clubId, from, to);
+
         assertEquals(1, available.size());
-        assertEquals(tableId, available.get(0).getTableId());
+        assertEquals(tableId, available.getFirst().getTableId());
     }
 }

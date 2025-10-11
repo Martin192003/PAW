@@ -5,16 +5,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.sql.DataSource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -25,18 +21,14 @@ import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
-@Sql("classpath:schema.sql")
 @Transactional
 public class BookingsJpaDaoTest {
 
     @Autowired
-    private DataSource ds;
-    @Autowired
     private BookingsJpaDao bookingsDao;
-    @Autowired
-    private UserJpaDao userDao;
-    private JdbcTemplate jdbcTemplate;
-    private PasswordEncoder passwordEncoder;
+
+    @PersistenceContext
+    private EntityManager em;
 
     private UUID clubId;
     private UUID tableId;
@@ -45,89 +37,130 @@ public class BookingsJpaDaoTest {
 
     @Before
     public void setUp() {
-        jdbcTemplate = new JdbcTemplate(ds);
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "bookings");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "users");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "club_tables");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "clubs");
-        passwordEncoder = new BCryptPasswordEncoder();
-        // Crear usuario
-        user = userDao.create("user", "name", passwordEncoder.encode("pass"), "last", "email", "cell", Role.USER);
-        // Crear club
-        clubId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                clubId, "Club Test", "Location", 5.0, 1, "medio", "desc", user.getId(), "pop", OffsetDateTime.now()
-        );
-        // Crear mesa asociada al club
-        tableId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                tableId, clubId, 1, 4, "disponible", 100.0, 0.0
-        );
+        // Limpieza ligera (con @Transactional ya hay rollback por test)
+        em.createQuery("DELETE FROM Booking b").executeUpdate();
+        em.createQuery("DELETE FROM ClubTable t").executeUpdate();
+        em.createQuery("DELETE FROM Club c").executeUpdate();
+        em.createQuery("DELETE FROM User u").executeUpdate();
+        em.flush();
+
+        // Arrange básico usando JPA
+        user = persistUser("user", "name", "last", "email", "cell", Role.USER);
+        Club club = persistClub(user);
+        clubId = club.getClubId();
+        ClubTable table = persistTable(club);
+        tableId = table.getTableId();
+
         Status status = Status.PENDIENTE;
-        BigDecimal totalAmount = BigDecimal.valueOf(200);
+        BigDecimal totalAmount = new BigDecimal("200.00");
         OffsetDateTime start = OffsetDateTime.now();
         OffsetDateTime end = start.plusHours(2);
+
         booking = bookingsDao.create(user, tableId, status, totalAmount, start, end);
+        em.flush();
     }
+
+    // ----------------- Helpers JPA -----------------
+
+    private User persistUser(String username, String name, String surname, String email, String cell, Role role) {
+        User u = new User(
+                UUID.randomUUID(),
+                username, name, surname, email,
+                "{noop}hash", // no hace falta encriptar para el test
+                cell,
+                role,
+                OffsetDateTime.now()
+        );
+        em.persist(u);
+        return u;
+    }
+
+    private Club persistClub(User contact) {
+        Club c = new Club(
+                "Club Test",
+                "Location",
+                new BigDecimal("5.0"),
+                1,
+                null,          // Price (opcional)
+                "desc",
+                contact,
+                null,          // MusicalGenre (opcional)
+                OffsetDateTime.now(),
+                null,          // Zone (opcional)
+                Boolean.FALSE
+        );
+        em.persist(c);
+        return c;
+    }
+
+    private ClubTable persistTable(Club club) {
+        ClubTable t = new ClubTable(
+                null,                   // UUID se autogenera en @PrePersist si null
+                club.getClubId(),       // FK por UUID (no ManyToOne)
+                1, 4,
+                TableState.DISPONIBLE,
+                new BigDecimal("100.00"),
+                BigDecimal.ZERO
+        );
+        em.persist(t);
+        return t;
+    }
+
+    private long countBookings() {
+        return em.createQuery("select count(b) from Booking b", Long.class).getSingleResult();
+    }
+
+    // ----------------- Tests -----------------
 
     @Test
     public void testCreate() {
-        // Crear usuario con datos únicos
-        User user = userDao.create("user2", "name2", passwordEncoder.encode("pass2"), "last2", "email2", "cell2", Role.USER);
-
-        // Crear club
-        UUID clubId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                clubId, "Club Test", "Location", 5.0, 1, "medio", "desc", user.getId(), "pop", OffsetDateTime.now()
-        );
-
-        // Crear mesa asociada al club
-        UUID tableId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                tableId, clubId, 1, 4, "disponible", 100.0, 0.0
-        );
+        User u2 = persistUser("user2", "name2", "last2", "email2", "cell2", Role.USER);
+        Club c2 = persistClub(u2);
+        ClubTable t2 = persistTable(c2);
 
         Status status = Status.PENDIENTE;
-        BigDecimal totalAmount = BigDecimal.valueOf(200);
+        BigDecimal totalAmount = new BigDecimal("200.00");
         OffsetDateTime start = OffsetDateTime.now();
         OffsetDateTime end = start.plusHours(2);
 
-        // Crear booking
-        Booking booking = bookingsDao.create(user, tableId, status, totalAmount, start, end);
 
-        assertNotNull(booking);
-        assertEquals(user.getId(), booking.getUser().getId());
-        assertEquals(tableId, booking.getTableId());
-        assertEquals(status, booking.getStatus());
-        assertEquals(0, totalAmount.compareTo(booking.getTotalAmount()));
-        assertEquals(start.truncatedTo(ChronoUnit.SECONDS), booking.getBookingStart().truncatedTo(ChronoUnit.SECONDS));
-        assertEquals(end.truncatedTo(ChronoUnit.SECONDS), booking.getBookingEnd().truncatedTo(ChronoUnit.SECONDS));
-        assertEquals(2, JdbcTestUtils.countRowsInTable(jdbcTemplate, "bookings"));
+        Booking b2 = bookingsDao.create(u2, t2.getTableId(), status, totalAmount, start, end);
+
+
+        assertNotNull(b2);
+        assertEquals(u2.getId(), b2.getUser().getId());
+        assertEquals(t2.getTableId(), b2.getTable().getTableId());
+        assertEquals(status, b2.getStatus());
+        assertEquals(0, totalAmount.compareTo(b2.getTotalAmount()));
+        assertEquals(start.truncatedTo(ChronoUnit.SECONDS), b2.getBookingStart().truncatedTo(ChronoUnit.SECONDS));
+        assertEquals(end.truncatedTo(ChronoUnit.SECONDS), b2.getBookingEnd().truncatedTo(ChronoUnit.SECONDS));
+        assertEquals(2L, countBookings());
     }
 
     @Test
     public void testUpdate() {
         Status newStatus = Status.CONFIRMADA;
-        BigDecimal newAmount = BigDecimal.valueOf(300);
+        BigDecimal newAmount = new BigDecimal("300.00");
         OffsetDateTime newStart = booking.getBookingStart().plusDays(1);
         OffsetDateTime newEnd = newStart.plusHours(2);
-        Optional<Booking> updated = bookingsDao.update(booking.getBookingId(), user, tableId, newStatus, newAmount, newStart, newEnd);
-        assertNotNull(updated);
-        assertEquals(newStatus, updated.orElseThrow().getStatus());
-        assertEquals(0, newAmount.compareTo(updated.orElseThrow().getTotalAmount()));
-        assertEquals(newStart.truncatedTo(ChronoUnit.SECONDS), updated.orElseThrow().getBookingStart().truncatedTo(ChronoUnit.SECONDS));
-        assertEquals(newEnd.truncatedTo(ChronoUnit.SECONDS), updated.orElseThrow().getBookingEnd().truncatedTo(ChronoUnit.SECONDS));
+
+        Optional<Booking> updated = bookingsDao.update(
+                booking.getBookingId(), user, tableId, newStatus, newAmount, newStart, newEnd
+        );
+
+        assertTrue(updated.isPresent());
+        Booking u = updated.get();
+        assertEquals(newStatus, u.getStatus());
+        assertEquals(0, newAmount.compareTo(u.getTotalAmount()));
+        assertEquals(newStart.truncatedTo(ChronoUnit.SECONDS), u.getBookingStart().truncatedTo(ChronoUnit.SECONDS));
+        assertEquals(newEnd.truncatedTo(ChronoUnit.SECONDS), u.getBookingEnd().truncatedTo(ChronoUnit.SECONDS));
     }
 
     @Test
     public void testDelete() {
         boolean deleted = bookingsDao.delete(booking.getBookingId());
         assertTrue(deleted);
-        assertEquals(0, JdbcTestUtils.countRowsInTable(jdbcTemplate, "bookings"));
+        assertEquals(0L, countBookings());
     }
 
     @Test
@@ -167,7 +200,8 @@ public class BookingsJpaDaoTest {
 
     @Test
     public void testSearchPaginated() {
-        assertEquals(1, bookingsDao.searchPaginated(user.getId(), clubId, booking.getBookingId(), booking.getStatus(), "created_desc", 10, 0).size());
+        assertEquals(1, bookingsDao.searchPaginated(user.getId(), clubId, booking.getBookingId(),
+                booking.getStatus(), "created_desc", 10, 0).size());
     }
 
     @Test

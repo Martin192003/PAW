@@ -68,6 +68,13 @@ public class Club {
     )
     private Set<User> admins = new HashSet<>();
 
+    @PrePersist
+    private void prePersist() {
+        if (isBar == null) isBar = Boolean.FALSE;
+        if (createdAt == null) createdAt = OffsetDateTime.now();
+        if (rating == null) rating = BigDecimal.ZERO;
+        if (quantityRatings == null) quantityRatings = 0;
+    }
 
     public Club() { }
 
@@ -87,6 +94,8 @@ public class Club {
         this.zone = zone;
         this.isBar = isBar;
     }
+
+
     //ver de sacar el constructor de arriba ya que se genera sola la uuid
     public Club(String clubName, String location, java.math.BigDecimal rating,
                 Integer quantityRatings, Price priceRange, String description,

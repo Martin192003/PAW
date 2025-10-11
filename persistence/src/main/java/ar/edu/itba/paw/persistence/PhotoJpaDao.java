@@ -26,19 +26,15 @@ public class PhotoJpaDao implements PhotoDao {
         return p.getPhotoId();
     }
 
-    @Override
-    @Transactional(readOnly = true)
     public List<Photo> findByClub(UUID clubId, int limit, int offset) {
-        return em.createQuery("""
-                SELECT p
-                FROM Photo p
-                WHERE p.clubId = :club
-                ORDER BY p.createdAt DESC
-                """, Photo.class)
-                .setParameter("club", clubId)
+        List<Photo> list = em.createQuery(
+                        "select p from Photo p where p.clubId = :clubId order by p.createdAt desc", Photo.class)
+                .setParameter("clubId", clubId)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
                 .getResultList();
+        list.forEach(p -> { em.detach(p); p.setData(null); });
+        return list;
     }
 
     @Override
@@ -48,11 +44,13 @@ public class PhotoJpaDao implements PhotoDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Optional<Photo> findById(UUID photoId) {
-        return Optional.ofNullable(em.find(Photo.class, photoId));
+    public Optional<Photo> findById(UUID id) {
+        Photo p = em.find(Photo.class, id);
+        if (p == null) return Optional.empty();
+        em.detach(p);
+        p.setData(null);
+        return Optional.of(p);
     }
-
     @Override
     @Transactional
     public UUID save(Photo p) {

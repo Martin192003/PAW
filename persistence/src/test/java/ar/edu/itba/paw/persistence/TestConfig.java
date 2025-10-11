@@ -45,7 +45,7 @@ public class TestConfig {
 
         var props = new Properties();
         props.setProperty("hibernate.hbm2ddl.auto", "update");
-        props.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL92Dialect");
+        props.setProperty("hibernate.dialect", "org.hibernate.dialect.HSQLDialect");
         emf.setJpaProperties(props);
         return emf;
     }

@@ -1,28 +1,25 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Activity;
-import ar.edu.itba.paw.model.Booking;
-import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.sql.DataSource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
-@Sql("classpath:schema.sql")
 @Transactional
 public class ActivityJpaDaoTest {
 
@@ -30,49 +27,102 @@ public class ActivityJpaDaoTest {
     private static final String DETAILS = "Detalles";
 
     @Autowired
-    private DataSource ds;
-    @Autowired
     private ActivityJpaDao activityDao;
-    private JdbcTemplate jdbcTemplate;
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Before
-    public void setUp() {
-        jdbcTemplate = new JdbcTemplate(ds);
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "activity");
+    public void clean() {
+        em.createQuery("DELETE FROM Activity a").executeUpdate();
+        em.flush();
     }
+
+
+    private User persistUser() {
+        User u = new User(
+                UUID.randomUUID(),
+                "testuser",
+                "Test",
+                "User",
+                "test@example.com",
+                "hash",
+                "123456",
+                Role.USER,
+                OffsetDateTime.now()
+        );
+        em.persist(u);
+        return u;
+    }
+
+    private Club persistClub(User contact) {
+        Club c = new Club(
+                "Club Test",
+                "Location",
+                new BigDecimal("5.0"),
+                1,
+                null,
+                "desc",
+                contact,
+                null,
+                OffsetDateTime.now(),
+                null,
+                Boolean.FALSE
+        );
+        em.persist(c);
+        return c;
+    }
+
+    private ClubTable persistTable(Club club) {
+        ClubTable t = new ClubTable(
+                null,
+                club.getClubId(),
+                1,
+                4,
+                TableState.DISPONIBLE,
+                new BigDecimal("100.00"),
+                BigDecimal.ZERO
+        );
+        em.persist(t);
+        return t;
+    }
+
+    private Booking persistBooking(User u, ClubTable t) {
+        Booking b = new Booking(
+                UUID.randomUUID(), // Booking NO genera id: lo seteamos acá
+                u,
+                t,
+                OffsetDateTime.now(),
+                OffsetDateTime.now().plusHours(1),
+                Status.CONFIRMADA, // Ajusta al valor existente en tu enum
+                OffsetDateTime.now(),
+                new BigDecimal("100.00")
+        );
+        em.persist(b);
+        return b;
+    }
+
+    private Booking persistedBookingGraph() {
+        User u = persistUser();
+        Club c = persistClub(u);
+        ClubTable t = persistTable(c);
+        Booking b = persistBooking(u, t);
+        em.flush();
+        return b;
+    }
+
+    private long countActivities() {
+        return em.createQuery("select count(a) from Activity a", Long.class)
+                .getSingleResult();
+    }
+
+    // ------------------------
+    // Tests
+    // ------------------------
 
     @Test
     public void testCreate() {
-        // Crear usuario
-        UUID userId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO users (user_id, user_name, surname, email, password_hash, cellphone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                userId, "Test", "User", "test@example.com", "hash", "123456", "user", OffsetDateTime.now()
-        );
-
-        // Crear club
-        UUID clubId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                clubId, "Club Test", "Location", 5.0, 1, "medio", "desc", userId, "pop", OffsetDateTime.now()
-        );
-
-        // Crear mesa
-        UUID tableId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                tableId, clubId, 1, 4, "disponible", 100.0, 0.0
-        );
-
-        // Crear booking
-        UUID bookingId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO bookings (booking_id, user_id, table_id, booking_start, booking_end, status, created_at, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                bookingId, userId, tableId, OffsetDateTime.now(), OffsetDateTime.now().plusHours(1), "confirmada", OffsetDateTime.now(), 100.0
-        );
-
-        Booking booking = new Booking();
-        booking.setBookingId(bookingId);
+        Booking booking = persistedBookingGraph();
         OffsetDateTime date = OffsetDateTime.now();
 
         Activity activity = activityDao.create(booking, TYPE, DETAILS, date);
@@ -82,29 +132,20 @@ public class ActivityJpaDaoTest {
         assertEquals(DETAILS, activity.getDetails());
         assertEquals(date, activity.getActivityDate());
         assertEquals(booking.getBookingId(), activity.getBooking().getBookingId());
-        assertEquals(1, JdbcTestUtils.countRowsInTable(jdbcTemplate, "activity"));
+        assertEquals(1L, countActivities());
     }
 
     @Test
     public void testUpdateSuccess() {
-        // Crear usuario, club, mesa, booking y actividad
-        UUID userId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO users (user_id, user_name, surname, email, password_hash, cellphone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", userId, "Test", "User", "test2@example.com", "hash", "123456", "user", OffsetDateTime.now());
-        UUID clubId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", clubId, "Club Test", "Location", 5.0, 1, "medio", "desc", userId, "pop", OffsetDateTime.now());
-        UUID tableId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)", tableId, clubId, 1, 4, "disponible", 100.0, 0.0);
-        UUID bookingId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO bookings (booking_id, user_id, table_id, booking_start, booking_end, status, created_at, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", bookingId, userId, tableId, OffsetDateTime.now(), OffsetDateTime.now().plusHours(1), "confirmada", OffsetDateTime.now(), 100.0);
-        Booking booking = new Booking();
-        booking.setBookingId(bookingId);
-        OffsetDateTime date = OffsetDateTime.now();
-        Activity activity = activityDao.create(booking, TYPE, DETAILS, date);
-        // Actualizar actividad
+        Booking booking = persistedBookingGraph();
+        Activity activity = activityDao.create(booking, TYPE, DETAILS, OffsetDateTime.now());
+
         String newType = "UPDATED_TYPE";
         String newDetails = "Nuevos detalles";
-        OffsetDateTime newDate = date.plusDays(1);
+        OffsetDateTime newDate = activity.getActivityDate().plusDays(1);
+
         Activity updated = activityDao.update(activity.getActivityId(), booking, newType, newDetails, newDate);
+
         assertNotNull(updated);
         assertEquals(newType, updated.getActivityType());
         assertEquals(newDetails, updated.getDetails());
@@ -113,42 +154,24 @@ public class ActivityJpaDaoTest {
 
     @Test
     public void testDeleteSuccess() {
-        // Crear usuario, club, mesa, booking y actividad
-        UUID userId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO users (user_id, user_name, surname, email, password_hash, cellphone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", userId, "Test", "User", "test3@example.com", "hash", "123456", "user", OffsetDateTime.now());
-        UUID clubId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", clubId, "Club Test", "Location", 5.0, 1, "medio", "desc", userId, "pop", OffsetDateTime.now());
-        UUID tableId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)", tableId, clubId, 1, 4, "disponible", 100.0, 0.0);
-        UUID bookingId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO bookings (booking_id, user_id, table_id, booking_start, booking_end, status, created_at, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", bookingId, userId, tableId, OffsetDateTime.now(), OffsetDateTime.now().plusHours(1), "confirmada", OffsetDateTime.now(), 100.0);
-        Booking booking = new Booking();
-        booking.setBookingId(bookingId);
-        OffsetDateTime date = OffsetDateTime.now();
-        Activity activity = activityDao.create(booking, TYPE, DETAILS, date);
+        Booking booking = persistedBookingGraph();
+        Activity activity = activityDao.create(booking, TYPE, DETAILS, OffsetDateTime.now());
+
         boolean deleted = activityDao.delete(activity.getActivityId());
+
         assertTrue(deleted);
-        assertEquals(0, JdbcTestUtils.countRowsInTable(jdbcTemplate, "activity"));
+        assertEquals(0L, countActivities());
     }
 
     @Test
     public void testFindByIdSuccess() {
-        // Crear usuario, club, mesa, booking y actividad
-        UUID userId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO users (user_id, user_name, surname, email, password_hash, cellphone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", userId, "Test", "User", "test4@example.com", "hash", "123456", "user", OffsetDateTime.now());
-        UUID clubId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", clubId, "Club Test", "Location", 5.0, 1, "medio", "desc", userId, "pop", OffsetDateTime.now());
-        UUID tableId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)", tableId, clubId, 1, 4, "disponible", 100.0, 0.0);
-        UUID bookingId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO bookings (booking_id, user_id, table_id, booking_start, booking_end, status, created_at, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", bookingId, userId, tableId, OffsetDateTime.now(), OffsetDateTime.now().plusHours(1), "confirmada", OffsetDateTime.now(), 100.0);
-        Booking booking = new Booking();
-        booking.setBookingId(bookingId);
-        OffsetDateTime date = OffsetDateTime.now();
-        Activity activity = activityDao.create(booking, TYPE, DETAILS, date);
-        assertNotNull(activityDao.findById(activity.getActivityId()));
-        assertTrue(activityDao.findById(activity.getActivityId()).isPresent());
-        assertEquals(activity.getActivityId(), activityDao.findById(activity.getActivityId()).get().getActivityId());
+        Booking booking = persistedBookingGraph();
+        Activity activity = activityDao.create(booking, TYPE, DETAILS, OffsetDateTime.now());
+
+        Optional<Activity> found = activityDao.findById(activity.getActivityId());
+
+        assertTrue(found.isPresent());
+        assertEquals(activity.getActivityId(), found.get().getActivityId());
     }
 
     @Test
@@ -158,39 +181,21 @@ public class ActivityJpaDaoTest {
 
     @Test
     public void testFindAllWithActivities() {
-        // Crear usuario, club, mesa, booking y dos actividades
-        UUID userId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO users (user_id, user_name, surname, email, password_hash, cellphone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", userId, "Test", "User", "test5@example.com", "hash", "123456", "user", OffsetDateTime.now());
-        UUID clubId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", clubId, "Club Test", "Location", 5.0, 1, "medio", "desc", userId, "pop", OffsetDateTime.now());
-        UUID tableId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)", tableId, clubId, 1, 4, "disponible", 100.0, 0.0);
-        UUID bookingId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO bookings (booking_id, user_id, table_id, booking_start, booking_end, status, created_at, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", bookingId, userId, tableId, OffsetDateTime.now(), OffsetDateTime.now().plusHours(1), "confirmada", OffsetDateTime.now(), 100.0);
-        Booking booking = new Booking();
-        booking.setBookingId(bookingId);
+        Booking booking = persistedBookingGraph();
         OffsetDateTime date = OffsetDateTime.now();
+
         activityDao.create(booking, TYPE, DETAILS, date);
         activityDao.create(booking, "OTRO_TYPE", "OTROS", date.plusMinutes(1));
+
         assertEquals(2, activityDao.findAll().size());
     }
 
     @Test
     public void testFindByUser() {
-        // Crear usuario, club, mesa, booking y actividad
-        UUID userId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO users (user_id, user_name, surname, email, password_hash, cellphone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", userId, "Test", "User", "test6@example.com", "hash", "123456", "user", OffsetDateTime.now());
-        UUID clubId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", clubId, "Club Test", "Location", 5.0, 1, "medio", "desc", userId, "pop", OffsetDateTime.now());
-        UUID tableId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)", tableId, clubId, 1, 4, "disponible", 100.0, 0.0);
-        UUID bookingId = UUID.randomUUID();
-        jdbcTemplate.update("INSERT INTO bookings (booking_id, user_id, table_id, booking_start, booking_end, status, created_at, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", bookingId, userId, tableId, OffsetDateTime.now(), OffsetDateTime.now().plusHours(1), "confirmada", OffsetDateTime.now(), 100.0);
-        Booking booking = new Booking();
-        booking.setBookingId(bookingId);
-        OffsetDateTime date = OffsetDateTime.now();
-        activityDao.create(booking, TYPE, DETAILS, date);
-        assertEquals(1, activityDao.findByUser(new User(userId)).size());
+        Booking booking = persistedBookingGraph();
+        activityDao.create(booking, TYPE, DETAILS, OffsetDateTime.now());
+
+        assertEquals(1, activityDao.findByUser(booking.getUser()).size());
     }
 
     @Test
@@ -200,8 +205,7 @@ public class ActivityJpaDaoTest {
 
     @Test
     public void testUpdateReturnsNullIfNotFound() {
-        Booking booking = new Booking();
-        booking.setBookingId(UUID.randomUUID());
+        Booking booking = persistedBookingGraph();
         Activity updated = activityDao.update(UUID.randomUUID(), booking, "type", "details", OffsetDateTime.now());
         assertNull(updated);
     }

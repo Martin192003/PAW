@@ -5,51 +5,58 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.sql.DataSource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
-
 
 import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
-@Sql("classpath:schema.sql")
 @Transactional
 public class ClubAdminsJpaDaoTest {
 
-    @Autowired
-    private DataSource ds;
-    @Autowired
-    private ClubAdminsJpaDao clubAdminsDao;
-    @Autowired
-    private ClubJpaDao clubDao;
-    @Autowired
-    private UserJpaDao userDao;
-    private JdbcTemplate jdbcTemplate;
+    @Autowired private ClubAdminsJpaDao clubAdminsDao;
+    @Autowired private ClubJpaDao clubDao;
+    @Autowired private UserJpaDao userDao;
+
+    @PersistenceContext private EntityManager em;
 
     @Before
     public void setUp() {
-        jdbcTemplate = new JdbcTemplate(ds);
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "club_admins");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "clubs");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "users");
+        // Con @Transactional, cada método hace rollback. No necesitamos limpiar a mano.
+        em.flush();
+    }
+
+    // -------- Helpers de verificación (JPQL) --------
+    private long countAdminsForClub(UUID clubId) {
+        return em.createQuery(
+                        "select count(a) from Club c join c.admins a where c.clubId = :cid", Long.class)
+                .setParameter("cid", clubId)
+                .getSingleResult();
+    }
+
+    private long countClubsForAdmin(UUID adminId) {
+        return em.createQuery(
+                        "select count(c) from User u join u.adminOfClubs c where u.id = :uid", Long.class)
+                .setParameter("uid", adminId)
+                .getSingleResult();
     }
 
     @Test
     public void testAddAdmin() {
         User admin = userDao.create("admin", "name","pass", "last", "email", "cell", Role.USER);
         Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+
         boolean added = clubAdminsDao.addAdmin(club, admin);
+
         assertTrue(added);
-        assertEquals(1, JdbcTestUtils.countRowsInTable(jdbcTemplate, "club_admins"));
+        assertEquals(1L, countAdminsForClub(club.getClubId()));
     }
 
     @Test
@@ -58,6 +65,7 @@ public class ClubAdminsJpaDaoTest {
         club.setClubId(UUID.randomUUID());
         User admin = new User();
         admin.setUserId(UUID.randomUUID());
+
         assertFalse(clubAdminsDao.exists(club, admin));
     }
 
@@ -65,7 +73,9 @@ public class ClubAdminsJpaDaoTest {
     public void testFindAdminsReturnsEmptyList() {
         Club club = new Club();
         club.setClubId(UUID.randomUUID());
+
         List<User> admins = clubAdminsDao.findAdmins(club);
+
         assertNotNull(admins);
         assertTrue(admins.isEmpty());
     }
@@ -74,7 +84,9 @@ public class ClubAdminsJpaDaoTest {
     public void testFindClubsByAdminReturnsEmptyList() {
         User admin = new User();
         admin.setUserId(UUID.randomUUID());
+
         List<Club> clubs = clubAdminsDao.findClubsByAdmin(admin);
+
         assertNotNull(clubs);
         assertTrue(clubs.isEmpty());
     }
@@ -85,6 +97,7 @@ public class ClubAdminsJpaDaoTest {
         club.setClubId(UUID.randomUUID());
         User admin = new User();
         admin.setUserId(UUID.randomUUID());
+
         assertFalse(clubAdminsDao.removeAdmin(club, admin));
     }
 
@@ -93,9 +106,11 @@ public class ClubAdminsJpaDaoTest {
         User admin = userDao.create("admin2", "name2","pass2", "last2", "email2", "cell2", Role.USER);
         Club club = clubDao.create("Club2", "Desc2", "Loc2", Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
         clubAdminsDao.addAdmin(club, admin);
+
         boolean removed = clubAdminsDao.removeAdmin(club, admin);
+
         assertTrue(removed);
-        assertEquals(0, JdbcTestUtils.countRowsInTable(jdbcTemplate, "club_admins"));
+        assertEquals(0L, countAdminsForClub(club.getClubId()));
     }
 
     @Test
@@ -103,7 +118,9 @@ public class ClubAdminsJpaDaoTest {
         User admin = userDao.create("admin3", "name3","pass3", "last3", "email3", "cell3", Role.USER);
         Club club = clubDao.create("Club3", "Desc3", "Loc3", Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
         clubAdminsDao.addAdmin(club, admin);
+
         List<User> admins = clubAdminsDao.findAdmins(club);
+
         assertEquals(1, admins.size());
         assertEquals(admin.getId(), admins.get(0).getId());
     }
@@ -113,7 +130,9 @@ public class ClubAdminsJpaDaoTest {
         User admin = userDao.create("admin4", "name4","pass4", "last4", "email4", "cell4", Role.USER);
         Club club = clubDao.create("Club4", "Desc4", "Loc4", Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
         clubAdminsDao.addAdmin(club, admin);
+
         List<Club> clubs = clubAdminsDao.findClubsByAdmin(admin);
+
         assertEquals(1, clubs.size());
         assertEquals(club.getClubId(), clubs.get(0).getClubId());
     }
@@ -122,10 +141,13 @@ public class ClubAdminsJpaDaoTest {
     public void testAddAdminDoesNotDuplicate() {
         User admin = userDao.create("admin5", "name5","pass5", "last5", "email5", "cell5", Role.USER);
         Club club = clubDao.create("Club5", "Desc5", "Loc5", Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+
         boolean firstAdd = clubAdminsDao.addAdmin(club, admin);
         boolean secondAdd = clubAdminsDao.addAdmin(club, admin);
+
         assertTrue(firstAdd);
         assertTrue(secondAdd);
-        assertEquals(1, JdbcTestUtils.countRowsInTable(jdbcTemplate, "club_admins"));
+        assertEquals(1L, countAdminsForClub(club.getClubId()));
+        assertEquals(1L, countClubsForAdmin(admin.getId()));
     }
 }
