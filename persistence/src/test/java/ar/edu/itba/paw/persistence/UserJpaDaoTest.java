@@ -2,14 +2,14 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Role;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.jdbc.JdbcTestUtils;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 import ar.edu.itba.paw.model.User;
 import org.junit.runner.RunWith;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
-
+import java.util.List;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
@@ -31,15 +31,14 @@ public class UserJpaDaoTest {
     private static final String LASTNAME = "LastName";
     private static final String CELLPHONE = "cellphone";
 
-    @Autowired
-    private DataSource ds;
+    @PersistenceContext
+    private EntityManager em;
     @Autowired
     private UserJpaDao userDao;
-    private JdbcTemplate jdbcTemplate;
+
     @Before
     public void setUp() {
-        jdbcTemplate = new JdbcTemplate(ds);
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "users");
+        em.createQuery("DELETE FROM User").executeUpdate();
     }
     @Test
     public void testCreate() {
@@ -47,7 +46,7 @@ public class UserJpaDaoTest {
         assertNotNull(user);
         assertEquals(USERNAME, user.getUsername());
         assertEquals(PASSWORD, user.getPassword());
-        assertEquals(1, JdbcTestUtils.countRowsInTable(jdbcTemplate, "users"));
+        assertEquals(1, ((Number)em.createQuery("SELECT COUNT(u) FROM User u").getSingleResult()).intValue());
     }
 
     @Test
@@ -69,7 +68,7 @@ public class UserJpaDaoTest {
         User user = userDao.create(USERNAME, NAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, Role.USER);
         boolean deleted = userDao.delete(user.getId());
         assertTrue(deleted);
-        assertEquals(0, JdbcTestUtils.countRowsInTable(jdbcTemplate, "users"));
+        assertEquals(0, ((Number)em.createQuery("SELECT COUNT(u) FROM User u").getSingleResult()).intValue());
     }
 
     @Test
@@ -108,7 +107,8 @@ public class UserJpaDaoTest {
     public void testFindAll() {
         userDao.create(USERNAME, NAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, Role.USER);
         userDao.create("User2", "Name2", "Pass2", "Last2", "email2", "cell2", Role.ADMIN);
-        assertEquals(2, userDao.findAll().size());
+        List<User> users = userDao.findAll();
+        assertEquals(2, users.size());
     }
 
     @Test

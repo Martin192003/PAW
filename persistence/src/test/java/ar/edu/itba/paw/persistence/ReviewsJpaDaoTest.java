@@ -1,4 +1,3 @@
-// persistence/src/test/java/ar/edu/itba/paw/persistence/ReviewsJDBCDaoTest.java
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
@@ -6,15 +5,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-
-import javax.sql.DataSource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,28 +27,26 @@ public class ReviewsJpaDaoTest {
     private static final int RATING = 5;
     private static final String DESCRIPTION = "Excelente club";
 
-    @Autowired
-    private DataSource ds;
+    @PersistenceContext
+    private EntityManager em;
     @Autowired
     private ReviewsJpaDao reviewsDao;
     @Autowired
     private UserJpaDao userDao;
     @Autowired
     private ClubJpaDao clubDao;
-    private JdbcTemplate jdbcTemplate;
 
     @Before
     public void setUp() {
-        jdbcTemplate = new JdbcTemplate(ds);
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "reviews");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "users");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "clubs");
+        em.createQuery("DELETE FROM Review").executeUpdate();
+        em.createQuery("DELETE FROM User").executeUpdate();
+        em.createQuery("DELETE FROM Club").executeUpdate();
     }
 
     @Test
     public void testCreateReview() {
         User user = userDao.create("user", "name","pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, user, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, user, MusicalGenre.ROCK, Zone.ZONA_CABA, false);
         Review review = reviewsDao.create(user, club, RATING, DESCRIPTION);
 
         assertNotNull(review);
@@ -59,7 +54,7 @@ public class ReviewsJpaDaoTest {
         assertEquals(DESCRIPTION, review.getDescription());
         assertEquals(user.getId(), review.getUser().getId());
         assertEquals(club.getClubId(), review.getClub().getClubId());
-        assertEquals(1, JdbcTestUtils.countRowsInTable(jdbcTemplate, "reviews"));
+        assertEquals(1, ((Number)em.createQuery("SELECT COUNT(r) FROM Review r").getSingleResult()).intValue());
     }
 
     @Test

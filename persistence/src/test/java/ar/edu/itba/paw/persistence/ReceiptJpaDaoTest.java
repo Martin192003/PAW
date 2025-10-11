@@ -1,19 +1,20 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Receipt;
+import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.sql.DataSource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,61 +26,94 @@ import static org.junit.Assert.*;
 @Transactional
 public class ReceiptJpaDaoTest {
 
-    @Autowired
-    private DataSource ds;
+    @PersistenceContext
+    private EntityManager em;
     @Autowired
     private ReceiptJpaDao receiptDao;
-    private JdbcTemplate jdbcTemplate;
 
     @Before
     public void setUp() {
-        jdbcTemplate = new JdbcTemplate(ds);
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "receipts");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "bookings");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "club_tables");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "clubs");
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "users");
+        em.createQuery("DELETE FROM Receipt").executeUpdate();
+        em.createQuery("DELETE FROM Booking").executeUpdate();
+        em.createQuery("DELETE FROM ClubTable").executeUpdate();
+        em.createQuery("DELETE FROM Club").executeUpdate();
+        em.createQuery("DELETE FROM User").executeUpdate();
     }
 
-    private void insertUser(UUID userId) {
-        String email = userId.toString() + "@example.com";
-        jdbcTemplate.update(
-            "INSERT INTO users (user_id, user_name, surname, email, password_hash, cellphone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            userId, "Test", "User", email, "hash", "123456", "user", OffsetDateTime.now()
-        );
+    private User insertUser(UUID userId) {
+        User user = new User();
+        user.setUserId(userId);
+        user.setUserName("Test");
+        user.setName("TestName");
+        user.setSurname("User");
+        user.setEmail(userId.toString() + "@example.com");
+        user.setPasswordHash("hash");
+        user.setCellphone("123456");
+        user.setRole(Role.USER);
+        user.setCreatedAt(OffsetDateTime.now());
+        em.persist(user);
+        return user;
     }
 
-    private void insertClub(UUID clubId, UUID contactId) {
-        jdbcTemplate.update(
-            "INSERT INTO clubs (club_id, club_name, location, rating, quantity_ratings, price_range, description, contact_info, music_genre, zone, is_bar, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            clubId, "Club Test", "Location", 5.0, 1, "medio", "desc", contactId, "pop", "ZONA_CABA", false, OffsetDateTime.now()
-        );
+    private Club insertClub(UUID clubId, User contact) {
+        Club club = em.find(Club.class, clubId);
+        if (club != null) {
+            return club;
+        }
+        club = new Club();
+        club.setClubId(clubId);
+        club.setClubName("Club Test");
+        club.setLocation("Location");
+        club.setRating(BigDecimal.ZERO);
+        club.setQuantityRatings(1);
+        club.setPriceRange(Price.MEDIO);
+        club.setDescription("desc");
+        club.setContactInfo(em.merge(contact));
+        club.setMusicGenre(MusicalGenre.POP);
+        club.setZone(Zone.ZONA_CABA);
+        club.setIsBar(false);
+        club.setCreatedAt(OffsetDateTime.now());
+        club.setAdmins(new HashSet<>());
+        return em.merge(club);
     }
 
-    private void insertTable(UUID tableId, UUID clubId) {
-        jdbcTemplate.update(
-            "INSERT INTO club_tables (table_id, club_id, table_number, capacity, table_state, price, discount) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            tableId, clubId, 1, 4, "disponible", 100.0, 0.0
-        );
+    private ClubTable insertTable(UUID tableId, Club club) {
+        ClubTable table = new ClubTable();
+        table.setTableId(tableId);
+        table.setClubId(club.getClubId());
+        table.setTableNumber(1);
+        table.setCapacity(4);
+        table.setTableState(TableState.DISPONIBLE);
+        table.setPrice(BigDecimal.valueOf(100.0));
+        table.setDiscount(BigDecimal.valueOf(0.0));
+        em.persist(table);
+        return table;
     }
 
-    private void insertBooking(UUID bookingId, UUID userId, UUID tableId) {
-        jdbcTemplate.update(
-            "INSERT INTO bookings (booking_id, user_id, table_id, booking_start, booking_end, status, created_at, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            bookingId, userId, tableId, OffsetDateTime.now(), OffsetDateTime.now().plusHours(1), "confirmada", OffsetDateTime.now(), 100.0
-        );
+    private Booking insertBooking(UUID bookingId, User user, ClubTable table) {
+        Booking booking = new Booking();
+        booking.setBookingId(bookingId);
+        booking.setUser(user);
+        booking.setTable(table);
+        booking.setBookingStart(OffsetDateTime.now());
+        booking.setBookingEnd(OffsetDateTime.now().plusHours(1));
+        booking.setStatus(Status.CONFIRMADA);
+        booking.setCreatedAt(OffsetDateTime.now());
+        booking.setTotalAmount(BigDecimal.valueOf(100.0));
+        em.persist(booking);
+        return booking;
     }
 
     @Test
     public void testCreateAndFindByIdWithData() {
         UUID userId = UUID.randomUUID();
-        insertUser(userId);
+        User user = insertUser(userId);
         UUID clubId = UUID.randomUUID();
-        insertClub(clubId, userId);
+        Club club = insertClub(clubId, user);
         UUID tableId = UUID.randomUUID();
-        insertTable(tableId, clubId);
+        ClubTable table = insertTable(tableId, club);
         UUID bookingId = UUID.randomUUID();
-        insertBooking(bookingId, userId, tableId);
+        Booking booking = insertBooking(bookingId, user, table);
         String filename = "receipt.pdf";
         String contentType = "application/pdf";
         byte[] data = new byte[]{1,2,3,4,5};
@@ -98,13 +132,13 @@ public class ReceiptJpaDaoTest {
     @Test
     public void testFindByBooking() {
         UUID userId = UUID.randomUUID();
-        insertUser(userId);
+        User user = insertUser(userId);
         UUID clubId = UUID.randomUUID();
-        insertClub(clubId, userId);
+        Club club = insertClub(clubId, user);
         UUID tableId = UUID.randomUUID();
-        insertTable(tableId, clubId);
+        ClubTable table = insertTable(tableId, club);
         UUID bookingId = UUID.randomUUID();
-        insertBooking(bookingId, userId, tableId);
+        Booking booking = insertBooking(bookingId, user, table);
         String filename = "receipt2.pdf";
         String contentType = "application/pdf";
         byte[] data = new byte[]{10,20,30};
@@ -119,13 +153,13 @@ public class ReceiptJpaDaoTest {
     @Test
     public void testFindById() {
         UUID userId = UUID.randomUUID();
-        insertUser(userId);
+        User user = insertUser(userId);
         UUID clubId = UUID.randomUUID();
-        insertClub(clubId, userId);
+        Club club = insertClub(clubId, user);
         UUID tableId = UUID.randomUUID();
-        insertTable(tableId, clubId);
+        ClubTable table = insertTable(tableId, club);
         UUID bookingId = UUID.randomUUID();
-        insertBooking(bookingId, userId, tableId);
+        Booking booking = insertBooking(bookingId, user, table);
         String filename = "receipt3.pdf";
         String contentType = "application/pdf";
         byte[] data = new byte[]{7,8,9};
@@ -135,44 +169,44 @@ public class ReceiptJpaDaoTest {
         Receipt receipt = receiptOpt.get();
         assertEquals(bookingId, receipt.getBookingId());
         assertEquals(filename, receipt.getFilename());
-        assertNull(receipt.getData()); // findById no trae los datos binarios
+        assertNotNull(receipt.getData());
     }
 
     @Test
     public void testDeleteByBooking() {
         UUID userId = UUID.randomUUID();
-        insertUser(userId);
+        User user = insertUser(userId);
         UUID clubId = UUID.randomUUID();
-        insertClub(clubId, userId);
+        Club club = insertClub(clubId, user);
         UUID tableId = UUID.randomUUID();
-        insertTable(tableId, clubId);
+        ClubTable table = insertTable(tableId, club);
         UUID bookingId = UUID.randomUUID();
-        insertBooking(bookingId, userId, tableId);
+        Booking booking = insertBooking(bookingId, user, table);
         String filename = "receipt4.pdf";
         String contentType = "application/pdf";
         byte[] data = new byte[]{11,12,13};
         receiptDao.create(bookingId, userId, filename, contentType, data);
         boolean deleted = receiptDao.deleteByBooking(bookingId);
         assertTrue(deleted);
-        assertEquals(0, JdbcTestUtils.countRowsInTable(jdbcTemplate, "receipts"));
+        assertEquals(0, ((Number)em.createQuery("SELECT COUNT(r) FROM Receipt r").getSingleResult()).intValue());
     }
 
     @Test
     public void testDeleteById() {
         UUID userId = UUID.randomUUID();
-        insertUser(userId);
+        User user = insertUser(userId);
         UUID clubId = UUID.randomUUID();
-        insertClub(clubId, userId);
+        Club club = insertClub(clubId, user);
         UUID tableId = UUID.randomUUID();
-        insertTable(tableId, clubId);
+        ClubTable table = insertTable(tableId, club);
         UUID bookingId = UUID.randomUUID();
-        insertBooking(bookingId, userId, tableId);
+        Booking booking = insertBooking(bookingId, user, table);
         String filename = "receipt5.pdf";
         String contentType = "application/pdf";
         byte[] data = new byte[]{21,22,23};
         UUID receiptId = receiptDao.create(bookingId, userId, filename, contentType, data);
         boolean deleted = receiptDao.delete(receiptId);
         assertTrue(deleted);
-        assertEquals(0, JdbcTestUtils.countRowsInTable(jdbcTemplate, "receipts"));
+        assertEquals(0, ((Number)em.createQuery("SELECT COUNT(r) FROM Receipt r").getSingleResult()).intValue());
     }
 }
