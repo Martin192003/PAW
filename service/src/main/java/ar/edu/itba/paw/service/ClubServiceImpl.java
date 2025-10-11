@@ -208,7 +208,6 @@ public class ClubServiceImpl implements ClubService{
                 throw new IllegalArgumentException("Campo inválido: " + field);
         }
 
-        // IMPORTANTÍSIMO: persistí la instancia MODIFICADA
         updateClub(club);
     }
 

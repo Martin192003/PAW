@@ -8,9 +8,11 @@ import javax.persistence.*;
 import javax.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.math.BigDecimal;
+import java.util.stream.Collectors;
 
 
 @Entity
@@ -60,12 +62,7 @@ public class Club {
     @Column(name = "is_bar", nullable = false)
     private Boolean isBar;
 
-    @ManyToMany
-    @JoinTable(
-            name = "club_admins",
-            joinColumns = @JoinColumn(name = "club_id"), // columna que referencia Club
-            inverseJoinColumns = @JoinColumn(name = "admin_id") // columna que referencia User
-    )
+    @ManyToMany(mappedBy = "adminOfClubs")
     private Set<User> admins = new HashSet<>();
 
     @PrePersist
@@ -150,5 +147,5 @@ public class Club {
     public void setIsBar(Boolean isBar) { this.isBar = isBar; }
 
     public Set<User> getAdmins() { return admins; }
-    public void setAdmins(Set<User> admins) { this.admins = admins; }
+    public void setAdmins(Set<User> admins) { this.admins = admins;}
 }

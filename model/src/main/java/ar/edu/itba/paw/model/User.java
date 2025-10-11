@@ -51,7 +51,12 @@ public class User {
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
-    @ManyToMany(mappedBy = "admins")
+    @ManyToMany
+    @JoinTable(
+            name = "club_admins",
+            joinColumns = @JoinColumn(name = "admin_id", referencedColumnName = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "club_id", referencedColumnName = "club_id")
+    )
     private Set<Club> adminOfClubs = new HashSet<>();
 
     public User() {}

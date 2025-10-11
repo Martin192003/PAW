@@ -1,9 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.model.ClubAdmin;
 import ar.edu.itba.paw.model.User;
-
-
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -19,12 +18,11 @@ public class ClubAdminsJpaDao implements ClubAdminDao {
     @Override
     public boolean exists(Club club, User admin) {
         Long cnt = em.createQuery("""
-            SELECT COUNT(c)
-            FROM Club c JOIN c.admins a
-            WHERE c = :club AND a = :admin
+            SELECT COUNT(ca) FROM ClubAdmin ca
+            WHERE ca.id.clubId = :clubId AND ca.id.userId = :userId
         """, Long.class)
-                .setParameter("club", club)
-                .setParameter("admin", admin)
+                .setParameter("clubId", club.getClubId())
+                .setParameter("userId", admin.getId())
                 .getSingleResult();
         return cnt > 0;
     }
@@ -32,49 +30,41 @@ public class ClubAdminsJpaDao implements ClubAdminDao {
     @Override
     public List<User> findAdmins(Club club) {
         return em.createQuery("""
-            SELECT a
-            FROM Club c JOIN c.admins a
-            WHERE c = :club
-            ORDER BY a.username ASC
+            SELECT ca.admin FROM ClubAdmin ca
+            WHERE ca.id.clubId = :clubId
+            ORDER BY ca.admin.username ASC
         """, User.class)
-                .setParameter("club", club)
+                .setParameter("clubId", club.getClubId())
                 .getResultList();
     }
 
     @Override
     public List<Club> findClubsByAdmin(User admin) {
         return em.createQuery("""
-            SELECT c
-            FROM Club c JOIN c.admins a
-            WHERE a = :admin
-            ORDER BY c.clubName ASC
+            SELECT ca.club FROM ClubAdmin ca
+            WHERE ca.id.userId = :userId
+            ORDER BY ca.club.clubName ASC
         """, Club.class)
-                .setParameter("admin", admin)
+                .setParameter("userId", admin.getId())
                 .getResultList();
     }
 
     @Override
     public boolean addAdmin(Club club, User admin) {
-        if (club == null || admin == null) return false;
         Club managedClub = em.find(Club.class, club.getClubId());
-        User managedUser = em.find(User.class, admin.getId());
-        if (managedClub == null || managedUser == null) return false;
-        if (managedClub.getAdmins().contains(managedUser)) return true;
-        managedClub.getAdmins().add(managedUser);
-        em.flush();
+        if (managedClub == null) return false;
+        em.persist(new ClubAdmin(managedClub, admin.getId()));
         return true;
     }
 
     @Override
     public boolean removeAdmin(Club club, User admin) {
-        if (club == null || admin == null) return false;
-        Club managedClub = em.find(Club.class, club.getClubId());
-        if (managedClub == null) return false;
-        User managedUser = em.find(User.class, admin.getId());
-        if (managedUser == null) return false;
-        if (!managedClub.getAdmins().contains(managedUser)) return false;
-        managedClub.getAdmins().remove(managedUser);
-        em.flush();
-        return true;
+        ClubAdmin.Id id = new ClubAdmin.Id(club.getClubId(), admin.getId());
+        ClubAdmin link = em.find(ClubAdmin.class, id);
+        if (link != null) {
+            em.remove(link);
+            return true;
+        }
+        return false;
     }
 }
