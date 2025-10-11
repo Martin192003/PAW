@@ -5,6 +5,10 @@ import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.form.VerificationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +20,9 @@ import ar.edu.itba.paw.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import ar.edu.itba.paw.service.UserService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.UUID;
 
 @Controller
@@ -64,7 +70,7 @@ public class LoginController {
                     "USER"
             );
             ra.addFlashAttribute("success", "Usuario registrado correctamente. Revisa tu email para verificar tu cuenta.");
-            return "redirect:/verify";
+            return "redirect:/verifyMailNotice";
         } catch (DuplicateEntityException e) {
             if (e.getMessage().contains("email")) {
                 binding.rejectValue("email", "duplicate.email", "Este email ya está registrado");
@@ -79,12 +85,9 @@ public class LoginController {
         }
     }
 
-    @GetMapping("/verify")
-    public String showVerificationPage(Model model) {
-        if (!model.containsAttribute("verificationForm")) {
-            model.addAttribute("verificationForm", new VerificationForm());
-        }
-        return "verify";
+    @GetMapping("/verifyMailNotice")
+    public String showVerifyMailNotice() {
+        return "verifyMailNotice";
     }
 
     @PostMapping("/verify")
@@ -106,6 +109,34 @@ public class LoginController {
         return "verify";
     }
 
+    @GetMapping("/verify-account")
+    public String verifyAccountFromEmail(@RequestParam(value = "token", required = false) String token,
+                                         Model model) {
+        if (token == null || token.trim().isEmpty()) {
+            return "redirect:/unverified";
+        }
+
+        User userToVerify = userService.findByVerificationToken(token);
+        if (userToVerify != null && !userToVerify.isVerified()) {
+            boolean isValid = userService.verifyUser(token);
+            if (isValid) {
+                Authentication auth = new UsernamePasswordAuthenticationToken(
+                        userToVerify.getUsername(),
+                        null,
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                );
+                SecurityContextHolder.getContext().setAuthentication(auth);
+
+                model.addAttribute("success", "register.valid.token");
+                model.addAttribute("userAuthenticated", true);
+                return "verifyResult";
+            }
+        }
+
+        // Token inválido - redirigir a unverified
+        return "redirect:/unverified";
+    }
+    
     @GetMapping("/unverified")
     public String showUnverifiedPage(@RequestParam(required = false) String username, Model model) {
         if (username != null) {

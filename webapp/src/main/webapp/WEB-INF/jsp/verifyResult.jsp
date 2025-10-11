@@ -19,11 +19,11 @@
 
     <div class="verify-card">
         <div class="verify-content">
-            <p class="verify-title"><spring:message code="register.valid.token"/></p>
+            <p class="verify-title"><spring:message code="${success}"/></p>
             <div class="verify-buttons">
                 <button type="button" class="btn btn-success"
-                        onclick="window.location.href='<c:url value='/login' />'">
-                    <spring:message code="return.login"/>
+                        onclick="window.location.href='<c:url value='/clubs' />'">
+                    <spring:message code="button.goToClubs"/>
                 </button>
             </div>
         </div>

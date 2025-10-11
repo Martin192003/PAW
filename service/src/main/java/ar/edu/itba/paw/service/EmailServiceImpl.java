@@ -38,7 +38,7 @@ public class EmailServiceImpl implements EmailService {
     private UserDao userDao;
 
 
-    @Value("${app.base.url}")
+    @Value("${local.base.url}")
     private String baseUrl;
 
     @Autowired
@@ -174,11 +174,13 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendUserRegistrationConfirmation(String to, String username, String verificationToken) {
+        String verificationUrl = abs("/verify-account?token=" + verificationToken);
+
         Map<String, Object> model = Map.of(
                 "username", username,
                 "token", verificationToken,
                 "createdAt", ZonedDateTime.now(),
-                "verificationUrl", abs("/verify?token=" + verificationToken),
+                "verificationUrl", verificationUrl,
                 "brandName", "BlingBling",
                 "brandFooter", "© 2025 BlingBling. Bienvenido a nuestra plataforma."
         );
@@ -189,7 +191,7 @@ public class EmailServiceImpl implements EmailService {
                 "user-registration-confirmation",
                 model,
                 "Verificar mi cuenta",
-                abs("/verify?token=" + verificationToken)
+                verificationUrl
         );
     }
 
