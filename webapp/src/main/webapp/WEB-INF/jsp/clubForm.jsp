@@ -40,7 +40,7 @@
         <spring:message code="label.bar" var="phbar"/>
         <spring:message code="label.notBar" var="phclub"/>
 
-        <form:form modelAttribute="clubForm" method="post" action="${pageContext.request.contextPath}${postPath}" enctype="multipart/form-data">
+        <form:form id="clubForm" modelAttribute="clubForm" method="post" action="${pageContext.request.contextPath}${postPath}" enctype="multipart/form-data">
             <span class="form-text-required"><spring:message code="form.required"/></span>
             <div class="form-group">
                 <form:input path="name" class="form-control" placeholder="${phName}"/>
