@@ -103,20 +103,34 @@
                     <dd>$ <c:out value="${booking.totalAmount}"/></dd>
                 </div>
             </dl>
-            <div class="booking-actions">
-                <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />">
-                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                    <button type="submit" class="btn btn-secondary">
-                        <i class="fa fa-trash"></i> <spring:message code="booking.action.cancel" text="Cancelar"/>
-                    </button>
-                </form>
-                <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/confirm' />">
-                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fa fa-check"></i> <spring:message code="booking.action.confirm" text="Confirmar"/>
-                    </button>
-                </form>
-            </div>
+            <c:set var="statusNormalized" value="${fn:trim(fn:toUpperCase(booking.status))}" />
+            <c:set var="isConfirmed" value="${statusNormalized == 'CONFIRMADA'}" />
+            <c:set var="isCancelled" value="${statusNormalized == 'CANCELADA'}"/>
+            <c:if test="${not isCancelled}">
+                <div class="booking-actions">
+                    <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="fa fa-trash"></i> <spring:message code="booking.action.cancel" text="Cancelar"/>
+                        </button>
+                    </form>
+                    <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/confirm' />">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                        <c:choose>
+                            <c:when test="${isConfirmed}">
+                                <button type="button" class="btn btn-success" disabled title="<spring:message code='booking.action.alreadyConfirmed' text='Reserva ya confirmada'/>">
+                                    <i class="fa fa-check"></i> <spring:message code="booking.action.confirm" text="Confirmar"/>
+                                </button>
+                            </c:when>
+                            <c:otherwise>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fa fa-check"></i> <spring:message code="booking.action.confirm" text="Confirmar"/>
+                                </button>
+                            </c:otherwise>
+                        </c:choose>
+                    </form>
+                </div>
+            </c:if>
         </article>
 
         <div class="right-col">

@@ -159,23 +159,23 @@
                     <i class="fa-solid fa-location-dot"></i> <c:out value="${club.location}"/><br>
                     <i class="fa-solid fa-music"></i> <spring:message code="genre.${club.musicGenre}"/><br>
                     <i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
-
-                    <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
-                    <c:set var="decimal" value="${club.rating - ratingInt}" />
-                    <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
-                    <c:set var="fullStars" value="${ratingInt}" />
-                    <c:set var="emptyStars" value="${5 - (fullStars + halfStar)}" />
-                    <c:forEach var="i" begin="1" end="${fullStars}">
-                        <i class="fa-solid fa-star" style="color:#FFD700;"></i>
-                    </c:forEach>
-                    <c:if test="${halfStar == 1}">
-                        <i class="fa-solid fa-star-half-stroke" style="color:#FFD700;"></i>
+                    <c:if test="${not empty club.rating}">
+                        <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
+                        <c:set var="decimal" value="${club.rating - ratingInt}" />
+                        <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
+                        <c:set var="fullStars" value="${ratingInt}" />
+                        <c:set var="emptyStars" value="${5 - (fullStars + halfStar)}" />
+                        <c:forEach var="i" begin="1" end="${fullStars}">
+                            <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                        </c:forEach>
+                        <c:if test="${halfStar == 1}">
+                            <i class="fa-solid fa-star-half-stroke" style="color:#FFD700;"></i>
+                        </c:if>
+                        <c:forEach var="i" begin="1" end="${emptyStars}">
+                            <i class="fa-regular fa-star" style="color:#bab8b8;"></i>
+                        </c:forEach>
+                        ${club.rating}<br>
                     </c:if>
-                    <c:forEach var="i" begin="1" end="${emptyStars}">
-                        <i class="fa-regular fa-star" style="color:#bab8b8;"></i>
-                    </c:forEach>
-
-                            ${club.rating}<br>
                     <c:choose>
                         <c:when test="${not empty club.description and fn:length(club.description) > 80}">
                             <c:out value="${fn:substring(club.description, 0, 80)}"/>...
