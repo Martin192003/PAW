@@ -34,10 +34,18 @@
     </div>
     <div class="detail-header" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%;">
         <h1 class="detail-title"><c:out value="${club.clubName}"/></h1>
-        <button type="button" class="btn btn-success"
-                onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
-            <i class="fa-solid fa-envelope"></i> <spring:message code="button.contact"/>
-        </button>
+        <div class="detail-actions" style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+            <c:if test="${isOwner}">
+                <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value='/clubs/handle'><c:param name='clubId' value='${club.clubId}'/></c:url>'">
+                    <i class="fa-solid fa-pen"></i>
+                    <spring:message code="button.edit" text="Editar"/>
+                </button>
+            </c:if>
+            <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
+                <i class="fa-solid fa-envelope"></i>
+                <spring:message code="button.contact"/>
+            </button>
+        </div>
     </div>
 
     <div class="detail-content">

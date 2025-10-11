@@ -100,6 +100,8 @@ public class ClubDetailsController {
         if (user != null) {
             model.addAttribute("user", user);
         }
+        boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
+        model.addAttribute("isOwner", isOwner);
 
         model.addAttribute("club", club);
         model.addAttribute("productsByCategory", ordered);
