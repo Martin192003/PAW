@@ -149,7 +149,7 @@ public class UserBookingController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("queryParams", queryParams);
-        model.addAttribute("clubs", clubService.getClubsByUser(form.getUserId()));
+        model.addAttribute("clubs", clubService.getClubsWithBookingsByUser(form.getUserId()));
 
 
         // echo de filtros

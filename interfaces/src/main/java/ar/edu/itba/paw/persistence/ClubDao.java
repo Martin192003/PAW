@@ -41,4 +41,6 @@ public interface ClubDao {
 
     List<UUID> findIdsByAdmin(UUID adminUserId);
 
+    List<Club> findClubsWithBookingsByUserId(UUID userId);
+
 }

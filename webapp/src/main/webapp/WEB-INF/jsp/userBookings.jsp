@@ -79,7 +79,7 @@
                 <i class="fa-solid fa-filter"></i><spring:message code="button.filter"/>
             </button>
         </form:form>
-        <button type="button" class="btn-reset" onclick="window.location.href='<c:url value="/admin/clubs/bookings"><c:param name="userId" value="${bookingSearchForm.userId}"/></c:url>'">
+        <button type="button" class="btn-reset" onclick="window.location.href='<c:url value="/bookings"><c:param name="userId" value="${bookingSearchForm.userId}"/></c:url>'">
             <i class="fa-solid fa-rotate-right"></i>
             <spring:message code="button.reset"/>
         </button>

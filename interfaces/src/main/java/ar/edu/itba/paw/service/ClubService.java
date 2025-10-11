@@ -47,5 +47,5 @@ public interface ClubService {
 
     boolean sendContactMessage(UUID clubId, String senderEmail, String senderName, String senderPhone, String message);
 
-
+    List<Club> getClubsWithBookingsByUser(UUID userId);
 }

@@ -287,6 +287,20 @@ public class ClubJpaDao implements ClubDao {
     }
 
 
+    @Override
+    public List<Club> findClubsWithBookingsByUserId(UUID userId) {
+        return em.createQuery("""
+            select distinct c
+            from Club c
+            join ClubTable t on t.clubId = c.clubId
+            join Booking b on b.tableId = t.tableid
+            where b.user.id = :uid
+            order by c.createdAt desc
+        """, Club.class)
+        .setParameter("uid", userId)
+        .getResultList();
+    }
+
     private Predicate[] buildSearchPredicates(
             CriteriaBuilder cb,
             Root<Club> root,

@@ -264,4 +264,9 @@ public class ClubServiceImpl implements ClubService{
         return s.toUpperCase(Locale.ROOT);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Club> getClubsWithBookingsByUser(UUID userId) {
+        return clubDao.findClubsWithBookingsByUserId(userId);
+    }
 }
