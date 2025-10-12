@@ -17,6 +17,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.Collections;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -147,16 +152,22 @@ public class ClubController {
 
         var contact = securityService.getVerifiedLoggedUser();
         if (contact == null) throw new IllegalStateException("No se encontró el usuario de contacto.");
-        var role = contact.getRole();
-
+        var roleAntes = contact.getRole();
 
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
                 contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getImage()
         );
 
-        if(role == Role.USER){
-            return "clubCreatedModal";
+        if (roleAntes == Role.USER) {
+            User updatedUser = userService.findById(contact.getId());
+
+            Authentication newAuth = new UsernamePasswordAuthenticationToken(
+                    updatedUser.getUsername(),
+                    null,
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + updatedUser.getRole().name()))
+            );
+            SecurityContextHolder.getContext().setAuthentication(newAuth);
         }
 
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();

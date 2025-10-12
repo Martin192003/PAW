@@ -121,6 +121,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public User findByResetPasswordToken(String token) {
+        return userDao.findByResetPasswordToken(token).orElse(null);
+    }
+    @Override
     @Transactional
     public boolean verifyUser(String token) {
         User user = userDao.findByVerificationToken(token).orElse(null);
