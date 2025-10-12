@@ -121,6 +121,12 @@ public class BookingAdminController {
                 .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(java.util.stream.Collectors.joining("&"));
 
+        Map<UUID, Boolean> hasReceiptMap = new HashMap<>();
+        for (Booking b : result) {
+            hasReceiptMap.put(b.getBookingId(), receiptService.findByBooking(b.getBookingId()).isPresent());
+        }
+        model.addAttribute("hasReceiptMap", hasReceiptMap);
+
         model.addAttribute("bookings", result);
         model.addAttribute("clubNames", clubService.mapClubNames(result));
         model.addAttribute("totalResults", totalBookings);
