@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,4 +49,11 @@ public interface ClubService {
     boolean sendContactMessage(UUID clubId, String senderEmail, String senderName, String senderPhone, String message);
 
     List<Club> getClubsWithBookingsByUser(UUID userId);
+
+    List<Club> searchAvailablePaginated(String nameLike, Zone location, String musicGenre,
+                                        String priceRange, Boolean isBar, String sort,
+                                        LocalDate day, int limit, int offset);
+
+    int countSearchAvailable(String nameLike, Zone location, String musicGenre,
+                             String priceRange, Boolean isBar, LocalDate day);
 }

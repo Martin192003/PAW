@@ -189,7 +189,7 @@ public class ClubServiceImplTest {
         Mockito.when(table.getClubId()).thenReturn(CLUB_ID);
         Mockito.when(tablesDao.findById(CLUB_ID)).thenReturn(Optional.of(table));
         Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
-        ClubServiceImpl service = new ClubServiceImpl(clubDao, null, tablesDao, null);
+        ClubServiceImpl service = new ClubServiceImpl(clubDao, null, tablesDao, null, null);
         Map<UUID, String> result = service.mapClubNames(Arrays.asList(booking));
         Assert.assertEquals(CLUB_NAME, result.get(CLUB_ID));
     }

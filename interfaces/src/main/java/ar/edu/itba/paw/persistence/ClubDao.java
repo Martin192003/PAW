@@ -2,6 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,5 +43,12 @@ public interface ClubDao {
     List<UUID> findIdsByAdmin(UUID adminUserId);
 
     List<Club> findClubsWithBookingsByUserId(UUID userId);
+
+    List<Club> searchAvailablePaginated(String nameLike, Zone location, String musicGenre,
+                                        String priceRange, Boolean isBar, String sort,
+                                        LocalDate day, int limit, int offset);
+
+    int countSearchAvailable(String nameLike, Zone location, String musicGenre,
+                             String priceRange, Boolean isBar, LocalDate day);
 
 }

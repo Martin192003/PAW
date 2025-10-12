@@ -22,11 +22,14 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import javax.validation.Valid;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Controller
 @RequestMapping("/clubs")
@@ -55,6 +58,7 @@ public class ClubController {
                        @RequestParam(value = "genre", required = false) String musicGenre,
                        @RequestParam(value = "price", required = false) String priceRange,
                        @RequestParam(value = "isBar", required = false) Boolean isBar,
+                       @RequestParam(value = "availableToday", required = false) Boolean availableToday,
                        @RequestParam(value = "sort", required = false) String sort,
                        @RequestParam(value = "page", defaultValue = "1") int page,
                        @RequestParam(value = "size", defaultValue = "10") int size,
@@ -69,15 +73,18 @@ public class ClubController {
             normalizedPriceRange = priceRange.toUpperCase();
         }
 
-        int totalClubs = clubService.countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+        int totalClubs = (availableToday != null && availableToday)
+                ? clubService.countSearchAvailable(nameLike, zone, musicGenre, normalizedPriceRange, isBar, LocalDate.now(ZoneOffset.UTC))
+                : clubService.countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+
         int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
         if (page > totalPages) page = totalPages;
 
         int offset = (page - 1) * size;
 
-        List<Club> clubs = clubService.searchPaginated(
-                nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, size, offset
-        );
+          List<Club> clubs = (availableToday != null && availableToday)
+                      ? clubService.searchAvailablePaginated(nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, LocalDate.now(ZoneOffset.UTC), size, offset)
+                      : clubService.searchPaginated(nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, size, offset);
 
         Map<UUID, String> photoUrlByClub = photoService.getCoverUrls(
                 clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
@@ -92,6 +99,7 @@ public class ClubController {
         if (musicGenre != null && !musicGenre.isBlank()) filters.put("genre", musicGenre);
         if (priceRange != null && !priceRange.isBlank()) filters.put("price", priceRange);
         if (isBar != null) filters.put("isBar", isBar.toString());
+        if (availableToday != null && availableToday) filters.put("availableToday", "true");
         if (sort != null && !sort.isBlank()) filters.put("sort", sort);
         filters.put("size", String.valueOf(size)); // <--- importante
         String queryParams = filters.entrySet().stream()
@@ -107,9 +115,9 @@ public class ClubController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
         model.addAttribute("pages",
-                java.util.stream.IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList())
+                IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList())
         );
-
+        model.addAttribute("availableToday", availableToday != null && availableToday);
         model.addAttribute("queryParams", queryParams);
         model.addAttribute("name", nameLike);
         model.addAttribute("zone", zone);

@@ -88,6 +88,9 @@
                 <!-- Sort -->
                 <select name="sort" class="filter-item filter-sort">
                     <option value=""><spring:message code="filter.sort" text="Ordenar por"/></option>
+                    <option value="availability_desc" ${ (sort == 'availability_desc' || param.sort == 'availability_desc') ? 'selected' : '' }>
+                        <spring:message code="filter.sort.availabilityDesc" text="Disponibles hoy primero"/>
+                    </option>
                     <option value="rating_desc" ${ (sort == 'rating_desc' || param.sort == 'rating_desc') ? 'selected' : '' }>
                         <spring:message code="filter.sort.ratingDesc" text="Rating (mayor a menor)"/>
                     </option>

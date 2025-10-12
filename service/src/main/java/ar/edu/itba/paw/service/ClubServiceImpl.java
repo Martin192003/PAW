@@ -15,6 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.Normalizer;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.*;
 
 @Service
@@ -24,13 +26,15 @@ public class ClubServiceImpl implements ClubService{
     private final EmailService mailService;
     private final ClubTablesDao tablesDao;
     private final PhotoService photoService;
+    private final UserService userService;
 
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, ClubTablesDao tablesDao, PhotoService photoService) {
+    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, ClubTablesDao tablesDao, PhotoService photoService, UserService userService) {
         this.tablesDao = tablesDao;
         this.mailService = mailService;
         this.clubDao = clubDao;
         this.photoService = photoService;
+        this.userService = userService;
     }
 
     @Override
@@ -41,21 +45,35 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     @Transactional
-    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, MultipartFile image) {
-        Club newClub = clubDao.create(name, description, location, priceRange, contactInfo, musicGenre, zone, isBar);
+    public Club create(String name, String description, String location, Price priceRange,
+                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, MultipartFile image) {
+
+        User managedContact = userService.findById(contactInfo.getId());
+        if (managedContact.getRole() != Role.ADMIN) {
+            managedContact.setRole(Role.ADMIN); // Dirty checking -> UPDATE al commit
+        }
+
+        Club newClub = clubDao.create(name, description, location, priceRange, managedContact, musicGenre, zone, isBar);
 
         if (image != null && !image.isEmpty()) {
             try {
-                photoService.upload(newClub.getClubId(), contactInfo.getId(),
-                        image.getOriginalFilename(), image.getContentType(), image.getBytes());
+                photoService.upload(
+                        newClub.getClubId(),
+                        managedContact.getId(),
+                        image.getOriginalFilename(),
+                        image.getContentType(),
+                        image.getBytes()
+                );
             } catch (IOException e) {
                 throw new RuntimeException("Failed to read uploaded image", e);
             }
         }
 
-        mailService.sendClubCreationConfirmation(contactInfo.getEmail(), name, newClub.getClubId());
+        mailService.sendClubCreationConfirmation(managedContact.getEmail(), name, newClub.getClubId());
+
         return newClub;
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -267,5 +285,22 @@ public class ClubServiceImpl implements ClubService{
     @Transactional(readOnly = true)
     public List<Club> getClubsWithBookingsByUser(UUID userId) {
         return clubDao.findClubsWithBookingsByUserId(userId);
+    }
+
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Club> searchAvailablePaginated(String nameLike, Zone location, String musicGenre,
+                                               String priceRange, Boolean isBar, String sort,
+                                               LocalDate day, int limit, int offset) {
+        return clubDao.searchAvailablePaginated(nameLike, location, musicGenre, priceRange, isBar, sort, day, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countSearchAvailable(String nameLike, Zone location, String musicGenre,
+                                    String priceRange, Boolean isBar, LocalDate day) {
+        return clubDao.countSearchAvailable(nameLike, location, musicGenre, priceRange, isBar, day);
     }
 }

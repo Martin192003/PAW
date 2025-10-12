@@ -11,7 +11,9 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,24 +25,30 @@ public class ClubJpaDao implements ClubDao {
     private EntityManager em;
 
     @Override
-    public Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
-        final User managed = em.contains(contactInfo) ? contactInfo : em.find(User.class, contactInfo.getId());
-        if (managed == null) {
-            throw new IllegalArgumentException("El usuario contactInfo debe existir en BD");
-        }
+    @Transactional
+    public Club create(String name, String description, String location, Price priceRange,
+                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
 
+        final User contact = em.getReference(User.class, contactInfo.getId());
 
-        final Club club = new Club(name, location, BigDecimal.ZERO, 0, priceRange,
-                description, managed, musicGenre, OffsetDateTime.now(), zone, isBar);
-
-        if (club.getIsBar() == null) club.setIsBar(Boolean.FALSE);
-
-        club.getAdmins().add(managed);
+        final Club club = new Club(
+                name,
+                location,
+                null,
+                null,
+                priceRange,
+                description,
+                contact,
+                musicGenre,
+                null,
+                zone,
+                isBar
+        );
 
         em.persist(club);
-
         return club;
     }
+
 
 
     @Override
@@ -212,24 +220,6 @@ public class ClubJpaDao implements ClubDao {
                 .intValue();
     }
 
-    @Override
-    public List<Club> searchPaginated(String nameLike, Zone location, String musicGenre,
-                                      String priceRange, Boolean isBar, String sort,
-                                      int limit, int offset) {
-        final var cb = em.getCriteriaBuilder();
-        final var cq = cb.createQuery(Club.class);
-        final var root = cq.from(Club.class);
-
-        final var predicates = buildSearchPredicates(cb, root, nameLike, location, musicGenre, priceRange, isBar);
-        cq.where(predicates);
-
-        applySort(cb, cq, root, sort);
-
-        return em.createQuery(cq)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
-                .getResultList();
-    }
 
     @Override
     public int countSearch(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar) {
@@ -322,6 +312,202 @@ public class ClubJpaDao implements ClubDao {
 
         return predicates.toArray(new javax.persistence.criteria.Predicate[0]);
     }
+
+
+    @Override
+    public List<Club> searchPaginated(String nameLike, Zone location, String musicGenre,
+                                      String priceRange, Boolean isBar, String sort,
+                                      int limit, int offset) {
+        // Si piden ordenar por disponibilidad hoy, usamos la variante JPQL con subquery
+        if (sort != null && (sort.equals("availability_desc") || sort.equals("availability_asc"))) {
+            return searchPaginatedOrderByAvailability(nameLike, location, musicGenre, priceRange, isBar, sort, limit, offset);
+        }
+
+        // Camino original con Criteria API (sin cambios funcionales)
+        final var cb = em.getCriteriaBuilder();
+        final var cq = cb.createQuery(Club.class);
+        final var root = cq.from(Club.class);
+
+        final var predicates = buildSearchPredicates(cb, root, nameLike, location, musicGenre, priceRange, isBar);
+        cq.where(predicates);
+
+        applySort(cb, cq, root, sort);
+
+        return em.createQuery(cq)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
+
+    private List<Club> searchPaginatedOrderByAvailability(String nameLike, Zone location, String musicGenre,
+                                                          String priceRange, Boolean isBar, String sort,
+                                                          int limit, int offset) {
+        final var zone = java.time.ZoneOffset.UTC; // o tu ZoneId
+        final var today = java.time.LocalDate.now(zone);
+        final var dayStart = today.atStartOfDay().atOffset(zone);
+        final var dayEnd   = today.plusDays(1).atStartOfDay().atOffset(zone);
+        final var blocking = java.util.List.of(Status.CONFIRMADA, Status.PENDIENTE);
+
+        StringBuilder jpql = new StringBuilder("""
+        select c
+        from Club c
+        join ClubTable t on t.clubId = c.clubId
+        left join Booking b on b.table = t
+           and b.status in :blocking
+           and b.bookingStart < :dayEnd
+           and b.bookingEnd   > :dayStart
+        where 1=1
+    """);
+
+        if (nameLike != null && !nameLike.isBlank()) jpql.append(" and lower(c.clubName) like :nameLike ");
+        if (location != null) jpql.append(" and c.zone = :zone ");
+        if (musicGenre != null && !musicGenre.isBlank()) jpql.append(" and c.musicGenre = :musicGenre ");
+        if (priceRange != null && !priceRange.isBlank()) jpql.append(" and c.priceRange = :priceRange ");
+        if (isBar != null) jpql.append(" and c.isBar = :isBar ");
+
+        // agrupamos por club y ordenamos por cantidad de mesas libres hoy
+        jpql.append("""
+        group by c
+        order by sum(case when b.bookingId is null then 1 else 0 end)
+    """).append(sort.endsWith("desc") ? " desc" : " asc")
+                .append(", c.createdAt desc");
+
+        var q = em.createQuery(jpql.toString(), Club.class);
+
+        if (nameLike != null && !nameLike.isBlank()) q.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
+        if (location != null) q.setParameter("zone", location);
+        if (musicGenre != null && !musicGenre.isBlank()) q.setParameter("musicGenre", MusicalGenre.valueOf(musicGenre));
+        if (priceRange != null && !priceRange.isBlank()) q.setParameter("priceRange", Price.valueOf(priceRange));
+        if (isBar != null) q.setParameter("isBar", isBar);
+
+        q.setParameter("blocking", blocking);
+        q.setParameter("dayStart", dayStart);
+        q.setParameter("dayEnd", dayEnd);
+
+        return q.setFirstResult(offset).setMaxResults(limit).getResultList();
+    }
+
+
+
+
+    @Override
+    public int countSearchAvailable(String nameLike, Zone location, String musicGenre,
+                                    String priceRange, Boolean isBar, java.time.LocalDate day) {
+        final var zone = java.time.ZoneOffset.UTC; // cambiar según dominio
+        final var dayStart = day.atStartOfDay().atOffset(zone);
+        final var dayEnd   = day.plusDays(1).atStartOfDay().atOffset(zone);
+        final var blocking = java.util.List.of(Status.CONFIRMADA, Status.PENDIENTE);
+
+        StringBuilder jpql = new StringBuilder("""
+        select count(distinct c)
+        from Club c
+        join ClubTable t on t.clubId = c.clubId
+        where 1=1
+    """);
+
+        if (nameLike != null && !nameLike.isBlank()) jpql.append(" and lower(c.clubName) like :nameLike ");
+        if (location != null) jpql.append(" and c.zone = :zone ");
+        if (musicGenre != null && !musicGenre.isBlank()) jpql.append(" and c.musicGenre = :musicGenre ");
+        if (priceRange != null && !priceRange.isBlank()) jpql.append(" and c.priceRange = :priceRange ");
+        if (isBar != null) jpql.append(" and c.isBar = :isBar ");
+
+        jpql.append("""
+        and not exists (
+            select 1 from Booking b
+            where b.table = t
+              and b.status in :blocking
+              and b.bookingStart < :dayEnd
+              and b.bookingEnd   > :dayStart
+        )
+    """);
+
+        var q = em.createQuery(jpql.toString(), Long.class);
+
+        if (nameLike != null && !nameLike.isBlank()) q.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
+        if (location != null) q.setParameter("zone", location);
+        if (musicGenre != null && !musicGenre.isBlank()) q.setParameter("musicGenre", MusicalGenre.valueOf(musicGenre));
+        if (priceRange != null && !priceRange.isBlank()) q.setParameter("priceRange", Price.valueOf(priceRange));
+        if (isBar != null) q.setParameter("isBar", isBar);
+
+        q.setParameter("blocking", blocking);
+        q.setParameter("dayStart", dayStart);
+        q.setParameter("dayEnd", dayEnd);
+
+        return q.getSingleResult().intValue();
+    }
+
+
+
+    @Override
+    public List<Club> searchAvailablePaginated(String nameLike, Zone location, String musicGenre,
+                                               String priceRange, Boolean isBar, String sort,
+                                               java.time.LocalDate day, int limit, int offset) {
+        final var zone = java.time.ZoneOffset.UTC; // o tu ZoneId
+        final var dayStart = day.atStartOfDay().atOffset(zone);
+        final var dayEnd   = day.plusDays(1).atStartOfDay().atOffset(zone);
+        final var blocking = java.util.List.of(Status.CONFIRMADA, Status.PENDIENTE);
+
+        StringBuilder jpql = new StringBuilder("""
+        select c
+        from Club c
+        join ClubTable t on t.clubId = c.clubId
+        left join Booking b on b.table = t
+           and b.status in :blocking
+           and b.bookingStart < :dayEnd
+           and b.bookingEnd   > :dayStart
+        where 1=1
+    """);
+
+        if (nameLike != null && !nameLike.isBlank()) jpql.append(" and lower(c.clubName) like :nameLike ");
+        if (location != null) jpql.append(" and c.zone = :zone ");
+        if (musicGenre != null && !musicGenre.isBlank()) jpql.append(" and c.musicGenre = :musicGenre ");
+        if (priceRange != null && !priceRange.isBlank()) jpql.append(" and c.priceRange = :priceRange ");
+        if (isBar != null) jpql.append(" and c.isBar = :isBar ");
+
+        jpql.append("""
+        group by c
+        having sum(case when b.bookingId is null then 1 else 0 end) > 0
+    """);
+
+        // orden
+        String sortField = switch (sort == null ? "" : sort) {
+            case "name_asc", "name_desc" -> "c.clubName";
+            case "rating_desc", "rating_asc" -> "c.rating";
+            case "availability_desc", "availability_asc" -> "availability";
+            default -> null;
+        };
+
+        if ("availability".equals(sortField)) {
+            jpql.append("""
+            order by sum(case when b.bookingId is null then 1 else 0 end)
+        """).append(sort.endsWith("desc") ? " desc" : " asc")
+                    .append(", c.createdAt desc");
+        } else if (sortField != null) {
+            boolean desc = sort.endsWith("desc");
+            jpql.append(" order by ").append(sortField).append(desc ? " desc" : " asc");
+        } else {
+            jpql.append(" order by c.createdAt desc");
+        }
+
+        var q = em.createQuery(jpql.toString(), Club.class);
+
+        if (nameLike != null && !nameLike.isBlank()) q.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
+        if (location != null) q.setParameter("zone", location);
+        if (musicGenre != null && !musicGenre.isBlank()) q.setParameter("musicGenre", MusicalGenre.valueOf(musicGenre));
+        if (priceRange != null && !priceRange.isBlank()) q.setParameter("priceRange", Price.valueOf(priceRange));
+        if (isBar != null) q.setParameter("isBar", isBar);
+
+        q.setParameter("blocking", blocking);
+        q.setParameter("dayStart", dayStart);
+        q.setParameter("dayEnd", dayEnd);
+
+        return q.setFirstResult(offset).setMaxResults(limit).getResultList();
+    }
+
+
+
+
 
     private void applySort(javax.persistence.criteria.CriteriaBuilder cb,
                            javax.persistence.criteria.CriteriaQuery<Club> cq,
