@@ -75,8 +75,8 @@ public class WebConfig implements WebMvcConfigurer {
     public MessageSource messageSource() {
         final ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
 
-        messageSource.addBasenames("classpath:i18n/messages");
-        messageSource.setDefaultEncoding(StandardCharsets.UTF_8.displayName());
+        messageSource.setBasename("classpath:i18n/messages");
+        messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
         messageSource.setCacheSeconds((int) TimeUnit.MINUTES.toSeconds(5));
 
         return messageSource;
@@ -123,6 +123,14 @@ public class WebConfig implements WebMvcConfigurer {
         var pop = new ResourceDatabasePopulator();
         pop.addScript(schemaSql);
         return pop;
+    }
+
+    @Bean
+    @Override
+    public Validator getValidator() {
+        LocalValidatorFactoryBean factoryBean = new LocalValidatorFactoryBean();
+        factoryBean.setValidationMessageSource(messageSource());
+        return factoryBean;
     }
 
 }
