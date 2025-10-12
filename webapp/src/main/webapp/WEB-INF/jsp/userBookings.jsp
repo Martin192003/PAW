@@ -96,9 +96,9 @@
             <c:forEach var="booking" items="${bookings}">
                 <a href="<c:url value='/booking'><c:param name='bookingId' value='${booking.bookingId}'/></c:url>"
                    style="text-decoration:none; color:inherit;">
-                    <div class="card-lg booking-card" style="position:relative; margin-bottom:24px;">
+                    <div class="card-md user-booking-card" style="position:relative; margin-bottom:24px;">
                         <span><b><spring:message code='booking.id' text='ID de la Reserva'/>: </b> <c:out value="${booking.bookingId}"/></span><br/>
-                        <span><b><spring:message code='filter.club' text='Boliche'/>: </b> <c:out value="${clubNames[booking.bookingId]}"/></span><br/>
+                        <span><b><spring:message code='filter.club' text='Boliche'/>: </b> <c:out value="${clubNames[booking.bookingId]}"/></span>
                         <div class="booking-status-container">
                             <c:choose>
                                 <c:when test="${jfn:trim(jfn:toUpperCase(booking.status)) == 'PENDIENTE'}">

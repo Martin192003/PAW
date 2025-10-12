@@ -104,13 +104,41 @@ body {
 }
 .card-lg.booking-card span {
     font-size: 1.1rem;
-    margin-bottom: 8px;
     color: #fff;
 }
+.card-md.user-booking-card {
+    background: #3c3c3c;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
+    margin-bottom: 24px;
+    padding: 12px 32px;
+    width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+}
+.card-md.user-booking-card:hover {
+    box-shadow: 0 4px 16px rgba(156, 39, 176, 0.25);
+    transform: scale(1.03);
+}
+.card-md.user-booking-card a {
+    color: inherit;
+    text-decoration: none;
+    width: 100%;
+    display: block;
+}
+.card-md.user-booking-card span {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+    color: #fff;
+}
+
 .booking-status-container {
     position: absolute;
-    right: 18px;
-    bottom: 14px;
+    right: 16px;
+    bottom: 8px;
     z-index: 2;
     display: flex;
     align-items: flex-end;

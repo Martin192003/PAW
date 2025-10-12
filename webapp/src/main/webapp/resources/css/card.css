@@ -27,7 +27,7 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 4px 20px rgba(140,0,183,0.5);
 }
-.card-md { padding: 16px; }
+.card-md {width: 70%; height: 130px; display: flex; align-items: stretch; }
 .card-lg {width: 70%; height: 180px; display: flex; align-items: stretch; }
 .card-disabled { opacity: 0.6; }
 .card-body { font-size: 16px; }
