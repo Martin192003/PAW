@@ -172,12 +172,18 @@
                                                     · <spring:message code="tables.capacity"/>: ${t.capacity}
                                                 </span>
                                                 <span class="table-row-price">
-                                                    $<fmt:formatNumber value="${t.price}" minFractionDigits="0" maxFractionDigits="0"/>
-                                                    <c:if test="${t.discount != null && t.discount > 0}">
-                                                        <small>(<spring:message code="tables.discount"/>:
-                                                            $<fmt:formatNumber value="${t.discount}" minFractionDigits="0" maxFractionDigits="0"/>
-                                                        )</small>
-                                                    </c:if>
+                                                    <c:choose>
+                                                        <c:when test="${t.discount != null && t.discount > 0}">
+                                                            <c:set var="discountedPrice" value="${t.price * (1 - t.discount / 100)}" />
+                                                            $<fmt:formatNumber value="${discountedPrice}" minFractionDigits="0" maxFractionDigits="0"/>
+                                                            <small>(<spring:message code="tables.discount"/>:
+                                                                <fmt:formatNumber value="${t.discount}" minFractionDigits="0" maxFractionDigits="0"/>%
+                                                            )</small>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            $<fmt:formatNumber value="${t.price}" minFractionDigits="0" maxFractionDigits="0"/>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </span>
                                             </label>
                                         </li>
