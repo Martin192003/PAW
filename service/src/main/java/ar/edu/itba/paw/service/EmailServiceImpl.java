@@ -388,7 +388,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void notifyReceiptUploaded(Booking booking, Club club, Table table, User owner, Receipt receipt, Locale locale) {
+    public void notifyReceiptUploaded(Booking booking, Club club, ClubTable table, User owner, Receipt receipt, Locale locale) {
         if (!isLikelyEmail(owner.getEmail())) {
             throw new BadRequestException("Email del dueño inválido: " + owner);
         }

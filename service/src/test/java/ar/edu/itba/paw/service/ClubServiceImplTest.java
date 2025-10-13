@@ -41,6 +41,14 @@ public class ClubServiceImplTest {
     @InjectMocks
     private ClubServiceImpl clubService;
 
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private PhotoService photoService;
+    @Mock
+    private ClubTablesDao tablesDao;
+
     @Test
     public void testGetAllClubs() {
         Club club1 = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
@@ -81,6 +89,10 @@ public class ClubServiceImplTest {
     public void testCreateClub() {
         Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
         User contact = Mockito.mock(User.class);
+        UUID contactId = UUID.randomUUID();
+        Mockito.when(contact.getId()).thenReturn(contactId);
+        Mockito.when(userService.findById(contactId)).thenReturn(contact);
+        Mockito.when(contact.getRole()).thenReturn(Role.USER);
         Mockito.when(contact.getEmail()).thenReturn("test@mail.com");
         Mockito.when(mockDao.create(CLUB_NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, true)).thenReturn(club);
         Club result = clubService.create(CLUB_NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, true, null);
@@ -189,7 +201,7 @@ public class ClubServiceImplTest {
         Mockito.when(table.getClubId()).thenReturn(CLUB_ID);
         Mockito.when(tablesDao.findById(CLUB_ID)).thenReturn(Optional.of(table));
         Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
-        ClubServiceImpl service = new ClubServiceImpl(clubDao, null, tablesDao, null, null);
+        ClubServiceImpl service = new ClubServiceImpl(clubDao, null, tablesDao, null, null, null);
         Map<UUID, String> result = service.mapClubNames(Arrays.asList(booking));
         Assert.assertEquals(CLUB_NAME, result.get(CLUB_ID));
     }
