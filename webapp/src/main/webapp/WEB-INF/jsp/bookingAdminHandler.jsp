@@ -64,7 +64,6 @@
     </h1>
 
     <section class="booking-grid">
-
         <!-- Detalles -->
         <article class="card-lg booking-card">
             <h2 class="panel-title"><spring:message code="booking.details.title" text="Detalles de la reserva"/></h2>
@@ -108,13 +107,13 @@
             <c:set var="isCancelled" value="${statusNormalized == 'CANCELADA'}"/>
             <c:if test="${not isCancelled}">
                 <div class="booking-actions">
-                    <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />">
+                    <form id="adminCancelForm" method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-secondary">
+                        <button id="adminCancelBtn" type="submit" class="btn btn-secondary">
                             <i class="fa fa-trash"></i> <spring:message code="booking.action.cancel" text="Cancelar"/>
                         </button>
                     </form>
-                    <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/confirm' />">
+                    <form id="adminConfirmForm" method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/confirm' />">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                         <c:choose>
                             <c:when test="${isConfirmed}">
@@ -123,7 +122,7 @@
                                 </button>
                             </c:when>
                             <c:otherwise>
-                                <button type="submit" class="btn btn-success">
+                                <button id="adminConfirmBtn" type="submit" class="btn btn-success">
                                     <i class="fa fa-check"></i> <spring:message code="booking.action.confirm" text="Confirmar"/>
                                 </button>
                             </c:otherwise>
@@ -165,5 +164,27 @@
             </div>
     </section>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function protectOnce(formId, btnSelector) {
+            var f = document.getElementById(formId);
+            if (!f) return;
+            f.addEventListener('submit', function(e) {
+                if (f.dataset.submitting === '1') { e.preventDefault(); return; }
+                f.dataset.submitting = '1';
+                var btn = f.querySelector(btnSelector);
+                if (btn) {
+                    btn.disabled = true;
+                    try {
+                        btn.dataset.orig = btn.innerHTML;
+                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (btn.textContent || '');
+                    } catch (err) { /* ignore */ }
+                }
+            });
+        }
+        protectOnce('adminCancelForm', 'button[type="submit"]');
+        protectOnce('adminConfirmForm', 'button[type="submit"]');
+    });
+</script>
 </body>
 </html>
