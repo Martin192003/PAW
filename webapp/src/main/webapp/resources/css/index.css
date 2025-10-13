@@ -302,6 +302,24 @@ select.filter-item option {
     display: block;
 }
 
+input.filter-item[name="name"],
+.filter-item.filter-name {
+    flex: 0 0 90px;
+    max-width: 220px;
+    min-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+select.filter-item[name="sort"],
+.filter-item.filter-sort {
+    flex: 0 0 160px;
+    min-width: 80px;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 
 

@@ -41,10 +41,12 @@
                     <spring:message code="button.edit" text="Editar"/>
                 </button>
             </c:if>
-            <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
-                <i class="fa-solid fa-envelope"></i>
-                <spring:message code="button.contact"/>
-            </button>
+            <c:if test="${not isOwner}">
+                <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
+                    <i class="fa-solid fa-envelope"></i>
+                    <spring:message code="button.contact"/>
+                </button>
+            </c:if>
         </div>
     </div>
 

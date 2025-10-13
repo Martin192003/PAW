@@ -13,11 +13,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClubServiceImplTest {
@@ -35,8 +31,6 @@ public class ClubServiceImplTest {
     @Mock
     private ClubDao mockDao;
 
-    @Mock
-    private EmailServiceImpl mailService;
 
     @InjectMocks
     private ClubServiceImpl clubService;
@@ -48,6 +42,8 @@ public class ClubServiceImplTest {
     private PhotoService photoService;
     @Mock
     private ClubTablesDao tablesDao;
+    @Mock
+    private EmailService emailService;
 
     @Test
     public void testGetAllClubs() {
@@ -103,10 +99,10 @@ public class ClubServiceImplTest {
     @Test
     public void testAdvancedSearch() {
         Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
-        Mockito.when(mockDao.search("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name")).thenReturn(Arrays.asList(club));
+        Mockito.when(mockDao.search("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name")).thenReturn(List.of(club));
         List<Club> result = clubService.advancedSearch("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name");
         Assert.assertEquals(1, result.size());
-        Assert.assertEquals(CLUB_NAME, result.get(0).getClubName());
+        Assert.assertEquals(CLUB_NAME, result.getFirst().getClubName());
     }
 
     @Test
@@ -130,16 +126,16 @@ public class ClubServiceImplTest {
     @Test
     public void testGetClubsByUser() {
         Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
-        Mockito.when(mockDao.findByUserId(CLUB_ID)).thenReturn(Arrays.asList(club));
+        Mockito.when(mockDao.findByUserId(CLUB_ID)).thenReturn(List.of(club));
         List<Club> result = clubService.getClubsByUser(CLUB_ID);
         Assert.assertEquals(1, result.size());
-        Assert.assertEquals(CLUB_ID, result.get(0).getClubId());
+        Assert.assertEquals(CLUB_ID, result.getFirst().getClubId());
     }
 
     @Test
     public void testGetAdminsByClub() {
         User user = Mockito.mock(User.class);
-        Mockito.when(mockDao.findAdminsByClubId(CLUB_ID)).thenReturn(Arrays.asList(user));
+        Mockito.when(mockDao.findAdminsByClubId(CLUB_ID)).thenReturn(Collections.singletonList(user));
         List<User> result = clubService.getAdminsByClub(CLUB_ID);
         Assert.assertEquals(1, result.size());
     }
@@ -147,7 +143,7 @@ public class ClubServiceImplTest {
     @Test
     public void testGetAllClubsPaginated() {
         Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
-        Mockito.when(mockDao.findAllPaginated(1, 0)).thenReturn(Arrays.asList(club));
+        Mockito.when(mockDao.findAllPaginated(1, 0)).thenReturn(List.of(club));
         List<Club> result = clubService.getAllClubsPaginated(1, 0);
         Assert.assertEquals(1, result.size());
     }
@@ -162,7 +158,7 @@ public class ClubServiceImplTest {
     @Test
     public void testGetClubsByUserPaginated() {
         Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
-        Mockito.when(mockDao.findByUserIdPaginated(CLUB_ID, 1, 0)).thenReturn(Arrays.asList(club));
+        Mockito.when(mockDao.findByUserIdPaginated(CLUB_ID, 1, 0)).thenReturn(List.of(club));
         List<Club> result = clubService.getClubsByUserPaginated(CLUB_ID, 1, 0);
         Assert.assertEquals(1, result.size());
     }
@@ -177,7 +173,7 @@ public class ClubServiceImplTest {
     @Test
     public void testSearchPaginated() {
         Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
-        Mockito.when(mockDao.searchPaginated("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name", 1, 0)).thenReturn(Arrays.asList(club));
+        Mockito.when(mockDao.searchPaginated("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name", 1, 0)).thenReturn(List.of(club));
         List<Club> result = clubService.searchPaginated("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name", 1, 0);
         Assert.assertEquals(1, result.size());
     }
@@ -201,8 +197,8 @@ public class ClubServiceImplTest {
         Mockito.when(table.getClubId()).thenReturn(CLUB_ID);
         Mockito.when(tablesDao.findById(CLUB_ID)).thenReturn(Optional.of(table));
         Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
-        ClubServiceImpl service = new ClubServiceImpl(clubDao, null, tablesDao, null, null, null);
-        Map<UUID, String> result = service.mapClubNames(Arrays.asList(booking));
+        ClubServiceImpl service = new ClubServiceImpl(clubDao, null, tablesDao, null,userService);
+        Map<UUID, String> result = service.mapClubNames(List.of(booking));
         Assert.assertEquals(CLUB_NAME, result.get(CLUB_ID));
     }
 }

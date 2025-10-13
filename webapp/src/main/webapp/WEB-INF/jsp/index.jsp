@@ -88,9 +88,17 @@
                 <!-- Sort -->
                 <select name="sort" class="filter-item filter-sort">
                     <option value=""><spring:message code="filter.sort" text="Ordenar por"/></option>
-                    <option value="availability_desc" ${ (sort == 'availability_desc' || param.sort == 'availability_desc') ? 'selected' : '' }>
-                        <spring:message code="filter.sort.availabilityDesc" text="Disponibles hoy primero"/>
+
+                    <option value="availability_d0_desc" ${ (sort == 'availability_d0_desc' || param.sort == 'availability_d0_desc') ? 'selected' : '' }>
+                        <spring:message code="filter.sort.availability.today" text="Disponibles HOY (más primero)"/>
                     </option>
+                    <option value="availability_d1_desc" ${ (sort == 'availability_d1_desc' || param.sort == 'availability_d1_desc') ? 'selected' : '' }>
+                        <spring:message code="filter.sort.availability.tomorrow" text="Disponibles MAÑANA (más primero)"/>
+                    </option>
+                    <option value="availability_d2_desc" ${ (sort == 'availability_d2_desc' || param.sort == 'availability_d2_desc') ? 'selected' : '' }>
+                        <spring:message code="filter.sort.availability.dayafter" text="Disponibles PASADO (más primero)"/>
+                    </option>
+
                     <option value="rating_desc" ${ (sort == 'rating_desc' || param.sort == 'rating_desc') ? 'selected' : '' }>
                         <spring:message code="filter.sort.ratingDesc" text="Rating (mayor a menor)"/>
                     </option>
@@ -110,7 +118,7 @@
         </button>
     </div>
 
-    <c:set var="anyFilterApplied" value="${not empty name or not empty zone or not empty genre or not empty price or not empty minRating or not empty maxRating}" />
+    <c:set var="anyFilterApplied" value="${not empty name or not empty zone or not empty genre or not empty price or not empty isBar or not empty sort}" />
 
     <c:if test="${not empty zone}">
         <c:set var="zoneLabel" value="${zone}" />
@@ -121,15 +129,26 @@
         </c:forEach>
     </c:if>
 
-    <c:if test="${empty clubs and anyFilterApplied}">
+    <c:if test="${empty clubs and (anyFilterApplied or invalidDay)}">
         <div class="no-results">
-            <spring:message code="error.noresults"/>
-            <button type="button" class="btn-reset" style="margin-top:16px;" onclick="window.location.href='<c:url value="/clubs"/>'">
+            <c:choose>
+                <c:when test="${invalidDay}">
+                    <spring:message code="validation.day.not.allowed"
+                                    text="Solo se pueden reservar mesas los días jueves, viernes y sábado"/>
+                </c:when>
+                <c:otherwise>
+                    <spring:message code="error.noresults"/>
+                </c:otherwise>
+            </c:choose>
+
+            <button type="button" class="btn-reset" style="margin-top:16px;"
+                    onclick="window.location.href='<c:url value="/clubs"/>'">
                 <i class="fa-solid fa-rotate-right"></i>
                 <spring:message code="button.reset"/>
             </button>
         </div>
     </c:if>
+
 
     <c:forEach var="club" items="${clubs}">
         <t:card size="card-lg" cssClass="boliche-card" dataId="${club.clubId}">
@@ -162,6 +181,7 @@
                     <i class="fa-solid fa-location-dot"></i> <c:out value="${club.location}"/><br>
                     <i class="fa-solid fa-music"></i> <spring:message code="genre.${club.musicGenre}"/><br>
                     <i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
+
                     <c:if test="${not empty club.rating}">
                         <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
                         <c:set var="decimal" value="${club.rating - ratingInt}" />
@@ -230,7 +250,7 @@
         const cards = document.querySelectorAll('.boliche-card');
         cards.forEach(card => {
             card.addEventListener('click', function() {
-                const clubId = this.getAttribute('data-id');
+                const clubId = this.getAttribute('data-id') || this.getAttribute('dataId');
                 if (clubId) {
                     window.location.href = '<c:url value="/clubs/" />' + clubId;
                 }

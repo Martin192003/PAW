@@ -72,24 +72,62 @@ public class ClubController {
         if (size < 1) size = 10;
         if (page < 1) page = 1;
 
-        // Conversión del parámetro priceRange a mayúsculas si corresponde
         String normalizedPriceRange = priceRange;
         if (priceRange != null && !priceRange.isBlank()) {
             normalizedPriceRange = priceRange.toUpperCase();
         }
 
-        int totalClubs = (availableToday != null && availableToday)
-                ? clubService.countSearchAvailable(nameLike, zone, musicGenre, normalizedPriceRange, isBar, LocalDate.now(ZoneOffset.UTC))
-                : clubService.countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+        final boolean availabilityMode = (availableToday != null && availableToday)
+                || (sort != null && sort.startsWith("availability_"));
 
-        int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
-        if (page > totalPages) page = totalPages;
+        LocalDate selectedDay = null;
+        Integer dayOffset = extractDayOffsetFromSort(sort);
+        var zoneBA = java.time.ZoneId.of("America/Argentina/Buenos_Aires");
+        if (availabilityMode) {
+            selectedDay = (dayOffset != null)
+                    ? java.time.LocalDate.now(zoneBA).plusDays(dayOffset)
+                    : java.time.LocalDate.now(zoneBA); // fallback: hoy
+        }
 
+        // Valido día permitido
+        boolean invalidDay = availabilityMode && (selectedDay == null || !tableService.isAllowedDay(selectedDay));
+        model.addAttribute("invalidDay", invalidDay);
+        model.addAttribute("selectedAvailabilityDate", selectedDay);
+
+        int totalClubs = 0;
         int offset = (page - 1) * size;
+        List<Club> clubs = java.util.Collections.emptyList();
 
-          List<Club> clubs = (availableToday != null && availableToday)
-                      ? clubService.searchAvailablePaginated(nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, LocalDate.now(ZoneOffset.UTC), size, offset)
-                      : clubService.searchPaginated(nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, size, offset);
+        if (availabilityMode) {
+            if (!invalidDay) {
+                totalClubs = clubService.countSearchAvailable(
+                        nameLike, zone, musicGenre, normalizedPriceRange, isBar, selectedDay
+                );
+
+                int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
+                if (page > totalPages) page = totalPages;
+                offset = (page - 1) * size;
+
+                clubs = clubService.searchAvailablePaginated(
+                        nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, selectedDay, size, offset
+                );
+
+                model.addAttribute("totalPages", Math.max(1, (int) Math.ceil((double) totalClubs / size)));
+            } else {
+                model.addAttribute("totalPages", 1);
+            }
+        } else {
+            totalClubs = clubService.countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+            int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
+            if (page > totalPages) page = totalPages;
+            offset = (page - 1) * size;
+
+            clubs = clubService.searchPaginated(
+                    nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, size, offset
+            );
+
+            model.addAttribute("totalPages", totalPages);
+        }
 
         Map<UUID, String> photoUrlByClub = photoService.getCoverUrls(
                 clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
@@ -104,25 +142,25 @@ public class ClubController {
         if (musicGenre != null && !musicGenre.isBlank()) filters.put("genre", musicGenre);
         if (priceRange != null && !priceRange.isBlank()) filters.put("price", priceRange);
         if (isBar != null) filters.put("isBar", isBar.toString());
-        if (availableToday != null && availableToday) filters.put("availableToday", "true");
+        if (availabilityMode) filters.put("availableToday", "true");
         if (sort != null && !sort.isBlank()) filters.put("sort", sort);
-        filters.put("size", String.valueOf(size)); // <--- importante
+        filters.put("size", String.valueOf(size));
+
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
 
+        // Modelo
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
-
         model.addAttribute("currentPage", page);
         model.addAttribute("page", page);
         model.addAttribute("size", size);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
-        model.addAttribute("pages",
-                IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList())
-        );
-        model.addAttribute("availableToday", availableToday != null && availableToday);
+        model.addAttribute("pages", IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList()));
+        model.addAttribute("availableToday", availabilityMode); // 👈 reflejo modo disponibilidad
         model.addAttribute("queryParams", queryParams);
         model.addAttribute("name", nameLike);
         model.addAttribute("zone", zone);
@@ -135,6 +173,7 @@ public class ClubController {
 
         return "index";
     }
+
 
 
     @GetMapping("/new")
@@ -278,36 +317,6 @@ public class ClubController {
     }
 
 
-    @GetMapping("/activity")
-    public String userClubs(@RequestParam("userId") UUID userId,
-                            @RequestParam(value = "page", defaultValue = "1") int page,
-                            @RequestParam(value = "size", defaultValue = "10") int size,
-                            Model model) {
-        if (page < 1) page = 1;
-        if (size < 1) size = 10;
-        int offset = (page - 1) * size;
-
-        List<Club> clubs = clubService.getClubsByUserPaginated(userId, size, offset);
-        int totalClubs = clubService.countClubsByUser(userId);
-        int totalPages = (int) Math.ceil((double) totalClubs / size);
-
-        Map<UUID,String> photoUrlByClub = photoService.getCoverUrls(
-                clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
-        );
-
-        model.addAttribute("user", userService.findById(userId));
-        model.addAttribute("clubs", clubs);
-        model.addAttribute("photoUrlByClub", photoUrlByClub);
-        model.addAttribute("zones", Zone.values());
-        model.addAttribute("genres", MusicalGenre.values());
-        model.addAttribute("activePage", "clubs");
-        model.addAttribute("userId", userId);
-        model.addAttribute("page", page);
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("totalResults", totalClubs);
-        return "clubActivity";
-    }
-
     @PostMapping("/club/{clubId}/photos")
     public String upload(@PathVariable UUID clubId,
                          @RequestParam("file") MultipartFile file,
@@ -362,6 +371,17 @@ public class ClubController {
     @PostMapping("/confirmClub")
     private String logout(){
         return "redirect:/logout";
+    }
+
+    private Integer extractDayOffsetFromSort(String sort) {
+        if (sort == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("availability_d([0-2])_(?:asc|desc)")
+                .matcher(sort);
+        if (m.matches()) {
+            return Integer.parseInt(m.group(1));
+        }
+        return null;
     }
 
 }

@@ -8,7 +8,7 @@
         </a>
 
         <c:if test="${user.role != null and user.role.name() == 'ADMIN'}">
-            <a href="<c:url value='/clubs/activity?userId=${user.id}' />"
+            <a href="<c:url value='/admin/clubs/activity?userId=${user.id}' />"
                class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">
                 <spring:message code="title.myClubs"/>
             </a>
