@@ -19,11 +19,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<c:set var="showRightButtons" value="true" />
-<c:set var="showProfileButton" value="false" />
-<c:set var="showAddClubButton" value="false" />
+<c:set var="showRightButtons" value="true"/>
+<c:set var="showProfileButton" value="false"/>
+<c:set var="showAddClubButton" value="false"/>
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
-<c:set var="activePage" value="profile" />
+<c:set var="activePage" value="profile"/>
 <%@ include file="/WEB-INF/jspf/sidebar.jspf" %>
 
 <div class="profile-page">
@@ -38,32 +38,39 @@
         <div class="profile-info-row">
             <span class="profile-label"><spring:message code="profile.username"/>:</span>
             <span class="profile-value">${user.username}</span>
-            <button class="btn btn-success btn-edit-small" onclick="openModal('editUsernameModal')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-success btn-edit-small" onclick="openModal('editUsernameModal')"><i
+                    class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
             <span class="profile-label"><spring:message code="profile.name"/>:</span>
             <span class="profile-value">${user.name}</span>
-            <button class="btn btn-success btn-edit-small" onclick="openModal('editNameModal')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-success btn-edit-small" onclick="openModal('editNameModal')"><i
+                    class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
             <span class="profile-label"><spring:message code="profile.surname"/>:</span>
             <span class="profile-value">${user.surname}</span>
-            <button class="btn btn-success btn-edit-small" onclick="openModal('editSurnameModal')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-success btn-edit-small" onclick="openModal('editSurnameModal')"><i
+                    class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
             <span class="profile-label"><spring:message code="profile.email"/>:</span>
             <span class="profile-value">${user.email}</span>
-            <button class="btn btn-success btn-edit-small" onclick="openModal('editEmailModal')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-success btn-edit-small" onclick="openModal('editEmailModal')"><i
+                    class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
             <span class="profile-label"><spring:message code="profile.cellphone"/>:</span>
             <span class="profile-value">${user.cellphone}</span>
-            <button class="btn btn-success btn-edit-small" onclick="openModal('editCellphoneModal')"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-success btn-edit-small" onclick="openModal('editCellphoneModal')"><i
+                    class="fa-solid fa-pen"></i></button>
         </div>
         <div class="profile-info-row">
             <span class="profile-label"><spring:message code="form.password"/>:</span>
             <span class="profile-value">••••••••</span>
-            <button type="button" class="btn btn-success btn-edit-small" onclick="window.location.href='<c:url value='/forgot-password' />'"><i class="fa-solid fa-key"></i></button>
+            <button type="button" class="btn btn-success btn-edit-small"
+                    onclick="window.location.href='<c:url value='/forgot-password'/>'"><i class="fa-solid fa-key"></i>
+            </button>
         </div>
     </div>
 </div>
@@ -73,12 +80,14 @@
 <div id="editUsernameModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeModal('editUsernameModal')">&times;</span>
-        <form:form action="${pageContext.request.contextPath}/profile/edit/username" method="post" modelAttribute="editUserForm">
+        <form:form action="${pageContext.request.contextPath}/profile/edit/username" method="post"
+                   modelAttribute="editUserForm">
             <label for="username"><spring:message code="profile.username"/></label>
-            <form:input path="username" id="username"/>
+            <form:input path="username" id="username" data-original="${user.username}"/>
             <form:errors path="username" cssClass="error"/>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('editUsernameModal')"><spring:message code="button.cancel"/></button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editUsernameModal')">
+                    <spring:message code="button.cancel"/></button>
                 <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
             </div>
         </form:form>
@@ -89,12 +98,14 @@
 <div id="editNameModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeModal('editNameModal')">&times;</span>
-        <form:form action="${pageContext.request.contextPath}/profile/edit/name" method="post" modelAttribute="editUserForm">
+        <form:form action="${pageContext.request.contextPath}/profile/edit/name" method="post"
+                   modelAttribute="editUserForm">
             <label for="name"><spring:message code="profile.name"/></label>
-            <form:input path="name" id="name"/>
+            <form:input path="username" id="username" data-original="${user.name}"/>
             <form:errors path="name" cssClass="error"/>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('editNameModal')"><spring:message code="button.cancel"/></button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editNameModal')"><spring:message
+                        code="button.cancel"/></button>
                 <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
             </div>
         </form:form>
@@ -105,12 +116,14 @@
 <div id="editSurnameModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeModal('editSurnameModal')">&times;</span>
-        <form:form action="${pageContext.request.contextPath}/profile/edit/surname" method="post" modelAttribute="editUserForm">
+        <form:form action="${pageContext.request.contextPath}/profile/edit/surname" method="post"
+                   modelAttribute="editUserForm">
             <label for="surname"><spring:message code="profile.surname"/></label>
-            <form:input path="surname" id="surname"/>
+            <form:input path="username" id="username" data-original="${user.surname}"/>
             <form:errors path="surname" cssClass="error"/>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('editSurnameModal')"><spring:message code="button.cancel"/></button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editSurnameModal')"><spring:message
+                        code="button.cancel"/></button>
                 <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
             </div>
         </form:form>
@@ -121,12 +134,14 @@
 <div id="editEmailModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeModal('editEmailModal')">&times;</span>
-        <form:form action="${pageContext.request.contextPath}/profile/edit/email" method="post" modelAttribute="editUserForm">
+        <form:form action="${pageContext.request.contextPath}/profile/edit/email" method="post"
+                   modelAttribute="editUserForm">
             <label for="email"><spring:message code="profile.email"/></label>
-            <form:input path="email" id="email"/>
+            <form:input path="username" id="username" data-original="${user.email}"/>
             <form:errors path="email" cssClass="error"/>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('editEmailModal')"><spring:message code="button.cancel"/></button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editEmailModal')"><spring:message
+                        code="button.cancel"/></button>
                 <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
             </div>
         </form:form>
@@ -137,12 +152,14 @@
 <div id="editCellphoneModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeModal('editCellphoneModal')">&times;</span>
-        <form:form action="${pageContext.request.contextPath}/profile/edit/cellphone" method="post" modelAttribute="editUserForm">
+        <form:form action="${pageContext.request.contextPath}/profile/edit/cellphone" method="post"
+                   modelAttribute="editUserForm">
             <label for="cellphone"><spring:message code="profile.cellphone"/></label>
-            <form:input path="cellphone" id="cellphone"/>
+            <form:input path="username" id="username" data-original="${user.cellphone}"/>
             <form:errors path="cellphone" cssClass="error"/>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('editCellphoneModal')"><spring:message code="button.cancel"/></button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editCellphoneModal')">
+                    <spring:message code="button.cancel"/></button>
                 <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
             </div>
         </form:form>
@@ -150,24 +167,92 @@
 </div>
 
 <script>
+    function hasValidationErrors(modal) {
+        if (!modal) return false;
+        return modal.querySelector(
+            'span.error, .error, .formError, .error-message, .field-error, .validation-error, .help-block, .invalid-feedback, .form-errors, .errors'
+        ) !== null;
+    }
+
+    function setOriginalValues(modal) {
+        if (!modal) return;
+        modal.querySelectorAll('input[data-original], select[data-original], textarea[data-original]')
+            .forEach(el => {
+                el.value = el.getAttribute('data-original') ?? '';
+            });
+    }
+
+    function clearFormErrors(scopeId) {
+        const root = scopeId ? document.getElementById(scopeId) : document;
+        if (!root) return;
+
+        root.querySelectorAll(
+            'span.error, .error, .formError, .error-message, .field-error, .validation-error, .help-block, .invalid-feedback, .form-errors, .errors'
+        ).forEach(el => el.remove());
+
+        root.querySelectorAll('input, select, textarea').forEach(el => {
+            el.classList.remove('input-error', 'is-invalid', 'has-error', 'is-danger');
+            el.removeAttribute('aria-invalid');
+        });
+
+        root.querySelectorAll('.form-group, .has-error, .is-invalid').forEach(el => {
+            el.classList.remove('has-error', 'is-invalid');
+        });
+    }
+
+    function clearErrorsExcept(exceptId) {
+        document.querySelectorAll('.modal').forEach(m => {
+            if (m.id !== (exceptId || '')) {
+                clearFormErrors(m.id);
+                setOriginalValues(m);
+            }
+        });
+    }
+
     function openModal(id) {
-        document.getElementById(id).style.display = "flex";
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        clearErrorsExcept(id);
+        if (!hasValidationErrors(modal)) {
+            setOriginalValues(modal);
+        }
+        modal.style.display = "flex";
     }
+
     function closeModal(id) {
-        document.getElementById(id).style.display = "none";
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.style.display = "none";
+        clearFormErrors(id);
+        setOriginalValues(modal);
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.modal').forEach(m => {
+            m.addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeModal(m.id);
+            });
+        });
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal').forEach(m => {
+                if (getComputedStyle(m).display !== 'none') closeModal(m.id);
+            });
+        }
+    });
 
     window.onload = function() {
+        var openedId = null;
         <c:if test="${not empty editField}">
-        openModal('edit${editField.substring(0,1).toUpperCase()}${editField.substring(1)}Modal');
+        openedId = 'edit${editField.substring(0,1).toUpperCase()}${editField.substring(1)}Modal';
+        openModal(openedId);
         </c:if>
-    }
-
-    window.onclick = function(event) {
-        if (event.target.classList.contains('modal')) {
-            event.target.style.display = "none";
-        }
+        clearErrorsExcept(openedId);
     }
 </script>
+
+
 </body>
 </html>

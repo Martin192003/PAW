@@ -222,9 +222,6 @@ public class ClubController {
             );
             SecurityContextHolder.getContext().setAuthentication(newAuth);
         }
-        /*if(role == Role.USER){
-            return "clubCreatedModal";
-        }*/
 
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();
     }

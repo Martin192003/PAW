@@ -1,10 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 
-import ar.edu.itba.paw.model.Booking;
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.ClubTable;
-import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
 import ar.edu.itba.paw.model.exceptions.InvalidStatusTransitionException;
 import ar.edu.itba.paw.service.*;
@@ -19,6 +16,7 @@ import javax.validation.Valid;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin")
@@ -30,17 +28,50 @@ public class BookingAdminController {
     private final TableService tableService;
     private final UserService userService;
     private final ReceiptService receiptService;
+    private final PhotoService photoService;
 
-    public BookingAdminController(BookingService bookingService, SecurityService securityService, ClubService clubService, TableService tableService, UserService userService, ReceiptService receiptService) {
+    public BookingAdminController(BookingService bookingService, SecurityService securityService, ClubService clubService, TableService tableService, UserService userService, ReceiptService receiptService, PhotoService photoService) {
         this.bookingService = bookingService;
         this.securityService = securityService;
         this.clubService = clubService;
         this.tableService = tableService;
         this.userService = userService;
         this.receiptService = receiptService;
+        this.photoService = photoService;
     }
 
 
+    @GetMapping("/clubs/activity")
+    public String userClubs(@RequestParam("userId") UUID userId,
+                            @RequestParam(value = "page", defaultValue = "1") int page,
+                            @RequestParam(value = "size", defaultValue = "10") int size,
+                            Model model) {
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+        int offset = (page - 1) * size;
+
+        List<Club> clubs = clubService.getClubsByUserPaginated(userId, size, offset);
+        int totalClubs = clubService.countClubsByUser(userId);
+        int totalPages = (int) Math.ceil((double) totalClubs / size);
+
+        Map<UUID,String> photoUrlByClub = photoService.getCoverUrls(
+                clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
+        );
+
+        model.addAttribute("user", userService.findById(userId));
+        model.addAttribute("clubs", clubs);
+        model.addAttribute("photoUrlByClub", photoUrlByClub);
+        model.addAttribute("zones", Zone.values());
+        model.addAttribute("genres", MusicalGenre.values());
+        model.addAttribute("activePage", "clubs");
+        model.addAttribute("userId", userId);
+        model.addAttribute("page", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalResults", totalClubs);
+        return "clubActivity";
+    }
+
+    
     /** Confirmar reserva → RESERVADA */
     @PostMapping("/bookings/{bookingId}/confirm")
     public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
