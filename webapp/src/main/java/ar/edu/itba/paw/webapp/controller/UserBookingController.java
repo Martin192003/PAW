@@ -193,12 +193,15 @@ public class UserBookingController {
                         .map(Club::getClubName)
                         .orElse("");
             }
+            ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withLocale(new Locale("es","AR"));
             model.addAttribute("clubName", clubName);
-
             var rOpt = receiptService.findByBooking(bookingId);
             model.addAttribute("hasReceipt", rOpt.isPresent());
             rOpt.ifPresent(r -> model.addAttribute("receipt", r));
             model.addAttribute("activePage", "bookings");
+            model.addAttribute("bookingStartLocal", booking.getBookingStart().atZoneSameInstant(zone).format(fmt));
+            model.addAttribute("bookingEndLocal", booking.getBookingEnd().atZoneSameInstant(zone).format(fmt));
             return "bookingUserHandler";
         }
         try {

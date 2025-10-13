@@ -3,6 +3,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
 <!DOCTYPE html>
 <html lang="es">
 <head><title><spring:message code="title.myActivity"/></title>
@@ -83,15 +85,13 @@
         </thead>
         <tbody><c:if test="${empty menu}">
             <tr>
-                <td colspan="5" class="styled-table-th"
-                    style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;"><spring:message
-                        code="error.noproducts"/></td>
+                <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;"><spring:message code="error.noproducts"/></td>
             </tr>
         </c:if> <c:forEach var="product" items="${menu}">
             <tr>
                 <td><c:out value="${product.productName}"/></td>
                 <td><c:out value="${product.description}"/></td>
-                <td><c:out value="${product.basePrice}"/></td>
+                <td>$<fmt:formatNumber value="${product.basePrice}" type="number" groupingUsed="true" maxFractionDigits="0"/></td>
                 <td><spring:message code="productType.${product.productType}"/></td>
                 <td>
                     <div style="display: flex; justify-content: right; margin-right: 12px">
@@ -99,7 +99,8 @@
                                 data-product-id="${product.productId}"
                                 data-product-name="<c:out value='${product.productName}'/>"
                                 data-product-description="<c:out value='${product.description}'/>"
-                                data-product-price="${product.basePrice}" data-product-type="${product.productType}"
+                                data-product-price="<fmt:formatNumber value='${product.basePrice}' type='number' groupingUsed='false' maxFractionDigits='0'/>"
+                                data-product-type="${product.productType}"
                                 onclick="openProductEditModal(this)" title="Editar producto"><i
                                 class="fa-solid fa-pen"></i></button>
                         <button type="button" class="btn btn-danger btn-edit-small"
@@ -128,7 +129,7 @@
     </div>
 
         <div class="form-group">
-        <form:input path="basePrice" type="number" cssClass="add-product-input" placeholder="${phPrice}" step="0.01" />
+        <form:input path="basePrice" type="number" cssClass="add-product-input" placeholder="${phPrice}" />
         <form:errors path="basePrice" cssClass="formError"/>
         </div>
 
@@ -156,15 +157,14 @@
         </thead>
         <tbody><c:if test="${empty tables}">
             <tr>
-                <td colspan="5" class="styled-table-th"
-                    style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;"><spring:message
+                <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;"><spring:message
                         code="error.notables"/></td>
             </tr>
         </c:if> <c:forEach var="table" items="${tables}">
             <tr>
                 <td><c:out value="${table.tableNumber}"/></td>
                 <td><c:out value="${table.capacity}"/></td>
-                <td><c:out value="${table.price}"/></td>
+                <td>$<fmt:formatNumber value="${table.price}" type="number" groupingUsed="true" maxFractionDigits="0"/></td>
                 <td><c:out value="${table.discount}"/></td>
                 <td>
                     <div style="display: flex; justify-content: right; margin-right: 12px">
@@ -193,11 +193,11 @@
             <form:errors path="capacity" cssClass="formError"/>
         </div>
         <div class="form-group">
-            <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}" step="0.01"/>
+            <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}"/>
             <form:errors path="price" cssClass="formError"/>
         </div>
         <div class="form-group">
-            <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}" step="0.01"/>
+            <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}"/>
             <form:errors path="discount" cssClass="formError"/>
         </div>
         <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
@@ -264,7 +264,7 @@
 
             <div id="editField_description" style="display:none;">
                 <label><spring:message code="form.description"/>:</label>
-                <form:input path="description" id="editFieldValue_description" rows="4" cssClass="input-modal"/>
+                <form:textarea path="description" id="editFieldValue_description" cssClass="input-modal textarea-modal" rows="6"/>
                 <form:errors path="description" cssClass="formError"/>
             </div>
 
@@ -302,10 +302,9 @@
                 <form:input path="description" id="editProductDescription"/>
                 <form:errors path="description" cssClass="formError"/>
             </div>
-
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <label for="editProductPrice"><spring:message code="label.price"/>:</label>
-                <form:input path="basePrice" type="number" step="0.01" id="editProductPrice"/>
+                <form:input path="basePrice" type="number" id="editProductPrice"/>
                 <form:errors path="basePrice" cssClass="formError"/>
             </div>
 
@@ -376,13 +375,13 @@
 
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <label for="editTablePrice"><spring:message code="label.price"/>:</label>
-                <form:input path="price" type="number" step="0.01" id="editTablePrice"/>
+                <form:input path="price" type="number" id="editTablePrice"/>
                 <form:errors path="price" cssClass="formError"/>
             </div>
 
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <label for="editTableDiscount"><spring:message code="label.discount"/>:</label>
-                <form:input path="discount" type="number" step="0.01" id="editTableDiscount"/>
+                <form:input path="discount" type="number" id="editTableDiscount"/>
                 <form:errors path="discount" cssClass="formError"/>
             </div>
 
@@ -492,7 +491,7 @@
         document.getElementById('editProductId').value = d.productId;
         document.getElementById('editProductName').value = d.productName;
         document.getElementById('editProductDescription').value = d.productDescription;
-        document.getElementById('editProductPrice').value = d.productPrice;
+        document.getElementById('editProductPrice').value =d.productPrice;
         document.getElementById('editProductType').value = d.productType;
     }
 

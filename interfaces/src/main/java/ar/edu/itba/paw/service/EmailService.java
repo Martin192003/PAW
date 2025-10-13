@@ -25,6 +25,8 @@ public interface EmailService {
 
     void notifyBookingCancelledToOwner(Booking booking, Club club, ClubTable table, User ownerEmail, Locale locale);
 
+    void notifyReceiptUploaded(Booking booking, Club club, ClubTable table, User owner, Receipt receipt, Locale locale);
+
     void notifyConfirmationEmailToUser(Booking booking, Club club, ClubTable table, Locale locale);
 
 }

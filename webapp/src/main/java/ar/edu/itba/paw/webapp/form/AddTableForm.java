@@ -22,8 +22,8 @@ public class AddTableForm {
     @DecimalMin(value = "0", message = "{table.price.min}")
     private BigDecimal price;
 
-    @DecimalMax(value = "100", message = "{table.discount}")
-    @DecimalMin(value = "0", message = "{table.discount}")
+    @DecimalMax(value = "100", message = "{table.discount.max}")
+    @DecimalMin(value = "0", message = "{table.discount.min}")
     private BigDecimal discount = BigDecimal.ZERO;
 
     // Getters y Setters

@@ -39,7 +39,7 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/admin/**").hasRole("ADMIN")
 
                 // Public routes
-                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify", "/unverified", "/resend-verification", "/forgot-password", "/reset-password").permitAll()                .antMatchers(HttpMethod.GET, "/clubs").permitAll()
+                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify", "/unverified", "/resend-verification", "/forgot-password", "/reset-password","/verifyMailNotice", "/verify-account").permitAll()                .antMatchers(HttpMethod.GET, "/clubs").permitAll()
                 .antMatchers(HttpMethod.GET, "/clubs/{id}").permitAll()
 
                 .anyRequest().authenticated()

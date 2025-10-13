@@ -34,10 +34,18 @@
     </div>
     <div class="detail-header" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%;">
         <h1 class="detail-title"><c:out value="${club.clubName}"/></h1>
-        <button type="button" class="btn btn-success"
-                onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
-            <i class="fa-solid fa-envelope"></i> <spring:message code="button.contact"/>
-        </button>
+        <div class="detail-actions" style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+            <c:if test="${isOwner}">
+                <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value='/clubs/handle'><c:param name='clubId' value='${club.clubId}'/></c:url>'">
+                    <i class="fa-solid fa-pen"></i>
+                    <spring:message code="button.edit" text="Editar"/>
+                </button>
+            </c:if>
+            <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/contact"><c:param name="id" value="${club.clubId}"/></c:url>'">
+                <i class="fa-solid fa-envelope"></i>
+                <spring:message code="button.contact"/>
+            </button>
+        </div>
     </div>
 
     <div class="detail-content">
@@ -164,12 +172,18 @@
                                                     · <spring:message code="tables.capacity"/>: ${t.capacity}
                                                 </span>
                                                 <span class="table-row-price">
-                                                    $<fmt:formatNumber value="${t.price}" minFractionDigits="0" maxFractionDigits="0"/>
-                                                    <c:if test="${t.discount != null && t.discount > 0}">
-                                                        <small>(<spring:message code="tables.discount"/>:
-                                                            $<fmt:formatNumber value="${t.discount}" minFractionDigits="0" maxFractionDigits="0"/>
-                                                        )</small>
-                                                    </c:if>
+                                                    <c:choose>
+                                                        <c:when test="${t.discount != null && t.discount > 0}">
+                                                            <c:set var="discountedPrice" value="${t.price * (1 - t.discount / 100)}" />
+                                                            $<fmt:formatNumber value="${discountedPrice}" minFractionDigits="0" maxFractionDigits="0"/>
+                                                            <small>(<spring:message code="tables.discount"/>:
+                                                                <fmt:formatNumber value="${t.discount}" minFractionDigits="0" maxFractionDigits="0"/>%
+                                                            )</small>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            $<fmt:formatNumber value="${t.price}" minFractionDigits="0" maxFractionDigits="0"/>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </span>
                                             </label>
                                         </li>

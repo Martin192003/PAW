@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import ar.edu.itba.paw.model.User;
+import java.util.Collections;
 
 import javax.validation.Valid;
 
@@ -64,13 +70,31 @@ public class PasswordController {
             model.addAttribute("token", token);
             return "resetPasswordResult";
         }
+
+        User user = userService.findByResetPasswordToken(token);
+        if (user == null) {
+            model.addAttribute("error", "Token inválido o expirado.");
+            model.addAttribute("token", token);
+            return "resetPasswordResult";
+        }
+
         boolean success = userService.resetPassword(token, form.getNewPassword());
         if (!success) {
             model.addAttribute("error", "Token inválido o expirado.");
             model.addAttribute("token", token);
             return "resetPasswordResult";
         }
-        model.addAttribute("success", "reset.password.button");
-        return "resetPasswordResult";
+
+        // Autenticar automáticamente al usuario después del reset exitoso
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                user.getUsername(),
+                null,
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // Ir a página de éxito en lugar de redirigir directamente
+        model.addAttribute("success", "password.reset.success");
+        return "passwordResetSuccess";
     }
 }

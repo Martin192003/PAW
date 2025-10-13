@@ -106,6 +106,16 @@
                     <div class="card-lg booking-card" style="position:relative; margin-bottom:24px;">
                         <span><b><spring:message code='booking.id' text='ID de la Reserva'/>: </b> <c:out value="${booking.bookingId}"/></span><br/>
                         <span><b><spring:message code='filter.club' text='Boliche'/>: </b> <c:out value="${clubNames[booking.bookingId]}"/></span><br/>
+                        <span><b><spring:message code="booking.receipt.title"/>: </b>
+                            <c:choose>
+                                <c:when test="${hasReceiptMap[booking.bookingId]}">
+                                    <spring:message code="receipt.state.uploaded"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <spring:message code="receipt.state.not_uploaded"/>
+                                </c:otherwise>
+                            </c:choose>
+                        </span><br/>
                         <div class="booking-status-container">
                             <c:choose>
                                 <c:when test="${jfn:trim(jfn:toUpperCase(booking.status)) == 'PENDIENTE'}">

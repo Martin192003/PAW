@@ -39,7 +39,7 @@ public class EmailServiceImpl implements EmailService {
     private UserDao userDao;
 
 
-    @Value("${app.base.url}")
+    @Value("${local.base.url}")
     private String baseUrl;
 
     @Autowired
@@ -66,6 +66,12 @@ public class EmailServiceImpl implements EmailService {
 
     private void sendTemplatedEmail(String to, String subject, String templateName,
                                     Map<String, Object> variables, String ctaText, String ctaUrl) {
+        sendTemplatedEmail(to, subject, templateName, variables, ctaText, ctaUrl, null, null, null);
+    }
+
+    private void sendTemplatedEmail(String to, String subject, String templateName,
+                                    Map<String, Object> variables, String ctaText, String ctaUrl,
+                                    String attachmentName, byte[] attachmentData, String attachmentContentType) {
         try {
             Locale userLocale = LocaleContextHolder.getLocale();
             Context context = new Context(userLocale);
@@ -90,6 +96,12 @@ public class EmailServiceImpl implements EmailService {
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
+
+            // Agregar adjunto si está presente
+            if (attachmentName != null && attachmentData != null && attachmentData.length > 0) {
+                String mimeType = attachmentContentType != null ? attachmentContentType : "application/octet-stream";
+                helper.addAttachment(attachmentName, new org.springframework.core.io.ByteArrayResource(attachmentData), mimeType);
+            }
 
             mailSender.send(message);
 
@@ -173,11 +185,13 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendUserRegistrationConfirmation(String to, String username, String verificationToken) {
+        String verificationUrl = abs("/verify-account?token=" + verificationToken);
+
         Map<String, Object> model = Map.of(
                 "username", username,
                 "token", verificationToken,
                 "createdAt", ZonedDateTime.now(),
-                "verificationUrl", abs("/verify?token=" + verificationToken),
+                "verificationUrl", verificationUrl,
                 "brandName", "BlingBling",
                 "brandFooter", "© 2025 BlingBling. Bienvenido a nuestra plataforma."
         );
@@ -188,7 +202,7 @@ public class EmailServiceImpl implements EmailService {
                 "user-registration-confirmation",
                 model,
                 "Verificar mi cuenta",
-                abs("/verify?token=" + verificationToken)
+                verificationUrl
         );
     }
 
@@ -369,6 +383,55 @@ public class EmailServiceImpl implements EmailService {
                 ownerModel,
                 "Ver panel",
                 abs("/admin/clubs/bookings?userId=" + owner.getId())
+        );
+    }
+
+    @Override
+    @Async
+    public void notifyReceiptUploaded(Booking booking, Club club, Table table, User owner, Receipt receipt, Locale locale) {
+        if (!isLikelyEmail(owner.getEmail())) {
+            throw new BadRequestException("Email del dueño inválido: " + owner);
+        }
+
+        Objects.requireNonNull(booking, "booking es null");
+        Objects.requireNonNull(club, "club es null");
+        Objects.requireNonNull(table, "table es null");
+        Objects.requireNonNull(receipt, "receipt es null");
+
+        final String clubName = Objects.requireNonNullElse(club.getClubName(), "Club");
+        final String tableNum = String.valueOf(table.getTableNumber());
+        final String username = Objects.requireNonNullElse(booking.getUser().getUsername(), "usuario");
+        final String userEmail = Objects.requireNonNullElse(booking.getUser().getEmail(), "no-reply@example.test");
+
+        final LocalDate date = Objects.requireNonNull(
+                booking.getBookingStart(), "booking.bookingStart es null"
+        ).atZoneSameInstant(ZONE_ID).toLocalDate();
+
+        final DateTimeFormatter df = DateTimeFormatter.ofPattern("EEE dd/MM", locale);
+        final String dateTimePretty = df.format(date) + " 23:59–06:00";
+
+        Map<String, Object> ownerModel = new HashMap<>();
+        ownerModel.put("clubName", clubName);
+        ownerModel.put("tableNumber", tableNum);
+        ownerModel.put("username", username);
+        ownerModel.put("userEmail", userEmail);
+        ownerModel.put("dateTime", dateTimePretty);
+        ownerModel.put("receiptFilename", receipt.getFilename());
+        ownerModel.put("receiptUploadedAt", OffsetDateTime.now(ZONE_ID).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        ownerModel.put("bookingId", booking.getBookingId());
+        ownerModel.put("brandName", "BlingBling");
+        ownerModel.put("brandFooter", "© 2025 BlingBling. Recibo de pago cargado.");
+
+        sendTemplatedEmail(
+                owner.getEmail(),
+                "Recibo cargado - " + clubName + " - Mesa " + tableNum,
+                "receipt-uploaded-notification",
+                ownerModel,
+                "Ver recibo",
+                abs("/admin/booking?bookingId=" + booking.getBookingId()),
+                receipt.getFilename(),
+                receipt.getData(),
+                receipt.getContentType()
         );
     }
 
