@@ -9,7 +9,8 @@ import ar.edu.itba.paw.persistence.ReceiptDao;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Locale;
@@ -26,11 +27,20 @@ public class ReceiptServiceImpl implements ReceiptService {
     private final BookingService bookingService;
 
     private final ReceiptDao dao;
+    private final TableService tableService;
+    private final ClubService clubService;
+    private final EmailService emailService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReceiptServiceImpl.class);
 
-    public ReceiptServiceImpl(ReceiptDao receiptRepository, BookingService bookingService, ReceiptDao dao) {
+    public ReceiptServiceImpl(ReceiptDao receiptRepository, BookingService bookingService, ReceiptDao dao,
+                              TableService tableService, ClubService clubService, EmailService emailService) {
         this.receiptDao = receiptRepository;
         this.bookingService = bookingService;
-        this.dao = dao; }
+        this.dao = dao;
+        this.tableService = tableService;
+        this.clubService = clubService;
+        this.emailService = emailService;
+    }
 
     @Override
     @Transactional
@@ -83,12 +93,11 @@ public class ReceiptServiceImpl implements ReceiptService {
             throw new UnauthorizedException("receipt.upload.notAllowed");
         }
 
-         if (booking.getStatus() == Status.CANCELADA) throw new InvalidReceiptException("receipt.for.cancelled");
+        if (booking.getStatus() == Status.CANCELADA) throw new InvalidReceiptException("receipt.for.cancelled");
 
         if (receiptDao.findByBooking(bookingId).isPresent()) {
             throw new DuplicateKeyException("receipt.already.exists");
         }
-
 
         final UUID newReceiptId = receiptDao.create(
                 bookingId,
@@ -98,8 +107,57 @@ public class ReceiptServiceImpl implements ReceiptService {
                 data
         );
 
-        Optional<Receipt> saved = receiptDao.findById(newReceiptId);
+        LOGGER.info("Receipt created successfully with ID: {}", newReceiptId);
 
+        // Obtener información adicional para el email
+        try {
+            var tableOpt = tableService.findById(booking.getTableId());
+            if (tableOpt.isPresent()) {
+                var table = tableOpt.get();
+                LOGGER.info("Table found: {}", table.getTableId());
+
+                var clubOpt = clubService.getClubById(table.getClubId());
+                if (clubOpt.isPresent()) {
+                    var club = clubOpt.get();
+                    LOGGER.info("Club found: {}", club.getClubName());
+
+                    var admins = clubService.getAdminsByClub(club.getClubId());
+                    LOGGER.info("Found {} admins for club", admins.size());
+
+                    if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
+                        String adminEmail = admins.get(0).getEmail();
+                        LOGGER.info("Sending receipt notification to admin: {}", adminEmail);
+
+                        Receipt receiptForEmail = new Receipt(
+                                newReceiptId,
+                                bookingId,
+                                userId,
+                                null, // url
+                                safeName,
+                                ct,
+                                (long) data.length, // sizeBytes
+                                OffsetDateTime.now(),
+                                data
+                        );
+
+                        LOGGER.info("Receipt object created for email with data length: {}", data.length);
+
+                        Locale locale = new Locale("es", "AR");
+                        emailService.notifyReceiptUploaded(booking, club, table, admins.get(0), receiptForEmail, locale);
+
+                        LOGGER.info("Receipt upload notification sent successfully to {}", adminEmail);
+                    } else {
+                        LOGGER.warn("No valid admin email found for club {}", club.getClubId());
+                    }
+                } else {
+                    LOGGER.warn("Club not found for table {}", table.getTableId());
+                }
+            } else {
+                LOGGER.warn("Table not found for booking {}", bookingId);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to send receipt upload notification for booking {}", bookingId, e);
+        }
     }
 
     @Override
@@ -127,5 +185,7 @@ public class ReceiptServiceImpl implements ReceiptService {
 
         return true;
     }
+
+
 
 }

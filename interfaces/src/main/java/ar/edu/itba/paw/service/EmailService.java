@@ -17,6 +17,6 @@ public interface EmailService {
     void sendPasswordResetEmail(String toEmail, String username, String resetToken);
     void notifyBookingCancelledToUser(Booking booking, Club club, Table table, Locale locale);
     void notifyBookingCancelledToOwner(Booking booking, Club club, Table table, User ownerEmail, Locale locale);
-
+    void notifyReceiptUploaded(Booking booking, Club club, Table table, User owner, Receipt receipt, Locale locale);
 }
 
