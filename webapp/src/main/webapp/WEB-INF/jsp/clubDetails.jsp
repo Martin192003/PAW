@@ -135,7 +135,7 @@
                     <c:url var="reserveUrl" value="/clubs/${club.clubId}/reserve"/>
                     <c:if test="${not empty error}">
                         <div class="bb-error" style="background:#5a1a1a;color:#fff;padding:10px;border-radius:6px;margin-bottom:12px;">
-                            <spring:message code="invalid.date"/>
+                            <spring:message code="${error}"/>
                         </div>
                     </c:if>
                     <form id="reserveForm" method="post" action="${reserveUrl}">
