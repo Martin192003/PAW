@@ -85,8 +85,8 @@
                 </div>
             </dl>
             <div class="booking-actions">
-                <form method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
-                    <button type="submit" class="btn btn-secondary">
+                <form id="userCancelForm" method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
+                    <button id="userCancelBtn" type="submit" class="btn btn-secondary">
                         <i class="fa fa-trash"></i>
                         <spring:message code="booking.action.cancel" text="Cancelar reserva"/>
                     </button>
@@ -137,7 +137,24 @@
         </aside>
     </section>
 </div>
-
-
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var f = document.getElementById('userCancelForm');
+        if (f) {
+            f.addEventListener('submit', function(e) {
+                if (f.dataset.submitting === '1') { e.preventDefault(); return; }
+                f.dataset.submitting = '1';
+                var btn = document.getElementById('userCancelBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    try {
+                        btn.dataset.orig = btn.innerHTML;
+                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (btn.textContent || '');
+                    } catch (err) { /* ignore */ }
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

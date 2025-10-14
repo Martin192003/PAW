@@ -66,9 +66,13 @@ public class ClubDetailsController {
         } else {
             try {
                 var ld = LocalDate.parse(dateStr);
-                available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
-                start = tableService.windowStart(ld, zone);
-                end   = tableService.windowEnd(ld, zone);
+                if (tableService.isPastDate(ld, clock, zone)) {
+                    model.addAttribute("error", "tables.pastdate");
+                } else {
+                    available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
+                    start = tableService.windowStart(ld, zone);
+                    end   = tableService.windowEnd(ld, zone);
+                }
             } catch (ValidationException | InvalidDateRangeException ex) {
                 model.addAttribute("error", "invalid.date");
             } catch (DateTimeParseException ex) {
