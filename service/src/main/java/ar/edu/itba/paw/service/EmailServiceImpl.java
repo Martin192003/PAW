@@ -39,7 +39,7 @@ public class EmailServiceImpl implements EmailService {
     private UserDao userDao;
 
 
-    @Value("${local.base.url}")
+    @Value("${app.base.url}")
     private String baseUrl;
 
     @Autowired
