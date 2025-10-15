@@ -333,3 +333,58 @@
     gap: 8px;
     align-items: flex-end;
 }
+
+/* Estilos para el Mapa de Ubicación */
+
+.map-container {
+    background-color: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(156, 39, 176, 0.3); /* Borde sutil púrpura */
+    border-radius: 10px;
+    padding: 24px;
+    margin-top: 20px; /* Separación del contenido anterior */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* Sombra para profundidad */
+}
+
+.map-container h3 {
+    font-size: 18px;
+    color: #fff;
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#clubMap {
+    height: 350px; /* Un poco más alto para mejor visualización */
+    width: 100%;
+    border-radius: 8px; /* Bordes redondeados dentro del contenedor */
+    /* El mapa de Leaflet necesita estilos específicos para su integración */
+}
+
+/* Ajustes para el tema oscuro de Leaflet */
+/* Hacen que los tiles se vean mejor en el tema general */
+.leaflet-container {
+    background-color: #2c2c2c; /* Fondo oscuro si los tiles no cargan */
+    border-radius: 8px; /* Aplicar bordes al contenedor interno del mapa */
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    background: #333 !important; /* Fondo oscuro */
+    color: #fff !important;      /* Texto blanco */
+    border-radius: 6px !important;
+}
+
+.leaflet-popup-content-wrapper a {
+    color: #9c27b0 !important; /* Enlaces en color púrpura */
+}
+
+.leaflet-control-zoom a {
+    background-color: #333 !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+.leaflet-control-zoom a:hover {
+    background-color: #444 !important;
+}

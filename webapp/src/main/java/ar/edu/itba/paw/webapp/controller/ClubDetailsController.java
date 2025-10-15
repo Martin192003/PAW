@@ -107,6 +107,8 @@ public class ClubDetailsController {
         boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
         model.addAttribute("isOwner", isOwner);
 
+        model.addAttribute("latitude",-34.5891429);
+        model.addAttribute("longitude",-58.3961641);
         model.addAttribute("club", club);
         model.addAttribute("productsByCategory", ordered);
         model.addAttribute("availableTables", available);
