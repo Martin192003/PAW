@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/text.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/clubForm.css' />" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
 </head>
@@ -47,9 +48,15 @@
                 <form:errors path="name" cssClass="error" element="div"/>
             </div>
             <div class="form-group">
-                <form:input path="location" class="form-control" placeholder="${phLocation}"/>
+                <form:input path="location" class="form-control" placeholder="${phLocation}" id="locationInput"/>
                 <form:errors path="location" cssClass="error" element="div"/>
             </div>
+
+            <!-- Mapa de previsualización -->
+            <div class="map-container">
+                <div id="locationMap"></div>
+            </div>
+
             <div class="form-group">
                 <div class="select-with-tooltip">
                     <form:select path="priceRange" id="priceRange" class="form-control" aria-describedby="tt-price">
@@ -180,6 +187,116 @@
 </div>
 </body>
 </html>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('locationInput');
+        const mapContainer = document.querySelector('.map-container');
+        const mapDiv = document.getElementById('locationMap');
+
+        // Variables del mapa
+        let map = null;
+        let marker = null;
+        let lat = -34.6037037; // Coordenadas iniciales (Buenos Aires)
+        let lng = -58.3841771;
+
+        // Variable para el temporizador de debounce
+        let typingTimer;
+        const searchDelay = 600; // Milisegundos de espera después de dejar de escribir
+
+        // --- Funciones para el mapa ---
+
+        function initializeMap() {
+            if (map) return; // Si el mapa ya está inicializado, no hacer nada
+
+            map = L.map('locationMap', { zoomControl: true }).setView([lat, lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([lat, lng]).addTo(map);
+
+            // Importante para que Leaflet calcule el tamaño correctamente tras la animación
+            setTimeout(() => {
+                map.invalidateSize(true);
+                // Si ya hay un valor al cargar, intenta actualizar la posición inicial
+                if (input.value.trim().length > 0) {
+                    updateMap(input.value.trim());
+                }
+            }, 650);
+        }
+
+        function showMap() {
+            if (mapContainer.classList.contains('show-map')) return;
+
+            mapContainer.classList.add('show-map');
+            initializeMap(); // Inicializar el mapa solo cuando se muestra por primera vez
+        }
+
+        function hideMap() {
+            mapContainer.classList.remove('show-map');
+        }
+
+        // Función para geocodificar la dirección y actualizar el marcador/vista
+        async function updateMap(address) {
+            // Solo buscar si el mapa está visible y hay suficiente texto
+            if (!mapContainer.classList.contains('show-map') || !address || address.trim().length < 3) {
+                return;
+            }
+
+            try {
+                const response = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(address));
+                const results = await response.json();
+                if (results && results.length > 0) {
+                    lat = parseFloat(results[0].lat);
+                    lng = parseFloat(results[0].lon);
+
+                    if (marker) {
+                        marker.setLatLng([lat, lng]);
+                    } else {
+                        // Si por alguna razón el marcador no se creó, créalo
+                        marker = L.marker([lat, lng]).addTo(map);
+                    }
+                    map.setView([lat, lng], 15);
+                }
+            } catch (e) {
+                console.error("Error buscando dirección:", e);
+            }
+        }
+
+        // --- Lógica de control de visibilidad y búsqueda (Debounce) ---
+
+        function handleLocationChange() {
+            const address = input.value.trim();
+
+            // 1. Mostrar/Ocultar el mapa (Se hace de inmediato)
+            if (address.length > 0) {
+                showMap();
+            } else {
+                hideMap();
+            }
+
+            // 2. Controlar el Debounce para la búsqueda (No buscar inmediatamente)
+            clearTimeout(typingTimer);
+
+            if (address.length >= 3) {
+                // Configura un nuevo temporizador
+                typingTimer = setTimeout(() => {
+                    updateMap(address);
+                }, searchDelay);
+            }
+        }
+
+        // 1. Control al cargar la página
+        if (input.value.trim().length > 0) {
+            showMap(); // Inicializa y muestra si ya hay un valor
+        }
+
+        // 2. Control al escribir
+        input.addEventListener('input', handleLocationChange);
+    });
+</script>
 <script>
     (function () {
         const form = document.getElementById('clubForm');

@@ -271,3 +271,66 @@ textarea.form-control {
         left: 12px;
     }
 }
+
+/* --- MAPA DE UBICACIÓN --- */
+.map-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.6s ease-in-out, opacity 0.5s ease;
+    margin-bottom: 0;
+}
+.map-container.show-map {
+    max-height: 300px;
+    opacity: 1;
+    margin-top: 10px;
+    margin-bottom: 18px;
+}
+
+#locationMap {
+    width: 600px;
+    height: 260px;
+    min-height: 260px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), 0 0 6px rgba(140, 0, 183, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.leaflet-container {
+    background-color: #2e2e2e !important;
+}
+
+.leaflet-control-zoom a {
+    background-color: #444 !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background-color: #6c63ff !important;
+}
+
+.leaflet-popup-content-wrapper {
+    background: #333 !important;
+    color: #fff !important;
+    border-radius: 8px;
+}
+
+.leaflet-popup-tip {
+    background: #333 !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    #locationMap {
+        width: 90%;
+        height: 220px;
+    }
+}

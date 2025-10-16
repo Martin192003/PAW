@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/details.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -203,6 +204,45 @@
                 </div>
             </div>
         </div>
+        <div class="map-container">
+            <h3><i class="fa-solid fa-map-location-dot"></i> <spring:message code="form.location"/></h3>
+            <div id="clubMap"></div>
+        </div>
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', async () => {
+                const address = "${club.location}"; // dirección guardada en la DB
+
+                let lat = -34.5891429; // coordenadas por defecto
+                let lng = -58.3961641;
+
+                try {
+                    const response = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(address));
+                    const results = await response.json();
+                    if (results && results.length > 0) {
+                        lat = results[0].lat;
+                        lng = results[0].lon;
+                    } else {
+                        console.warn("No se encontró la ubicación, usando coordenadas por defecto");
+                    }
+                } catch (error) {
+                    console.error("Error al geocodificar la dirección:", error);
+                }
+
+                const map = L.map('clubMap').setView([lat, lng], 16);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                L.marker([lat, lng]).addTo(map)
+                    .bindPopup(`<b>${"${club.clubName}"}</b><br>${address}`)
+                    .openPopup();
+            });
+        </script>
+
+
+
 
         <div id="reservationModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
             <div style="background:#222; color:#fff; padding:32px; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.6); width:400px; text-align:center;">
@@ -361,7 +401,7 @@
                 window.location.href = "${clubUrl}";
             }
         </script>
-
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     </div>
 </div>
 </body>
