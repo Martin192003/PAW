@@ -387,3 +387,11 @@ body {
     margin-left: 2px;
     font-weight: 500;
 }
+
+.details .row.total dd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap; /* permite que en pantallas pequeñas el descuento baje a la siguiente línea */
+}

@@ -71,6 +71,14 @@
                     onclick="openEditModal('description', '<c:out value="${club.description}"/>')"><i
                     class="fa-solid fa-pen"></i></button>
         </div>
+        <div>
+            <strong><spring:message code="placeholder.cbu"/>:&nbsp;</strong>
+            <c:out value="${club.cbu}"/>
+            <button type="button" class="btn btn-success btn-edit-small"
+                    onclick="openEditModal('cbu', '<c:out value="${club.cbu}"/>')">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+        </div>
     </div>
     <h2><spring:message code="menu.menu"/></h2>
     <table class="styled-table">
@@ -268,6 +276,12 @@
                 <form:errors path="description" cssClass="formError"/>
             </div>
 
+            <div id="editField_cbu" style="display:none;">
+                <label><spring:message code="placeholder.cbu"/>:</label>
+                <form:input path="cbu" id="editFieldValue_cbu" cssClass="input-modal"/>
+                <form:errors path="cbu" cssClass="formError"/>
+            </div>
+
             <div class="modal-actions" style="margin-top:12px;">
                 <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
                     <spring:message code="button.cancel"/>
@@ -428,7 +442,7 @@
         document.getElementById('editedField').value = field;
 
         // ocultar todos los bloques
-        const fields = ['clubName','location','zone','musicGenre','priceRange','description'];
+        const fields = ['clubName','location','zone','musicGenre','priceRange','description', 'cbu'];
         fields.forEach(f => {
             const el = document.getElementById('editField_' + f);
             if (el) el.style.display = 'none';
@@ -446,7 +460,8 @@
             'description': 'editFieldValue_description',
             'zone': 'zoneSelectModal',
             'musicGenre': 'musicGenreSelectModal',
-            'priceRange': 'priceSelectModal'
+            'priceRange': 'priceSelectModal',
+            'cbu': 'editFieldValue_cbu'
         };
         const id = inputIds[field];
         if (id) {

@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
@@ -79,9 +80,33 @@
                     <dt><spring:message code="booking.end" text="Fin"/></dt>
                     <dd><c:out value="${bookingEndLocal}"/></dd>
                 </div>
+                <div class="row">
+                    <dt><spring:message code="placeholder.cbu" text="CBU"/></dt>
+                    <dd><c:out value="${clubCbu}"/></dd>
+                </div>
                 <div class="row total">
                     <dt><spring:message code="booking.total" text="Total"/></dt>
-                    <dd>$ <c:out value="${booking.totalAmount}"/></dd>
+                    <dd>
+                        <c:choose>
+                            <c:when test="${not empty table.price}">
+                                <c:choose>
+                                    <c:when test="${not empty table.discount and table.discount > 0}">
+                                        <c:set var="priceToPay" value="${table.price * (1 - table.discount / 100)}" />
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:set var="priceToPay" value="${table.price}" />
+                                    </c:otherwise>
+                                </c:choose>
+                                $ <fmt:formatNumber value="${priceToPay}" minFractionDigits="0" maxFractionDigits="0"/>
+                                <c:if test="${not empty table.discount and table.discount > 0}">
+                                    <span class="discount-right muted">(<spring:message code="tables.discount"/>:<fmt:formatNumber value="${table.discount}" minFractionDigits="0" maxFractionDigits="0"/>%)</span>
+                                </c:if>
+                            </c:when>
+                            <c:otherwise>
+                                $ <c:out value="${booking.totalAmount}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </dd>
                 </div>
             </dl>
             <div class="booking-actions">

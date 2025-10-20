@@ -200,6 +200,7 @@ public class ClubController {
             model.addAttribute("priceValues", Price.values());
             model.addAttribute("genreValues", MusicalGenre.values());
             model.addAttribute("zoneValues", Zone.values());
+
             return "clubForm";
         }
 
@@ -209,7 +210,7 @@ public class ClubController {
 
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
-                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getImage()
+                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getCbu(), f.getImage()
         );
 
         if (roleAntes == Role.USER) {
@@ -260,6 +261,7 @@ public class ClubController {
         form.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
         form.setDescription(club.getDescription() != null ? club.getDescription() : "");
         form.setImage(coverPhotoUrl != null ? coverPhotoUrl : "");
+        form.setCbu(club.getCbu() != null ? club.getCbu() : "");
 
         model.addAttribute("clubHandlerForm", form);
         return "clubHandler";
@@ -304,6 +306,9 @@ public class ClubController {
         }
         if (clubHandlerForm.getDescription() != null) {
             club.setDescription(clubHandlerForm.getDescription());
+        }
+        if (clubHandlerForm.getCbu() != null && !clubHandlerForm.getCbu().isBlank()) {
+            club.setCbu(clubHandlerForm.getCbu());
         }
 
         clubService.updateClub(club);

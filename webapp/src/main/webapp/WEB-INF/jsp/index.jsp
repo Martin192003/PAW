@@ -182,7 +182,7 @@
                     <i class="fa-solid fa-music"></i> <spring:message code="genre.${club.musicGenre}"/><br>
                     <i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
 
-                    <c:if test="${not empty club.rating}">
+                    <c:if test="${not empty club.rating and club.rating gt 0.0}">
                         <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
                         <c:set var="decimal" value="${club.rating - ratingInt}" />
                         <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
