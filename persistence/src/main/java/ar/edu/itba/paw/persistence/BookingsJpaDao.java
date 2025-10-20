@@ -4,6 +4,8 @@ import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
+import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
 
 
@@ -79,13 +81,6 @@ public class BookingsJpaDao implements BookingDao {
         return Optional.of(b);
     }
 
-
-    @Override
-    public List<Booking> findAll() {
-        return em.createQuery("SELECT b FROM Booking b", Booking.class)
-                .getResultList();
-    }
-
     @Override
     public List<Booking> findByUser(UUID userId) {
         return em.createQuery("""
@@ -108,14 +103,6 @@ public class BookingsJpaDao implements BookingDao {
                 .getResultList();
     }
 
-    @Override
-    public List<Booking> findAllPaginated(int limit, int offset) {
-        final String orderBy = resolveOrderBy("created_desc", false);
-        return em.createQuery("SELECT b FROM Booking b ORDER BY " + orderBy, Booking.class)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
-                .getResultList();
-    }
 
     @Override
     public int countAll() {
@@ -124,55 +111,120 @@ public class BookingsJpaDao implements BookingDao {
         return cnt.intValue();
     }
 
-
     @Override
-    public List<Booking> searchPaginated(UUID userId,
-                                         UUID clubId,
-                                         UUID bookingId,
-                                         Status status,
-                                         String sort,
-                                         int limit,
-                                         int offset) {
+    public List<Booking> searchPaginated(final UUID userId,
+                                         final UUID clubId,
+                                         final UUID bookingId,
+                                         final Status status,
+                                         final String sort,
+                                         final int limit,
+                                         final int offset) {
+
+        // 1) Query nativa
+        final StringBuilder inner = new StringBuilder("""
+        SELECT DISTINCT b.booking_id, b.created_at, b.booking_start, b.status
+        FROM bookings b
+    """);
 
         if (clubId != null) {
-            String sql = "SELECT b.* FROM bookings b " +
-                    "LEFT JOIN club_tables t ON t.table_id = b.table_id " +
-                    "WHERE t.club_id = :clubId";
-
-            if (userId != null)   sql += " AND b.user_id = :userId";
-            if (bookingId != null) sql += " AND b.booking_id = :bookingId";
-            if (status != null)    sql += " AND LOWER(b.status) = LOWER(:status)";
-
-            sql += " ORDER BY " + resolveOrderBy(sort, true) + " LIMIT :limit OFFSET :offset";
-
-            Query q = em.createNativeQuery(sql, Booking.class)
-                    .setParameter("clubId", clubId)
-                    .setParameter("limit", limit)
-                    .setParameter("offset", offset);
-
-            if (userId != null)    q.setParameter("userId", userId);
-            if (bookingId != null) q.setParameter("bookingId", bookingId);
-            if (status != null)    q.setParameter("status", status.db());
-
-            @SuppressWarnings("unchecked")
-            List<Booking> res = q.getResultList();
-            return res;
+            inner.append("LEFT JOIN club_tables t ON t.table_id = b.table_id\n");
         }
 
-        StringBuilder jpql = new StringBuilder("SELECT b FROM Booking b WHERE 1=1");
-        Map<String,Object> params = new HashMap<>();
-        if (userId != null)   { jpql.append(" AND b.user.id = :userId"); params.put("userId", userId); }
-        if (bookingId != null){ jpql.append(" AND b.bookingId = :bookingId"); params.put("bookingId", bookingId); }
-        if (status != null)   { jpql.append(" AND b.status = :status"); params.put("status", status); }
+        inner.append("WHERE 1=1\n");
+        if (clubId != null)    inner.append("AND t.club_id = :clubId\n");
+        if (userId != null)    inner.append("AND b.user_id = :userId\n");
+        if (bookingId != null) inner.append("AND b.booking_id = :bookingId\n");
+        if (status != null)    inner.append("AND LOWER(b.status) = LOWER(:status)\n");
 
-        jpql.append(" ORDER BY ").append(resolveOrderBy(sort, false));
+        final String idSql = """
+        SELECT CAST(x.booking_id AS TEXT) AS id_text
+        FROM ( %s ) x
+        ORDER BY %s
+    """.formatted(inner, nativeSortForAlias("x", sort));
 
-        TypedQuery<Booking> q = em.createQuery(jpql.toString(), Booking.class)
+        final var nq = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setFirstResult(offset)
                 .setMaxResults(limit);
-        params.forEach(q::setParameter);
-        return q.getResultList();
+
+        if (clubId != null)    nq.setParameter("clubId", clubId);
+        if (userId != null)    nq.setParameter("userId", userId);
+        if (bookingId != null) nq.setParameter("bookingId", bookingId);
+        if (status != null)    nq.setParameter("status", status.db());
+
+        @SuppressWarnings("unchecked")
+        final java.util.List<String> idTexts = nq.getResultList();
+        if (idTexts.isEmpty()) return java.util.List.of();
+
+        final java.util.List<java.util.UUID> ids = idTexts.stream()
+                .map(java.util.UUID::fromString)
+                .toList();
+
+        // 2) Query hibernate
+        final String orderBy = resolveOrderBy(sort, false);
+        return em.createQuery(
+                "SELECT b FROM Booking b WHERE b.bookingId IN :ids ORDER BY " + orderBy,
+                Booking.class
+        ).setParameter("ids", ids).getResultList();
     }
+
+
+    @Override
+    public List<Booking> searchByClubIdsPaginated(final java.util.List<java.util.UUID> clubIds,
+                                                  final java.util.UUID bookingId,
+                                                  final Status status,
+                                                  final String sort,
+                                                  final int limit,
+                                                  final int offset) {
+        if (clubIds == null || clubIds.isEmpty()) return java.util.List.of();
+
+        final String ph = placeholders("cid", clubIds.size());
+
+        // 1) Query nativa
+        final StringBuilder inner = new StringBuilder("""
+        SELECT DISTINCT b.booking_id, b.created_at, b.booking_start, b.status
+        FROM bookings b
+        JOIN club_tables t ON t.table_id = b.table_id
+        WHERE t.club_id IN ( %s )
+    """.formatted(ph));
+
+        if (bookingId != null) inner.append("AND b.booking_id = :bookingId\n");
+        if (status != null)    inner.append("AND LOWER(b.status) = LOWER(:status)\n");
+
+        final String idSql = """
+        SELECT CAST(x.booking_id AS TEXT) AS id_text
+        FROM ( %s ) x
+        ORDER BY %s
+    """.formatted(inner, nativeSortForAlias("x", sort));
+
+        final var nq = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .setFirstResult(offset)
+                .setMaxResults(limit);
+
+        bindUuidList(nq, "cid", clubIds); //Preguntar si esta bien si no lo pongo tira: The parameter [cid0] did not have a matching bind value
+
+        if (bookingId != null) nq.setParameter("bookingId", bookingId);
+        if (status != null)    nq.setParameter("status", status.db());
+
+        @SuppressWarnings("unchecked")
+        final java.util.List<String> idTexts = nq.getResultList();
+        if (idTexts.isEmpty()) return java.util.List.of();
+
+        final java.util.List<java.util.UUID> ids = idTexts.stream()
+                .map(java.util.UUID::fromString)
+                .toList();
+
+        // 2) Query hibernate
+        final String orderBy = resolveOrderBy(sort, false);
+        return em.createQuery(
+                "SELECT b FROM Booking b WHERE b.bookingId IN :ids ORDER BY " + orderBy,
+                Booking.class
+        ).setParameter("ids", ids).getResultList();
+    }
+
 
     @Override
     public int countSearch(UUID userId,
@@ -212,56 +264,32 @@ public class BookingsJpaDao implements BookingDao {
     }
 
     @Override
-    public List<Booking> searchByClubIdsPaginated(List<UUID> clubIds,
-                                                  UUID bookingId,
-                                                  Status status,
-                                                  String sort,
-                                                  int limit,
-                                                  int offset) {
-        if (clubIds == null || clubIds.isEmpty()) return List.of();
-
-        String sql = "SELECT b.* FROM bookings b " +
-                "JOIN club_tables t ON t.table_id = b.table_id " +
-                "WHERE t.club_id IN (:clubIds)";
-
-        if (bookingId != null) sql += " AND b.booking_id = :bookingId";
-        if (status != null)    sql += " AND LOWER(b.status) = LOWER(:status)";
-
-        sql += " ORDER BY " + resolveOrderBy(sort, true) + " LIMIT :limit OFFSET :offset";
-
-        Query q = em.createNativeQuery(sql, Booking.class)
-                .setParameter("clubIds", clubIds)
-                .setParameter("limit", limit)
-                .setParameter("offset", offset);
-
-        if (bookingId != null) q.setParameter("bookingId", bookingId);
-        if (status != null)    q.setParameter("status", status.db());
-
-        @SuppressWarnings("unchecked")
-        List<Booking> res = q.getResultList();
-        return res;
-    }
-
-    @Override
-    public int countByClubIds(List<UUID> clubIds, UUID bookingId, Status status) {
+    public int countByClubIds(final List<UUID> clubIds, final UUID bookingId, final Status status) {
         if (clubIds == null || clubIds.isEmpty()) return 0;
 
-        String sql = "SELECT COUNT(*) FROM bookings b " +
-                "JOIN club_tables t ON t.table_id = b.table_id " +
-                "WHERE t.club_id IN (:clubIds)";
+        final String ph = placeholders("cid", clubIds.size());
 
-        if (bookingId != null) sql += " AND b.booking_id = :bookingId";
-        if (status != null)    sql += " AND LOWER(b.status) = LOWER(:status)";
+        final StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(*) FROM bookings b
+        JOIN club_tables t ON t.table_id = b.table_id
+        WHERE t.club_id IN ( %s )
+    """.formatted(ph));
 
-        Query q = em.createNativeQuery(sql)
-                .setParameter("clubIds", clubIds);
+        if (bookingId != null) sql.append("AND b.booking_id = :bookingId\n");
+        if (status != null)    sql.append("AND LOWER(b.status) = LOWER(:status)\n");
 
-        if (bookingId != null) q.setParameter("bookingId", bookingId);
-        if (status != null)    q.setParameter("status", status.db());
+        final var nq = em.createNativeQuery(sql.toString())
+                .unwrap(NativeQuery.class);
 
-        Number n = (Number) q.getSingleResult();
+        bindUuidList(nq, "cid", clubIds);
+
+        if (bookingId != null) nq.setParameter("bookingId", bookingId);
+        if (status != null)    nq.setParameter("status", status.db());
+
+        final Number n = (Number) nq.getSingleResult();
         return n.intValue();
     }
+
 
 
     private static String resolveOrderBy(String sort, boolean nativeSql) {
@@ -277,6 +305,33 @@ public class BookingsJpaDao implements BookingDao {
                     nativeSql ? "b.created_at DESC NULLS LAST"
                             : "(CASE WHEN b.createdAt IS NULL THEN 1 ELSE 0 END) ASC, b.createdAt DESC";
         };
+    }
+
+    private static String nativeSortForAlias(final String alias, final String sort) {
+        final String a = alias == null ? "x" : alias;
+        return switch (sort == null ? "" : sort) {
+            case "created_asc" -> a + ".created_at ASC NULLS LAST, " + a + ".booking_id ASC";
+            case "start_desc"  -> a + ".booking_start DESC NULLS LAST, " + a + ".booking_id DESC";
+            case "start_asc"   -> a + ".booking_start ASC NULLS LAST, " + a + ".booking_id ASC";
+            case "status_asc"  -> a + ".status ASC NULLS LAST, " + a + ".booking_id ASC";
+            default /* created_desc */ ->
+                    a + ".created_at DESC NULLS LAST, " + a + ".booking_id DESC";
+        };
+    }
+
+    private static String placeholders(final String base, final int n) {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(':').append(base).append(i);
+        }
+        return sb.toString();
+    }
+
+    private static void bindUuidList(final NativeQuery<?> nq, final String base, final List<UUID> values) {
+        for (int i = 0; i < values.size(); i++) {
+            nq.setParameter(base + i, values.get(i));
+        }
     }
 
 }

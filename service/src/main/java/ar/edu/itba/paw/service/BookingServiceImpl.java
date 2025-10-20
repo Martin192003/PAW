@@ -404,17 +404,6 @@ public class BookingServiceImpl implements BookingService {
         return bookingDao.countSearch(userId, clubId, bookingId, status);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Booking> findAllPaginated(int limit, int offset) {
-        return bookingDao.findAllPaginated(limit, offset);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public int countAll() {
-        return bookingDao.countAll();
-    }
 
     @Override
     public Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username) {
