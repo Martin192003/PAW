@@ -38,12 +38,6 @@ public class ClubServiceImpl implements ClubService{
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Club> getAllClubs() {
-        return clubDao.findAll();
-    }
-
-    @Override
     @Transactional
     public Club create(String name, String description, String location, Price priceRange,
                        User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, MultipartFile image) {
@@ -130,18 +124,6 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     @Transactional(readOnly = true)
-    public List<Club> getAllClubsPaginated(int limit, int offset) {
-        return clubDao.findAllPaginated(limit, offset);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public int countAllClubs() {
-        return clubDao.countAll();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<Club> getClubsByUserPaginated(UUID userId, int limit, int offset) {
         return clubDao.findByUserIdPaginated(userId, limit, offset);
     }
@@ -193,40 +175,6 @@ public class ClubServiceImpl implements ClubService{
     public void assertAdmin(UUID clubId, UUID userId) {
         List<User> admins = clubDao.findAdminsByClubId(clubId);
         admins.stream().filter(a -> a.getId().equals(userId)).findAny().orElseThrow(UnauthorizedException::new);
-    }
-
-
-    @Override
-    @Transactional
-    public void updateField(UUID clubId, String field, String value, UUID editorId){
-        assertAdmin(clubId, editorId);
-
-        Club club = clubDao.findById(clubId).orElseThrow(ClubNotFoundException::new);
-
-        switch (field) {
-            case "clubName":
-                club.setClubName(value);
-                break;
-            case "location":
-                club.setLocation(value);
-                break;
-            case "priceRange":
-                club.setPriceRange(Price.valueOf(value.toUpperCase(Locale.ROOT)));
-                break;
-            case "description":
-                club.setDescription(value);
-                break;
-            case "zone":
-                club.setZone(parseZoneFlexible(value)); // <-- acepta name() o dbValue
-                break;
-            case "musicGenre":
-                club.setMusicGenre(MusicalGenre.valueOf(value));
-                break;
-            default:
-                throw new IllegalArgumentException("Campo inválido: " + field);
-        }
-
-        updateClub(club);
     }
 
     @Override

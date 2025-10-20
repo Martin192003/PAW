@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ClubService {
-    List<Club> getAllClubs();
 
     Optional<Club> getClubById(UUID clubId);
 
@@ -32,10 +31,6 @@ public interface ClubService {
 
     int countSearch(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar);
 
-    List<Club> getAllClubsPaginated(int limit, int offset);
-
-    int countAllClubs();
-
     List<Club> getClubsByUserPaginated(UUID userId, int limit, int offset);
 
     int countClubsByUser(UUID userId);
@@ -43,8 +38,6 @@ public interface ClubService {
     Map<UUID, String> mapClubNames(List<Booking> bookings);
 
     void assertAdmin(UUID clubId, UUID userId);
-
-    void updateField(UUID clubId, String field, String value, UUID editorId);
 
     boolean sendContactMessage(UUID clubId, String senderEmail, String senderName, String senderPhone, String message);
 

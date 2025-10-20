@@ -16,10 +16,6 @@ public interface ClubDao {
 
     Optional<Club> findById(UUID clubId);
 
-    Optional<Club> findByName(String clubName);
-
-    List<Club> findAll();
-
     Integer incrementQuantityRatings(UUID clubId, int delta);
 
     List<Club> search(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar, String sort);

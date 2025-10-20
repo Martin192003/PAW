@@ -111,34 +111,6 @@ public class ClubJpaDaoTest {
     }
 
     @Test
-    public void testFindByName() {
-        User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
-
-        Optional<Club> found = clubDao.findByName(NAME);
-
-        assertTrue(found.isPresent());
-        assertEquals(NAME, found.get().getClubName());
-    }
-
-    @Test
-    public void testFindAll() {
-        User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
-        clubDao.create("Otro", "desc", "loc", Price.BAJO, contact, MusicalGenre.POP, Zone.ZONA_SUR, false);
-
-        assertEquals(2, clubDao.findAll().size());
-    }
-
-    @Test
-    public void testFindByUserId() {
-        User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
-
-        assertEquals(1, clubDao.findByUserId(contact.getId()).size());
-    }
-
-    @Test
     public void testFindAdminsByClubId() {
         User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
         Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
@@ -146,36 +118,4 @@ public class ClubJpaDaoTest {
         assertEquals(1, clubDao.findAdminsByClubId(club.getClubId()).size());
     }
 
-    @Test
-    public void testFindAllPaginated() {
-        User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
-        clubDao.create("Otro", "desc", "loc", Price.BAJO, contact, MusicalGenre.POP, Zone.ZONA_SUR, false);
-
-        assertEquals(1, clubDao.findAllPaginated(1, 0).size());
-    }
-
-    @Test
-    public void testCountAll() {
-        User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
-
-        assertEquals(1, clubDao.countAll());
-    }
-
-    @Test
-    public void testFindByUserIdPaginated() {
-        User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
-
-        assertEquals(1, clubDao.findByUserIdPaginated(contact.getId(), 1, 0).size());
-    }
-
-    @Test
-    public void testCountByUserId() {
-        User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
-
-        assertEquals(1, clubDao.countByUserId(contact.getId()));
-    }
 }

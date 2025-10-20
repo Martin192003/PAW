@@ -50,7 +50,6 @@ public class ClubJpaDao implements ClubDao {
     }
 
 
-
     @Override
     public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
         final Club club = em.find(Club.class, clubId);
@@ -83,22 +82,9 @@ public class ClubJpaDao implements ClubDao {
         return Optional.ofNullable(em.find(Club.class, clubId));
     }
 
-    @Transactional(readOnly = true)
-    @Override
-    public Optional<Club> findByName(String clubName) {
-        final TypedQuery<Club> q = em.createQuery(
-                "SELECT c FROM Club c WHERE c.clubName = :clubName", Club.class);
-        q.setParameter("clubName", clubName);
-        return q.getResultList().stream().findFirst();
-    }
 
     @Override
-    public List<Club> findAll() {
-        return em.createQuery("SELECT c FROM Club c", Club.class)
-                .getResultList();
-    }
-
-    @Override
+    @Transactional
     public Integer incrementQuantityRatings(UUID clubId, int delta) {
         final int updated = em.createQuery(
                         "UPDATE Club c SET c.quantityRatings = c.quantityRatings + :delta WHERE c.clubId = :id")
@@ -113,6 +99,7 @@ public class ClubJpaDao implements ClubDao {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Club> search(String nameLike, Zone location, String musicGenre,
                              String priceRange, Boolean isBar, String sort) {
         final var cb = em.getCriteriaBuilder();
@@ -264,7 +251,7 @@ public class ClubJpaDao implements ClubDao {
         return n.intValue();
     }
 
-
+    //FALTA TESTEAR
     @Override
     public List<UUID> findIdsByAdmin(UUID adminUserId) {
         return em.createQuery("""
@@ -278,7 +265,7 @@ public class ClubJpaDao implements ClubDao {
                 .getResultList();
     }
 
-
+    //FALTA TESTEAR
     @Override
     public List<Club> findClubsWithBookingsByUserId(UUID userId) {
         return em.createQuery("""
@@ -315,80 +302,59 @@ public class ClubJpaDao implements ClubDao {
 
 
     @Override
-    public List<Club> searchPaginated(String nameLike, Zone location, String musicGenre,
-                                      String priceRange, Boolean isBar, String sort,
-                                      int limit, int offset) {
-        // Si piden ordenar por disponibilidad hoy, usamos la variante JPQL con subquery
-        if (sort != null && (sort.equals("availability_desc") || sort.equals("availability_asc"))) {
-            return searchPaginatedOrderByAvailability(nameLike, location, musicGenre, priceRange, isBar, sort, limit, offset);
-        }
+    public List<Club> searchPaginated(final String nameLike,
+                                      final Zone location,
+                                      final String musicGenre,
+                                      final String priceRange,
+                                      final Boolean isBar,
+                                      final String sort,
+                                      final int limit,
+                                      final int offset) {
+        // 1) IDs paginados (SQL nativo)
+        final StringBuilder where = new StringBuilder("WHERE 1=1\n");
+        if (nameLike != null && !nameLike.isBlank())       where.append("AND LOWER(c.club_name) LIKE :nameLike\n");
+        if (location != null)                              where.append("AND c.zone = :zone\n");
+        if (musicGenre != null && !musicGenre.isBlank())   where.append("AND UPPER(c.music_genre) = UPPER(:musicGenre)\n");
+        if (priceRange != null && !priceRange.isBlank())   where.append("AND c.price_range = :priceRange\n");
+        if (isBar != null)                                 where.append("AND c.is_bar = :isBar\n");
 
-        // Camino original con Criteria API (sin cambios funcionales)
-        final var cb = em.getCriteriaBuilder();
-        final var cq = cb.createQuery(Club.class);
-        final var root = cq.from(Club.class);
+        final String inner = """
+        SELECT DISTINCT c.club_id, c.created_at, c.club_name, c.rating
+        FROM clubs c
+        %s
+    """.formatted(where);
 
-        final var predicates = buildSearchPredicates(cb, root, nameLike, location, musicGenre, priceRange, isBar);
-        cq.where(predicates);
+        final String idSql = """
+        SELECT CAST(x.club_id AS TEXT) AS id_text
+        FROM ( %s ) x
+        ORDER BY %s
+    """.formatted(inner, nativeClubSort("x", sort));
 
-        applySort(cb, cq, root, sort);
-
-        return em.createQuery(cq)
+        final var nq = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setFirstResult(offset)
-                .setMaxResults(limit)
+                .setMaxResults(limit);
+
+        if (nameLike != null && !nameLike.isBlank())     nq.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
+        if (location != null)                            nq.setParameter("zone", location.name()); // enum->texto
+        if (musicGenre != null && !musicGenre.isBlank()) nq.setParameter("musicGenre", musicGenre.toUpperCase());
+        if (priceRange != null && !priceRange.isBlank()) nq.setParameter("priceRange", Price.valueOf(priceRange).getLabel().toLowerCase()); // <- minúsculas DB
+        if (isBar != null)                               nq.setParameter("isBar", isBar);
+
+        @SuppressWarnings("unchecked")
+        final List<String> idTexts = nq.getResultList();
+        if (idTexts.isEmpty()) return List.of();
+
+        final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+        // 2) Entidades (JPQL)
+        final String orderBy = jpqlClubSort(sort);
+        return em.createQuery(
+                        "SELECT c FROM Club c WHERE c.clubId IN :ids ORDER BY " + orderBy, Club.class)
+                .setParameter("ids", ids)
                 .getResultList();
     }
-
-
-    private List<Club> searchPaginatedOrderByAvailability(String nameLike, Zone location, String musicGenre,
-                                                          String priceRange, Boolean isBar, String sort,
-                                                          int limit, int offset) {
-        final var zone = java.time.ZoneOffset.UTC; // o tu ZoneId
-        final var today = java.time.LocalDate.now(zone);
-        final var dayStart = today.atStartOfDay().atOffset(zone);
-        final var dayEnd   = today.plusDays(1).atStartOfDay().atOffset(zone);
-        final var blocking = java.util.List.of(Status.CONFIRMADA, Status.PENDIENTE);
-
-        StringBuilder jpql = new StringBuilder("""
-        select c
-        from Club c
-        join ClubTable t on t.clubId = c.clubId
-        left join Booking b on b.table = t
-           and b.status in :blocking
-           and b.bookingStart < :dayEnd
-           and b.bookingEnd   > :dayStart
-        where 1=1
-    """);
-
-        if (nameLike != null && !nameLike.isBlank()) jpql.append(" and lower(c.clubName) like :nameLike ");
-        if (location != null) jpql.append(" and c.zone = :zone ");
-        if (musicGenre != null && !musicGenre.isBlank()) jpql.append(" and c.musicGenre = :musicGenre ");
-        if (priceRange != null && !priceRange.isBlank()) jpql.append(" and c.priceRange = :priceRange ");
-        if (isBar != null) jpql.append(" and c.isBar = :isBar ");
-
-        // agrupamos por club y ordenamos por cantidad de mesas libres hoy
-        jpql.append("""
-        group by c
-        order by sum(case when b.bookingId is null then 1 else 0 end)
-    """).append(sort.endsWith("desc") ? " desc" : " asc")
-                .append(", c.createdAt desc");
-
-        var q = em.createQuery(jpql.toString(), Club.class);
-
-        if (nameLike != null && !nameLike.isBlank()) q.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
-        if (location != null) q.setParameter("zone", location);
-        if (musicGenre != null && !musicGenre.isBlank()) q.setParameter("musicGenre", MusicalGenre.valueOf(musicGenre));
-        if (priceRange != null && !priceRange.isBlank()) q.setParameter("priceRange", Price.valueOf(priceRange));
-        if (isBar != null) q.setParameter("isBar", isBar);
-
-        q.setParameter("blocking", blocking);
-        q.setParameter("dayStart", dayStart);
-        q.setParameter("dayEnd", dayEnd);
-
-        return q.setFirstResult(offset).setMaxResults(limit).getResultList();
-    }
-
-
 
 
     @Override
@@ -440,89 +406,127 @@ public class ClubJpaDao implements ClubDao {
 
 
     @Override
-    public List<Club> searchAvailablePaginated(String nameLike, Zone location, String musicGenre,
-                                               String priceRange, Boolean isBar, String sort,
-                                               java.time.LocalDate day, int limit, int offset) {
-        final var zone = java.time.ZoneOffset.UTC; // o tu ZoneId
+    public List<Club> searchAvailablePaginated(final String nameLike,
+                                               final Zone location,
+                                               final String musicGenre,
+                                               final String priceRange,
+                                               final Boolean isBar,
+                                               final String sort,
+                                               final java.time.LocalDate day,
+                                               final int limit,
+                                               final int offset) {
+        final var zone = java.time.ZoneOffset.UTC;
         final var dayStart = day.atStartOfDay().atOffset(zone);
         final var dayEnd   = day.plusDays(1).atStartOfDay().atOffset(zone);
         final var blocking = java.util.List.of(Status.CONFIRMADA, Status.PENDIENTE);
 
-        StringBuilder jpql = new StringBuilder("""
-        select c
-        from Club c
-        join ClubTable t on t.clubId = c.clubId
-        left join Booking b on b.table = t
-           and b.status in :blocking
-           and b.bookingStart < :dayEnd
-           and b.bookingEnd   > :dayStart
-        where 1=1
-    """);
+        // 1) IDs paginados (SQL nativo con agregación de disponibilidad)
+        final StringBuilder where = new StringBuilder("WHERE 1=1\n");
+        if (nameLike != null && !nameLike.isBlank())       where.append("AND LOWER(c.club_name) LIKE :nameLike\n");
+        if (location != null)                              where.append("AND c.zone = :zone\n");
+        if (musicGenre != null && !musicGenre.isBlank())   where.append("AND UPPER(c.music_genre) = UPPER(:musicGenre)\n");
+        if (priceRange != null && !priceRange.isBlank())   where.append("AND c.price_range = :priceRange\n");
+        if (isBar != null)                                 where.append("AND c.is_bar = :isBar\n");
 
-        if (nameLike != null && !nameLike.isBlank()) jpql.append(" and lower(c.clubName) like :nameLike ");
-        if (location != null) jpql.append(" and c.zone = :zone ");
-        if (musicGenre != null && !musicGenre.isBlank()) jpql.append(" and c.musicGenre = :musicGenre ");
-        if (priceRange != null && !priceRange.isBlank()) jpql.append(" and c.priceRange = :priceRange ");
-        if (isBar != null) jpql.append(" and c.isBar = :isBar ");
+        final String inner = """
+        SELECT
+            c.club_id,
+            c.created_at,
+            COALESCE(SUM(CASE WHEN b.booking_id IS NULL THEN 1 ELSE 0 END), 0) AS availability
+        FROM clubs c
+        JOIN club_tables t ON t.club_id = c.club_id
+        LEFT JOIN bookings b
+               ON b.table_id = t.table_id
+              AND LOWER(b.status) IN (:blocking)
+              AND b.booking_start < :dayEnd
+              AND b.booking_end   > :dayStart
+        %s
+        GROUP BY c.club_id, c.created_at
+        HAVING COALESCE(SUM(CASE WHEN b.booking_id IS NULL THEN 1 ELSE 0 END), 0) > 0
+    """.formatted(where);
 
-        jpql.append("""
-        group by c
-        having sum(case when b.bookingId is null then 1 else 0 end) > 0
-    """);
+        final String orderNative =
+                ("availability_desc".equals(sort) || "availability_asc".equals(sort))
+                        ? ("availability " + (sort != null && sort.endsWith("desc") ? "DESC" : "ASC") + ", x.created_at DESC, x.club_id DESC")
+                        : nativeClubSort("x", sort);
 
-        // orden
-        String sortField = switch (sort == null ? "" : sort) {
-            case "name_asc", "name_desc" -> "c.clubName";
-            case "rating_desc", "rating_asc" -> "c.rating";
-            case "availability_desc", "availability_asc" -> "availability";
-            default -> null;
-        };
+        final String idSql = """
+        SELECT CAST(x.club_id AS TEXT) AS id_text
+        FROM ( %s ) x
+        ORDER BY %s
+    """.formatted(inner, orderNative);
 
-        if ("availability".equals(sortField)) {
-            jpql.append("""
-            order by sum(case when b.bookingId is null then 1 else 0 end)
-        """).append(sort.endsWith("desc") ? " desc" : " asc")
-                    .append(", c.createdAt desc");
-        } else if (sortField != null) {
-            boolean desc = sort.endsWith("desc");
-            jpql.append(" order by ").append(sortField).append(desc ? " desc" : " asc");
-        } else {
-            jpql.append(" order by c.createdAt desc");
-        }
+        final var nq = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .setParameter("blocking", blocking.stream().map(Status::db).map(String::toLowerCase).toList())
+                .setParameter("dayStart", java.sql.Timestamp.from(dayStart.toInstant()))
+                .setParameter("dayEnd",   java.sql.Timestamp.from(dayEnd.toInstant()))
+                .setFirstResult(offset)
+                .setMaxResults(limit);
 
-        var q = em.createQuery(jpql.toString(), Club.class);
+        if (nameLike != null && !nameLike.isBlank())     nq.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
+        if (location != null)                            nq.setParameter("zone", location.name());
+        if (musicGenre != null && !musicGenre.isBlank()) nq.setParameter("musicGenre", musicGenre.toUpperCase());
+        if (priceRange != null && !priceRange.isBlank()) nq.setParameter("priceRange", Price.valueOf(priceRange).getLabel().toLowerCase()); // <- minúsculas DB
+        if (isBar != null)                               nq.setParameter("isBar", isBar);
 
-        if (nameLike != null && !nameLike.isBlank()) q.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
-        if (location != null) q.setParameter("zone", location);
-        if (musicGenre != null && !musicGenre.isBlank()) q.setParameter("musicGenre", MusicalGenre.valueOf(musicGenre));
-        if (priceRange != null && !priceRange.isBlank()) q.setParameter("priceRange", Price.valueOf(priceRange));
-        if (isBar != null) q.setParameter("isBar", isBar);
+        @SuppressWarnings("unchecked")
+        final List<String> idTexts = nq.getResultList();
+        if (idTexts.isEmpty()) return List.of();
 
-        q.setParameter("blocking", blocking);
-        q.setParameter("dayStart", dayStart);
-        q.setParameter("dayEnd", dayEnd);
+        final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
 
-        return q.setFirstResult(offset).setMaxResults(limit).getResultList();
+        // 2) Entidades (JPQL)
+        final String orderBy =
+                ("availability_desc".equals(sort) || "availability_asc".equals(sort))
+                        ? "/* orden principal ya viene de native */ c.createdAt DESC, c.clubId DESC"
+                        : jpqlClubSort(sort);
+
+        return em.createQuery(
+                        "SELECT c FROM Club c WHERE c.clubId IN :ids ORDER BY " + orderBy, Club.class)
+                .setParameter("ids", ids)
+                .getResultList();
     }
 
 
-
-
-
-    private void applySort(javax.persistence.criteria.CriteriaBuilder cb,
-                           javax.persistence.criteria.CriteriaQuery<Club> cq,
-                           javax.persistence.criteria.Root<Club> root,
-                           String sort) {
-        String sortField = switch (sort == null ? "" : sort) {
-            case "name_asc"  -> "clubName";
-            case "name_desc" -> "clubName";
-            case "rating_desc" -> "rating";
-            case "rating_asc"  -> "rating";
-            default -> null;
+    // Mapea el sort pedido a columnas nativas (con alias de subquery: "x")
+    private static String nativeClubSort(final String a, final String sort) {
+        final String alias = (a == null || a.isBlank()) ? "x" : a;
+        final String key = (sort == null) ? "" : sort;
+        return switch (key) {
+            case "name_asc"  -> alias + ".club_name ASC, "  + alias + ".club_id ASC";
+            case "name_desc" -> alias + ".club_name DESC, " + alias + ".club_id DESC";
+            case "rating_asc"  -> alias + ".rating ASC NULLS LAST, "  + alias + ".club_id ASC";
+            case "rating_desc" -> alias + ".rating DESC NULLS LAST, " + alias + ".club_id DESC";
+            default /* created_desc */ ->
+                    alias + ".created_at DESC NULLS LAST, " + alias + ".club_id DESC";
         };
-        if (sortField != null) {
-            boolean desc = sort.endsWith("desc");
-            cq.orderBy(desc ? cb.desc(root.get(sortField)) : cb.asc(root.get(sortField)));
-        }
     }
+
+    // Mapea el sort a propiedades JPQL
+    private static String jpqlClubSort(final String sort) {
+        final String key = (sort == null) ? "" : sort;
+        return switch (key) {
+            case "name_asc"  -> "c.clubName ASC, c.clubId ASC";
+            case "name_desc" -> "c.clubName DESC, c.clubId DESC";
+            case "rating_asc"  -> "c.rating ASC, c.clubId ASC";
+            case "rating_desc" -> "c.rating DESC, c.clubId DESC";
+            default /* created_desc */ -> "c.createdAt DESC, c.clubId DESC";
+        };
+    }
+
+
+    private static UUID parseUuidSafe(final String raw) {
+        if (raw == null) throw new IllegalArgumentException("null uuid");
+        String s = raw.trim();
+        if (s.startsWith("{") && s.endsWith("}") && s.length() >= 2) {
+            s = s.substring(1, s.length() - 1);
+        }
+        if (s.length() > 36) {
+            s = s.substring(0, 36);
+        }
+        return UUID.fromString(s);
+    }
+
 }
