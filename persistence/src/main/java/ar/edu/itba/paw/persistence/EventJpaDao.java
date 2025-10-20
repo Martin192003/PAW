@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-@Transactional
 public class EventJpaDao implements EventDao {
 
     @PersistenceContext
@@ -48,13 +47,11 @@ public class EventJpaDao implements EventDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Event> findById(UUID eventId) {
         return Optional.ofNullable(em.find(Event.class, eventId));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Event> findByClub(UUID clubId, int page, int size) {
         return em.createQuery(
                         "FROM Event e WHERE e.clubId = :clubId ORDER BY e.date DESC", Event.class)
@@ -65,7 +62,6 @@ public class EventJpaDao implements EventDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Event> searchByDateRangePaginated(LocalDate startDate, LocalDate endDate, int page, int size) {
         return em.createQuery(
                         "FROM Event e WHERE e.date BETWEEN :start AND :end ORDER BY e.date ASC", Event.class)
@@ -77,7 +73,6 @@ public class EventJpaDao implements EventDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public int countByDateRange(LocalDate startDate, LocalDate endDate) {
         final Long total = em.createQuery(
                         "SELECT COUNT(e) FROM Event e WHERE e.date BETWEEN :start AND :end", Long.class)
@@ -88,11 +83,29 @@ public class EventJpaDao implements EventDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public int countByClub(UUID clubId) {
         final Long total = em.createQuery(
                         "SELECT COUNT(e) FROM Event e WHERE e.clubId = :clubId", Long.class)
                 .setParameter("clubId", clubId)
+                .getSingleResult();
+        return total.intValue();
+    }
+
+    @Override
+    public List<Event> findUpcoming(LocalDate fromInclusive, int page, int size) {
+        return em.createQuery(
+                        "FROM Event e WHERE e.date >= :from ORDER BY e.date ASC", Event.class)
+                .setParameter("from", fromInclusive)
+                .setFirstResult(page * size)
+                .setMaxResults(size)
+                .getResultList();
+    }
+
+    @Override
+    public int countUpcoming(LocalDate fromInclusive) {
+        final Long total = em.createQuery(
+                        "SELECT COUNT(e) FROM Event e WHERE e.date >= :from", Long.class)
+                .setParameter("from", fromInclusive)
                 .getSingleResult();
         return total.intValue();
     }

@@ -23,4 +23,8 @@ public interface EventDao {
     int countByDateRange(LocalDate startDate, LocalDate endDate);
 
     int countByClub(UUID clubId);
+
+    List<Event> findUpcoming(LocalDate fromInclusive, int page, int size);
+
+    int countUpcoming(LocalDate fromInclusive);
 }

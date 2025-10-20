@@ -30,4 +30,11 @@ public interface EventService {
 
     /** Total para paginación (count) */
     int countByDate(LocalDate start, LocalDate end);
+
+
+    /** Próximos eventos desde hoy (data) */
+    List<Event> listUpcoming(int page, int size);
+
+    /** Total de próximos eventos (count) */
+    int countUpcoming();
 }

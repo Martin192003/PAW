@@ -103,7 +103,24 @@ public class EventsController {
     }
 
 
-    // --- Helpers ---
+    @GetMapping("/upcoming")
+    public String listUpcoming(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            Model model
+    ) {
+        var events = eventService.listUpcoming(page, size);
+        int total = eventService.countUpcoming();
+        int totalPages = (int) Math.ceil((double) total / size);
+
+        model.addAttribute("events", events);
+        model.addAttribute("page", page);
+        model.addAttribute("size", size);
+        model.addAttribute("total", total);
+        model.addAttribute("totalPages", totalPages);
+        return "eventsUpcoming"; // JSP/Thymeleaf view that renders the list
+    }
+
     private void checkLoggedUser(UUID clubId) {
         User user = securityService.getVerifiedLoggedUser();
         if (user == null) {

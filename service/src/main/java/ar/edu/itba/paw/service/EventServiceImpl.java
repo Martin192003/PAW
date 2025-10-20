@@ -66,26 +66,30 @@ public class EventServiceImpl implements EventService {
     }
 
 
-    @Override @Transactional(readOnly = true)
+    @Override
+    @Transactional(readOnly = true)
     public Event get(UUID eventId) {
         return eventDao.findById(eventId).orElseThrow(() -> new NotFoundException("Event not found"));
     }
 
 
-    @Override @Transactional(readOnly = true)
+    @Override
+    @Transactional(readOnly = true)
     public List<Event> listByClub(UUID clubId, int page, int size) {
         validatePaging(page, size);
         return eventDao.findByClub(clubId, page, size); // Query #1 (data)
     }
 
 
-    @Override @Transactional(readOnly = true)
+    @Override
+    @Transactional(readOnly = true)
     public int countByClub(UUID clubId) { return eventDao.countByClub(clubId); } // Query +1 (count)
 
 
 
 
-    @Override @Transactional(readOnly = true)
+    @Override
+    @Transactional(readOnly = true)
     public List<Event> searchByDate(LocalDate start, LocalDate end, int page, int size) {
         validatePaging(page, size);
         Objects.requireNonNull(start, "start");
@@ -95,13 +99,28 @@ public class EventServiceImpl implements EventService {
     }
 
 
-    @Override @Transactional(readOnly = true)
+    @Override
+    @Transactional(readOnly = true)
     public int countByDate(LocalDate start, LocalDate end) {
         Objects.requireNonNull(start, "start");
         Objects.requireNonNull(end, "end");
         if (end.isBefore(start)) throw new InvalidDateRangeException("end date cannot be before start date");
         return eventDao.countByDateRange(start, end); // Query +1 (count)
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Event> listUpcoming(int page, int size) {
+        validatePaging(page, size);
+        return eventDao.findUpcoming(LocalDate.now(), page, size);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countUpcoming() {
+        return eventDao.countUpcoming(LocalDate.now());
+    }
+
 
     private void validateName(String name) {
         if (name == null || name.trim().isEmpty())
