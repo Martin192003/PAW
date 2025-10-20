@@ -27,7 +27,7 @@ public class ClubJpaDao implements ClubDao {
     @Override
     @Transactional
     public Club create(String name, String description, String location, Price priceRange,
-                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
+                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu){
 
         final User contact = em.getReference(User.class, contactInfo.getId());
 
@@ -42,7 +42,8 @@ public class ClubJpaDao implements ClubDao {
                 musicGenre,
                 null,
                 zone,
-                isBar
+                isBar,
+                cbu
         );
 
         em.persist(club);
@@ -52,7 +53,7 @@ public class ClubJpaDao implements ClubDao {
 
 
     @Override
-    public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
+    public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu) {
         final Club club = em.find(Club.class, clubId);
         if (club == null) {
             return null;
@@ -67,6 +68,7 @@ public class ClubJpaDao implements ClubDao {
         if (musicGenre != null) club.setMusicGenre(musicGenre);
         if (zone != null) club.setZone(zone);
         if (isBar != null) club.setIsBar(isBar);
+        if (cbu != null) club.setCbu(cbu);
         return club;
     }
 

@@ -46,14 +46,14 @@ public class ClubServiceImpl implements ClubService{
     @Override
     @Transactional
     public Club create(String name, String description, String location, Price priceRange,
-                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, MultipartFile image) {
+                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, MultipartFile image) {
 
         User managedContact = userService.findById(contactInfo.getId());
         if (managedContact.getRole() != Role.ADMIN) {
             managedContact.setRole(Role.ADMIN); // Dirty checking -> UPDATE al commit
         }
 
-        Club newClub = clubDao.create(name, description, location, priceRange, managedContact, musicGenre, zone, isBar);
+        Club newClub = clubDao.create(name, description, location, priceRange, managedContact, musicGenre, zone, isBar, cbu);
 
         if (image != null && !image.isEmpty()) {
             try {
@@ -94,8 +94,8 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     @Transactional
-    public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
-        return clubDao.update(clubId, name, location, rating, quantityRatings, priceRange, description, contactInfoId, musicGenre, zone, isBar);
+    public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu) {
+        return clubDao.update(clubId, name, location, rating, quantityRatings, priceRange, description, contactInfoId, musicGenre, zone, isBar, cbu);
     }
 
     @Override
@@ -112,7 +112,8 @@ public class ClubServiceImpl implements ClubService{
                 club.getContactInfo() != null ? club.getContactInfo().getId() : null,
                 club.getMusicGenre(),
                 club.getZone(),
-                club.getIsBar()
+                club.getIsBar(),
+                club.getCbu()
         );
     }
 

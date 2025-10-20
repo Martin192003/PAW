@@ -53,7 +53,7 @@ public class PhotoJpaDaoTest {
     private Club persistClub(String name, User contact) {
         // isBar = false para evitar NOT NULL (o rely en @PrePersist si lo agregaste)
         Club c = new Club(name, "Loc", null, null, Price.MEDIO,
-                "Desc", contact, MusicalGenre.ROCK, null, Zone.ZONA_CABA, false);
+                "Desc", contact, MusicalGenre.ROCK, null, Zone.ZONA_CABA, false, null);
         em.persist(c);
         return c;
     }

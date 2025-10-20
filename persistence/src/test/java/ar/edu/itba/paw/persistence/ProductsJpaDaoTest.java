@@ -55,7 +55,7 @@ public class ProductsJpaDaoTest {
     @Test
     public void testCreateProduct() {
         User contact = userDao.create("admin", "name","pass", "last", "email@email.com", "123456", Role.USER);
-        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
 
         Product product = productsDao.create(club, NAME, DESCRIPTION, BASE_PRICE, TYPE, IS_AVAILABLE);
 
@@ -121,7 +121,7 @@ public class ProductsJpaDaoTest {
     @Test
     public void testUpdateSuccess() {
         User contact = userDao.create("admin2", "name2","pass2", "last2", "email2@email.com", "654321", Role.USER);
-        Club club = clubDao.create("Club2", "Desc2", "Loc2", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+        Club club = clubDao.create("Club2", "Desc2", "Loc2", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
         Product product = productsDao.create(club, "Prod", "Desc", BigDecimal.valueOf(50), ProductType.NO_ALCOHOLICA, true);
 
         Product updated = productsDao.update(product.getProductId(), club.getClubId(), "ProdUp", "DescUp", BigDecimal.valueOf(60), ProductType.ALCOHOLICA, false);
@@ -137,7 +137,7 @@ public class ProductsJpaDaoTest {
     @Test
     public void testDeleteSuccess() {
         User contact = userDao.create("admin3", "name3","pass3", "last3", "email3@email.com", "987654", Role.USER);
-        Club club = clubDao.create("Club3", "Desc3", "Loc3", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+        Club club = clubDao.create("Club3", "Desc3", "Loc3", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
         Product product = productsDao.create(club, "ProdDel", "DescDel", BigDecimal.valueOf(70), ProductType.ALCOHOLICA, true);
 
         boolean deleted = productsDao.delete(product.getProductId());
@@ -148,7 +148,7 @@ public class ProductsJpaDaoTest {
     @Test
     public void testFindByIdSuccess() {
         User contact = userDao.create("admin4", "name4","pass4", "last4", "email4@email.com", "111111", Role.USER);
-        Club club = clubDao.create("Club4", "Desc4", "Loc4", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+        Club club = clubDao.create("Club4", "Desc4", "Loc4", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
         Product product = productsDao.create(club, "ProdFindId", "DescFindId", BigDecimal.valueOf(80), ProductType.ALCOHOLICA, true);
 
         Optional<Product> found = productsDao.findById(product.getProductId());
@@ -159,7 +159,7 @@ public class ProductsJpaDaoTest {
     @Test
     public void testFindByNameSuccess() {
         User contact = userDao.create("admin5", "name5","pass5", "last5", "email5@email.com", "222222", Role.USER);
-        Club club = clubDao.create("Club5", "Desc5", "Loc5", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+        Club club = clubDao.create("Club5", "Desc5", "Loc5", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
         Product product = productsDao.create(club, "ProdFindName", "DescFindName", BigDecimal.valueOf(90), ProductType.ALCOHOLICA, true);
 
         Optional<Product> found = productsDao.findByName("ProdFindName");
@@ -170,7 +170,7 @@ public class ProductsJpaDaoTest {
     @Test
     public void testFindAllWithProducts() {
         User contact = userDao.create("admin6", "name6","pass6", "last6", "email6@email.com", "333333", Role.USER);
-        Club club = clubDao.create("Club6", "Desc6", "Loc6", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+        Club club = clubDao.create("Club6", "Desc6", "Loc6", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
         productsDao.create(club, "Prod1", "Desc1", BigDecimal.valueOf(10), ProductType.ALCOHOLICA, true);
         productsDao.create(club, "Prod2", "Desc2", BigDecimal.valueOf(20), ProductType.NO_ALCOHOLICA, true);
 
@@ -181,7 +181,7 @@ public class ProductsJpaDaoTest {
     @Test
     public void testFindByClubWithProducts() {
         User contact = userDao.create("admin7", "name7","pass7", "last7", "email7@email.com", "444444", Role.USER);
-        Club club = clubDao.create("Club7", "Desc7", "Loc7", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+        Club club = clubDao.create("Club7", "Desc7", "Loc7", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
         productsDao.create(club, "ProdA", "DescA", BigDecimal.valueOf(30), ProductType.ALCOHOLICA, true);
         productsDao.create(club, "ProdB", "DescB", BigDecimal.valueOf(40), ProductType.NO_ALCOHOLICA, true);
 
@@ -192,7 +192,7 @@ public class ProductsJpaDaoTest {
     @Test
     public void testFindByClubIDWithProducts() {
         User contact = userDao.create("admin8", "name8","pass8", "last8", "email8@email.com", "555555", Role.USER);
-        Club club = clubDao.create("Club8", "Desc8", "Loc8", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
+        Club club = clubDao.create("Club8", "Desc8", "Loc8", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
         productsDao.create(club, "ProdX", "DescX", BigDecimal.valueOf(50), ProductType.ALCOHOLICA, true);
         productsDao.create(club, "ProdY", "DescY", BigDecimal.valueOf(60), ProductType.NO_ALCOHOLICA, true);
 
