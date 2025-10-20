@@ -26,16 +26,49 @@ public class PhotoJpaDao implements PhotoDao {
         return p.getPhotoId();
     }
 
-    public List<Photo> findByClub(UUID clubId, int limit, int offset) {
-        List<Photo> list = em.createQuery(
-                        "select p from Photo p where p.clubId = :clubId order by p.createdAt desc", Photo.class)
+    @Override
+    @Transactional(readOnly = true)
+    public List<Photo> findByClub(final UUID clubId, final int limit, final int offset) {
+        final int lim = Math.max(0, limit);
+        final int off = Math.max(0, offset);
+
+        // 1) Página de IDs (SQL nativo) — evita traer el BLOB `data`
+        final String idSql = """
+        SELECT CAST(p.photo_id AS TEXT) AS id_text
+        FROM photos p
+        WHERE p.club_id = :clubId
+        ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
+        LIMIT :limit OFFSET :offset
+    """;
+
+        @SuppressWarnings("unchecked")
+        final List<String> idTexts = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
+                .setParameter("limit", lim)
+                .setParameter("offset", off)
                 .getResultList();
-        list.forEach(p -> { em.detach(p); p.setData(null); });
-        return list;
+
+        if (idTexts.isEmpty()) return List.of();
+
+        final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+        // 2) Entidades por IDs (JPQL) con el mismo orden lógico
+        final List<Photo> photos = em.createQuery("""
+            SELECT p
+            FROM Photo p
+            WHERE p.photoId IN :ids
+            ORDER BY p.createdAt DESC, p.photoId DESC
+        """, Photo.class)
+                .setParameter("ids", ids)
+                .getResultList();
+
+        // No exponemos el BLOB en listados
+        photos.forEach(p -> { em.detach(p); p.setData(null); });
+        return photos;
     }
+
 
     @Override
     @Transactional(readOnly = true)
