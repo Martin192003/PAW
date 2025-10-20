@@ -287,4 +287,26 @@ public class UserServiceImpl implements UserService {
         return passwordEncoder.matches(password, user.getPassword());
     }
 
+    @Override
+    @Transactional
+    public boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword) {
+        User user = userDao.findById(userId).orElse(null);
+        if (user == null) {
+            return false;
+        }
+
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        userDao.update(
+                user.getId(),
+                user.getUsername(),
+                user.getName(),
+                user.getSurname(),
+                user.getEmail(),
+                encodedPassword,
+                user.getCellphone(),
+                user.getRole()
+        );
+        return true;
+    }
+
 }
