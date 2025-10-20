@@ -12,10 +12,10 @@ import java.util.UUID;
 
 public interface ClubTablesDao {
     Optional<ClubTable> findById(UUID id);
-    List<ClubTable> findAll();
     List<ClubTable> findByClub(Club club);
     List<ClubTable> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to);
-
+    List<ClubTable> findAvailableByClubAndRangePaginated(final UUID clubId, final OffsetDateTime from, final OffsetDateTime to, final int limit, final int offset);
+    int countAvailableByClubAndRange(final UUID clubId, final OffsetDateTime from, final OffsetDateTime to);
     ClubTable create(int number, int capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount);
     ClubTable update(UUID tableId, UUID clubId, Integer tableNumber, Integer capacity, TableState state, BigDecimal price, BigDecimal discount);
     boolean delete(UUID id);

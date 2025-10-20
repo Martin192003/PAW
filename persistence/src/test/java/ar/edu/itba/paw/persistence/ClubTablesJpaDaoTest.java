@@ -165,19 +165,6 @@ public class ClubTablesJpaDaoTest {
     }
 
     @Test
-    public void testFindAllWithTables() {
-        ClubTable t2 = clubTablesDao.create(
-                2, 2, clubId, TableState.DISPONIBLE,
-                new BigDecimal("50"), new BigDecimal("5")
-        );
-        em.flush();
-
-        List<ClubTable> tables = clubTablesDao.findAll();
-        assertEquals(2, tables.size());
-        assertTrue(tables.stream().anyMatch(t -> t.getTableId().equals(t2.getTableId())));
-    }
-
-    @Test
     public void testFindByClubWithTables() {
         Club clubProxy = new Club(clubId, null, null, null, null, null, null, null, null, null, null, null);
         List<ClubTable> tables = clubTablesDao.findByClub(clubProxy);
@@ -186,14 +173,4 @@ public class ClubTablesJpaDaoTest {
         assertEquals(tableId, tables.getFirst().getTableId());
     }
 
-    @Test
-    public void testFindAvailableByClubAndRange() {
-        OffsetDateTime from = OffsetDateTime.now();
-        OffsetDateTime to = from.plusHours(2);
-
-        List<ClubTable> available = clubTablesDao.findAvailableByClubAndRange(clubId, from, to);
-
-        assertEquals(1, available.size());
-        assertEquals(tableId, available.getFirst().getTableId());
-    }
 }

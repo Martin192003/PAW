@@ -65,14 +65,6 @@ public class TableServiceImplTest {
     }
 
     @Test
-    public void testFindAll() {
-        List<ClubTable> tables = Arrays.asList(Mockito.mock(ClubTable.class));
-        Mockito.when(clubTablesDao.findAll()).thenReturn(tables);
-        List<ClubTable> result = tableService.findAll();
-        Assert.assertEquals(tables, result);
-    }
-
-    @Test
     public void testFindAvailableByClubAndRange_Success() {
         UUID clubId = UUID.randomUUID();
         Club club = Mockito.mock(Club.class);

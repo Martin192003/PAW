@@ -15,7 +15,6 @@ import java.util.UUID;
 public interface TableService {
     Optional<ClubTable> findById(UUID id);
     List<ClubTable> findByClubId(UUID clubId);
-    List<ClubTable> findAll();
     List<ClubTable> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to);
 
     ClubTable create(BigDecimal number, BigDecimal capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount);

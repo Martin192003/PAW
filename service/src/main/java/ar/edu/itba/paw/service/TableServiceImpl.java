@@ -42,11 +42,6 @@ public class TableServiceImpl implements TableService {
         var list = clubTablesDao.findByClub(club);
         return list;
     }
-    @Override
-    @Transactional(readOnly = true)
-    public List<ClubTable> findAll() {
-        return clubTablesDao.findAll();
-    }
 
     @Override
     @Transactional(readOnly = true)

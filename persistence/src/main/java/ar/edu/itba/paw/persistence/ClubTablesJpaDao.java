@@ -54,29 +54,104 @@ public class ClubTablesJpaDao implements ClubTablesDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<ClubTable> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to) {
+    public List<ClubTable> findAvailableByClubAndRange(final UUID clubId,
+                                                       final OffsetDateTime from,
+                                                       final OffsetDateTime to) {
+        final int total = countAvailableByClubAndRange(clubId, from, to);
+        if (total == 0) return List.of();
+        return findAvailableByClubAndRangePaginated(clubId, from, to, total, 0);
+    }
+
+
+    @Override
+    public List<ClubTable> findAvailableByClubAndRangePaginated(final UUID clubId,
+                                                                final OffsetDateTime from,
+                                                                final OffsetDateTime to,
+                                                                final int limit,
+                                                                final int offset) {
+        // 1) IDs paginados (SQL nativo) — ¡OJO! bind sobre NativeQuery y setParameterList
+        final String idSql = """
+        SELECT CAST(ct.table_id AS TEXT) AS id_text
+        FROM club_tables ct
+        WHERE ct.club_id = :clubId
+          AND NOT EXISTS (
+              SELECT 1
+              FROM bookings b
+              WHERE b.table_id = ct.table_id
+                AND LOWER(b.status) IN (:blocking)
+                AND b.booking_start < :to_ts
+                AND b.booking_end   > :from_ts
+          )
+        ORDER BY ct.table_number ASC, ct.table_id ASC
+        LIMIT :limit OFFSET :offset
+    """;
+
+        final java.util.List<String> blocking =
+                java.util.List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
+
+        final org.hibernate.query.NativeQuery<String> nq = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING);
+
+        nq.setParameter("clubId", clubId);
+        nq.setParameterList("blocking", blocking);
+        nq.setParameter("from_ts", java.sql.Timestamp.from(from.toInstant()));
+        nq.setParameter("to_ts",   java.sql.Timestamp.from(to.toInstant()));
+        nq.setParameter("limit",   limit);
+        nq.setParameter("offset",  offset);
+
+        @SuppressWarnings("unchecked")
+        final java.util.List<String> idTexts = nq.getResultList();
+        if (idTexts.isEmpty()) return java.util.List.of();
+
+        final java.util.List<java.util.UUID> ids = idTexts.stream()
+                .map(java.util.UUID::fromString)
+                .toList();
+
+        // 2) Entidades (JPQL) — usa el nombre del CAMPO: ct.tableid (no tableId)
         return em.createQuery("""
-                        SELECT ct
-                        FROM ClubTable ct
-                        WHERE ct.clubId = :clubId
-                          AND NOT EXISTS (
-                            SELECT 1
-                            FROM Booking b
-                            WHERE b.table = ct
-                              AND b.status IN (:s1, :s2)
-                              AND b.bookingStart < :to
-                              AND b.bookingEnd   > :from
-                          )
-                        ORDER BY ct.tableNumber ASC
-                        """, ClubTable.class)
-                .setParameter("clubId", clubId)
-                .setParameter("from", from)
-                .setParameter("to", to)
-                .setParameter("s1", Status.PENDIENTE)
-                .setParameter("s2", Status.CONFIRMADA)
+            SELECT ct
+            FROM ClubTable ct
+            WHERE ct.tableid IN :ids
+            ORDER BY ct.tableNumber ASC, ct.tableid ASC
+        """, ClubTable.class)
+                .setParameter("ids", ids)
                 .getResultList();
     }
+
+    @Override
+    public int countAvailableByClubAndRange(final UUID clubId,
+                                            final OffsetDateTime from,
+                                            final OffsetDateTime to) {
+        final String countSql = """
+        SELECT COUNT(*)
+        FROM club_tables ct
+        WHERE ct.club_id = :clubId
+          AND NOT EXISTS (
+              SELECT 1
+              FROM bookings b
+              WHERE b.table_id = ct.table_id
+                AND LOWER(b.status) IN (:blocking)
+                AND b.booking_start < :to_ts
+                AND b.booking_end   > :from_ts
+          )
+    """;
+
+        final java.util.List<String> blocking =
+                java.util.List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
+
+        final org.hibernate.query.NativeQuery<?> nq = em.createNativeQuery(countSql)
+                .unwrap(org.hibernate.query.NativeQuery.class);
+
+        nq.setParameter("clubId", clubId);
+        nq.setParameterList("blocking", blocking);
+        nq.setParameter("from_ts", java.sql.Timestamp.from(from.toInstant()));
+        nq.setParameter("to_ts",   java.sql.Timestamp.from(to.toInstant()));
+
+        final Number n = (Number) nq.getSingleResult();
+        return n.intValue();
+    }
+
 
     @Override
     public boolean delete(UUID id) {
@@ -91,14 +166,6 @@ public class ClubTablesJpaDao implements ClubTablesDao {
         return Optional.ofNullable(em.find(ClubTable.class, id));
     }
 
-    @Override
-    public List<ClubTable> findAll() {
-        return em.createQuery("""
-                SELECT ct
-                FROM ClubTable ct
-                ORDER BY ct.tableNumber ASC
-                """, ClubTable.class).getResultList();
-    }
 
     @Override
     public List<ClubTable> findByClub(Club club) {
