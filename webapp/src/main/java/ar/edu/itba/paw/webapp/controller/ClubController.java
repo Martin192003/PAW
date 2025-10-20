@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,15 +47,17 @@ public class ClubController {
     private final MenuService menuService;
     private final SecurityService securityService;
     private final TableService tableService;
+    private final EventService eventService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService, TableService tableService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, EventService eventService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
         this.menuService = menuService;
         this.securityService = securityService;
         this.tableService = tableService;
+        this.eventService = eventService;
     }
 
     @GetMapping({"", "/"})
@@ -170,7 +173,7 @@ public class ClubController {
         model.addAttribute("sort", sort);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
-
+        addEventsByClubToModel(clubs, model);
         return "index";
     }
 
@@ -239,6 +242,16 @@ public class ClubController {
         String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
 
 
+        model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+
+        EventAddForm eventForm = new EventAddForm();
+        eventForm.setClubId(clubId);
+        model.addAttribute("eventForm", eventForm);
+
+        EventEditForm editEventForm = new EventEditForm();
+        editEventForm.setClubId(clubId);
+        model.addAttribute("editEventForm", editEventForm);
+
         model.addAttribute("club", club);
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("coverPhotoUrl", cover);
@@ -250,6 +263,9 @@ public class ClubController {
         model.addAttribute("tableForm", new AddTableForm());
         model.addAttribute("editTableForm", new EditTableForm());
         model.addAttribute("editProductForm", new EditProductForm());
+        model.addAttribute("editField", "Event");
+
+
 
         ClubHandlerForm form = new ClubHandlerForm();
         form.setClubId(club.getClubId());
@@ -380,5 +396,19 @@ public class ClubController {
         }
         return null;
     }
+
+    private void addEventsByClubToModel(List<Club> clubs, Model model) {
+        Map<UUID, List<Event>> eventsByClub = clubs.stream()
+                .collect(Collectors.toMap(
+                        Club::getClubId,
+                        c -> eventService.listByClub(c.getClubId(), 0, 5).stream()
+                                .filter(e -> !e.getDate().isBefore(LocalDate.now()))
+                                .sorted(java.util.Comparator.comparing(Event::getDate))
+                                .limit(2)
+                                .collect(Collectors.toList())
+                ));
+        model.addAttribute("eventsByClub", eventsByClub);
+    }
+
 
 }

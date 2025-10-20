@@ -321,5 +321,25 @@ select.filter-item[name="sort"],
     white-space: nowrap;
 }
 
-
+.events-container { margin: 12px 0 24px; }
+.events-title { margin: 0 0 8px; }
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+}
+.event-column { display: flex; flex-direction: column; gap: 8px; }
+.event-club-title {
+    font-weight: 600; color: #fff; display: flex; align-items: center; gap: 6px;
+}
+.event-card {
+    display: block; text-decoration: none; color: inherit;
+    background: #2d2d2d; border: 1px solid #3b3b3b; border-radius: 8px;
+    transition: transform .1s ease, border-color .1s ease;
+}
+.event-card:hover { transform: translateY(-2px); border-color: #4c4c4c; }
+.event-card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.event-date { font-size: .9rem; color: #cfcfcf; display: flex; gap: 6px; align-items: center; }
+.event-name { font-weight: 600; color: #fff; }
+.event-desc { font-size: .9rem; color: #d7d7d7; }
 

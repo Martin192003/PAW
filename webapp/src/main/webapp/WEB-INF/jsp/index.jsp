@@ -24,6 +24,52 @@
 <c:set var="showRightButtons" value="true" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="app-boliches">
+
+    <div class="events-container">
+        <h2 class="events-title">Próximos eventos</h2>
+        <div class="events-grid">
+            <c:forEach var="club" items="${clubs}">
+                <c:set var="clubEvents" value="${eventsByClub[club.clubId]}"/>
+                <c:if test="${not empty clubEvents}">
+                    <div class="event-column">
+                        <div class="event-club-title">
+                            <i class="fa-solid fa-martini-glass"></i>
+                            <c:out value="${club.clubName}"/>
+                        </div>
+                        <a class="event-card" href="<c:url value='/clubs/${club.clubId}'/>">
+                            <c:forEach var="e" items="${clubEvents}">
+                            <c:url var="eventUrl" value="/clubs/${club.clubId}">
+                                <c:param name="date" value="${e.date}"/>
+                            </c:url>
+                            <a class="event-card" href="${eventUrl}">
+
+                            <div class="event-card-body">
+                                    <div class="event-date">
+                                        <i class="fa-regular fa-calendar"></i>
+                                        <c:out value="${e.date}"/>
+                                    </div>
+                                    <div class="event-name"><c:out value="${e.eventName}"/></div>
+                                    <c:if test="${not empty e.description}">
+                                        <div class="event-desc">
+                                            <c:choose>
+                                                <c:when test="${fn:length(e.description) > 80}">
+                                                    <c:out value="${fn:substring(e.description, 0, 80)}"/>...
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:out value="${e.description}"/>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                    </c:if>
+                                </div>
+                            </a>
+                        </c:forEach>
+                    </div>
+                </c:if>
+            </c:forEach>
+        </div>
+    </div>
+
     <div class="filter-container">
         <spring:message code="filter.name" var="phName"/>
         <spring:message code="filter.minRating" var="phMinrating"/>

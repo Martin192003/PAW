@@ -8,26 +8,27 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table
+@Table(name = "event")
 public class Event {
 
     @Id
-    private  UUID eventId;
+    @Column(name = "eventid", nullable = false, updatable = false) // <- sin underscore
+    private UUID eventId;
 
-    @Column
-    private  UUID clubId;
+    @Column(name = "clubid", nullable = false)
+    private UUID clubId;
 
-    @Column
-    private  String eventName;
+    @Column(name = "eventname", nullable = false, length = 120)
+    private String eventName;
 
-    @Column
+    @Column(name = "description")
     private String description;
 
-    @Column
+    @Column(name = "date", nullable = false)
     private LocalDate date;
 
-    @Column
-    private  UUID photoId;
+    @Column(name = "photoid")
+    private UUID photoId;
 
 
     public Event(UUID eventId, UUID clubId, String eventName, String description, LocalDate date, UUID photoId) {

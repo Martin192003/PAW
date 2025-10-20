@@ -58,10 +58,10 @@ public class EventJpaDao implements EventDao {
 
         // 1) Página de IDs (SQL nativo, orden estable + tie-break por PK)
         final String idSql = """
-        SELECT CAST(e.event_id AS TEXT) AS id_text
-        FROM events e
-        WHERE e.club_id = :clubId
-        ORDER BY e.date DESC, e.event_id DESC
+        SELECT CAST(e.eventid AS TEXT) AS id_text
+        FROM event e
+        WHERE e.clubid = :clubId
+        ORDER BY e.date DESC, e.eventid DESC
         LIMIT :limit OFFSET :offset
     """;
 
@@ -102,12 +102,12 @@ public class EventJpaDao implements EventDao {
 
         // 1) Página de IDs
         final String idSql = """
-        SELECT CAST(e.event_id AS TEXT) AS id_text
-        FROM events e
-        WHERE e.date BETWEEN :start AND :end
-        ORDER BY e.date ASC, e.event_id ASC
-        LIMIT :limit OFFSET :offset
-    """;
+            SELECT CAST(e.eventid AS TEXT) AS id_text
+            FROM event e
+            WHERE e.date BETWEEN :start AND :end
+            ORDER BY e.date ASC, e.eventid ASC
+            LIMIT :limit OFFSET :offset
+                """;
 
         @SuppressWarnings("unchecked")
         final java.util.List<String> idTexts = em.createNativeQuery(idSql)
@@ -165,12 +165,12 @@ public class EventJpaDao implements EventDao {
 
         // 1) Página de IDs
         final String idSql = """
-        SELECT CAST(e.event_id AS TEXT) AS id_text
-        FROM events e
-        WHERE e.date >= :from
-        ORDER BY e.date ASC, e.event_id ASC
-        LIMIT :limit OFFSET :offset
-    """;
+                  SELECT CAST(e.eventid AS TEXT) AS id_text
+                  FROM event e
+                  WHERE e.date >= :from
+                  ORDER BY e.date ASC, e.eventid ASC
+                  LIMIT :limit OFFSET :offset
+                """;
 
         @SuppressWarnings("unchecked")
         final java.util.List<String> idTexts = em.createNativeQuery(idSql)
@@ -187,7 +187,6 @@ public class EventJpaDao implements EventDao {
                 .map(java.util.UUID::fromString)
                 .toList();
 
-        // 2) Entidades por IDs
         return em.createQuery("""
             SELECT e
             FROM Event e

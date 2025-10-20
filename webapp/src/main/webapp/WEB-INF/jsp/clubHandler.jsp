@@ -206,6 +206,83 @@
         <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.duplicate" text="Ya existe una mesa con ese número."/></div>
     </c:if>
 </div>
+<h2><spring:message code="label.events" text="Eventos"/></h2>
+
+<table class="styled-table">
+    <thead>
+    <tr>
+        <th><spring:message code="form.name" text="Nombre"/></th>
+        <th><spring:message code="form.date" text="Fecha"/></th>
+        <th><spring:message code="form.description" text="Descripción"/></th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <c:if test="${empty events}">
+        <tr>
+            <td colspan="4" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
+                <spring:message code="error.noevents" text="Sin eventos"/>
+            </td>
+        </tr>
+    </c:if>
+    <c:forEach var="e" items="${events}">
+        <tr>
+            <td><c:out value="${e.eventName}"/></td>
+            <td><c:out value="${e.date}"/></td>
+            <td>
+                <c:choose>
+                    <c:when test="${not empty e.description and fn:length(e.description) > 80}">
+                        <c:out value="${fn:substring(e.description, 0, 80)}"/>...
+                    </c:when>
+                    <c:otherwise>
+                        <c:out value="${e.description}"/>
+                    </c:otherwise>
+                </c:choose>
+            </td>
+            <td>
+                <form method="post" action="<c:url value='/clubs/events/${e.eventId}/delete'/>" style="display:inline;">
+                    <input type="hidden" name="clubId" value="${club.clubId}"/>
+                    <button type="submit" class="btn btn-danger btn-edit-small">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </form>
+            </td>
+        </tr>
+    </c:forEach>
+    </tbody>
+</table>
+
+<h3><spring:message code="button.addEvent" text="Crear evento"/></h3>
+<form:form method="post" modelAttribute="eventForm" action="${pageContext.request.contextPath}/clubs/events/add"
+           cssClass="add-product-bar">
+    <form:hidden path="clubId" value="${club.clubId}"/>
+
+    <div class="form-group">
+        <label><spring:message code="form.name" text="Nombre"/></label>
+        <form:input path="eventName" cssClass="add-product-name" />
+        <form:errors path="eventName" cssClass="formError"/>
+    </div>
+
+    <div class="form-group">
+        <label><spring:message code="form.date" text="Fecha"/></label>
+        <form:input path="date" type="date" cssClass="add-product-input" />
+        <form:errors path="date" cssClass="formError"/>
+    </div>
+
+    <div class="form-group" style="flex:1;">
+        <label><spring:message code="form.description" text="Descripción"/></label>
+        <form:input path="description" cssClass="add-product-input" />
+        <form:errors path="description" cssClass="formError"/>
+    </div>
+
+    <!-- Optional: if you manage event photos by id -->
+    <form:hidden path="photoId"/>
+
+    <button type="submit" class="btn btn-success btn-edit-small">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+</form:form>
+
 <div id="editModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEditModal()">&times;</span>
@@ -354,6 +431,7 @@
         </form>
     </div>
 </div>
+
 <div id="tableEditModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeTableEditModal()" style="color:#fff;">&times;</span>
         <h2><spring:message code="title.editTable"/></h2>

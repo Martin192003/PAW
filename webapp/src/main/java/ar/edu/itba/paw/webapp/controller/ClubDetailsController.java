@@ -41,89 +41,89 @@ public class ClubDetailsController {
         this.securityService = securityService;
     }
 
-    @GetMapping("/{clubId}")
-    public String clubDetails(@PathVariable UUID clubId,
-                              @RequestParam(name = "date", required = false) String dateStr,
-                              Model model) {
+   @GetMapping("/{clubId}")
+   public String clubDetails(
+           @PathVariable("clubId") UUID clubId,
+           @RequestParam(name = "date", required = false)
+           @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+           LocalDate date,
+           Model model) {
 
-        var club = clubService.getClubById(clubId)
-                .orElseThrow(() -> new NotFoundException("El boliche no existe."));
+       var club = clubService.getClubById(clubId)
+               .orElseThrow(() -> new NotFoundException("El boliche no existe."));
 
-        LocalDate defaultDate = nextAllowedFrom(LocalDate.now(zone));
-        String selectedDateStr = (dateStr != null && !dateStr.isBlank()) ? dateStr : defaultDate.toString();
-        model.addAttribute("selectedDate", selectedDateStr);
-        model.addAttribute("availableTables", List.of());
+       LocalDate defaultDate = nextAllowedFrom(LocalDate.now(zone));
+       LocalDate ld = (date == null) ? defaultDate : date;
 
-        OffsetDateTime start = null;
-        OffsetDateTime end = null;
-        List<ar.edu.itba.paw.model.ClubTable> available = List.of();
+       model.addAttribute("selectedDate", ld.toString());
+       model.addAttribute("availableTables", List.of());
 
-        if (dateStr == null || dateStr.isBlank()) {
-            var ld = defaultDate;
-            available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
-            start = tableService.windowStart(ld, zone);
-            end   = tableService.windowEnd(ld, zone);
-        } else {
-            try {
-                var ld = LocalDate.parse(dateStr);
-                if (tableService.isPastDate(ld, clock, zone)) {
-                    model.addAttribute("error", "tables.pastdate");
-                } else {
-                    available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
-                    start = tableService.windowStart(ld, zone);
-                    end   = tableService.windowEnd(ld, zone);
-                }
-            } catch (ValidationException | InvalidDateRangeException ex) {
-                model.addAttribute("error", "invalid.date");
-            } catch (DateTimeParseException ex) {
-                model.addAttribute("error", "Fecha inválida.");
-            }
-        }
+       OffsetDateTime start = null;
+       OffsetDateTime end = null;
+       List<ar.edu.itba.paw.model.ClubTable> available = List.of();
 
-        var products = productsService.findByClub(club).stream()
-                .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
-                .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))
-                .toList();
+       if (date == null) {
+           available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
+           start = tableService.windowStart(ld, zone);
+           end   = tableService.windowEnd(ld, zone);
+       } else {
+           try {
+               if (tableService.isPastDate(ld, clock, zone)) {
+                   model.addAttribute("error", "tables.pastdate");
+               } else {
+                   available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
+                   start = tableService.windowStart(ld, zone);
+                   end   = tableService.windowEnd(ld, zone);
+               }
+           } catch (ValidationException | InvalidDateRangeException ex) {
+               model.addAttribute("error", "invalid.date");
+           }
+       }
 
-        var grouped = products.stream().collect(Collectors.groupingBy(productsService::classifyCategory));
-        var desired = List.of("Cervezas","Tragos","Champagne","Sin Alcohol");
-        var ordered = new LinkedHashMap<String, List<Product>>();
-        desired.forEach(cat -> {
-            var list = grouped.remove(cat);
-            if (list != null && !list.isEmpty()) ordered.put(cat, list);
-        });
-        grouped.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))
-                .forEach(e -> ordered.put(e.getKey(), e.getValue()));
-        if (ordered.isEmpty() && !products.isEmpty()) ordered.put("Tragos", products);
+       var products = productsService.findByClub(club).stream()
+               .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
+               .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))
+               .toList();
 
-        var photos = photoService.listByClub(clubId, 0, 1);
-        String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
+       var grouped = products.stream().collect(Collectors.groupingBy(productsService::classifyCategory));
+       var desired = List.of("Cervezas","Tragos","Champagne","Sin Alcohol");
+       var ordered = new LinkedHashMap<String, List<Product>>();
+       desired.forEach(cat -> {
+           var list = grouped.remove(cat);
+           if (list != null && !list.isEmpty()) ordered.put(cat, list);
+       });
+       grouped.entrySet().stream()
+               .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))
+               .forEach(e -> ordered.put(e.getKey(), e.getValue()));
+       if (ordered.isEmpty() && !products.isEmpty()) ordered.put("Tragos", products);
 
-        User user = securityService.getVerifiedLoggedUser();
-        if (user != null) {
-            model.addAttribute("user", user);
-        }
-        boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
-        model.addAttribute("isOwner", isOwner);
+       var photos = photoService.listByClub(clubId, 0, 1);
+       String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
 
-        model.addAttribute("latitude",-34.5891429);
-        model.addAttribute("longitude",-58.3961641);
-        model.addAttribute("club", club);
-        model.addAttribute("productsByCategory", ordered);
-        model.addAttribute("availableTables", available);
-        model.addAttribute("locationText", toLocationText(club.getLocation()));
-        model.addAttribute("genreText", toGenreText(club.getMusicGenre() != null ? club.getMusicGenre().getLabel() : null));
-        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
-        model.addAttribute("clubId", clubId);
+       User user = securityService.getVerifiedLoggedUser();
+       if (user != null) {
+           model.addAttribute("user", user);
+       }
+       boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
+       model.addAttribute("isOwner", isOwner);
 
-        if (start != null && end != null) {
-            model.addAttribute("dayStart", start);
-            model.addAttribute("dayEnd", end);
-        }
+       model.addAttribute("latitude",-34.5891429);
+       model.addAttribute("longitude",-58.3961641);
+       model.addAttribute("club", club);
+       model.addAttribute("productsByCategory", ordered);
+       model.addAttribute("availableTables", available);
+       model.addAttribute("locationText", toLocationText(club.getLocation()));
+       model.addAttribute("genreText", toGenreText(club.getMusicGenre() != null ? club.getMusicGenre().getLabel() : null));
+       model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+       model.addAttribute("clubId", clubId);
 
-        return "clubDetails";
-    }
+       if (start != null && end != null) {
+           model.addAttribute("dayStart", start);
+           model.addAttribute("dayEnd", end);
+       }
+
+       return "clubDetails";
+   }
 
 
     private String toLocationText(final String location) {

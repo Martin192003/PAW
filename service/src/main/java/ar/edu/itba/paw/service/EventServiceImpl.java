@@ -18,44 +18,38 @@ import java.util.UUID;
 
 
 @Service
+@Transactional
 public class EventServiceImpl implements EventService {
 
 
     private final EventDao eventDao;
 
-
     public EventServiceImpl(EventDao eventDao) { this.eventDao = eventDao; }
 
-
     @Override
+    @Transactional
     public Event create(UUID clubId, String eventName, String description, LocalDate date, UUID photoId) {
         validateName(eventName);
         validateDate(date);
         return eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, photoId);
     }
 
-
     @Override
+    @Transactional
     public Event update(UUID clubId, UUID eventId, String eventName, String description, LocalDate date, UUID photoId) {
         validateName(eventName);
         validateDate(date);
-
-
         final Event current = eventDao.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
-
-
         if (!Objects.equals(current.getClubId(), clubId))
             throw new InvalidClubException("Event does not belong to the provided club");
-
-
         final Event updated = eventDao.update(eventId, clubId, eventName.trim(), trimOrNull(description), date, photoId);
         if (updated == null) throw new NotFoundException("Event not found");
         return updated;
     }
 
-
     @Override
+    @Transactional
     public void delete(UUID clubId, UUID eventId) {
         final Event current = eventDao.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
@@ -64,7 +58,6 @@ public class EventServiceImpl implements EventService {
         if (!eventDao.delete(eventId))
             throw new NotFoundException("Event not found");
     }
-
 
     @Override
     @Transactional(readOnly = true)

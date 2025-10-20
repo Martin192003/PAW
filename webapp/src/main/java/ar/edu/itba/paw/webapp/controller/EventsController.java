@@ -118,7 +118,7 @@ public class EventsController {
         model.addAttribute("size", size);
         model.addAttribute("total", total);
         model.addAttribute("totalPages", totalPages);
-        return "eventsUpcoming"; // JSP/Thymeleaf view that renders the list
+        return "eventsUpcoming";
     }
 
     private void checkLoggedUser(UUID clubId) {
