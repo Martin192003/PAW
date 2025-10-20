@@ -103,21 +103,6 @@ public class UserJpaDaoTest {
         assertEquals(user.getVerificationToken(), found.get().getVerificationToken());
     }
 
-    @Test
-    public void testFindAll() {
-        userDao.create(USERNAME, NAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, Role.USER);
-        userDao.create("User2", "Name2", "Pass2", "Last2", "email2", "cell2", Role.ADMIN);
-        List<User> users = userDao.findAll();
-        assertEquals(2, users.size());
-    }
-
-    @Test
-    public void testFindByRole() {
-        userDao.create(USERNAME, NAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, Role.USER);
-        userDao.create("User2", "Name2", "Pass2", "Last2", "email2", "cell2", Role.ADMIN);
-        assertEquals(1, userDao.findByRole("user").size());
-        assertEquals(1, userDao.findByRole("admin").size());
-    }
 
     @Test
     public void testUpdateVerificationStatus() {

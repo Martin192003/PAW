@@ -104,18 +104,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return userDao.findAll();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<User> findByRole(String role) {
-        return userDao.findByRole(role);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public User findByVerificationToken(String token) {
         return userDao.findByVerificationToken(token).orElse(null);
     }

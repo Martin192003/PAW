@@ -93,20 +93,6 @@ public class UserJpaDao implements UserDao {
                 .setParameter("token", token).getResultList().stream().findFirst();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return em.createQuery("FROM User u ORDER BY u.username ASC", User.class)
-                .getResultList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<User> findByRole(String role) {
-        return em.createQuery("FROM User u WHERE u.role = :role ORDER BY u.username ASC", User.class)
-                .setParameter("role", Role.valueOf(role.toUpperCase(Locale.ROOT)))
-                .getResultList();
-    }
 
     @Override
     @Transactional
