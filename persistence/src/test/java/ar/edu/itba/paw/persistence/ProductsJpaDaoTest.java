@@ -83,12 +83,6 @@ public class ProductsJpaDaoTest {
         assertTrue(result.isEmpty());
     }
 
-    @Test
-    public void testFindAllReturnsEmptyList() {
-        List<Product> result = productsDao.findAll();
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-    }
 
     @Test
     public void testUpdateReturnsNullIfNotFound() {
@@ -165,17 +159,6 @@ public class ProductsJpaDaoTest {
         Optional<Product> found = productsDao.findByName("ProdFindName");
         assertTrue(found.isPresent());
         assertEquals(product.getProductId(), found.get().getProductId());
-    }
-
-    @Test
-    public void testFindAllWithProducts() {
-        User contact = userDao.create("admin6", "name6","pass6", "last6", "email6@email.com", "333333", Role.USER);
-        Club club = clubDao.create("Club6", "Desc6", "Loc6", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null);
-        productsDao.create(club, "Prod1", "Desc1", BigDecimal.valueOf(10), ProductType.ALCOHOLICA, true);
-        productsDao.create(club, "Prod2", "Desc2", BigDecimal.valueOf(20), ProductType.NO_ALCOHOLICA, true);
-
-        List<Product> products = productsDao.findAll();
-        assertEquals(2, products.size());
     }
 
     @Test

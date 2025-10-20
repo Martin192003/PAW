@@ -95,15 +95,6 @@ public class ProductServiceImplTest {
         Assert.assertEquals(product, result.get());
     }
 
-    @Test
-    public void testFindAll() {
-        Product product1 = Mockito.mock(Product.class);
-        Product product2 = Mockito.mock(Product.class);
-        Mockito.when(productsDao.findAll()).thenReturn(Arrays.asList(product1, product2));
-        List<Product> result = productService.findAll();
-        Assert.assertNotNull(result);
-        Assert.assertEquals(2, result.size());
-    }
 
     @Test
     public void testFindByClub() {
