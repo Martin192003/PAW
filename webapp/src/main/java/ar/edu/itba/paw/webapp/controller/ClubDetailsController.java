@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
@@ -25,6 +26,7 @@ public class ClubDetailsController {
     private final PhotoService photoService;
     private final TableService tableService;
     private final SecurityService securityService;
+    private final ReviewService reviewService;
 
     private final ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
     private final Clock clock = Clock.system(zone);
@@ -33,12 +35,14 @@ public class ClubDetailsController {
                                  final ProductService productsService,
                                  final PhotoService photoService,
                                  final TableService tableService,
-                                 final SecurityService securityService) {
+                                 final SecurityService securityService,
+                                 final ReviewService reviewService) {
         this.clubService = clubService;
         this.productsService = productsService;
         this.photoService = photoService;
         this.tableService = tableService;
         this.securityService = securityService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/{clubId}")
@@ -120,6 +124,17 @@ public class ClubDetailsController {
         if (start != null && end != null) {
             model.addAttribute("dayStart", start);
             model.addAttribute("dayEnd", end);
+        }
+        List<Review> reviews = reviewService.getReviewsByClub(clubId);
+        model.addAttribute("reviews", reviews);
+
+        // Verificar si el usuario actual tiene una review
+        if (user != null) {
+            Optional<Review> userReview = reviewService.getUserReviewForClub(user.getId(), clubId);
+            model.addAttribute("userReview", userReview.orElse(null));
+            model.addAttribute("isAuthenticated", true);
+        } else {
+            model.addAttribute("isAuthenticated", false);
         }
 
         return "clubDetails";

@@ -19,4 +19,6 @@ public interface ReviewsDao {
     Review update(UUID reviewId, int rating, String description);
     Review upsert(User user, Club club, int rating, String description);
     boolean delete(UUID id);
+
+    Optional<Review> findByUserAndClub(User user, Club club);
 }

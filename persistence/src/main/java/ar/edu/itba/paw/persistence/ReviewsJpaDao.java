@@ -117,4 +117,19 @@ public class ReviewsJpaDao implements ReviewsDao {
                 .setParameter("c", club)
                 .getResultList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Review> findByUserAndClub(User user, Club club) {
+        List<Review> results = em.createQuery("""
+            SELECT r
+            FROM Review r
+            WHERE r.user = :user AND r.club = :club
+            """, Review.class)
+                .setParameter("user", user)
+                .setParameter("club", club)
+                .getResultList();
+
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
 }
