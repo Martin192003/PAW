@@ -192,13 +192,13 @@
 <div id="cancelConfirmModal" class="modal" style="display:none; align-items:center; justify-content:center;">
     <div class="modal-content">
         <span class="modal-close" onclick="closeCancelConfirmModal()">&times;</span>
-        <h3 style="margin-top:8px;">¿Estás seguro que querés cancelar esta reserva?</h3>
+        <h3 style="margin-top:8px;"><spring:message code="confirm.cancelBooking"/></h3>
         <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
             <button type="button" class="btn btn-secondary" onclick="closeCancelConfirmModal()">
                 <spring:message code="button.cancel" text="Cancelar"/>
             </button>
             <button id="confirmCancelBtn" type="button" class="btn btn-danger">
-                <spring:message code="booking.action.cancel" text="Cancelar"/>
+                <spring:message code="booking.action.confirm"/>
             </button>
         </div>
     </div>

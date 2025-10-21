@@ -110,53 +110,56 @@
                 </div>
             </dl>
             <div class="booking-actions">
-                <button id="userCancelBtn" type="button" class="btn btn-secondary"
-                        onclick="openCancelBookingModal('${booking.bookingId}')">
-                    <i class="fa fa-trash"></i>
-                    <spring:message code="booking.action.cancel" text="Cancelar reserva"/>
-                </button>
+                <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
+                    <button id="userCancelBtn" type="button" class="btn btn-secondary"
+                            onclick="openCancelBookingModal('${booking.bookingId}')">
+                        <i class="fa fa-trash"></i>
+                        <spring:message code="booking.action.cancel" text="Cancelar reserva"/>
+                    </button>
+                </c:if>
             </div>
         </article>
 
         <aside class="right-col">
             <article class="card-lg booking-card">
                 <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>
-
                 <c:choose>
                     <c:when test="${hasReceipt}">
                         <div class="receipt-thumb">
                             <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>" alt="Receipt"/>
                         </div>
-                        <div class="receipt-actions">
-                            <form method="post" action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>">
-                                <button type="submit" class="btn btn-secondary">
-                                    <spring:message code="receipt.delete" text="Eliminar"/>
-                                </button>
-                            </form>
-                            <form>
-                                <button type="button" class="btn btn-success" onclick="window.open('<c:url value="/bookings/${booking.bookingId}/receipt"/>', '_blank')">
-                                    <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
-                                </button>
-                            </form>
-                        </div>
+                        <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
+                            <div class="receipt-actions">
+                                <form method="post" action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>">
+                                    <button type="submit" class="btn btn-secondary">
+                                        <spring:message code="receipt.delete" text="Eliminar"/>
+                                    </button>
+                                </form>
+                                <form>
+                                    <button type="button" class="btn btn-success" onclick="window.open('<c:url value="/bookings/${booking.bookingId}/receipt"/>', '_blank')">
+                                        <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
+                                    </button>
+                                </form>
+                            </div>
+                        </c:if>
                     </c:when>
-
                     <c:otherwise>
                         <p class="muted"><spring:message code="receipt.missing" text="No hay comprobante cargado."/></p>
+                        <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
+                            <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data"
+                                       action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt"
+                                       class="upload-form">
+                                <div class="form-group">
+                                    <form:input type="file" path="file"/>
+                                    <p cssClass="error-message"><form:errors path="file"/></p>
+                                </div>
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <spring:message code="receipt.upload" text="Subir comprobante"/>
+                                </button>
+                            </form:form>
+                        </c:if>
                     </c:otherwise>
                 </c:choose>
-
-                <c:if test="${!hasReceipt}">
-                    <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data" action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt" class="upload-form">
-                        <div class="form-group">
-                            <form:input type="file" path="file"/>
-                            <p cssClass="error-message"><form:errors path="file"/></p>
-                        </div>
-                        <button type="submit" class="btn btn-success btn-sm" >
-                                <spring:message code="receipt.upload" text="Subir comprobante"/>
-                        </button>
-                    </form:form>
-                </c:if>
             </article>
         </aside>
     </section>
@@ -164,7 +167,7 @@
 <div id="cancelBookingModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeCancelBookingModal()">&times;</span>
-        <h3 style="margin-top:8px;">¿Está seguro de que quiere cancelar esta reserva?</h3>
+        <h3 style="margin-top:8px;"><spring:message code="confirm.cancelBooking"/></h3>
         <form id="cancelBookingForm" method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
             <input type="hidden" name="bookingId" id="cancelBookingId" value=""/>
             <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
@@ -172,7 +175,7 @@
                     <spring:message code="button.cancel"/>
                 </button>
                 <button type="submit" class="btn btn-danger">
-                    Cancelar
+                    <spring:message code="booking.action.confirm"/>
                 </button>
             </div>
         </form>
