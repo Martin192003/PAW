@@ -251,6 +251,22 @@
         </c:if>
         clearErrorsExcept(openedId);
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var cellphoneInput = document.querySelector('#editCellphoneModal input');
+        if (cellphoneInput) {
+            cellphoneInput.addEventListener('keydown', function(e) {
+                if (e.key === '-' || e.key === 'Subtract') {
+                    e.preventDefault();
+                }
+            });
+            cellphoneInput.addEventListener('input', function(e) {
+                if (this.value.includes('-')) {
+                    this.value = this.value.replace(/-/g, '');
+                }
+            });
+        }
+    });
 </script>
 
 

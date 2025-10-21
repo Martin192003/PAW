@@ -586,6 +586,20 @@
         });
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[type="number"]').forEach(function(input) {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === '-' || e.key === 'Subtract') {
+                    e.preventDefault();
+                }
+            });
+            input.addEventListener('input', function(e) {
+                if (this.value.includes('-')) {
+                    this.value = this.value.replace(/-/g, '');
+                }
+            });
+        });
+    });
 
 </script>
 </body>

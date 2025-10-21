@@ -172,6 +172,24 @@
     function volverADetalles() {
         window.location.href = "<c:url value='/clubs/${clubId}' />";
     }
+
+    // Bloquea el símbolo "-" en el input de teléfono del formulario de contacto
+    document.addEventListener('DOMContentLoaded', function() {
+        var phoneInput = document.querySelector('#contactForm input[name="phone"]');
+        if (phoneInput) {
+            phoneInput.addEventListener('keydown', function(e) {
+                if (e.key === '-' || e.key === 'Subtract') {
+                    e.preventDefault();
+                }
+            });
+            phoneInput.addEventListener('input', function(e) {
+                if (this.value.includes('-')) {
+                    this.value = this.value.replace(/-/g, '');
+                }
+            });
+        }
+    });
+
 </script>
 </body>
 </html>
