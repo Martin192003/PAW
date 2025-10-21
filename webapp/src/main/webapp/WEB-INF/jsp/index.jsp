@@ -31,13 +31,17 @@
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
             <div class="filter-bar">
                 <!-- Name -->
-                <input
-                        type="text"
-                        name="name"
-                        placeholder="<c:out value='${phName}'/>"
-                        class="filter-item"
-                        value="<c:out value='${not empty param.name ? param.name : name}'/>"
-                />
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input
+                            type="text"
+                            name="name"
+                            placeholder=""
+                            aria-label="<c:out value='${phName}'/>"
+                            class="filter-item"
+                            value="<c:out value='${not empty param.name ? param.name : name}'/>"
+                    />
+                </div>
 
                 <!-- Zone -->
                 <select name="zone" class="filter-item">

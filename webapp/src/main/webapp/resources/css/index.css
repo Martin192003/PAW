@@ -304,9 +304,9 @@ select.filter-item option {
 
 input.filter-item[name="name"],
 .filter-item.filter-name {
-    flex: 0 0 90px;
-    max-width: 220px;
-    min-width: 120px;
+    flex: 0 0 38px;
+    max-width: 110px;
+    min-width: 38px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -319,6 +319,23 @@ select.filter-item[name="sort"],
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.input-with-icon {
+    position: relative;
+    display: inline-block;
+}
+.input-with-icon .fa-magnifying-glass {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #ffffff;
+    font-size: 0.95em;
+}
+.input-with-icon .filter-item {
+    padding-left: 36px; /* espacio para el icono */
 }
 
 
