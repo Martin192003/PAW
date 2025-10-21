@@ -240,27 +240,19 @@
                     .openPopup();
             });
         </script>
-
-
-
-
-        <div id="reservationModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
-            <div style="background:#222; color:#fff; padding:32px; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.6); width:400px; text-align:center;">
-                <div style="font-size:22px; margin-bottom:18px;">
-                    <spring:message code="reservation.sent"/>
-                </div>
-                <button class="btn btn-success" onclick="cerrarModal()"><spring:message code="button.back"/></button>
-            </div>
-        </div>
-
         <c:if test="${not empty reservationSent}">
             <script>
                 document.addEventListener("DOMContentLoaded", function() {
-                    document.getElementById("reservationModal").style.display = "flex";
+                    const toast = document.getElementById("reservationToast");
+                    toast.classList.add("show");
+
+                    // Se cierra automáticamente después de 3 segundos
+                    setTimeout(() => {
+                        toast.classList.remove("show");
+                    }, 3000);
                 });
             </script>
         </c:if>
-
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 function breakEveryN(str, n) {
@@ -403,6 +395,11 @@
         </script>
         <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     </div>
+</div>
+<!-- Pop-up de confirmación de reserva -->
+<div id="reservationToast" class="toast-popup">
+    <i class="fa-solid fa-circle-check" style="color:#4caf50; font-size:24px;"></i>
+    <span><spring:message code="reservation.sent"/></span>
 </div>
 </body>
 </html>
