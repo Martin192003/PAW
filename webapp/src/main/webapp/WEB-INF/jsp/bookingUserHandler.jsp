@@ -110,12 +110,11 @@
                 </div>
             </dl>
             <div class="booking-actions">
-                <form id="userCancelForm" method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
-                    <button id="userCancelBtn" type="submit" class="btn btn-secondary">
-                        <i class="fa fa-trash"></i>
-                        <spring:message code="booking.action.cancel" text="Cancelar reserva"/>
-                    </button>
-                </form>
+                <button id="userCancelBtn" type="button" class="btn btn-secondary"
+                        onclick="openCancelBookingModal('${booking.bookingId}')">
+                    <i class="fa fa-trash"></i>
+                    <spring:message code="booking.action.cancel" text="Cancelar reserva"/>
+                </button>
             </div>
         </article>
 
@@ -162,22 +161,67 @@
         </aside>
     </section>
 </div>
+<div id="cancelBookingModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeCancelBookingModal()">&times;</span>
+        <h3 style="margin-top:8px;">¿Está seguro de que quiere cancelar esta reserva?</h3>
+        <form id="cancelBookingForm" method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
+            <input type="hidden" name="bookingId" id="cancelBookingId" value=""/>
+            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
+                <button type="button" class="btn btn-secondary" onclick="closeCancelBookingModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var f = document.getElementById('userCancelForm');
-        if (f) {
-            f.addEventListener('submit', function(e) {
-                if (f.dataset.submitting === '1') { e.preventDefault(); return; }
-                f.dataset.submitting = '1';
-                var btn = document.getElementById('userCancelBtn');
-                if (btn) {
-                    btn.disabled = true;
-                    try {
-                        btn.dataset.orig = btn.innerHTML;
-                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (btn.textContent || '');
-                    } catch (err) { /* ignore */ }
-                }
+    window.openCancelBookingModal = function(bookingId) {
+        const input = document.getElementById('cancelBookingId');
+        const modal = document.getElementById('cancelBookingModal');
+        if (!modal) return;
+        if (input) input.value = bookingId;
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            modal.style.visibility = 'visible';
+        }, 10);
+    };
+
+    window.closeCancelBookingModal = function() {
+        const input = document.getElementById('cancelBookingId');
+        const modal = document.getElementById('cancelBookingModal');
+        if (!modal) return;
+        if (input) input.value = '';
+        modal.style.display = 'none';
+        modal.style.opacity = '0';
+        modal.style.visibility = 'hidden';
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('cancelBookingModal');
+        const btn = document.getElementById('userCancelBtn');
+
+        if (btn) {
+            btn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                openCancelBookingModal('${booking.bookingId}');
             });
+        }
+
+        window.addEventListener('click', function (e) {
+            const modalNow = document.getElementById('cancelBookingModal');
+            if (modalNow && e.target === modalNow) {
+                closeCancelBookingModal();
+            }
+        });
+
+        const closeX = document.querySelector('#cancelBookingModal .modal-close');
+        if (closeX) {
+            closeX.addEventListener('click', closeCancelBookingModal);
         }
     });
 </script>

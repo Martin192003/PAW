@@ -421,6 +421,43 @@
         </form>
     </div>
 </div>
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
+        <h3><spring:message code="confirm.deleteProduct"/></h3>
+        <p style="margin-top:8px;">¿Estás seguro que querés eliminar este producto? Esta acción no se puede deshacer.</p>
+
+        <form id="deleteForm" method="post" action="<c:url value='/clubs/products/deleteProduct' />">
+            <input type="hidden" name="productId" id="deleteProductId" value=""/>
+            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <spring:message code="button.delete"/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="tableDeleteModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeTableDeleteModal()">&times;</span>
+        <h3><spring:message code="confirm.deleteTable"/></h3>
+        <form method="post" id="tableDeleteForm">
+            <input type="hidden" name="clubId" value="${club.clubId}"/>
+            <input type="hidden" name="tableId" id="deleteTableId" value=""/>
+            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
+                <button type="button" class="btn btn-secondary" onclick="closeTableDeleteModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <spring:message code="button.delete"/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 <script>
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -434,6 +471,7 @@
     }
 
     function closeDeleteModal() {
+        document.getElementById('deleteProductId').value = '';
         document.getElementById('deleteModal').style.display = 'none';
     }
 
@@ -493,10 +531,12 @@
 
     function openTableDeleteModal(tableId) {
         document.getElementById('tableDeleteModal').style.display = 'flex';
+        document.getElementById('deleteTableId').value = tableId;
         document.getElementById('tableDeleteForm').action = '${pageContext.request.contextPath}/clubs/tables/' + tableId + '/delete';
     }
 
     function closeTableDeleteModal() {
+        document.getElementById('deleteTableId').value = '';
         document.getElementById('tableDeleteModal').style.display = 'none';
     }
 
@@ -545,6 +585,7 @@
             el.innerHTML = '';
         });
     }
+
 
 </script>
 </body>
