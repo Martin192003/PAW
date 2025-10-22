@@ -85,7 +85,9 @@ CREATE TABLE IF NOT EXISTS photos
     created_at TIMESTAMPTZ      DEFAULT NOW(),
     filename   TEXT,
     content_type TEXT,
-    size_bytes BIGINT
+    size_bytes BIGINT,
+    photo_type VARCHAR(20) DEFAULT 'CAROUSEL'
+        CHECK (photo_type IN ('COVER', 'CAROUSEL'))
     );
 CREATE INDEX ON photos (club_id);
 

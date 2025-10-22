@@ -1,6 +1,7 @@
 
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.PhotoType;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.PhotoDao;
 import ar.edu.itba.paw.service.PhotoService;
@@ -31,26 +32,46 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID upload(UUID id,
-                       UUID postedBy,
-                       String filename,
-                       String contentType,
-                       byte[] data) {
+    public UUID upload(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
+        Photo photo = new Photo();
+        photo.setClubId(clubId);
+        photo.setPostedBy(userId);
+        photo.setFilename(filename);
+        photo.setContentType(contentType);
+        photo.setData(data);
+        photo.setPhotoType(PhotoType.CAROUSEL);
 
-        if (data == null || data.length == 0) {
-            throw new IllegalArgumentException("La imagen está vacía");
-        }
-        if (data.length > MAX_BYTES) {
-            throw new IllegalArgumentException("La imagen excede el tamaño máximo permitido");
-        }
-        if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
-            throw new IllegalArgumentException("Tipo de imagen no permitido");
-        }
-        if (filename == null || filename.isBlank()) {
-            throw new IllegalArgumentException("Filename inválido");
-        }
+        return photoDao.save(photo);
+    }
 
-        return photoDao.create(id, postedBy, filename, contentType, data);
+    @Override
+    @Transactional
+    public UUID uploadCover(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
+        photoDao.deleteCoverByClubId(clubId);
+
+        Photo photo = new Photo();
+        photo.setClubId(clubId);
+        photo.setPostedBy(userId);
+        photo.setFilename(filename);
+        photo.setContentType(contentType);
+        photo.setData(data);
+        photo.setPhotoType(PhotoType.COVER);
+
+        return photoDao.save(photo);
+    }
+
+    @Override
+    @Transactional
+    public UUID uploadCarousel(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
+        Photo photo = new Photo();
+        photo.setClubId(clubId);
+        photo.setPostedBy(userId);
+        photo.setFilename(filename);
+        photo.setContentType(contentType);
+        photo.setData(data);
+        photo.setPhotoType(PhotoType.CAROUSEL);
+
+        return photoDao.save(photo);
     }
 
     @Override
@@ -117,7 +138,6 @@ public class PhotoServiceImpl implements PhotoService {
         );
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public Optional<String> getCoverUrl(UUID clubId) {
@@ -135,5 +155,17 @@ public class PhotoServiceImpl implements PhotoService {
             getCoverUrl(clubId).ifPresent(url -> result.put(clubId, url));
         }
         return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Photo> getCoverPhoto(UUID clubId) {
+        return photoDao.findCoverByClubId(clubId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset) {
+        return photoDao.findCarouselByClubId(clubId, limit, offset);
     }
 }

@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.Review;
@@ -111,6 +112,12 @@ public class ClubDetailsController {
         boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
         model.addAttribute("isOwner", isOwner);
 
+        Optional<Photo> coverPhoto = photoService.getCoverPhoto(clubId);
+        List<Photo> carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("clubPhotos", carouselPhotos);
+
         model.addAttribute("latitude",-34.5891429);
         model.addAttribute("longitude",-58.3961641);
         model.addAttribute("club", club);
@@ -139,6 +146,8 @@ public class ClubDetailsController {
 
         return "clubDetails";
     }
+
+
 
 
     private String toLocationText(final String location) {

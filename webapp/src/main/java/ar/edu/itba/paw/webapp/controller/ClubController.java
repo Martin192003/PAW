@@ -160,7 +160,7 @@ public class ClubController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
         model.addAttribute("pages", IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList()));
-        model.addAttribute("availableToday", availabilityMode); // 👈 reflejo modo disponibilidad
+        model.addAttribute("availableToday", availabilityMode);
         model.addAttribute("queryParams", queryParams);
         model.addAttribute("name", nameLike);
         model.addAttribute("zone", zone);
@@ -212,6 +212,21 @@ public class ClubController {
                 contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getImage()
         );
 
+        MultipartFile image = f.getImage();
+        if (image != null && !image.isEmpty()) {
+            try {
+                photoService.uploadCover(
+                        newClub.getClubId(),
+                        contact.getId(),
+                        image.getOriginalFilename(),
+                        image.getContentType() != null ? image.getContentType() : "application/octet-stream",
+                        image.getBytes()
+                );
+            } catch (IOException e) {
+                System.err.println("Error uploading photo during club creation: " + e.getMessage());
+            }
+        }
+
         if (roleAntes == Role.USER) {
             User updatedUser = userService.findById(contact.getId());
 
@@ -235,13 +250,15 @@ public class ClubController {
         var club = clubService.getClubById(clubId).orElseThrow(() -> new NotFoundException("El boliche no existe."));
         var cover = photoService.getCoverUrl(clubId).orElse(null);
 
-        var photos = photoService.listByClub(clubId, 0, 1);
-        String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
+        var coverPhoto = photoService.getCoverPhoto(clubId);
+        String coverPhotoUrl = coverPhoto.map(Photo::getUrl).orElse(null);
+        List<Photo> carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+        model.addAttribute("clubPhotos", carouselPhotos);
 
 
         model.addAttribute("club", club);
         model.addAttribute("tables", tableService.findByClubId(clubId));
-        model.addAttribute("coverPhotoUrl", cover);
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
@@ -379,5 +396,83 @@ public class ClubController {
             return Integer.parseInt(m.group(1));
         }
         return null;
+    }
+
+    @PostMapping("/club/{clubId}/gallery")
+    public String addPhotosToGallery(@PathVariable UUID clubId,
+                                     @RequestParam("files") MultipartFile[] files,
+                                     RedirectAttributes redirectAttributes) {
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        int uploaded = 0;
+        for (MultipartFile file : files) {
+            if (file != null && !file.isEmpty()) {
+                try {
+                    photoService.uploadCarousel(
+                            clubId,
+                            user.getId(),
+                            file.getOriginalFilename(),
+                            file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                            file.getBytes()
+                    );
+                    uploaded++;
+                } catch (IOException e) {
+                    // Optionally log or handle error
+                }
+            }
+        }
+        if (uploaded > 0) {
+            redirectAttributes.addFlashAttribute("success", "photos.added.successfully");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "photos.upload.error");
+        }
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @PostMapping("/club/{clubId}/cover")
+    public String uploadCover(@PathVariable UUID clubId,
+                              @RequestParam("file") MultipartFile file,
+                              Principal principal) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        photoService.uploadCover(
+                clubId,
+                user.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @PostMapping("/club/{clubId}/carousel")
+    public String uploadCarousel(@PathVariable UUID clubId,
+                                 @RequestParam("file") MultipartFile file,
+                                 Principal principal) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        photoService.uploadCarousel(
+                clubId,
+                user.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
     }
 }

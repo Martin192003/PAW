@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Photo;
+import ar.edu.itba.paw.model.PhotoType;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +13,8 @@ public interface PhotoDao {
                 UUID postedBy,
                 String filename,
                 String contentType,
-                byte[] data);
+                byte[] data,
+                PhotoType photoType);
 
     List<Photo> findByClub(UUID clubId, int limit, int offset);
 
@@ -26,4 +28,9 @@ public interface PhotoDao {
 
     public Optional<Photo> findByBooking(UUID bookingId);
 
+    List<Photo> findByClubIdPaginated(UUID clubId, int limit, int offset);
+
+    Optional<Photo> findCoverByClubId(UUID clubId);
+    List<Photo> findCarouselByClubId(UUID clubId, int limit, int offset);
+    void deleteCoverByClubId(UUID clubId);
 }

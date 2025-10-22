@@ -38,6 +38,10 @@ public class Photo {
     @Column(name = "data", nullable = false, columnDefinition = "bytea")
     private byte[] data;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "photo_type")
+    private PhotoType photoType = PhotoType.CAROUSEL;
+
     @PrePersist
     private void beforeInsert() {
         if (this.photoId == null) this.photoId = UUID.randomUUID();
@@ -72,4 +76,7 @@ public class Photo {
 
     public byte[] getData() { return data; }
     public void setData(byte[] data) { this.data = data; }
+
+    public PhotoType getPhotoType() { return photoType; }
+    public void setPhotoType(PhotoType photoType) { this.photoType = photoType;}
 }

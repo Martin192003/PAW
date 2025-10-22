@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Photo;
+import ar.edu.itba.paw.model.PhotoType;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,13 +16,14 @@ public class PhotoJpaDao implements PhotoDao {
 
     @Override
     @Transactional
-    public UUID create(UUID clubId, UUID postedBy, String filename, String contentType, byte[] data) {
+    public UUID create(UUID clubId, UUID postedBy, String filename, String contentType, byte[] data, PhotoType photoType) {
         Photo p = new Photo();
         p.setClubId(clubId);
         p.setPostedBy(postedBy);
         p.setFilename(filename);
         p.setContentType(contentType);
         p.setData(data);
+        p.setPhotoType(photoType);
         em.persist(p);
         return p.getPhotoId();
     }
@@ -82,5 +84,46 @@ public class PhotoJpaDao implements PhotoDao {
         if (p == null) return false;
         em.remove(p);
         return true;
+    }
+
+    public List<Photo> findByClubIdPaginated(UUID clubId, int limit, int offset) {
+        return em.createQuery("SELECT p FROM Photo p WHERE p.clubId = :clubId ORDER BY p.createdAt DESC", Photo.class)
+                .setParameter("clubId", clubId)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Photo> findCoverByClubId(UUID clubId) {
+        return em.createQuery(
+                        "SELECT p FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type", Photo.class)
+                .setParameter("clubId", clubId)
+                .setParameter("type", PhotoType.COVER)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Photo> findCarouselByClubId(UUID clubId, int limit, int offset) {
+        return em.createQuery(
+                        "SELECT p FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type ORDER BY p.createdAt DESC", Photo.class)
+                .setParameter("clubId", clubId)
+                .setParameter("type", PhotoType.CAROUSEL)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteCoverByClubId(UUID clubId) {
+        em.createQuery("DELETE FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type")
+                .setParameter("clubId", clubId)
+                .setParameter("type", PhotoType.COVER)
+                .executeUpdate();
     }
 }

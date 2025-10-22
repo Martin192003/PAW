@@ -92,7 +92,7 @@ public class PhotoJpaDaoTest {
         String contentType = "image/jpeg";
         byte[] data = new byte[]{1,2,3,4,5};
 
-        UUID photoId = photoDao.create(c.getClubId(), u.getId(), filename, contentType, data);
+        UUID photoId = photoDao.create(c.getClubId(), u.getId(), filename, contentType, data, PhotoType.CAROUSEL);
         assertNotNull(photoId);
 
         Optional<Photo> photoOpt = photoDao.findByIdWithData(photoId);
@@ -112,7 +112,7 @@ public class PhotoJpaDaoTest {
         User u = persistUser("u2");
         Club c = persistClub("Club X", u);
 
-        UUID id = photoDao.create(c.getClubId(), u.getId(), "test2.jpg", "image/jpeg", new byte[]{10,20,30});
+        UUID id = photoDao.create(c.getClubId(), u.getId(), "test2.jpg", "image/jpeg", new byte[]{10,20,30}, PhotoType.CAROUSEL);
         assertNotNull(id);
 
         List<Photo> photos = photoDao.findByClub(c.getClubId(), 10, 0);
@@ -127,7 +127,7 @@ public class PhotoJpaDaoTest {
         User u = persistUser("u3");
         Club c = persistClub("Club Y", u);
 
-        UUID photoId = photoDao.create(c.getClubId(), u.getId(), "test3.png", "image/png", new byte[]{7,8,9});
+        UUID photoId = photoDao.create(c.getClubId(), u.getId(), "test3.png", "image/png", new byte[]{7,8,9}, PhotoType.CAROUSEL);
         Optional<Photo> photoOpt = photoDao.findById(photoId);
 
         assertTrue(photoOpt.isPresent());
@@ -145,7 +145,7 @@ public class PhotoJpaDaoTest {
         ClubTable t = persistTable(c);
         Booking b = persistBooking(u, t);
 
-        UUID photoId = photoDao.create(c.getClubId(), u.getId(), "booking.jpg", "image/jpeg", new byte[]{5,6,7});
+        UUID photoId = photoDao.create(c.getClubId(), u.getId(), "booking.jpg", "image/jpeg", new byte[]{5,6,7}, PhotoType.CAROUSEL);
 
         Optional<Photo> found = photoDao.findByBooking(b.getBookingId());
         assertTrue(found.isPresent());
@@ -156,7 +156,7 @@ public class PhotoJpaDaoTest {
     public void testDeleteSuccess() {
         User u = persistUser("u5");
         Club c = persistClub("Club Del", u);
-        UUID photoId = photoDao.create(c.getClubId(), u.getId(), "delete.jpg", "image/jpeg", new byte[]{1,2});
+        UUID photoId = photoDao.create(c.getClubId(), u.getId(), "delete.jpg", "image/jpeg", new byte[]{1,2}, PhotoType.CAROUSEL);
 
         boolean deleted = photoDao.delete(photoId);
         assertTrue(deleted);

@@ -80,4 +80,5 @@ public class PhotoController {
         }
         return MediaType.APPLICATION_OCTET_STREAM;
     }
+
 }
