@@ -14,7 +14,6 @@ public class ReceiptJpaDao implements ReceiptDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public UUID create(UUID bookingId, UUID uploadedBy, String filename, String contentType, byte[] data) {
         Receipt r = new Receipt();
         r.setBookingId(bookingId);
@@ -28,7 +27,6 @@ public class ReceiptJpaDao implements ReceiptDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Receipt> findByBooking(UUID bookingId) {
         final List<Receipt> list = em.createQuery("""
                 SELECT r
@@ -42,7 +40,6 @@ public class ReceiptJpaDao implements ReceiptDao {
 
         if (list.isEmpty()) return Optional.empty();
 
-        // devolver sin BLOB
         Receipt r = list.getFirst();
         em.detach(r);
         r.setData(null);
@@ -54,13 +51,11 @@ public class ReceiptJpaDao implements ReceiptDao {
         return Optional.ofNullable(em.find(Receipt.class, receiptId));
     }
     @Override
-    @Transactional(readOnly = true)
     public Optional<Receipt> findByIdWithData(UUID receiptId) {
         return Optional.ofNullable(em.find(Receipt.class, receiptId));
     }
 
     @Override
-    @Transactional
     public boolean deleteByBooking(UUID bookingId) {
         int updated = em.createQuery("""
                 DELETE FROM Receipt r
@@ -72,7 +67,6 @@ public class ReceiptJpaDao implements ReceiptDao {
     }
 
     @Override
-    @Transactional
     public boolean delete(UUID receiptId) {
         Receipt r = em.find(Receipt.class, receiptId);
         if (r == null) return false;

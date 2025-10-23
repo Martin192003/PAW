@@ -204,7 +204,7 @@ public class BookingsJpaDao implements BookingDao {
                 .setFirstResult(offset)
                 .setMaxResults(limit);
 
-        bindUuidList(nq, "cid", clubIds); //Preguntar si esta bien si no lo pongo tira: The parameter [cid0] did not have a matching bind value
+        bindUuidList(nq, "cid", clubIds);
 
         if (bookingId != null) nq.setParameter("bookingId", bookingId);
         if (status != null)    nq.setParameter("status", status.db());

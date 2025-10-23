@@ -310,7 +310,7 @@ public class ClubController {
 
         String coverPhoto = clubOnlyPhotos.isEmpty()
                 ? "/resources/img/default-club-placeholder.png"
-                : clubOnlyPhotos.get(0).getUrl();
+                : clubOnlyPhotos.getFirst().getUrl();
         String coverPhotoUrl = clubOnlyPhotos.isEmpty() ? null : clubOnlyPhotos.get(0).getUrl();
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("club", club);

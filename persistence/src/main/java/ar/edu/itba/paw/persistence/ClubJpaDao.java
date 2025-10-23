@@ -25,7 +25,6 @@ public class ClubJpaDao implements ClubDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public Club create(String name, String description, String location, Price priceRange,
                        User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar) {
 
@@ -84,7 +83,6 @@ public class ClubJpaDao implements ClubDao {
 
 
     @Override
-    @Transactional
     public Integer incrementQuantityRatings(UUID clubId, int delta) {
         final int updated = em.createQuery(
                         "UPDATE Club c SET c.quantityRatings = c.quantityRatings + :delta WHERE c.clubId = :id")
@@ -99,7 +97,6 @@ public class ClubJpaDao implements ClubDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Club> search(String nameLike, Zone location, String musicGenre,
                              String priceRange, Boolean isBar, String sort) {
         final var cb = em.getCriteriaBuilder();
@@ -237,7 +234,6 @@ public class ClubJpaDao implements ClubDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public int countByUserId(UUID userId) {
         Long n = em.createQuery("""
         select count(distinct c)
@@ -310,7 +306,7 @@ public class ClubJpaDao implements ClubDao {
                                       final String sort,
                                       final int limit,
                                       final int offset) {
-        // 1) IDs paginados (SQL nativo)
+        // 1) IDs paginados
         final StringBuilder where = new StringBuilder("WHERE 1=1\n");
         if (nameLike != null && !nameLike.isBlank())       where.append("AND LOWER(c.club_name) LIKE :nameLike\n");
         if (location != null)                              where.append("AND c.zone = :zone\n");
@@ -348,7 +344,7 @@ public class ClubJpaDao implements ClubDao {
 
         final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
 
-        // 2) Entidades (JPQL)
+        // 2) Entidades
         final String orderBy = jpqlClubSort(sort);
         return em.createQuery(
                         "SELECT c FROM Club c WHERE c.clubId IN :ids ORDER BY " + orderBy, Club.class)
@@ -420,7 +416,7 @@ public class ClubJpaDao implements ClubDao {
         final var dayEnd   = day.plusDays(1).atStartOfDay().atOffset(zone);
         final var blocking = java.util.List.of(Status.CONFIRMADA, Status.PENDIENTE);
 
-        // 1) IDs paginados (SQL nativo con agregación de disponibilidad)
+        // 1) IDs paginados
         final StringBuilder where = new StringBuilder("WHERE 1=1\n");
         if (nameLike != null && !nameLike.isBlank())       where.append("AND LOWER(c.club_name) LIKE :nameLike\n");
         if (location != null)                              where.append("AND c.zone = :zone\n");
@@ -480,7 +476,7 @@ public class ClubJpaDao implements ClubDao {
         // 2) Entidades (JPQL)
         final String orderBy =
                 ("availability_desc".equals(sort) || "availability_asc".equals(sort))
-                        ? "/* orden principal ya viene de native */ c.createdAt DESC, c.clubId DESC"
+                        ? "c.createdAt DESC, c.clubId DESC"
                         : jpqlClubSort(sort);
 
         return em.createQuery(
@@ -490,7 +486,6 @@ public class ClubJpaDao implements ClubDao {
     }
 
 
-    // Mapea el sort pedido a columnas nativas (con alias de subquery: "x")
     private static String nativeClubSort(final String a, final String sort) {
         final String alias = (a == null || a.isBlank()) ? "x" : a;
         final String key = (sort == null) ? "" : sort;

@@ -14,7 +14,6 @@ public class PhotoJpaDao implements PhotoDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public UUID create(UUID clubId, UUID postedBy, String filename, String contentType, byte[] data) {
         Photo p = new Photo();
         p.setClubId(clubId);
@@ -27,7 +26,6 @@ public class PhotoJpaDao implements PhotoDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Photo> findByClub(final UUID clubId, final int limit, final int offset) {
         final int lim = Math.max(0, limit);
         final int off = Math.max(0, offset);
@@ -71,7 +69,6 @@ public class PhotoJpaDao implements PhotoDao {
 
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Photo> findByIdWithData(UUID photoId) {
         return Optional.ofNullable(em.find(Photo.class, photoId));
     }
@@ -85,7 +82,6 @@ public class PhotoJpaDao implements PhotoDao {
         return Optional.of(p);
     }
     @Override
-    @Transactional
     public UUID save(Photo p) {
         if (p.getPhotoId() == null) {
             em.persist(p);

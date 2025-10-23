@@ -16,7 +16,6 @@ public class ReviewsJpaDao implements ReviewsDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public Review create(User user, Club club, int rating, String description) {
         Review r = new Review();
         r.setUser(user);               // Deben ser entidades administradas (o con ID válido)
@@ -28,7 +27,6 @@ public class ReviewsJpaDao implements ReviewsDao {
     }
 
     @Override
-    @Transactional
     public Review update(UUID reviewId, int rating, String description) {
         Objects.requireNonNull(reviewId, "reviewId is required");
         Review r = em.find(Review.class, reviewId);
@@ -39,8 +37,7 @@ public class ReviewsJpaDao implements ReviewsDao {
         return r;
     }
 
-    /** Emula tu INSERT ... ON CONFLICT de Postgres con SQL nativo y mapeo a entidad. */
-    @Transactional
+
     public Review upsert(User user, Club club, int rating, String description) {
         Objects.requireNonNull(user); Objects.requireNonNull(user.getId());
         Objects.requireNonNull(club); Objects.requireNonNull(club.getClubId());
@@ -68,7 +65,6 @@ public class ReviewsJpaDao implements ReviewsDao {
     }
 
     @Override
-    @Transactional
     public boolean delete(UUID id) {
         Review r = em.find(Review.class, id);
         if (r == null) return false;
@@ -77,13 +73,11 @@ public class ReviewsJpaDao implements ReviewsDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Review> findById(UUID id) {
         return Optional.ofNullable(em.find(Review.class, id));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Review> findAll() {
         return em.createQuery("""
                 SELECT r
@@ -93,7 +87,6 @@ public class ReviewsJpaDao implements ReviewsDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Review> findByUser(User user) {
         return em.createQuery("""
                 SELECT r
@@ -106,7 +99,6 @@ public class ReviewsJpaDao implements ReviewsDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Review> findByClub(Club club) {
         return em.createQuery("""
                 SELECT r

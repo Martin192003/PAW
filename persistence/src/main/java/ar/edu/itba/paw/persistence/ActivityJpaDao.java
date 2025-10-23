@@ -17,7 +17,6 @@ public class ActivityJpaDao implements ActivityDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public Activity create(Booking booking, String activityType, String details, OffsetDateTime activityDate) {
         final Activity a = new Activity();
         a.setBooking(booking);
@@ -29,7 +28,6 @@ public class ActivityJpaDao implements ActivityDao {
     }
 
     @Override
-    @Transactional
     public Activity update(UUID id, Booking booking, String activityType, String details, OffsetDateTime activityDate) {
         Activity a = em.find(Activity.class, id);
         if (a == null) return null;
@@ -41,7 +39,6 @@ public class ActivityJpaDao implements ActivityDao {
     }
 
     @Override
-    @Transactional
     public boolean delete(UUID activityId) {
         Activity a = em.find(Activity.class, activityId);
         if (a == null) return false;
@@ -50,20 +47,17 @@ public class ActivityJpaDao implements ActivityDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Activity> findById(UUID id) {
         return Optional.ofNullable(em.find(Activity.class, id));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Activity> findAll() {
         return em.createQuery("SELECT a FROM Activity a", Activity.class)
                 .getResultList();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Activity> findByUser(User user) {
         return em.createQuery("""
                 SELECT a

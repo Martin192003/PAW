@@ -19,7 +19,6 @@ public class ClubTablesJpaDao implements ClubTablesDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public ClubTable create(int number, int capacity, UUID clubId, TableState tableState,
                             BigDecimal price, BigDecimal discount) {
 
@@ -69,7 +68,7 @@ public class ClubTablesJpaDao implements ClubTablesDao {
                                                                 final OffsetDateTime to,
                                                                 final int limit,
                                                                 final int offset) {
-        // 1) IDs paginados (SQL nativo) — ¡OJO! bind sobre NativeQuery y setParameterList
+        // 1) IDs paginados
         final String idSql = """
         SELECT CAST(ct.table_id AS TEXT) AS id_text
         FROM club_tables ct
@@ -108,7 +107,7 @@ public class ClubTablesJpaDao implements ClubTablesDao {
                 .map(java.util.UUID::fromString)
                 .toList();
 
-        // 2) Entidades (JPQL) — usa el nombre del CAMPO: ct.tableid (no tableId)
+        // 2) Entidades
         return em.createQuery("""
             SELECT ct
             FROM ClubTable ct
