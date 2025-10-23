@@ -26,7 +26,7 @@
 <div class="app-boliches">
     <div class="events-container">
         <c:set var="hasEvents" value="false" />
-        <c:forEach var="club" items="${clubs}">
+        <c:forEach var="club" items="${clubsForEvents}">
             <c:set var="clubEvents" value="${eventsByClub[club.clubId]}"/>
             <c:if test="${not empty clubEvents}">
                 <c:set var="hasEvents" value="true" />
@@ -42,12 +42,13 @@
                 </button>
 
                 <div class="events-carousel" id="eventsCarousel">
-                    <c:forEach var="club" items="${clubs}">
+                    <c:forEach var="club" items="${clubsForEvents}">
                         <c:set var="clubEvents" value="${eventsByClub[club.clubId]}"/>
                         <c:if test="${not empty clubEvents}">
                             <c:forEach var="e" items="${clubEvents}">
                                 <c:url var="eventUrl" value="/clubs/${club.clubId}">
                                     <c:param name="date" value="${e.date}"/>
+                                    <c:param name="fromEvent" value="true"/>
                                 </c:url>
 
                                 <a class="event-card" href="${eventUrl}">

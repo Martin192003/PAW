@@ -530,7 +530,27 @@
     <span><spring:message code="reservation.sent"/></span>
 </div>
 
-<!-- === Carrusel: JS robusto, scopeado e idempotente === -->
+<!-- Modal: disponibilidad de mesas para el evento (con estilos mínimos) -->
+<style>
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999}
+    .modal.show{display:flex}
+    .modal-content{background:#222;color:#fff;border-radius:10px;min-width:280px;max-width:520px;width:90%;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+    .modal-content .modal-close{float:right;font-size:24px;cursor:pointer}
+    .modal-actions{margin-top:14px;display:flex;gap:10px;justify-content:flex-end}
+</style>
+
+<div id="eventAvailabilityModal" class="modal" aria-hidden="true" role="dialog">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeEventAvailabilityModal()">&times;</span>
+        <h3 style="margin:0 0 10px;">Disponibilidad para el evento</h3>
+        <p id="eventAvailabilityText" style="margin:0 0 14px;"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeEventAvailabilityModal()">Cerrar</button>
+            <button type="button" class="btn btn-success" onclick="closeEventAvailabilityModal()">OK</button>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const root = document.getElementById('club-carousel');
@@ -607,6 +627,45 @@
             if (e.key === 'ArrowRight') next();
         });
     });
+
+    (function(){
+        function openEventAvailabilityModal(message){
+            var modal = document.getElementById('eventAvailabilityModal');
+            var textEl = document.getElementById('eventAvailabilityText');
+            if(!modal || !textEl) return;
+            textEl.textContent = message;
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden','false');
+        }
+        window.closeEventAvailabilityModal = function(){
+            var modal = document.getElementById('eventAvailabilityModal');
+            if(!modal) return;
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden','true');
+        };
+
+        document.addEventListener('DOMContentLoaded', function(){
+            var params = new URLSearchParams(window.location.search);
+            var fromEvent = params.get('fromEvent') === 'true';
+            var dateParam = params.get('date');
+            if(!fromEvent || !dateParam) return;
+
+            // 1) Conteo del servidor (si availableTables está en el modelo)
+            var serverCount = Number('${empty availableTables ? 0 : fn:length(availableTables)}'.replace(/[^0-9]/g,''));
+            if(isNaN(serverCount)) serverCount = 0;
+
+            // 2) Fallback: contar ítems renderizados en la lista de mesas
+            var domCount = document.querySelectorAll('.table-list li').length;
+
+            var availableCount = Math.max(serverCount, domCount);
+
+            var msg = (availableCount > 0)
+                ? ('Quedan ' + availableCount + ' mesas disponibles para el evento (' + dateParam + ').')
+                : ('Se agotaron las mesas para el evento (' + dateParam + ').');
+
+            openEventAvailabilityModal(msg);
+        });
+    })();
 </script>
 </body>
 </html>

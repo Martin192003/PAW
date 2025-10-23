@@ -478,17 +478,33 @@ public class ClubController {
     }
 
     private void addEventsByClubToModel(List<Club> clubs, Model model) {
-        Map<UUID, List<Event>> eventsByClub = clubs.stream()
-                .collect(Collectors.toMap(
-                        Club::getClubId,
-                        c -> eventService.listByClub(c.getClubId(), 0, 20).stream()
-                                .filter(e -> !e.getDate().isBefore(LocalDate.now()))
-                                .sorted(Comparator.comparing(Event::getDate))
-                                .limit(3)
-                                .collect(Collectors.toList())
-                ));
+        // Traemos, por ejemplo, los próximos 30 eventos de TODO el sistema
+        final int page = 0;
+        final int size = 30; // ajustalo si querés más/menos
+        List<Event> upcoming = eventService.listUpcoming(page, size);
+
+        // Group by clubId -> eventos del club
+        Map<UUID, List<Event>> eventsByClub = upcoming.stream()
+                .collect(Collectors.groupingBy(Event::getClubId));
+
+        // Obtenemos los Club de esos IDs (sin depender de la paginación de "clubs")
+        List<Club> clubsForEvents = eventsByClub.keySet().stream()
+                .map(id -> clubService.getClubById(id).orElse(null))
+                .filter(Objects::nonNull)
+                // orden opcional: por fecha del primer evento ascendente
+                .sorted(Comparator.comparing(
+                        c -> eventsByClub.get(c.getClubId()).stream()
+                                .map(Event::getDate)
+                                .min(Comparator.naturalOrder())
+                                .orElse(LocalDate.MAX)
+                ))
+                .collect(Collectors.toList());
+
+        // Exponemos EXACTAMENTE los nombres que va a usar el JSP
         model.addAttribute("eventsByClub", eventsByClub);
+        model.addAttribute("clubsForEvents", clubsForEvents);
     }
+
 
 
 

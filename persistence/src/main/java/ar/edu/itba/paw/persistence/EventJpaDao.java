@@ -66,7 +66,7 @@ public class EventJpaDao implements EventDao {
     """;
 
         @SuppressWarnings("unchecked")
-        final java.util.List<String> idTexts = em.createNativeQuery(idSql)
+        final List<String> idTexts = em.createNativeQuery(idSql)
                 .unwrap(org.hibernate.query.NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
@@ -74,10 +74,10 @@ public class EventJpaDao implements EventDao {
                 .setParameter("offset", offset)
                 .getResultList();
 
-        if (idTexts.isEmpty()) return java.util.List.of();
+        if (idTexts.isEmpty()) return List.of();
 
-        final java.util.List<java.util.UUID> ids = idTexts.stream()
-                .map(java.util.UUID::fromString)
+        final List<UUID> ids = idTexts.stream()
+                .map(UUID::fromString)
                 .toList();
 
         // 2) Entidades por IDs (JPQL) con el mismo orden lógico
