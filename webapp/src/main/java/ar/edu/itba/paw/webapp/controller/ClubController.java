@@ -46,15 +46,17 @@ public class ClubController {
     private final MenuService menuService;
     private final SecurityService securityService;
     private final TableService tableService;
+    private final ReviewService reviewService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService, TableService tableService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService, TableService tableService, ReviewService reviewService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
         this.menuService = menuService;
         this.securityService = securityService;
         this.tableService = tableService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping({"", "/"})
@@ -175,12 +177,11 @@ public class ClubController {
     }
 
 
-
     @GetMapping("/new")
     public String showClubForm(Model model) {
 
         User user = securityService.getVerifiedLoggedUser();
-        if(user!=null) model.addAttribute("user", user);
+        if (user != null) model.addAttribute("user", user);
         model.addAttribute("clubForm", new AddClubForm());
         model.addAttribute("postPath", "/clubs/create");
         model.addAttribute("priceValues", Price.values());
@@ -354,16 +355,17 @@ public class ClubController {
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
-    private void checkLoggedUser(UUID clubId){
+    private void checkLoggedUser(UUID clubId) {
         User user = securityService.getVerifiedLoggedUser();
-        if(user == null) {
+        if (user == null) {
             throw new UserNotFoundException("No se encontró el usuario logueado.");
         }
         List<User> clubUsers = clubService.getAdminsByClub(clubId);
-        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+        if (clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
             throw new UnauthorizedException("El usuario no es admin del club.");
         }
     }
+
     private void populateClubHandlerModel(Model model, Club club) {
         UUID clubId = club.getClubId();
         var photos = photoService.listByClub(clubId, 0, 1);
@@ -383,7 +385,7 @@ public class ClubController {
     }
 
     @PostMapping("/confirmClub")
-    private String logout(){
+    private String logout() {
         return "redirect:/logout";
     }
 

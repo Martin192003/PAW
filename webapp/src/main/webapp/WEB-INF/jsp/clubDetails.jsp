@@ -128,6 +128,46 @@
                 </c:otherwise>
             </c:choose>
         </div>
+        <c:if test="${isLoggedIn}">
+            <div class="review-form">
+                <form method="post" action="<c:url value='/clubs/${club.clubId}/reviews'/>">
+                    <label for="rating">Rating:</label>
+                    <select name="rating" id="rating" required>
+                        <c:forEach var="i" begin="1" end="5">
+                            <option value="${i}">${i}</option>
+                        </c:forEach>
+                    </select>
+                    <label for="comment">Comment:</label>
+                    <textarea name="comment" id="comment" rows="3" required></textarea>
+                    <button type="submit" class="btn btn-success">Submit Review</button>
+                </form>
+            </div>
+        </c:if>
+        <!-- Show club reviews -->
+        <div class="club-reviews">
+            <h3><i class="fa-solid fa-star"></i> <spring:message code="reviews.title" text="Reviews"/></h3>
+            <c:choose>
+                <c:when test="${not empty reviews}">
+                    <ul>
+                        <c:forEach var="review" items="${reviews}">
+                            <li>
+                                <strong><c:out value="${review.user.username}"/></strong>
+                                <span> - ${review.rating} <i class="fa-solid fa-star" style="color:#FFD700;"></i></span>
+                                <p><c:out value="${review.description}"/></p>
+                                <small>
+                                    <spring:message code="reviews.date" text="Date"/>:
+                                    <%--<fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/>--%>
+                                </small>
+                            </li>
+                        </c:forEach>
+                    </ul>
+                </c:when>
+                <c:otherwise>
+                    <p><spring:message code="reviews.empty" text="No reviews yet."/></p>
+                </c:otherwise>
+            </c:choose>
+        </div>
+
     </div>
 
         <!-- Fila con 2 dropdowns independientes -->

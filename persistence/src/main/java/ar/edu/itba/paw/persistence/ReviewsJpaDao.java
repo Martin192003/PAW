@@ -42,31 +42,31 @@ public class ReviewsJpaDao implements ReviewsDao {
     /** Emula tu INSERT ... ON CONFLICT de Postgres con SQL nativo y mapeo a entidad. */
     @Transactional
     public Review upsert(User user, Club club, int rating, String description) {
-        Objects.requireNonNull(user); Objects.requireNonNull(user.getId());
-        Objects.requireNonNull(club); Objects.requireNonNull(club.getClubId());
+        Objects.requireNonNull(user);
+        Objects.requireNonNull(user.getId());
+        Objects.requireNonNull(club);
+        Objects.requireNonNull(club.getClubId());
 
         UUID provisionalId = UUID.randomUUID();
 
-        UUID resultingId = (UUID) em.createNativeQuery("""
-                INSERT INTO reviews (review_id, user_id, club_id, rating, description)
-                VALUES (:rid, :uid, :cid, :rating, :desc)
-                ON CONFLICT (user_id, club_id) DO UPDATE
-                  SET rating = EXCLUDED.rating,
-                      description = EXCLUDED.description,
-                      created_at = NOW()
-                RETURNING review_id
-                """)
-                .setParameter("rid", provisionalId)
-                .setParameter("uid", user.getId())
-                .setParameter("cid", club.getClubId())
+        // Pass UUID objects directly to setParameter for PostgreSQL
+        em.createNativeQuery("""
+    INSERT INTO reviews (review_id, user_id, club_id, rating, description)
+    VALUES (:rid, :uid, :cid, :rating, :desc)
+    ON CONFLICT (user_id, club_id) DO UPDATE
+      SET rating = EXCLUDED.rating,
+          description = EXCLUDED.description,
+          created_at = NOW()
+""")
+                .setParameter("rid", provisionalId) // UUID, not String
+                .setParameter("uid", user.getId())  // UUID, not String
+                .setParameter("cid", club.getClubId()) // UUID, not String
                 .setParameter("rating", rating)
                 .setParameter("desc", description)
-                .getSingleResult();
+                .executeUpdate();
 
-        // Recuperamos la entidad administrada
-        return em.find(Review.class, resultingId);
-    }
-
+        return findByUserAndClub(user, club).orElse(null);
+}
     @Override
     @Transactional
     public boolean delete(UUID id) {
@@ -109,11 +109,12 @@ public class ReviewsJpaDao implements ReviewsDao {
     @Transactional(readOnly = true)
     public List<Review> findByClub(Club club) {
         return em.createQuery("""
-                SELECT r
-                FROM Review r
-                WHERE r.club = :c
-                ORDER BY r.createdAt DESC
-                """, Review.class)
+            SELECT r
+            FROM Review r
+            JOIN FETCH r.user
+            WHERE r.club = :c
+            ORDER BY r.createdAt DESC
+            """, Review.class)
                 .setParameter("c", club)
                 .getResultList();
     }

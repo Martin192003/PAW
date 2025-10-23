@@ -40,6 +40,25 @@ public class ReviewServiceImpl implements ReviewService {
         return sum / reviews.size();
     }
 
+    private void updateClubRating(Club club) {
+        double avg = getAverageRating(club.getClubId());
+        club.setRating(java.math.BigDecimal.valueOf(avg));
+        club.setQuantityRatings(reviewsDao.findByClub(club).size());
+        clubDao.update(
+                club.getClubId(),
+                club.getClubName(),
+                club.getLocation(),
+                club.getRating(),
+                club.getQuantityRatings(),
+                club.getPriceRange(),
+                club.getDescription(),
+                club.getContactInfo() != null ? club.getContactInfo().getId() : null,
+                club.getMusicGenre(),
+                club.getZone(),
+                club.getIsBar()
+        );
+    }
+
     @Override
     @Transactional
     public Review createReview(UUID userId, UUID clubId, int rating, String description) {
@@ -52,7 +71,9 @@ public class ReviewServiceImpl implements ReviewService {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
 
-        return reviewsDao.upsert(user, club, rating, description);
+        Review review = reviewsDao.upsert(user, club, rating, description);
+        updateClubRating(club);
+        return review;
     }
 
     @Override

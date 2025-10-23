@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -115,6 +116,7 @@ public class ClubDetailsController {
         Optional<Photo> coverPhoto = photoService.getCoverPhoto(clubId);
         List<Photo> carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
 
+        model.addAttribute("isLoggedIn", securityService.getVerifiedLoggedUser() != null);
         model.addAttribute("coverPhotoUrl", coverPhotoUrl);
         model.addAttribute("clubPhotos", carouselPhotos);
 
@@ -147,6 +149,16 @@ public class ClubDetailsController {
         return "clubDetails";
     }
 
+    @PostMapping("/{clubId}/reviews")
+    public String submitReview(@PathVariable UUID clubId,
+                               @RequestParam int rating,
+                               @RequestParam String comment,
+                               Principal principal) {
+        if (principal == null) return "redirect:/login";
+        User user = securityService.getVerifiedLoggedUser();
+        reviewService.createReview(user.getId(), clubId, rating, comment);
+        return "redirect:/clubs/" + clubId;
+    }
 
 
 
