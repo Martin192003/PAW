@@ -1,163 +1,84 @@
-.photo-carousel {
+/* ===== CARRUSEL EN CAPAS (ROBUSTO) ===== */
+#club-carousel.photo-carousel {
     position: relative;
     width: 100%;
     max-width: 800px;
     margin: 20px auto;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 20px rgba(0,0,0,.3);
 }
 
-.carousel-container {
+#club-carousel .carousel-container {
     position: relative;
     width: 100%;
     height: 400px;
     overflow: hidden;
+    background: #000;
 }
 
-.carousel-track {
-    display: flex;
-    transition: transform 0.3s ease;
+#club-carousel .carousel-track {
+    position: relative;
+    width: 100%;
     height: 100%;
-    width: max-content; /* Importante: permite que el track crezca */
 }
 
-.carousel-slide {
-    height: 100%;
-    flex-shrink: 0;
+#club-carousel .carousel-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .3s ease;
+    pointer-events: none;
 }
 
-.carousel-slide img {
+#club-carousel .carousel-slide.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#club-carousel .carousel-slide img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
-.carousel-btn {
+#club-carousel .carousel-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0,0,0,0.7);
-    color: white;
+    background: rgba(0,0,0,.7);
+    color: #fff;
     border: none;
-    width: 50px;
-    height: 50px;
+    width: 50px; height: 50px;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 18px;
-    z-index: 10;
-    transition: background 0.3s ease;
-}
-
-.carousel-btn:hover {
-    background: rgba(0,0,0,0.9);
-}
-
-.carousel-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.carousel-prev {
-    left: 15px;
-}
-
-.carousel-next {
-    right: 15px;
-}
-
-.carousel-indicators {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    padding: 15px 0;
-    background: rgba(0,0,0,0.1);
-}
-
-.carousel-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.5);
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.carousel-dot.active {
-    background: #fff;
-}
-
-.carousel-counter {
-    position: absolute;
-    bottom: 15px;
-    right: 15px;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 14px;
     z-index: 10;
 }
+#club-carousel .carousel-btn:hover { background: rgba(0,0,0,.9); }
+#club-carousel .carousel-btn:disabled { opacity: .3; cursor: not-allowed; }
+#club-carousel .carousel-prev { left: 15px; }
+#club-carousel .carousel-next { right: 15px; }
 
-.no-photos {
-    text-align: center;
-    padding: 60px 20px;
-    background: #f5f5f5;
-    border-radius: 12px;
-    color: #666;
+#club-carousel .carousel-indicators {
+    display: flex; justify-content: center; gap: 8px;
+    padding: 12px 0;
 }
+#club-carousel .carousel-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,.5); cursor: pointer;
+}
+#club-carousel .carousel-dot.active { background: #fff; }
 
-.no-photos i {
-    font-size: 48px;
-    margin-bottom: 15px;
-    color: #ccc;
+#club-carousel .carousel-counter {
+    position: absolute; bottom: 15px; right: 15px;
+    background: rgba(0,0,0,.7); color: #fff;
+    padding: 4px 10px; border-radius: 14px; font-size: 14px; z-index: 10;
 }
 
 @media (max-width: 768px) {
-    .photo-carousel {
-        margin: 10px;
-    }
-
-    .carousel-container {
-        height: 250px;
-    }
-
-    .carousel-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-}
-
-.photo-carousel h3 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-    color: #fff;
-    font-size: 1.2rem;
-}
-
-.photo-carousel h3 i {
-    color: #28a745;
-}
-
-.cover-photo-section {
-    margin-bottom: 2rem;
-}
-
-.gallery-section {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #333;
-}
-
-.detail-cover-photo {
-    margin-bottom: 2rem;
-}
-
-.photo-carousel {
-    margin-top: 1.5rem;
+    #club-carousel .carousel-container { height: 250px; }
+    #club-carousel .carousel-btn { width: 40px; height: 40px; }
 }
