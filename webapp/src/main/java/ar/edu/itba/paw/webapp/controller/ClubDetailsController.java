@@ -25,6 +25,7 @@ public class ClubDetailsController {
     private final PhotoService photoService;
     private final TableService tableService;
     private final SecurityService securityService;
+    private final ClubLayoutService clubLayoutService;
 
     private final ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
     private final Clock clock = Clock.system(zone);
@@ -33,12 +34,14 @@ public class ClubDetailsController {
                                  final ProductService productsService,
                                  final PhotoService photoService,
                                  final TableService tableService,
-                                 final SecurityService securityService) {
+                                 final SecurityService securityService,
+                                 final ClubLayoutService clubLayoutService) {
         this.clubService = clubService;
         this.productsService = productsService;
         this.photoService = photoService;
         this.tableService = tableService;
         this.securityService = securityService;
+        this.clubLayoutService = clubLayoutService;
     }
 
    @GetMapping("/{clubId}")
@@ -100,12 +103,18 @@ public class ClubDetailsController {
        var photos = photoService.listByClub(clubId, 0, 1);
        String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
 
+       // Obtener URL del layout desde ClubLayoutService (si existe)
+       String tableLayoutUrl = clubLayoutService.getLayoutByClub(clubId)
+               .map(l -> l.getUrl())
+               .orElse(null);
+       model.addAttribute("tableLayoutUrl", tableLayoutUrl);
+
        User user = securityService.getVerifiedLoggedUser();
-       if (user != null) {
-           model.addAttribute("user", user);
-       }
-       boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
-       model.addAttribute("isOwner", isOwner);
+        if (user != null) {
+            model.addAttribute("user", user);
+        }
+        boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
+        model.addAttribute("isOwner", isOwner);
 
        model.addAttribute("latitude",-34.5891429);
        model.addAttribute("longitude",-58.3961641);

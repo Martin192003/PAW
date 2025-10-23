@@ -9,6 +9,8 @@ import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,9 +50,10 @@ public class ClubController {
     private final SecurityService securityService;
     private final TableService tableService;
     private final EventService eventService;
+    private final ClubLayoutService clubLayoutService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, EventService eventService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService,  EventService eventService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
@@ -58,6 +61,7 @@ public class ClubController {
         this.securityService = securityService;
         this.tableService = tableService;
         this.eventService = eventService;
+        this.clubLayoutService = clubLayoutService;
     }
 
     @GetMapping({"", "/"})
@@ -257,6 +261,8 @@ public class ClubController {
         model.addAttribute("coverPhotoUrl", coverPhoto);
         model.addAttribute("clubPhotos", clubOnlyPhotos);
 
+        var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
+        String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
         model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
 
         EventAddForm eventForm = new EventAddForm();
@@ -270,6 +276,7 @@ public class ClubController {
         model.addAttribute("club", club);
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("coverPhotoUrl", coverPhoto);
+        model.addAttribute("tableLayoutUrl", tableLayoutUrl);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
@@ -312,9 +319,14 @@ public class ClubController {
                 ? "/resources/img/default-club-placeholder.png"
                 : clubOnlyPhotos.getFirst().getUrl();
         String coverPhotoUrl = clubOnlyPhotos.isEmpty() ? null : clubOnlyPhotos.get(0).getUrl();
+
+        var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
+        String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
+
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("club", club);
         model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("tableLayoutUrl", tableLayoutUrl);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
@@ -372,5 +384,37 @@ public class ClubController {
         model.addAttribute("eventsByClub", eventsByClub);
     }
 
+
+    @PostMapping("/club/{clubId}/layout")
+    public String uploadLayout(@PathVariable UUID clubId,
+                               @RequestParam("file") MultipartFile file,
+                               Principal principal,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            String email = principal.getName();
+            clubLayoutService.uploadLayout(clubId, email, file);
+            redirectAttributes.addFlashAttribute("successMessage", "Layout subido correctamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error al subir el layout: " + e.getMessage());
+        }
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @GetMapping("/club/{clubId}/layout/{layoutId}/image")
+    public ResponseEntity<byte[]> getLayoutImage(
+            @PathVariable UUID clubId,
+            @PathVariable UUID layoutId) {
+
+        var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
+
+        if (layoutOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ClubLayout layout = layoutOpt.get();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(layout.getContentType()))
+                .body(layout.getData());
+    }
 
 }

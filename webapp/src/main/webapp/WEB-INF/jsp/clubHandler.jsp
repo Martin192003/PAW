@@ -72,6 +72,26 @@
                     class="fa-solid fa-pen"></i></button>
         </div>
     </div>
+    <h2><spring:message code="layout.title" text="Layout de mesas"/></h2>
+    <div class="form-group">
+        <c:choose>
+            <c:when test="${not empty tableLayoutUrl}">
+                <div class="table-layout-container" style="text-align:center; margin-bottom:12px;">
+                    <img src="<c:url value='${tableLayoutUrl}' />" alt="Layout de mesas"
+                         style="max-width:100%; border-radius:8px; border:1px solid #333;"/>
+                </div>
+            </c:when>
+            <c:otherwise>
+                <p><spring:message code="layout.available" text="No hay layout por el momento"/></p>
+            </c:otherwise>
+        </c:choose>
+
+        <button type="button" class="btn btn-success btn-edit-small"
+                onclick="document.getElementById('editLayoutModal').style.display='flex'">
+            <i class="fa-solid fa-pen"></i>
+        </button>
+    </div>
+
     <h2><spring:message code="menu.menu"/></h2>
     <table class="styled-table">
         <thead>
@@ -459,7 +479,7 @@
         </form>
     </div>
 </div>
-
+<!-- Modal editar mesa -->
 <div id="tableEditModal" class="modal">
     <div class="modal-content"><span class="modal-close" onclick="closeTableEditModal()" style="color:#fff;">&times;</span>
         <h2><spring:message code="title.editTable"/></h2>
@@ -578,6 +598,22 @@
     </div>
 </div>
 
+<!-- Modal subir layout -->
+<div id="editLayoutModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeLayoutModal()">&times;</span>
+        <h3><spring:message code="title.editTableLayout" text="Subir layout de mesas"/></h3>
+        <form method="post" action="<c:url value='/clubs/club/${club.clubId}/layout' />" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required/>
+            <div class="modal-actions" style="margin-top:12px;">
+                <button type="button" class="btn btn-secondary" onclick="closeLayoutModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
+            </div>
+        </form>
+    </div>
+</div>
 <script>
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -770,6 +806,16 @@
             preview.innerHTML = '';
         }
     });
+    function closeLayoutModal() {
+        const modal = document.getElementById('editLayoutModal');
+        if (!modal) return;
+        modal.style.display = 'none';
+        const fileInput = modal.querySelector('input[type="file"]');
+        if (fileInput) fileInput.value = '';
+        // reutiliza la función existente que limpia errores si está definida
+        try { clearFormErrors('editLayoutModal'); } catch(e){}
+    }
+
 </script>
 </body>
 </html>
