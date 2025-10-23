@@ -79,44 +79,37 @@
             </div>
         </div>
 
-        <div class="detail-description">
-            <p><c:out value="${club.description}" /></p>
-        </div>
-
-        <div class="photo-carousel">
+        <div id="club-carousel" class="photo-carousel">
             <h3><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h3>
             <c:choose>
                 <c:when test="${not empty clubPhotos}">
                     <div class="carousel-container">
                         <div class="carousel-track" id="carouselTrack">
                             <c:forEach var="photo" items="${clubPhotos}" varStatus="status">
-                                <div class="carousel-slide">
+                                <div class="carousel-slide${status.index == 0 ? ' active' : ''}">
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${status.index + 1}"
-                                         loading="lazy">
+                                         loading="lazy" draggable="false">
                                 </div>
                             </c:forEach>
                         </div>
 
                         <c:if test="${fn:length(clubPhotos) > 1}">
-                            <button class="carousel-btn carousel-prev" id="prevBtn">
+                            <button class="carousel-btn carousel-prev" id="prevBtn" type="button">
                                 <i class="fa-solid fa-chevron-left"></i>
                             </button>
-                            <button class="carousel-btn carousel-next" id="nextBtn">
+                            <button class="carousel-btn carousel-next" id="nextBtn" type="button">
                                 <i class="fa-solid fa-chevron-right"></i>
                             </button>
 
-                            <div class="carousel-counter" id="carouselCounter">
-                                1 / ${fn:length(clubPhotos)}
-                            </div>
+                            <div class="carousel-counter" id="carouselCounter">—</div>
                         </c:if>
                     </div>
 
                     <c:if test="${fn:length(clubPhotos) > 1}">
                         <div class="carousel-indicators" id="carouselIndicators">
                             <c:forEach begin="0" end="${fn:length(clubPhotos) - 1}" var="i">
-                                <button class="carousel-dot ${i == 0 ? 'active' : ''}"
-                                        onclick="goToSlide(${i})"></button>
+                                <button class="carousel-dot${i == 0 ? ' active' : ''}" type="button"></button>
                             </c:forEach>
                         </div>
                     </c:if>
@@ -324,9 +317,9 @@
                                     <div class="review-item-header">
                                         <strong class="review-user"><c:out value="${review.user.username}"/></strong>
                                         <span class="review-rating" aria-label="rating">
-                  ${review.rating}
-                  <i class="fa-solid fa-star" style="color:#FFD700;"></i>
-                </span>
+                                            ${review.rating}
+                                            <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                                        </span>
                                     </div>
                                     <p class="review-text"><c:out value="${review.description}"/></p>
                                     <small class="review-date">
@@ -348,192 +341,188 @@
 
 
     </div>
-        <script>
-            document.addEventListener('DOMContentLoaded', async () => {
-                const address = "${club.location}"; // dirección guardada en la DB
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const address = "${club.location}"; // dirección guardada en la DB
 
-                let lat = -34.5891429; // coordenadas por defecto
-                let lng = -58.3961641;
+            let lat = -34.5891429; // coordenadas por defecto
+            let lng = -58.3961641;
 
-                try {
-                    const response = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(address));
-                    const results = await response.json();
-                    if (results && results.length > 0) {
-                        lat = results[0].lat;
-                        lng = results[0].lon;
-                    } else {
-                        console.warn("No se encontró la ubicación, usando coordenadas por defecto");
-                    }
-                } catch (error) {
-                    console.error("Error al geocodificar la dirección:", error);
+            try {
+                const response = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(address));
+                const results = await response.json();
+                if (results && results.length > 0) {
+                    lat = results[0].lat;
+                    lng = results[0].lon;
+                } else {
+                    console.warn("No se encontró la ubicación, usando coordenadas por defecto");
                 }
-
-                const map = L.map('clubMap').setView([lat, lng], 16);
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
-
-                L.marker([lat, lng]).addTo(map)
-                    .bindPopup(`<b>${"${club.clubName}"}</b><br>${address}`)
-                    .openPopup();
-            });
-        </script>
-        <c:if test="${not empty reservationSent}">
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    const toast = document.getElementById("reservationToast");
-                    toast.classList.add("show");
-
-                    // Se cierra automáticamente después de 3 segundos
-                    setTimeout(() => {
-                        toast.classList.remove("show");
-                    }, 3000);
-                });
-            </script>
-        </c:if>
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                function breakEveryN(str, n) {
-                    if (!str) return '';
-                    const s = String(str).trim();
-                    if (s.length <= n) return s;
-                    const parts = [];
-                    for (let i = 0; i < s.length; i += n) parts.push(s.slice(i, i + n));
-                    return parts.join('\n');
-                }
-
-                // Aplica al título (cada 30)
-                const titleEl = document.querySelector('.detail-title');
-                if (titleEl && !titleEl.dataset.broken) {
-                    titleEl.innerText = breakEveryN(titleEl.textContent, 30);
-                    titleEl.dataset.broken = '1';
-                }
-
-                // Aplica a la descripción (cada 100)
-                const descEl = document.querySelector('.detail-description p');
-                if (descEl && !descEl.dataset.broken) {
-                    descEl.innerText = breakEveryN(descEl.textContent, 100);
-                    descEl.dataset.broken = '1';
-                }
-
-                const dropdowns = Array.from(document.querySelectorAll('.bb-dropdown'));
-                function closeAll() {
-                    dropdowns.forEach(dd => {
-                        dd.querySelector('.bb-btn')?.classList.remove('active');
-                        dd.querySelector('.bb-panel')?.classList.remove('show');
-                    });
-                }
-                dropdowns.forEach(dd => {
-                    const btn = dd.querySelector('.bb-btn');
-                    const panel = dd.querySelector('.bb-panel');
-                    btn?.addEventListener('click', (e) => {
-                        const isOpen = panel?.classList.contains('show');
-                        closeAll();
-                        if (!isOpen) { btn.classList.add('active'); panel.classList.add('show'); }
-                        e.stopPropagation();
-                    });
-                });
-                window.addEventListener('click', (e) => {
-                    if (!e.target.closest('.bb-dropdown')) closeAll();
-                });
-
-                const reserveBtn   = document.getElementById('reserveBtn');
-                const form         = document.getElementById('reserveForm');
-                const bookingDate  = document.getElementById('bookingDate');
-
-                const today = new Date();
-                const yyyy  = today.getFullYear();
-                const mm    = String(today.getMonth()+1).padStart(2,'0');
-                const dd    = String(today.getDate()).padStart(2,'0');
-                if (bookingDate && !bookingDate.getAttribute('min')) {
-                    bookingDate.setAttribute('min', `${yyyy}-${mm}-${dd}`);
-                }
-
-                function updateReserveButtonState(){
-                    if (!reserveBtn || !form) return;
-                    const selected = form.querySelector('input[type="radio"][name="tableId"]:checked');
-                    reserveBtn.disabled = !selected;
-                }
-
-                (function autoPickFirstIfAny(){
-                    if (!form) return;
-                    const radios = form.querySelectorAll('input[type="radio"][name="tableId"]');
-                    if (radios.length > 0) {
-                        const anyChecked = Array.from(radios).some(r => r.checked);
-                        if (!anyChecked) radios[0].checked = true;
-                    }
-                })();
-
-                updateReserveButtonState();
-
-                if (bookingDate) {
-                    bookingDate.addEventListener('change', () => {
-                        if (bookingDate.value) {
-                            window.location.href = "${clubUrl}?date=" + bookingDate.value + "#dd-tables";
-                        }
-                    });
-                }
-
-                if (form && reserveBtn){
-                    form.addEventListener('submit', (e) => {
-                        if (form.dataset.submitting === '1') { e.preventDefault(); return; }
-
-                        const selected = form.querySelector('input[type="radio"][name="tableId"]:checked');
-                        if (!selected) {
-                            e.preventDefault();
-                            updateReserveButtonState();
-                            return;
-                        }
-
-                        let hidTable = form.querySelector('input[type="hidden"][name="tableId"]');
-                        if (!hidTable) {
-                            hidTable = document.createElement('input');
-                            hidTable.type = 'hidden';
-                            hidTable.name = 'tableId';
-                            form.appendChild(hidTable);
-                        }
-                        hidTable.value = selected.value;
-
-                        let hidDate = form.querySelector('input[type="hidden"][name="date"]');
-                        if (!hidDate) {
-                            hidDate = document.createElement('input');
-                            hidDate.type = 'hidden';
-                            hidDate.name = 'date';
-                            form.appendChild(hidDate);
-                        }
-                        if (!bookingDate || !bookingDate.value) {
-                            e.preventDefault();
-                            return;
-                        }
-                        hidDate.value = bookingDate.value;
-
-                        form.dataset.submitting = '1';
-                        reserveBtn.disabled = true;
-                        reserveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <spring:message code="button.reservation"/>';
-
-                        form.querySelectorAll('input, button, select').forEach(el => {
-                            const keepEnabled = (el === hidTable) || (el === hidDate) || (el === selected);
-                            if (!keepEnabled) el.disabled = true;
-                        });
-                    });
-                }
-
-                if (location.hash === "#dd-tables") {
-                    const ddEl = document.getElementById('dd-tables');
-                    if (ddEl) {
-                        ddEl.querySelector('.bb-btn')?.classList.add('active');
-                        ddEl.querySelector('.bb-panel')?.classList.add('show');
-                    }
-                }
-            });
-
-            function cerrarModal() {
-                window.location.href = "${clubUrl}";
+            } catch (error) {
+                console.error("Error al geocodificar la dirección:", error);
             }
+
+            const map = L.map('clubMap').setView([lat, lng], 16);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup(`<b>${"${club.clubName}"}</b><br>${address}`)
+                .openPopup();
+        });
+    </script>
+    <c:if test="${not empty reservationSent}">
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const toast = document.getElementById("reservationToast");
+                toast.classList.add("show");
+                setTimeout(() => { toast.classList.remove("show"); }, 3000);
+            });
         </script>
-        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    </div>
+    </c:if>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            function breakEveryN(str, n) {
+                if (!str) return '';
+                const s = String(str).trim();
+                if (s.length <= n) return s;
+                const parts = [];
+                for (let i = 0; i < s.length; i += n) parts.push(s.slice(i, i + n));
+                return parts.join('\n');
+            }
+
+            // Aplica al título (cada 30)
+            const titleEl = document.querySelector('.detail-title');
+            if (titleEl && !titleEl.dataset.broken) {
+                titleEl.innerText = breakEveryN(titleEl.textContent, 30);
+                titleEl.dataset.broken = '1';
+            }
+
+            // Aplica a la descripción (cada 100)
+            const descEl = document.querySelector('.detail-description p');
+            if (descEl && !descEl.dataset.broken) {
+                descEl.innerText = breakEveryN(descEl.textContent, 100);
+                descEl.dataset.broken = '1';
+            }
+
+            const dropdowns = Array.from(document.querySelectorAll('.bb-dropdown'));
+            function closeAll() {
+                dropdowns.forEach(dd => {
+                    dd.querySelector('.bb-btn')?.classList.remove('active');
+                    dd.querySelector('.bb-panel')?.classList.remove('show');
+                });
+            }
+            dropdowns.forEach(dd => {
+                const btn = dd.querySelector('.bb-btn');
+                const panel = dd.querySelector('.bb-panel');
+                btn?.addEventListener('click', (e) => {
+                    const isOpen = panel?.classList.contains('show');
+                    closeAll();
+                    if (!isOpen) { btn.classList.add('active'); panel.classList.add('show'); }
+                    e.stopPropagation();
+                });
+            });
+            window.addEventListener('click', (e) => {
+                if (!e.target.closest('.bb-dropdown')) closeAll();
+            });
+
+            const reserveBtn   = document.getElementById('reserveBtn');
+            const form         = document.getElementById('reserveForm');
+            const bookingDate  = document.getElementById('bookingDate');
+
+            const today = new Date();
+            const yyyy  = today.getFullYear();
+            const mm    = String(today.getMonth()+1).padStart(2,'0');
+            const dd    = String(today.getDate()).padStart(2,'0');
+            if (bookingDate && !bookingDate.getAttribute('min')) {
+                bookingDate.setAttribute('min', `${yyyy}-${mm}-${dd}`);
+            }
+
+            function updateReserveButtonState(){
+                if (!reserveBtn || !form) return;
+                const selected = form.querySelector('input[type="radio"][name="tableId"]:checked');
+                reserveBtn.disabled = !selected;
+            }
+
+            (function autoPickFirstIfAny(){
+                if (!form) return;
+                const radios = form.querySelectorAll('input[type="radio"][name="tableId"]');
+                if (radios.length > 0) {
+                    const anyChecked = Array.from(radios).some(r => r.checked);
+                    if (!anyChecked) radios[0].checked = true;
+                }
+            })();
+
+            updateReserveButtonState();
+
+            if (bookingDate) {
+                bookingDate.addEventListener('change', () => {
+                    if (bookingDate.value) {
+                        window.location.href = "${clubUrl}?date=" + bookingDate.value + "#dd-tables";
+                    }
+                });
+            }
+
+            if (form && reserveBtn){
+                form.addEventListener('submit', (e) => {
+                    if (form.dataset.submitting === '1') { e.preventDefault(); return; }
+
+                    const selected = form.querySelector('input[type="radio"][name="tableId"]:checked');
+                    if (!selected) {
+                        e.preventDefault();
+                        updateReserveButtonState();
+                        return;
+                    }
+
+                    let hidTable = form.querySelector('input[type="hidden"][name="tableId"]');
+                    if (!hidTable) {
+                        hidTable = document.createElement('input');
+                        hidTable.type = 'hidden';
+                        hidTable.name = 'tableId';
+                        form.appendChild(hidTable);
+                    }
+                    hidTable.value = selected.value;
+
+                    let hidDate = form.querySelector('input[type="hidden"][name="date"]');
+                    if (!hidDate) {
+                        hidDate = document.createElement('input');
+                        hidDate.type = 'hidden';
+                        hidDate.name = 'date';
+                        form.appendChild(hidDate);
+                    }
+                    if (!bookingDate || !bookingDate.value) {
+                        e.preventDefault();
+                        return;
+                    }
+                    hidDate.value = bookingDate.value;
+
+                    form.dataset.submitting = '1';
+                    reserveBtn.disabled = true;
+                    reserveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <spring:message code="button.reservation"/>';
+
+                    form.querySelectorAll('input, button, select').forEach(el => {
+                        const keepEnabled = (el === hidTable) || (el === hidDate) || (el === selected);
+                        if (!keepEnabled) el.disabled = true;
+                    });
+                });
+            }
+
+            if (location.hash === "#dd-tables") {
+                const ddEl = document.getElementById('dd-tables');
+                if (ddEl) {
+                    ddEl.querySelector('.bb-btn')?.classList.add('active');
+                    ddEl.querySelector('.bb-panel')?.classList.add('show');
+                }
+            }
+        });
+
+        function cerrarModal() {
+            window.location.href = "${clubUrl}";
+        }
+    </script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</div>
 </div>
 <!-- Pop-up de confirmación de reserva -->
 <div id="reservationToast" class="toast-popup">
@@ -541,77 +530,82 @@
     <span><spring:message code="reservation.sent"/></span>
 </div>
 
+<!-- === Carrusel: JS robusto, scopeado e idempotente === -->
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const track = document.getElementById('carouselTrack');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const counter = document.getElementById('carouselCounter');
-        const indicators = document.querySelectorAll('.carousel-dot');
+        const root = document.getElementById('club-carousel');
+        if (!root) return;
 
-        if (!track) return; // No hay carrusel
+        const track = root.querySelector('#carouselTrack');
+        if (!track) return;
 
-        const slides = track.children;
-        const totalSlides = slides.length;
-        let currentSlide = 0;
+        let slides = Array.from(track.querySelectorAll('.carousel-slide'));
+        if (!slides.length) return;
 
-        if (totalSlides <= 1) return; // Una sola foto o ninguna
+        const prevBtn = root.querySelector('#prevBtn');
+        const nextBtn = root.querySelector('#nextBtn');
+        const counter = root.querySelector('#carouselCounter');
+        const indicatorsBox = root.querySelector('#carouselIndicators');
+        const dots = indicatorsBox ? Array.from(indicatorsBox.querySelectorAll('.carousel-dot')) : [];
 
-        function updateCarousel() {
-            const translateX = -currentSlide * 100;
-            track.style.transform = `translateX(${translateX}%)`;
+        let current = Math.max(0, slides.findIndex(s => s.classList.contains('active')));
+        if (current === -1) current = 0;
 
-            // Actualizar contador
-            if (counter) {
-                counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
-            }
-
-            // Actualizar indicadores
-            indicators.forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentSlide);
-            });
-
-            // Actualizar botones
-            if (prevBtn) prevBtn.disabled = currentSlide === 0;
-            if (nextBtn) nextBtn.disabled = currentSlide === totalSlides - 1;
+        function refreshRefs() {
+            slides = Array.from(track.querySelectorAll('.carousel-slide'));
         }
 
-        function nextSlide() {
-            if (currentSlide < totalSlides - 1) {
-                currentSlide++;
-                updateCarousel();
+        function paint() {
+            refreshRefs();
+            const total = slides.length;
+
+            if (!total) {
+                if (counter) counter.textContent = '';
+                return;
             }
+
+            if (current < 0) current = 0;
+            if (current > total - 1) current = total - 1;
+
+            // Si usás transform por % en el CSS, no tocamos. Solo marcamos "active"
+            slides.forEach((s, i) => s.classList.toggle('active', i === current));
+            dots.forEach((d, i) => d.classList.toggle('active', i === current));
+
+            if (counter) counter.textContent = (current + 1) + ' / ' + total;
+
+            if (prevBtn) prevBtn.disabled = (current === 0);
+            if (nextBtn) nextBtn.disabled = (current === total - 1);
+
+            // Si tu CSS apila slides, podés además forzar translateX por slide:
+            // track.style.transform = 'translateX(-' + (current * 100) + '%)';
         }
 
-        function prevSlide() {
-            if (currentSlide > 0) {
-                currentSlide--;
-                updateCarousel();
-            }
+        function goTo(i) {
+            refreshRefs();
+            const total = slides.length;
+            if (i < 0 || i >= total) return;
+            current = i;
+            paint();
         }
+        const next = () => goTo(current + 1);
+        const prev = () => goTo(current - 1);
 
-        function goToSlide(index) {
-            if (index >= 0 && index < totalSlides) {
-                currentSlide = index;
-                updateCarousel();
-            }
-        }
+        if (prevBtn) prevBtn.addEventListener('click', prev);
+        if (nextBtn) nextBtn.addEventListener('click', next);
+        dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
 
-        // Event listeners
-        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
-        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+        // Inicializar tras carga de imágenes (y fallback)
+        const imgs = track.querySelectorAll('img');
+        let loaded = 0;
+        const done = () => { loaded++; if (loaded === imgs.length) requestAnimationFrame(paint); };
+        imgs.forEach(img => (img.complete ? done() : (img.onload = img.onerror = done)));
+        requestAnimationFrame(paint);
 
-        // Hacer goToSlide global para los indicadores
-        window.goToSlide = goToSlide;
-
-        // Navegación con teclado
+        // Navegación por teclado
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') prevSlide();
-            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prev();
+            if (e.key === 'ArrowRight') next();
         });
-
-        // Inicializar
-        updateCarousel();
     });
 </script>
 </body>
