@@ -1,7 +1,9 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -25,6 +28,7 @@ public class ClubDetailsController {
     private final PhotoService photoService;
     private final TableService tableService;
     private final SecurityService securityService;
+    private final ReviewService reviewService;
     private final ClubLayoutService clubLayoutService;
 
     private final ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
@@ -35,13 +39,15 @@ public class ClubDetailsController {
                                  final PhotoService photoService,
                                  final TableService tableService,
                                  final SecurityService securityService,
-                                 final ClubLayoutService clubLayoutService) {
+                                 final ClubLayoutService clubLayoutService
+                                 final ReviewService reviewService) {
         this.clubService = clubService;
         this.productsService = productsService;
         this.photoService = photoService;
         this.tableService = tableService;
         this.securityService = securityService;
         this.clubLayoutService = clubLayoutService;
+        this.reviewService = reviewService;
     }
 
    @GetMapping("/{clubId}")
@@ -116,6 +122,13 @@ public class ClubDetailsController {
         boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
         model.addAttribute("isOwner", isOwner);
 
+       Optional<Photo> coverPhoto = photoService.getCoverPhoto(clubId);
+       List<Photo> carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+
+       model.addAttribute("isLoggedIn", securityService.getVerifiedLoggedUser() != null);
+       model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+       model.addAttribute("clubPhotos", carouselPhotos);
+
        model.addAttribute("latitude",-34.5891429);
        model.addAttribute("longitude",-58.3961641);
        model.addAttribute("club", club);
@@ -131,8 +144,32 @@ public class ClubDetailsController {
            model.addAttribute("dayEnd", end);
        }
 
+       List<Review> reviews = reviewService.getReviewsByClub(clubId);
+       model.addAttribute("reviews", reviews);
+
+       // Verificar si el usuario actual tiene una review
+       if (user != null) {
+           Optional<Review> userReview = reviewService.getUserReviewForClub(user.getId(), clubId);
+           model.addAttribute("userReview", userReview.orElse(null));
+           model.addAttribute("isAuthenticated", true);
+       } else {
+           model.addAttribute("isAuthenticated", false);
+       }
+
        return "clubDetails";
    }
+
+    @PostMapping("/{clubId}/reviews")
+    public String submitReview(@PathVariable UUID clubId,
+                               @RequestParam int rating,
+                               @RequestParam String comment,
+                               Principal principal) {
+        if (principal == null) return "redirect:/login";
+        User user = securityService.getVerifiedLoggedUser();
+        reviewService.createReview(user.getId(), clubId, rating, comment);
+        return "redirect:/clubs/" + clubId;
+    }
+
 
 
     private String toLocationText(final String location) {

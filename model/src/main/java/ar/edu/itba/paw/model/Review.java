@@ -18,7 +18,8 @@ public class Review {
     @Column(name = "review_id", columnDefinition = "UUID", nullable = false, updatable = false)
     private UUID reviewId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    //ESTABA EN LAZY Y LO PUSE EN EAGER SI NO NO ANDA
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

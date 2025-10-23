@@ -79,7 +79,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${local.db.pass}")
     private String dbPass;
 
-    @Value("${app.schema.init:false}")
+    @Value("${local.schema.init:false}")
     private boolean runSchema;
 
     @Bean

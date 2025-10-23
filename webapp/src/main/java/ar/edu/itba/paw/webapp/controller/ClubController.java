@@ -51,15 +51,17 @@ public class ClubController {
     private final TableService tableService;
     private final EventService eventService;
     private final ClubLayoutService clubLayoutService;
+    private final ReviewService reviewService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService,  EventService eventService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService,  EventService eventService, ReviewService reviewService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
         this.menuService = menuService;
         this.securityService = securityService;
         this.tableService = tableService;
+        this.reviewService = reviewService;
         this.eventService = eventService;
         this.clubLayoutService = clubLayoutService;
     }
@@ -181,11 +183,12 @@ public class ClubController {
         return "index";
     }
 
+
     @GetMapping("/new")
     public String showClubForm(Model model) {
 
         User user = securityService.getVerifiedLoggedUser();
-        if(user!=null) model.addAttribute("user", user);
+        if (user != null) model.addAttribute("user", user);
         model.addAttribute("clubForm", new AddClubForm());
         model.addAttribute("postPath", "/clubs/create");
         model.addAttribute("priceValues", Price.values());
@@ -217,6 +220,21 @@ public class ClubController {
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
                 contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getCbu(), f.getImage()
         );
+
+        MultipartFile image = f.getImage();
+        if (image != null && !image.isEmpty()) {
+            try {
+                photoService.uploadCover(
+                        newClub.getClubId(),
+                        contact.getId(),
+                        image.getOriginalFilename(),
+                        image.getContentType() != null ? image.getContentType() : "application/octet-stream",
+                        image.getBytes()
+                );
+            } catch (IOException e) {
+                System.err.println("Error uploading photo during club creation: " + e.getMessage());
+            }
+        }
 
         if (roleAntes == Role.USER) {
             User updatedUser = userService.findById(contact.getId());
@@ -261,6 +279,9 @@ public class ClubController {
 
         model.addAttribute("coverPhotoUrl", coverPhoto);
         model.addAttribute("clubPhotos", clubOnlyPhotos);
+
+        List<Photo> carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+        model.addAttribute("clubPhotos", carouselPhotos);
 
         var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
         String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
@@ -379,6 +400,17 @@ public class ClubController {
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
+    private void checkLoggedUser(UUID clubId) {
+        User user = securityService.getVerifiedLoggedUser();
+        if (user == null) {
+            throw new UserNotFoundException("No se encontró el usuario logueado.");
+        }
+        List<User> clubUsers = clubService.getAdminsByClub(clubId);
+        if (clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+    }
+
     private void populateClubHandlerModel(Model model, Club club) {
         UUID clubId = club.getClubId();
         var photos = photoService.listByClub(clubId, 0, 50);
@@ -423,18 +455,9 @@ public class ClubController {
         model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
     }
 
-    private void checkLoggedUser(UUID clubId){
-        User user = securityService.getVerifiedLoggedUser();
-        if(user == null) {
-            throw new UserNotFoundException("No se encontró el usuario logueado.");
-        }
-        List<User> clubUsers = clubService.getAdminsByClub(clubId);
-        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
-        }
-    }
+
     @PostMapping("/confirmClub")
-    private String logout(){
+    private String logout() {
         return "redirect:/logout";
     }
 
@@ -449,6 +472,83 @@ public class ClubController {
         return null;
     }
 
+    @PostMapping("/club/{clubId}/gallery")
+    public String addPhotosToGallery(@PathVariable UUID clubId,
+                                     @RequestParam("files") MultipartFile[] files,
+                                     RedirectAttributes redirectAttributes) {
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        int uploaded = 0;
+        for (MultipartFile file : files) {
+            if (file != null && !file.isEmpty()) {
+                try {
+                    photoService.uploadCarousel(
+                            clubId,
+                            user.getId(),
+                            file.getOriginalFilename(),
+                            file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                            file.getBytes()
+                    );
+                    uploaded++;
+                } catch (IOException e) {
+                    // Optionally log or handle error
+                }
+            }
+        }
+        if (uploaded > 0) {
+            redirectAttributes.addFlashAttribute("success", "photos.added.successfully");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "photos.upload.error");
+        }
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @PostMapping("/club/{clubId}/cover")
+    public String uploadCover(@PathVariable UUID clubId,
+                              @RequestParam("file") MultipartFile file,
+                              Principal principal) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        photoService.uploadCover(
+                clubId,
+                user.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @PostMapping("/club/{clubId}/carousel")
+    public String uploadCarousel(@PathVariable UUID clubId,
+                                 @RequestParam("file") MultipartFile file,
+                                 Principal principal) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        photoService.uploadCarousel(
+                clubId,
+                user.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
     private void addEventsByClubToModel(List<Club> clubs, Model model) {
         Map<UUID, List<Event>> eventsByClub = clubs.stream()
                 .collect(Collectors.toMap(

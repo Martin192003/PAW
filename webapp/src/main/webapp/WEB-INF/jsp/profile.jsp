@@ -69,7 +69,7 @@
             <span class="profile-label"><spring:message code="form.password"/>:</span>
             <span class="profile-value">••••••••</span>
             <button type="button" class="btn btn-success btn-edit-small"
-                    onclick="window.location.href='<c:url value='/forgot-password'/>'"><i class="fa-solid fa-key"></i>
+                    onclick="openModal('editPasswordModal')"><i class="fa-solid fa-key"></i>
             </button>
         </div>
     </div>
@@ -159,6 +159,29 @@
             <form:errors path="cellphone" cssClass="error"/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editCellphoneModal')">
+                    <spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
+            </div>
+        </form:form>
+    </div>
+</div>
+
+<!-- MODAL PASSWORD -->
+<div id="editPasswordModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal('editPasswordModal')">&times;</span>
+        <form:form action="${pageContext.request.contextPath}/profile/edit/password" method="post"
+                   modelAttribute="editUserForm">
+            <label for="password"><spring:message code="form.password"/></label>
+            <form:password path="password" id="password"/>
+            <form:errors path="password" cssClass="error"/>
+
+            <label for="confirmPassword"><spring:message code="form.confirmPassword"/></label>
+            <form:password path="confirmPassword" id="confirmPassword"/>
+            <form:errors path="confirmPassword" cssClass="error"/>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editPasswordModal')">
                     <spring:message code="button.cancel"/></button>
                 <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
             </div>

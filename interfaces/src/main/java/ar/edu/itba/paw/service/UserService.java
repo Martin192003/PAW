@@ -29,4 +29,5 @@ public interface UserService {
     User authenticateAndGetUser(String usernameOrEmail, String password);
     boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
     User findByResetPasswordToken(String token);
+    boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword);
 }

@@ -30,4 +30,8 @@ public interface PhotoService {
     UUID uploadPhotoForClub(UUID clubId, String userEmail, MultipartFile file) throws IOException;
     public UUID uploadPhotoForEvent(UUID eventId, String userEmail, MultipartFile file) throws IOException;
 
+    UUID uploadCover(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
+    UUID uploadCarousel(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
+    Optional<Photo> getCoverPhoto(UUID clubId);
+    List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset);
 }

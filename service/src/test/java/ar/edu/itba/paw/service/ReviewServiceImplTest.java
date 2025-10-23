@@ -3,6 +3,7 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ReviewsDao;
+import ar.edu.itba.paw.persistence.UserDao;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,8 +31,11 @@ public class ReviewServiceImplTest {
     @Mock
     private ClubDao clubDao;
 
+    @Mock
+    private UserDao userDao;
+
     @InjectMocks
-    private ReviewServiceImpl reviewService = new ReviewServiceImpl(reviewsDao, clubDao);
+    private ReviewServiceImpl reviewService;
 
     @Test
     public void testGetAverageRatingWithReviews() {

@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/sidebar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/activity.css' />">
+    <link rel="stylesheet" href="<c:url value='/resources/css/carousel.css' />" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
 </head>
@@ -99,7 +100,66 @@
             <i class="fa-solid fa-pen"></i>
         </button>
     </div>
+    <!-- Sección de Galería de Fotos -->
+    <div class="photo-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h2>
+            <div>
+                <button type="button" class="btn btn-info" onclick="openAddCarouselPhotoModal()">
+                    <i class="fa-solid fa-plus"></i> Add Carousel Photo
+                </button>
+                <button type="button" class="btn btn-success" onclick="openAddPhotosModal()">
+                    <i class="fa-solid fa-plus"></i> <spring:message code="button.addPhotos" text="Agregar Fotos"/>
+                </button>
+            </div>
+        </div>
+        <h2><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h2>
 
+
+        <c:choose>
+            <c:when test="${not empty clubPhotos}">
+                <div class="carousel-container">
+                    <div class="carousel-track" id="carouselTrack">
+                        <c:forEach var="photo" items="${clubPhotos}" varStatus="status">
+                            <div class="carousel-slide">
+                                <img src="<c:url value='${photo.url}'/>"
+                                     alt="<c:out value='${club.clubName}'/> - Foto ${status.index + 1}"
+                                     loading="lazy">
+                            </div>
+                        </c:forEach>
+                    </div>
+
+                    <c:if test="${fn:length(clubPhotos) > 1}">
+                        <button class="carousel-btn carousel-prev" id="prevBtn">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button class="carousel-btn carousel-next" id="nextBtn">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+
+                        <div class="carousel-counter" id="carouselCounter">
+                            1 / ${fn:length(clubPhotos)}
+                        </div>
+                    </c:if>
+                </div>
+
+                <c:if test="${fn:length(clubPhotos) > 1}">
+                    <div class="carousel-indicators" id="carouselIndicators">
+                        <c:forEach begin="0" end="${fn:length(clubPhotos) - 1}" var="i">
+                            <button class="carousel-dot ${i == 0 ? 'active' : ''}"
+                                    onclick="goToSlide(${i})"></button>
+                        </c:forEach>
+                    </div>
+                </c:if>
+            </c:when>
+            <c:otherwise>
+                <div class="no-photos">
+                    <i class="fa-solid fa-camera"></i>
+                    <p><spring:message code="photos.noPhotos" text="No hay fotos disponibles para la galería"/></p>
+                </div>
+            </c:otherwise>
+        </c:choose>
+    </div>
     <h2><spring:message code="menu.menu"/></h2>
     <table class="styled-table">
         <thead>
@@ -415,6 +475,50 @@
                 </button>
             </div>
         </form:form>
+    </div>
+</div>
+
+<!-- Modal agregar fotos al carrusel -->
+<div id="addPhotosModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeAddPhotosModal()">&times;</span>
+        <h3><spring:message code="title.addPhotos" text="Agregar Fotos a la Galería"/></h3>
+        <form method="post" action="<c:url value='/clubs/club/${club.clubId}/gallery' />" enctype="multipart/form-data">
+            <div style="margin-bottom: 20px;">
+                <label for="galleryFiles" style="display: block; margin-bottom: 8px;">
+                    <spring:message code="label.selectPhotos" text="Seleccionar fotos (máximo 5):"/>
+                </label>
+                <input type="file" id="galleryFiles" name="files" accept="image/*" multiple style="width: 100%;"/>
+                <small style="color: #ccc; font-size: 0.85em;">
+                    <spring:message code="help.multiplePhotos" text="Puedes seleccionar hasta 5 fotos a la vez"/>
+                </small>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeAddPhotosModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <i class="fa-solid fa-upload"></i> <spring:message code="button.upload" text="Subir Fotos"/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal for adding a single carousel photo -->
+<div id="addCarouselPhotoModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeAddCarouselPhotoModal()">&times;</span>
+        <h3>Add Photo to Carousel</h3>
+        <form method="post" action="<c:url value='/clubs/club/${club.clubId}/carousel' />" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required />
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeAddCarouselPhotoModal()">Cancel</button>
+                <button type="submit" class="btn btn-success">
+                    <i class="fa-solid fa-upload"></i> Upload Photo
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -886,6 +990,98 @@
         });
     });
 
+    function openAddCarouselPhotoModal() {
+        document.getElementById('addCarouselPhotoModal').style.display = 'flex';
+    }
+    function closeAddCarouselPhotoModal() {
+        document.getElementById('addCarouselPhotoModal').style.display = 'none';
+    }
+
+    function openAddPhotosModal() {
+        document.getElementById('addPhotosModal').style.display = 'flex';
+    }
+
+    function closeAddPhotosModal() {
+        document.getElementById('addPhotosModal').style.display = 'none';
+    }
+
+    // Optional: Add file validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('galleryFiles');
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const files = e.target.files;
+                if (files.length > 5) {
+                    alert('Máximo 5 fotos permitidas');
+                    e.target.value = '';
+                }
+            });
+        }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const track = document.getElementById('carouselTrack');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const counter = document.getElementById('carouselCounter');
+        const indicators = document.querySelectorAll('.carousel-dot');
+
+        if (!track) return;
+
+        const slides = track.children;
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+
+        if (totalSlides <= 1) return;
+
+        function updateCarousel() {
+            const translateX = -currentSlide * 100;
+            track.style.transform = `translateX(${translateX}%)`;
+
+            if (counter) {
+                counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            }
+
+            indicators.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+
+            if (prevBtn) prevBtn.disabled = currentSlide === 0;
+            if (nextBtn) nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateCarousel();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateCarousel();
+            }
+        }
+
+        function goToSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                currentSlide = index;
+                updateCarousel();
+            }
+        }
+
+        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+
+        window.goToSlide = goToSlide;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') prevSlide();
+            if (e.key === 'ArrowRight') nextSlide();
+        });
+
+        updateCarousel();
+    });
 </script>
 </body>
 </html>

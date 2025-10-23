@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/index.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/details.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />" />
+    <link rel="stylesheet" href="<c:url value='/resources/css/carousel.css' />" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -80,6 +81,94 @@
         <div class="detail-description">
             <p><c:out value="${club.description}" /></p>
         </div>
+
+        <div class="photo-carousel">
+            <h3><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h3>
+            <c:choose>
+                <c:when test="${not empty clubPhotos}">
+                    <div class="carousel-container">
+                        <div class="carousel-track" id="carouselTrack">
+                            <c:forEach var="photo" items="${clubPhotos}" varStatus="status">
+                                <div class="carousel-slide">
+                                    <img src="<c:url value='${photo.url}'/>"
+                                         alt="<c:out value='${club.clubName}'/> - Foto ${status.index + 1}"
+                                         loading="lazy">
+                                </div>
+                            </c:forEach>
+                        </div>
+
+                        <c:if test="${fn:length(clubPhotos) > 1}">
+                            <button class="carousel-btn carousel-prev" id="prevBtn">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button class="carousel-btn carousel-next" id="nextBtn">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+
+                            <div class="carousel-counter" id="carouselCounter">
+                                1 / ${fn:length(clubPhotos)}
+                            </div>
+                        </c:if>
+                    </div>
+
+                    <c:if test="${fn:length(clubPhotos) > 1}">
+                        <div class="carousel-indicators" id="carouselIndicators">
+                            <c:forEach begin="0" end="${fn:length(clubPhotos) - 1}" var="i">
+                                <button class="carousel-dot ${i == 0 ? 'active' : ''}"
+                                        onclick="goToSlide(${i})"></button>
+                            </c:forEach>
+                        </div>
+                    </c:if>
+                </c:when>
+                <c:otherwise>
+                    <div class="no-photos">
+                        <i class="fa-solid fa-camera"></i>
+                        <p><spring:message code="photos.noPhotos" text="No hay fotos disponibles para la galería"/></p>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </div>
+        <c:if test="${isLoggedIn}">
+            <div class="review-form">
+                <form method="post" action="<c:url value='/clubs/${club.clubId}/reviews'/>">
+                    <label for="rating">Rating:</label>
+                    <select name="rating" id="rating" required>
+                        <c:forEach var="i" begin="1" end="5">
+                            <option value="${i}">${i}</option>
+                        </c:forEach>
+                    </select>
+                    <label for="comment">Comment:</label>
+                    <textarea name="comment" id="comment" rows="3" required></textarea>
+                    <button type="submit" class="btn btn-success">Submit Review</button>
+                </form>
+            </div>
+        </c:if>
+        <!-- Show club reviews -->
+        <div class="club-reviews">
+            <h3><i class="fa-solid fa-star"></i> <spring:message code="reviews.title" text="Reviews"/></h3>
+            <c:choose>
+                <c:when test="${not empty reviews}">
+                    <ul>
+                        <c:forEach var="review" items="${reviews}">
+                            <li>
+                                <strong><c:out value="${review.user.username}"/></strong>
+                                <span> - ${review.rating} <i class="fa-solid fa-star" style="color:#FFD700;"></i></span>
+                                <p><c:out value="${review.description}"/></p>
+                                <small>
+                                    <spring:message code="reviews.date" text="Date"/>:
+                                    <%--<fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/>--%>
+                                </small>
+                            </li>
+                        </c:forEach>
+                    </ul>
+                </c:when>
+                <c:otherwise>
+                    <p><spring:message code="reviews.empty" text="No reviews yet."/></p>
+                </c:otherwise>
+            </c:choose>
+        </div>
+
+    </div>
 
         <!-- Fila con 2 dropdowns independientes -->
         <div class="bb-row">
@@ -407,5 +496,79 @@
     <i class="fa-solid fa-circle-check" style="color:#4caf50; font-size:24px;"></i>
     <span><spring:message code="reservation.sent"/></span>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const track = document.getElementById('carouselTrack');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const counter = document.getElementById('carouselCounter');
+        const indicators = document.querySelectorAll('.carousel-dot');
+
+        if (!track) return; // No hay carrusel
+
+        const slides = track.children;
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+
+        if (totalSlides <= 1) return; // Una sola foto o ninguna
+
+        function updateCarousel() {
+            const translateX = -currentSlide * 100;
+            track.style.transform = `translateX(${translateX}%)`;
+
+            // Actualizar contador
+            if (counter) {
+                counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            }
+
+            // Actualizar indicadores
+            indicators.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+
+            // Actualizar botones
+            if (prevBtn) prevBtn.disabled = currentSlide === 0;
+            if (nextBtn) nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateCarousel();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateCarousel();
+            }
+        }
+
+        function goToSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                currentSlide = index;
+                updateCarousel();
+            }
+        }
+
+        // Event listeners
+        if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+        if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+
+        // Hacer goToSlide global para los indicadores
+        window.goToSlide = goToSlide;
+
+        // Navegación con teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') prevSlide();
+            if (e.key === 'ArrowRight') nextSlide();
+        });
+
+        // Inicializar
+        updateCarousel();
+    });
+</script>
 </body>
 </html>

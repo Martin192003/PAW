@@ -1,12 +1,16 @@
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ReviewsDao;
+import ar.edu.itba.paw.persistence.UserDao;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -14,8 +18,10 @@ public class ReviewServiceImpl implements ReviewService {
 
     private ReviewsDao reviewsDao;
     private ClubDao clubDao;
+    private UserDao userDao;
 
-    public ReviewServiceImpl(ReviewsDao reviewsDao, ClubDao clubDao) {
+    public ReviewServiceImpl(ReviewsDao reviewsDao, ClubDao clubDao, UserDao userDao) {
+        this.userDao = userDao;
         this.reviewsDao = reviewsDao;
         this.clubDao = clubDao;
     }
@@ -32,5 +38,60 @@ public class ReviewServiceImpl implements ReviewService {
             sum += review.getRating();
         }
         return sum / reviews.size();
+    }
+
+    private void updateClubRating(Club club) {
+        double avg = getAverageRating(club.getClubId());
+        club.setRating(java.math.BigDecimal.valueOf(avg));
+        club.setQuantityRatings(reviewsDao.findByClub(club).size());
+        clubDao.update(
+                club.getClubId(),
+                club.getClubName(),
+                club.getLocation(),
+                club.getRating(),
+                club.getQuantityRatings(),
+                club.getPriceRange(),
+                club.getDescription(),
+                club.getContactInfo() != null ? club.getContactInfo().getId() : null,
+                club.getMusicGenre(),
+                club.getZone(),
+                club.getIsBar()
+        );
+    }
+
+    @Override
+    @Transactional
+    public Review createReview(UUID userId, UUID clubId, int rating, String description) {
+        User user = userDao.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Club club = clubDao.findById(clubId)
+                .orElseThrow(() -> new IllegalArgumentException("Club not found"));
+
+        if (rating < 1 || rating > 5) {
+            throw new IllegalArgumentException("Rating must be between 1 and 5");
+        }
+
+        Review review = reviewsDao.upsert(user, club, rating, description);
+        updateClubRating(club);
+        return review;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Review> getUserReviewForClub(UUID userId, UUID clubId) {
+        User user = userDao.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Club club = clubDao.findById(clubId)
+                .orElseThrow(() -> new IllegalArgumentException("Club not found"));
+
+        return reviewsDao.findByUserAndClub(user, club);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Review> getReviewsByClub(UUID clubId) {
+        Club club = clubDao.findById(clubId)
+                .orElseThrow(() -> new IllegalArgumentException("Club not found"));
+        return reviewsDao.findByClub(club);
     }
 }
