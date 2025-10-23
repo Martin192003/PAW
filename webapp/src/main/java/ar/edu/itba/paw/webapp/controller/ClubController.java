@@ -51,17 +51,15 @@ public class ClubController {
     private final TableService tableService;
     private final EventService eventService;
     private final ClubLayoutService clubLayoutService;
-    private final ReviewService reviewService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService,  EventService eventService, ReviewService reviewService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService,  EventService eventService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
         this.menuService = menuService;
         this.securityService = securityService;
         this.tableService = tableService;
-        this.reviewService = reviewService;
         this.eventService = eventService;
         this.clubLayoutService = clubLayoutService;
     }
@@ -376,29 +374,43 @@ public class ClubController {
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
+    @PostMapping("/confirmClub")
+    private String logout() {
+        return "redirect:/logout";
+    }
 
-    @PostMapping("/club/{clubId}/photos")
-    public String upload(@PathVariable UUID clubId,
-                         @RequestParam("file") MultipartFile file,
-                         Principal principal) throws IOException {
-
-        if (file == null || file.isEmpty()) {
-            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+    @PostMapping("/club/{clubId}/layout")
+    public String uploadLayout(@PathVariable UUID clubId,
+                               @RequestParam("file") MultipartFile file,
+                               Principal principal,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            String email = principal.getName();
+            clubLayoutService.uploadLayout(clubId, email, file);
+            redirectAttributes.addFlashAttribute("successMessage", "Layout subido correctamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error al subir el layout: " + e.getMessage());
         }
-
-        User user = securityService.getVerifiedLoggedUser();
-        checkLoggedUser(clubId);
-
-        UUID photoId = photoService.upload(
-                clubId,
-                user.getId(),
-                file.getOriginalFilename(),
-                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
-        );
-
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
+    @GetMapping("/club/{clubId}/layout/{layoutId}/image")
+    public ResponseEntity<byte[]> getLayoutImage(
+            @PathVariable UUID clubId,
+            @PathVariable UUID layoutId) {
+
+        var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
+
+        if (layoutOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ClubLayout layout = layoutOpt.get();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(layout.getContentType()))
+                .body(layout.getData());
+    }
+
 
     private void checkLoggedUser(UUID clubId) {
         User user = securityService.getVerifiedLoggedUser();
@@ -455,12 +467,6 @@ public class ClubController {
         model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
     }
 
-
-    @PostMapping("/confirmClub")
-    private String logout() {
-        return "redirect:/logout";
-    }
-
     private Integer extractDayOffsetFromSort(String sort) {
         if (sort == null) return null;
         java.util.regex.Matcher m = java.util.regex.Pattern
@@ -472,83 +478,6 @@ public class ClubController {
         return null;
     }
 
-    @PostMapping("/club/{clubId}/gallery")
-    public String addPhotosToGallery(@PathVariable UUID clubId,
-                                     @RequestParam("files") MultipartFile[] files,
-                                     RedirectAttributes redirectAttributes) {
-        User user = securityService.getVerifiedLoggedUser();
-        checkLoggedUser(clubId);
-
-        int uploaded = 0;
-        for (MultipartFile file : files) {
-            if (file != null && !file.isEmpty()) {
-                try {
-                    photoService.uploadCarousel(
-                            clubId,
-                            user.getId(),
-                            file.getOriginalFilename(),
-                            file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                            file.getBytes()
-                    );
-                    uploaded++;
-                } catch (IOException e) {
-                    // Optionally log or handle error
-                }
-            }
-        }
-        if (uploaded > 0) {
-            redirectAttributes.addFlashAttribute("success", "photos.added.successfully");
-        } else {
-            redirectAttributes.addFlashAttribute("error", "photos.upload.error");
-        }
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
-    @PostMapping("/club/{clubId}/cover")
-    public String uploadCover(@PathVariable UUID clubId,
-                              @RequestParam("file") MultipartFile file,
-                              Principal principal) throws IOException {
-
-        if (file == null || file.isEmpty()) {
-            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
-        }
-
-        User user = securityService.getVerifiedLoggedUser();
-        checkLoggedUser(clubId);
-
-        photoService.uploadCover(
-                clubId,
-                user.getId(),
-                file.getOriginalFilename(),
-                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
-        );
-
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
-    @PostMapping("/club/{clubId}/carousel")
-    public String uploadCarousel(@PathVariable UUID clubId,
-                                 @RequestParam("file") MultipartFile file,
-                                 Principal principal) throws IOException {
-
-        if (file == null || file.isEmpty()) {
-            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
-        }
-
-        User user = securityService.getVerifiedLoggedUser();
-        checkLoggedUser(clubId);
-
-        photoService.uploadCarousel(
-                clubId,
-                user.getId(),
-                file.getOriginalFilename(),
-                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
-        );
-
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
     private void addEventsByClubToModel(List<Club> clubs, Model model) {
         Map<UUID, List<Event>> eventsByClub = clubs.stream()
                 .collect(Collectors.toMap(
@@ -563,36 +492,5 @@ public class ClubController {
     }
 
 
-    @PostMapping("/club/{clubId}/layout")
-    public String uploadLayout(@PathVariable UUID clubId,
-                               @RequestParam("file") MultipartFile file,
-                               Principal principal,
-                               RedirectAttributes redirectAttributes) {
-        try {
-            String email = principal.getName();
-            clubLayoutService.uploadLayout(clubId, email, file);
-            redirectAttributes.addFlashAttribute("successMessage", "Layout subido correctamente");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al subir el layout: " + e.getMessage());
-        }
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
-    @GetMapping("/club/{clubId}/layout/{layoutId}/image")
-    public ResponseEntity<byte[]> getLayoutImage(
-            @PathVariable UUID clubId,
-            @PathVariable UUID layoutId) {
-
-        var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
-
-        if (layoutOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        ClubLayout layout = layoutOpt.get();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(layout.getContentType()))
-                .body(layout.getData());
-    }
 
 }

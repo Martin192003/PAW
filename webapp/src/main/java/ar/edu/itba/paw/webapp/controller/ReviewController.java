@@ -2,7 +2,9 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.ReviewService;
+import ar.edu.itba.paw.service.SecurityService;
 import ar.edu.itba.paw.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -11,19 +13,24 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.security.Principal;
 import java.util.UUID;
 
 @Controller
-@RequestMapping("/reviews")
 public class ReviewController {
 
-    @Autowired
-    private ReviewService reviewService;
+    private final ReviewService reviewService;
+    private final UserService userService;
+    private final SecurityService securityService;
 
-    @Autowired
-    private UserService userService;
+    public ReviewController(ReviewService reviewService, UserService userService, SecurityService securityService) {
+        this.reviewService = reviewService;
+        this.userService = userService;
+        this.securityService = securityService;
+    }
 
-    @PostMapping("/clubs/{clubId}")
+
+    @PostMapping("/reviews/clubs/{clubId}")
     public ModelAndView createReview(@PathVariable UUID clubId,
                                      @RequestParam int rating,
                                      @RequestParam(required = false) String description) {
@@ -49,7 +56,7 @@ public class ReviewController {
         }
     }
 
-    @GetMapping("/clubs/{clubId}/user")
+    @GetMapping("/reviews/clubs/{clubId}/user")
     @ResponseBody
     public Review getUserReview(@PathVariable UUID clubId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -65,6 +72,18 @@ public class ReviewController {
 
         return reviewService.getUserReviewForClub(user.getId(), clubId).orElse(null);
     }
+
+    @PostMapping("/clubs/{clubId}/reviews")
+    public String submitReview(@PathVariable UUID clubId,
+                               @RequestParam int rating,
+                               @RequestParam String comment,
+                               Principal principal) {
+        if (principal == null) return "redirect:/login";
+        User user = securityService.getVerifiedLoggedUser();
+        reviewService.createReview(user.getId(), clubId, rating, comment);
+        return "redirect:/clubs/" + clubId;
+    }
+
 
 
 }

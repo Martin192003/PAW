@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -54,7 +55,7 @@ public class ClubDetailsController {
    public String clubDetails(
            @PathVariable("clubId") UUID clubId,
            @RequestParam(name = "date", required = false)
-           @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
            LocalDate date,
            Model model) {
 
@@ -159,16 +160,6 @@ public class ClubDetailsController {
        return "clubDetails";
    }
 
-    @PostMapping("/{clubId}/reviews")
-    public String submitReview(@PathVariable UUID clubId,
-                               @RequestParam int rating,
-                               @RequestParam String comment,
-                               Principal principal) {
-        if (principal == null) return "redirect:/login";
-        User user = securityService.getVerifiedLoggedUser();
-        reviewService.createReview(user.getId(), clubId, rating, comment);
-        return "redirect:/clubs/" + clubId;
-    }
 
 
 

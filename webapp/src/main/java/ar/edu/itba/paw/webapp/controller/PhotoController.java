@@ -1,12 +1,19 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.model.Photo;
+import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
+import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
+import ar.edu.itba.paw.service.ClubService;
+import ar.edu.itba.paw.service.EventService;
 import ar.edu.itba.paw.service.PhotoService;
+import ar.edu.itba.paw.service.SecurityService;
+import ar.edu.itba.paw.webapp.form.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -14,6 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,9 +31,13 @@ public class PhotoController {
     private static final Logger log = LoggerFactory.getLogger(PhotoController.class);
 
     private final PhotoService photoService;
+    private final SecurityService securityService;
+    private final ClubService clubService;
 
-    public PhotoController(PhotoService photoService) {
+    public PhotoController(PhotoService photoService, SecurityService securityService, ClubService clubService) {
         this.photoService = photoService;
+        this.securityService = securityService;
+        this.clubService = clubService;
     }
 
     @PostMapping("/clubs/{clubId}/photos")
@@ -75,6 +87,108 @@ public class PhotoController {
         return ResponseEntity.ok().contentType(mediaType).body(photo.getData());
     }
 
+    @PostMapping("/clubs/club/{clubId}/gallery")
+    public String addPhotosToGallery(@PathVariable UUID clubId,
+                                     @RequestParam("files") MultipartFile[] files,
+                                     RedirectAttributes redirectAttributes) {
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        int uploaded = 0;
+        for (MultipartFile file : files) {
+            if (file != null && !file.isEmpty()) {
+                try {
+                    photoService.uploadCarousel(
+                            clubId,
+                            user.getId(),
+                            file.getOriginalFilename(),
+                            file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                            file.getBytes()
+                    );
+                    uploaded++;
+                } catch (IOException e) {
+                    // Optionally log or handle error
+                }
+            }
+        }
+        if (uploaded > 0) {
+            redirectAttributes.addFlashAttribute("success", "photos.added.successfully");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "photos.upload.error");
+        }
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @PostMapping("/clubs/club/{clubId}/cover")
+    public String uploadCover(@PathVariable UUID clubId,
+                              @RequestParam("file") MultipartFile file,
+                              Principal principal) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        photoService.uploadCover(
+                clubId,
+                user.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @PostMapping("/clubs/club/{clubId}/carousel")
+    public String uploadCarousel(@PathVariable UUID clubId,
+                                 @RequestParam("file") MultipartFile file,
+                                 Principal principal) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        photoService.uploadCarousel(
+                clubId,
+                user.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+    @PostMapping("/clubs/club/{clubId}/photos")
+    public String upload(@PathVariable UUID clubId,
+                         @RequestParam("file") MultipartFile file,
+                         Principal principal) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        UUID photoId = photoService.upload(
+                clubId,
+                user.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+
     private static MediaType sniff(byte[] d) {
         if (d.length >= 4 && (d[0] & 0xFF) == 0x89 && d[1] == 'P' && d[2] == 'N' && d[3] == 'G') {
             return MediaType.IMAGE_PNG;
@@ -88,5 +202,18 @@ public class PhotoController {
         }
         return MediaType.APPLICATION_OCTET_STREAM;
     }
+
+    private void checkLoggedUser(UUID clubId) {
+        User user = securityService.getVerifiedLoggedUser();
+        if (user == null) {
+            throw new UserNotFoundException("No se encontró el usuario logueado.");
+        }
+        List<User> clubUsers = clubService.getAdminsByClub(clubId);
+        if (clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+            throw new UnauthorizedException("El usuario no es admin del club.");
+        }
+    }
+
+
 
 }
