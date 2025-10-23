@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.form;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import javax.validation.constraints.*;
@@ -12,8 +13,10 @@ public class EventEditForm {
     @NotNull
     private UUID clubId;
 
+    private UUID eventId;
 
-    @NotBlank @Size(max = 120)
+    @NotBlank
+    @Size(max = 120)
     private String eventName;
 
 
@@ -21,11 +24,13 @@ public class EventEditForm {
     private String description;
 
 
-    @NotNull @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @NotNull
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
 
 
-    private UUID photoId; // opcional
+    private UUID photoIdId;
+    private MultipartFile photoId;
 
 
     // getters/setters
@@ -37,6 +42,10 @@ public class EventEditForm {
     public void setDescription(String description) { this.description = description; }
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
-    public UUID getPhotoId() { return photoId; }
-    public void setPhotoId(UUID photoId) { this.photoId = photoId; }
+    public MultipartFile getPhotoId() { return photoId; }
+    public void setPhotoId(MultipartFile photoId) { this.photoId = photoId; }
+    public UUID getEventId() { return eventId; }
+    public void setEventId(UUID eventId) { this.eventId = eventId; }
+    public UUID getPhotoIdId() { return photoIdId; }
+    public void setPhotoIdId(UUID photoIdId) { this.photoIdId = photoIdId; }
 }

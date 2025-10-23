@@ -28,5 +28,6 @@ public interface PhotoService {
     Optional<String> getCoverUrl(UUID clubId);
     Map<UUID,String> getCoverUrls(Set<UUID> clubIds);
     UUID uploadPhotoForClub(UUID clubId, String userEmail, MultipartFile file) throws IOException;
+    public UUID uploadPhotoForEvent(UUID eventId, String userEmail, MultipartFile file) throws IOException;
 
 }

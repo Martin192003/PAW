@@ -44,7 +44,7 @@ public class ClubServiceImpl implements ClubService{
 
         User managedContact = userService.findById(contactInfo.getId());
         if (managedContact.getRole() != Role.ADMIN) {
-            managedContact.setRole(Role.ADMIN); // Dirty checking -> UPDATE al commit
+            managedContact.setRole(Role.ADMIN);
         }
 
         Club newClub = clubDao.create(name, description, location, priceRange, managedContact, musicGenre, zone, isBar);

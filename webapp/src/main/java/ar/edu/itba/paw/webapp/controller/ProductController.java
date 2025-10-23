@@ -70,6 +70,12 @@ public class ProductController {
             model.addAttribute("productForm", form);
             model.addAttribute("editProductForm", new EditProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
+            EventAddForm eventForm = new EventAddForm();
+            eventForm.setClubId(club.getClubId());
+            model.addAttribute("eventForm", eventForm);
+            EventEditForm editEventForm = new EventEditForm();
+            editEventForm.setClubId(club.getClubId());
+            model.addAttribute("editEventForm", editEventForm);
             return "clubHandler";
         }
 
@@ -129,6 +135,12 @@ public class ProductController {
             model.addAttribute("editTableForm", new EditTableForm());
             model.addAttribute("editProductForm", form);
             model.addAttribute("editField", "Product");
+            EventAddForm eventForm = new EventAddForm();
+            eventForm.setClubId(club.getClubId());
+            model.addAttribute("eventForm", eventForm);
+            EventEditForm editEventForm = new EventEditForm();
+            editEventForm.setClubId(club.getClubId());
+            model.addAttribute("editEventForm", editEventForm);
             return "clubHandler";
         }
 

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,20 +31,27 @@ public class PhotoController {
     @PostMapping("/clubs/{clubId}/photos")
     public String upload(@PathVariable UUID clubId,
                          @RequestParam("file") MultipartFile file,
-                         Principal principal) throws IOException {
-
+                         Principal principal,
+                         RedirectAttributes redirectAttributes) throws IOException {
+        log.info("Attempting to upload photo for clubId: {}", clubId);
         try {
             String userEmail = principal != null ? principal.getName() : null;
+            log.info("User email: {}, File size: {}", userEmail, file.getSize());
             UUID photoId = photoService.uploadPhotoForClub(clubId, userEmail, file);
-            return "redirect:/clubs/" + clubId + "?photo=" + photoId;
+            log.info("Photo uploaded successfully, photoId: {}", photoId);
+            redirectAttributes.addFlashAttribute("success", "Imagen subida correctamente.");
+            return "redirect:/clubs/handle?clubId=" + clubId;
         } catch (IllegalArgumentException e) {
-            if (e.getMessage().contains("empty")) {
-                return "redirect:/clubs/" + clubId + "?err=empty";
-            } else if (e.getMessage().contains("User not found")) {
-                return "redirect:/clubs/" + clubId + "?err=user";
-            } else {
-                return "redirect:/clubs/" + clubId + "?err=invalid";
-            }
+            log.error("Error uploading photo: {}", e.getMessage());
+            String errorMsg = e.getMessage().contains("empty") ? "Por favor, selecciona una imagen válida." :
+                    e.getMessage().contains("User not found") ? "Usuario no encontrado." :
+                            "Error al subir la imagen.";
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            return "redirect:/clubs/handle?clubId=" + clubId;
+        } catch (Exception e) {
+            log.error("Unexpected error uploading photo: {}", e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("error", "Error inesperado al subir la imagen.");
+            return "redirect:/clubs/handle?clubId=" + clubId;
         }
     }
 

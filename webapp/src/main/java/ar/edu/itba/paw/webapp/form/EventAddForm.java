@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.webapp.form;
 
+import ar.edu.itba.paw.webapp.form.validation.ValidImage;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import javax.validation.constraints.*;
@@ -12,23 +14,23 @@ public class EventAddForm {
     @NotNull
     private UUID clubId;
 
-
-    @NotBlank @Size(max = 120)
+    @NotBlank(message = "{contact.name.notblank}")
+    @Size(max = 120, message = "{contact.name.size}")
     private String eventName;
 
-
-    @Size(max = 2000)
+    @NotBlank(message = "{product.description.notblank}")
+    @Size(max = 2000, message = "{contact.description.size}")
     private String description;
 
 
-    @NotNull @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @NotNull(message = "{event.date.notnull}")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
 
+    @ValidImage
+    private MultipartFile photoId;
 
-    private UUID photoId; // opcional
 
-
-    // getters/setters
     public UUID getClubId() { return clubId; }
     public void setClubId(UUID clubId) { this.clubId = clubId; }
     public String getEventName() { return eventName; }
@@ -37,6 +39,6 @@ public class EventAddForm {
     public void setDescription(String description) { this.description = description; }
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
-    public UUID getPhotoId() { return photoId; }
-    public void setPhotoId(UUID photoId) { this.photoId = photoId; }
+    public MultipartFile getPhotoId() { return photoId; }
+    public void setPhotoId(MultipartFile photoId) { this.photoId = photoId; }
 }

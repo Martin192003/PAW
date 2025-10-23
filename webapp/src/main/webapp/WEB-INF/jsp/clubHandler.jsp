@@ -203,85 +203,112 @@
         <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
     </form:form>
     <c:if test="${param.err == 'dup'}">
-        <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.duplicate" text="Ya existe una mesa con ese número."/></div>
+        <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.duplicate"/></div>
     </c:if>
+
+    <h2><spring:message code="label.events" text="Eventos"/></h2>
+
+    <table class="styled-table">
+        <thead>
+        <tr>
+            <th><spring:message code="form.name"/></th>
+            <th><spring:message code="form.date"/></th>
+            <th><spring:message code="form.description"/></th>
+            <th><spring:message code="form.eventImage"/></th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <c:if test="${empty events}">
+            <tr>
+                <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
+                    <spring:message code="error.noevents"/>
+                </td>
+            </tr>
+        </c:if>
+        <c:forEach var="e" items="${events}">
+            <tr>
+                <td><c:out value="${e.eventName}"/></td>
+                <td><c:out value="${e.date}"/></td>
+                <td>
+                    <c:choose>
+                        <c:when test="${not empty e.description and fn:length(e.description) > 80}">
+                            <c:out value="${fn:substring(e.description, 0, 80)}"/>...
+                        </c:when>
+                        <c:otherwise>
+                            <c:out value="${e.description}"/>
+                        </c:otherwise>
+                    </c:choose>
+                </td>
+                <td style="text-align:center;">
+                    <c:choose>
+                        <c:when test="${not empty e.photoId}">
+                            <img src="<c:url value='/photos/${e.photoId}'/>"
+                                 alt="Imagen del evento"
+                                 class="event-thumbnail"/>
+                        </c:when>
+                        <c:otherwise>
+                            <span style="color: #aaa; font-size: 0.85rem;"><spring:message code="label.noImage" text="Sin imagen"/></span>
+                        </c:otherwise>
+                    </c:choose>
+                </td>
+                <td>
+                    <div style="display: flex; justify-content: right; gap: 8px; margin-right: 12px">
+                        <button type="button" class="btn btn-success btn-edit-small"
+                                onclick="openEventEditModal('${e.eventId}', '${fn:escapeXml(e.eventName)}', '${e.date}', '${fn:escapeXml(e.description)}', '${e.photoId}')">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <form method="post" action="<c:url value='/clubs/events/${e.eventId}/delete'/>" style="display:inline;">
+                            <input type="hidden" name="clubId" value="${club.clubId}"/>
+                            <button type="submit" class="btn btn-danger btn-edit-small">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        </c:forEach>
+        </tbody>
+    </table>
+
+    <spring:message code="placeholder.event.name" var="phEventName"/>
+    <spring:message code="placeholder.event.date" var="phEventDate"/>
+    <spring:message code="placeholder.event.description" var="phEventDesc"/>
+
+    <form:form method="post"
+               modelAttribute="eventForm"
+               action="${pageContext.request.contextPath}/clubs/events/add"
+               enctype="multipart/form-data"
+               cssClass="add-product-bar">
+
+        <form:hidden path="clubId" value="${club.clubId}"/>
+
+        <div class="form-group">
+            <form:input path="eventName" cssClass="add-product-name" placeholder="${phEventName}" />
+            <form:errors path="eventName" cssClass="formError"/>
+        </div>
+
+        <div class="form-group">
+            <form:input path="date" type="date" cssClass="add-product-input" placeholder="${phEventDate}" />
+            <form:errors path="date" cssClass="formError"/>
+        </div>
+
+        <div class="form-group">
+            <form:input path="description" cssClass="add-product-input" placeholder="${phEventDesc}"/>
+            <form:errors path="description" cssClass="formError"/>
+        </div>
+
+        <div class="form-group">
+            <input type="file" id="editEventPhoto" name="photoId" accept="image/jpeg,image/png,image/webp"/>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-edit-small">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    </form:form>
+
+
 </div>
-<h2><spring:message code="label.events" text="Eventos"/></h2>
-
-<table class="styled-table">
-    <thead>
-    <tr>
-        <th><spring:message code="form.name" text="Nombre"/></th>
-        <th><spring:message code="form.date" text="Fecha"/></th>
-        <th><spring:message code="form.description" text="Descripción"/></th>
-        <th></th>
-    </tr>
-    </thead>
-    <tbody>
-    <c:if test="${empty events}">
-        <tr>
-            <td colspan="4" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
-                <spring:message code="error.noevents" text="Sin eventos"/>
-            </td>
-        </tr>
-    </c:if>
-    <c:forEach var="e" items="${events}">
-        <tr>
-            <td><c:out value="${e.eventName}"/></td>
-            <td><c:out value="${e.date}"/></td>
-            <td>
-                <c:choose>
-                    <c:when test="${not empty e.description and fn:length(e.description) > 80}">
-                        <c:out value="${fn:substring(e.description, 0, 80)}"/>...
-                    </c:when>
-                    <c:otherwise>
-                        <c:out value="${e.description}"/>
-                    </c:otherwise>
-                </c:choose>
-            </td>
-            <td>
-                <form method="post" action="<c:url value='/clubs/events/${e.eventId}/delete'/>" style="display:inline;">
-                    <input type="hidden" name="clubId" value="${club.clubId}"/>
-                    <button type="submit" class="btn btn-danger btn-edit-small">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </form>
-            </td>
-        </tr>
-    </c:forEach>
-    </tbody>
-</table>
-
-<h3><spring:message code="button.addEvent" text="Crear evento"/></h3>
-<form:form method="post" modelAttribute="eventForm" action="${pageContext.request.contextPath}/clubs/events/add"
-           cssClass="add-product-bar">
-    <form:hidden path="clubId" value="${club.clubId}"/>
-
-    <div class="form-group">
-        <label><spring:message code="form.name" text="Nombre"/></label>
-        <form:input path="eventName" cssClass="add-product-name" />
-        <form:errors path="eventName" cssClass="formError"/>
-    </div>
-
-    <div class="form-group">
-        <label><spring:message code="form.date" text="Fecha"/></label>
-        <form:input path="date" type="date" cssClass="add-product-input" />
-        <form:errors path="date" cssClass="formError"/>
-    </div>
-
-    <div class="form-group" style="flex:1;">
-        <label><spring:message code="form.description" text="Descripción"/></label>
-        <form:input path="description" cssClass="add-product-input" />
-        <form:errors path="description" cssClass="formError"/>
-    </div>
-
-    <!-- Optional: if you manage event photos by id -->
-    <form:hidden path="photoId"/>
-
-    <button type="submit" class="btn btn-success btn-edit-small">
-        <i class="fa-solid fa-plus"></i>
-    </button>
-</form:form>
 
 <div id="editModal" class="modal">
     <div class="modal-content">
@@ -363,7 +390,7 @@
         <h2><spring:message code="title.editProduct"/></h2>
         <form:form method="post" modelAttribute="editProductForm" id="productEditForm"
                    action="${pageContext.request.contextPath}/clubs/products/editProduct"
-                   cssStyle="display:flex; flex-direction:column; gap:18px;">
+                   cssStyle="display:flex; flex-direction:column; gap:18px">
 
             <form:hidden path="clubId" value="${club.clubId}"/>
             <form:hidden path="productId" id="editProductId"/>
@@ -403,13 +430,14 @@
         </form:form>
     </div>
 </div>
+
 <!-- Modal editar imagen -->
 <div id="editImageModal" class="modal">
     <div class="modal-content"><span class="modal-close"
                                      onclick="document.getElementById('editImageModal').style.display='none'">&times;</span>
         <h3><spring:message code="title.editImage"/></h3>
-        <form method="post" action="<c:url value='/clubs/club/${club.clubId}/photos' />" enctype="multipart/form-data">
-            <input type="file" name="file" accept="image/*"/> <!-- IMAGEN ACEPTA GIF -->
+        <form method="post" action="<c:url value='/clubs/${club.clubId}/photos' />" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/jpeg,image/png,image/webp"/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary"
                         onclick="document.getElementById('editImageModal').style.display='none'"><spring:message
@@ -485,6 +513,71 @@
         </form>
     </div>
 </div>
+<div id="eventEditModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeEventEditModal()" style="color:#fff;">&times;</span>
+        <h2><spring:message code="title.editEvent"/></h2>
+
+        <form:form method="post"
+                   modelAttribute="editEventForm"
+                   id="eventEditForm"
+                   enctype="multipart/form-data"
+                   cssStyle="display:flex; flex-direction:column; gap:18px;">
+
+            <form:hidden path="clubId" value="${club.clubId}"/>
+            <form:hidden path="eventId" id="editEventId"/>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editEventName"><spring:message code="form.name"/>:</label>
+                <form:input path="eventName" id="editEventName" cssClass="input-modal"/>
+                <form:errors path="eventName" cssClass="formError"/>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editEventDate"><spring:message code="form.date"/>:</label>
+                <form:input path="date" type="date" id="editEventDate" cssClass="input-modal"/>
+                <form:errors path="date" cssClass="formError"/>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editEventDescription"><spring:message code="form.description"/>:</label>
+                <form:input path="description" id="editEventDescription" rows="4" cssClass="input-modal"/>
+                <form:errors path="description" cssClass="formError"/>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <label for="editEventPhoto"><spring:message code="form.eventImage" text="Imagen del evento"/>:</label>
+                <input type="file" id="editEventPhoto" name="photo" accept="image/jpeg,image/png,image/webp"/>
+                <span id="editEventFileInfo" style="font-size: 0.85rem; color: #fff; margin-top: 4px;"></span>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeEventEditModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <spring:message code="button.update"/>
+                </button>
+            </div>
+        </form:form>
+    </div>
+</div>
+
+<!-- Modal eliminar evento -->
+<div id="eventDeleteModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeEventDeleteModal()">&times;</span>
+<%--        <h3><spring:message code="confirm.deleteEvent" text="¿Eliminar evento?"/></h3>--%>
+        <form id="eventDeleteForm" method="post">
+            <input type="hidden" name="clubId" value="${club.clubId}"/>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeEventDeleteModal()"><spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-danger"><spring:message code="button.delete"/></button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -579,7 +672,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        <c:if test="${not empty editField}">
+        <c:if test="${not empty editField and editField ne 'Event'}">
         const field = '${editField}';
         if (field === 'Product') {
             openModal('productEditModal');
@@ -589,16 +682,6 @@
             openEditModal(field, '${fn:escapeXml(editFieldValue)}');
         }
         </c:if>
-
-        document.querySelectorAll("form.add-product-bar").forEach(form => {
-            form.addEventListener("submit", (e) => {
-                const submitBtn = form.querySelector("button[type='submit']");
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = "<i class='fa fa-spinner fa-spin'></i>"; // opcional
-                }
-            });
-        });
     });
 
     function clearFormErrors(modalId) {
@@ -609,6 +692,84 @@
         });
     }
 
+    document.getElementById('eventPhotoInput')?.addEventListener('change', function(e) {
+        const fileInfo = document.getElementById('eventFileInfo');
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            fileInfo.textContent = file.name;
+        } else {
+            fileInfo.textContent = '';
+        }
+    });
+    function openEventEditModal(eventId, eventName, eventDate, eventDesc, photoId) {
+        // Open modal
+        document.getElementById('eventEditModal').style.display = 'flex';
+
+        // Set values
+        document.getElementById('editEventId').value = eventId;
+        document.getElementById('editEventName').value = eventName || '';
+        document.getElementById('editEventDate').value = eventDate || ''; // Already in YYYY-MM-DD
+        document.getElementById('editEventDescription').value = eventDesc || '';
+        document.getElementById('eventEditForm').action = '${pageContext.request.contextPath}/clubs/events/' + eventId + '/edit';
+
+        // Handle existing image
+        const fileInfo = document.getElementById('editEventFileInfo');
+        if (photoId) {
+            // Placeholder: Derive filename (replace with actual filename if available)
+            fileInfo.textContent = 'Current image: event_' + photoId + '.jpg';
+        } else {
+            fileInfo.textContent = 'No image';
+        }
+    }
+
+    function closeEventEditModal() {
+        document.getElementById('eventEditModal').style.display = 'none';
+        clearFormErrors('eventEditModal');
+        // limpiar inputs
+        document.getElementById('editEventId').value = '';
+        document.getElementById('editEventName').value = '';
+        document.getElementById('editEventDate').value = '';
+        document.getElementById('editEventDescription').value = '';
+        document.getElementById('editEventPhotoInput').value = '';
+        document.getElementById('currentEventImagePreview').innerHTML = '';
+        document.getElementById('editEventFileInfo').textContent = '';
+    }
+
+    function openEventDeleteModal(eventId) {
+        document.getElementById('eventDeleteModal').style.display = 'flex';
+        document.getElementById('eventDeleteForm').action = '${pageContext.request.contextPath}/clubs/events/' + eventId + '/delete';
+    }
+    function closeEventDeleteModal() { document.getElementById('eventDeleteModal').style.display = 'none'; }
+
+
+    // file input preview & info for add-event (ya tenías) y para editar evento
+    document.getElementById('eventPhotoInput')?.addEventListener('change', function(e) {
+        const fileInfo = document.getElementById('eventFileInfo');
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            fileInfo.textContent = file.name;
+        } else {
+            fileInfo.textContent = '';
+        }
+    });
+
+    document.getElementById('editEventPhoto')?.addEventListener('change', function(e) {
+        const info = document.getElementById('editEventFileInfo');
+        const preview = document.getElementById('currentEventImagePreview');
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            info.textContent = file.name;
+            // show small preview
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                preview.innerHTML = '<img src="' + ev.target.result + '" style="max-width:80px; max-height:60px; object-fit:cover; border-radius:4px;"/>';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            info.textContent = '';
+            preview.innerHTML = '';
+        }
+    });
 </script>
 </body>
 </html>

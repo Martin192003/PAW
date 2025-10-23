@@ -7,15 +7,20 @@ import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/clubs/events")
@@ -46,11 +51,27 @@ public class EventsController {
         checkLoggedUser(clubId);
 
 
+
         if (errors.hasErrors()) {
             preloadClubHandler(model, clubId);
+            var club = clubService.getClubById(clubId).orElseThrow();
+            model.addAttribute("club", club);
             model.addAttribute("eventForm", form);
             model.addAttribute("editEventForm", new EventEditForm());
             model.addAttribute("editField", "Event");
+            model.addAttribute("tableForm", new AddTableForm());
+            model.addAttribute("productForm", new AddProductForm());
+            model.addAttribute("editProductForm", new EditProductForm());
+            model.addAttribute("editTableForm", new EditTableForm());
+            ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
+            clubHandlerForm.setClubId(club.getClubId());
+            clubHandlerForm.setName(club.getClubName());
+            clubHandlerForm.setDescription(club.getDescription());
+            clubHandlerForm.setLocation(club.getLocation());
+            clubHandlerForm.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
+            clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
+            clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
             return "clubHandler";
         }
 
@@ -70,30 +91,58 @@ public class EventsController {
             @PathVariable UUID eventId,
             @Valid @ModelAttribute("editEventForm") EventEditForm form,
             BindingResult errors,
+            @RequestParam(value = "photo", required = false) MultipartFile photo,
             Model model
     ) {
         UUID clubId = form.getClubId();
         checkLoggedUser(clubId);
 
-
         if (errors.hasErrors()) {
             preloadClubHandler(model, clubId);
+            var club = clubService.getClubById(clubId).orElseThrow();
+            model.addAttribute("club", club);
             model.addAttribute("eventForm", new EventAddForm());
             model.addAttribute("editEventForm", form);
             model.addAttribute("editField", "Event");
+            model.addAttribute("tableForm", new AddTableForm());
+            model.addAttribute("productForm", new AddProductForm());
+            model.addAttribute("editProductForm", new EditProductForm());
+            model.addAttribute("editTableForm", new EditTableForm());
+            ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
+            clubHandlerForm.setClubId(club.getClubId());
+            clubHandlerForm.setName(club.getClubName());
+            clubHandlerForm.setDescription(club.getDescription());
+            clubHandlerForm.setLocation(club.getLocation());
+            clubHandlerForm.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
+            clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
+            clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
             return "clubHandler";
         }
 
+        if (photo != null && !photo.isEmpty()) {
+            eventService.update(
+                    clubId,
+                    eventId,
+                    form.getEventName(),
+                    form.getDescription(),
+                    form.getDate(),
+                    photo
+            );
+        } else{
+            eventService.update(
+                    clubId,
+                    eventId,
+                    form.getEventName(),
+                    form.getDescription(),
+                    form.getDate(),
+                    null
+            );
+        }
 
-        eventService.update(
-                clubId, eventId,
-                form.getEventName(),
-                form.getDescription(),
-                form.getDate(),
-                form.getPhotoId()
-        );
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
+
 
     @PostMapping("/{eventId}/delete")
     public String deleteEvent(@PathVariable UUID eventId, @RequestParam("clubId") UUID clubId) {
@@ -132,12 +181,35 @@ public class EventsController {
         }
     }
 
-
     private void preloadClubHandler(Model model, UUID clubId) {
         var club = clubService.getClubById(clubId).orElseThrow();
         model.addAttribute("club", club);
         model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
-        model.addAttribute("coverPhotoUrl", photoService.listByClub(clubId, 0, 1)
-                .stream().findFirst().map(Photo::getUrl).orElse(null));
+
+        // Fetch all photos for the club
+        var photos = photoService.listByClub(clubId, 0, 50);
+        var eventPhotoIds = eventService.getEventPhotoIds(clubId);
+
+        // Filter photos to include only non-event photos and sort by recency
+        var clubOnlyPhotos = photos.stream()
+                .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
+                .sorted((p1, p2) -> {
+                    // Assuming Photo has a getCreatedAt() method returning LocalDateTime
+                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
+                        return p2.getCreatedAt().compareTo(p1.getCreatedAt()); // Newest first
+                    }
+                    // Fallback to photoId if createdAt is unavailable
+                    return p2.getPhotoId().compareTo(p1.getPhotoId());
+                })
+                .collect(Collectors.toList());
+
+        // Select cover photo
+        String coverPhoto = clubOnlyPhotos.isEmpty()
+                ? "/resources/img/default-club-placeholder.png"
+                : clubOnlyPhotos.get(0).getUrl();
+
+        model.addAttribute("coverPhotoUrl", coverPhoto);
+        model.addAttribute("clubPhotos", clubOnlyPhotos);
     }
+
 }

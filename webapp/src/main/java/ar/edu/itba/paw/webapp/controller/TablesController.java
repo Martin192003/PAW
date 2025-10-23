@@ -76,6 +76,12 @@ public class TablesController {
             clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
+            EventAddForm eventForm = new EventAddForm();
+            eventForm.setClubId(club.getClubId());
+            model.addAttribute("eventForm", eventForm);
+            EventEditForm editEventForm = new EventEditForm();
+            editEventForm.setClubId(club.getClubId());
+            model.addAttribute("editEventForm", editEventForm);
             return "clubHandler";
         }
 
@@ -157,6 +163,12 @@ public class TablesController {
             clubHandlerForm.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
             clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+            EventAddForm eventForm = new EventAddForm();
+            eventForm.setClubId(club.getClubId());
+            model.addAttribute("eventForm", eventForm);
+            EventEditForm editEventForm = new EventEditForm();
+            editEventForm.setClubId(club.getClubId());
+            model.addAttribute("editEventForm", editEventForm);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("tableForm", tableForm);
             model.addAttribute("productForm", new AddProductForm());

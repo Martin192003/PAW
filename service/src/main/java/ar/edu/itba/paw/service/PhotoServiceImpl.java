@@ -2,6 +2,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.persistence.EventDao;
 import ar.edu.itba.paw.persistence.PhotoDao;
 import ar.edu.itba.paw.service.PhotoService;
 import ar.edu.itba.paw.model.Photo;
@@ -23,10 +24,12 @@ public class PhotoServiceImpl implements PhotoService {
 
     private final PhotoDao photoDao;
     private final UserService userService;
+    private final EventDao eventDao;
 
-    public PhotoServiceImpl(PhotoDao photoDao, UserService userService) {
+    public PhotoServiceImpl(PhotoDao photoDao, UserService userService, EventDao eventDao) {
         this.photoDao = photoDao;
         this.userService = userService;
+        this.eventDao = eventDao;
     }
 
     @Override
@@ -121,9 +124,17 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional(readOnly = true)
     public Optional<String> getCoverUrl(UUID clubId) {
-        List<Photo> photos = photoDao.findByClub(clubId, 1, 0);
-        if (photos.isEmpty()) return Optional.empty();
-        return Optional.ofNullable(photos.get(0).getUrl());
+        List<Photo> photos = photoDao.findByClub(clubId, 50, 0);
+        return photos.stream()
+                .filter(p -> !eventDao.findByPhotoIdAndClub(p.getPhotoId(), clubId).isPresent())
+                .sorted((p1, p2) -> {
+                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
+                        return p2.getCreatedAt().compareTo(p1.getCreatedAt());
+                    }
+                    return p2.getPhotoId().compareTo(p1.getPhotoId());
+                })
+                .findFirst()
+                .map(Photo::getUrl);
     }
 
 
@@ -136,4 +147,29 @@ public class PhotoServiceImpl implements PhotoService {
         }
         return result;
     }
+
+    @Override
+    @Transactional
+    public UUID uploadPhotoForEvent(UUID eventId, String userEmail, MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+
+        User effectiveUser = (userEmail != null)
+                ? userService.findByEmail(userEmail)
+                : userService.findByEmail("dev@local");
+
+        if (effectiveUser == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        return upload(
+                eventId, // id del evento
+                effectiveUser.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+    }
+
 }

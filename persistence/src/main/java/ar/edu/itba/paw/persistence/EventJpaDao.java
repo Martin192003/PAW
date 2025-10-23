@@ -206,4 +206,24 @@ public class EventJpaDao implements EventDao {
                 .getSingleResult();
         return total.intValue();
     }
+
+    @Override
+    public Optional<Event> findByPhotoIdAndClub(UUID photoId, UUID clubId) {
+        final List<Event> events = em.createQuery(
+                        "SELECT e FROM Event e WHERE e.photoId = :photoId AND e.clubId = :clubId", Event.class)
+                .setParameter("photoId", photoId)
+                .setParameter("clubId", clubId)
+                .getResultList();
+        return events.isEmpty() ? Optional.empty() : Optional.of(events.get(0));
+    }
+
+    @Override
+    public List<UUID> findEventPhotoIdsByClub(UUID clubId) {
+        return em.createQuery(
+                        "SELECT e.photoId FROM Event e WHERE e.clubId = :clubId AND e.photoId IS NOT NULL",
+                        UUID.class
+                )
+                .setParameter("clubId", clubId)
+                .getResultList();
+    }
 }

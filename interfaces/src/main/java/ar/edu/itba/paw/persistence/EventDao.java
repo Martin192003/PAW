@@ -27,4 +27,9 @@ public interface EventDao {
     List<Event> findUpcoming(LocalDate fromInclusive, int page, int size);
 
     int countUpcoming(LocalDate fromInclusive);
+
+    public Optional<Event> findByPhotoIdAndClub(UUID photoId, UUID clubId);
+
+    List<UUID> findEventPhotoIdsByClub(UUID clubId);
+
 }

@@ -100,7 +100,7 @@ public class BookingAdminController {
     }
 
     @GetMapping(value = "/clubs/bookings", produces = "text/html;charset=UTF-8")
-    public String bookingsOfMyClubs(@Valid @ModelAttribute("bookingSearchForm") BookingSearchForm form,
+    public String bookingsOfMyClubs(@ModelAttribute("bookingSearchForm") BookingSearchForm form,
                                     BindingResult br,
                                     Model model) {
 
