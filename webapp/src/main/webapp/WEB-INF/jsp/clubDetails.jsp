@@ -135,6 +135,12 @@
                 </button>
 
                 <div class="bb-panel">
+                    <c:if test="${not empty tableLayoutUrl}">
+                        <div class="table-layout-container" style="text-align:center; margin-bottom:12px;">
+                            <img src="<c:url value='${tableLayoutUrl}' />" alt="Layout de mesas"
+                                 style="max-width:100%; border-radius:8px; border:1px solid #333;"/>
+                        </div>
+                    </c:if>
                     <c:url var="reserveUrl" value="/clubs/${club.clubId}/reserve"/>
                     <c:if test="${not empty error}">
                         <div class="bb-error" style="background:#5a1a1a;color:#fff;padding:10px;border-radius:6px;margin-bottom:12px;">

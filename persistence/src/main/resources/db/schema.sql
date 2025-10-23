@@ -171,6 +171,20 @@ CREATE TABLE IF NOT EXISTS club_admins (
     PRIMARY KEY (club_id, admin_id)
 );
 
+CREATE TABLE IF NOT EXISTS club_layouts (
+                                            layout_id    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                            club_id      UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
+                                            uploaded_by  UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                                            url          TEXT NOT NULL,
+                                            data         BYTEA,
+                                            filename     TEXT,
+                                            content_type TEXT,
+                                            size_bytes   BIGINT,
+                                            created_at   TIMESTAMPTZ DEFAULT NOW(),
+                                            UNIQUE (club_id)
+);
+CREATE INDEX IF NOT EXISTS idx_club_layouts_club_id ON club_layouts (club_id);
+
 -- por si ya existe, la volamos primero
 DROP FUNCTION IF EXISTS booking_items_set_line_total() CASCADE;
 
