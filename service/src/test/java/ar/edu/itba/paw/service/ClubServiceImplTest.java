@@ -47,7 +47,7 @@ public class ClubServiceImplTest {
 
     @Test
     public void testGetClubByIdFound() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null, null);
 
         Mockito.when(mockDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
 
@@ -68,22 +68,22 @@ public class ClubServiceImplTest {
 
     @Test
     public void testCreateClub() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null,  null);
         User contact = Mockito.mock(User.class);
         UUID contactId = UUID.randomUUID();
         Mockito.when(contact.getId()).thenReturn(contactId);
         Mockito.when(userService.findById(contactId)).thenReturn(contact);
         Mockito.when(contact.getRole()).thenReturn(Role.USER);
         Mockito.when(contact.getEmail()).thenReturn("test@mail.com");
-        Mockito.when(mockDao.create(CLUB_NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, true)).thenReturn(club);
-        Club result = clubService.create(CLUB_NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, true, null);
+        Mockito.when(mockDao.create(CLUB_NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, true, null)).thenReturn(club);
+        Club result = clubService.create(CLUB_NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, true, null,null);
         Assert.assertNotNull(result);
         Assert.assertEquals(CLUB_NAME, result.getClubName());
     }
 
     @Test
     public void testAdvancedSearch() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null, null);
         Mockito.when(mockDao.search("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name")).thenReturn(List.of(club));
         List<Club> result = clubService.advancedSearch("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name");
         Assert.assertEquals(1, result.size());
@@ -92,17 +92,17 @@ public class ClubServiceImplTest {
 
     @Test
     public void testUpdateClubById() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
-        Mockito.when(mockDao.update(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, Zone.ZONA_CABA, true)).thenReturn(club);
-        Club result = clubService.update(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, Zone.ZONA_CABA, true);
+        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null, null);
+        Mockito.when(mockDao.update(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, Zone.ZONA_CABA, true, null)).thenReturn(club);
+        Club result = clubService.update(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, Zone.ZONA_CABA, true, null);
         Assert.assertNotNull(result);
         Assert.assertEquals(CLUB_ID, result.getClubId());
     }
 
     @Test
     public void testUpdateClub() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, true);
-        Mockito.when(mockDao.update(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, Zone.ZONA_CABA, true)).thenReturn(club);
+        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, true, null);
+        Mockito.when(mockDao.update(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, Zone.ZONA_CABA, true, null)).thenReturn(club);
         Club result = clubService.updateClub(club);
         Assert.assertNotNull(result);
         Assert.assertEquals(CLUB_ID, result.getClubId());
@@ -119,7 +119,7 @@ public class ClubServiceImplTest {
 
     @Test
     public void testSearchPaginated() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null, null);
         Mockito.when(mockDao.searchPaginated("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name", 1, 0)).thenReturn(List.of(club));
         List<Club> result = clubService.searchPaginated("Club", Zone.ZONA_CABA, "ROCK", "MEDIO", true, "name", 1, 0);
         Assert.assertEquals(1, result.size());
@@ -139,7 +139,7 @@ public class ClubServiceImplTest {
         Mockito.when(booking.getBookingId()).thenReturn(CLUB_ID);
         ClubTablesDao tablesDao = Mockito.mock(ClubTablesDao.class);
         ClubDao clubDao = Mockito.mock(ClubDao.class);
-        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club = new Club(CLUB_ID, CLUB_NAME, LOCATION, RATING, QUANTITY_RATINGS, PRICE_RANGE, DESCRIPTION, null, MUSIC_GENRE, CREATED_AT, Zone.ZONA_CABA, null, null);
         ClubTable table = Mockito.mock(ClubTable.class);
         Mockito.when(table.getClubId()).thenReturn(CLUB_ID);
         Mockito.when(tablesDao.findById(CLUB_ID)).thenReturn(Optional.of(table));

@@ -39,7 +39,7 @@ public class ClubDetailsController {
                                  final PhotoService photoService,
                                  final TableService tableService,
                                  final SecurityService securityService,
-                                 final ClubLayoutService clubLayoutService
+                                 final ClubLayoutService clubLayoutService,
                                  final ReviewService reviewService) {
         this.clubService = clubService;
         this.productsService = productsService;

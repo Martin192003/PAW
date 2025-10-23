@@ -55,7 +55,8 @@ public class ReviewServiceImpl implements ReviewService {
                 club.getContactInfo() != null ? club.getContactInfo().getId() : null,
                 club.getMusicGenre(),
                 club.getZone(),
-                club.getIsBar()
+                club.getIsBar(),
+                club.getCbu()
         );
     }
 
