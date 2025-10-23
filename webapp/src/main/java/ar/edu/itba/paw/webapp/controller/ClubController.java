@@ -260,26 +260,26 @@ public class ClubController {
 
         var eventPhotoIds = eventService.getEventPhotoIds(clubId);
 
-        //LÓGICA DE NEGOCIOS, PASAR A SERVICE
         var clubOnlyPhotos = photos.stream()
                 .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
-                .sorted((p1, p2) -> {
-                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
-                        return p2.getCreatedAt().compareTo(p1.getCreatedAt());
-                    }
-                    return p2.getPhotoId().compareTo(p1.getPhotoId());
-                })
                 .collect(Collectors.toList());
 
-        String coverPhoto = clubOnlyPhotos.isEmpty()
-                ? "/resources/img/default-club-placeholder.png"
-                : clubOnlyPhotos.getFirst().getUrl();
+        var coverPhotoOpt = clubOnlyPhotos.stream()
+                .filter(p -> PhotoType.COVER == p.getPhotoType())
+                .sorted(Comparator.comparing(Photo::getCreatedAt).reversed())
+                .findFirst();
+
+        String coverPhoto = coverPhotoOpt
+                .map(Photo::getUrl)
+                .orElse("/resources/img/default-club-placeholder.png");
+
+        List<Photo> carouselPhotos = clubOnlyPhotos.stream()
+                .filter(p -> PhotoType.CAROUSEL == p.getPhotoType())
+                .sorted(Comparator.comparing(Photo::getCreatedAt).reversed())
+                .collect(Collectors.toList());
 
         model.addAttribute("coverPhotoUrl", coverPhoto);
-        model.addAttribute("clubPhotos", clubOnlyPhotos);
-
-        List<Photo> carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
-        model.addAttribute("clubPhotos", carouselPhotos);
+        model.addAttribute("carouselPhotos", carouselPhotos);
 
         var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
         String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
@@ -295,7 +295,6 @@ public class ClubController {
 
         model.addAttribute("club", club);
         model.addAttribute("tables", tableService.findByClubId(clubId));
-        model.addAttribute("coverPhotoUrl", coverPhoto);
         model.addAttribute("tableLayoutUrl", tableLayoutUrl);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());

@@ -117,40 +117,42 @@
 
 
         <c:choose>
-            <c:when test="${not empty clubPhotos}">
-                <div class="carousel-container">
-                    <div class="carousel-track" id="carouselTrack">
-                        <c:forEach var="photo" items="${clubPhotos}" varStatus="status">
-                            <div class="carousel-slide">
-                                <img src="<c:url value='${photo.url}'/>"
-                                     alt="<c:out value='${club.clubName}'/> - Foto ${status.index + 1}"
-                                     loading="lazy">
+            <c:when test="${not empty carouselPhotos}">
+                <div class="photo-carousel">
+                    <div class="carousel-container">
+                        <div class="carousel-track" id="carouselTrack">
+                            <c:forEach var="photo" items="${carouselPhotos}" varStatus="status">
+                                <div class="carousel-slide">
+                                    <img src="<c:url value='${photo.url}'/>"
+                                         alt="<c:out value='${club.clubName}'/> - Foto ${status.index + 1}"
+                                         loading="lazy">
+                                </div>
+                            </c:forEach>
+                        </div>
+
+                        <c:if test="${fn:length(carouselPhotos) > 1}">
+                            <button class="carousel-btn carousel-prev" id="prevBtn">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button class="carousel-btn carousel-next" id="nextBtn">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+
+                            <div class="carousel-counter" id="carouselCounter">
+                                1 / ${fn:length(carouselPhotos)}
                             </div>
-                        </c:forEach>
+                        </c:if>
                     </div>
 
-                    <c:if test="${fn:length(clubPhotos) > 1}">
-                        <button class="carousel-btn carousel-prev" id="prevBtn">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <button class="carousel-btn carousel-next" id="nextBtn">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
 
-                        <div class="carousel-counter" id="carouselCounter">
-                            1 / ${fn:length(clubPhotos)}
+                    <c:if test="${fn:length(carouselPhotos) > 1}">
+                        <div class="carousel-indicators" id="carouselIndicators">
+                            <c:forEach begin="0" end="${fn:length(carouselPhotos) - 1}" var="i">
+                                <button class="carousel-dot ${i == 0 ? 'active' : ''}"></button>
+                            </c:forEach>
                         </div>
                     </c:if>
                 </div>
-
-                <c:if test="${fn:length(clubPhotos) > 1}">
-                    <div class="carousel-indicators" id="carouselIndicators">
-                        <c:forEach begin="0" end="${fn:length(clubPhotos) - 1}" var="i">
-                            <button class="carousel-dot ${i == 0 ? 'active' : ''}"
-                                    onclick="goToSlide(${i})"></button>
-                        </c:forEach>
-                    </div>
-                </c:if>
             </c:when>
             <c:otherwise>
                 <div class="no-photos">
@@ -1023,28 +1025,53 @@
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const counter = document.getElementById('carouselCounter');
-        const indicators = document.querySelectorAll('.carousel-dot');
+        const indicatorsContainer = document.getElementById('carouselIndicators');
 
-        if (!track) return;
+        let indicators = [];
+        if (indicatorsContainer) {
+            indicators = Array.from(indicatorsContainer.querySelectorAll('.carousel-dot'));
+        }
 
-        const slides = track.children;
+        if (!track || track.children.length === 0) return;
+
+        const slides = Array.from(track.children);
         const totalSlides = slides.length;
         let currentSlide = 0;
 
-        if (totalSlides <= 1) return;
+        // Asegurar que cada slide tenga el ancho del contenedor para un carrusel que solo muestra una foto a la vez
+        function setSlideWidths(containerWidth) {
+            slides.forEach(slide => {
+                // * CAMBIO 1: Añadir backticks (`) alrededor de toda la expresión para concatenar 'px' *
+                slide.style.width = `${containerWidth}px`;
+            });
+        }
 
         function updateCarousel() {
-            const translateX = -currentSlide * 100;
-            track.style.transform = `translateX(${translateX}%)`;
+            const container = track.parentElement;
+            const containerWidth = container.offsetWidth;
 
+            if (containerWidth === 0) {
+                requestAnimationFrame(updateCarousel);
+                return;
+            }
+
+            // Ajustar el ancho de los slides en cada actualización (importante para el resize)
+            setSlideWidths(containerWidth);
+
+            // * CAMBIO 2: Añadir backticks (`) alrededor de toda la expresión para 'translateX' *
+            track.style.transform = `translateX(-${currentSlide * containerWidth}px)`;
+
+            // * CAMBIO 3: Añadir backticks (`) alrededor de toda la expresión para el contador *
             if (counter) {
                 counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
             }
 
-            indicators.forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentSlide);
+            // Indicadores
+            indicators.forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentSlide);
             });
 
+            // Botones
             if (prevBtn) prevBtn.disabled = currentSlide === 0;
             if (nextBtn) nextBtn.disabled = currentSlide === totalSlides - 1;
         }
@@ -1070,17 +1097,38 @@
             }
         }
 
+        // Eventos
+        indicators.forEach((dot, i) => dot.addEventListener('click', () => goToSlide(i)));
         if (nextBtn) nextBtn.addEventListener('click', nextSlide);
         if (prevBtn) prevBtn.addEventListener('click', prevSlide);
 
-        window.goToSlide = goToSlide;
-
-        document.addEventListener('keydown', (e) => {
+        // Teclas y Resize
+        document.addEventListener('keydown', e => {
             if (e.key === 'ArrowLeft') prevSlide();
             if (e.key === 'ArrowRight') nextSlide();
         });
 
-        updateCarousel();
+        window.addEventListener('resize', () => {
+            requestAnimationFrame(updateCarousel);
+        });
+
+        // Carga de Imágenes
+        const images = track.querySelectorAll('img');
+        let loaded = 0;
+        const check = () => {
+            loaded++;
+            if (loaded === images.length) {
+                requestAnimationFrame(updateCarousel);
+            }
+        };
+
+        images.forEach(img => {
+            if (img.complete) check();
+            else img.onload = img.onerror = check;
+        });
+
+        // Inicializar
+        requestAnimationFrame(updateCarousel);
     });
 </script>
 </body>

@@ -19,12 +19,12 @@
     display: flex;
     transition: transform 0.3s ease;
     height: 100%;
+    width: max-content; /* Importante: permite que el track crezca */
 }
 
 .carousel-slide {
-    min-width: 100%;
     height: 100%;
-    position: relative;
+    flex-shrink: 0;
 }
 
 .carousel-slide img {
