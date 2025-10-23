@@ -71,6 +71,14 @@
                     onclick="openEditModal('description', '<c:out value="${club.description}"/>')"><i
                     class="fa-solid fa-pen"></i></button>
         </div>
+        <div>
+            <strong><spring:message code="placeholder.cbu"/>:&nbsp;</strong>
+            <c:out value="${club.cbu}"/>
+            <button type="button" class="btn btn-success btn-edit-small"
+                    onclick="openEditModal('cbu', '<c:out value="${club.cbu}"/>')">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+        </div>
     </div>
     <h2><spring:message code="layout.title" text="Layout de mesas"/></h2>
     <div class="form-group">
@@ -392,6 +400,12 @@
                 <form:errors path="description" cssClass="formError"/>
             </div>
 
+            <div id="editField_cbu" style="display:none;">
+                <label><spring:message code="placeholder.cbu"/>:</label>
+                <form:input path="cbu" id="editFieldValue_cbu" cssClass="input-modal"/>
+                <form:errors path="cbu" cssClass="formError"/>
+            </div>
+
             <div class="modal-actions" style="margin-top:12px;">
                 <button type="button" class="btn btn-secondary" onclick="closeEditModal()">
                     <spring:message code="button.cancel"/>
@@ -533,6 +547,43 @@
         </form>
     </div>
 </div>
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
+        <h3><spring:message code="confirm.deleteProduct"/></h3>
+        <p style="margin-top:8px;">¿Estás seguro que querés eliminar este producto? Esta acción no se puede deshacer.</p>
+
+        <form id="deleteForm" method="post" action="<c:url value='/clubs/products/deleteProduct' />">
+            <input type="hidden" name="productId" id="deleteProductId" value=""/>
+            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <spring:message code="button.delete"/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="tableDeleteModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeTableDeleteModal()">&times;</span>
+        <h3><spring:message code="confirm.deleteTable"/></h3>
+        <form method="post" id="tableDeleteForm">
+            <input type="hidden" name="clubId" value="${club.clubId}"/>
+            <input type="hidden" name="tableId" id="deleteTableId" value=""/>
+            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
+                <button type="button" class="btn btn-secondary" onclick="closeTableDeleteModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <spring:message code="button.delete"/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 <div id="eventEditModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEventEditModal()" style="color:#fff;">&times;</span>
@@ -627,6 +678,7 @@
     }
 
     function closeDeleteModal() {
+        document.getElementById('deleteProductId').value = '';
         document.getElementById('deleteModal').style.display = 'none';
     }
 
@@ -635,7 +687,7 @@
         document.getElementById('editedField').value = field;
 
         // ocultar todos los bloques
-        const fields = ['clubName','location','zone','musicGenre','priceRange','description'];
+        const fields = ['clubName','location','zone','musicGenre','priceRange','description', 'cbu'];
         fields.forEach(f => {
             const el = document.getElementById('editField_' + f);
             if (el) el.style.display = 'none';
@@ -653,7 +705,8 @@
             'description': 'editFieldValue_description',
             'zone': 'zoneSelectModal',
             'musicGenre': 'musicGenreSelectModal',
-            'priceRange': 'priceSelectModal'
+            'priceRange': 'priceSelectModal',
+            'cbu': 'editFieldValue_cbu'
         };
         const id = inputIds[field];
         if (id) {
@@ -685,10 +738,12 @@
 
     function openTableDeleteModal(tableId) {
         document.getElementById('tableDeleteModal').style.display = 'flex';
+        document.getElementById('deleteTableId').value = tableId;
         document.getElementById('tableDeleteForm').action = '${pageContext.request.contextPath}/clubs/tables/' + tableId + '/delete';
     }
 
     function closeTableDeleteModal() {
+        document.getElementById('deleteTableId').value = '';
         document.getElementById('tableDeleteModal').style.display = 'none';
     }
 
@@ -815,6 +870,21 @@
         // reutiliza la función existente que limpia errores si está definida
         try { clearFormErrors('editLayoutModal'); } catch(e){}
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[type="number"]').forEach(function(input) {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === '-' || e.key === 'Subtract') {
+                    e.preventDefault();
+                }
+            });
+            input.addEventListener('input', function(e) {
+                if (this.value.includes('-')) {
+                    this.value = this.value.replace(/-/g, '');
+                }
+            });
+        });
+    });
 
 </script>
 </body>

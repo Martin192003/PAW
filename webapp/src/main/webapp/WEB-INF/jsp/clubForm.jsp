@@ -171,6 +171,11 @@
                 <form:errors path="isBar" cssClass="error" element="div"/>
             </div>
             <div class="form-group">
+                <spring:message code="form.cbu" var="phCbu"/>
+                <form:input path="cbu" class="form-control" placeholder="${phCbu}"/>
+                <form:errors path="cbu" cssClass="error" element="div"/>
+            </div>
+            <div class="form-group">
                 <form:input path="image" type="file" class="form-control"/>
                 <form:errors path="image" cssClass="error" element="div"/>
             </div>

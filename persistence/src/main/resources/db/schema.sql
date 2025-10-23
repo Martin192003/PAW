@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at    TIMESTAMPTZ DEFAULT NOW(),
     is_verified   BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(100),
-    reset_password_token VARCHAR(255),
+    reset_password_token VARCHAR(255)
 
     );
 
@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS clubs (
     music_genre VARCHAR(50),
     zone VARCHAR(50) CHECK (zone IN ('ZONA_CABA','ZONA_NORTE', 'ZONA_OESTE', 'ZONA_SUR')),
     is_bar BOOLEAN NOT NULL DEFAULT FALSE,
+    cbu VARCHAR(50),
     created_at TIMESTAMPTZ DEFAULT NOW()
     );
 

@@ -52,8 +52,8 @@
                 <div class="card-right">
                     <div class="card-text-title">
                         <c:choose>
-                            <c:when test="${not empty club.clubName and fn:length(club.clubName) > 20}">
-                                <c:out value="${fn:substring(club.clubName, 0, 20)}"/>...
+                            <c:when test="${not empty club.clubName and fn:length(club.clubName) > 30}">
+                                <c:out value="${fn:substring(club.clubName, 0, 30)}"/>...
                             </c:when>
                             <c:otherwise>
                                 <c:out value="${club.clubName}"/>
@@ -61,17 +61,36 @@
                         </c:choose>
                     </div>
                     <span class="card-text-body">
-                        <i class="fa-solid fa-location-dot"></i> <c:out value="${club.location}"/><br>
-                            ${club.rating}<br>
-                        <c:choose>
-                            <c:when test="${not empty club.description and fn:length(club.description) > 75}">
-                                <c:out value="${fn:substring(club.description, 0, 75)}"/>...
-                            </c:when>
-                            <c:otherwise>
-                                <c:out value="${club.description}"/>
-                            </c:otherwise>
-                        </c:choose>
-                    </span>
+                    <i class="fa-solid fa-location-dot"></i> <c:out value="${club.location}"/><br>
+                    <i class="fa-solid fa-music"></i> <spring:message code="genre.${club.musicGenre}"/><br>
+                    <i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
+
+                    <c:if test="${not empty club.rating and club.rating gt 0.0}">
+                        <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
+                        <c:set var="decimal" value="${club.rating - ratingInt}" />
+                        <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
+                        <c:set var="fullStars" value="${ratingInt}" />
+                        <c:set var="emptyStars" value="${5 - (fullStars + halfStar)}" />
+                        <c:forEach var="i" begin="1" end="${fullStars}">
+                            <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                        </c:forEach>
+                        <c:if test="${halfStar == 1}">
+                            <i class="fa-solid fa-star-half-stroke" style="color:#FFD700;"></i>
+                        </c:if>
+                        <c:forEach var="i" begin="1" end="${emptyStars}">
+                            <i class="fa-regular fa-star" style="color:#bab8b8;"></i>
+                        </c:forEach>
+                        ${club.rating}<br>
+                    </c:if>
+                    <c:choose>
+                        <c:when test="${not empty club.description and fn:length(club.description) > 80}">
+                            <c:out value="${fn:substring(club.description, 0, 80)}"/>...
+                        </c:when>
+                        <c:otherwise>
+                            <c:out value="${club.description}"/>
+                        </c:otherwise>
+                    </c:choose>
+                </span>
                 </div>
             </div>
         </t:card>

@@ -43,7 +43,7 @@ public class ClubTablesJpaDaoTest {
         User admin = persistUser("admin", "Admin", "Last", "admin@email.com",
                 "{noop}pass", "123456", Role.USER);
         Club club = persistClub("Club", "Desc", "Loc",
-                Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, false);
+                Price.MEDIO, admin, MusicalGenre.ROCK, Zone.ZONA_CABA, false, null);
         clubId = club.getClubId();
 
         ClubTable t = clubTablesDao.create(
@@ -63,10 +63,10 @@ public class ClubTablesJpaDaoTest {
     }
 
     private Club persistClub(String name, String desc, String loc, Price price,
-                             User contact, MusicalGenre genre, Zone zone, Boolean isBar) {
+                             User contact, MusicalGenre genre, Zone zone, Boolean isBar, String cbu) {
         Club c = new Club(
                 name, loc,  null,  null,
-                price, desc, contact, genre, null, zone, isBar
+                price, desc, contact, genre, null, zone, isBar, cbu
         );
         em.persist(c);
         return c;
@@ -85,7 +85,7 @@ public class ClubTablesJpaDaoTest {
         User admin2 = persistUser("admin2", "Name2", "Last2", "email2@email.com",
                 "{noop}pass2", "654321", Role.USER);
         Club club2 = persistClub("Club2", "Desc2", "Loc2",
-                Price.MEDIO, admin2, MusicalGenre.ROCK, Zone.ZONA_CABA, false);
+                Price.MEDIO, admin2, MusicalGenre.ROCK, Zone.ZONA_CABA, false, null);
 
         int number = 1;
         int capacity = 4;
@@ -166,7 +166,7 @@ public class ClubTablesJpaDaoTest {
 
     @Test
     public void testFindByClubWithTables() {
-        Club clubProxy = new Club(clubId, null, null, null, null, null, null, null, null, null, null, null);
+        Club clubProxy = new Club(clubId, null, null, null, null, null, null, null, null, null, null, null, null);
         List<ClubTable> tables = clubTablesDao.findByClub(clubProxy);
 
         assertEquals(1, tables.size());

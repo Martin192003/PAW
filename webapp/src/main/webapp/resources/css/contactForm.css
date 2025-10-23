@@ -133,3 +133,36 @@ body {
     overflow: auto;
     height: auto;
 }
+.toast-bottom-right {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    opacity: 0;
+    transform: translateY(100px);
+    pointer-events: none;
+    z-index: 9999;
+    transition: all 0.5s ease;
+}
+
+.toast-bottom-right.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.toast-bottom-right .fa-circle-check {
+    color: #4caf50;
+    font-size: 20px;
+}
+
+

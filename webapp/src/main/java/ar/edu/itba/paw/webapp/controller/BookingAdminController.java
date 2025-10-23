@@ -148,6 +148,7 @@ public class BookingAdminController {
         if (form.getStatus() != null) filters.put("status", form.getStatus().name());
         if (form.getSort() != null && !form.getSort().isBlank()) filters.put("sort", form.getSort());
 
+
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(java.util.stream.Collectors.joining("&"));
@@ -193,9 +194,14 @@ public class BookingAdminController {
         ClubTable table = tableOpt.orElse(null);
 
         String clubName = "";
+        String clubCbu = "";
         if (table != null) {
             Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
-            clubName = clubOpt.map(Club::getClubName).orElse("");
+            if (clubOpt.isPresent()) {
+                Club club = clubOpt.get();
+                clubName = club.getClubName();
+                clubCbu = club.getCbu();
+            }
         }
 
         var rOpt = receiptService.findByBooking(bookingId);
@@ -208,6 +214,7 @@ public class BookingAdminController {
         model.addAttribute("booking", booking);
         model.addAttribute("table", table);
         model.addAttribute("clubName", clubName);
+        model.addAttribute("clubCbu", clubCbu);
 
 
         ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");

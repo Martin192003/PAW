@@ -205,6 +205,7 @@ public class ClubController {
             model.addAttribute("priceValues", Price.values());
             model.addAttribute("genreValues", MusicalGenre.values());
             model.addAttribute("zoneValues", Zone.values());
+
             return "clubForm";
         }
 
@@ -214,7 +215,7 @@ public class ClubController {
 
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
-                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getImage()
+                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getCbu(), f.getImage()
         );
 
         if (roleAntes == Role.USER) {
@@ -296,9 +297,86 @@ public class ClubController {
         form.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
         form.setDescription(club.getDescription() != null ? club.getDescription() : "");
         form.setImage(coverPhoto != null ? coverPhoto : "");
+        form.setCbu(club.getCbu() != null ? club.getCbu() : "");
+
 
         model.addAttribute("clubHandlerForm", form);
         return "clubHandler";
+    }
+
+    @PostMapping("/editClub")
+    public String editClub(
+            @Valid @ModelAttribute("clubHandlerForm") ClubHandlerForm clubHandlerForm,
+            BindingResult errors,
+            @RequestParam("clubId") UUID clubId,
+            @RequestParam(value = "editedField", required = false) String editedField,
+            Model model,
+            RedirectAttributes ra
+    ) {
+        checkLoggedUser(clubId);
+
+        var maybeClub = clubService.getClubById(clubId);
+        if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
+        Club club = maybeClub.get();
+
+        if (errors.hasErrors()) {
+            populateClubHandlerModel(model, club);
+            model.addAttribute("clubHandlerForm", clubHandlerForm);
+            model.addAttribute("editField", editedField);
+            return "clubHandler";
+        }
+
+        if (clubHandlerForm.getName() != null && !clubHandlerForm.getName().isBlank()) {
+            club.setClubName(clubHandlerForm.getName());
+        }
+        if (clubHandlerForm.getLocation() != null && !clubHandlerForm.getLocation().isBlank()) {
+            club.setLocation(clubHandlerForm.getLocation());
+        }
+        if (clubHandlerForm.getZone() != null && !clubHandlerForm.getZone().isBlank()) {
+            club.setZone(Zone.valueOf(clubHandlerForm.getZone()));
+        }
+        if (clubHandlerForm.getMusicGenre() != null && !clubHandlerForm.getMusicGenre().isBlank()) {
+            club.setMusicGenre(MusicalGenre.valueOf(clubHandlerForm.getMusicGenre()));
+        }
+        if (clubHandlerForm.getPriceRange() != null && !clubHandlerForm.getPriceRange().isBlank()) {
+            club.setPriceRange(Price.valueOf(clubHandlerForm.getPriceRange()));
+        }
+        if (clubHandlerForm.getDescription() != null) {
+            club.setDescription(clubHandlerForm.getDescription());
+        }
+        if (clubHandlerForm.getCbu() != null && !clubHandlerForm.getCbu().isBlank()) {
+            club.setCbu(clubHandlerForm.getCbu());
+        }
+
+        clubService.updateClub(club);
+
+        ra.addFlashAttribute("successMessage", "Cambios guardados correctamente.");
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+
+    @PostMapping("/club/{clubId}/photos")
+    public String upload(@PathVariable UUID clubId,
+                         @RequestParam("file") MultipartFile file,
+                         Principal principal) throws IOException {
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
+        }
+
+        User user = securityService.getVerifiedLoggedUser();
+        checkLoggedUser(clubId);
+
+        UUID photoId = photoService.upload(
+                clubId,
+                user.getId(),
+                file.getOriginalFilename(),
+                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
+                file.getBytes()
+        );
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
     private void populateClubHandlerModel(Model model, Club club) {

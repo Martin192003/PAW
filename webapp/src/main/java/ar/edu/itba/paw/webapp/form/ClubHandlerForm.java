@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.form;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.util.UUID;
 
 public class ClubHandlerForm {
@@ -26,6 +27,10 @@ public class ClubHandlerForm {
 
     @NotBlank(message = "{clubHandlerForm.description.notEmpty}")
     private String description;
+
+    @Size(max = 50, message = "{clubHandlerForm.cbu.size}")
+    @NotBlank(message = "{club.cbu.notnull}")
+    private String cbu;
 
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
@@ -53,4 +58,7 @@ public class ClubHandlerForm {
 
     public String getEditedField() { return editedField; }
     public void setEditedField(String editedField) { this.editedField = editedField; }
+
+    public String getCbu() { return cbu; }
+    public void setCbu(String cbu) { this.cbu = cbu; }
 }

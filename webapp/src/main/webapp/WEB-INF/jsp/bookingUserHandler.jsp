@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
@@ -79,80 +80,151 @@
                     <dt><spring:message code="booking.end" text="Fin"/></dt>
                     <dd><c:out value="${bookingEndLocal}"/></dd>
                 </div>
+                <div class="row">
+                    <dt><spring:message code="placeholder.cbu" text="CBU"/></dt>
+                    <dd><c:out value="${clubCbu}"/></dd>
+                </div>
                 <div class="row total">
                     <dt><spring:message code="booking.total" text="Total"/></dt>
-                    <dd>$ <c:out value="${booking.totalAmount}"/></dd>
+                    <dd>
+                        <c:choose>
+                            <c:when test="${not empty table.price}">
+                                <c:choose>
+                                    <c:when test="${not empty table.discount and table.discount > 0}">
+                                        <c:set var="priceToPay" value="${table.price * (1 - table.discount / 100)}" />
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:set var="priceToPay" value="${table.price}" />
+                                    </c:otherwise>
+                                </c:choose>
+                                $ <fmt:formatNumber value="${priceToPay}" minFractionDigits="0" maxFractionDigits="0"/>
+                                <c:if test="${not empty table.discount and table.discount > 0}">
+                                    <span class="discount-right muted">(<spring:message code="tables.discount"/>:<fmt:formatNumber value="${table.discount}" minFractionDigits="0" maxFractionDigits="0"/>%)</span>
+                                </c:if>
+                            </c:when>
+                            <c:otherwise>
+                                $ <c:out value="${booking.totalAmount}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </dd>
                 </div>
             </dl>
             <div class="booking-actions">
-                <form id="userCancelForm" method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
-                    <button id="userCancelBtn" type="submit" class="btn btn-secondary">
+                <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
+                    <button id="userCancelBtn" type="button" class="btn btn-secondary"
+                            onclick="openCancelBookingModal('${booking.bookingId}')">
                         <i class="fa fa-trash"></i>
                         <spring:message code="booking.action.cancel" text="Cancelar reserva"/>
                     </button>
-                </form>
+                </c:if>
             </div>
         </article>
 
         <aside class="right-col">
             <article class="card-lg booking-card">
                 <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>
-
                 <c:choose>
                     <c:when test="${hasReceipt}">
                         <div class="receipt-thumb">
                             <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>" alt="Receipt"/>
                         </div>
-                        <div class="receipt-actions">
-                            <form method="post" action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>">
-                                <button type="submit" class="btn btn-secondary">
-                                    <spring:message code="receipt.delete" text="Eliminar"/>
-                                </button>
-                            </form>
-                            <form>
-                                <button type="button" class="btn btn-success" onclick="window.open('<c:url value="/bookings/${booking.bookingId}/receipt"/>', '_blank')">
-                                    <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
-                                </button>
-                            </form>
-                        </div>
+                        <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
+                            <div class="receipt-actions">
+                                <form method="post" action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>">
+                                    <button type="submit" class="btn btn-secondary">
+                                        <spring:message code="receipt.delete" text="Eliminar"/>
+                                    </button>
+                                </form>
+                                <form>
+                                    <button type="button" class="btn btn-success" onclick="window.open('<c:url value="/bookings/${booking.bookingId}/receipt"/>', '_blank')">
+                                        <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
+                                    </button>
+                                </form>
+                            </div>
+                        </c:if>
                     </c:when>
-
                     <c:otherwise>
                         <p class="muted"><spring:message code="receipt.missing" text="No hay comprobante cargado."/></p>
+                        <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
+                            <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data"
+                                       action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt"
+                                       class="upload-form">
+                                <div class="form-group">
+                                    <form:input type="file" path="file"/>
+                                    <p cssClass="error-message"><form:errors path="file"/></p>
+                                </div>
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <spring:message code="receipt.upload" text="Subir comprobante"/>
+                                </button>
+                            </form:form>
+                        </c:if>
                     </c:otherwise>
                 </c:choose>
-
-                <c:if test="${!hasReceipt}">
-                    <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data" action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt" class="upload-form">
-                        <div class="form-group">
-                            <form:input type="file" path="file"/>
-                            <p cssClass="error-message"><form:errors path="file"/></p>
-                        </div>
-                        <button type="submit" class="btn btn-success btn-sm" >
-                                <spring:message code="receipt.upload" text="Subir comprobante"/>
-                        </button>
-                    </form:form>
-                </c:if>
             </article>
         </aside>
     </section>
 </div>
+<div id="cancelBookingModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeCancelBookingModal()">&times;</span>
+        <h3 style="margin-top:8px;"><spring:message code="confirm.cancelBooking"/></h3>
+        <form id="cancelBookingForm" method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
+            <input type="hidden" name="bookingId" id="cancelBookingId" value=""/>
+            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
+                <button type="button" class="btn btn-secondary" onclick="closeCancelBookingModal()">
+                    <spring:message code="button.cancel"/>
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <spring:message code="booking.action.confirm"/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var f = document.getElementById('userCancelForm');
-        if (f) {
-            f.addEventListener('submit', function(e) {
-                if (f.dataset.submitting === '1') { e.preventDefault(); return; }
-                f.dataset.submitting = '1';
-                var btn = document.getElementById('userCancelBtn');
-                if (btn) {
-                    btn.disabled = true;
-                    try {
-                        btn.dataset.orig = btn.innerHTML;
-                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (btn.textContent || '');
-                    } catch (err) { /* ignore */ }
-                }
+    window.openCancelBookingModal = function(bookingId) {
+        const input = document.getElementById('cancelBookingId');
+        const modal = document.getElementById('cancelBookingModal');
+        if (!modal) return;
+        if (input) input.value = bookingId;
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            modal.style.visibility = 'visible';
+        }, 10);
+    };
+
+    window.closeCancelBookingModal = function() {
+        const input = document.getElementById('cancelBookingId');
+        const modal = document.getElementById('cancelBookingModal');
+        if (!modal) return;
+        if (input) input.value = '';
+        modal.style.display = 'none';
+        modal.style.opacity = '0';
+        modal.style.visibility = 'hidden';
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('cancelBookingModal');
+        const btn = document.getElementById('userCancelBtn');
+
+        if (btn) {
+            btn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                openCancelBookingModal('${booking.bookingId}');
             });
+        }
+
+        window.addEventListener('click', function (e) {
+            const modalNow = document.getElementById('cancelBookingModal');
+            if (modalNow && e.target === modalNow) {
+                closeCancelBookingModal();
+            }
+        });
+
+        const closeX = document.querySelector('#cancelBookingModal .modal-close');
+        if (closeX) {
+            closeX.addEventListener('click', closeCancelBookingModal);
         }
     });
 </script>

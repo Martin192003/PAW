@@ -35,7 +35,7 @@ public class ReviewServiceImplTest {
 
     @Test
     public void testGetAverageRatingWithReviews() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, Price.MEDIO, "desc", null, MusicalGenre.ROCK, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, Price.MEDIO, "desc", null, MusicalGenre.ROCK, CREATED_AT, Zone.ZONA_CABA, null, null);
         Review review1 = new Review(UUID.randomUUID(), null, club, 4, "Muy bueno", CREATED_AT);
         Review review2 = new Review(UUID.randomUUID(), null, club, 2, "Regular", CREATED_AT);
 
@@ -49,7 +49,7 @@ public class ReviewServiceImplTest {
 
     @Test
     public void testGetAverageRatingNoReviews() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, Price.MEDIO, "desc", null, MusicalGenre.ROCK, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, Price.MEDIO, "desc", null, MusicalGenre.ROCK, CREATED_AT, Zone.ZONA_CABA, null, null);
 
         Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
         Mockito.when(reviewsDao.findByClub(club)).thenReturn(Collections.emptyList());

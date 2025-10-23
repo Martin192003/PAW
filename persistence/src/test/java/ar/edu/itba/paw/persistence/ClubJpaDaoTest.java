@@ -48,7 +48,7 @@ public class ClubJpaDaoTest {
     public void testCreate() {
         User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
         // Si NO pusiste @PrePersist en Club para isBar, pasá false explícito en el último parámetro:
-        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
+        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false, null);
 
         assertNotNull(club);
         assertEquals(NAME, club.getClubName());
@@ -63,7 +63,7 @@ public class ClubJpaDaoTest {
     @Test
     public void testUpdate() {
         User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
+        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false, null);
 
         Club updated = clubDao.update(
                 club.getClubId(),
@@ -76,7 +76,8 @@ public class ClubJpaDaoTest {
                 contact.getId(),
                 MusicalGenre.POP,
                 Zone.ZONA_SUR,
-                true           // isBar
+                true,// isBar
+                null
         );
 
         assertNotNull(updated);
@@ -91,7 +92,7 @@ public class ClubJpaDaoTest {
     @Test
     public void testDelete() {
         User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
+        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false, null);
 
         boolean deleted = clubDao.delete(club.getClubId());
 
@@ -102,7 +103,7 @@ public class ClubJpaDaoTest {
     @Test
     public void testFindById() {
         User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
+        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false, null);
 
         Optional<Club> found = clubDao.findById(club.getClubId());
 
@@ -113,7 +114,7 @@ public class ClubJpaDaoTest {
     @Test
     public void testFindAdminsByClubId() {
         User contact = userDao.create("user","name","pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false);
+        Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false, null);
 
         assertEquals(1, clubDao.findAdminsByClubId(club.getClubId()).size());
     }

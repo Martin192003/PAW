@@ -109,13 +109,17 @@
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
             <div class="filter-bar">
                 <!-- Name -->
-                <input
-                        type="text"
-                        name="name"
-                        placeholder="<c:out value='${phName}'/>"
-                        class="filter-item"
-                        value="<c:out value='${not empty param.name ? param.name : name}'/>"
-                />
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input
+                            type="text"
+                            name="name"
+                            placeholder=""
+                            aria-label="<c:out value='${phName}'/>"
+                            class="filter-item"
+                            value="<c:out value='${not empty param.name ? param.name : name}'/>"
+                    />
+                </div>
 
                 <!-- Zone -->
                 <select name="zone" class="filter-item">
@@ -260,7 +264,7 @@
                     <i class="fa-solid fa-music"></i> <spring:message code="genre.${club.musicGenre}"/><br>
                     <i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
 
-                    <c:if test="${not empty club.rating}">
+                    <c:if test="${not empty club.rating and club.rating gt 0.0}">
                         <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
                         <c:set var="decimal" value="${club.rating - ratingInt}" />
                         <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
