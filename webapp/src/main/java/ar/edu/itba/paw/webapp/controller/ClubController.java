@@ -264,13 +264,7 @@ public class ClubController {
                 .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
                 .collect(Collectors.toList());
 
-        var coverPhotoOpt = clubOnlyPhotos.stream()
-                .filter(p -> PhotoType.COVER == p.getPhotoType())
-                .sorted(Comparator.comparing(Photo::getCreatedAt).reversed())
-                .findFirst();
-
-        String coverPhoto = coverPhotoOpt
-                .map(Photo::getUrl)
+        String coverPhotoUrl = photoService.getCoverUrl(clubId)
                 .orElse("/resources/img/default-club-placeholder.png");
 
         List<Photo> carouselPhotos = clubOnlyPhotos.stream()
@@ -278,7 +272,7 @@ public class ClubController {
                 .sorted(Comparator.comparing(Photo::getCreatedAt).reversed())
                 .collect(Collectors.toList());
 
-        model.addAttribute("coverPhotoUrl", coverPhoto);
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
         model.addAttribute("carouselPhotos", carouselPhotos);
 
         var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
@@ -314,7 +308,7 @@ public class ClubController {
         form.setZone(club.getZone() != null ? club.getZone().name() : null);
         form.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
         form.setDescription(club.getDescription() != null ? club.getDescription() : "");
-        form.setImage(coverPhoto != null ? coverPhoto : "");
+        form.setImage(coverPhotoUrl != null ? coverPhotoUrl : "");
         form.setCbu(club.getCbu() != null ? club.getCbu() : "");
 
 

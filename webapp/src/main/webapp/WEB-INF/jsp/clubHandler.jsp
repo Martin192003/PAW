@@ -576,7 +576,7 @@
     <div class="modal-content"><span class="modal-close"
                                      onclick="document.getElementById('editImageModal').style.display='none'">&times;</span>
         <h3><spring:message code="title.editImage"/></h3>
-        <form method="post" action="<c:url value='/clubs/${club.clubId}/photos' />" enctype="multipart/form-data">
+        <form method="post" action="<c:url value='/clubs/club/${club.clubId}/cover' />" enctype="multipart/form-data">
             <input type="file" name="file" accept="image/jpeg,image/png,image/webp"/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary"

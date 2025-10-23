@@ -107,8 +107,8 @@ public class ClubDetailsController {
                .forEach(e -> ordered.put(e.getKey(), e.getValue()));
        if (ordered.isEmpty() && !products.isEmpty()) ordered.put("Tragos", products);
 
-       var photos = photoService.listByClub(clubId, 0, 1);
-       String coverPhotoUrl = photos.isEmpty() ? null : photos.get(0).getUrl();
+       String coverPhotoUrl = photoService.getCoverUrl(clubId)
+               .orElse("/resources/img/default-club-placeholder.png");
 
        // Obtener URL del layout desde ClubLayoutService (si existe)
        String tableLayoutUrl = clubLayoutService.getLayoutByClub(clubId)
@@ -123,7 +123,6 @@ public class ClubDetailsController {
         boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
         model.addAttribute("isOwner", isOwner);
 
-       Optional<Photo> coverPhoto = photoService.getCoverPhoto(clubId);
        List<Photo> carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
 
        model.addAttribute("isLoggedIn", securityService.getVerifiedLoggedUser() != null);
