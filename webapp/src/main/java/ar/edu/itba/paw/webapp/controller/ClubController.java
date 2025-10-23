@@ -363,10 +363,10 @@ public class ClubController {
         Map<UUID, List<Event>> eventsByClub = clubs.stream()
                 .collect(Collectors.toMap(
                         Club::getClubId,
-                        c -> eventService.listByClub(c.getClubId(), 0, 5).stream()
+                        c -> eventService.listByClub(c.getClubId(), 0, 20).stream()
                                 .filter(e -> !e.getDate().isBefore(LocalDate.now()))
                                 .sorted(Comparator.comparing(Event::getDate))
-                                .limit(2)
+                                .limit(3)
                                 .collect(Collectors.toList())
                 ));
         model.addAttribute("eventsByClub", eventsByClub);

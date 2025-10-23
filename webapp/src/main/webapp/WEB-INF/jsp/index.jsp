@@ -35,21 +35,41 @@
 
         <c:if test="${hasEvents}">
             <h2 class="events-title"><spring:message code="title.events"/></h2>
-            <div class="events-grid">
-                <c:forEach var="club" items="${clubs}">
-                    <c:set var="clubEvents" value="${eventsByClub[club.clubId]}"/>
-                    <c:if test="${not empty clubEvents}">
-                        <div class="event-column">
-                            <div class="event-club-title">
-                                <i class="fa-solid fa-martini-glass"></i>
-                                <c:out value="${club.clubName}"/>
-                            </div>
+
+            <div class="events-carousel-wrapper">
+                <button class="carousel-btn left" onclick="scrollCarousel(-1)">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <div class="events-carousel" id="eventsCarousel">
+                    <c:forEach var="club" items="${clubs}">
+                        <c:set var="clubEvents" value="${eventsByClub[club.clubId]}"/>
+                        <c:if test="${not empty clubEvents}">
                             <c:forEach var="e" items="${clubEvents}">
                                 <c:url var="eventUrl" value="/clubs/${club.clubId}">
                                     <c:param name="date" value="${e.date}"/>
                                 </c:url>
+
                                 <a class="event-card" href="${eventUrl}">
                                     <div class="event-card-body">
+                                        <div class="event-card-image">
+                                            <c:choose>
+                                                <c:when test="${not empty e.photoId}">
+                                                    <div class="event-card-image">
+                                                        <img src="${pageContext.request.contextPath}/photos/${e.photoId}" alt="Imagen del evento" />
+                                                    </div>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div class="event-card-no-image">
+                                                        <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                        <div class="event-club-title">
+                                            <i class="fa-solid fa-martini-glass"></i>
+                                            <c:out value="${club.clubName}"/>
+                                        </div>
                                         <div class="event-date">
                                             <i class="fa-regular fa-calendar"></i>
                                             <c:out value="${e.date}"/>
@@ -70,12 +90,17 @@
                                     </div>
                                 </a>
                             </c:forEach>
-                        </div>
-                    </c:if>
-                </c:forEach>
+                        </c:if>
+                    </c:forEach>
+                </div>
+
+                <button class="carousel-btn right" onclick="scrollCarousel(1)">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
             </div>
         </c:if>
     </div>
+
 
     <div class="filter-container">
         <spring:message code="filter.name" var="phName"/>
@@ -311,6 +336,11 @@
             card.style.cursor = 'pointer';
         });
     });
+    function scrollCarousel(direction) {
+        const carousel = document.getElementById('eventsCarousel');
+        const scrollAmount = 300; // distancia del desplazamiento
+        carousel.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+    }
 </script>
 </body>
 </html>
