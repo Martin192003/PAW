@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/details.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/topbar.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/carousel.css' />" />
+    <link rel="stylesheet" href="<c:url value='/resources/css/reviews.css' />">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -128,47 +129,6 @@
                 </c:otherwise>
             </c:choose>
         </div>
-        <c:if test="${isLoggedIn}">
-            <div class="review-form">
-                <form method="post" action="<c:url value='/clubs/${club.clubId}/reviews'/>">
-                    <label for="rating">Rating:</label>
-                    <select name="rating" id="rating" required>
-                        <c:forEach var="i" begin="1" end="5">
-                            <option value="${i}">${i}</option>
-                        </c:forEach>
-                    </select>
-                    <label for="comment">Comment:</label>
-                    <textarea name="comment" id="comment" rows="3" required></textarea>
-                    <button type="submit" class="btn btn-success">Submit Review</button>
-                </form>
-            </div>
-        </c:if>
-        <!-- Show club reviews -->
-        <div class="club-reviews">
-            <h3><i class="fa-solid fa-star"></i> <spring:message code="reviews.title" text="Reviews"/></h3>
-            <c:choose>
-                <c:when test="${not empty reviews}">
-                    <ul>
-                        <c:forEach var="review" items="${reviews}">
-                            <li>
-                                <strong><c:out value="${review.user.username}"/></strong>
-                                <span> - ${review.rating} <i class="fa-solid fa-star" style="color:#FFD700;"></i></span>
-                                <p><c:out value="${review.description}"/></p>
-                                <small>
-                                    <spring:message code="reviews.date" text="Date"/>:
-                                    <%--<fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/>--%>
-                                </small>
-                            </li>
-                        </c:forEach>
-                    </ul>
-                </c:when>
-                <c:otherwise>
-                    <p><spring:message code="reviews.empty" text="No reviews yet."/></p>
-                </c:otherwise>
-            </c:choose>
-        </div>
-
-    </div>
 
         <!-- Fila con 2 dropdowns independientes -->
         <div class="bb-row">
@@ -303,7 +263,91 @@
             <h3><i class="fa-solid fa-map-location-dot"></i> <spring:message code="form.location"/></h3>
             <div id="clubMap"></div>
         </div>
+
         <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+        <!-- Reviews: formulario -->
+        <c:if test="${isLoggedIn}">
+            <section class="review-section">
+                <div class="contact-card review-card">
+                    <div class="review-header">
+                        <h3 class="contact-title">
+                            <span><spring:message code="reviews.add" text="Dejar una reseña"/></span>
+                        </h3>
+                        <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
+                    </div>
+
+                    <form method="post" action="<c:url value='/clubs/${club.clubId}/reviews'/>" class="review-form">
+                        <div class="form-group">
+                            <label for="rating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
+                            <select name="rating" id="rating" class="form-control" required>
+                                <c:forEach var="i" begin="1" end="5">
+                                    <option value="${i}">${i}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="comment"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
+                            <textarea name="comment" id="comment" class="form-control" rows="5"
+                                      placeholder="<spring:message code='reviews.placeholder' text='Contanos tu experiencia...'/>"
+                                      required></textarea>
+                        </div>
+
+                        <div class="contact-buttons">
+                            <button type="button" class="btn btn-secondary"
+                                    onclick="window.location.hash='#reviews';">
+                                <spring:message code="button.cancel" text="Cancelar"/>
+                            </button>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <spring:message code="reviews.submit" text="Enviar reseña"/>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </c:if>
+
+        <!-- Reviews: listado -->
+        <section id="reviews" class="reviews-list-section">
+            <div class="contact-card reviews-card">
+                <h3 class="contact-title">
+                    <span><spring:message code="reviews.title" text="Reseñas"/></span>
+                </h3>
+
+                <c:choose>
+                    <c:when test="${not empty reviews}">
+                        <ul class="reviews-list">
+                            <c:forEach var="review" items="${reviews}">
+                                <li class="review-item">
+                                    <div class="review-item-header">
+                                        <strong class="review-user"><c:out value="${review.user.username}"/></strong>
+                                        <span class="review-rating" aria-label="rating">
+                  ${review.rating}
+                  <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                </span>
+                                    </div>
+                                    <p class="review-text"><c:out value="${review.description}"/></p>
+                                    <small class="review-date">
+                                        <spring:message code="reviews.date" text="Fecha"/>:
+                                            <%-- <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/> --%>
+                                    </small>
+                                </li>
+                            </c:forEach>
+                        </ul>
+                    </c:when>
+                    <c:otherwise>
+                        <p class="no-reviews">
+                            <spring:message code="reviews.empty" text="Todavía no hay reseñas."/>
+                        </p>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </section>
+
+
+    </div>
         <script>
             document.addEventListener('DOMContentLoaded', async () => {
                 const address = "${club.location}"; // dirección guardada en la DB
