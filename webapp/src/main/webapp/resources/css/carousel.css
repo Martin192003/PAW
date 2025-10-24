@@ -1,12 +1,21 @@
-/* ===== CARRUSEL EN CAPAS (ROBUSTO) ===== */
 #club-carousel.photo-carousel {
     position: relative;
     width: 100%;
-    max-width: 800px;
-    margin: 20px auto;
-    border-radius: 12px;
+    margin: 20px 0; /* igual separación que la coverphoto /
+    border-radius: 8px; / igual que .detail-image /
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5); / igual tono que el mapa /
+    background-color: rgba(20, 20, 20, 0.95); / coherente con tema oscuro /
+    border: 1px solid rgba(156, 39, 176, 0.3); / mismo borde violeta sutil */
+}
+
+#club-carousel h3 {
+    font-size: 18px;
+    color: #fff;
+    margin: 16px 0 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 #club-carousel .carousel-container {
@@ -15,6 +24,7 @@
     height: 400px;
     overflow: hidden;
     background: #000;
+    border-radius: 8px;
 }
 
 #club-carousel .carousel-track {
@@ -78,7 +88,7 @@
     padding: 4px 10px; border-radius: 14px; font-size: 14px; z-index: 10;
 }
 
-@media (max-width: 768px) {
-    #club-carousel .carousel-container { height: 250px; }
-    #club-carousel .carousel-btn { width: 40px; height: 40px; }
+@media (max-width: 768px){
+    #club-carousel .carousel-container{ aspect-ratio: 4 / 3; }
+    #club-carousel .carousel-btn{ width: 40px; height: 40px; }
 }

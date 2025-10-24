@@ -64,7 +64,6 @@ public class PhotoJpaDao implements PhotoDao {
                 .setParameter("ids", ids)
                 .getResultList();
 
-        // No exponemos el BLOB en listados
         photos.forEach(p -> { em.detach(p); p.setData(null); });
         return photos;
     }
@@ -115,6 +114,7 @@ public class PhotoJpaDao implements PhotoDao {
         return true;
     }
 
+    @Override
     public List<Photo> findByClubIdPaginated(UUID clubId, int limit, int offset) {
         return em.createQuery("SELECT p FROM Photo p WHERE p.clubId = :clubId ORDER BY p.createdAt DESC", Photo.class)
                 .setParameter("clubId", clubId)
@@ -124,7 +124,6 @@ public class PhotoJpaDao implements PhotoDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Photo> findCoverByClubId(UUID clubId) {
         return em.createQuery(
                         "SELECT p FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type", Photo.class)
@@ -136,7 +135,6 @@ public class PhotoJpaDao implements PhotoDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Photo> findCarouselByClubId(UUID clubId, int limit, int offset) {
         return em.createQuery(
                         "SELECT p FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type ORDER BY p.createdAt DESC", Photo.class)
@@ -148,11 +146,80 @@ public class PhotoJpaDao implements PhotoDao {
     }
 
     @Override
-    @Transactional
     public void deleteCoverByClubId(UUID clubId) {
         em.createQuery("DELETE FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type")
                 .setParameter("clubId", clubId)
                 .setParameter("type", PhotoType.COVER)
                 .executeUpdate();
     }
+
+    @Override
+    public UUID createReviewPhoto(UUID clubId, UUID reviewId, UUID postedBy,
+                                  String filename, String contentType, byte[] data) {
+        Photo p = new Photo();
+        p.setClubId(clubId);
+        p.setReviewId(reviewId);                 // <-- vínculo con reseña
+        p.setPostedBy(postedBy);
+        p.setFilename(filename);
+        p.setContentType(contentType);
+        p.setData(data);
+        p.setPhotoType(PhotoType.REVIEW);
+        em.persist(p);
+        return p.getPhotoId();
+    }
+
+    @Override
+    public List<Photo> findReviewPhotosByClub(UUID clubId, int limit, int offset) {
+        final int lim = Math.max(0, limit);
+        final int off = Math.max(0, offset);
+
+        // 1) Página de IDs
+        final String idSql = """
+                SELECT CAST(p.photo_id AS TEXT) AS id_text
+                FROM photos p
+                WHERE p.club_id = :clubId AND p.photo_type = 'REVIEW'
+                ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
+                LIMIT :limit OFFSET :offset
+            """;
+
+        @SuppressWarnings("unchecked") final List<String> idTexts = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .setParameter("clubId", clubId)
+                .setParameter("limit", lim)
+                .setParameter("offset", off)
+                .getResultList();
+
+        if (idTexts.isEmpty()) return List.of();
+
+        final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+        // 2) Entidades
+        final List<Photo> photos = em.createQuery("""
+                        SELECT p
+                        FROM Photo p
+                        WHERE p.photoId IN :ids AND p.photoType = :type
+                        ORDER BY p.createdAt DESC, p.photoId DESC
+                    """, Photo.class)
+            .setParameter("ids", ids)
+            .setParameter("type", PhotoType.REVIEW)
+            .getResultList();
+
+        photos.forEach(p -> {
+            em.detach(p);
+            p.setData(null);
+        });
+        return photos;
+    }
+
+@Override
+public Optional<Photo> findByReviewId(UUID reviewId) {
+    List<Photo> list = em.createQuery(
+            "SELECT p FROM Photo p WHERE p.reviewId = :rid ORDER BY p.createdAt DESC",
+            Photo.class)
+        .setParameter("rid", reviewId)
+        .setMaxResults(1)
+        .getResultList();
+    return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
+}
 }

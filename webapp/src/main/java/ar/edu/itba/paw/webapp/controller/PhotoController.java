@@ -121,8 +121,7 @@ public class PhotoController {
 
     @PostMapping("/clubs/club/{clubId}/cover")
     public String uploadCover(@PathVariable UUID clubId,
-                              @RequestParam("file") MultipartFile file,
-                              Principal principal) throws IOException {
+                              @RequestParam("file") MultipartFile file) throws IOException {
 
         if (file == null || file.isEmpty()) {
             return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
@@ -144,8 +143,7 @@ public class PhotoController {
 
     @PostMapping("/clubs/club/{clubId}/carousel")
     public String uploadCarousel(@PathVariable UUID clubId,
-                                 @RequestParam("file") MultipartFile file,
-                                 Principal principal) throws IOException {
+                                 @RequestParam("file") MultipartFile file ) throws IOException {
 
         if (file == null || file.isEmpty()) {
             return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";

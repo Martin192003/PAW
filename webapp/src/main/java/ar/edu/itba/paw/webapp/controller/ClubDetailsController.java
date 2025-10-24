@@ -123,7 +123,9 @@ public class ClubDetailsController {
         boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
         model.addAttribute("isOwner", isOwner);
 
-       List<Photo> carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+       List<Photo> carouselPhotos = photoService.getClubPhotos(clubId, 10, 0);
+       List<Photo> reviewPhotos = photoService.getReviewPhotosByClub(clubId, 20, 0);
+       model.addAttribute("reviewPhotos", reviewPhotos);
 
        model.addAttribute("isLoggedIn", securityService.getVerifiedLoggedUser() != null);
        model.addAttribute("coverPhotoUrl", coverPhotoUrl);

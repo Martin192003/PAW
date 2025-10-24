@@ -33,4 +33,11 @@ public interface PhotoDao {
     Optional<Photo> findCoverByClubId(UUID clubId);
     List<Photo> findCarouselByClubId(UUID clubId, int limit, int offset);
     void deleteCoverByClubId(UUID clubId);
+
+    UUID createReviewPhoto(UUID clubId, UUID reviewId, UUID postedBy,
+                           String filename, String contentType, byte[] data);
+    List<Photo> findReviewPhotosByClub(UUID clubId, int limit, int offset);
+    Optional<Photo> findByReviewId(UUID reviewId);
+
+
 }

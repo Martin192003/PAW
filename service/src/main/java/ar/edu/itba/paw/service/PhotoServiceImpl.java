@@ -5,7 +5,6 @@ import ar.edu.itba.paw.model.PhotoType;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.EventDao;
 import ar.edu.itba.paw.persistence.PhotoDao;
-import ar.edu.itba.paw.service.PhotoService;
 import ar.edu.itba.paw.model.Photo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +48,7 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID uploadCover(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
+    public void uploadCover(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
         photoDao.deleteCoverByClubId(clubId);
 
         Photo photo = new Photo();
@@ -60,12 +59,12 @@ public class PhotoServiceImpl implements PhotoService {
         photo.setData(data);
         photo.setPhotoType(PhotoType.COVER);
 
-        return photoDao.save(photo);
+        photoDao.save(photo);
     }
 
     @Override
     @Transactional
-    public UUID uploadCarousel(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
+    public void uploadCarousel(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
         Photo photo = new Photo();
         photo.setClubId(clubId);
         photo.setPostedBy(userId);
@@ -74,7 +73,7 @@ public class PhotoServiceImpl implements PhotoService {
         photo.setData(data);
         photo.setPhotoType(PhotoType.CAROUSEL);
 
-        return photoDao.save(photo);
+        photoDao.save(photo);
     }
 
     @Override
@@ -189,6 +188,39 @@ public class PhotoServiceImpl implements PhotoService {
     @Transactional(readOnly = true)
     public List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset) {
         return photoDao.findCarouselByClubId(clubId, limit, offset);
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Photo> getClubPhotos(UUID clubId, int limit, int offset) {
+        List<Photo> result = new ArrayList<>();
+        photoDao.findCoverByClubId(clubId).ifPresent(result::add);
+        result.addAll(photoDao.findCarouselByClubId(clubId, limit, offset));
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) throw new IllegalArgumentException("File is empty");
+        final String ct = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
+        return photoDao.createReviewPhoto(
+                clubId, reviewId, userId,
+                file.getOriginalFilename(), ct, file.getBytes()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Photo> getReviewPhotosByClub(UUID clubId, int limit, int offset) {
+        return photoDao.findReviewPhotosByClub(clubId, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Photo> getPhotoByReview(UUID reviewId) {
+        return photoDao.findByReviewId(reviewId);
     }
 
     @Override

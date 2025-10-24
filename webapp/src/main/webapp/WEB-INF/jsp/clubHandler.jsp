@@ -126,9 +126,6 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h2>
             <div>
-                <button type="button" class="btn btn-info" onclick="openAddCarouselPhotoModal()">
-                    <i class="fa-solid fa-plus"></i> Add Carousel Photo
-                </button>
                 <button type="button" class="btn btn-success" onclick="openAddPhotosModal()">
                     <i class="fa-solid fa-plus"></i> <spring:message code="button.addPhotos" text="Agregar Fotos"/>
                 </button>

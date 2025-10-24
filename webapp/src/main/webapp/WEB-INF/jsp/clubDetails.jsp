@@ -54,33 +54,7 @@
     </div>
 
     <div class="detail-content">
-        <c:if test="${not empty coverPhotoUrl}">
-            <img src="<c:url value='${coverPhotoUrl}' />"
-                 alt="<c:out value='${club.clubName}'/>" class="detail-image">
-        </c:if>
-
-        <div class="detail-info">
-            <div class="detail-details">
-                <span><i class="fa-solid fa-location-dot"></i><c:out value="${locationText}"/></span><br>
-                <span><i class="fa-solid fa-music"></i><spring:message code="genre.${club.musicGenre}"/></span><br>
-                <i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
-                <div>
-                    <i class="fa-solid fa-star" style="color:#FFD700;"></i>
-                    <c:choose>
-                        <c:when test="${club.rating != null}">
-                            <span>
-                              <fmt:formatNumber value="${club.rating}" minFractionDigits="1" maxFractionDigits="1"/>
-                              (<c:out value="${club.quantityRatings}"/> <spring:message code="rating.reviews"/>)
-                            </span>
-                        </c:when>
-                        <c:otherwise><span><spring:message code="error.norated"/></span></c:otherwise>
-                    </c:choose>
-                </div>
-            </div>
-        </div>
-
         <div id="club-carousel" class="photo-carousel">
-            <h3><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h3>
             <c:choose>
                 <c:when test="${not empty clubPhotos}">
                     <div class="carousel-container">
@@ -122,6 +96,28 @@
                 </c:otherwise>
             </c:choose>
         </div>
+
+
+        <div class="detail-info">
+            <div class="detail-details">
+                <span><i class="fa-solid fa-location-dot"></i><c:out value="${locationText}"/></span><br>
+                <span><i class="fa-solid fa-music"></i><spring:message code="genre.${club.musicGenre}"/></span><br>
+                <i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
+                <div>
+                    <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                    <c:choose>
+                        <c:when test="${club.rating != null}">
+                            <span>
+                              <fmt:formatNumber value="${club.rating}" minFractionDigits="1" maxFractionDigits="1"/>
+                              (<c:out value="${club.quantityRatings}"/> <spring:message code="rating.reviews"/>)
+                            </span>
+                        </c:when>
+                        <c:otherwise><span><spring:message code="error.norated"/></span></c:otherwise>
+                    </c:choose>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Fila con 2 dropdowns independientes -->
         <div class="bb-row">
@@ -257,50 +253,46 @@
             <div id="clubMap"></div>
         </div>
 
-        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-        <!-- Reviews: formulario -->
-        <c:if test="${isLoggedIn}">
-            <section class="review-section">
-                <div class="contact-card review-card">
-                    <div class="review-header">
-                        <h3 class="contact-title">
-                            <span><spring:message code="reviews.add" text="Dejar una reseña"/></span>
-                        </h3>
-                        <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
+        <h3><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h3>
+
+        <c:if test="${not empty reviewPhotos}">
+            <div id="review-photos" class="photo-carousel">
+                <h3><i class="fa-solid fa-images"></i> <spring:message code="reviews.photos" text="Fotos de reseñas"/></h3>
+                <div class="carousel-container">
+                    <div class="carousel-track" id="reviewPhotosTrack">
+                        <c:forEach var="ph" items="${reviewPhotos}" varStatus="st">
+                            <div class="carousel-slide${st.index == 0 ? ' active' : ''}">
+                                <img src="<c:url value='${ph.photoId}'/>"
+                                     alt="Reseña foto ${st.index + 1}"
+                                     loading="lazy" draggable="false"/>
+                            </div>
+                        </c:forEach>
                     </div>
 
-                    <form method="post" action="<c:url value='/clubs/${club.clubId}/reviews'/>" class="review-form">
-                        <div class="form-group">
-                            <label for="rating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
-                            <select name="rating" id="rating" class="form-control" required>
-                                <c:forEach var="i" begin="1" end="5">
-                                    <option value="${i}">${i}</option>
-                                </c:forEach>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="comment"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
-                            <textarea name="comment" id="comment" class="form-control" rows="5"
-                                      placeholder="<spring:message code='reviews.placeholder' text='Contanos tu experiencia...'/>"
-                                      required></textarea>
-                        </div>
-
-                        <div class="contact-buttons">
-                            <button type="button" class="btn btn-secondary"
-                                    onclick="window.location.hash='#reviews';">
-                                <spring:message code="button.cancel" text="Cancelar"/>
-                            </button>
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa-solid fa-paper-plane"></i>
-                                <spring:message code="reviews.submit" text="Enviar reseña"/>
-                            </button>
-                        </div>
-                    </form>
+                    <c:if test="${fn:length(reviewPhotos) > 1}">
+                        <button class="carousel-btn carousel-prev" id="rpPrev" type="button">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button class="carousel-btn carousel-next" id="rpNext" type="button">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <div class="carousel-counter" id="rpCounter">—</div>
+                    </c:if>
                 </div>
-            </section>
+
+                <c:if test="${fn:length(reviewPhotos) > 1}">
+                    <div class="carousel-indicators" id="rpIndicators">
+                        <c:forEach begin="0" end="${fn:length(reviewPhotos) - 1}" var="i">
+                            <button class="carousel-dot${i == 0 ? ' active' : ''}" type="button"></button>
+                        </c:forEach>
+                    </div>
+                </c:if>
+            </div>
         </c:if>
+
+
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 
         <!-- Reviews: listado -->
         <section id="reviews" class="reviews-list-section">
@@ -338,6 +330,55 @@
                 </c:choose>
             </div>
         </section>
+
+        <c:if test="${isLoggedIn}">
+            <section class="review-section">
+                <div class="contact-card review-card">
+                    <div class="review-header">
+                        <h3 class="contact-title">
+                            <span><spring:message code="reviews.add" text="Dejar una reseña"/></span>
+                        </h3>
+                        <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
+                    </div>
+
+                    <form method="post" action="<c:url value='/clubs/${club.clubId}/reviews'/>" class="review-form"  enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="rating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
+                            <select name="rating" id="rating" class="form-control" required>
+                                <c:forEach var="i" begin="1" end="5">
+                                    <option value="${i}">${i}</option>
+                                </c:forEach>
+                            </select>
+
+                            <label for="photo"><spring:message code="reviews.photo" text="Foto (opcional)"/></label>
+                            <input type="file" id="photo" name="photo" accept="image/*" class="form-control"/>
+                            <small class="bb-help"><spring:message code="reviews.photo.help"
+                                                                   text="Formatos: JPG/PNG/WebP. Máx. 5MB."/></small>
+
+                        </div>
+
+                        <div class="form-group">
+                            <label for="comment"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
+                            <textarea name="comment" id="comment" class="form-control" rows="5"
+                                      placeholder="<spring:message code='reviews.placeholder' text='Contanos tu experiencia...'/>"
+                                      required></textarea>
+                        </div>
+
+                        <div class="contact-buttons">
+                            <button type="button" class="btn btn-secondary"
+                                    onclick="window.location.hash='#reviews';">
+                                <spring:message code="button.cancel" text="Cancelar"/>
+                            </button>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <spring:message code="reviews.submit" text="Enviar reseña"/>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </c:if>
 
 
     </div>
@@ -553,78 +594,51 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const root = document.getElementById('club-carousel');
-        if (!root) return;
+        document.querySelectorAll('.photo-carousel').forEach((root) => {
+            const track    = root.querySelector('.carousel-track');
+            if (!track) return;
 
-        const track = root.querySelector('#carouselTrack');
-        if (!track) return;
+            let   slides   = Array.from(track.querySelectorAll('.carousel-slide'));
+            const prevBtn  = root.querySelector('.carousel-prev');
+            const nextBtn  = root.querySelector('.carousel-next');
+            const counter  = root.querySelector('.carousel-counter');
+            const dots     = Array.from(root.querySelectorAll('.carousel-indicators .carousel-dot'));
 
-        let slides = Array.from(track.querySelectorAll('.carousel-slide'));
-        if (!slides.length) return;
+            let current = Math.max(0, slides.findIndex(s => s.classList.contains('active')));
+            if (current === -1) current = 0;
 
-        const prevBtn = root.querySelector('#prevBtn');
-        const nextBtn = root.querySelector('#nextBtn');
-        const counter = root.querySelector('#carouselCounter');
-        const indicatorsBox = root.querySelector('#carouselIndicators');
-        const dots = indicatorsBox ? Array.from(indicatorsBox.querySelectorAll('.carousel-dot')) : [];
+            const refresh = () => { slides = Array.from(track.querySelectorAll('.carousel-slide')); };
 
-        let current = Math.max(0, slides.findIndex(s => s.classList.contains('active')));
-        if (current === -1) current = 0;
+            function paint() {
+                refresh();
+                const total = slides.length;
+                if (!total) { if (counter) counter.textContent = ''; return; }
 
-        function refreshRefs() {
-            slides = Array.from(track.querySelectorAll('.carousel-slide'));
-        }
+                if (current < 0) current = 0;
+                if (current > total - 1) current = total - 1;
 
-        function paint() {
-            refreshRefs();
-            const total = slides.length;
+                slides.forEach((s, i) => s.classList.toggle('active', i === current));
+                dots.forEach((d, i)   => d.classList.toggle('active', i === current));
 
-            if (!total) {
-                if (counter) counter.textContent = '';
-                return;
+                if (counter) counter.textContent = (current + 1) + ' / ' + total;
+                if (prevBtn) prevBtn.disabled = (current === 0);
+                if (nextBtn) nextBtn.disabled = (current === total - 1);
             }
 
-            if (current < 0) current = 0;
-            if (current > total - 1) current = total - 1;
+            const goTo  = (i) => { if (i < 0 || i >= slides.length) return; current = i; paint(); };
+            const next  = ()   => goTo(current + 1);
+            const prev  = ()   => goTo(current - 1);
 
-            // Si usás transform por % en el CSS, no tocamos. Solo marcamos "active"
-            slides.forEach((s, i) => s.classList.toggle('active', i === current));
-            dots.forEach((d, i) => d.classList.toggle('active', i === current));
+            prevBtn && prevBtn.addEventListener('click', prev);
+            nextBtn && nextBtn.addEventListener('click', next);
+            dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
 
-            if (counter) counter.textContent = (current + 1) + ' / ' + total;
-
-            if (prevBtn) prevBtn.disabled = (current === 0);
-            if (nextBtn) nextBtn.disabled = (current === total - 1);
-
-            // Si tu CSS apila slides, podés además forzar translateX por slide:
-            // track.style.transform = 'translateX(-' + (current * 100) + '%)';
-        }
-
-        function goTo(i) {
-            refreshRefs();
-            const total = slides.length;
-            if (i < 0 || i >= total) return;
-            current = i;
-            paint();
-        }
-        const next = () => goTo(current + 1);
-        const prev = () => goTo(current - 1);
-
-        if (prevBtn) prevBtn.addEventListener('click', prev);
-        if (nextBtn) nextBtn.addEventListener('click', next);
-        dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
-
-        // Inicializar tras carga de imágenes (y fallback)
-        const imgs = track.querySelectorAll('img');
-        let loaded = 0;
-        const done = () => { loaded++; if (loaded === imgs.length) requestAnimationFrame(paint); };
-        imgs.forEach(img => (img.complete ? done() : (img.onload = img.onerror = done)));
-        requestAnimationFrame(paint);
-
-        // Navegación por teclado
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') prev();
-            if (e.key === 'ArrowRight') next();
+            // init tras cargar imágenes
+            const imgs = track.querySelectorAll('img');
+            let loaded = 0;
+            const done = () => { loaded++; if (loaded === imgs.length) requestAnimationFrame(paint); };
+            imgs.forEach(img => (img.complete ? done() : (img.onload = img.onerror = done)));
+            requestAnimationFrame(paint);
         });
     });
 
