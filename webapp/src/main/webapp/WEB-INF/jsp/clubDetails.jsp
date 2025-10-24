@@ -346,7 +346,12 @@
                         <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
                     </div>
 
-                    <form method="post" action="<c:url value='reviews/clubs/${club.clubId}/'/>" class="review-form"  enctype="multipart/form-data">
+                    <form method="post"
+                          action="<c:url value='/clubs/${club.clubId}/reviews'/>"
+                          class="review-form"
+                          enctype="multipart/form-data">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+
                         <div class="form-group">
                             <label for="rating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
                             <select name="rating" id="rating" class="form-control" required>
@@ -359,11 +364,10 @@
                             <input type="file" id="photo" name="photo" accept="image/*" class="form-control"/>
                             <small class="bb-help"><spring:message code="reviews.photo.help"
                                                                    text="Formatos: JPG/PNG/WebP. Máx. 5MB."/></small>
-
                         </div>
 
                         <div class="form-group">
-                            <label for="comment"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
+                            <label for="description"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
                             <textarea name="description" id="description" class="form-control" rows="5"
                                       placeholder="<spring:message code='reviews.placeholder' text='Contanos tu experiencia...'/>"
                                       required></textarea>

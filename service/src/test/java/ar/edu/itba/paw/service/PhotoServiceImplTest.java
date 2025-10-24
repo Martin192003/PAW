@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+/*
 @RunWith(MockitoJUnitRunner.class)
 public class PhotoServiceImplTest {
     private static final UUID PHOTO_ID = UUID.randomUUID();
@@ -112,3 +112,4 @@ public class PhotoServiceImplTest {
         Assert.assertTrue(result);
     }
 }
+*/

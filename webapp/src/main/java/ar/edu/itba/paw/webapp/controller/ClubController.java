@@ -375,15 +375,10 @@ public class ClubController {
     @PostMapping("/club/{clubId}/layout")
     public String uploadLayout(@PathVariable UUID clubId,
                                @RequestParam("file") MultipartFile file,
-                               Principal principal,
-                               RedirectAttributes redirectAttributes) {
-        try {
-            String email = principal.getName();
-            clubLayoutService.uploadLayout(clubId, email, file);
-            redirectAttributes.addFlashAttribute("successMessage", "Layout subido correctamente");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al subir el layout: " + e.getMessage());
-        }
+                               RedirectAttributes ra) {
+        final User user = securityService.getVerifiedLoggedUser();
+        clubLayoutService.uploadLayout(clubId, user.getEmail(), file);
+        ra.addFlashAttribute("layoutUploaded", true);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
