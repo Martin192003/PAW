@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -31,21 +32,22 @@ public class ReviewController {
     }
 
 
-    @PostMapping("/reviews/clubs/{clubId}")
-    public ModelAndView createReview(@PathVariable UUID clubId,
+    @PostMapping("clubs/reviews/clubs/{clubId}")
+    public String createReview(@PathVariable UUID clubId,
                                      @RequestParam int rating,
                                      @RequestParam(value = "photo", required = false) MultipartFile photo,
-                                     @RequestParam(required = false) String description) {
+                                     @RequestParam(required = false) String description,
+                                     RedirectAttributes redirectAttributes) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return new ModelAndView("redirect:/login");
+            return "redirect:/login";
         }
 
         String username = auth.getName();
         User user = userService.findByEmail(username);
         if (user == null) {
-            return new ModelAndView("redirect:/login");
+            return "redirect:/login";
         }
 
 
@@ -55,13 +57,13 @@ public class ReviewController {
             if (photo != null && !photo.isEmpty()) {
                 photoService.uploadReviewPhoto(clubId, review.getReviewId(), user.getId(), photo);
             }
-            return new ModelAndView("redirect:/clubs/" + clubId);
+            return "redirect:/clubs/" + clubId;
         } catch (IllegalArgumentException e) {
-            ModelAndView mav = new ModelAndView("club/detail");
-            mav.addObject("error", e.getMessage());
-            return mav;
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/clubs/" + clubId ;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            redirectAttributes.addFlashAttribute("error", "Error subiendo la imagen.");
+            return "redirect:/clubs/" + clubId ;
         }
 
     }

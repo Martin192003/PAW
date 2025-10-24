@@ -253,35 +253,37 @@
             <div id="clubMap"></div>
         </div>
 
-        <h3><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h3>
-
         <c:if test="${not empty reviewPhotos}">
-            <div id="review-photos" class="photo-carousel">
-                <h3><i class="fa-solid fa-images"></i> <spring:message code="reviews.photos" text="Fotos de reseñas"/></h3>
+            <!-- Usa el mismo ID que el CSS espera -->
+            <div id="club-carousel" class="photo-carousel review-carousel">
+                <h3><i class="fa-solid fa-images"></i>
+                    <spring:message code="reviews.photos" text="Fotos de reseñas"/>
+                </h3>
+
                 <div class="carousel-container">
-                    <div class="carousel-track" id="reviewPhotosTrack">
+                    <div class="carousel-track">
                         <c:forEach var="ph" items="${reviewPhotos}" varStatus="st">
                             <div class="carousel-slide${st.index == 0 ? ' active' : ''}">
-                                <img src="<c:url value='${ph.photoId}'/>"
-                                     alt="Reseña foto ${st.index + 1}"
-                                     loading="lazy" draggable="false"/>
+                                <img src="<c:url value='/photos/${ph.photoId}'/>"
+                                     alt="Foto de reseña ${st.index + 1}"
+                                     loading="lazy" draggable="false">
                             </div>
                         </c:forEach>
                     </div>
 
                     <c:if test="${fn:length(reviewPhotos) > 1}">
-                        <button class="carousel-btn carousel-prev" id="rpPrev" type="button">
+                        <button class="carousel-btn carousel-prev" type="button">
                             <i class="fa-solid fa-chevron-left"></i>
                         </button>
-                        <button class="carousel-btn carousel-next" id="rpNext" type="button">
+                        <button class="carousel-btn carousel-next" type="button">
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
-                        <div class="carousel-counter" id="rpCounter">—</div>
+                        <div class="carousel-counter">—</div>
                     </c:if>
                 </div>
 
                 <c:if test="${fn:length(reviewPhotos) > 1}">
-                    <div class="carousel-indicators" id="rpIndicators">
+                    <div class="carousel-indicators">
                         <c:forEach begin="0" end="${fn:length(reviewPhotos) - 1}" var="i">
                             <button class="carousel-dot${i == 0 ? ' active' : ''}" type="button"></button>
                         </c:forEach>
@@ -289,6 +291,7 @@
                 </c:if>
             </div>
         </c:if>
+
 
 
         <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -313,7 +316,9 @@
                                             <i class="fa-solid fa-star" style="color:#FFD700;"></i>
                                         </span>
                                     </div>
-                                    <p class="review-text"><c:out value="${review.description}"/></p>
+                                    <p class="review-text">
+                                        <c:out value="${review.description}"/>
+                                    </p>
                                     <small class="review-date">
                                         <spring:message code="reviews.date" text="Fecha"/>:
                                             <%-- <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/> --%>
@@ -341,7 +346,7 @@
                         <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
                     </div>
 
-                    <form method="post" action="<c:url value='/clubs/${club.clubId}/reviews'/>" class="review-form"  enctype="multipart/form-data">
+                    <form method="post" action="<c:url value='reviews/clubs/${club.clubId}/'/>" class="review-form"  enctype="multipart/form-data">
                         <div class="form-group">
                             <label for="rating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
                             <select name="rating" id="rating" class="form-control" required>
@@ -359,7 +364,7 @@
 
                         <div class="form-group">
                             <label for="comment"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
-                            <textarea name="comment" id="comment" class="form-control" rows="5"
+                            <textarea name="description" id="description" class="form-control" rows="5"
                                       placeholder="<spring:message code='reviews.placeholder' text='Contanos tu experiencia...'/>"
                                       required></textarea>
                         </div>
