@@ -1,30 +1,29 @@
 package ar.edu.itba.paw.webapp.form;
 
+import ar.edu.itba.paw.webapp.form.validation.ValidEventEditDate;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
-
-
 import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-
+@ValidEventEditDate
 public class EventEditForm {
     @NotNull
     private UUID clubId;
 
     private UUID eventId;
 
-    @NotBlank
+    @NotBlank(message = "{event.name.notblank}")
     @Size(max = 120)
     private String eventName;
 
-
+    @NotBlank(message = "{event.description.notnull}")
     @Size(max = 2000)
     private String description;
 
 
-    @NotNull
+    @NotNull(message = "{event.name.notblank}")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate date;
 

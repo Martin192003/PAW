@@ -58,7 +58,7 @@ public class EventsController {
             model.addAttribute("club", club);
             model.addAttribute("eventForm", form);
             model.addAttribute("editEventForm", new EventEditForm());
-            model.addAttribute("editField", "Event");
+            model.addAttribute("editField", "event");
             model.addAttribute("tableForm", new AddTableForm());
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editProductForm", new EditProductForm());
@@ -103,7 +103,7 @@ public class EventsController {
             model.addAttribute("club", club);
             model.addAttribute("eventForm", new EventAddForm());
             model.addAttribute("editEventForm", form);
-            model.addAttribute("editField", "Event");
+            model.addAttribute("editField", "event");
             model.addAttribute("tableForm", new AddTableForm());
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editProductForm", new EditProductForm());

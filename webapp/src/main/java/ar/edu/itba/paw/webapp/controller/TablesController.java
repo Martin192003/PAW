@@ -66,7 +66,7 @@ public class TablesController {
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editProductForm", new EditProductForm());
             model.addAttribute("editTableForm", form);
-            model.addAttribute("editField", "Table");
+            model.addAttribute("editField", "table");
             ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
             clubHandlerForm.setClubId(club.getClubId());
             clubHandlerForm.setName(club.getClubName());

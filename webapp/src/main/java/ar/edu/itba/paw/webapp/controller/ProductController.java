@@ -134,7 +134,7 @@ public class ProductController {
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
             model.addAttribute("editProductForm", form);
-            model.addAttribute("editField", "Product");
+            model.addAttribute("editField", "product");
             EventAddForm eventForm = new EventAddForm();
             eventForm.setClubId(club.getClubId());
             model.addAttribute("eventForm", eventForm);
