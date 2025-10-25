@@ -32,4 +32,6 @@ public interface EventDao {
 
     List<UUID> findEventPhotoIdsByClub(UUID clubId);
 
+    void attachPhoto(UUID eventId, UUID photoId);
+
 }

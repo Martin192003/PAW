@@ -8,7 +8,10 @@ import ar.edu.itba.paw.persistence.ReviewsDao;
 import ar.edu.itba.paw.persistence.UserDao;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,11 +19,13 @@ import java.util.UUID;
 @Service
 public class ReviewServiceImpl implements ReviewService {
 
-    private ReviewsDao reviewsDao;
-    private ClubDao clubDao;
-    private UserDao userDao;
+    private final ReviewsDao reviewsDao;
+    private final PhotoService photoService;
+    private final ClubDao clubDao;
+    private final UserDao userDao;
 
-    public ReviewServiceImpl(ReviewsDao reviewsDao, ClubDao clubDao, UserDao userDao) {
+    public ReviewServiceImpl(ReviewsDao reviewsDao, PhotoService photoService, ClubDao clubDao, UserDao userDao) {
+        this.photoService = photoService;
         this.userDao = userDao;
         this.reviewsDao = reviewsDao;
         this.clubDao = clubDao;
@@ -42,7 +47,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private void updateClubRating(Club club) {
         double avg = getAverageRating(club.getClubId());
-        club.setRating(java.math.BigDecimal.valueOf(avg));
+        club.setRating(BigDecimal.valueOf(avg));
         club.setQuantityRatings(reviewsDao.findByClub(club).size());
         clubDao.update(
                 club.getClubId(),
@@ -62,7 +67,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public Review createReview(UUID userId, UUID clubId, int rating, String description) {
+    public Review createReview(UUID userId, UUID clubId, int rating, String description, MultipartFile photo) throws IOException {
         User user = userDao.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Club club = clubDao.findById(clubId)
@@ -74,6 +79,9 @@ public class ReviewServiceImpl implements ReviewService {
 
         Review review = reviewsDao.upsert(user, club, rating, description);
         updateClubRating(club);
+        if (photo != null && !photo.isEmpty()) {
+            photoService.uploadReviewPhoto(clubId, review.getReviewId(), user.getId(), photo);
+        }
         return review;
     }
 

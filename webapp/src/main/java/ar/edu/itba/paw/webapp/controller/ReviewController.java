@@ -56,12 +56,7 @@ public class ReviewController {
                                @RequestParam(name = "description") String description) throws IOException {
 
         User user = securityService.getVerifiedLoggedUser();
-        Review review = reviewService.createReview(user.getId(), clubId, rating, description);
-
-        if (photo != null && !photo.isEmpty()) {
-            photoService.uploadReviewPhoto(clubId, review.getReviewId(), user.getId(), photo);
-        }
-
+        reviewService.createReview(user.getId(), clubId, rating, description, photo);
         return "redirect:/clubs/" + clubId + "#reviews";
     }
 

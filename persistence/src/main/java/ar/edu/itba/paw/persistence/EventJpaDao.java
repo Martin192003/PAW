@@ -226,4 +226,12 @@ public class EventJpaDao implements EventDao {
                 .setParameter("clubId", clubId)
                 .getResultList();
     }
+
+    @Override
+    public void attachPhoto(UUID eventId, UUID photoId) {
+        Event ev = em.find(Event.class, eventId);
+        if (ev == null) throw new IllegalArgumentException("Evento no encontrado");
+        ev.setPhotoId(photoId);
+        em.merge(ev);
+    }
 }

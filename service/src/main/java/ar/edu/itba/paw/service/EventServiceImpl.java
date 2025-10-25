@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Event;
+import ar.edu.itba.paw.model.PhotoType;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.InvalidClubException;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
@@ -37,24 +38,27 @@ public class EventServiceImpl implements EventService {
         validateName(eventName);
         validateDate(date);
 
-        UUID photoId = null;
+        Event ev = eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, null);
+
         if (image != null && !image.isEmpty()) {
             try {
                 User loggedUser = securityService.getVerifiedLoggedUser();
-                photoId = photoService.upload(
+                UUID photoId = photoService.uploadEventPhoto(
                         clubId,
+                        ev.getEventId(),
                         loggedUser.getId(),
-                        image.getOriginalFilename(),
-                        image.getContentType(),
-                        image.getBytes()
+                        image
                 );
+                eventDao.attachPhoto(ev.getEventId(), photoId);
+                ev.setPhotoId(photoId);
             } catch (IOException e) {
                 throw new RuntimeException("Error al leer la imagen subida del evento", e);
             }
         }
 
-        return eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, photoId);
+        return ev;
     }
+
 
     @Override
     @Transactional

@@ -130,6 +130,7 @@ public class PhotoController {
         User user = securityService.getVerifiedLoggedUser();
         checkLoggedUser(clubId);
 
+
         photoService.uploadCover(
                 clubId,
                 user.getId(),

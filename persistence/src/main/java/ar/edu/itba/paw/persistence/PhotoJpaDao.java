@@ -3,7 +3,6 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.PhotoType;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.*;
@@ -164,6 +163,21 @@ public class PhotoJpaDao implements PhotoDao {
         p.setContentType(contentType);
         p.setData(data);
         p.setPhotoType(PhotoType.REVIEW);
+        em.persist(p);
+        return p.getPhotoId();
+    }
+
+    @Override
+    public UUID createEventPhoto(UUID clubId, UUID eventId, UUID postedBy,
+                                 String filename, String contentType, byte[] data) {
+        Photo p = new Photo();
+        p.setClubId(clubId);
+        p.setReviewId(eventId);
+        p.setPostedBy(postedBy);
+        p.setFilename(filename);
+        p.setContentType(contentType);
+        p.setData(data);
+        p.setPhotoType(PhotoType.EVENT);
         em.persist(p);
         return p.getPhotoId();
     }

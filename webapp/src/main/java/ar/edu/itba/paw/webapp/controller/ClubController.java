@@ -219,21 +219,6 @@ public class ClubController {
                 contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getCbu(), f.getImage()
         );
 
-        MultipartFile image = f.getImage();
-        if (image != null && !image.isEmpty()) {
-            try {
-                photoService.uploadCover(
-                        newClub.getClubId(),
-                        contact.getId(),
-                        image.getOriginalFilename(),
-                        image.getContentType() != null ? image.getContentType() : "application/octet-stream",
-                        image.getBytes()
-                );
-            } catch (IOException e) {
-                System.err.println("Error uploading photo during club creation: " + e.getMessage());
-            }
-        }
-
         if (roleAntes == Role.USER) {
             User updatedUser = userService.findById(contact.getId());
 

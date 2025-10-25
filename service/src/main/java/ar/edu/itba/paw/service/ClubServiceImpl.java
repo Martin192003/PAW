@@ -51,7 +51,7 @@ public class ClubServiceImpl implements ClubService{
 
         if (image != null && !image.isEmpty()) {
             try {
-                photoService.upload(
+                photoService.uploadCover(
                         newClub.getClubId(),
                         managedContact.getId(),
                         image.getOriginalFilename(),

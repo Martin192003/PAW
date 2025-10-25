@@ -202,13 +202,33 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException {
+    public void uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) throw new IllegalArgumentException("File is empty");
         final String ct = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
-        return photoDao.createReviewPhoto(
+        photoDao.createReviewPhoto(
                 clubId, reviewId, userId,
                 file.getOriginalFilename(), ct, file.getBytes()
         );
+    }
+
+    @Override
+    @Transactional
+    public UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, MultipartFile file) throws IOException {
+        // Validaciones básicas
+        Objects.requireNonNull(clubId,  "clubId no puede ser null");
+        Objects.requireNonNull(eventId, "eventId no puede ser null");
+        Objects.requireNonNull(userId,  "userId no puede ser null");
+
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("El archivo de la foto del evento está vacío o es null");
+        }
+
+        final String filename    = file.getOriginalFilename();
+        final String contentType = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
+        final byte[]  data       = file.getBytes();
+
+
+        return photoDao.createEventPhoto(clubId, eventId, userId, filename, contentType, data);
     }
 
     @Override
@@ -223,28 +243,5 @@ public class PhotoServiceImpl implements PhotoService {
         return photoDao.findByReviewId(reviewId);
     }
 
-    @Override
-    @Transactional
-    public UUID uploadPhotoForEvent(UUID eventId, String userEmail, MultipartFile file) throws IOException {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File is empty");
-        }
-
-        User effectiveUser = (userEmail != null)
-                ? userService.findByEmail(userEmail)
-                : userService.findByEmail("dev@local");
-
-        if (effectiveUser == null) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        return upload(
-                eventId, // id del evento
-                effectiveUser.getId(),
-                file.getOriginalFilename(),
-                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
-        );
-    }
 
 }
