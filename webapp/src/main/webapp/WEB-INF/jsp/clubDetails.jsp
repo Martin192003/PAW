@@ -321,7 +321,7 @@
                                     </p>
                                     <small class="review-date">
                                         <spring:message code="reviews.date" text="Fecha"/>:
-                                            <%-- <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/> --%>
+                                        <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
                                     </small>
                                 </li>
                             </c:forEach>
