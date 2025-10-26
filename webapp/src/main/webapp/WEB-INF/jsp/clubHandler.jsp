@@ -774,15 +774,26 @@
         document.getElementById('deleteModal').style.display = 'none';
     }
     function openEditModal(field, value) {
-        document.getElementById('editModal').style.display = 'flex';
-        document.getElementById('editedField').value = field;
-        const fields = ['clubName','location','zone','musicGenre','priceRange','description','cbu'];
+        const modal = document.getElementById('editModal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+
+        // Set the hidden editedField input
+        const editedFieldInput = document.getElementById('editedField');
+        if (editedFieldInput) editedFieldInput.value = field;
+
+        // Hide all field containers
+        const fields = ['clubName', 'location', 'zone', 'musicGenre', 'priceRange', 'description', 'cbu'];
         fields.forEach(f => {
             const el = document.getElementById('editField_' + f);
             if (el) el.style.display = 'none';
         });
-        const visible = document.getElementById('editField_' + field);
-        if (visible) visible.style.display = 'block';
+
+        // Show the relevant field container
+        const visibleField = document.getElementById('editField_' + field);
+        if (visibleField) visibleField.style.display = 'block';
+
+        // Map fields to their input/select IDs
         const inputIds = {
             'clubName': 'editFieldValue_clubName',
             'location': 'editFieldValue_location',
@@ -792,14 +803,34 @@
             'priceRange': 'priceSelectModal',
             'cbu': 'editFieldValue_cbu'
         };
-        const id = inputIds[field];
-        if (id) {
-            const el = document.getElementById(id);
-            if (el) el.value = (value === undefined || value === null) ? '' : value;
+
+        const inputId = inputIds[field];
+        if (!inputId) return;
+
+        const inputElement = document.getElementById(inputId);
+        if (!inputElement) return;
+
+        // Handle value setting based on element type
+        if (inputElement.tagName === 'SELECT') {
+            // For <select> elements, ensure the value matches an option
+            const validValue = (value === undefined || value === null || value === '') ? '' : value;
+            inputElement.value = validValue;
+            // If no valid option is selected, reset to the first option
+            if (validValue && !inputElement.querySelector(`option[value="${validValue}"]`)) {
+                inputElement.value = '';
+            }
+        } else {
+            // For <input> and <textarea>, set the value directly
+            inputElement.value = (value === undefined || value === null) ? '' : value;
         }
     }
-    function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
-
+    function closeEditModal() {
+        const modal = document.getElementById('editModal');
+        if (modal) {
+            modal.style.display = 'none';
+            clearFormErrors('editModal');
+        }
+    }
     function openTableEditModal(tableId, tableNumber, capacity, price, discount) {
         document.getElementById('tableEditModal').style.display = 'flex';
         document.getElementById('editTableNumber').value = tableNumber;
@@ -1012,19 +1043,22 @@
     });
     document.addEventListener('DOMContentLoaded', function() {
         <c:if test="${not empty clubHandlerForm and not empty errors and not empty editField}">
-        openEditModal(
-            '<c:out value="${editField}"/>',
-            <c:choose>
+            <c:if test="${editField == 'clubName' or editField == 'location' or editField == 'zone' or editField == 'musicGenre' or editField == 'priceRange' or editField == 'description' or editField == 'cbu'}">
+            openEditModal(
+                '<c:out value="${editField}"/>',
+                <c:choose>
                 <c:when test="${editField == 'clubName'}">'<c:out value="${fn:escapeXml(clubHandlerForm.name)}"/>'</c:when>
-                <c:when test="${editField == 'location'}">'<c:out value="${fn:escapeXml(clubHandlerForm.location)}"/>'</c:when>
-                <c:when test="${editField == 'zone'}">'<c:out value="${clubHandlerForm.zone}"/>'</c:when>
-                <c:when test="${editField == 'musicGenre'}">'<c:out value="${clubHandlerForm.musicGenre}"/>'</c:when>
-                <c:when test="${editField == 'priceRange'}">'<c:out value="${clubHandlerForm.priceRange}"/>'</c:when>
-                <c:when test="${editField == 'description'}">'<c:out value="${fn:escapeXml(clubHandlerForm.description)}"/>'</c:when>
-                <c:when test="${editField == 'cbu'}">'<c:out value="${fn:escapeXml(clubHandlerForm.cbu)}"/>'</c:when>
-                <c:otherwise>''</c:otherwise>
+            <c:when test="${editField == 'location'}">'<c:out value="${fn:escapeXml(clubHandlerForm.location)}"/>'</c:when>
+            <c:when test="${editField == 'zone'}">'<c:out value="${clubHandlerForm.zone}"/>'</c:when>
+            <c:when test="${editField == 'musicGenre'}">'<c:out value="${clubHandlerForm.musicGenre}"/>'</c:when>
+            <c:when test="${editField == 'priceRange'}">'<c:out value="${clubHandlerForm.priceRange}"/>'</c:when>
+            <c:when test="${editField == 'description'}">'<c:out value="${fn:escapeXml(clubHandlerForm.description)}"/>'</c:when>
+            <c:when test="${editField == 'cbu'}">'<c:out value="${fn:escapeXml(clubHandlerForm.cbu)}"/>'</c:when>
+            <c:otherwise>''</c:otherwise>
             </c:choose>
-    )
+            )
+        </c:if>
+
         </c:if>
     });
 </script>
