@@ -320,6 +320,7 @@ public class ClubController {
             populateClubHandlerModel(model, club);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("editField", editedField);
+            model.addAttribute("errors", errors);
             return "clubHandler";
         }
 

@@ -681,7 +681,6 @@
 </div>
 
 <!-- Modal eliminar producto (duplicado resuelto arriba) -->
-
 <div id="eventEditModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEventEditModal()" style="color:#fff;">&times;</span>
@@ -713,7 +712,6 @@
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <label for="editEventPhoto"><spring:message code="form.eventImage" text="Imagen del evento"/>:</label>
                 <input type="file" id="editEventPhoto" name="photo" accept="image/jpeg,image/png,image/webp"/>
-                <span id="editEventFileInfo" style="font-size: 0.85rem; color: #fff; margin-top: 4px;"></span>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeEventEditModal()">
@@ -888,6 +886,7 @@
             input.addEventListener('keydown', function(e) { if (e.key === '-' || e.key === 'Subtract') e.preventDefault(); });
             input.addEventListener('input', function() { this.value = this.value.replace(/-/g, ''); });
         });
+
     });
 
     function openAddCarouselPhotoModal() { document.getElementById('addCarouselPhotoModal').style.display = 'flex'; }
@@ -978,10 +977,56 @@
         const done = () => { loaded++; if (loaded === imgs.length) requestAnimationFrame(paint); };
         imgs.forEach(img => (img.complete ? done() : (img.onload = img.onerror = done)));
 
-        // Fallback inmediato
         requestAnimationFrame(paint);
     });
-
+    document.addEventListener('DOMContentLoaded', function() {
+        <c:if test="${not empty editEventForm and not empty errors and editField == 'event'}">
+        openEventEditModal(
+            '<c:out value="${editEventForm.eventId}"/>',
+            '<c:out value="${fn:escapeXml(editEventForm.eventName)}"/>',
+            '<c:out value="${editEventForm.date}"/>',
+            '<c:out value="${fn:escapeXml(editEventForm.description)}"/>',
+            '<c:out value="${editEventForm.photoIdId}"/>'
+        );
+        </c:if>
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        <c:if test="${not empty editProductForm and not empty errors and editField == 'product'}">
+            document.getElementById('productEditModal').style.display = 'flex';
+            document.getElementById('editProductId').value = '<c:out value="${editProductForm.productId}"/>';
+            document.getElementById('editProductName').value = '<c:out value="${fn:escapeXml(editProductForm.productName)}"/>';
+            document.getElementById('editProductDescription').value = '<c:out value="${fn:escapeXml(editProductForm.description)}"/>';
+            document.getElementById('editProductPrice').value = '<c:out value="${editProductForm.basePrice}"/>';
+            document.getElementById('editProductType').value = '<c:out value="${editProductForm.productType}"/>';
+        </c:if>
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        <c:if test="${not empty editTableForm and not empty errors and editField == 'table'}">
+            document.getElementById('tableEditModal').style.display = 'flex';
+            document.getElementById('editTableNumber').value = '<c:out value="${editTableForm.tableNumber}"/>';
+            document.getElementById('editTableCapacity').value = '<c:out value="${editTableForm.capacity}"/>';
+            document.getElementById('editTablePrice').value = '<c:out value="${editTableForm.price}"/>';
+            document.getElementById('editTableDiscount').value = '<c:out value="${editTableForm.discount}"/>';
+            document.getElementById('tableEditForm').action = '${pageContext.request.contextPath}/clubs/tables/<c:out value="${editTableForm.tableId}"/>/edit';
+        </c:if>
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        <c:if test="${not empty clubHandlerForm and not empty errors and not empty editField}">
+        openEditModal(
+            '<c:out value="${editField}"/>',
+            <c:choose>
+                <c:when test="${editField == 'clubName'}">'<c:out value="${fn:escapeXml(clubHandlerForm.name)}"/>'</c:when>
+                <c:when test="${editField == 'location'}">'<c:out value="${fn:escapeXml(clubHandlerForm.location)}"/>'</c:when>
+                <c:when test="${editField == 'zone'}">'<c:out value="${clubHandlerForm.zone}"/>'</c:when>
+                <c:when test="${editField == 'musicGenre'}">'<c:out value="${clubHandlerForm.musicGenre}"/>'</c:when>
+                <c:when test="${editField == 'priceRange'}">'<c:out value="${clubHandlerForm.priceRange}"/>'</c:when>
+                <c:when test="${editField == 'description'}">'<c:out value="${fn:escapeXml(clubHandlerForm.description)}"/>'</c:when>
+                <c:when test="${editField == 'cbu'}">'<c:out value="${fn:escapeXml(clubHandlerForm.cbu)}"/>'</c:when>
+                <c:otherwise>''</c:otherwise>
+            </c:choose>
+    )
+        </c:if>
+    });
 </script>
 </body>
 </html>
