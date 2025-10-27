@@ -101,25 +101,29 @@
         </div>
     </div>
 
-    <h2><spring:message code="layout.title" text="Layout de mesas"/></h2>
-    <div class="form-group">
-        <c:choose>
-            <c:when test="${not empty tableLayoutUrl}">
-                <div class="table-layout-container" style="text-align:center; margin-bottom:12px;">
-                    <img src="<c:url value='${tableLayoutUrl}' />" alt="Layout de mesas"
-                         style="max-width:100%; border-radius:8px; border:1px solid #333;"/>
-                </div>
-            </c:when>
-            <c:otherwise>
-                <p><spring:message code="layout.available" text="No hay layout por el momento"/></p>
-            </c:otherwise>
-        </c:choose>
-
+    <div class="layout-header">
+        <h2><spring:message code="layout.title" text="Layout de mesas"/></h2>
         <button type="button" class="btn btn-success btn-edit-small"
                 onclick="document.getElementById('editLayoutModal').style.display='flex'">
             <i class="fa-solid fa-pen"></i>
         </button>
     </div>
+    <div class="layout-section">
+        <div class="table-layout-container">
+            <c:choose>
+                <c:when test="${not empty tableLayoutUrl}">
+                    <div class="table-layout-container" style="text-align:center; margin-bottom:12px;">
+                        <img src="<c:url value='${tableLayoutUrl}' />" alt="Layout de mesas"
+                             style="max-width:100%; border-radius:8px; border:1px solid #333;"/>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <p><spring:message code="layout.available" text="No hay layout por el momento"/></p>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </div>
+
 
     <!-- Sección de Galería de Fotos -->
     <div class="photo-section">
@@ -748,8 +752,8 @@
     <div class="modal-content">
         <span class="modal-close" onclick="closeLayoutModal()">&times;</span>
         <h3><spring:message code="title.editTableLayout" text="Subir layout de mesas"/></h3>
-        <form method="post" action="<c:url value='/clubs/club/${club.clubId}/layout' />" enctype="multipart/form-data">
-            <input type="file" name="file" accept="image/*" required/>
+        <form method="post" action="<c:url value='/clubs/club/${club.clubId}/layout' />" enctype="multipart/form-data" id="editLayoutForm">
+            <input type="file" name="file" id="layoutFileInput" accept="image/*"/>
             <div class="modal-actions" style="margin-top:12px;">
                 <button type="button" class="btn btn-secondary" onclick="closeLayoutModal()">
                     <spring:message code="button.cancel"/>
@@ -939,7 +943,20 @@
         }
     });
 
-    // === JS del carrusel (scopeado a #club-carousel) ===
+    document.addEventListener('DOMContentLoaded', function () {
+        const layoutForm = document.getElementById('editLayoutForm');
+        if (!layoutForm) return;
+
+        layoutForm.addEventListener('submit', function (e) {
+            const fileInput = document.getElementById('layoutFileInput');
+            const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+            if (!hasFile) {
+                e.preventDefault();
+                closeLayoutModal();
+            }
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
         const root = document.getElementById('club-carousel');
         if (!root) return;
@@ -948,6 +965,8 @@
         if (!track) return;
 
         let slides = Array.from(track.querySelectorAll('.carousel-slide'));
+        console.log('Carousel images:', slides.map(s => s.querySelector('img').src));
+
         if (!slides.length) return;
 
         const prevBtn = root.querySelector('#prevBtn');
@@ -960,30 +979,22 @@
         if (current === -1) current = 0;
 
         function refreshRefs() {
-            // Si el DOM cambia (ej: re-render), refrescamos referencias
             slides = Array.from(track.querySelectorAll('.carousel-slide'));
         }
 
         function paint() {
             refreshRefs();
-            const total = slides.length; // <- total real del DOM, siempre consistente
-
-            // Safety: si algo raro pasó y no hay slides, evitamos mostrar basura
+            const total = slides.length;
             if (!total) {
                 if (counter) counter.textContent = '';
                 return;
             }
-
-            // Aseguramos current dentro de rango
             if (current < 0) current = 0;
             if (current > total - 1) current = total - 1;
 
             slides.forEach((s, i) => s.classList.toggle('active', i === current));
             dots.forEach((d, i) => d.classList.toggle('active', i === current));
-
-            // Forzamos string plano (evita cualquier template/string raro)
             if (counter) counter.textContent = (current + 1) + ' / ' + total;
-
             if (prevBtn) prevBtn.disabled = (current === 0);
             if (nextBtn) nextBtn.disabled = (current === total - 1);
         }
@@ -1002,7 +1013,6 @@
         if (nextBtn) nextBtn.addEventListener('click', next);
         dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
 
-        // Inicializar tras carga de imágenes (y por si no disparan onload)
         const imgs = track.querySelectorAll('img');
         let loaded = 0;
         const done = () => { loaded++; if (loaded === imgs.length) requestAnimationFrame(paint); };

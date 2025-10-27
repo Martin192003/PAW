@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PhotoServiceImpl implements PhotoService {
@@ -187,7 +188,10 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional(readOnly = true)
     public List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset) {
-        return photoDao.findCarouselByClubId(clubId, limit, offset);
+        List<Photo> photos = photoDao.findCarouselByClubId(clubId, limit, offset);
+        System.out.println("getCarouselPhotos for clubId " + clubId + ": " +
+                photos.stream().map(p -> p.getUrl() + " [type: " + p.getPhotoType() + "]").toList());
+        return photos;
     }
 
 
