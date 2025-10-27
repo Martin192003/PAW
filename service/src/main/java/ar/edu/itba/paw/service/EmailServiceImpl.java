@@ -146,6 +146,8 @@ public class EmailServiceImpl implements EmailService {
                     "brandFooter", "© 2025 BlingBling. Tu mensaje fue enviado correctamente."
             );
 
+            String subject = messageSource.getMessage("email.contact.confirmation.subject", null, userLocale) + " - " + clubName;
+
             sendTemplatedEmail(
                     fromEmail,
                     "Confirmación de contacto - " + clubName,
@@ -172,9 +174,11 @@ public class EmailServiceImpl implements EmailService {
                 "brandFooter", "© 2025 BlingBling. Panel de administración."
         );
 
+        String subject = messageSource.getMessage("email.club.creation.title", null, LocaleContextHolder.getLocale()) + " - " + clubName;
+
         sendTemplatedEmail(
                 to,
-                messageSource.getMessage("email.club.creation.title", null, LocaleContextHolder.getLocale()) + " - " + clubName,
+                subject,
                 "club-creation-confirmation",
                 model,
                 "Gestionar mi club",
@@ -196,9 +200,11 @@ public class EmailServiceImpl implements EmailService {
                 "brandFooter", "© 2025 BlingBling. Bienvenido a nuestra plataforma."
         );
 
+        String subject = messageSource.getMessage("email.registration.title.header", null, LocaleContextHolder.getLocale()) + " - " + username;
+
         sendTemplatedEmail(
                 to,
-                messageSource.getMessage("email.registration.title.header", null, LocaleContextHolder.getLocale()) + " - " + username,
+                subject,
                 "user-registration-confirmation",
                 model,
                 "Verificar mi cuenta",
@@ -246,9 +252,12 @@ public class EmailServiceImpl implements EmailService {
         }
 
         LocalDate selectedDate = booking.getBookingStart().atZoneSameInstant(ZONE_ID).toLocalDate();
+
+        String subject = messageSource.getMessage("email.booking.confirmed", new Object[] { club.getClubName() }, locale);
+
         sendTemplatedEmail(
                 userEmail,
-                "Reserva confirmada - " + club.getClubName(),
+                subject,
                 "table-reserved-user",
                 Map.of(
                         "clubName", club.getClubName(),
@@ -301,9 +310,12 @@ public class EmailServiceImpl implements EmailService {
         ownerModel.put("brandFooter", "© 2025 BlingBling.");
         ownerModel.put("sentAt", OffsetDateTime.now(ZONE_ID));
 
+        String subject = messageSource.getMessage("email.booking.new", new Object[] { club.getClubName() }, locale);
+
+
         sendTemplatedEmail(
                 owner.getEmail(),
-                "Nueva reserva de mesa - " + clubName,
+                subject,
                 "table-reserved-owner",
                 ownerModel,
                 "Abrir panel", ctaUrl
@@ -325,9 +337,11 @@ public class EmailServiceImpl implements EmailService {
 
         LocalDate selectedDate = booking.getBookingStart().atZoneSameInstant(ZONE_ID).toLocalDate();
 
+        String subject = messageSource.getMessage("email.booking.cancelled", new Object[] { club.getClubName() }, locale);
+
         sendTemplatedEmail(
                 userEmail,
-                "Reserva cancelada - " + club.getClubName(),
+                subject,
                 "booking-cancelled-user",
                 Map.of(
                         "clubName", club.getClubName(),
@@ -376,9 +390,12 @@ public class EmailServiceImpl implements EmailService {
                 "sentAt", OffsetDateTime.now(ZONE_ID)
         );
 
+        String subject = messageSource.getMessage("email.booking.cancelled", new Object[] { club.getClubName() }, locale);
+
+
         sendTemplatedEmail(
                 owner.getEmail(),
-                "Reserva cancelada - " + clubName,
+                subject,
                 "booking-cancelled-owner",
                 ownerModel,
                 "Ver panel",
@@ -422,9 +439,11 @@ public class EmailServiceImpl implements EmailService {
         ownerModel.put("brandName", "BlingBling");
         ownerModel.put("brandFooter", "© 2025 BlingBling. Recibo de pago cargado.");
 
+        String subject = messageSource.getMessage("email.receipt.uploaded", new Object[] { club.getClubName(), tableNum }, locale);
+
         sendTemplatedEmail(
                 owner.getEmail(),
-                "Recibo cargado - " + clubName + " - Mesa " + tableNum,
+                subject,
                 "receipt-uploaded-notification",
                 ownerModel,
                 "Ver recibo",
@@ -457,9 +476,11 @@ public class EmailServiceImpl implements EmailService {
 
         String ctaUrl = abs("/booking?bookingId=" + booking.getBookingId());
 
+        String subject = messageSource.getMessage("email.booking.confirmed.user.subject", new Object[] { club.getClubName() }, locale);
+
         sendTemplatedEmail(
                 toEmail,
-                "email.booking.confirmed.user.subject",
+                subject,
                 "booking-confirm-user",
                 Map.of(
                         "clubName", club.getClubName(),

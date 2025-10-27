@@ -173,13 +173,11 @@
         <form:form action="${pageContext.request.contextPath}/profile/edit/password" method="post"
                    modelAttribute="editUserForm">
             <label for="password"><spring:message code="form.password"/></label>
-            <form:password path="password" id="password"/>
+            <form:password path="password" id="password" cssClass="form-control"/>
             <form:errors path="password" cssClass="error"/>
-
             <label for="confirmPassword"><spring:message code="form.confirmPassword"/></label>
-            <form:password path="confirmPassword" id="confirmPassword"/>
+            <form:password path="confirmPassword" id="confirmPassword" cssClass="form-control"/>
             <form:errors path="confirmPassword" cssClass="error"/>
-
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editPasswordModal')">
                     <spring:message code="button.cancel"/></button>

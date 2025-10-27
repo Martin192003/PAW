@@ -576,7 +576,7 @@
 </div>
 </div>
 <!-- Pop-up de confirmación de reserva -->
-<div id="reservationToast" class="toast-popup">
+<div id="reservationToast" class="toast-popup" style="display:none;">
     <i class="fa-solid fa-circle-check" style="color:#4caf50; font-size:24px;"></i>
     <span><spring:message code="reservation.sent"/></span>
 </div>

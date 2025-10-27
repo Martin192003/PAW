@@ -58,8 +58,9 @@ public class UserBookingController {
                 .orElseThrow(() -> new IllegalArgumentException("El usuario no está autenticado."));
 
         try {
-            bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
+            Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
             ra.addFlashAttribute("reservationSent", true);
+            return "redirect:/booking?bookingId=" + booking.getBookingId();
         } catch (InvalidDateRangeException | ValidationException e) {
             ra.addFlashAttribute("error", "invalid.date");
             ra.addFlashAttribute("reservationError", true);
@@ -74,6 +75,7 @@ public class UserBookingController {
         try {
             bookingService.cancelByUser(bookingId, current.getId());
             ra.addFlashAttribute("success", "booking.cancelled");
+            ra.addFlashAttribute("bookingAction", "cancelled");
         } catch (UnauthorizedException e) {
             ra.addFlashAttribute("error", "booking.notAllowedToCancel");
         } catch (InvalidStatusTransitionException e) {

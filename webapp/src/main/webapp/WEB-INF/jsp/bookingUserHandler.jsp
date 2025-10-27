@@ -228,5 +228,47 @@
         }
     });
 </script>
+<c:if test="${not empty bookingAction}">
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var toast = document.getElementById("bookingActionToast");
+            var msg = "";
+            <c:choose>
+            <c:when test="${bookingAction eq 'cancelled'}">
+            msg = "<spring:message code='booking.cancelled.toast' text='Booking cancelled successfully.'/>";
+            </c:when>
+            <c:when test="${bookingAction eq 'confirmed'}">
+            msg = "<spring:message code='booking.confirmed.toast' text='Booking confirmed successfully.'/>";
+            </c:when>
+            </c:choose>
+            if (toast) {
+                document.getElementById("bookingActionToastMsg").innerHTML = msg;
+                toast.style.display = "flex";
+                toast.classList.add("show");
+                setTimeout(() => { toast.classList.remove("show"); toast.style.display = "none"; }, 3000);
+            }
+        });
+    </script>
+</c:if>
+<div id="bookingActionToast" class="toast-popup" style="display:none;">
+    <i class="fa-solid fa-circle-check" style="color:#4caf50; font-size:24px;"></i>
+    <span id="bookingActionToastMsg"></span>
+</div>
+
+<div id="reservationToast" class="toast-popup" style="display:none;">
+    <i class="fa-solid fa-circle-check" style="color:#4caf50; font-size:24px;"></i>
+    <span><spring:message code="reservation.sent"/></span>
+</div>
+
+<c:if test="${not empty reservationSent}">
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toast = document.getElementById("reservationToast");
+            toast.style.display = "flex";
+            toast.classList.add("show");
+            setTimeout(() => { toast.classList.remove("show"); toast.style.display = "none"; }, 3000);
+        });
+    </script>
+</c:if>
 </body>
 </html>
