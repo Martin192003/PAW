@@ -117,6 +117,7 @@ public class EventsController {
             clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
+            model.addAttribute("errors", errors);
             return "clubHandler";
         }
 

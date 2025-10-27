@@ -140,6 +140,7 @@ public class ProductController {
             model.addAttribute("eventForm", eventForm);
             EventEditForm editEventForm = new EventEditForm();
             editEventForm.setClubId(club.getClubId());
+            model.addAttribute("errors", errors);
             model.addAttribute("editEventForm", editEventForm);
             return "clubHandler";
         }

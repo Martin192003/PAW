@@ -82,6 +82,7 @@ public class TablesController {
             EventEditForm editEventForm = new EventEditForm();
             editEventForm.setClubId(club.getClubId());
             model.addAttribute("editEventForm", editEventForm);
+            model.addAttribute("errors", errors);
             return "clubHandler";
         }
 

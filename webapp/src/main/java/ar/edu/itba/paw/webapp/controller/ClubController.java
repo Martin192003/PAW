@@ -320,28 +320,23 @@ public class ClubController {
             populateClubHandlerModel(model, club);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("editField", editedField);
+            model.addAttribute("errors", errors);
             return "clubHandler";
         }
 
-        if (clubHandlerForm.getName() != null && !clubHandlerForm.getName().isBlank()) {
+        if ("clubName".equals(editedField)) {
             club.setClubName(clubHandlerForm.getName());
-        }
-        if (clubHandlerForm.getLocation() != null && !clubHandlerForm.getLocation().isBlank()) {
+        } else if ("location".equals(editedField)) {
             club.setLocation(clubHandlerForm.getLocation());
-        }
-        if (clubHandlerForm.getZone() != null && !clubHandlerForm.getZone().isBlank()) {
+        } else if ("zone".equals(editedField)) {
             club.setZone(Zone.valueOf(clubHandlerForm.getZone()));
-        }
-        if (clubHandlerForm.getMusicGenre() != null && !clubHandlerForm.getMusicGenre().isBlank()) {
+        } else if ("musicGenre".equals(editedField)) {
             club.setMusicGenre(MusicalGenre.valueOf(clubHandlerForm.getMusicGenre()));
-        }
-        if (clubHandlerForm.getPriceRange() != null && !clubHandlerForm.getPriceRange().isBlank()) {
+        } else if ("priceRange".equals(editedField)) {
             club.setPriceRange(Price.valueOf(clubHandlerForm.getPriceRange()));
-        }
-        if (clubHandlerForm.getDescription() != null) {
+        } else if ("description".equals(editedField)) {
             club.setDescription(clubHandlerForm.getDescription());
-        }
-        if (clubHandlerForm.getCbu() != null && !clubHandlerForm.getCbu().isBlank()) {
+        } else if ("cbu".equals(editedField)) {
             club.setCbu(clubHandlerForm.getCbu());
         }
 

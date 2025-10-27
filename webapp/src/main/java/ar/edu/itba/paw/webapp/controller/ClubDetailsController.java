@@ -162,9 +162,6 @@ public class ClubDetailsController {
        return "clubDetails";
    }
 
-
-
-
     private String toLocationText(final String location) {
         return (location == null || location.isBlank()) ? "Sin ubicación" : location;
     }
