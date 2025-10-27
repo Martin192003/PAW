@@ -46,7 +46,7 @@ public class ReviewsJpaDaoTest {
     @Test
     public void testCreateReview() {
         User user = userDao.create("user", "name","pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, user, MusicalGenre.ROCK, Zone.ZONA_CABA, false);
+        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, user, MusicalGenre.ROCK, Zone.ZONA_CABA, false, null);
         Review review = reviewsDao.create(user, club, RATING, DESCRIPTION);
 
         assertNotNull(review);

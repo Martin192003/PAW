@@ -32,6 +32,12 @@ public class PasswordController {
 
     @GetMapping("/forgot-password")
     public String showForgotForm(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getName())) {
+            return "redirect:/profile";
+        }
+
         if (!model.containsAttribute("forgotPasswordForm")) {
             model.addAttribute("forgotPasswordForm", new ForgotPasswordForm());
         }
@@ -85,7 +91,6 @@ public class PasswordController {
             return "resetPasswordResult";
         }
 
-        // Autenticar automáticamente al usuario después del reset exitoso
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 user.getUsername(),
                 null,
@@ -93,7 +98,6 @@ public class PasswordController {
         );
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        // Ir a página de éxito en lugar de redirigir directamente
         model.addAttribute("success", "password.reset.success");
         return "passwordResetSuccess";
     }

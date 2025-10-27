@@ -17,7 +17,6 @@ public class ProductsJpaDao implements ProductsDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public Product create(Club club, String name, String description, BigDecimal basePrice,
                           ProductType type, boolean isAvailable) {
 
@@ -30,7 +29,7 @@ public class ProductsJpaDao implements ProductsDao {
 
         Product p = new Product();
         p.setProductId(UUID.randomUUID());
-        p.setClub(club);                 // club debe ser entidad administrada o al menos tener ID válido
+        p.setClub(club);
         p.setProductName(name);
         p.setDescription(description);
         p.setBasePrice(basePrice);
@@ -42,7 +41,6 @@ public class ProductsJpaDao implements ProductsDao {
     }
 
     @Override
-    @Transactional
     public Product update(UUID productId, UUID clubId, String name, String description,
                           BigDecimal basePrice, ProductType type, Boolean isAvailable) {
 
@@ -57,7 +55,6 @@ public class ProductsJpaDao implements ProductsDao {
         Product p = em.find(Product.class, productId);
         if (p == null) return null;
 
-        // Referencia liviana al Club (evita hit extra si no hace falta)
         Club clubRef = em.getReference(Club.class, clubId);
 
         p.setClub(clubRef);
@@ -71,7 +68,6 @@ public class ProductsJpaDao implements ProductsDao {
     }
 
     @Override
-    @Transactional
     public boolean delete(UUID id) {
         Product p = em.find(Product.class, id);
         if (p == null) return false;
@@ -80,13 +76,11 @@ public class ProductsJpaDao implements ProductsDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Product> findById(UUID id) {
         return Optional.ofNullable(em.find(Product.class, id));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Product> findByName(String name) {
         return em.createQuery("""
                 SELECT p
@@ -98,38 +92,73 @@ public class ProductsJpaDao implements ProductsDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Product> findAll() {
-        return em.createQuery("""
-                SELECT p
-                FROM Product p
-                ORDER BY p.productName ASC
-                """, Product.class).getResultList();
-    }
+    public List<Product> findByClub(final Club club) {
+        Objects.requireNonNull(club, "club is required");
+        Objects.requireNonNull(club.getClubId(), "clubId is required");
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Product> findByClub(Club club) {
+        // 1) IDs del club
+        final String idSql = """
+        SELECT CAST(p.product_id AS TEXT) AS id_text
+        FROM products p
+        WHERE p.club_id = :clubId
+        ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
+    """;
+
+        @SuppressWarnings("unchecked")
+        final List<String> idTexts = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .setParameter("clubId", club.getClubId())
+                .getResultList();
+
+        if (idTexts.isEmpty()) return List.of();
+
+        final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+        // 2) Entidades
         return em.createQuery("""
-                SELECT p
-                FROM Product p
-                WHERE p.club = :club
-                ORDER BY p.productName ASC
-                """, Product.class)
-                .setParameter("club", club)
+            SELECT p
+            FROM Product p
+            WHERE p.productId IN :ids
+            ORDER BY p.productName ASC, p.productId ASC
+        """, Product.class)
+                .setParameter("ids", ids)
                 .getResultList();
     }
 
+
     @Override
-    @Transactional(readOnly = true)
-    public List<Product> findByClubID(UUID clubId) {
+    public List<Product> findByClubID(final UUID clubId) {
+        Objects.requireNonNull(clubId, "clubId is required");
+
+        // 1) IDs del club
+        final String idSql = """
+        SELECT CAST(p.product_id AS TEXT) AS id_text
+        FROM products p
+        WHERE p.club_id = :clubId
+        ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
+    """;
+
+        @SuppressWarnings("unchecked")
+        final List<String> idTexts = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .setParameter("clubId", clubId)
+                .getResultList();
+
+        if (idTexts.isEmpty()) return List.of();
+
+        final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+        // 2) Entidades
         return em.createQuery("""
-                SELECT p
-                FROM Product p
-                WHERE p.club.clubId = :cid
-                ORDER BY p.productName ASC
-                """, Product.class)
-                .setParameter("cid", clubId)
+            SELECT p
+            FROM Product p
+            WHERE p.productId IN :ids
+            ORDER BY p.productName ASC, p.productId ASC
+        """, Product.class)
+                .setParameter("ids", ids)
                 .getResultList();
     }
+
 }

@@ -14,7 +14,6 @@ public class ReceiptJpaDao implements ReceiptDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public UUID create(UUID bookingId, UUID uploadedBy, String filename, String contentType, byte[] data) {
         Receipt r = new Receipt();
         r.setBookingId(bookingId);
@@ -22,38 +21,41 @@ public class ReceiptJpaDao implements ReceiptDao {
         r.setFilename(filename);
         r.setContentType(contentType);
         r.setData(data);
-        // url/createdAt/sizeBytes/receiptId se setean en @PrePersist
+        // url / createdAt / sizeBytes / receiptId se setean en @PrePersist del entity
         em.persist(r);
         return r.getReceiptId();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Receipt> findByBooking(UUID bookingId) {
-        return em.createQuery("""
+        final List<Receipt> list = em.createQuery("""
                 SELECT r
                 FROM Receipt r
                 WHERE r.bookingId = :bid
+                ORDER BY r.createdAt DESC
                 """, Receipt.class)
                 .setParameter("bid", bookingId)
-                .setMaxResults(1).getResultList().stream().findFirst();
+                .setMaxResults(1)
+                .getResultList();
+
+        if (list.isEmpty()) return Optional.empty();
+
+        Receipt r = list.getFirst();
+        em.detach(r);
+        r.setData(null);
+        return Optional.of(r);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Receipt> findById(UUID receiptId) {
         return Optional.ofNullable(em.find(Receipt.class, receiptId));
     }
-
     @Override
-    @Transactional(readOnly = true)
     public Optional<Receipt> findByIdWithData(UUID receiptId) {
-        // Igual que findById; 'data' es LAZY y se carga al acceder dentro de la transacción
         return Optional.ofNullable(em.find(Receipt.class, receiptId));
     }
 
     @Override
-    @Transactional
     public boolean deleteByBooking(UUID bookingId) {
         int updated = em.createQuery("""
                 DELETE FROM Receipt r
@@ -65,7 +67,6 @@ public class ReceiptJpaDao implements ReceiptDao {
     }
 
     @Override
-    @Transactional
     public boolean delete(UUID receiptId) {
         Receipt r = em.find(Receipt.class, receiptId);
         if (r == null) return false;

@@ -35,19 +35,22 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .and().authorizeRequests()
 
                 // Authenticated routes
-                .antMatchers("/clubs/new", "/clubs/create", "/reservations/**").authenticated()
+                .antMatchers("/clubs/new", "/clubs/create", "/reservations/**", "/reviews/**").authenticated()
                 .antMatchers("/admin/**").hasRole("ADMIN")
 
                 // Public routes
                 .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify", "/unverified", "/resend-verification", "/forgot-password", "/reset-password","/verifyMailNotice", "/verify-account").permitAll()                .antMatchers(HttpMethod.GET, "/clubs").permitAll()
+                //.antMatchers(HttpMethod.GET, "/clubs").permitAll()
                 .antMatchers(HttpMethod.GET, "/clubs/{id}").permitAll()
+                .antMatchers(HttpMethod.GET, "/clubs/**/layout/**").permitAll()
 
                 .anyRequest().authenticated()
                 .and().formLogin()
                 .usernameParameter("usernameOrEmail")
                 .passwordParameter("password")
                 .defaultSuccessUrl("/clubs", false)
-                .failureHandler(customAuthenticationFailureHandler)                .loginPage("/login")
+                .failureHandler(customAuthenticationFailureHandler)
+                .loginPage("/login")
                 .and().rememberMe()
                 .rememberMeParameter("j_rememberme")
                 .userDetailsService(userDetailsService)

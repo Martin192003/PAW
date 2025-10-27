@@ -27,14 +27,18 @@ public class TablesController {
      private final ClubService clubService;
      private final PhotoService photoService;
      private final MenuService menuService;
+     private final EventService eventService;
+     private final ClubLayoutService clubLayoutService;
 
      @Autowired
-     public TablesController(TableService tableService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService) {
+     public TablesController(TableService tableService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService, EventService eventService, ClubLayoutService clubLayoutService) {
          this.tableService = tableService;
          this.securityService = securityService;
          this.clubService = clubService;
          this.photoService = photoService;
          this.menuService = menuService;
+         this.eventService = eventService;
+         this.clubLayoutService = clubLayoutService;
      }
 
 
@@ -66,7 +70,7 @@ public class TablesController {
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editProductForm", new EditProductForm());
             model.addAttribute("editTableForm", form);
-            model.addAttribute("editField", "Table");
+            model.addAttribute("editField", "table");
             ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
             clubHandlerForm.setClubId(club.getClubId());
             clubHandlerForm.setName(club.getClubName());
@@ -76,6 +80,21 @@ public class TablesController {
             clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
+            EventAddForm eventForm = new EventAddForm();
+            eventForm.setClubId(club.getClubId());
+            model.addAttribute("eventForm", eventForm);
+            EventEditForm editEventForm = new EventEditForm();
+            editEventForm.setClubId(club.getClubId());
+            model.addAttribute("editEventForm", editEventForm);
+            model.addAttribute("errors", errors);
+            model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+            var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+            var tableLayout = clubLayoutService.getLayoutByClub(clubId);
+            String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
+
+            model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
+            model.addAttribute("carouselPhotos", carouselPhotos);
+            model.addAttribute("tableLayoutUrl", tableLayoutUrl);
             return "clubHandler";
         }
 
@@ -157,6 +176,12 @@ public class TablesController {
             clubHandlerForm.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().name() : null);
             clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
+            EventAddForm eventForm = new EventAddForm();
+            eventForm.setClubId(club.getClubId());
+            model.addAttribute("eventForm", eventForm);
+            EventEditForm editEventForm = new EventEditForm();
+            editEventForm.setClubId(club.getClubId());
+            model.addAttribute("editEventForm", editEventForm);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("tableForm", tableForm);
             model.addAttribute("productForm", new AddProductForm());

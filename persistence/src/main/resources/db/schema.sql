@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at    TIMESTAMPTZ DEFAULT NOW(),
     is_verified   BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(100),
-    reset_password_token VARCHAR(255),
+    reset_password_token VARCHAR(255)
 
     );
 
@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS clubs (
     music_genre VARCHAR(50),
     zone VARCHAR(50) CHECK (zone IN ('ZONA_CABA','ZONA_NORTE', 'ZONA_OESTE', 'ZONA_SUR')),
     is_bar BOOLEAN NOT NULL DEFAULT FALSE,
+    cbu VARCHAR(50),
     created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
@@ -85,7 +86,9 @@ CREATE TABLE IF NOT EXISTS photos
     created_at TIMESTAMPTZ      DEFAULT NOW(),
     filename   TEXT,
     content_type TEXT,
-    size_bytes BIGINT
+    size_bytes BIGINT,
+    photo_type VARCHAR(20) DEFAULT 'CAROUSEL'
+        CHECK (photo_type IN ('COVER', 'CAROUSEL', 'REVIEW', 'EVENT') )
     );
 CREATE INDEX ON photos (club_id);
 
@@ -170,6 +173,20 @@ CREATE TABLE IF NOT EXISTS club_admins (
     admin_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     PRIMARY KEY (club_id, admin_id)
 );
+
+CREATE TABLE IF NOT EXISTS club_layouts (
+                                            layout_id    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                                            club_id      UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
+                                            uploaded_by  UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                                            url          TEXT NOT NULL,
+                                            data         BYTEA,
+                                            filename     TEXT,
+                                            content_type TEXT,
+                                            size_bytes   BIGINT,
+                                            created_at   TIMESTAMPTZ DEFAULT NOW(),
+                                            UNIQUE (club_id)
+);
+CREATE INDEX IF NOT EXISTS idx_club_layouts_club_id ON club_layouts (club_id);
 
 -- por si ya existe, la volamos primero
 DROP FUNCTION IF EXISTS booking_items_set_line_total() CASCADE;

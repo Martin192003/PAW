@@ -63,7 +63,8 @@ public class BookingItemsJpaDaoTest {
                 null, // MusicalGenre
                 OffsetDateTime.now(),
                 null, // Zone
-                Boolean.FALSE
+                Boolean.FALSE,
+                null
         );
         em.persist(c);
         return c;

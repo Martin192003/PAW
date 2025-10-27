@@ -67,7 +67,8 @@ public class ActivityJpaDaoTest {
                 null,
                 OffsetDateTime.now(),
                 null,
-                Boolean.FALSE
+                Boolean.FALSE,
+                null
         );
         em.persist(c);
         return c;

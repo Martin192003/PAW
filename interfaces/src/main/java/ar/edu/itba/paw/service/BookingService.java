@@ -58,9 +58,6 @@ public interface BookingService {
                     UUID bookingId,
                     Status status);
 
-    List<Booking> findAllPaginated(int limit, int offset);
-
-    int countAll();
 
     /** Devuelve la reserva creada (mejor que void). */
     Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username);

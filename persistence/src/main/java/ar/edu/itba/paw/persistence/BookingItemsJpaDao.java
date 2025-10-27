@@ -17,7 +17,6 @@ public class BookingItemsJpaDao implements BookingItemsDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public BookingItem create(Booking booking, Product product, int quantity, BigDecimal unitPrice) {
         final Booking managedBooking =
                 em.contains(booking) ? booking : em.getReference(Booking.class, booking.getBookingId());
@@ -29,14 +28,12 @@ public class BookingItemsJpaDao implements BookingItemsDao {
         bi.setBooking(managedBooking);
         bi.setProduct(managedProduct);
         bi.setQuantity(quantity);
-        // si no te pasan precio unitario, tomá el base del producto (ajustá si tu modelo lo requiere)
         bi.setUnitPrice(unitPrice != null ? unitPrice : managedProduct.getBasePrice());
         em.persist(bi);
         return bi;
     }
 
     @Override
-    @Transactional
     public BookingItem update(UUID id, Booking booking, Product product, int quantity, BigDecimal unitPrice) {
         BookingItem bi = em.find(BookingItem.class, id);
         if (bi == null) return null;
@@ -53,7 +50,6 @@ public class BookingItemsJpaDao implements BookingItemsDao {
     }
 
     @Override
-    @Transactional
     public boolean delete(UUID id) {
         BookingItem bi = em.find(BookingItem.class, id);
         if (bi == null) return false;
@@ -62,20 +58,17 @@ public class BookingItemsJpaDao implements BookingItemsDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<BookingItem> findById(UUID id) {
         return Optional.ofNullable(em.find(BookingItem.class, id));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<BookingItem> findAll() {
         return em.createQuery("SELECT bi FROM BookingItem bi", BookingItem.class)
                 .getResultList();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<BookingItem> findByBooking(Booking booking) {
         return em.createQuery("""
                 SELECT bi
@@ -87,7 +80,6 @@ public class BookingItemsJpaDao implements BookingItemsDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<BookingItem> findByProduct(Product product) {
         return em.createQuery("""
                 SELECT bi

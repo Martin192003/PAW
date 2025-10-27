@@ -69,7 +69,7 @@
             <span class="profile-label"><spring:message code="form.password"/>:</span>
             <span class="profile-value">••••••••</span>
             <button type="button" class="btn btn-success btn-edit-small"
-                    onclick="window.location.href='<c:url value='/forgot-password'/>'"><i class="fa-solid fa-key"></i>
+                    onclick="openModal('editPasswordModal')"><i class="fa-solid fa-key"></i>
             </button>
         </div>
     </div>
@@ -166,6 +166,27 @@
     </div>
 </div>
 
+<!-- MODAL PASSWORD -->
+<div id="editPasswordModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal('editPasswordModal')">&times;</span>
+        <form:form action="${pageContext.request.contextPath}/profile/edit/password" method="post"
+                   modelAttribute="editUserForm">
+            <label for="password"><spring:message code="form.password"/></label>
+            <form:password path="password" id="password" cssClass="form-control"/>
+            <form:errors path="password" cssClass="error"/>
+            <label for="confirmPassword"><spring:message code="form.confirmPassword"/></label>
+            <form:password path="confirmPassword" id="confirmPassword" cssClass="form-control"/>
+            <form:errors path="confirmPassword" cssClass="error"/>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editPasswordModal')">
+                    <spring:message code="button.cancel"/></button>
+                <button type="submit" class="btn btn-success"><spring:message code="button.save"/></button>
+            </div>
+        </form:form>
+    </div>
+</div>
+
 <script>
     function hasValidationErrors(modal) {
         if (!modal) return false;
@@ -251,6 +272,22 @@
         </c:if>
         clearErrorsExcept(openedId);
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var cellphoneInput = document.querySelector('#editCellphoneModal input');
+        if (cellphoneInput) {
+            cellphoneInput.addEventListener('keydown', function(e) {
+                if (e.key === '-' || e.key === 'Subtract') {
+                    e.preventDefault();
+                }
+            });
+            cellphoneInput.addEventListener('input', function(e) {
+                if (this.value.includes('-')) {
+                    this.value = this.value.replace(/-/g, '');
+                }
+            });
+        }
+    });
 </script>
 
 

@@ -29,6 +29,13 @@ public class EditUserForm {
     @Pattern(regexp = "^[0-9\\-\\+ ]*$", message = "{register.phone.pattern}")
     private String cellphone;
 
+    @NotEmpty(message = "{register.password.notempty}")
+    @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
+    private String password;
+
+    @NotEmpty(message = "{register.confirmpassword.notempty}")
+    private String confirmPassword;
+
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
@@ -43,5 +50,16 @@ public class EditUserForm {
 
     public String getCellphone() { return cellphone; }
     public void setCellphone(String cellphone) { this.cellphone = cellphone; }
+
+    public String getPassword() {return password;}
+    public void setPassword(String password) {this.password = password;}
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
+    }
 }
 

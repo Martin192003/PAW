@@ -72,12 +72,12 @@ public class BookingAdminController {
     }
 
     
-    /** Confirmar reserva → RESERVADA */
     @PostMapping("/bookings/{bookingId}/confirm")
     public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
         try {
             bookingService.confirm(bookingId);
             ra.addFlashAttribute("success", "booking.confirmed");
+            ra.addFlashAttribute("bookingAction", "confirmed");
         } catch (InvalidStatusTransitionException e) {
             ra.addFlashAttribute("error", "error.booking.cannotConfirm");
         } catch (BookingNotFoundException e) {
@@ -91,6 +91,7 @@ public class BookingAdminController {
         try {
             bookingService.cancel(bookingId);
             ra.addFlashAttribute("success", "booking.cancelled");
+            ra.addFlashAttribute("bookingAction", "cancelled");
         } catch (InvalidStatusTransitionException e) {
             ra.addFlashAttribute("error", "error.booking.cannotCancel");
         } catch (BookingNotFoundException e) {
@@ -100,7 +101,7 @@ public class BookingAdminController {
     }
 
     @GetMapping(value = "/clubs/bookings", produces = "text/html;charset=UTF-8")
-    public String bookingsOfMyClubs(@Valid @ModelAttribute("bookingSearchForm") BookingSearchForm form,
+    public String bookingsOfMyClubs(@ModelAttribute("bookingSearchForm") BookingSearchForm form,
                                     BindingResult br,
                                     Model model) {
 
@@ -148,6 +149,7 @@ public class BookingAdminController {
         if (form.getStatus() != null) filters.put("status", form.getStatus().name());
         if (form.getSort() != null && !form.getSort().isBlank()) filters.put("sort", form.getSort());
 
+
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(java.util.stream.Collectors.joining("&"));
@@ -193,9 +195,14 @@ public class BookingAdminController {
         ClubTable table = tableOpt.orElse(null);
 
         String clubName = "";
+        String clubCbu = "";
         if (table != null) {
             Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
-            clubName = clubOpt.map(Club::getClubName).orElse("");
+            if (clubOpt.isPresent()) {
+                Club club = clubOpt.get();
+                clubName = club.getClubName();
+                clubCbu = club.getCbu();
+            }
         }
 
         var rOpt = receiptService.findByBooking(bookingId);
@@ -208,6 +215,7 @@ public class BookingAdminController {
         model.addAttribute("booking", booking);
         model.addAttribute("table", table);
         model.addAttribute("clubName", clubName);
+        model.addAttribute("clubCbu", clubCbu);
 
 
         ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");

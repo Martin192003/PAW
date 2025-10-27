@@ -15,7 +15,6 @@ public class UserJpaDao implements UserDao {
     private EntityManager em;
 
     @Override
-    @Transactional
     public User create(String username, String name, String passwordHash, String surname,
                        String email, String cellphone, Role role) {
 
@@ -37,7 +36,6 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
-    @Transactional
     public User update(UUID userId, String userName, String name, String surname, String email,
                        String passwordHash, String cellphone, Role role) {
 
@@ -57,7 +55,6 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
-    @Transactional
     public boolean delete(UUID id) {
         User u = em.find(User.class, id);
         if (u == null)
@@ -67,49 +64,30 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<User> findById(UUID id) {
         return Optional.ofNullable(em.find(User.class, id));
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return em.createQuery("FROM User u WHERE LOWER(u.email) = LOWER(:email)", User.class)
                 .setParameter("email", email).getResultList().stream().findFirst();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<User> findByUserName(String userName) {
         return em.createQuery("FROM User u WHERE LOWER(u.username) = LOWER(:username)", User.class)
                 .setParameter("username", userName).getResultList().stream().findFirst();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<User> findByVerificationToken(String token) {
         return em.createQuery("FROM User u WHERE u.verificationToken = :token", User.class)
                 .setParameter("token", token).getResultList().stream().findFirst();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return em.createQuery("FROM User u ORDER BY u.username ASC", User.class)
-                .getResultList();
-    }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<User> findByRole(String role) {
-        return em.createQuery("FROM User u WHERE u.role = :role ORDER BY u.username ASC", User.class)
-                .setParameter("role", Role.valueOf(role.toUpperCase(Locale.ROOT)))
-                .getResultList();
-    }
-
-    @Override
-    @Transactional
     public void updateVerificationStatus(UUID userId, boolean isVerified) {
         User u = em.find(User.class, userId);
         if (u != null) {
@@ -118,7 +96,6 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
-    @Transactional
     public void updateVerificationToken(UUID userId, String token) {
         User u = em.find(User.class, userId);
         if (u != null) {
@@ -127,7 +104,6 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
-    @Transactional
     public void updateResetPasswordToken(UUID userId, String token) {
         User u = em.find(User.class, userId);
         if (u != null) {
@@ -136,7 +112,6 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<User> findByResetPasswordToken(String token) {
         return em.createQuery("FROM User u WHERE u.resetPasswordToken = :token", User.class)
                 .setParameter("token", token)
@@ -144,7 +119,6 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
-    @Transactional
     public void clearResetPasswordToken(UUID userId) {
         User u = em.find(User.class, userId);
         if (u != null) {

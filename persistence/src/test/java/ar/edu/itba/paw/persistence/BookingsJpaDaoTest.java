@@ -87,7 +87,8 @@ public class BookingsJpaDaoTest {
                 null,          // MusicalGenre (opcional)
                 OffsetDateTime.now(),
                 null,          // Zone (opcional)
-                Boolean.FALSE
+                Boolean.FALSE,
+                null
         );
         em.persist(c);
         return c;
@@ -171,12 +172,6 @@ public class BookingsJpaDaoTest {
     }
 
     @Test
-    public void testFindAll() {
-        assertFalse(bookingsDao.findAll().isEmpty());
-        assertEquals(1, bookingsDao.findAll().size());
-    }
-
-    @Test
     public void testFindByUser() {
         assertFalse(bookingsDao.findByUser(user.getId()).isEmpty());
         assertEquals(1, bookingsDao.findByUser(user.getId()).size());
@@ -186,11 +181,6 @@ public class BookingsJpaDaoTest {
     public void testFindByTable() {
         assertFalse(bookingsDao.findByTable(tableId).isEmpty());
         assertEquals(1, bookingsDao.findByTable(tableId).size());
-    }
-
-    @Test
-    public void testFindAllPaginated() {
-        assertEquals(1, bookingsDao.findAllPaginated(10, 0).size());
     }
 
     @Test

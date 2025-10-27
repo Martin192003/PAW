@@ -18,10 +18,6 @@ public interface UserDao {
     Optional<User> findByUserName(String userName);
     Optional<User> findByVerificationToken(String token);
 
-
-    List<User> findAll();
-    List<User> findByRole(String role);
-
     void updateVerificationStatus(UUID userId, boolean isVerified);
     void updateVerificationToken(UUID userId, String token);
 

@@ -14,8 +14,6 @@ import java.util.UUID;
 
 public interface BookingDao {
     Optional<Booking> findById(UUID id);
-    List<Booking> findAll();
-
     List<Booking> findByUser(UUID userId);
     List<Booking> findByTable(UUID tableId);
 
@@ -41,9 +39,6 @@ public interface BookingDao {
                     UUID clubId,
                     UUID bookingId,
                     Status status);
-
-    List<Booking> findAllPaginated(int limit, int offset);
-
     List<Booking> searchByClubIdsPaginated(List<UUID> clubIds,
                                            UUID bookingId,
                                            Status status,

@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.util.UUID;
 
 public class AddClubForm {
@@ -37,6 +38,10 @@ public class AddClubForm {
 
     @NotNull(message = "{club.isBar.notnull}")
     private Boolean isBar;
+
+    @Size(max = 50, message = "{clubHandlerForm.cbu.size}")
+    @NotBlank(message = "{club.cbu.notnull}")
+    private String cbu;
 
     public UUID getClubId() {
         return clubId;
@@ -104,6 +109,9 @@ public class AddClubForm {
 
     public Boolean getIsBar() { return isBar; }
     public void setIsBar(Boolean isBar) { this.isBar = isBar; }
+
+    public String getCbu() { return cbu; }
+    public void setCbu(String cbu) { this.cbu = cbu;}
 
 }
 

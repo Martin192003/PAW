@@ -3,6 +3,7 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ReviewsDao;
+import ar.edu.itba.paw.persistence.UserDao;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,12 +31,15 @@ public class ReviewServiceImplTest {
     @Mock
     private ClubDao clubDao;
 
+    @Mock
+    private UserDao userDao;
+
     @InjectMocks
-    private ReviewServiceImpl reviewService = new ReviewServiceImpl(reviewsDao, clubDao);
+    private ReviewServiceImpl reviewService;
 
     @Test
     public void testGetAverageRatingWithReviews() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, Price.MEDIO, "desc", null, MusicalGenre.ROCK, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, Price.MEDIO, "desc", null, MusicalGenre.ROCK, CREATED_AT, Zone.ZONA_CABA, null, null);
         Review review1 = new Review(UUID.randomUUID(), null, club, 4, "Muy bueno", CREATED_AT);
         Review review2 = new Review(UUID.randomUUID(), null, club, 2, "Regular", CREATED_AT);
 
@@ -49,7 +53,7 @@ public class ReviewServiceImplTest {
 
     @Test
     public void testGetAverageRatingNoReviews() {
-        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, Price.MEDIO, "desc", null, MusicalGenre.ROCK, CREATED_AT, Zone.ZONA_CABA, null);
+        Club club = new Club(CLUB_ID, CLUB_NAME, "Ubicación", null, null, Price.MEDIO, "desc", null, MusicalGenre.ROCK, CREATED_AT, Zone.ZONA_CABA, null, null);
 
         Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
         Mockito.when(reviewsDao.findByClub(club)).thenReturn(Collections.emptyList());

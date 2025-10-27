@@ -60,11 +60,6 @@ public class ProductServiceImpl implements ProductService {
         return productsDao.findByName(name);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Product> findAll() {
-        return productsDao.findAll();
-    }
 
     @Override
     @Transactional(readOnly = true)

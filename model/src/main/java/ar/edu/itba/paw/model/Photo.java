@@ -19,6 +19,10 @@ public class Photo {
     @Column(name = "posted_by", columnDefinition = "UUID", nullable = false)
     private UUID postedBy;
 
+
+    @Column(name = "review_id", columnDefinition = "uuid")
+    private UUID reviewId;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -37,6 +41,10 @@ public class Photo {
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "data", nullable = false, columnDefinition = "bytea")
     private byte[] data;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "photo_type")
+    private PhotoType photoType = PhotoType.CAROUSEL;
 
     @PrePersist
     private void beforeInsert() {
@@ -67,9 +75,15 @@ public class Photo {
     public Long getSizeBytes() { return sizeBytes; }
     public void setSizeBytes(Long sizeBytes) { this.sizeBytes = sizeBytes; }
 
+    public UUID getReviewId() { return reviewId; }
+    public void setReviewId(UUID reviewId) { this.reviewId = reviewId; }
+
     public String getUrl() { return url; }
     public void setUrl(String url) { this.url = url; }
 
     public byte[] getData() { return data; }
     public void setData(byte[] data) { this.data = data; }
+
+    public PhotoType getPhotoType() { return photoType; }
+    public void setPhotoType(PhotoType photoType) { this.photoType = photoType;}
 }

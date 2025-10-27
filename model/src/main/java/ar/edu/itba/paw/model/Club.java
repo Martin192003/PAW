@@ -62,6 +62,9 @@ public class Club {
     @Column(name = "is_bar", nullable = false)
     private Boolean isBar;
 
+    @Column(name = "cbu", length = 50)
+    private String cbu;
+
     @ManyToMany(mappedBy = "adminOfClubs")
     private Set<User> admins = new HashSet<>();
 
@@ -77,7 +80,7 @@ public class Club {
 
     public Club(UUID clubId, String clubName, String location, java.math.BigDecimal rating,
                 Integer quantityRatings, Price priceRange, String description,
-                User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone, Boolean isBar) {
+                User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone, Boolean isBar, String cbu) {
         this.clubId = clubId;
         this.clubName = clubName;
         this.location = location;
@@ -90,13 +93,14 @@ public class Club {
         this.createdAt = createdAt;
         this.zone = zone;
         this.isBar = isBar;
+        this.cbu = cbu;
     }
 
 
     //ver de sacar el constructor de arriba ya que se genera sola la uuid
     public Club(String clubName, String location, java.math.BigDecimal rating,
                 Integer quantityRatings, Price priceRange, String description,
-                User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone, Boolean isBar) {
+                User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone, Boolean isBar, String cbu) {
         this.clubName = clubName;
         this.location = location;
         this.rating = rating;
@@ -108,6 +112,7 @@ public class Club {
         this.createdAt = createdAt;
         this.zone = zone;
         this.isBar = isBar;
+        this.cbu = cbu;
     }
 
     public UUID getClubId() { return clubId; }
@@ -148,4 +153,7 @@ public class Club {
 
     public Set<User> getAdmins() { return admins; }
     public void setAdmins(Set<User> admins) { this.admins = admins;}
+
+    public String getCbu() { return cbu; }
+    public void setCbu(String cbu) { this.cbu = cbu; }
 }

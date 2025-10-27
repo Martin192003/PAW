@@ -29,4 +29,14 @@ public interface PhotoService {
     Map<UUID,String> getCoverUrls(Set<UUID> clubIds);
     UUID uploadPhotoForClub(UUID clubId, String userEmail, MultipartFile file) throws IOException;
 
+    void uploadCover(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
+    void uploadCarousel(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
+    Optional<Photo> getCoverPhoto(UUID clubId);
+    List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset);
+    List<Photo> getClubPhotos(UUID clubId, int limit, int offset);
+
+    void uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException;
+    UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, MultipartFile file) throws IOException;
+    List<Photo> getReviewPhotosByClub(UUID clubId, int limit, int offset);
+    Optional<Photo> getPhotoByReview(UUID reviewId);
 }

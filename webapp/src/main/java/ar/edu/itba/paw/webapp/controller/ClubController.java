@@ -8,6 +8,9 @@ import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,7 +31,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import javax.validation.Valid;
@@ -46,15 +49,19 @@ public class ClubController {
     private final MenuService menuService;
     private final SecurityService securityService;
     private final TableService tableService;
+    private final EventService eventService;
+    private final ClubLayoutService clubLayoutService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, ProductService productService, SecurityService securityService, TableService tableService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService,  EventService eventService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
         this.menuService = menuService;
         this.securityService = securityService;
         this.tableService = tableService;
+        this.eventService = eventService;
+        this.clubLayoutService = clubLayoutService;
     }
 
     @GetMapping({"", "/"})
@@ -81,12 +88,12 @@ public class ClubController {
                 || (sort != null && sort.startsWith("availability_"));
 
         LocalDate selectedDay = null;
+        var zoneBA = ZoneId.of("America/Argentina/Buenos_Aires");
         Integer dayOffset = extractDayOffsetFromSort(sort);
-        var zoneBA = java.time.ZoneId.of("America/Argentina/Buenos_Aires");
         if (availabilityMode) {
             selectedDay = (dayOffset != null)
-                    ? java.time.LocalDate.now(zoneBA).plusDays(dayOffset)
-                    : java.time.LocalDate.now(zoneBA); // fallback: hoy
+                    ? LocalDate.now(zoneBA).plusDays(dayOffset)
+                    : LocalDate.now(zoneBA); // fallback: hoy
         }
 
         // Valido día permitido
@@ -96,7 +103,7 @@ public class ClubController {
 
         int totalClubs = 0;
         int offset = (page - 1) * size;
-        List<Club> clubs = java.util.Collections.emptyList();
+        List<Club> clubs = Collections.emptyList();
 
         if (availabilityMode) {
             if (!invalidDay) {
@@ -160,7 +167,7 @@ public class ClubController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
         model.addAttribute("pages", IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList()));
-        model.addAttribute("availableToday", availabilityMode); // 👈 reflejo modo disponibilidad
+        model.addAttribute("availableToday", availabilityMode); // reflejo modo disponibilidad
         model.addAttribute("queryParams", queryParams);
         model.addAttribute("name", nameLike);
         model.addAttribute("zone", zone);
@@ -170,17 +177,16 @@ public class ClubController {
         model.addAttribute("sort", sort);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
-
+        addEventsByClubToModel(clubs, model);
         return "index";
     }
-
 
 
     @GetMapping("/new")
     public String showClubForm(Model model) {
 
         User user = securityService.getVerifiedLoggedUser();
-        if(user!=null) model.addAttribute("user", user);
+        if (user != null) model.addAttribute("user", user);
         model.addAttribute("clubForm", new AddClubForm());
         model.addAttribute("postPath", "/clubs/create");
         model.addAttribute("priceValues", Price.values());
@@ -200,6 +206,7 @@ public class ClubController {
             model.addAttribute("priceValues", Price.values());
             model.addAttribute("genreValues", MusicalGenre.values());
             model.addAttribute("zoneValues", Zone.values());
+
             return "clubForm";
         }
 
@@ -209,7 +216,7 @@ public class ClubController {
 
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
-                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getImage()
+                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getCbu(), f.getImage()
         );
 
         if (roleAntes == Role.USER) {
@@ -233,15 +240,41 @@ public class ClubController {
         clubService.assertAdmin(clubId, user.getId());
 
         var club = clubService.getClubById(clubId).orElseThrow(() -> new NotFoundException("El boliche no existe."));
-        var cover = photoService.getCoverUrl(clubId).orElse(null);
 
-        var photos = photoService.listByClub(clubId, 0, 1);
-        String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
+        var photos = photoService.listByClub(clubId, 0, 50);
 
+        var eventPhotoIds = eventService.getEventPhotoIds(clubId);
+
+        var clubOnlyPhotos = photos.stream()
+                .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
+                .collect(Collectors.toList());
+
+        String coverPhotoUrl = photoService.getCoverUrl(clubId)
+                .orElse("/resources/img/default-club-placeholder.png");
+
+        List<Photo> carouselPhotos = clubOnlyPhotos.stream()
+                .filter(p -> PhotoType.CAROUSEL == p.getPhotoType())
+                .sorted(Comparator.comparing(Photo::getCreatedAt).reversed())
+                .collect(Collectors.toList());
+
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("carouselPhotos", carouselPhotos);
+
+        var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
+        String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
+        model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+
+        EventAddForm eventForm = new EventAddForm();
+        eventForm.setClubId(club.getClubId());
+        model.addAttribute("eventForm", eventForm);
+
+        EventEditForm editEventForm = new EventEditForm();
+        editEventForm.setClubId(club.getClubId());
+        model.addAttribute("editEventForm", editEventForm);
 
         model.addAttribute("club", club);
         model.addAttribute("tables", tableService.findByClubId(clubId));
-        model.addAttribute("coverPhotoUrl", cover);
+        model.addAttribute("tableLayoutUrl", tableLayoutUrl);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
@@ -250,6 +283,7 @@ public class ClubController {
         model.addAttribute("tableForm", new AddTableForm());
         model.addAttribute("editTableForm", new EditTableForm());
         model.addAttribute("editProductForm", new EditProductForm());
+        model.addAttribute("editField", "Event");
 
         ClubHandlerForm form = new ClubHandlerForm();
         form.setClubId(club.getClubId());
@@ -260,6 +294,8 @@ public class ClubController {
         form.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
         form.setDescription(club.getDescription() != null ? club.getDescription() : "");
         form.setImage(coverPhotoUrl != null ? coverPhotoUrl : "");
+        form.setCbu(club.getCbu() != null ? club.getCbu() : "");
+
 
         model.addAttribute("clubHandlerForm", form);
         return "clubHandler";
@@ -284,26 +320,26 @@ public class ClubController {
             populateClubHandlerModel(model, club);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("editField", editedField);
+            model.addAttribute("errors", errors);
+            var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+            model.addAttribute("carouselPhotos", carouselPhotos);
             return "clubHandler";
         }
 
-        if (clubHandlerForm.getName() != null && !clubHandlerForm.getName().isBlank()) {
+        if ("clubName".equals(editedField)) {
             club.setClubName(clubHandlerForm.getName());
-        }
-        if (clubHandlerForm.getLocation() != null && !clubHandlerForm.getLocation().isBlank()) {
+        } else if ("location".equals(editedField)) {
             club.setLocation(clubHandlerForm.getLocation());
-        }
-        if (clubHandlerForm.getZone() != null && !clubHandlerForm.getZone().isBlank()) {
+        } else if ("zone".equals(editedField)) {
             club.setZone(Zone.valueOf(clubHandlerForm.getZone()));
-        }
-        if (clubHandlerForm.getMusicGenre() != null && !clubHandlerForm.getMusicGenre().isBlank()) {
+        } else if ("musicGenre".equals(editedField)) {
             club.setMusicGenre(MusicalGenre.valueOf(clubHandlerForm.getMusicGenre()));
-        }
-        if (clubHandlerForm.getPriceRange() != null && !clubHandlerForm.getPriceRange().isBlank()) {
+        } else if ("priceRange".equals(editedField)) {
             club.setPriceRange(Price.valueOf(clubHandlerForm.getPriceRange()));
-        }
-        if (clubHandlerForm.getDescription() != null) {
+        } else if ("description".equals(editedField)) {
             club.setDescription(clubHandlerForm.getDescription());
+        } else if ("cbu".equals(editedField)) {
+            club.setCbu(clubHandlerForm.getCbu());
         }
 
         clubService.updateClub(club);
@@ -313,48 +349,76 @@ public class ClubController {
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
+    @PostMapping("/confirmClub")
+    private String logout() {
+        return "redirect:/logout";
+    }
 
-    @PostMapping("/club/{clubId}/photos")
-    public String upload(@PathVariable UUID clubId,
-                         @RequestParam("file") MultipartFile file,
-                         Principal principal) throws IOException {
-
-        if (file == null || file.isEmpty()) {
-            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
-        }
-
-        User user = securityService.getVerifiedLoggedUser();
-        checkLoggedUser(clubId);
-
-        UUID photoId = photoService.upload(
-                clubId,
-                user.getId(),
-                file.getOriginalFilename(),
-                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
-        );
-
+    @PostMapping("/club/{clubId}/layout")
+    public String uploadLayout(@PathVariable UUID clubId,
+                               @RequestParam("file") MultipartFile file,
+                               RedirectAttributes ra) {
+        final User user = securityService.getVerifiedLoggedUser();
+        clubLayoutService.uploadLayout(clubId, user.getEmail(), file);
+        ra.addFlashAttribute("layoutUploaded", true);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
-    private void checkLoggedUser(UUID clubId){
+    @GetMapping("/club/{clubId}/layout/{layoutId}/image")
+    public ResponseEntity<byte[]> getLayoutImage(
+            @PathVariable UUID clubId,
+            @PathVariable UUID layoutId) {
+
+        var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
+
+        if (layoutOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ClubLayout layout = layoutOpt.get();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(layout.getContentType()))
+                .body(layout.getData());
+    }
+
+
+    private void checkLoggedUser(UUID clubId) {
         User user = securityService.getVerifiedLoggedUser();
-        if(user == null) {
+        if (user == null) {
             throw new UserNotFoundException("No se encontró el usuario logueado.");
         }
         List<User> clubUsers = clubService.getAdminsByClub(clubId);
-        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+        if (clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
             throw new UnauthorizedException("El usuario no es admin del club.");
         }
     }
+
     private void populateClubHandlerModel(Model model, Club club) {
         UUID clubId = club.getClubId();
-        var photos = photoService.listByClub(clubId, 0, 1);
-        String coverPhotoUrl = photos.isEmpty() ? null : photos.getFirst().getUrl();
+        var photos = photoService.listByClub(clubId, 0, 50);
+        var eventPhotoIds = eventService.getEventPhotoIds(clubId);
+        var clubOnlyPhotos = photos.stream()
+                .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
+                .sorted((p1, p2) -> {
+                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
+                        return p2.getCreatedAt().compareTo(p1.getCreatedAt()); // Newest first
+                    }
+                    return p2.getPhotoId().compareTo(p1.getPhotoId());
+                })
+                .toList();
+
+        String coverPhoto = clubOnlyPhotos.isEmpty()
+                ? "/resources/img/default-club-placeholder.png"
+                : clubOnlyPhotos.getFirst().getUrl();
+        String coverPhotoUrl = clubOnlyPhotos.isEmpty() ? null : clubOnlyPhotos.get(0).getUrl();
+
+        var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
+        String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
 
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("club", club);
         model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("tableLayoutUrl", tableLayoutUrl);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
@@ -363,11 +427,14 @@ public class ClubController {
         model.addAttribute("tableForm", new AddTableForm());
         model.addAttribute("editProductForm", new EditProductForm());
         model.addAttribute("editTableForm", new EditTableForm());
-    }
+        EventAddForm eventForm = new EventAddForm();
+        eventForm.setClubId(clubId);
+        model.addAttribute("eventForm", eventForm);
 
-    @PostMapping("/confirmClub")
-    private String logout(){
-        return "redirect:/logout";
+        EventEditForm editEventForm = new EventEditForm();
+        editEventForm.setClubId(clubId);
+        model.addAttribute("editEventForm", editEventForm);
+        model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
     }
 
     private Integer extractDayOffsetFromSort(String sort) {
@@ -380,5 +447,30 @@ public class ClubController {
         }
         return null;
     }
+
+    private void addEventsByClubToModel(List<Club> clubs, Model model) {
+        final int page = 0;
+        final int size = 30;
+        List<Event> upcoming = eventService.listUpcoming(page, size);
+
+        Map<UUID, List<Event>> eventsByClub = upcoming.stream()
+                .collect(Collectors.groupingBy(Event::getClubId));
+
+        List<Club> clubsForEvents = eventsByClub.keySet().stream()
+                .map(id -> clubService.getClubById(id).orElse(null))
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(
+                        c -> eventsByClub.get(c.getClubId()).stream()
+                                .map(Event::getDate)
+                                .min(Comparator.naturalOrder())
+                                .orElse(LocalDate.MAX)
+                ))
+                .collect(Collectors.toList());
+        model.addAttribute("eventsByClub", eventsByClub);
+        model.addAttribute("clubsForEvents", clubsForEvents);
+    }
+
+
+
 
 }

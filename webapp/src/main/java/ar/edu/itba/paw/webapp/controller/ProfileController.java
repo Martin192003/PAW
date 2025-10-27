@@ -117,6 +117,34 @@ public class ProfileController {
         return handleFieldUpdate("email", form.getEmail(), "Email", errors, model, ra, false);
     }
 
+    @PostMapping("/edit/password")
+    public String editPassword(@Valid @ModelAttribute("editUserForm") EditUserForm form,
+                               BindingResult errors, Model model, RedirectAttributes ra) {
+        if (!form.getPassword().equals(form.getConfirmPassword())) {
+            errors.rejectValue("confirmPassword", "password.mismatch", "Las contraseñas no coinciden");
+        }
+
+        if (errors.hasFieldErrors("password") || errors.hasFieldErrors("confirmPassword")) {
+            return handleValidationError("password", model);
+        }
+
+        try {
+            UUID currentUserId = getCurrentUserId();
+            boolean success = userService.changePasswordForAuthenticatedUser(currentUserId, form.getPassword());
+
+            if (success) {
+                ra.addFlashAttribute("success", "Contraseña actualizada correctamente.");
+                return "redirect:/profile";
+            } else {
+                model.addAttribute("error", "Error al actualizar la contraseña");
+                return handleValidationError("password", model);
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Error al actualizar la contraseña");
+            return handleValidationError("password", model);
+        }
+    }
+
 
     @PostMapping("/resend-verification")
     public String resendVerification(@RequestParam("usernameOrEmail") String usernameOrEmail,

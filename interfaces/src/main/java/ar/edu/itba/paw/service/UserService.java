@@ -18,8 +18,6 @@ public interface UserService {
     User findByEmail(String email);
     User findByUserName(String userName);
 
-    List<User> findAll();
-    List<User> findByRole(String role);
     User findByVerificationToken(String token);
     boolean verifyUser(String token);
     boolean resendVerificationToken(String usernameOrEmail);
@@ -31,4 +29,5 @@ public interface UserService {
     User authenticateAndGetUser(String usernameOrEmail, String password);
     boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
     User findByResetPasswordToken(String token);
+    boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword);
 }

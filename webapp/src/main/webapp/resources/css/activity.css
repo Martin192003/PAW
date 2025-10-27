@@ -375,7 +375,7 @@ html, body {
     padding: 12px 14px;
     margin-top: 12px;
 }
-.input-text{
+.input-text {
     width: 100%;
     height: 100%;
     border: none;
@@ -441,3 +441,97 @@ html, body {
     font-size: 1rem;
     line-height: 1.4;
 }
+.event-thumbnail {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #555;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-right: 12px;
+}
+.add-product-input, .add-product-bar textarea {
+    resize: none;
+    min-height: 54px;
+    max-height: 54px;
+    height: 54px;
+    box-sizing: border-box;
+}
+
+.add-product-bar input::placeholder,
+.add-product-bar textarea::placeholder {
+    font-family: Arial, sans-serif;
+    color: #888;
+    text-align: left; /* asegura que todos queden alineados igual */
+}
+
+.add-product-bar textarea[placeholder*="descripción"],
+.add-product-bar textarea[placeholder*="Descripción"] {
+    font-family: Arial, sans-serif !important;
+}
+
+.add-product-bar .form-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-file-small {
+    width: 140px;
+    padding: 4px 8px;
+    font-size: 0.95rem;
+    margin-right: 32px;
+    display: inline-block;
+}
+
+.add-product-bar .formError {
+    text-align: left;
+    width: 100%;
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85rem;
+}
+
+.modal-content input[type="date"] {
+    background: #1a1a1a !important;
+    color: #fff !important;
+    border-radius: 6px !important;
+    padding: 10px 12px !important;
+    font-size: 16px !important;
+    outline: none;
+    cursor: pointer;
+}
+
+.modal-content input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+.add-product-bar input[type="file"] {
+    margin-top: 18px;
+}
+
+.layout-section {
+    margin: 10px 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: #fff;
+}
+.layout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    margin-top: 36px;
+    padding-right: 10px;
+}
+.layout-header h2 {
+    margin: 0;
+    color: #fff;
+}
+.layout-section .table-layout-container {
+    text-align: center;
+    margin-bottom: 12px;
+}
+

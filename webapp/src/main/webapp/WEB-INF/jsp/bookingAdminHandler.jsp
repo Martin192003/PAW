@@ -1,6 +1,7 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
@@ -34,9 +35,18 @@
     </c:if>
 
     <c:if test="${not empty success}">
-        <div class="alert alert-success">
-            <spring:message code="${success}" text="${success}"/>
-        </div>
+        <c:choose>
+            <c:when test="${success == 'booking.cancelled'}">
+                <div class="alert alert-danger">
+                    <spring:message code="${success}" text="${success}"/>
+                </div>
+            </c:when>
+            <c:otherwise>
+                <div class="alert alert-success">
+                    <spring:message code="${success}" text="${success}"/>
+                </div>
+            </c:otherwise>
+        </c:choose>
     </c:if>
 
     <c:if test="${not empty info}">
@@ -97,9 +107,33 @@
                     <dt><spring:message code="booking.end" text="Fin"/></dt>
                     <dd><c:out value="${bookingEndLocal}"/></dd>
                 </div>
+                <div class="row">
+                    <dt><spring:message code="booking.cbu" text="CBU"/></dt>
+                    <dd><c:out value="${clubCbu}"/></dd>
+                </div>
                 <div class="row total">
                     <dt><spring:message code="booking.total" text="Total"/></dt>
-                    <dd>$ <c:out value="${booking.totalAmount}"/></dd>
+                    <dd>
+                        <c:choose>
+                            <c:when test="${not empty table.price}">
+                                <c:choose>
+                                    <c:when test="${not empty table.discount and table.discount > 0}">
+                                        <c:set var="priceToPay" value="${table.price * (1 - table.discount / 100)}" />
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:set var="priceToPay" value="${table.price}" />
+                                    </c:otherwise>
+                                </c:choose>
+                                <span>$ <fmt:formatNumber value="${priceToPay}" minFractionDigits="0" maxFractionDigits="0"/></span>
+                                <c:if test="${not empty table.discount and table.discount > 0}">
+                                    <span class="discount-right muted">(<spring:message code="tables.discount"/>:<fmt:formatNumber value="${table.discount}" minFractionDigits="0" maxFractionDigits="0"/>%)</span>
+                                </c:if>
+                            </c:when>
+                            <c:otherwise>
+                                $ <c:out value="${booking.totalAmount}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </dd>
                 </div>
             </dl>
             <c:set var="statusNormalized" value="${fn:trim(fn:toUpperCase(booking.status))}" />
@@ -107,7 +141,7 @@
             <c:set var="isCancelled" value="${statusNormalized == 'CANCELADA'}"/>
             <c:if test="${not isCancelled}">
                 <div class="booking-actions">
-                    <form id="adminCancelForm" method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />">
+                    <form id="adminCancelForm" class="confirm-cancel" method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                         <button id="adminCancelBtn" type="submit" class="btn btn-secondary">
                             <i class="fa fa-trash"></i> <spring:message code="booking.action.cancel" text="Cancelar"/>
@@ -164,27 +198,94 @@
             </div>
     </section>
 </div>
+<div id="cancelConfirmModal" class="modal" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeCancelConfirmModal()">&times;</span>
+        <h3 style="margin-top:8px;"><spring:message code="confirm.cancelBooking"/></h3>
+        <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
+            <button type="button" class="btn btn-secondary" onclick="closeCancelConfirmModal()">
+                <spring:message code="button.cancel" text="Cancelar"/>
+            </button>
+            <button id="confirmCancelBtn" type="button" class="btn btn-danger">
+                <spring:message code="booking.action.confirm"/>
+            </button>
+        </div>
+    </div>
+</div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function protectOnce(formId, btnSelector) {
-            var f = document.getElementById(formId);
-            if (!f) return;
-            f.addEventListener('submit', function(e) {
-                if (f.dataset.submitting === '1') { e.preventDefault(); return; }
-                f.dataset.submitting = '1';
-                var btn = f.querySelector(btnSelector);
-                if (btn) {
-                    btn.disabled = true;
-                    try {
-                        btn.dataset.orig = btn.innerHTML;
-                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (btn.textContent || '');
-                    } catch (err) { /* ignore */ }
-                }
-            });
+    (function(){
+        let pendingCancelForm = null;
+
+        function openCancelConfirmModal(form){
+            pendingCancelForm = form;
+            const modal = document.getElementById('cancelConfirmModal');
+            if(modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    modal.style.opacity = '1';
+                    modal.style.visibility = 'visible';
+                }, 10);
+            }
         }
-        protectOnce('adminCancelForm', 'button[type="submit"]');
-        protectOnce('adminConfirmForm', 'button[type="submit"]');
-    });
+
+        function closeCancelConfirmModal(){
+            const modal = document.getElementById('cancelConfirmModal');
+            if(modal) {
+                modal.style.display = 'none';
+                modal.style.opacity = '0';
+                modal.style.visibility = 'hidden';
+            }
+            pendingCancelForm = null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function(){
+            // Interceptar submit de forms de cancelación
+            document.querySelectorAll('form.confirm-cancel').forEach(f => {
+                f.addEventListener('submit', function(e){
+                    // si ya se confirmó, permitir submit real
+                    if(f.dataset.confirmed === '1') return;
+                    e.preventDefault();
+                    openCancelConfirmModal(f);
+                });
+            });
+
+            // Botón de confirmación dentro del modal
+            const confirmBtn = document.getElementById('confirmCancelBtn');
+            if(confirmBtn){
+                confirmBtn.addEventListener('click', function(){
+                    if(!pendingCancelForm) return;
+
+                    // marcar confirmado para que se haga submit real
+                    pendingCancelForm.dataset.confirmed = '1';
+
+                    // activar spinner solo ahora, antes de enviar
+                    const btn = pendingCancelForm.querySelector('button[type="submit"]');
+                    if(btn){
+                        btn.disabled = true;
+                        try {
+                            btn.dataset.orig = btn.innerHTML;
+                            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (btn.textContent || '');
+                        } catch (err){ }
+                    }
+
+                    pendingCancelForm.submit();
+                });
+            }
+
+            // Cerrar modal al click fuera del contenido
+            window.addEventListener('click', function(e){
+                const modal = document.getElementById('cancelConfirmModal');
+                if(modal && e.target === modal) closeCancelConfirmModal();
+            });
+
+            // Cerrar modal con la X
+            const closeX = document.querySelector('#cancelConfirmModal .modal-close');
+            if(closeX) closeX.addEventListener('click', closeCancelConfirmModal);
+
+            window.closeCancelConfirmModal = closeCancelConfirmModal;
+        });
+    })();
 </script>
 </body>
 </html>
+

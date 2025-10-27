@@ -58,8 +58,9 @@ public class UserBookingController {
                 .orElseThrow(() -> new IllegalArgumentException("El usuario no está autenticado."));
 
         try {
-            bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
+            Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
             ra.addFlashAttribute("reservationSent", true);
+            return "redirect:/booking?bookingId=" + booking.getBookingId();
         } catch (InvalidDateRangeException | ValidationException e) {
             ra.addFlashAttribute("error", "invalid.date");
             ra.addFlashAttribute("reservationError", true);
@@ -74,6 +75,7 @@ public class UserBookingController {
         try {
             bookingService.cancelByUser(bookingId, current.getId());
             ra.addFlashAttribute("success", "booking.cancelled");
+            ra.addFlashAttribute("bookingAction", "cancelled");
         } catch (UnauthorizedException e) {
             ra.addFlashAttribute("error", "booking.notAllowedToCancel");
         } catch (InvalidStatusTransitionException e) {
@@ -157,7 +159,6 @@ public class UserBookingController {
         model.addAttribute("status", form.getStatus());
         model.addAttribute("clubId", form.getClubId());
         model.addAttribute("bookingId", form.getBookingId());
-
         model.addAttribute("user", securityService.getVerifiedLoggedUser());
         model.addAttribute("activePage", "bookings");
         model.addAttribute("bookingSearchForm", form);
@@ -188,20 +189,27 @@ public class UserBookingController {
             model.addAttribute("table", table);
 
             String clubName = "";
+            String clubCbu = "";
             if (table != null) {
-                clubName = clubService.getClubById(table.getClubId())
-                        .map(Club::getClubName)
-                        .orElse("");
+                Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
+                if (clubOpt.isPresent()) {
+                    Club club = clubOpt.get();
+                    clubName = club.getClubName();
+                    clubCbu = club.getCbu();
+                }
             }
             ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withLocale(new Locale("es","AR"));
             model.addAttribute("clubName", clubName);
+            model.addAttribute("clubCbu", clubCbu);
             var rOpt = receiptService.findByBooking(bookingId);
             model.addAttribute("hasReceipt", rOpt.isPresent());
             rOpt.ifPresent(r -> model.addAttribute("receipt", r));
             model.addAttribute("activePage", "bookings");
             model.addAttribute("bookingStartLocal", booking.getBookingStart().atZoneSameInstant(zone).format(fmt));
             model.addAttribute("bookingEndLocal", booking.getBookingEnd().atZoneSameInstant(zone).format(fmt));
+
+
             return "bookingUserHandler";
         }
         try {
@@ -260,12 +268,14 @@ public class UserBookingController {
         model.addAttribute("table", table);
 
         String clubName = "";
+        String clubCbu = null;
         if (table != null) {
-            clubName = clubService.getClubById(table.getClubId())
-                    .map(Club::getClubName)
-                    .orElse("");
+            var clubOpt = clubService.getClubById(table.getClubId());
+            clubName = clubOpt.map(Club::getClubName).orElse("");
+            clubCbu = clubOpt.map(Club::getCbu).orElse(null);
         }
         model.addAttribute("clubName", clubName);
+        model.addAttribute("clubCbu", clubCbu);
         if(!model.containsAttribute("receiptForm")) {
             model.addAttribute("receiptForm", new ReceiptUploadForm());
         }

@@ -388,3 +388,106 @@
 .leaflet-control-zoom a:hover {
     background-color: #444 !important;
 }
+
+/* Estilo general del pop-up */
+.popup {
+    position: fixed;
+    top:0; left:0;
+    width:100vw;
+    height:100vh;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.popup-content {
+    background: #222;
+    color: #fff;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    width: 400px;
+    text-align: center;
+    animation: popupFade 0.3s ease-out;
+}
+
+.popup-header {
+    margin-bottom: 16px;
+}
+
+.popup-body p {
+    font-size: 18px;
+    margin-bottom: 24px;
+}
+
+.popup-footer button {
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+/* Animación */
+@keyframes popupFade {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Toast estilo pop-up abajo a la derecha */
+.toast-popup {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #222;
+    color: #fff;
+    padding: 16px 24px;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+    z-index: 9999;
+}
+
+/* Animación al aparecer */
+.toast-popup.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.55);
+    z-index:9999
+}
+.modal.show{
+    display:flex
+}
+.modal-content{
+    background:#222;
+    color:#fff;
+    border-radius:10px;
+    min-width:280px;
+    max-width:520px;
+    width:90%;padding:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45)
+}
+.modal-content .modal-close{
+    float:right;
+    font-size:24px;
+    cursor:pointer
+}
+.modal-actions{
+    margin-top:14px;
+    display:flex;
+    gap:10px;
+    justify-content:flex-end
+}

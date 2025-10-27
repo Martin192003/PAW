@@ -24,6 +24,85 @@
 <c:set var="showRightButtons" value="true" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="app-boliches">
+    <div class="events-container">
+        <c:set var="hasEvents" value="false" />
+        <c:forEach var="club" items="${clubsForEvents}">
+            <c:set var="clubEvents" value="${eventsByClub[club.clubId]}"/>
+            <c:if test="${not empty clubEvents}">
+                <c:set var="hasEvents" value="true" />
+            </c:if>
+        </c:forEach>
+
+        <c:if test="${hasEvents}">
+            <h2 class="events-title"><spring:message code="title.events"/></h2>
+
+            <div class="events-carousel-wrapper">
+                <button class="carousel-btn left" onclick="scrollCarousel(-1)">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <div class="events-carousel" id="eventsCarousel">
+                    <c:forEach var="club" items="${clubsForEvents}">
+                        <c:set var="clubEvents" value="${eventsByClub[club.clubId]}"/>
+                        <c:if test="${not empty clubEvents}">
+                            <c:forEach var="e" items="${clubEvents}">
+                                <c:url var="eventUrl" value="/clubs/${club.clubId}">
+                                    <c:param name="date" value="${e.date}"/>
+                                    <c:param name="fromEvent" value="true"/>
+                                </c:url>
+
+                                <a class="event-card" href="${eventUrl}">
+                                    <div class="event-card-body">
+                                        <div class="event-card-image">
+                                            <c:choose>
+                                                <c:when test="${not empty e.photoId}">
+                                                    <div class="event-card-image">
+                                                        <img src="${pageContext.request.contextPath}/photos/${e.photoId}" alt="Imagen del evento" />
+                                                    </div>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div class="event-card-no-image">
+                                                        <spring:message code="app.title"/> <br>&nbsp;&nbsp;<spring:message code="app.title"/>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                        <div class="event-club-title">
+                                            <i class="fa-solid fa-martini-glass"></i>
+                                            <c:out value="${club.clubName}"/>
+                                        </div>
+                                        <div class="event-date">
+                                            <i class="fa-regular fa-calendar"></i>
+                                            <c:out value="${e.date}"/>
+                                        </div>
+                                        <div class="event-name"><c:out value="${e.eventName}"/></div>
+                                        <c:if test="${not empty e.description}">
+                                            <div class="event-desc">
+                                                <c:choose>
+                                                    <c:when test="${fn:length(e.description) > 80}">
+                                                        <c:out value="${fn:substring(e.description, 0, 80)}"/>...
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <c:out value="${e.description}"/>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                        </c:if>
+                                    </div>
+                                </a>
+                            </c:forEach>
+                        </c:if>
+                    </c:forEach>
+                </div>
+
+                <button class="carousel-btn right" onclick="scrollCarousel(1)">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </c:if>
+    </div>
+
+
     <div class="filter-container">
         <spring:message code="filter.name" var="phName"/>
         <spring:message code="filter.minRating" var="phMinrating"/>
@@ -31,13 +110,17 @@
         <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
             <div class="filter-bar">
                 <!-- Name -->
-                <input
-                        type="text"
-                        name="name"
-                        placeholder="<c:out value='${phName}'/>"
-                        class="filter-item"
-                        value="<c:out value='${not empty param.name ? param.name : name}'/>"
-                />
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input
+                            type="text"
+                            name="name"
+                            placeholder=""
+                            aria-label="<c:out value='${phName}'/>"
+                            class="filter-item"
+                            value="<c:out value='${not empty param.name ? param.name : name}'/>"
+                    />
+                </div>
 
                 <!-- Zone -->
                 <select name="zone" class="filter-item">
@@ -182,7 +265,7 @@
                     <i class="fa-solid fa-music"></i> <spring:message code="genre.${club.musicGenre}"/><br>
                     <i class="fa-solid fa-dollar-sign"></i> <spring:message code="price.${club.priceRange}"/><br>
 
-                    <c:if test="${not empty club.rating}">
+                    <c:if test="${not empty club.rating and club.rating gt 0.0}">
                         <c:set var="ratingInt" value="${Math.floor(club.rating)}" />
                         <c:set var="decimal" value="${club.rating - ratingInt}" />
                         <c:set var="halfStar" value="${decimal > 0 ? 1 : 0}" />
@@ -258,6 +341,11 @@
             card.style.cursor = 'pointer';
         });
     });
+    function scrollCarousel(direction) {
+        const carousel = document.getElementById('eventsCarousel');
+        const scrollAmount = 300; // distancia del desplazamiento
+        carousel.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+    }
 </script>
 </body>
 </html>

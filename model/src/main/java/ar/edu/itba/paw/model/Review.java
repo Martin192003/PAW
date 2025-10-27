@@ -2,7 +2,9 @@ package ar.edu.itba.paw.model;
 
 import javax.persistence.*;
 import javax.persistence.Table;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -68,6 +70,6 @@ public class Review {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public Date getCreatedAt() { return createdAt == null ? null : Date.from(createdAt.toInstant()); }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 }

@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
+import ar.edu.itba.paw.model.ClubLayout;
 import ar.edu.itba.paw.model.MusicalGenre;
 import ar.edu.itba.paw.model.Price;
 import ar.edu.itba.paw.model.Zone;
@@ -29,14 +30,18 @@ public class ProductController {
     private final ClubService clubService;
     private final MenuService menuService;
     private final PhotoService photoService;
+    private final EventService eventService;
+    private final ClubLayoutService clubLayoutService;
 
-    public ProductController(ProductService productService, SecurityService securityService, TableService tableService, ClubService clubService, MenuService menuService, PhotoService photoService) {
+    public ProductController(ProductService productService, SecurityService securityService, TableService tableService, ClubService clubService, MenuService menuService, PhotoService photoService, EventService eventService, ClubLayoutService clubLayoutService) {
         this.productService = productService;
         this.securityService = securityService;
         this.tableService = tableService;
         this.clubService = clubService;
         this.menuService = menuService;
         this.photoService = photoService;
+        this.eventService = eventService;
+        this.clubLayoutService = clubLayoutService;
     }
 
     @PostMapping("/addProduct")
@@ -70,6 +75,12 @@ public class ProductController {
             model.addAttribute("productForm", form);
             model.addAttribute("editProductForm", new EditProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
+            EventAddForm eventForm = new EventAddForm();
+            eventForm.setClubId(club.getClubId());
+            model.addAttribute("eventForm", eventForm);
+            EventEditForm editEventForm = new EventEditForm();
+            editEventForm.setClubId(club.getClubId());
+            model.addAttribute("editEventForm", editEventForm);
             return "clubHandler";
         }
 
@@ -128,7 +139,22 @@ public class ProductController {
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
             model.addAttribute("editProductForm", form);
-            model.addAttribute("editField", "Product");
+            model.addAttribute("editField", "product");
+            EventAddForm eventForm = new EventAddForm();
+            eventForm.setClubId(club.getClubId());
+            model.addAttribute("eventForm", eventForm);
+            EventEditForm editEventForm = new EventEditForm();
+            editEventForm.setClubId(club.getClubId());
+            model.addAttribute("errors", errors);
+            model.addAttribute("editEventForm", editEventForm);
+            model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+            var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+            var tableLayout = clubLayoutService.getLayoutByClub(clubId);
+            String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
+
+            model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
+            model.addAttribute("carouselPhotos", carouselPhotos);
+            model.addAttribute("tableLayoutUrl", tableLayoutUrl);
             return "clubHandler";
         }
 

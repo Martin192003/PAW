@@ -243,17 +243,4 @@ public class UserServiceImplTest {
         Assert.assertNull(userService.findByVerificationToken(TOKEN));
     }
 
-    @Test
-    public void testFindAllReturnsList() {
-        List<User> users = List.of(user);
-        Mockito.when(mockDao.findAll()).thenReturn(users);
-        Assert.assertEquals(1, userService.findAll().size());
-    }
-
-    @Test
-    public void testFindByRoleReturnsList() {
-        List<User> users = List.of(user);
-        Mockito.when(mockDao.findByRole(ROLE1)).thenReturn(users);
-        Assert.assertEquals(1, userService.findByRole(ROLE1).size());
-    }
 }
