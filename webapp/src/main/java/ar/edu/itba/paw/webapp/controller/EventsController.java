@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.model.Photo;
-import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
@@ -29,14 +28,21 @@ public class EventsController {
     private final SecurityService securityService;
     private final ClubService clubService;
     private final PhotoService photoService;
+    private final TableService tableService;
+    private final MenuService menuService;
+    private final ClubLayoutService clubLayoutService;
+
 
 
     @Autowired
-    public EventsController(EventService eventService, SecurityService securityService, ClubService clubService, PhotoService photoService) {
+    public EventsController(EventService eventService, SecurityService securityService, ClubService clubService, PhotoService photoService, TableService tableService, MenuService menuService, ClubLayoutService clubLayoutService) {
         this.eventService = eventService;
         this.securityService = securityService;
         this.clubService = clubService;
         this.photoService = photoService;
+        this.tableService = tableService;
+        this.menuService = menuService;
+        this.clubLayoutService = clubLayoutService;
     }
 
 
@@ -49,8 +55,6 @@ public class EventsController {
     ) {
         UUID clubId = form.getClubId();
         checkLoggedUser(clubId);
-
-
 
         if (errors.hasErrors()) {
             preloadClubHandler(model, clubId);
@@ -182,35 +186,38 @@ public class EventsController {
         }
     }
 
+    // En EventsController.java
     private void preloadClubHandler(Model model, UUID clubId) {
         var club = clubService.getClubById(clubId).orElseThrow();
         model.addAttribute("club", club);
         model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+        model.addAttribute("tables", tableService.findByClubId(clubId));
+        model.addAttribute("menu", menuService.getMenuByClub(clubId));
+        model.addAttribute("zones", Zone.values());
+        model.addAttribute("genres", MusicalGenre.values());
+        model.addAttribute("prices", Price.values());
 
-        // Fetch all photos for the club
         var photos = photoService.listByClub(clubId, 0, 50);
         var eventPhotoIds = eventService.getEventPhotoIds(clubId);
-
-        // Filter photos to include only non-event photos and sort by recency
         var clubOnlyPhotos = photos.stream()
                 .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
                 .sorted((p1, p2) -> {
-                    // Assuming Photo has a getCreatedAt() method returning LocalDateTime
                     if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
-                        return p2.getCreatedAt().compareTo(p1.getCreatedAt()); // Newest first
+                        return p2.getCreatedAt().compareTo(p1.getCreatedAt());
                     }
-                    // Fallback to photoId if createdAt is unavailable
                     return p2.getPhotoId().compareTo(p1.getPhotoId());
                 })
-                .collect(Collectors.toList());
+                .toList();
 
-        // Select cover photo
-        String coverPhoto = clubOnlyPhotos.isEmpty()
-                ? "/resources/img/default-club-placeholder.png"
-                : clubOnlyPhotos.get(0).getUrl();
+        var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+        var tableLayout = clubLayoutService.getLayoutByClub(clubId);
+        String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
 
-        model.addAttribute("coverPhotoUrl", coverPhoto);
-        model.addAttribute("clubPhotos", clubOnlyPhotos);
+        System.out.println("carouselPhotos URLs: " + carouselPhotos.stream().map(Photo::getUrl).toList());
+        System.out.println("tableLayoutUrl: " + tableLayoutUrl);
+
+        model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
+        model.addAttribute("carouselPhotos", carouselPhotos);
+        model.addAttribute("tableLayoutUrl", tableLayoutUrl);
     }
-
 }

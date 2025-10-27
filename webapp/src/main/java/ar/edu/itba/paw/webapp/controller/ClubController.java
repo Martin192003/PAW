@@ -321,6 +321,8 @@ public class ClubController {
             model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("editField", editedField);
             model.addAttribute("errors", errors);
+            var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+            model.addAttribute("carouselPhotos", carouselPhotos);
             return "clubHandler";
         }
 
@@ -447,20 +449,16 @@ public class ClubController {
     }
 
     private void addEventsByClubToModel(List<Club> clubs, Model model) {
-        // Traemos, por ejemplo, los próximos 30 eventos de TODO el sistema
         final int page = 0;
-        final int size = 30; // ajustalo si querés más/menos
+        final int size = 30;
         List<Event> upcoming = eventService.listUpcoming(page, size);
 
-        // Group by clubId -> eventos del club
         Map<UUID, List<Event>> eventsByClub = upcoming.stream()
                 .collect(Collectors.groupingBy(Event::getClubId));
 
-        // Obtenemos los Club de esos IDs (sin depender de la paginación de "clubs")
         List<Club> clubsForEvents = eventsByClub.keySet().stream()
                 .map(id -> clubService.getClubById(id).orElse(null))
                 .filter(Objects::nonNull)
-                // orden opcional: por fecha del primer evento ascendente
                 .sorted(Comparator.comparing(
                         c -> eventsByClub.get(c.getClubId()).stream()
                                 .map(Event::getDate)
@@ -468,8 +466,6 @@ public class ClubController {
                                 .orElse(LocalDate.MAX)
                 ))
                 .collect(Collectors.toList());
-
-        // Exponemos EXACTAMENTE los nombres que va a usar el JSP
         model.addAttribute("eventsByClub", eventsByClub);
         model.addAttribute("clubsForEvents", clubsForEvents);
     }

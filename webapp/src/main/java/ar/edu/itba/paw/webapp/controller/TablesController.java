@@ -27,14 +27,18 @@ public class TablesController {
      private final ClubService clubService;
      private final PhotoService photoService;
      private final MenuService menuService;
+     private final EventService eventService;
+     private final ClubLayoutService clubLayoutService;
 
      @Autowired
-     public TablesController(TableService tableService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService) {
+     public TablesController(TableService tableService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService, EventService eventService, ClubLayoutService clubLayoutService) {
          this.tableService = tableService;
          this.securityService = securityService;
          this.clubService = clubService;
          this.photoService = photoService;
          this.menuService = menuService;
+         this.eventService = eventService;
+         this.clubLayoutService = clubLayoutService;
      }
 
 
@@ -83,6 +87,14 @@ public class TablesController {
             editEventForm.setClubId(club.getClubId());
             model.addAttribute("editEventForm", editEventForm);
             model.addAttribute("errors", errors);
+            model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+            var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+            var tableLayout = clubLayoutService.getLayoutByClub(clubId);
+            String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
+
+            model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
+            model.addAttribute("carouselPhotos", carouselPhotos);
+            model.addAttribute("tableLayoutUrl", tableLayoutUrl);
             return "clubHandler";
         }
 
