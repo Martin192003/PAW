@@ -489,6 +489,29 @@ body {
     outline-offset: 2px;
 }
 
+/*Toast */
+.toast-popup {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: #222;
+    color: #fff;
+    padding: 16px 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.1em;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+.toast-popup.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 /* responsive */
 @media (max-width: 520px) {
     .modal-content {

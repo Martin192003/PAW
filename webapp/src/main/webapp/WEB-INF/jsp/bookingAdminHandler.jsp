@@ -35,9 +35,18 @@
     </c:if>
 
     <c:if test="${not empty success}">
-        <div class="alert alert-success">
-            <spring:message code="${success}" text="${success}"/>
-        </div>
+        <c:choose>
+            <c:when test="${success == 'booking.cancelled'}">
+                <div class="alert alert-danger">
+                    <spring:message code="${success}" text="${success}"/>
+                </div>
+            </c:when>
+            <c:otherwise>
+                <div class="alert alert-success">
+                    <spring:message code="${success}" text="${success}"/>
+                </div>
+            </c:otherwise>
+        </c:choose>
     </c:if>
 
     <c:if test="${not empty info}">

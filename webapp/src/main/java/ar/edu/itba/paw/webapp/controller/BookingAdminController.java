@@ -72,12 +72,12 @@ public class BookingAdminController {
     }
 
     
-    /** Confirmar reserva → RESERVADA */
     @PostMapping("/bookings/{bookingId}/confirm")
     public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
         try {
             bookingService.confirm(bookingId);
             ra.addFlashAttribute("success", "booking.confirmed");
+            ra.addFlashAttribute("bookingAction", "confirmed");
         } catch (InvalidStatusTransitionException e) {
             ra.addFlashAttribute("error", "error.booking.cannotConfirm");
         } catch (BookingNotFoundException e) {
@@ -91,6 +91,7 @@ public class BookingAdminController {
         try {
             bookingService.cancel(bookingId);
             ra.addFlashAttribute("success", "booking.cancelled");
+            ra.addFlashAttribute("bookingAction", "cancelled");
         } catch (InvalidStatusTransitionException e) {
             ra.addFlashAttribute("error", "error.booking.cannotCancel");
         } catch (BookingNotFoundException e) {
