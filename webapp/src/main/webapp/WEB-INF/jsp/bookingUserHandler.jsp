@@ -254,5 +254,21 @@
     <i class="fa-solid fa-circle-check" style="color:#4caf50; font-size:24px;"></i>
     <span id="bookingActionToastMsg"></span>
 </div>
+
+<div id="reservationToast" class="toast-popup" style="display:none;">
+    <i class="fa-solid fa-circle-check" style="color:#4caf50; font-size:24px;"></i>
+    <span><spring:message code="reservation.sent"/></span>
+</div>
+
+<c:if test="${not empty reservationSent}">
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toast = document.getElementById("reservationToast");
+            toast.style.display = "flex";
+            toast.classList.add("show");
+            setTimeout(() => { toast.classList.remove("show"); toast.style.display = "none"; }, 3000);
+        });
+    </script>
+</c:if>
 </body>
 </html>
