@@ -183,7 +183,6 @@ textarea.form-control {
 .review-text {
     margin: 6px 0 8px;
     line-height: 1.45;
-    white-space: pre-wrap;
 }
 
 .review-date {

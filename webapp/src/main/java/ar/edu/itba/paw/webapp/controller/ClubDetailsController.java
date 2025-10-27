@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -141,6 +142,7 @@ public class ClubDetailsController {
        model.addAttribute("genreText", toGenreText(club.getMusicGenre() != null ? club.getMusicGenre().getLabel() : null));
        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
        model.addAttribute("clubId", clubId);
+       model.addAttribute("reviewForm", new ReviewForm());
 
        if (start != null && end != null) {
            model.addAttribute("dayStart", start);

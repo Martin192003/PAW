@@ -2,6 +2,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 
 <!DOCTYPE html>
@@ -346,9 +347,11 @@
                         <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
                     </div>
 
-                    <form method="post"
-                          action="<c:url value='/clubs/${club.clubId}/reviews'/>"
-                          class="review-form"
+                    <c:url var="reviewAction" value="/clubs/${club.clubId}/reviews"/>
+
+                    <form:form method="post" modelAttribute="reviewForm"
+                          action="${reviewAction}"
+                          cssClass="review-form"
                           enctype="multipart/form-data">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
 
@@ -360,7 +363,7 @@
                                 </c:forEach>
                             </select>
 
-                            <label for="photo"><spring:message code="reviews.photo" text="Foto (opcional)"/></label>
+                            <label for="photo" style="margin-top:16px"><spring:message code="reviews.photo" text="Foto (opcional)"/></label>
                             <input type="file" id="photo" name="photo" accept="image/*" class="form-control"/>
                             <small class="bb-help"><spring:message code="reviews.photo.help"
                                                                    text="Formatos: JPG/PNG/WebP. Máx. 5MB."/></small>
@@ -368,9 +371,8 @@
 
                         <div class="form-group">
                             <label for="description"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
-                            <textarea name="description" id="description" class="form-control" rows="5"
-                                      placeholder="<spring:message code='reviews.placeholder' text='Contanos tu experiencia...'/>"
-                                      required></textarea>
+                            <form:textarea path="description" id="description" cssClass="form-control"/>
+                            <form:errors path="description" cssClass="formError"/>
                         </div>
 
                         <div class="contact-buttons">
@@ -378,13 +380,12 @@
                                     onclick="window.location.hash='#reviews';">
                                 <spring:message code="button.cancel" text="Cancelar"/>
                             </button>
-
                             <button type="submit" class="btn btn-primary">
                                 <i class="fa-solid fa-paper-plane"></i>
                                 <spring:message code="reviews.submit" text="Enviar reseña"/>
                             </button>
                         </div>
-                    </form>
+                    </form:form>
                 </div>
             </section>
         </c:if>
