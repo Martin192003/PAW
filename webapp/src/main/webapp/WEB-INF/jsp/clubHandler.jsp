@@ -146,7 +146,7 @@
                                 <div class="carousel-slide${st.first ? ' active' : ''}">
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${st.index + 1}"
-                                         loading="lazy" draggable="false"/>
+                                         loading="lazy" draggable="false" style="object-fit: fill;"/>
                                 </div>
                             </c:forEach>
                         </div>

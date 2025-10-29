@@ -64,7 +64,7 @@
                                 <div class="carousel-slide${status.index == 0 ? ' active' : ''}">
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${status.index + 1}"
-                                         loading="lazy" draggable="false">
+                                         loading="lazy" draggable="false" style="object-fit: fill;">
                                 </div>
                             </c:forEach>
                         </div>
@@ -267,7 +267,7 @@
                             <div class="carousel-slide${st.index == 0 ? ' active' : ''}">
                                 <img src="<c:url value='/photos/${ph.photoId}'/>"
                                      alt="Foto de reseña ${st.index + 1}"
-                                     loading="lazy" draggable="false">
+                                     loading="lazy" draggable="false" style="object-fit: fill;"/>">
                             </div>
                         </c:forEach>
                     </div>
@@ -593,11 +593,11 @@
 <div id="eventAvailabilityModal" class="modal" aria-hidden="true" role="dialog">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEventAvailabilityModal()">&times;</span>
-        <h3 style="margin:0 0 10px;">Disponibilidad para el evento</h3>
+        <h3 style="margin:0 0 10px;"><spring:message code="event.availability.title"/></h3>
         <p id="eventAvailabilityText" style="margin:0 0 14px;"></p>
         <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeEventAvailabilityModal()">Cerrar</button>
-            <button type="button" class="btn btn-success" onclick="closeEventAvailabilityModal()">OK</button>
+            <button type="button" class="btn btn-secondary" onclick="closeEventAvailabilityModal()"><spring:message code="event.availability.close"/></button>
+            <button type="button" class="btn btn-success" onclick="closeEventAvailabilityModal()"><spring:message code="event.availability.ok"/></button>
         </div>
     </div>
 </div>
@@ -672,23 +672,32 @@
             var params = new URLSearchParams(window.location.search);
             var fromEvent = params.get('fromEvent') === 'true';
             var dateParam = params.get('date');
-            if(!fromEvent || !dateParam) return;
+            if (!fromEvent || !dateParam) return;
 
-            // 1) Conteo del servidor (si availableTables está en el modelo)
-            var serverCount = Number('${empty availableTables ? 0 : fn:length(availableTables)}'.replace(/[^0-9]/g,''));
-            if(isNaN(serverCount)) serverCount = 0;
+            var serverCount = Number('<c:out value="${empty availableTables ? 0 : fn:length(availableTables)}"/>'.replace(/[^0-9]/g,''));
+            if (isNaN(serverCount)) serverCount = 0;
 
-            // 2) Fallback: contar ítems renderizados en la lista de mesas
             var domCount = document.querySelectorAll('.table-list li').length;
 
             var availableCount = Math.max(serverCount, domCount);
 
-            var msg = (availableCount > 0)
-                ? ('Quedan ' + availableCount + ' mesas disponibles para el evento (' + dateParam + ').')
-                : ('Se agotaron las mesas para el evento (' + dateParam + ').');
+            const availableTpl = `<spring:message code="event.availability.available"/>`;
+            const soldoutTpl  = `<spring:message code="event.availability.soldout"/>`;
+
+            function formatTpl(tpl, ...args) {
+                return tpl.replace(/\{(\d+)\}/g, (m, idx) => {
+                    const i = Number(idx);
+                    return (typeof args[i] !== 'undefined') ? args[i] : m;
+                });
+            }
+
+            const msg = (availableCount > 0)
+                ? formatTpl(availableTpl, availableCount, dateParam)
+                : formatTpl(soldoutTpl, dateParam);
 
             openEventAvailabilityModal(msg);
         });
+
     })();
 </script>
 </body>
