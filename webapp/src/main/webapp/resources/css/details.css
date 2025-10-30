@@ -491,3 +491,19 @@
     gap:10px;
     justify-content:flex-end
 }
+.star-rating {
+    display: flex;
+    gap: 5px;
+    font-size: 24px;
+    color: #FFD700;
+    cursor: pointer;
+}
+.star-rating i {
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+.star-rating i:hover {
+    transform: scale(1.2);
+}
+.star-rating i.inactive {
+    color: #ccc;
+}

@@ -64,7 +64,7 @@
                                 <div class="carousel-slide${status.index == 0 ? ' active' : ''}">
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${status.index + 1}"
-                                         loading="lazy" draggable="false">
+                                         loading="lazy" draggable="false" style="object-fit: fill;">
                                 </div>
                             </c:forEach>
                         </div>
@@ -267,7 +267,7 @@
                             <div class="carousel-slide${st.index == 0 ? ' active' : ''}">
                                 <img src="<c:url value='/photos/${ph.photoId}'/>"
                                      alt="Foto de reseña ${st.index + 1}"
-                                     loading="lazy" draggable="false">
+                                     loading="lazy" draggable="false" style="object-fit: fill;"/>">
                             </div>
                         </c:forEach>
                     </div>
@@ -357,11 +357,16 @@
 
                         <div class="form-group">
                             <label for="rating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
-                            <select name="rating" id="rating" class="form-control" required>
-                                <c:forEach var="i" begin="1" end="5">
-                                    <option value="${i}">${i}</option>
-                                </c:forEach>
-                            </select>
+                            <div id="starRating" class="star-rating">
+                                <i class="fa-solid fa-star" data-value="1"></i>
+                                <i class="fa-solid fa-star" data-value="2"></i>
+                                <i class="fa-solid fa-star" data-value="3"></i>
+                                <i class="fa-solid fa-star" data-value="4"></i>
+                                <i class="fa-solid fa-star" data-value="5"></i>
+                            </div>
+
+                            <!-- Campo oculto para enviar el valor -->
+                            <input type="hidden" name="rating" id="rating" value="5" />
 
                             <label for="photo" style="margin-top:16px"><spring:message code="reviews.photo" text="Foto (opcional)"/></label>
                             <input type="file" id="photo" name="photo" accept="image/*" class="form-control"/>
@@ -394,10 +399,8 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const address = "${club.location}"; // dirección guardada en la DB
-
-            let lat = -34.5891429; // coordenadas por defecto
-            let lng = -58.3961641;
+            const address = "${club.location}";
+            let lat = -34.5891429, lng = -58.3961641;
 
             try {
                 const response = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(address));
@@ -405,14 +408,21 @@
                 if (results && results.length > 0) {
                     lat = results[0].lat;
                     lng = results[0].lon;
-                } else {
-                    console.warn("No se encontró la ubicación, usando coordenadas por defecto");
                 }
-            } catch (error) {
-                console.error("Error al geocodificar la dirección:", error);
+            } catch (e) {
+                console.error("Error al geocodificar:", e);
             }
 
-            const map = L.map('clubMap').setView([lat, lng], 16);
+            const map = L.map('clubMap', {
+                center: [lat, lng],
+                zoom: 16,
+                zoomControl: false,
+                dragging: false,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+                keyboard: false
+            });
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
@@ -421,6 +431,30 @@
             L.marker([lat, lng]).addTo(map)
                 .bindPopup(`<b>${"${club.clubName}"}</b><br>${address}`)
                 .openPopup();
+
+            // Estado de interacción
+            let interactive = false;
+
+            // Escuchamos el click en el contenedor del mapa
+            const mapContainer = document.getElementById('clubMap');
+            mapContainer.style.cursor = "pointer";
+
+            mapContainer.addEventListener('click', () => {
+                if (!interactive) {
+                    // Activar interacción en el siguiente ciclo de event loop
+                    setTimeout(() => {
+                        map.dragging.enable();
+                        map.scrollWheelZoom.enable();
+                        map.doubleClickZoom.enable();
+                        map.boxZoom.enable();
+                        map.keyboard.enable();
+                        L.control.zoom({ position: 'topright' }).addTo(map);
+                        mapContainer.style.cursor = "grab";
+                        interactive = true;
+                        console.log("Mapa ahora es interactivo");
+                    }, 50);
+                }
+            });
         });
     </script>
     <c:if test="${not empty reservationSent}">
@@ -571,6 +605,39 @@
         function cerrarModal() {
             window.location.href = "${clubUrl}";
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const stars = document.querySelectorAll('#starRating i');
+            const hiddenInput = document.getElementById('rating');
+            let currentRating = 5; // valor por defecto
+
+            const updateStars = (value) => {
+                stars.forEach(star => {
+                    star.classList.toggle('inactive', star.dataset.value > value);
+                });
+            };
+
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const value = parseInt(star.dataset.value);
+                    currentRating = value;
+                    hiddenInput.value = value;
+                    updateStars(value);
+                });
+
+                // efecto hover (opcional)
+                star.addEventListener('mouseenter', () => {
+                    updateStars(star.dataset.value);
+                });
+
+                star.addEventListener('mouseleave', () => {
+                    updateStars(currentRating);
+                });
+            });
+
+            // inicializa con todas activas
+            updateStars(currentRating);
+        });
     </script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </div>
@@ -593,11 +660,11 @@
 <div id="eventAvailabilityModal" class="modal" aria-hidden="true" role="dialog">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEventAvailabilityModal()">&times;</span>
-        <h3 style="margin:0 0 10px;">Disponibilidad para el evento</h3>
+        <h3 style="margin:0 0 10px;"><spring:message code="event.availability.title"/></h3>
         <p id="eventAvailabilityText" style="margin:0 0 14px;"></p>
         <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeEventAvailabilityModal()">Cerrar</button>
-            <button type="button" class="btn btn-success" onclick="closeEventAvailabilityModal()">OK</button>
+            <button type="button" class="btn btn-secondary" onclick="closeEventAvailabilityModal()"><spring:message code="event.availability.close"/></button>
+            <button type="button" class="btn btn-success" onclick="closeEventAvailabilityModal()"><spring:message code="event.availability.ok"/></button>
         </div>
     </div>
 </div>
@@ -672,23 +739,32 @@
             var params = new URLSearchParams(window.location.search);
             var fromEvent = params.get('fromEvent') === 'true';
             var dateParam = params.get('date');
-            if(!fromEvent || !dateParam) return;
+            if (!fromEvent || !dateParam) return;
 
-            // 1) Conteo del servidor (si availableTables está en el modelo)
-            var serverCount = Number('${empty availableTables ? 0 : fn:length(availableTables)}'.replace(/[^0-9]/g,''));
-            if(isNaN(serverCount)) serverCount = 0;
+            var serverCount = Number('<c:out value="${empty availableTables ? 0 : fn:length(availableTables)}"/>'.replace(/[^0-9]/g,''));
+            if (isNaN(serverCount)) serverCount = 0;
 
-            // 2) Fallback: contar ítems renderizados en la lista de mesas
             var domCount = document.querySelectorAll('.table-list li').length;
 
             var availableCount = Math.max(serverCount, domCount);
 
-            var msg = (availableCount > 0)
-                ? ('Quedan ' + availableCount + ' mesas disponibles para el evento (' + dateParam + ').')
-                : ('Se agotaron las mesas para el evento (' + dateParam + ').');
+            const availableTpl = `<spring:message code="event.availability.available"/>`;
+            const soldoutTpl  = `<spring:message code="event.availability.soldout"/>`;
+
+            function formatTpl(tpl, ...args) {
+                return tpl.replace(/\{(\d+)\}/g, (m, idx) => {
+                    const i = Number(idx);
+                    return (typeof args[i] !== 'undefined') ? args[i] : m;
+                });
+            }
+
+            const msg = (availableCount > 0)
+                ? formatTpl(availableTpl, availableCount, dateParam)
+                : formatTpl(soldoutTpl, dateParam);
 
             openEventAvailabilityModal(msg);
         });
+
     })();
 </script>
 </body>
