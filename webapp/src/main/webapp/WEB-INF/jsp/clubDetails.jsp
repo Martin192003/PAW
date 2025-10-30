@@ -357,11 +357,16 @@
 
                         <div class="form-group">
                             <label for="rating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
-                            <select name="rating" id="rating" class="form-control" required>
-                                <c:forEach var="i" begin="1" end="5">
-                                    <option value="${i}">${i}</option>
-                                </c:forEach>
-                            </select>
+                            <div id="starRating" class="star-rating">
+                                <i class="fa-solid fa-star" data-value="1"></i>
+                                <i class="fa-solid fa-star" data-value="2"></i>
+                                <i class="fa-solid fa-star" data-value="3"></i>
+                                <i class="fa-solid fa-star" data-value="4"></i>
+                                <i class="fa-solid fa-star" data-value="5"></i>
+                            </div>
+
+                            <!-- Campo oculto para enviar el valor -->
+                            <input type="hidden" name="rating" id="rating" value="5" />
 
                             <label for="photo" style="margin-top:16px"><spring:message code="reviews.photo" text="Foto (opcional)"/></label>
                             <input type="file" id="photo" name="photo" accept="image/*" class="form-control"/>
@@ -394,10 +399,8 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const address = "${club.location}"; // dirección guardada en la DB
-
-            let lat = -34.5891429; // coordenadas por defecto
-            let lng = -58.3961641;
+            const address = "${club.location}";
+            let lat = -34.5891429, lng = -58.3961641;
 
             try {
                 const response = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(address));
@@ -405,14 +408,21 @@
                 if (results && results.length > 0) {
                     lat = results[0].lat;
                     lng = results[0].lon;
-                } else {
-                    console.warn("No se encontró la ubicación, usando coordenadas por defecto");
                 }
-            } catch (error) {
-                console.error("Error al geocodificar la dirección:", error);
+            } catch (e) {
+                console.error("Error al geocodificar:", e);
             }
 
-            const map = L.map('clubMap').setView([lat, lng], 16);
+            const map = L.map('clubMap', {
+                center: [lat, lng],
+                zoom: 16,
+                zoomControl: false,
+                dragging: false,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+                keyboard: false
+            });
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
@@ -421,6 +431,30 @@
             L.marker([lat, lng]).addTo(map)
                 .bindPopup(`<b>${"${club.clubName}"}</b><br>${address}`)
                 .openPopup();
+
+            // Estado de interacción
+            let interactive = false;
+
+            // Escuchamos el click en el contenedor del mapa
+            const mapContainer = document.getElementById('clubMap');
+            mapContainer.style.cursor = "pointer";
+
+            mapContainer.addEventListener('click', () => {
+                if (!interactive) {
+                    // Activar interacción en el siguiente ciclo de event loop
+                    setTimeout(() => {
+                        map.dragging.enable();
+                        map.scrollWheelZoom.enable();
+                        map.doubleClickZoom.enable();
+                        map.boxZoom.enable();
+                        map.keyboard.enable();
+                        L.control.zoom({ position: 'topright' }).addTo(map);
+                        mapContainer.style.cursor = "grab";
+                        interactive = true;
+                        console.log("Mapa ahora es interactivo");
+                    }, 50);
+                }
+            });
         });
     </script>
     <c:if test="${not empty reservationSent}">
@@ -571,6 +605,39 @@
         function cerrarModal() {
             window.location.href = "${clubUrl}";
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const stars = document.querySelectorAll('#starRating i');
+            const hiddenInput = document.getElementById('rating');
+            let currentRating = 5; // valor por defecto
+
+            const updateStars = (value) => {
+                stars.forEach(star => {
+                    star.classList.toggle('inactive', star.dataset.value > value);
+                });
+            };
+
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const value = parseInt(star.dataset.value);
+                    currentRating = value;
+                    hiddenInput.value = value;
+                    updateStars(value);
+                });
+
+                // efecto hover (opcional)
+                star.addEventListener('mouseenter', () => {
+                    updateStars(star.dataset.value);
+                });
+
+                star.addEventListener('mouseleave', () => {
+                    updateStars(currentRating);
+                });
+            });
+
+            // inicializa con todas activas
+            updateStars(currentRating);
+        });
     </script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </div>
