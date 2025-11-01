@@ -56,12 +56,14 @@ public class ClubDetailsController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate date,
             @RequestParam(defaultValue = "created_desc") String sort,
-            @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "0") int offset,
             Model model) {
 
         var club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new NotFoundException("El boliche no existe."));
+
+        int limit  = 10;
+        offset = Math.max(0, offset);
 
         LocalDate defaultDate = nextAllowedFrom(LocalDate.now(zone));
         LocalDate ld = (date == null) ? defaultDate : date;
@@ -148,9 +150,15 @@ public class ClubDetailsController {
             model.addAttribute("dayEnd", end);
         }
 
-        // === Paginación usando ReviewService ===
         List<Review> reviews = reviewService.listByClub(clubId, sort, limit, offset);
         int total = reviewService.countByClub(clubId);
+
+        if (offset >= total && total > 0) {
+            int lastPage = (int) Math.floor((total - 1) / (double) limit);
+            offset = lastPage * limit;
+            reviews = reviewService.listByClub(clubId, sort, limit, offset);
+        }
+
         model.addAttribute("reviews", reviews);
         model.addAttribute("totalReviews", total);
         model.addAttribute("limit", limit);
@@ -168,7 +176,6 @@ public class ClubDetailsController {
 
         return "clubDetails";
     }
-
 
 
     private String toLocationText(final String location) {

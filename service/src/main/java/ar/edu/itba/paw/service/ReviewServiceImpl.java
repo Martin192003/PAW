@@ -28,13 +28,15 @@ public class ReviewServiceImpl implements ReviewService {
     private final ClubDao clubDao;
     private final UserDao userDao;
     private final BookingDao bookingDao;
+    private final EmailService emailService;
 
-    public ReviewServiceImpl(ReviewsDao reviewsDao, PhotoService photoService, ClubDao clubDao, UserDao userDao, BookingDao bookingDao) {
+    public ReviewServiceImpl(ReviewsDao reviewsDao, PhotoService photoService, ClubDao clubDao, UserDao userDao, BookingDao bookingDao, EmailService emailService) {
         this.photoService = photoService;
         this.userDao = userDao;
         this.reviewsDao = reviewsDao;
         this.clubDao = clubDao;
         this.bookingDao = bookingDao;
+        this.emailService = emailService;
     }
 
     @Override
@@ -74,16 +76,27 @@ public class ReviewServiceImpl implements ReviewService {
         Club club = clubDao.findById(clubId)
                 .orElseThrow(() -> new IllegalArgumentException("Club not found"));
 
+
+        boolean hadTable = bookingDao.existsPastConfirmedByUserAndClub(userId, clubId, OffsetDateTime.now());
         if (rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
 
-        Review review = reviewsDao.upsert(user, club, rating, description, false);
+        Review review = reviewsDao.upsert(user, club, rating, description, hadTable);
         updateClubRating(club);
         if (photo != null && !photo.isEmpty()) {
             UUID photoId = photoService.uploadReviewPhoto(clubId, review.getReviewId(), user.getId(), photo);
             if (photoId != null) {
                 reviewsDao.updatePhotoId(review.getReviewId(), photoId);
+            }
+        }
+
+        // Notificar al dueño del club si corresponde
+        if (hadTable) {
+            final UUID ownerId = club.getContactInfo() != null ? club.getContactInfo().getId() : null;
+            if (ownerId != null) {
+
+                emailService.sendOwnerReviewAlert(club, review, Locale.getDefault());
             }
         }
     }
@@ -116,13 +129,14 @@ public class ReviewServiceImpl implements ReviewService {
     public int countByClub(UUID clubId) {
         return reviewsDao.countSearch(null, clubId);
     }
+    
     @Override
     @Transactional
     public Review upsertReview(UUID userId, UUID clubId, int rating, String description, Locale locale) {
         final User user = userDao.findById(userId).orElseThrow();
         final Club club = clubDao.findById(clubId).orElseThrow();
 
-        final boolean hadTable = bookingDao.existsPastConfirmedByUserAndClub(userId, clubId, OffsetDateTime.now());
+        final boolean hadTable = true;
 
         Review review = reviewsDao.upsert(user, club, rating, description, hadTable);
 
