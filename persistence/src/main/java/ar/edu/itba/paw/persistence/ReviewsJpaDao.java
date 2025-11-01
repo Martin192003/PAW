@@ -40,7 +40,7 @@ public class ReviewsJpaDao implements ReviewsDao {
     }
 
 
-    public Review upsert(User user, Club club, int rating, String description) {
+    public Review upsert(User user, Club club, int rating, String description, boolean fromTableGuest) {
         Objects.requireNonNull(user);
         Objects.requireNonNull(user.getId());
         Objects.requireNonNull(club);
@@ -49,18 +49,20 @@ public class ReviewsJpaDao implements ReviewsDao {
         UUID provisionalId = UUID.randomUUID();
 
         em.createNativeQuery("""
-                            INSERT INTO reviews (review_id, user_id, club_id, rating, description)
-                            VALUES (:rid, :uid, :cid, :rating, :desc)
-                            ON CONFLICT (user_id, club_id) DO UPDATE
-                              SET rating = EXCLUDED.rating,
-                                  description = EXCLUDED.description,
-                                  created_at = NOW()
-                        """)
+        INSERT INTO reviews (review_id, user_id, club_id, rating, description, from_table_guest)
+        VALUES (:rid, :uid, :cid, :rating, :desc, :ftg)
+        ON CONFLICT (user_id, club_id) DO UPDATE
+          SET rating = EXCLUDED.rating,
+              description = EXCLUDED.description,
+              from_table_guest = EXCLUDED.from_table_guest,
+              created_at = NOW()
+    """)
                 .setParameter("rid", provisionalId)
                 .setParameter("uid", user.getId())
                 .setParameter("cid", club.getClubId())
                 .setParameter("rating", rating)
                 .setParameter("desc", description)
+                .setParameter("ftg", fromTableGuest)
                 .executeUpdate();
 
         return findByUserAndClub(user, club).orElse(null);

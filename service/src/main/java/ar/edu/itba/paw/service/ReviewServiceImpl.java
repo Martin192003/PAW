@@ -78,7 +78,7 @@ public class ReviewServiceImpl implements ReviewService {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
 
-        Review review = reviewsDao.upsert(user, club, rating, description);
+        Review review = reviewsDao.upsert(user, club, rating, description, false);
         updateClubRating(club);
         if (photo != null && !photo.isEmpty()) {
             UUID photoId = photoService.uploadReviewPhoto(clubId, review.getReviewId(), user.getId(), photo);
@@ -107,8 +107,6 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewsDao.findByClub(club);
     }
 
-
-
     @Transactional(readOnly = true)
     public List<Review> listByClub(UUID clubId, String sort, int limit, int offset) {
         return reviewsDao.searchPaginated(null, clubId, sort, limit, offset);
@@ -126,7 +124,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         final boolean hadTable = bookingDao.existsPastConfirmedByUserAndClub(userId, clubId, OffsetDateTime.now());
 
-        Review review = reviewsDao.upsert(user, club, rating, description);
+        Review review = reviewsDao.upsert(user, club, rating, description, hadTable);
 
         // setear tag si decidiste persistirlo:
         if (review != null && hasFromTableGuestField(review)) { // helper para no romper si no agregaste la columna

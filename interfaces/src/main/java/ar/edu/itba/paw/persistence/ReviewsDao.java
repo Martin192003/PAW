@@ -26,6 +26,6 @@ public interface ReviewsDao {
     boolean delete(UUID id);
 
     void updatePhotoId(UUID reviewId, UUID photoId);
-    Review upsert(User user, Club club, int rating, String description);
+    Review upsert(User user, Club club, int rating, String description, boolean fromTableGuest);
     Optional<Review> findByUserAndClub(User user, Club club);
 }
