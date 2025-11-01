@@ -256,41 +256,30 @@
         </div>
 
         <c:if test="${not empty reviewPhotos}">
-            <!-- Usa el mismo ID que el CSS espera -->
-            <div id="club-carousel" class="photo-carousel review-carousel">
-                <h3><i class="fa-solid fa-images"></i>
-                    <spring:message code="reviews.photos" text="Fotos de reseñas"/>
-                </h3>
+            <div class="review-photos-section">
+                <h3><i class="fa-solid fa-images"></i> <spring:message code="reviews.photos" text="Fotos de reseñas"/></h3>
 
-                <div class="carousel-container">
-                    <div class="carousel-track">
-                        <c:forEach var="ph" items="${reviewPhotos}" varStatus="st">
-                            <div class="carousel-slide${st.index == 0 ? ' active' : ''}">
+                <div class="review-photos-carousel-wrapper">
+                    <button class="carousel-btn left" onclick="scrollReviewPhotos(-1)">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <div class="review-photos-carousel" id="reviewPhotosCarousel">
+                        <c:forEach var="ph" items="${reviewPhotos}">
+                            <div class="review-photo-item">
                                 <img src="<c:url value='/photos/${ph.photoId}'/>"
-                                     alt="Foto de reseña ${st.index + 1}"
-                                     loading="lazy" draggable="false" style="object-fit: contain;"/>">
+                                     alt="Foto de reseña"
+                                     loading="lazy"
+                                     onclick="openLightbox(this.src)"
+                                     style="cursor: pointer;" />
                             </div>
                         </c:forEach>
                     </div>
 
-                    <c:if test="${fn:length(reviewPhotos) > 1}">
-                        <button class="carousel-btn carousel-prev" type="button">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <button class="carousel-btn carousel-next" type="button">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                        <div class="carousel-counter">—</div>
-                    </c:if>
+                    <button class="carousel-btn right" onclick="scrollReviewPhotos(1)">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
                 </div>
-
-                <c:if test="${fn:length(reviewPhotos) > 1}">
-                    <div class="carousel-indicators">
-                        <c:forEach begin="0" end="${fn:length(reviewPhotos) - 1}" var="i">
-                            <button class="carousel-dot${i == 0 ? ' active' : ''}" type="button"></button>
-                        </c:forEach>
-                    </div>
-                </c:if>
             </div>
         </c:if>
 
@@ -767,6 +756,64 @@
         });
 
     })();
+    function scrollReviewPhotos(direction) {
+        const carousel = document.getElementById('reviewPhotosCarousel');
+        if (!carousel) return;
+
+        const itemWidth = carousel.querySelector('.review-photo-item').offsetWidth;
+        const gap = 12; // del CSS
+        const scrollAmount = (itemWidth + gap) * 3; // 3 items visibles
+
+        carousel.scrollBy({
+            left: direction * scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+
+    // Opcional: Lightbox simple al hacer click
+    function openLightbox(src) {
+        const lightbox = document.createElement('div');
+        lightbox.style.position = 'fixed';
+        lightbox.style.inset = '0';
+        lightbox.style.background = 'rgba(0,0,0,0.9)';
+        lightbox.style.display = 'flex';
+        lightbox.style.alignItems = 'center';
+        lightbox.style.justifyContent = 'center';
+        lightbox.style.zIndex = '10000';
+        lightbox.style.cursor = 'pointer';
+        lightbox.onclick = () => lightbox.remove();
+
+        const img = document.createElement('img');
+        img.src = src;
+        img.style.maxWidth = '90%';
+        img.style.maxHeight = '90%';
+        img.style.borderRadius = '12px';
+        img.style.boxShadow = '0 0 20px rgba(0,0,0,0.5)';
+
+        lightbox.appendChild(img);
+        document.body.appendChild(lightbox);
+    }
+
+    // Mostrar/ocultar flechas según scroll
+    document.addEventListener('DOMContentLoaded', () => {
+        const carousel = document.getElementById('reviewPhotosCarousel');
+        const leftBtn = document.querySelector('.review-photos-carousel-wrapper .left');
+        const rightBtn = document.querySelector('.review-photos-carousel-wrapper .right');
+
+        if (!carousel || !leftBtn || !rightBtn) return;
+
+        function updateButtons() {
+            leftBtn.style.opacity = carousel.scrollLeft <= 0 ? '0.3' : '1';
+            leftBtn.style.pointerEvents = carousel.scrollLeft <= 0 ? 'none' : 'auto';
+
+            const atEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10;
+            rightBtn.style.opacity = atEnd ? '0.3' : '1';
+            rightBtn.style.pointerEvents = atEnd ? 'none' : 'auto';
+        }
+
+        carousel.addEventListener('scroll', updateButtons);
+        updateButtons(); // inicial
+    });
 </script>
 </body>
 </html>
