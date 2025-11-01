@@ -492,6 +492,12 @@
     gap:10px;
     justify-content:space-between;
 }
+.modal-buttons{
+    margin-top:14px;
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+}
 .star-rating {
     display: flex;
     gap: 5px;

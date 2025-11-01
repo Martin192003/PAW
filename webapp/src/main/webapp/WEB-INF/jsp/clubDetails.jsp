@@ -589,8 +589,7 @@
         <span class="modal-close" onclick="closeEventAvailabilityModal()">&times;</span>
         <h3 style="margin:0 0 10px;"><spring:message code="event.availability.title"/></h3>
         <p id="eventAvailabilityText" style="margin:0 0 14px;"></p>
-        <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeEventAvailabilityModal()"><spring:message code="event.availability.close"/></button>
+        <div class="modal-buttons">
             <button type="button" class="btn btn-success" onclick="closeEventAvailabilityModal()"><spring:message code="event.availability.ok"/></button>
         </div>
     </div>
