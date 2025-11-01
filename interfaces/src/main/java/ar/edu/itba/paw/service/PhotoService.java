@@ -35,7 +35,7 @@ public interface PhotoService {
     List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset);
     List<Photo> getClubPhotos(UUID clubId, int limit, int offset);
 
-    void uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException;
+    UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException;
     UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, MultipartFile file) throws IOException;
     List<Photo> getReviewPhotosByClub(UUID clubId, int limit, int offset);
     Optional<Photo> getPhotoByReview(UUID reviewId);

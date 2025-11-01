@@ -206,10 +206,10 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public void uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException {
+    public UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) throw new IllegalArgumentException("File is empty");
         final String ct = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
-        photoDao.createReviewPhoto(
+        return photoDao.createReviewPhoto(
                 clubId, reviewId, userId,
                 file.getOriginalFilename(), ct, file.getBytes()
         );
