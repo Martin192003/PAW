@@ -139,6 +139,7 @@
             <c:set var="statusNormalized" value="${fn:trim(fn:toUpperCase(booking.status))}" />
             <c:set var="isConfirmed" value="${statusNormalized == 'CONFIRMADA'}" />
             <c:set var="isCancelled" value="${statusNormalized == 'CANCELADA'}"/>
+            <c:set var="isPending" value="${statusNormalized == 'PENDIENTE'}"/>
             <c:if test="${not isCancelled}">
                 <div class="booking-actions">
                     <form id="adminCancelForm" class="confirm-cancel" method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />">
@@ -176,19 +177,14 @@
                             <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>"
                                  alt="<spring:message code='receipt.alt' text='Comprobante'/>"/>
                         </div>
-
-                        <div class="receipt-actions">
-                            <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/receipt/delete'/>">
-                                <button type="submit" class="btn btn-secondary">
-                                    <spring:message code="receipt.delete" text="Eliminar"/>
-                                </button>
-                            </form>
-                            <form>
-                                <button type="button" class="btn btn-success" onclick="window.open('<c:url value='/bookings/${booking.bookingId}/receipt'/>', '_blank')">
-                                    <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
-                                </button>
-                            </form>
-                        </div>
+                        <c:if test="${isPending or isConfirmed}">                            <div class="receipt-actions">
+                                <form style="justify-content: center; display: flex; align-items: center">
+                                    <button type="button" class="btn btn-success" onclick="window.open('<c:url value='/bookings/${booking.bookingId}/receipt'/>', '_blank')">
+                                        <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
+                                    </button>
+                                </form>
+                            </div>
+                        </c:if>
                     </c:when>
                     <c:otherwise>
                         <p class="muted"><spring:message code="receipt.missing" text="No hay comprobante cargado."/></p>

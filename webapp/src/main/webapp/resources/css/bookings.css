@@ -88,7 +88,6 @@ body {
     width: 420px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
     transition: box-shadow 0.2s, transform 0.2s;
     position: relative;
 }
@@ -338,3 +337,26 @@ select.filter-item option {
         max-width: 100%;
     }
 }
+
+.receipt-thumb {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 16px 0;
+}
+
+.receipt-thumb img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.receipt-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    margin-top: 16px;
+}
+
