@@ -163,6 +163,41 @@
         </div>
     </c:if>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('filtersForm');
+        const resetBtn = document.querySelector('.btn-reset');
+        const clubSelect = form.querySelector('[name="clubId"]');
+        const bookingIdInput = form.querySelector('[name="bookingId"]');
+        const statusSelect = form.querySelector('[name="status"]');
+        const sortSelect = form.querySelector('[name="sort"]');
 
+        function hasActiveFilters() {
+            return (clubSelect && clubSelect.value !== '') ||
+                (bookingIdInput && bookingIdInput.value.trim() !== '') ||
+                (statusSelect && statusSelect.value !== '') ||
+                (sortSelect && sortSelect.value !== 'created_desc');
+        }
+
+        function updateResetButton() {
+            if (hasActiveFilters()) {
+                resetBtn.style.display = 'inline-flex';
+            } else {
+                resetBtn.style.display = 'none';
+            }
+        }
+
+        // Verificar al cargar la página
+        updateResetButton();
+
+        // Escuchar cambios en los campos
+        [clubSelect, bookingIdInput, statusSelect, sortSelect].forEach(field => {
+            if (field) {
+                field.addEventListener('change', updateResetButton);
+                field.addEventListener('input', updateResetButton);
+            }
+        });
+    });
+</script>
 </body>
 </html>
