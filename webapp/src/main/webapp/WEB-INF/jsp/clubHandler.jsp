@@ -35,7 +35,7 @@
     <div class="club-image-container" style="position:relative;">
         <c:choose>
             <c:when test="${not empty coverPhotoUrl}">
-                <img src="<c:url value='${coverPhotoUrl}' />" alt="<c:out value='${club.clubName}'/>" class="card-image"/>
+                <img src="<c:url value='${coverPhotoUrl}' />" alt="<c:out value='${club.clubName}'/>" class="card-image" style="object-fit: contain;"/>
             </c:when>
             <c:otherwise>
                 <div class="card-no-image">
@@ -146,7 +146,7 @@
                                 <div class="carousel-slide${st.first ? ' active' : ''}">
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${st.index + 1}"
-                                         loading="lazy" draggable="false" style="object-fit: fill;"/>
+                                         loading="lazy" draggable="false" style="object-fit: contain;"/>
                                 </div>
                             </c:forEach>
                         </div>

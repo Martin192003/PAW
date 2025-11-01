@@ -64,7 +64,7 @@
                                 <div class="carousel-slide${status.index == 0 ? ' active' : ''}">
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${status.index + 1}"
-                                         loading="lazy" draggable="false" style="object-fit: fill;">
+                                         loading="lazy" draggable="false" style="object-fit: contain;">
                                 </div>
                             </c:forEach>
                         </div>
@@ -239,12 +239,13 @@
                                 </ul>
                             </c:otherwise>
                         </c:choose>
-
-                        <button id="reserveBtn" type="submit" class="btn btn-success"
-                                <c:if test="${empty availableTables}">disabled</c:if>
-                                style="height:40px; align-self:end;">
-                            <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
-                        </button>
+                        <div style="display:flex; justify-content:center; margin-top:12px; align-items:center;">
+                            <button id="reserveBtn" type="submit" class="btn btn-success"
+                                    <c:if test="${empty availableTables}">disabled</c:if>
+                                    style="height:40px; align-self:end; width: 160px">
+                                <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -267,7 +268,7 @@
                             <div class="carousel-slide${st.index == 0 ? ' active' : ''}">
                                 <img src="<c:url value='/photos/${ph.photoId}'/>"
                                      alt="Foto de reseña ${st.index + 1}"
-                                     loading="lazy" draggable="false" style="object-fit: fill;"/>">
+                                     loading="lazy" draggable="false" style="object-fit: contain;"/>">
                             </div>
                         </c:forEach>
                     </div>
