@@ -1,9 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
-import ar.edu.itba.paw.model.Photo;
-import ar.edu.itba.paw.model.Product;
-import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
@@ -52,117 +49,127 @@ public class ClubDetailsController {
         this.reviewService = reviewService;
     }
 
-   @GetMapping("/{clubId}")
-   public String clubDetails(
-           @PathVariable("clubId") UUID clubId,
-           @RequestParam(name = "date", required = false)
-           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-           LocalDate date,
-           Model model) {
+    @GetMapping("/{clubId}")
+    public String clubDetails(
+            @PathVariable("clubId") UUID clubId,
+            @RequestParam(name = "date", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate date,
+            @RequestParam(defaultValue = "created_desc") String sort,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "0") int offset,
+            Model model) {
 
-       var club = clubService.getClubById(clubId)
-               .orElseThrow(() -> new NotFoundException("El boliche no existe."));
+        var club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new NotFoundException("El boliche no existe."));
 
-       LocalDate defaultDate = nextAllowedFrom(LocalDate.now(zone));
-       LocalDate ld = (date == null) ? defaultDate : date;
+        LocalDate defaultDate = nextAllowedFrom(LocalDate.now(zone));
+        LocalDate ld = (date == null) ? defaultDate : date;
 
-       model.addAttribute("selectedDate", ld.toString());
-       model.addAttribute("availableTables", List.of());
+        model.addAttribute("selectedDate", ld.toString());
+        model.addAttribute("availableTables", List.of());
 
-       OffsetDateTime start = null;
-       OffsetDateTime end = null;
-       List<ar.edu.itba.paw.model.ClubTable> available = List.of();
+        OffsetDateTime start = null;
+        OffsetDateTime end = null;
+        List<ar.edu.itba.paw.model.ClubTable> available = List.of();
 
-       if (date == null) {
-           available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
-           start = tableService.windowStart(ld, zone);
-           end   = tableService.windowEnd(ld, zone);
-       } else {
-           try {
-               if (tableService.isPastDate(ld, clock, zone)) {
-                   model.addAttribute("error", "tables.pastdate");
-               } else {
-                   available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
-                   start = tableService.windowStart(ld, zone);
-                   end   = tableService.windowEnd(ld, zone);
-               }
-           } catch (ValidationException | InvalidDateRangeException ex) {
-               model.addAttribute("error", "invalid.date");
-           }
-       }
+        if (date == null) {
+            available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
+            start = tableService.windowStart(ld, zone);
+            end   = tableService.windowEnd(ld, zone);
+        } else {
+            try {
+                if (tableService.isPastDate(ld, clock, zone)) {
+                    model.addAttribute("error", "tables.pastdate");
+                } else {
+                    available = tableService.findAvailableOnDate(clubId, ld, zone, clock);
+                    start = tableService.windowStart(ld, zone);
+                    end   = tableService.windowEnd(ld, zone);
+                }
+            } catch (ValidationException | InvalidDateRangeException ex) {
+                model.addAttribute("error", "invalid.date");
+            }
+        }
 
-       var products = productsService.findByClub(club).stream()
-               .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
-               .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))
-               .toList();
+        var products = productsService.findByClub(club).stream()
+                .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
+                .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))
+                .toList();
 
-       var grouped = products.stream().collect(Collectors.groupingBy(productsService::classifyCategory));
-       var desired = List.of("Cervezas","Tragos","Champagne","Sin Alcohol");
-       var ordered = new LinkedHashMap<String, List<Product>>();
-       desired.forEach(cat -> {
-           var list = grouped.remove(cat);
-           if (list != null && !list.isEmpty()) ordered.put(cat, list);
-       });
-       grouped.entrySet().stream()
-               .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))
-               .forEach(e -> ordered.put(e.getKey(), e.getValue()));
-       if (ordered.isEmpty() && !products.isEmpty()) ordered.put("Tragos", products);
+        var grouped = products.stream().collect(Collectors.groupingBy(productsService::classifyCategory));
+        var desired = List.of("Cervezas","Tragos","Champagne","Sin Alcohol");
+        var ordered = new LinkedHashMap<String, List<Product>>();
+        desired.forEach(cat -> {
+            var list = grouped.remove(cat);
+            if (list != null && !list.isEmpty()) ordered.put(cat, list);
+        });
+        grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))
+                .forEach(e -> ordered.put(e.getKey(), e.getValue()));
+        if (ordered.isEmpty() && !products.isEmpty()) ordered.put("Tragos", products);
 
-       String coverPhotoUrl = photoService.getCoverUrl(clubId)
-               .orElse("/resources/img/default-club-placeholder.png");
+        String coverPhotoUrl = photoService.getCoverUrl(clubId)
+                .orElse("/resources/img/default-club-placeholder.png");
 
-       // Obtener URL del layout desde ClubLayoutService (si existe)
-       String tableLayoutUrl = clubLayoutService.getLayoutByClub(clubId)
-               .map(l -> l.getUrl())
-               .orElse(null);
-       model.addAttribute("tableLayoutUrl", tableLayoutUrl);
+        String tableLayoutUrl = clubLayoutService.getLayoutByClub(clubId)
+                .map(ClubLayout::getUrl)
+                .orElse(null);
+        model.addAttribute("tableLayoutUrl", tableLayoutUrl);
 
-       User user = securityService.getVerifiedLoggedUser();
+        User user = securityService.getVerifiedLoggedUser();
         if (user != null) {
             model.addAttribute("user", user);
         }
         boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
         model.addAttribute("isOwner", isOwner);
 
-       List<Photo> carouselPhotos = photoService.getClubPhotos(clubId, 10, 0);
-       List<Photo> reviewPhotos = photoService.getReviewPhotosByClub(clubId, 20, 0);
-       model.addAttribute("reviewPhotos", reviewPhotos);
+        List<Photo> carouselPhotos = photoService.getClubPhotos(clubId, 10, 0);
+        List<Photo> reviewPhotos = photoService.getReviewPhotosByClub(clubId, 20, 0);
+        model.addAttribute("reviewPhotos", reviewPhotos);
 
-       model.addAttribute("isLoggedIn", securityService.getVerifiedLoggedUser() != null);
-       model.addAttribute("coverPhotoUrl", coverPhotoUrl);
-       model.addAttribute("clubPhotos", carouselPhotos);
+        model.addAttribute("isLoggedIn", securityService.getVerifiedLoggedUser() != null);
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("clubPhotos", carouselPhotos);
 
-       model.addAttribute("latitude",-34.5891429);
-       model.addAttribute("longitude",-58.3961641);
-       model.addAttribute("club", club);
-       model.addAttribute("productsByCategory", ordered);
-       model.addAttribute("availableTables", available);
-       model.addAttribute("availableTablesCount", available != null ? available.size() : 0);
-       model.addAttribute("locationText", toLocationText(club.getLocation()));
-       model.addAttribute("genreText", toGenreText(club.getMusicGenre() != null ? club.getMusicGenre().getLabel() : null));
-       model.addAttribute("coverPhotoUrl", coverPhotoUrl);
-       model.addAttribute("clubId", clubId);
-       model.addAttribute("reviewForm", new ReviewForm());
+        model.addAttribute("latitude",-34.5891429);
+        model.addAttribute("longitude",-58.3961641);
+        model.addAttribute("club", club);
+        model.addAttribute("productsByCategory", ordered);
+        model.addAttribute("availableTables", available);
+        model.addAttribute("availableTablesCount", available != null ? available.size() : 0);
+        model.addAttribute("locationText", toLocationText(club.getLocation()));
+        model.addAttribute("genreText", toGenreText(club.getMusicGenre() != null ? club.getMusicGenre().getLabel() : null));
+        model.addAttribute("coverPhotoUrl", coverPhotoUrl);
+        model.addAttribute("clubId", clubId);
+        model.addAttribute("reviewForm", new ReviewForm());
 
-       if (start != null && end != null) {
-           model.addAttribute("dayStart", start);
-           model.addAttribute("dayEnd", end);
-       }
+        if (start != null && end != null) {
+            model.addAttribute("dayStart", start);
+            model.addAttribute("dayEnd", end);
+        }
 
-       List<Review> reviews = reviewService.getReviewsByClub(clubId);
-       model.addAttribute("reviews", reviews);
+        // === Paginación usando ReviewService ===
+        List<Review> reviews = reviewService.listByClub(clubId, sort, limit, offset);
+        int total = reviewService.countByClub(clubId);
+        model.addAttribute("reviews", reviews);
+        model.addAttribute("totalReviews", total);
+        model.addAttribute("limit", limit);
+        model.addAttribute("offset", offset);
+        model.addAttribute("sort", sort);
+        model.addAttribute("hasMore", offset + reviews.size() < total);
 
-       // Verificar si el usuario actual tiene una review
-       if (user != null) {
-           Optional<Review> userReview = reviewService.getUserReviewForClub(user.getId(), clubId);
-           model.addAttribute("userReview", userReview.orElse(null));
-           model.addAttribute("isAuthenticated", true);
-       } else {
-           model.addAttribute("isAuthenticated", false);
-       }
+        if (user != null) {
+            Optional<Review> userReview = reviewService.getUserReviewForClub(user.getId(), clubId);
+            model.addAttribute("userReview", userReview.orElse(null));
+            model.addAttribute("isAuthenticated", true);
+        } else {
+            model.addAttribute("isAuthenticated", false);
+        }
 
-       return "clubDetails";
-   }
+        return "clubDetails";
+    }
+
+
 
     private String toLocationText(final String location) {
         return (location == null || location.isBlank()) ? "Sin ubicación" : location;

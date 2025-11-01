@@ -71,68 +71,19 @@ public class ReviewController {
     public String submitReview(@PathVariable UUID clubId,
                                @Valid @ModelAttribute("reviewForm") ReviewForm form,
                                BindingResult br,
-                               Model model,
                                RedirectAttributes ra,
                                @RequestParam(required = false, name = "photo") MultipartFile photo) throws IOException {
 
         if (br.hasErrors()) {
-            Club club = clubService.getClubById(clubId)
-                    .orElseThrow(() -> new IllegalArgumentException("Club not found"));
-
-            model.addAttribute("club", club);
-            model.addAttribute("reviewForm", form); // Mantener el formulario con los datos ingresados
-            model.addAttribute("reviews", reviewService.getReviewsByClub(clubId));
-            model.addAttribute("isLoggedIn", securityService.getVerifiedLoggedUser() != null);
-
-            List<Photo> carouselPhotos = photoService.getClubPhotos(clubId, 10, 0);
-            model.addAttribute("clubPhotos", carouselPhotos);
-
-            List<Photo> reviewPhotos = photoService.getReviewPhotosByClub(clubId, 20, 0);
-            model.addAttribute("reviewPhotos", reviewPhotos);
-
-            var products = productsService.findByClub(club).stream()
-                    .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
-                    .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))
-                    .toList();
-            var grouped = products.stream().collect(Collectors.groupingBy(productsService::classifyCategory));
-            var desired = List.of("Cervezas", "Tragos", "Champagne", "Sin Alcohol");
-            var ordered = new LinkedHashMap<String, List<Product>>();
-            desired.forEach(cat -> {
-                var list = grouped.remove(cat);
-                if (list != null && !list.isEmpty()) ordered.put(cat, list);
-            });
-            grouped.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))
-                    .forEach(e -> ordered.put(e.getKey(), e.getValue()));
-            if (ordered.isEmpty() && !products.isEmpty()) ordered.put("Tragos", products);
-            model.addAttribute("productsByCategory", ordered);
-
-            User user = securityService.getVerifiedLoggedUser();
-            if (user != null) {
-                model.addAttribute("user", user);
-                model.addAttribute("userReview", reviewService.getUserReviewForClub(user.getId(), clubId).orElse(null));
-                model.addAttribute("isAuthenticated", true);
-                boolean isOwner = clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
-                model.addAttribute("isOwner", isOwner);
-            } else {
-                model.addAttribute("isAuthenticated", false);
-                model.addAttribute("isOwner", false);
-            }
-
-            String tableLayoutUrl = clubLayoutService.getLayoutByClub(clubId)
-                    .map(ClubLayout::getUrl)
-                    .orElse(null);
-            model.addAttribute("tableLayoutUrl", tableLayoutUrl);
-
-            model.addAttribute("locationText", club.getLocation() != null ? club.getLocation() : "Sin ubicación");
-            model.addAttribute("latitude", -34.5891429);
-            model.addAttribute("longitude", -58.3961641);
-
-            return "clubDetails";
+            ra.addFlashAttribute("org.springframework.validation.BindingResult.reviewForm", br);
+            ra.addFlashAttribute("reviewForm", form);
+            return "redirect:/clubs/" + clubId + "#reviews";
         }
 
         User user = securityService.getVerifiedLoggedUser();
         reviewService.createReview(user.getId(), clubId, form.getRating(), form.getDescription(), photo);
         return "redirect:/clubs/" + clubId + "#reviews";
     }
+
+
 }

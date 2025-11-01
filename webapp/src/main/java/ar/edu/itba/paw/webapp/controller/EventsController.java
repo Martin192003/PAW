@@ -186,7 +186,6 @@ public class EventsController {
         }
     }
 
-    // En EventsController.java
     private void preloadClubHandler(Model model, UUID clubId) {
         var club = clubService.getClubById(clubId).orElseThrow();
         model.addAttribute("club", club);

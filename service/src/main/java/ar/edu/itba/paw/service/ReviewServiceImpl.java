@@ -107,6 +107,17 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewsDao.findByClub(club);
     }
 
+
+
+    @Transactional(readOnly = true)
+    public List<Review> listByClub(UUID clubId, String sort, int limit, int offset) {
+        return reviewsDao.searchPaginated(null, clubId, sort, limit, offset);
+    }
+
+    @Transactional(readOnly = true)
+    public int countByClub(UUID clubId) {
+        return reviewsDao.countSearch(null, clubId);
+    }
     @Override
     @Transactional
     public Review upsertReview(UUID userId, UUID clubId, int rating, String description, Locale locale) {
