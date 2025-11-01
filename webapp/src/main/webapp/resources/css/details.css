@@ -483,13 +483,14 @@
 .modal-content .modal-close{
     float:right;
     font-size:24px;
-    cursor:pointer
+    cursor:pointer;
+    margin-bottom:20px;
 }
 .modal-actions{
     margin-top:14px;
     display:flex;
     gap:10px;
-    justify-content:flex-end
+    justify-content:space-between;
 }
 .star-rating {
     display: flex;
@@ -600,4 +601,61 @@
         height: 36px;
         font-size: 16px;
     }
+}
+.modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.55);
+    z-index:9999
+}
+.modal.show{
+    display:flex
+}
+.modal-content{
+    background:#222;
+    color:#fff;
+    border-radius:10px;
+    min-width:280px;
+    max-width:520px;
+    width:90%;
+    padding:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45)
+}
+.modal-content .modal-close{
+    float:right;
+    font-size:24px;
+    cursor:pointer
+}
+.modal-actions{
+    margin-top:14px;
+    display:flex;
+    gap:10px;
+    justify-content:space-between;
+}
+.review-header{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    gap:12px;
+    margin-bottom:10px
+}
+.review-modal-header{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    gap:12px;
+    margin-bottom:4px;
+    margin-top: 30px;
+}
+.review-form textarea#modalDescription {
+    resize: none !important;
+}
+.error {
+    color: #dc3545;
+    font-size: 0.85em;
+    margin-top: 6px;
+    display: block;
 }
