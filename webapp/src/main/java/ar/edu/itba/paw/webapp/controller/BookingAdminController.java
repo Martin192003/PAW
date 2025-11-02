@@ -40,38 +40,39 @@ public class BookingAdminController {
         this.photoService = photoService;
     }
 
-
-    @GetMapping("/clubs/activity")
-    public String userClubs(@RequestParam("userId") UUID userId,
-                            @RequestParam(value = "page", defaultValue = "1") int page,
+    @GetMapping("/activity")
+    public String userClubs(@RequestParam(value = "page", defaultValue = "1") int page,
                             @RequestParam(value = "size", defaultValue = "10") int size,
                             Model model) {
+
         if (page < 1) page = 1;
         if (size < 1) size = 10;
         int offset = (page - 1) * size;
 
+        User current = securityService.getVerifiedLoggedUser();
+        UUID userId = current.getId();
+
         List<Club> clubs = clubService.getClubsByUserPaginated(userId, size, offset);
         int totalClubs = clubService.countClubsByUser(userId);
-        int totalPages = (int) Math.ceil((double) totalClubs / size);
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
 
         Map<UUID,String> photoUrlByClub = photoService.getCoverUrls(
                 clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
         );
 
-        model.addAttribute("user", userService.findById(userId));
+        model.addAttribute("user", current);
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("activePage", "clubs");
-        model.addAttribute("userId", userId);
         model.addAttribute("page", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
         return "clubActivity";
     }
 
-    
+
     @PostMapping("/bookings/{bookingId}/confirm")
     public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
         try {
@@ -209,7 +210,7 @@ public class BookingAdminController {
         model.addAttribute("hasReceipt", rOpt.isPresent());
         rOpt.ifPresent(r -> model.addAttribute("receipt", r));
 
-        User u = userService.findById(booking.getUser().getId());
+        Optional<User> u = userService.findById(booking.getUser().getId());
         model.addAttribute("user", u);
 
         model.addAttribute("booking", booking);

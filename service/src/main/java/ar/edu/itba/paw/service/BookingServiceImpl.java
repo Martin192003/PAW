@@ -181,7 +181,7 @@ public class BookingServiceImpl implements BookingService {
         final ClubTable table = ensureTableExists(existing.getTableId());
         final Club club = clubDao.findById(table.getClubId()).orElseThrow();
 
-        final User completeUser = userService.findById(existing.getUser().getId());
+        final User completeUser = userService.findById(existing.getUser().getId()).orElseThrow();
         if (completeUser == null) {
             throw new UserNotFoundException("Usuario no encontrado: " + existing.getUser().getId());
         }
@@ -244,7 +244,7 @@ public class BookingServiceImpl implements BookingService {
         final ClubTable table = ensureTableExists(existing.getTableId());
         final Club club = clubDao.findById(table.getClubId()).orElseThrow();
 
-        final User completeUser = userService.findById(existing.getUser().getId());
+        final User completeUser = userService.findById(existing.getUser().getId()).orElseThrow();
         if (completeUser == null) {
             throw new UserNotFoundException("Usuario no encontrado: " + existing.getUser().getId());
         }

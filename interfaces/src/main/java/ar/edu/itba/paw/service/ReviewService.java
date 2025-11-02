@@ -24,4 +24,6 @@ public interface ReviewService {
     int countByClub(UUID clubId);
     Optional<Review> getUserReviewForClub(UUID userId, UUID clubId);
     List<Review> getReviewsByClub(UUID clubId);
+    List<Review> listByUser(UUID userId, String sort, int limit, int offset);
+    int countByUser(UUID userId);
     }

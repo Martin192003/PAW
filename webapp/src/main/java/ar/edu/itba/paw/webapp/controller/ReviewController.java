@@ -85,5 +85,57 @@ public class ReviewController {
         return "redirect:/clubs/" + clubId + "#reviews";
     }
 
+    @GetMapping("/users/{userId}/reviews")
+    public String listUserReviews(@PathVariable UUID userId,
+                                  @RequestParam(defaultValue = "created_desc") String sort,
+                                  @RequestParam(defaultValue = "10") int limit,
+                                  @RequestParam(defaultValue = "0") int offset,
+                                  Model model) {
+
+
+        // Normalizar parámetros
+        limit = Math.max(1, Math.min(limit, 50));
+        offset = Math.max(0, offset);
+
+
+        // Traer el usuario solo para mostrar nombre/validar existencia
+        final User user = userService.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+
+        // Datos paginados
+        final List<Review> reviews = reviewService.listByUser(userId, sort, limit, offset);
+        final int total = reviewService.countByUser(userId);
+
+
+        // Ajuste si el offset quedó fuera de rango (p. ej., se borraron reviews)
+        if (offset >= total && total > 0) {
+            int lastPage = (int) Math.floor((total - 1) / (double) limit);
+            offset = lastPage * limit;
+        }
+
+
+        // Si recalculamos offset, recargar la página
+        final List<Review> pageReviews = (offset == 0 || offset <= total)
+                ? reviewService.listByUser(userId, sort, limit, offset)
+                : reviews;
+
+
+        model.addAttribute("pageUser", user);
+        model.addAttribute("reviews", pageReviews);
+        model.addAttribute("total", total);
+        model.addAttribute("limit", limit);
+        model.addAttribute("offset", offset);
+        model.addAttribute("sort", sort);
+
+
+        // Para UI (paginación)
+        model.addAttribute("currentPage", (offset / limit) + 1);
+        model.addAttribute("totalPages", (int) Math.ceil(total / (double) limit));
+
+
+        return "userReviews";
+    }
+
 
 }

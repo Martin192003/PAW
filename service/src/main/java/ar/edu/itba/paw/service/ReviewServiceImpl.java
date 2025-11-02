@@ -129,7 +129,7 @@ public class ReviewServiceImpl implements ReviewService {
     public int countByClub(UUID clubId) {
         return reviewsDao.countSearch(null, clubId);
     }
-    
+
     @Override
     @Transactional
     public Review upsertReview(UUID userId, UUID clubId, int rating, String description, Locale locale) {
@@ -167,5 +167,18 @@ public class ReviewServiceImpl implements ReviewService {
         } catch (NoSuchFieldException e) {
             return false;
         }
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Review> listByUser(UUID userId, String sort, int limit, int offset) {
+        return reviewsDao.searchPaginated(userId, null, sort, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countByUser(UUID userId) {
+        return reviewsDao.countSearch(userId, null);
     }
 }

@@ -261,7 +261,7 @@ public class UserBookingController {
             return "error/error";
         }
 
-        User u = userService.findById(booking.getUser().getId());
+        Optional<User> u = userService.findById(booking.getUser().getId());
         model.addAttribute("user", u);
 
         ClubTable table = tableService.findById(booking.getTableId()).orElse(null);

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
+import java.util.Optional;
 import java.util.UUID;
 
 @Controller
@@ -30,7 +31,6 @@ public class ProfileController {
 
     private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         if (authentication == null || !authentication.isAuthenticated() ||
                 "anonymousUser".equals(authentication.getName())) {
             throw new SecurityException("Usuario no autenticado");
@@ -38,32 +38,12 @@ public class ProfileController {
 
         String identifier = authentication.getName();
         User user = userService.findByUserName(identifier);
+        if (user == null) user = userService.findByEmail(identifier);
+        if (user == null) throw new SecurityException("Usuario no encontrado: " + identifier);
 
-        if (user == null) {
-            user = userService.findByEmail(identifier);
-        }
-
-        if (user == null) {
-            throw new SecurityException("Usuario no encontrado: " + identifier);
-        }
-
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication().getName();
         return user.getId();
     }
 
-    private void prepareProfileModel(Model model) {
-        User user = userService.findById(getCurrentUserId());
-        model.addAttribute("user", user);
-
-        EditUserForm editUserForm = new EditUserForm();
-        editUserForm.setUsername(user.getUsername());
-        editUserForm.setName(user.getName());
-        editUserForm.setSurname(user.getSurname());
-        editUserForm.setEmail(user.getEmail());
-        editUserForm.setCellphone(user.getCellphone());
-        model.addAttribute("editUserForm", editUserForm);
-    }
 
     @GetMapping("/edit")
     public String editProfile(Model model) {
@@ -77,14 +57,6 @@ public class ProfileController {
         return "profile";
     }
 
-    private String handleDuplicateError(String field, Model model) {
-        User user = userService.findById(getCurrentUserId());
-        model.addAttribute("user", user);
-        model.addAttribute("openModal", true);
-        model.addAttribute("editField", field);
-        model.addAttribute("error", field.equals("username") ? "Username already exists" : "Email already exists");
-        return "profile";
-    }
 
     @PostMapping("/edit/username")
     public String editUsername(@Valid @ModelAttribute("editUserForm") EditUserForm form,
@@ -145,6 +117,39 @@ public class ProfileController {
         }
     }
 
+    private void prepareProfileModel(Model model) {
+        User user = userService.findById(getCurrentUserId())
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
+        model.addAttribute("user", user);
+
+        EditUserForm editUserForm = new EditUserForm();
+        editUserForm.setUsername(user.getUsername());
+        editUserForm.setName(user.getName());
+        editUserForm.setSurname(user.getSurname());
+        editUserForm.setEmail(user.getEmail());
+        editUserForm.setCellphone(user.getCellphone());
+        model.addAttribute("editUserForm", editUserForm);
+    }
+
+    private String handleDuplicateError(String field, Model model) {
+        User user = userService.findById(getCurrentUserId())
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
+        model.addAttribute("user", user);
+        model.addAttribute("openModal", true);
+        model.addAttribute("editField", field);
+        model.addAttribute("error", field.equals("username") ? "Username already exists" : "Email already exists");
+        return "profile";
+    }
+
+    private String handleValidationError(String field, Model model) {
+        User user = userService.findById(getCurrentUserId())
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
+        model.addAttribute("user", user);
+        model.addAttribute("openModal", true);
+        model.addAttribute("editField", field);
+        return "profile";
+    }
+
 
     @PostMapping("/resend-verification")
     public String resendVerification(@RequestParam("usernameOrEmail") String usernameOrEmail,
@@ -179,14 +184,6 @@ public class ProfileController {
         } catch (DuplicateEntityException e) {
             return handleDuplicateError(field, model);
         }
-    }
-
-    private String handleValidationError(String field, Model model) {
-        User user = userService.findById(getCurrentUserId());
-        model.addAttribute("user", user);
-        model.addAttribute("openModal", true);
-        model.addAttribute("editField", field);
-        return "profile";
     }
     private void updateAuthenticationContext(User updatedUser) {
         UsernamePasswordAuthenticationToken authentication =

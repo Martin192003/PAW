@@ -220,7 +220,7 @@ public class ClubController {
         );
 
         if (roleAntes == Role.USER) {
-            User updatedUser = userService.findById(contact.getId());
+            User updatedUser = userService.findById(contact.getId()).orElseThrow(UserNotFoundException::new);
 
             Authentication newAuth = new UsernamePasswordAuthenticationToken(
                     updatedUser.getUsername(),

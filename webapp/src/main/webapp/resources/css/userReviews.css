@@ -1,0 +1,17 @@
+.page-wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+.header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.reviews-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+.review-item { background:#1e1e1e; color:#f1f1f1; border-radius:12px; padding:14px; border:1px solid #333; }
+.review-item-header { display:flex; align-items:center; gap:8px; justify-content:space-between; }
+.club-link { color:#9fd3ff; text-decoration:none; font-weight:600; }
+.club-link:hover { text-decoration:underline; }
+.badge-guest { background:#a64ca6; color:#fff; font-size:11px; padding:4px 10px; border-radius:999px; font-weight:800; letter-spacing:.4px; }
+.review-row { display:flex; align-items:flex-start; gap:14px; }
+.review-col { flex:1; min-width:0; }
+.review-thumb { width:84px; height:84px; object-fit:cover; border-radius:8px; border:1px solid #444; cursor:pointer; }
+.pagination { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+.btn { padding:8px 12px; border-radius:10px; border:1px solid #444; color:#fff; background:#2a2a2a; text-decoration:none; }
+.btn-primary { background:#4b6bfb; border-color:#3a58e6; }
+.btn-secondary { background:#2a2a2a; }
+.btn[aria-disabled="true"] { opacity:.5; pointer-events:none; }
+.summary { margin-top:8px; color:#ccc; }
