@@ -19,5 +19,6 @@ public interface ProductService {
     Optional<Product> findByName(String name);
     List<Product> findByClub(Club club);
     List<Product> findByClubID(UUID clubId);
-   String classifyCategory(Product p);
+    String classifyCategory(Product p);
+    boolean canAddProduct(Club club);
 }

@@ -241,29 +241,48 @@
             <spring:message code="placeholder.menu.description" var="phDescription"/>
             <spring:message code="placeholder.price" var="phPrice"/>
 
-            <form:form method="post" modelAttribute="productForm" action="${pageContext.request.contextPath}/clubs/products/addProduct" class="add-product-bar">
-                <form:hidden path="clubId" value="${club.clubId}" />
-                <div class="form-group">
-                    <form:input path="productName" cssClass="add-product-name" placeholder="${phProductName}" />
-                    <form:errors path="productName" cssClass="formError"/>
+            <c:if test="${param.err == 'max_products'}">
+                <div class="alert alert-danger" style="margin-top: 10px; text-align:center;">
+                    Has alcanzado el máximo de productos.
                 </div>
-                <div class="form-group">
-                    <form:input path="description" cssClass="add-product-input" placeholder="${phDescription}" />
-                    <form:errors path="description" cssClass="formError"/>
-                </div>
-                <div class="form-group">
-                    <form:input path="basePrice" type="number" cssClass="add-product-input" placeholder="${phPrice}" />
-                    <form:errors path="basePrice" cssClass="formError"/>
-                </div>
-                <div class="form-group">
-                    <form:select path="productType" cssClass="input-text">
-                        <form:option value="ALCOHOLICA" label="Alcohólica"/>
-                        <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
-                    </form:select>
-                    <form:errors path="productType" cssClass="formError"/>
-                </div>
-                <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
-            </form:form>
+            </c:if>
+
+            <c:choose>
+                <c:when test="${maxProductsReached}">
+                    <div class="alert alert-warning" style="text-align:center; margin-top:10px;">
+                        Has alcanzado el máximo de productos.
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <form:form method="post" modelAttribute="productForm"
+                               action="${pageContext.request.contextPath}/clubs/products/addProduct"
+                               class="add-product-bar">
+                        <form:hidden path="clubId" value="${club.clubId}" />
+                        <div class="form-group">
+                            <form:input path="productName" cssClass="add-product-name" placeholder="${phProductName}" />
+                            <form:errors path="productName" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="description" cssClass="add-product-input" placeholder="${phDescription}" />
+                            <form:errors path="description" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="basePrice" type="number" cssClass="add-product-input" placeholder="${phPrice}" />
+                            <form:errors path="basePrice" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:select path="productType" cssClass="input-text">
+                                <form:option value="ALCOHOLICA" label="Alcohólica"/>
+                                <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+                            </form:select>
+                            <form:errors path="productType" cssClass="formError"/>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-edit-small">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </form:form>
+                </c:otherwise>
+            </c:choose>
         </div>
 
         <div class="tab-content" id="tables-tab">

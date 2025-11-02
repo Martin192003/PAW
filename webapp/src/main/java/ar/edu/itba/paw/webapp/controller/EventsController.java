@@ -31,11 +31,12 @@ public class EventsController {
     private final TableService tableService;
     private final MenuService menuService;
     private final ClubLayoutService clubLayoutService;
+    private final ProductService productService;
 
 
 
     @Autowired
-    public EventsController(EventService eventService, SecurityService securityService, ClubService clubService, PhotoService photoService, TableService tableService, MenuService menuService, ClubLayoutService clubLayoutService) {
+    public EventsController(EventService eventService, SecurityService securityService, ClubService clubService, PhotoService photoService, TableService tableService, MenuService menuService, ClubLayoutService clubLayoutService, ProductService productService) {
         this.eventService = eventService;
         this.securityService = securityService;
         this.clubService = clubService;
@@ -43,6 +44,7 @@ public class EventsController {
         this.tableService = tableService;
         this.menuService = menuService;
         this.clubLayoutService = clubLayoutService;
+        this.productService = productService;
     }
 
 
@@ -76,6 +78,7 @@ public class EventsController {
             clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
             return "clubHandler";
         }
 
@@ -122,6 +125,7 @@ public class EventsController {
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("errors", errors);
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
             return "clubHandler";
         }
 

@@ -51,9 +51,10 @@ public class ClubController {
     private final TableService tableService;
     private final EventService eventService;
     private final ClubLayoutService clubLayoutService;
+    private final ProductService productService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService,  EventService eventService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
@@ -62,6 +63,7 @@ public class ClubController {
         this.tableService = tableService;
         this.eventService = eventService;
         this.clubLayoutService = clubLayoutService;
+        this.productService = productService;
     }
 
     @GetMapping({"", "/"})
@@ -284,6 +286,7 @@ public class ClubController {
         model.addAttribute("editTableForm", new EditTableForm());
         model.addAttribute("editProductForm", new EditProductForm());
         model.addAttribute("editField", "Event");
+        model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
 
         ClubHandlerForm form = new ClubHandlerForm();
         form.setClubId(club.getClubId());
