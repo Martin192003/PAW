@@ -3,6 +3,8 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -23,6 +25,7 @@
 <c:set var="showAddClubButton" value="true" />
 <c:set var="showRightButtons" value="true" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
+<fmt:setLocale value="es_ES"/>
 <div class="app-boliches">
     <div class="events-container">
         <c:set var="hasEvents" value="false" />
@@ -73,7 +76,18 @@
                                         </div>
                                         <div class="event-date">
                                             <i class="fa-regular fa-calendar"></i>
-                                            <c:out value="${e.date}"/>
+                                            <c:choose>
+                                                <c:when test="${fn:contains(e.date, '-')}">
+                                                    <fmt:parseDate var="eventDate" value="${e.date}" pattern="yyyy-MM-dd"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:set var="eventDate" value="${e.date}"/>
+                                                </c:otherwise>
+                                            </c:choose>
+                                            <fmt:formatDate value="${eventDate}" pattern="d" var="eventDay"/>
+                                            <fmt:formatDate value="${eventDate}" pattern="MMMM" var="eventMonth"/>
+                                            <fmt:formatDate value="${eventDate}" pattern="yyyy" var="eventYear"/>
+                                                ${eventDay} <spring:message code="pagination.of"/><span class="month">${eventMonth}</span>${eventYear}
                                         </div>
                                         <div class="event-name"><c:out value="${e.eventName}"/></div>
                                         <c:if test="${not empty e.description}">
