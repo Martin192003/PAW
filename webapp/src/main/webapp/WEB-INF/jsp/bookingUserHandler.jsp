@@ -20,7 +20,7 @@
 <body>
 
 <c:set var="showRightButtons" value="true" />
-<c:set var="showProfileButton" value="false" />
+<c:set var="showProfileButton" value="true" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="detail-back">
