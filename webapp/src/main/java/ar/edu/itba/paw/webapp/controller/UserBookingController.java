@@ -262,7 +262,7 @@ public class UserBookingController {
         }
 
         Optional<User> u = userService.findById(booking.getUser().getId());
-        model.addAttribute("user", u);
+        model.addAttribute("user", u.orElse(null));
 
         ClubTable table = tableService.findById(booking.getTableId()).orElse(null);
         model.addAttribute("table", table);
