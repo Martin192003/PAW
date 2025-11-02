@@ -665,3 +665,6 @@
     margin-top: 6px;
     display: block;
 }
+.review-date .month {
+    text-transform: capitalize;
+}

@@ -29,6 +29,7 @@
 <c:set var="showProfileButton" value="true" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
+<fmt:setLocale value="es_ES"/>
 <div class="detail-page">
     <div class="detail-back">
         <button type="button" class="btn btn-success"
@@ -307,6 +308,9 @@
                     <c:when test="${not empty reviews}">
                         <ul class="reviews-list">
                             <c:forEach var="review" items="${reviews}">
+                                <fmt:formatDate value="${review.createdAt}" pattern="d" var="reviewDay"/>
+                                <fmt:formatDate value="${review.createdAt}" pattern="MMMM" var="reviewMonth"/>
+                                <fmt:formatDate value="${review.createdAt}" pattern="yyyy" var="reviewYear"/>
                                 <li class="review-item">
                                     <div class="review-item-header">
                                         <strong class="review-user"><c:out value="${review.user.username}"/></strong>
@@ -320,7 +324,7 @@
                                     </p>
                                     <small class="review-date">
                                         <spring:message code="reviews.date" text="Fecha"/>:
-                                        <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
+                                            ${reviewDay} <spring:message code="pagination.of"/> <span class="month">${reviewMonth}</span>, ${reviewYear}
                                     </small>
                                 </li>
                             </c:forEach>
