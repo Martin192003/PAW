@@ -291,14 +291,25 @@
         <!-- Reviews: listado -->
         <section id="reviews" class="reviews-list-section">
             <div class="contact-card reviews-card">
-                <h3 class="contact-title">
-                    <span><spring:message code="reviews.title" text="Reseñas"/></span>
-                </h3>
+                <div class="review-header">
+                    <h3 class="contact-title">
+                        <span><spring:message code="reviews.title" text="Reseñas"/></span>
+                    </h3>
+
+                    <c:if test="${isLoggedIn}">
+                        <button type="button" class="btn btn-primary" onclick="openReviewModal()" style="margin-bottom: 15px">
+                            <i class="fa-solid fa-star"></i> <spring:message code="reviews.add" text="Dejar una reseña"/>
+                        </button>
+                    </c:if>
+                </div>
 
                 <c:choose>
                     <c:when test="${not empty reviews}">
                         <ul class="reviews-list">
                             <c:forEach var="review" items="${reviews}">
+                                <fmt:formatDate value="${review.createdAt}" pattern="d" var="reviewDay"/>
+                                <fmt:formatDate value="${review.createdAt}" pattern="MMMM" var="reviewMonth"/>
+                                <fmt:formatDate value="${review.createdAt}" pattern="yyyy" var="reviewYear"/>
                                 <li class="review-item">
                                     <div class="review-item-header">
                                         <strong class="review-user"><c:out value="${review.user.username}"/></strong>
@@ -312,7 +323,7 @@
                                     </p>
                                     <small class="review-date">
                                         <spring:message code="reviews.date" text="Fecha"/>:
-                                        <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
+                                            ${reviewDay} <spring:message code="pagination.of"/> <span class="month">${reviewMonth}</span>, ${reviewYear}
                                     </small>
                                 </li>
                             </c:forEach>
@@ -326,66 +337,6 @@
                 </c:choose>
             </div>
         </section>
-
-        <c:if test="${isLoggedIn}">
-            <section class="review-section">
-                <div class="contact-card review-card">
-                    <div class="review-header">
-                        <h3 class="contact-title">
-                            <span><spring:message code="reviews.add" text="Dejar una reseña"/></span>
-                        </h3>
-                        <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
-                    </div>
-
-                    <c:url var="reviewAction" value="/clubs/${club.clubId}/reviews"/>
-
-                    <form:form method="post" modelAttribute="reviewForm"
-                          action="${reviewAction}"
-                          cssClass="review-form"
-                          enctype="multipart/form-data">
-                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-
-                        <div class="form-group">
-                            <label for="rating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
-                            <div id="starRating" class="star-rating">
-                                <i class="fa-solid fa-star" data-value="1"></i>
-                                <i class="fa-solid fa-star" data-value="2"></i>
-                                <i class="fa-solid fa-star" data-value="3"></i>
-                                <i class="fa-solid fa-star" data-value="4"></i>
-                                <i class="fa-solid fa-star" data-value="5"></i>
-                            </div>
-
-                            <!-- Campo oculto para enviar el valor -->
-                            <input type="hidden" name="rating" id="rating" value="5" />
-
-                            <label for="photo" style="margin-top:16px"><spring:message code="reviews.photo" text="Foto (opcional)"/></label>
-                            <input type="file" id="photo" name="photo" accept="image/*" class="form-control"/>
-                            <small class="bb-help"><spring:message code="reviews.photo.help"
-                                                                   text="Formatos: JPG/PNG/WebP. Máx. 5MB."/></small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="description"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
-                            <form:textarea path="description" id="description" cssClass="form-control"/>
-                            <form:errors path="description" cssClass="formError"/>
-                        </div>
-
-                        <div class="contact-buttons">
-                            <button type="button" class="btn btn-secondary"
-                                    onclick="window.location.hash='#reviews';">
-                                <spring:message code="button.cancel" text="Cancelar"/>
-                            </button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa-solid fa-paper-plane"></i>
-                                <spring:message code="reviews.submit" text="Enviar reseña"/>
-                            </button>
-                        </div>
-                    </form:form>
-                </div>
-            </section>
-        </c:if>
-
-
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -631,31 +582,72 @@
     </script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </div>
-</div>
-<!-- Pop-up de confirmación de reserva -->
 <div id="reservationToast" class="toast-popup" style="display:none;">
     <i class="fa-solid fa-circle-check" style="color:#4caf50; font-size:24px;"></i>
     <span><spring:message code="reservation.sent"/></span>
 </div>
-
-<!-- Modal: disponibilidad de mesas para el evento (con estilos mínimos) -->
-<style>
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999}
-    .modal.show{display:flex}
-    .modal-content{background:#222;color:#fff;border-radius:10px;min-width:280px;max-width:520px;width:90%;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
-    .modal-content .modal-close{float:right;font-size:24px;cursor:pointer}
-    .modal-actions{margin-top:14px;display:flex;gap:10px;justify-content:flex-end}
-</style>
 
 <div id="eventAvailabilityModal" class="modal" aria-hidden="true" role="dialog">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEventAvailabilityModal()">&times;</span>
         <h3 style="margin:0 0 10px;"><spring:message code="event.availability.title"/></h3>
         <p id="eventAvailabilityText" style="margin:0 0 14px;"></p>
-        <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeEventAvailabilityModal()"><spring:message code="event.availability.close"/></button>
+        <div class="modal-buttons">
             <button type="button" class="btn btn-success" onclick="closeEventAvailabilityModal()"><spring:message code="event.availability.ok"/></button>
         </div>
+    </div>
+</div>
+<div id="reviewModal" class="modal" aria-hidden="true" role="dialog" >
+    <div class="modal-content" style="max-width: 520px; width: 90%;">
+        <span class="modal-close" onclick="closeReviewModal()">&times;</span>
+
+        <div class="review-modal-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size:26px"><spring:message code="reviews.add" text="Dejar una reseña"/></h3>
+            <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
+        </div>
+
+        <c:url var="reviewAction" value="/clubs/${club.clubId}/reviews"/>
+
+        <form:form method="post" modelAttribute="reviewForm"
+                   action="${reviewAction}"
+                   cssClass="review-form"
+                   enctype="multipart/form-data"
+                   id="reviewModalForm">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+
+            <div class="form-group">
+                <label for="modalRating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
+                <div id="modalStarRating" class="star-rating">
+                    <i class="fa-solid fa-star" data-value="1"></i>
+                    <i class="fa-solid fa-star" data-value="2"></i>
+                    <i class="fa-solid fa-star" data-value="3"></i>
+                    <i class="fa-solid fa-star" data-value="4"></i>
+                    <i class="fa-solid fa-star" data-value="5"></i>
+                </div>
+                <input type="hidden" name="rating" id="modalRating" value="5" />
+            </div>
+
+            <div class="form-group" style="margin-top: 16px;">
+                <label for="modalPhoto"><spring:message code="reviews.photo" text="Foto (opcional)"/></label>
+                <input type="file" id="modalPhoto" name="photo" accept="image/*" class="form-control"/>
+            </div>
+
+            <div class="form-group" style="margin-top: 16px;">
+                <label for="modalDescription"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
+                <form:textarea path="description" id="modalDescription" cssClass="form-control" rows="4"/>
+                <form:errors path="description" cssClass="error"/>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">
+                    <spring:message code="button.cancel" text="Cancelar"/>
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <spring:message code="reviews.submit" text="Enviar reseña"/>
+                </button>
+            </div>
+        </form:form>
     </div>
 </div>
 
@@ -813,6 +805,80 @@
 
         carousel.addEventListener('scroll', updateButtons);
         updateButtons(); // inicial
+    });
+    function openReviewModal() {
+        const modal = document.getElementById('reviewModal');
+        if (modal) {
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden'; // evita scroll de fondo
+            initModalStarRating(); // reinicia estrellas
+        }
+    }
+
+    function closeReviewModal() {
+        const modal = document.getElementById('reviewModal');
+        if (modal) {
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            // reset form
+            document.getElementById('reviewModalForm').reset();
+            document.getElementById('modalRating').value = '5';
+            updateModalStars(5);
+        }
+    }
+
+    // Inicializar estrellas en el modal
+    function initModalStarRating() {
+        const stars = document.querySelectorAll('#modalStarRating i');
+        const hiddenInput = document.getElementById('modalRating');
+        let currentRating = 5;
+
+        const updateModalStars = (value) => {
+            stars.forEach(star => {
+                star.classList.toggle('inactive', star.dataset.value > value);
+            });
+        };
+
+        stars.forEach(star => {
+            star.onclick = () => {
+                currentRating = parseInt(star.dataset.value);
+                hiddenInput.value = currentRating;
+                updateModalStars(currentRating);
+            };
+            star.onmouseenter = () => updateModalStars(star.dataset.value);
+            star.onmouseleave = () => updateModalStars(currentRating);
+        });
+
+        updateModalStars(currentRating);
+    }
+
+    // Cerrar modal al hacer click fuera
+    document.addEventListener('click', (e) => {
+        const modal = document.getElementById('reviewModal');
+        if (modal && modal.classList.contains('show') && !e.target.closest('.modal-content') && !e.target.closest('[onclick="openReviewModal()"]')) {
+            closeReviewModal();
+        }
+    });
+
+    // Cerrar con ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeReviewModal();
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Busca si hay algún elemento con clase "error" dentro del modal de reseña
+        const hasErrors = document.querySelector('#reviewModal .error') !== null;
+
+        if (hasErrors) {
+            // Si hay errores, muestra el modal automáticamente
+            const modal = document.getElementById('reviewModal');
+            if (modal) {
+                modal.classList.add('show');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden'; // Evita que se pueda scrollear el fondo
+            }
+        }
     });
 </script>
 </body>

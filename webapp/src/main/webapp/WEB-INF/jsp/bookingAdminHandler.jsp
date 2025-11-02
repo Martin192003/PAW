@@ -19,11 +19,11 @@
 </head>
 <body>
 <c:set var="showRightButtons" value="true" />
-<c:set var="showProfileButton" value="false" />
+<c:set var="showProfileButton" value="true" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="detail-back">
-    <button type="button" class="btn btn-success" onclick="window.history.back();">
+    <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/admin/clubs/bookings"><c:param name="userId" value="${user.id}"/></c:url>';">
         <i class="fa fa-arrow-left"></i>
     </button>
 </div>

@@ -350,7 +350,21 @@
         <c:forEach var="e" items="${events}">
             <tr>
                 <td><c:out value="${e.eventName}"/></td>
-                <td><c:out value="${e.date}"/></td>
+                <td>
+                    <c:choose>
+                    <c:when test="${fn:contains(e.date, '-')}">
+                        <fmt:parseDate var="eventDate" value="${e.date}" pattern="yyyy-MM-dd"/>
+                    </c:when>
+                    <c:otherwise>
+                        <c:set var="eventDate" value="${e.date}"/>
+                    </c:otherwise>
+                </c:choose>
+
+                    <fmt:formatDate value="${eventDate}" pattern="d" var="eventDay"/>
+                    <fmt:formatDate value="${eventDate}" pattern="MMMM" var="eventMonth"/>
+                    <fmt:formatDate value="${eventDate}" pattern="yyyy" var="eventYear"/>
+
+                        ${eventDay} <spring:message code="pagination.of"/> <span class="month">${eventMonth}</span>, ${eventYear}</td>
                 <td>
                     <c:choose>
                         <c:when test="${not empty e.description and fn:length(e.description) > 80}">
