@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.TableState;
 
@@ -25,6 +26,7 @@ public interface TableService {
 
     boolean isAllowedDay(LocalDate date);
     boolean isPastDate(LocalDate date, Clock clock, ZoneId tz);
+    boolean canAddTable(Club club);
 
     OffsetDateTime windowStart(LocalDate date, ZoneId tz);
     OffsetDateTime windowEnd(LocalDate date, ZoneId tz);

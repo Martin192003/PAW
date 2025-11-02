@@ -82,6 +82,7 @@ public class ProductController {
             editEventForm.setClubId(club.getClubId());
             model.addAttribute("editEventForm", editEventForm);
             model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
 
@@ -160,6 +161,7 @@ public class ProductController {
             model.addAttribute("carouselPhotos", carouselPhotos);
             model.addAttribute("tableLayoutUrl", tableLayoutUrl);
             model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
 

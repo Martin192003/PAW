@@ -243,14 +243,14 @@
 
             <c:if test="${param.err == 'max_products'}">
                 <div class="alert alert-danger" style="margin-top: 10px; text-align:center;">
-                    Has alcanzado el máximo de productos.
+                    <spring:message code="menu.limit"/>
                 </div>
             </c:if>
 
             <c:choose>
                 <c:when test="${maxProductsReached}">
                     <div class="alert alert-warning" style="text-align:center; margin-top:10px;">
-                        Has alcanzado el máximo de productos.
+                        <spring:message code="menu.limit"/>
                     </div>
                 </c:when>
                 <c:otherwise>
@@ -333,26 +333,41 @@
             <spring:message code="placeholder.capacity" var="phCapacity"/>
             <spring:message code="placeholder.discount" var="phDiscount"/>
 
-            <form:form method="post" modelAttribute="tableForm" action="${pageContext.request.contextPath}/clubs/tables/addTable" class="add-product-bar">
-                <form:hidden path="clubId" value="${club.clubId}" />
-                <div class="form-group">
-                    <form:input path="tableNumber" type="number" cssClass="add-product-name" placeholder="${phTableNumber}" />
-                    <form:errors path="tableNumber" cssClass="formError"/>
+            <c:if test="${param.err == 'max_tables'}">
+                <div class="alert alert-danger" style="margin-top: 10px; text-align:center;">
+                    <spring:message code="table.limit"/>
                 </div>
-                <div class="form-group">
-                    <form:input path="capacity" type="number" cssClass="add-product-input" placeholder="${phCapacity}" />
-                    <form:errors path="capacity" cssClass="formError"/>
-                </div>
-                <div class="form-group">
-                    <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}"/>
-                    <form:errors path="price" cssClass="formError"/>
-                </div>
-                <div class="form-group">
-                    <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}"/>
-                    <form:errors path="discount" cssClass="formError"/>
-                </div>
-                <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
-            </form:form>
+            </c:if>
+
+            <c:choose>
+                <c:when test="${maxTablesReached}">
+                    <div class="alert alert-warning" style="text-align:center; margin-top:10px;">
+                        <spring:message code="table.limit"/>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <form:form method="post" modelAttribute="tableForm" action="${pageContext.request.contextPath}/clubs/tables/addTable" class="add-product-bar">
+                        <form:hidden path="clubId" value="${club.clubId}" />
+                        <div class="form-group">
+                            <form:input path="tableNumber" type="number" cssClass="add-product-name" placeholder="${phTableNumber}" />
+                            <form:errors path="tableNumber" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="capacity" type="number" cssClass="add-product-input" placeholder="${phCapacity}" />
+                            <form:errors path="capacity" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}"/>
+                            <form:errors path="price" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}"/>
+                            <form:errors path="discount" cssClass="formError"/>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
+                    </form:form>
+                </c:otherwise>
+            </c:choose>
 
             <c:if test="${param.err == 'dup'}">
                 <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.duplicate"/></div>

@@ -98,6 +98,7 @@ public class TablesController {
             model.addAttribute("carouselPhotos", carouselPhotos);
             model.addAttribute("tableLayoutUrl", tableLayoutUrl);
             model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
 
@@ -150,7 +151,8 @@ public class TablesController {
     public String addTable(
             @Valid @ModelAttribute("tableForm") AddTableForm tableForm,
             BindingResult errors,
-            Model model
+            Model model,
+            RedirectAttributes ra
     ) {
         UUID clubId = tableForm.getClubId();
         checkLoggedUser(clubId);
@@ -191,7 +193,14 @@ public class TablesController {
             model.addAttribute("editProductForm", new EditProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
             model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
+        }
+
+        Club club = clubService.getClubById(clubId).orElseThrow();
+        if (!tableService.canAddTable(club)) {
+            ra.addAttribute("err", "max_tables");
+            return "redirect:/clubs/handle?clubId=" + clubId ;
         }
 
         try {

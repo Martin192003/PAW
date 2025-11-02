@@ -287,6 +287,7 @@ public class ClubController {
         model.addAttribute("editProductForm", new EditProductForm());
         model.addAttribute("editField", "Event");
         model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+        model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
 
         ClubHandlerForm form = new ClubHandlerForm();
         form.setClubId(club.getClubId());

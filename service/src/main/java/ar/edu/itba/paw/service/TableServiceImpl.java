@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.TableState;
 import ar.edu.itba.paw.model.exceptions.*;
@@ -10,15 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.*;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class TableServiceImpl implements TableService {
 
     private static final Set<DayOfWeek> ALLOWED = Set.of(DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
+    private static final int MAX_TABLES_PER_CLUB = 50;
 
 
     private final ClubDao clubDao;
@@ -66,11 +65,14 @@ public class TableServiceImpl implements TableService {
     @Override
     @Transactional
     public ClubTable update(UUID tableId, UUID clubId, BigDecimal tableNumber, BigDecimal capacity, TableState state, BigDecimal price, BigDecimal discount) {
+        var club = clubDao.findById(clubId)
+                .orElseThrow(() -> new NotFoundException("Club no existente"));
         if (clubDao.findById(clubId).isEmpty()) throw new NotFoundException("Club no existente");
         if ( tableNumber == null || tableNumber.compareTo(BigDecimal.ZERO) < 0 || tableNumber.compareTo(BigDecimal.valueOf(1_000_000)) >=  0) throw new InvalidTableNumberException("Número de mesa inválido");
         if ( capacity == null || capacity.compareTo(BigDecimal.ZERO) <= 0 || capacity.compareTo(BigDecimal.valueOf(10_000)) >= 0) throw new InvalidCapacityException("Capacidad inválida");
         if (price.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(new BigDecimal("99999999.99")) >= 0) throw new InvalidPriceException("Precio inválido");
         if (discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0) throw new ValidationException("Descuento inválido");
+        if (!canAddTable(club)) throw new IllegalStateException("Numero maximo de mesas alcanzado");
         return clubTablesDao.update(tableId, clubId, tableNumber.intValueExact(), capacity.intValueExact(), state, price, discount);
     }
 
@@ -114,6 +116,14 @@ public class TableServiceImpl implements TableService {
     @Override
     public OffsetDateTime windowEnd(LocalDate date, ZoneId tz) {
         return date.plusDays(1).atTime(6,0).atZone(tz).toOffsetDateTime();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean canAddTable(Club club) {
+        Objects.requireNonNull(club, "club is required");
+        int count = clubTablesDao.findByClub(club).size();
+        return count < MAX_TABLES_PER_CLUB;
     }
 
 }
