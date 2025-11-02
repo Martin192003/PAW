@@ -349,7 +349,6 @@
         </c:if>
         <c:forEach var="e" items="${events}">
             <tr>
-                <fmt:setLocale value="es_ES"/>
                 <td><c:out value="${e.eventName}"/></td>
                 <td>
                     <c:choose>

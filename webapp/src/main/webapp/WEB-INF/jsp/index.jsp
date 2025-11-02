@@ -25,7 +25,6 @@
 <c:set var="showAddClubButton" value="true" />
 <c:set var="showRightButtons" value="true" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
-<fmt:setLocale value="es_ES"/>
 <div class="app-boliches">
     <div class="events-container">
         <c:set var="hasEvents" value="false" />

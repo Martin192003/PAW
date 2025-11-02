@@ -29,7 +29,6 @@
 <c:set var="showProfileButton" value="true" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
-<fmt:setLocale value="es_ES"/>
 <div class="detail-page">
     <div class="detail-back">
         <button type="button" class="btn btn-success"
