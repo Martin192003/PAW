@@ -3,6 +3,8 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="jfn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 
 <html>
@@ -55,6 +57,9 @@
                     </form:select>
                 </c:if>
                 <div class="filter-item" style="display:flex; flex-direction:column;">
+                    <form:input path="bookingDate" type="date" placeholder="Fecha" cssClass="filter-item"/>
+                </div>
+                <div class="filter-item" style="display:flex; flex-direction:column;">
                     <form:input path="bookingId" placeholder="${phBookingId}" cssClass="filter-item"/>
                 </div>
 
@@ -99,6 +104,15 @@
                     <div class="card-md user-booking-card" style="position:relative; margin-bottom:24px;">
                         <span><b><spring:message code='booking.id' text='ID de la Reserva'/>: </b> <c:out value="${booking.bookingId}"/></span><br/>
                         <span><b><spring:message code='filter.club' text='Boliche'/>: </b> <c:out value="${clubNames[booking.bookingId]}"/></span>
+                        <c:if test="${not empty booking.bookingStart}">
+                        <fmt:formatDate value="${bookingStartDates[booking.bookingId]}" pattern="d" var="bookingDay"/>
+                        <fmt:formatDate value="${bookingStartDates[booking.bookingId]}" pattern="MMMM" var="bookingMonth"/>
+                        <fmt:formatDate value="${bookingStartDates[booking.bookingId]}" pattern="yyyy" var="bookingYear"/>
+                        <span>
+                        <b><spring:message code="booking.date" text="Date"/>: </b>
+                        ${bookingDay} <spring:message code="pagination.of"/> <span class="month">${bookingMonth}</span> ${bookingYear}
+                        </span><br/>
+                        </c:if>
                         <div class="booking-status-container">
                             <c:choose>
                                 <c:when test="${jfn:trim(jfn:toUpperCase(booking.status)) == 'PENDIENTE'}">

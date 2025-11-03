@@ -104,6 +104,11 @@ public class UserBookingController {
             form.setUserId(current.getId());
         }
 
+        LocalDate bookingDate = null;
+        if (form.getBookingDate() != null && !form.getBookingDate().isBlank()) {
+            bookingDate = LocalDate.parse(form.getBookingDate());
+        }
+
         UUID bookingUuid = null;
         if (form.getBookingId() != null && !form.getBookingId().isBlank()) {
             try {
@@ -123,6 +128,7 @@ public class UserBookingController {
                     bookingUuid,
                     form.getStatus(),
                     form.getSort(),
+                    bookingDate,
                     size,
                     offset
             );
@@ -131,7 +137,8 @@ public class UserBookingController {
                     form.getUserId(),
                     form.getClubId(),
                     bookingUuid,
-                    form.getStatus()
+                    form.getStatus(),
+                    bookingDate
             );
         }
 
@@ -147,6 +154,17 @@ public class UserBookingController {
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
+
+        Map<UUID, Date> bookingStartDates = new HashMap<>();
+        for (Booking booking : bookings) {
+            if (booking.getBookingStart() != null) {
+                bookingStartDates.put(
+                        booking.getBookingId(),
+                        Date.from(booking.getBookingStart().toInstant())
+                );
+            }
+        }
+        model.addAttribute("bookingStartDates", bookingStartDates);
 
         // Datos para la vista
         model.addAttribute("bookings", bookings);
