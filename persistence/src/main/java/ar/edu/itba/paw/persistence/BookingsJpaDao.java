@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -117,6 +118,7 @@ public class BookingsJpaDao implements BookingDao {
                                          final UUID bookingId,
                                          final Status status,
                                          final String sort,
+                                         final LocalDate bookingDate,
                                          final int limit,
                                          final int offset) {
 
@@ -135,6 +137,8 @@ public class BookingsJpaDao implements BookingDao {
         if (userId != null)    inner.append("AND b.user_id = :userId\n");
         if (bookingId != null) inner.append("AND b.booking_id = :bookingId\n");
         if (status != null)    inner.append("AND LOWER(b.status) = LOWER(:status)\n");
+        if (bookingDate != null) inner.append("AND DATE(b.booking_start) = :bookingDate\n");
+
 
         final String idSql = """
         SELECT CAST(x.booking_id AS TEXT) AS id_text
@@ -152,6 +156,8 @@ public class BookingsJpaDao implements BookingDao {
         if (userId != null)    nq.setParameter("userId", userId);
         if (bookingId != null) nq.setParameter("bookingId", bookingId);
         if (status != null)    nq.setParameter("status", status.db());
+        if (bookingDate != null) nq.setParameter("bookingDate", bookingDate);
+
 
         @SuppressWarnings("unchecked")
         final java.util.List<String> idTexts = nq.getResultList();
@@ -175,6 +181,7 @@ public class BookingsJpaDao implements BookingDao {
                                                   final java.util.UUID bookingId,
                                                   final Status status,
                                                   final String sort,
+                                                  final LocalDate bookingDate,
                                                   final int limit,
                                                   final int offset) {
         if (clubIds == null || clubIds.isEmpty()) return java.util.List.of();
@@ -191,6 +198,7 @@ public class BookingsJpaDao implements BookingDao {
 
         if (bookingId != null) inner.append("AND b.booking_id = :bookingId\n");
         if (status != null)    inner.append("AND LOWER(b.status) = LOWER(:status)\n");
+        if (bookingDate != null) inner.append("AND DATE(b.booking_start) = :bookingDate\n");
 
         final String idSql = """
         SELECT CAST(x.booking_id AS TEXT) AS id_text
@@ -208,6 +216,7 @@ public class BookingsJpaDao implements BookingDao {
 
         if (bookingId != null) nq.setParameter("bookingId", bookingId);
         if (status != null)    nq.setParameter("status", status.db());
+        if (bookingDate != null) nq.setParameter("bookingDate", bookingDate);
 
         @SuppressWarnings("unchecked")
         final java.util.List<String> idTexts = nq.getResultList();
@@ -230,7 +239,9 @@ public class BookingsJpaDao implements BookingDao {
     public int countSearch(UUID userId,
                            UUID clubId,
                            UUID bookingId,
-                           Status status) {
+                           Status status,
+                            LocalDate bookingDate
+    ) {
 
         if (clubId != null) {
             String sql = "SELECT COUNT(*) FROM bookings b " +
@@ -240,6 +251,8 @@ public class BookingsJpaDao implements BookingDao {
             if (userId != null)    sql += " AND b.user_id = :userId";
             if (bookingId != null) sql += " AND b.booking_id = :bookingId";
             if (status != null)    sql += " AND LOWER(b.status) = LOWER(:status)";
+            if (bookingDate != null) sql += " AND DATE(b.booking_start) = :bookingDate";
+
 
             Query q = em.createNativeQuery(sql)
                     .setParameter("clubId", clubId);
@@ -247,6 +260,8 @@ public class BookingsJpaDao implements BookingDao {
             if (userId != null)    q.setParameter("userId", userId);
             if (bookingId != null) q.setParameter("bookingId", bookingId);
             if (status != null)    q.setParameter("status", status.db());
+            if (bookingDate != null) q.setParameter("bookingDate", bookingDate);
+
 
             Number n = (Number) q.getSingleResult();
             return n.intValue();
@@ -264,7 +279,7 @@ public class BookingsJpaDao implements BookingDao {
     }
 
     @Override
-    public int countByClubIds(final List<UUID> clubIds, final UUID bookingId, final Status status) {
+    public int countByClubIds(final List<UUID> clubIds, final UUID bookingId, final Status status, final LocalDate bookingDate) {
         if (clubIds == null || clubIds.isEmpty()) return 0;
 
         final String ph = placeholders("cid", clubIds.size());
@@ -277,6 +292,7 @@ public class BookingsJpaDao implements BookingDao {
 
         if (bookingId != null) sql.append("AND b.booking_id = :bookingId\n");
         if (status != null)    sql.append("AND LOWER(b.status) = LOWER(:status)\n");
+        if (bookingDate != null) sql.append(" AND DATE(b.booking_start) = :bookingDate");
 
         final var nq = em.createNativeQuery(sql.toString())
                 .unwrap(NativeQuery.class);
@@ -285,6 +301,7 @@ public class BookingsJpaDao implements BookingDao {
 
         if (bookingId != null) nq.setParameter("bookingId", bookingId);
         if (status != null)    nq.setParameter("status", status.db());
+        if (bookingDate != null) nq.setParameter("bookingDate", bookingDate);
 
         final Number n = (Number) nq.getSingleResult();
         return n.intValue();

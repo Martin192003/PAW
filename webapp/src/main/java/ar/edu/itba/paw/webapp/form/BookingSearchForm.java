@@ -24,6 +24,8 @@ public class BookingSearchForm {
     @Min(0)
     private int page = 0;
 
+    private String bookingDate;
+
     public UUID getUserId() {
         return userId;
     }
@@ -71,4 +73,8 @@ public class BookingSearchForm {
     public void setPage(int page) {
         this.page = page;
     }
+
+    public String getBookingDate() { return bookingDate; }
+
+    public void setBookingDate(String bookingDate) { this.bookingDate = bookingDate; }
 }

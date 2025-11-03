@@ -21,6 +21,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 @Controller
 @RequestMapping("/admin")
@@ -124,6 +130,11 @@ public class BookingAdminController {
             }
         }
 
+        LocalDate bookingDate = null;
+        if (form.getBookingDate() != null && !form.getBookingDate().isBlank()) {
+            bookingDate = LocalDate.parse(form.getBookingDate());
+        }
+
         List<Booking> result = List.of();
         int totalBookings = 0;
 
@@ -134,13 +145,15 @@ public class BookingAdminController {
                     bookingUuid,
                     form.getStatus(),
                     form.getSort(),
+                    bookingDate,
                     size, offset
             );
             totalBookings = bookingService.countSearchForAdmin(
                     current.getId(),
                     form.getClubId(),
                     bookingUuid,
-                    form.getStatus()
+                    form.getStatus(),
+                    bookingDate
             );
         }
 
@@ -157,6 +170,17 @@ public class BookingAdminController {
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(java.util.stream.Collectors.joining("&"));
+
+        Map<UUID, Date> bookingStartDates = new HashMap<>();
+        for (Booking booking : result) {
+            if (booking.getBookingStart() != null) {
+                bookingStartDates.put(
+                        booking.getBookingId(),
+                        Date.from(booking.getBookingStart().toInstant())
+                );
+            }
+        }
+        model.addAttribute("bookingStartDates", bookingStartDates);
 
         Map<UUID, Boolean> hasReceiptMap = new HashMap<>();
         for (Booking b : result) {

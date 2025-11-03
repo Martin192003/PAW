@@ -338,6 +338,7 @@ public class BookingServiceImpl implements BookingService {
                                                  UUID bookingId,
                                                  Status status,
                                                  String sort,
+                                                 LocalDate bookingDate,
                                                  int limit,
                                                  int offset) {
 
@@ -354,15 +355,12 @@ public class BookingServiceImpl implements BookingService {
             adminClubIds = List.of(clubId);
         }
 
-        return bookingDao.searchByClubIdsPaginated(adminClubIds, bookingId, status, sort, limit, offset);
+        return bookingDao.searchByClubIdsPaginated(adminClubIds, bookingId, status, sort, bookingDate ,limit, offset);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public int countSearchForAdmin(UUID adminUserId,
-                                   UUID clubId,
-                                   UUID bookingId,
-                                   Status status) {
+    public int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate) {
 
         List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
         if (adminClubIds == null || adminClubIds.isEmpty()) {
@@ -374,7 +372,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         List<UUID> target = (clubId != null) ? List.of(clubId) : adminClubIds;
-        return bookingDao.countByClubIds(target, bookingId, status);
+        return bookingDao.countByClubIds(target, bookingId, status, bookingDate);
     }
 
 
@@ -390,9 +388,10 @@ public class BookingServiceImpl implements BookingService {
                                          UUID bookingId,
                                          Status status,
                                          String sort,
+                                         LocalDate bookingDate,
                                          int limit,
                                          int offset) {
-        return bookingDao.searchPaginated(userId, clubId, bookingId, status, sort, limit, offset);
+        return bookingDao.searchPaginated(userId, clubId, bookingId, status, sort, bookingDate,limit, offset);
     }
 
     @Override
@@ -400,8 +399,9 @@ public class BookingServiceImpl implements BookingService {
     public int countSearch(UUID userId,
                            UUID clubId,
                            UUID bookingId,
-                           Status status) {
-        return bookingDao.countSearch(userId, clubId, bookingId, status);
+                           Status status,
+                           LocalDate bookingDate) {
+        return bookingDao.countSearch(userId, clubId, bookingId, status, bookingDate);
     }
 
 

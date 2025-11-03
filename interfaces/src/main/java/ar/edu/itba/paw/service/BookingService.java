@@ -50,13 +50,15 @@ public interface BookingService {
                                   UUID bookingId,
                                   Status status,
                                   String sort,
+                                  LocalDate bookingDate,
                                   int limit,
                                   int offset);
 
     int countSearch(UUID userId,
                     UUID clubId,
                     UUID bookingId,
-                    Status status);
+                    Status status,
+                    LocalDate bookingDate);
 
 
     /** Devuelve la reserva creada (mejor que void). */
@@ -69,16 +71,9 @@ public interface BookingService {
     Booking getForUser(UUID bookingId, UUID userId);
 
     /** Vista admin con paginado. */
-    List<Booking> searchForAdminPaginated(UUID adminUserId,
-                                          UUID clubId,
-                                          UUID bookingId,
-                                          Status status,
-                                          String sort,
-                                          int limit,
-                                          int offset);
+    List<Booking> searchForAdminPaginated(UUID adminUserId, UUID clubId, UUID bookingId, Status status, String sort, LocalDate bookingDate, int limit, int offset);
 
-    int countSearchForAdmin(UUID adminUserId,
-                            UUID clubId,
-                            UUID bookingId,
-                            Status status);
+
+    int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate);
+
 }
