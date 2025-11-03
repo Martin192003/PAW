@@ -101,11 +101,11 @@
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.start" text="Inicio"/></dt>
-                    <dd><c:out value="${bookingStartLocal}"/></dd>
+                    <dd><c:out value="${bookingStartLocal}"/> 23:59hs</dd>
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.end" text="Fin"/></dt>
-                    <dd><c:out value="${bookingEndLocal}"/></dd>
+                    <dd><c:out value="${bookingEndLocal}"/> 6:00hs</dd>
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.cbu" text="CBU"/></dt>
