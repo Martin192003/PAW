@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,7 +101,7 @@ public class ReviewController {
 
         // Traer el usuario solo para mostrar nombre/validar existencia
         final User user = userService.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
 
         // Datos paginados
@@ -121,7 +122,7 @@ public class ReviewController {
                 : reviews;
 
 
-        model.addAttribute("pageUser", user);
+        model.addAttribute("user", user);
         model.addAttribute("reviews", pageReviews);
         model.addAttribute("total", total);
         model.addAttribute("limit", limit);
