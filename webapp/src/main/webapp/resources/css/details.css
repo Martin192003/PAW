@@ -530,6 +530,7 @@
     overflow-x: auto;
     scroll-behavior: smooth;
     gap: 12px;
+    justify-content: center;
     padding: 12px;
     scrollbar-width: none;
 }
