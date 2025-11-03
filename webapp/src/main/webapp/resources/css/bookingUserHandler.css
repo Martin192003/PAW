@@ -524,3 +524,15 @@ body {
     }
     .modal-actions .btn { width: 100%; }
 }
+
+.upload-receipt{
+    display: flex;
+    flex-direction: column;
+}
+.error{
+    display: block;
+    color: #ff0000;
+    font-size: 0.75rem;
+    margin-left: 2px;
+    font-weight: 500;
+}

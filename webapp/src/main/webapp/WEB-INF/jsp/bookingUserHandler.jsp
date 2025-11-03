@@ -148,14 +148,16 @@
                         <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
                             <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data"
                                        action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt"
-                                       class="upload-form">
-                                <div class="form-group">
-                                    <form:input type="file" path="file"/>
-                                    <p cssClass="error-message"><form:errors path="file"/></p>
+                                       class="upload-form" id="receiptUploadForm">
+                                <!-- Input oculto -->
+                                <form:input type="file" path="file" id="receiptFile" cssStyle="display:none"
+                                            accept="image/*,application/pdf"/>
+                                <div class="upload-receipt">
+                                    <button type="button" class="btn btn-success" id="uploadReceiptBtn">
+                                        <spring:message code="receipt.upload" text="Subir comprobante"/>
+                                    </button>
+                                    <p class="error"><form:errors path="file"/></p>
                                 </div>
-                                <button type="submit" class="btn btn-success btn-sm">
-                                    <spring:message code="receipt.upload" text="Subir comprobante"/>
-                                </button>
                             </form:form>
                         </c:if>
                     </c:otherwise>
@@ -226,6 +228,24 @@
         if (closeX) {
             closeX.addEventListener('click', closeCancelBookingModal);
         }
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('receiptUploadForm');
+        const fileInput = document.getElementById('receiptFile');
+        const btn = document.getElementById('uploadReceiptBtn');
+
+        if (!form || !fileInput || !btn) return;
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files.length > 0) {
+                form.submit();
+            }
+        });
     });
 </script>
 <c:if test="${not empty bookingAction}">
