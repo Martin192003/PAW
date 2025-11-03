@@ -235,6 +235,11 @@ public class UserBookingController {
             return "bookingUserHandler";
         }
         try {
+            try {
+                receiptService.deleteByBookingForUser(bookingId, current.getId());
+            } catch (Exception e) {
+                // Ignorar errores al eliminar recibo previo
+            }
             String filename = Optional.ofNullable(form.getFile().getOriginalFilename()).orElse("receipt");
             receiptService.uploadForBooking(
                     bookingId, current.getId(), filename, form.getFile().getContentType(), form.getFile().getBytes());

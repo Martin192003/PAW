@@ -122,25 +122,34 @@
 
         <aside class="right-col">
             <article class="card-lg booking-card">
-                <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>
+                <div class="panel-header-flex">
+                    <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>
+
+                    <c:if test="${hasReceipt and fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
+                        <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data"
+                                   action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt"
+                                   class="edit-form" id="receiptEditForm">
+
+                            <form:input type="file" path="file" id="receiptEditFile" cssStyle="display:none"
+                                        accept="image/*,application/pdf"/>
+
+                            <button type="button" class="btn btn-success" id="editReceiptBtn" title="Editar comprobante">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
+                        </form:form>
+                    </c:if>
+                </div>
                 <c:choose>
                     <c:when test="${hasReceipt}">
                         <div class="receipt-thumb">
                             <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>" alt="Receipt"/>
                         </div>
                         <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
-                            <div class="receipt-actions">
-                                <form method="post" action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>">
-                                    <button type="submit" class="btn btn-secondary">
-                                        <spring:message code="receipt.delete" text="Eliminar"/>
-                                    </button>
-                                </form>
-                                <form>
-                                    <button type="button" class="btn btn-success" onclick="window.open('<c:url value="/bookings/${booking.bookingId}/receipt"/>', '_blank')">
-                                        <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
-                                    </button>
-                                </form>
-                            </div>
+                            <form class="receipt-actions">
+                                <button type="button" class="btn btn-success" onclick="window.open('<c:url value="/bookings/${booking.bookingId}/receipt"/>', '_blank')">
+                                    <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
+                                </button>
+                            </form>
                         </c:if>
                     </c:when>
                     <c:otherwise>
@@ -149,7 +158,6 @@
                             <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data"
                                        action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt"
                                        class="upload-form" id="receiptUploadForm">
-                                <!-- Input oculto -->
                                 <form:input type="file" path="file" id="receiptFile" cssStyle="display:none"
                                             accept="image/*,application/pdf"/>
                                 <div class="upload-receipt">
@@ -233,6 +241,26 @@
         const form = document.getElementById('receiptUploadForm');
         const fileInput = document.getElementById('receiptFile');
         const btn = document.getElementById('uploadReceiptBtn');
+
+        if (!form || !fileInput || !btn) return;
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files.length > 0) {
+                form.submit();
+            }
+        });
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('receiptEditForm');
+        const fileInput = document.getElementById('receiptEditFile');
+        const btn = document.getElementById('editReceiptBtn');
 
         if (!form || !fileInput || !btn) return;
 
