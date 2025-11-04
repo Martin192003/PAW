@@ -63,7 +63,8 @@
                     </form:select>
                 </c:if>
                 <div class="filter-item" style="display:flex; flex-direction:column;">
-                    <form:input path="bookingDate" type="date" placeholder="Fecha" cssClass="filter-item"/>
+                    <spring:message code="filter.date" var="phBookingDate" text="Fecha"/>
+                    <form:input path="bookingDate" type="date" placeholder="${phBookingDate}" cssClass="filter-item"/>
                 </div>
                 <div class="filter-item" style="display:flex; flex-direction:column;">
                     <form:input path="bookingId" placeholder="${phBookingId}" cssClass="filter-item"/>
