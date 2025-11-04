@@ -14,20 +14,18 @@ body {
     overflow-x: hidden;
 }
 
-/* Contenedor principal siguiendo el estilo de bookings */
 .app-reviews {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;            /* left align the content */
+    align-items: flex-start;
     justify-content: flex-start;
     width: 100vw;
     min-height: 60vh;
     padding-top: 100px;
-    padding-left: 240px;                /* reserve space for sidebar */
+    padding-left: 240px;
     box-sizing: border-box;
 }
 
-/* Botón de volver posicionado igual que en bookings */
 .app-reviews .detail-back {
     position: fixed;
     top: 106px;
@@ -43,18 +41,16 @@ body {
     justify-content: center;
 }
 
-/* Header: selector above cards, left-aligned */
 .reviews-header {
     display: flex;
-    flex-direction: column;             /* stack selector above title/cards */
-    align-items: flex-start;            /* left alignment */
+    flex-direction: column;
+    align-items: flex-start;
     justify-content: flex-start;
-    width: calc(100% - 240px);          /* occupy remaining content width */
+    width: calc(100% - 240px);
     max-width: none;
     margin-bottom: 24px;
     gap: 12px;
 }
-
 
 .reviews-title {
     font-size: 2.2rem;
@@ -66,10 +62,8 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-
-    /* NEW */
-    align-self: center;    /* center the title horizontally inside the column header */
-    text-align: center;    /* center title text */
+    align-self: center;
+    text-align: center;
 }
 
 .reviews-title i {
@@ -77,7 +71,6 @@ body {
     font-size: 2rem;
 }
 
-/* Selector positioned above and left, compact */
 .reviews-sort-form {
     order: 0;
     display: flex;
@@ -87,7 +80,6 @@ body {
     margin: 0;
 }
 
-/* styling for select remains */
 .filter-item.filter-sort {
     background: #3c3c3c;
     color: #fff;
@@ -112,7 +104,6 @@ body {
     color: #fff;
 }
 
-/* Make the reviews list use the same content width and left-align cards */
 .reviews-list {
     width: calc(100% - 240px);
     max-width: none;
@@ -122,14 +113,13 @@ body {
     gap: 16px;
 }
 
-/* Cards wide and left-aligned */
 .card-md.review-card {
     background: #3c3c3c;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
     margin-bottom: 24px;
     padding: 20px 28px;
-    width: 100%;                         /* fill available width of reviews-list */
+    width: 100%;
     max-width: none;
     display: flex;
     flex-direction: column;
@@ -142,7 +132,6 @@ body {
     transform: scale(1.01);
 }
 
-/* Header de la reseña */
 .review-header {
     display: flex;
     justify-content: space-between;
@@ -167,7 +156,6 @@ body {
     font-weight: 700;
 }
 
-/* Badge de "Reservó mesa" con gradiente */
 .badge-guest {
     background: linear-gradient(135deg, #9c27b0, #d800b7);
     color: white;
@@ -194,7 +182,6 @@ body {
     color: #ffd700;
 }
 
-/* Cuerpo de la reseña */
 .review-body {
     display: flex;
     gap: 20px;
@@ -224,7 +211,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* Thumbnail de la foto */
 .review-thumb {
     width: 72px;
     height: 72px;
@@ -240,16 +226,13 @@ body {
     transform: scale(1.05);
 }
 
-/* Paginación siguiendo el estilo de bookings */
 .pagination {
     display: flex;
     justify-content: center;
     align-items: center;
     margin: 20px 0;
     flex-wrap: wrap;
-
-    /* NEW */
-    width: 100%;           /* span the available content area */
+    width: 100%;
     box-sizing: border-box;
 }
 
@@ -273,9 +256,9 @@ body {
     font-size: 0.95rem;
 }
 
-/* Modal overlay and content (for delete confirmation, lightboxes, etc.) */
+/* MODAL DE RESEÑAS - FUNCIONA PERFECTO */
 .reviews-modal {
-    position: fixed !important;   /* clave: nos aseguramos que no lo pisen */
+    position: fixed !important;
     inset: 0 !important;
     display: none;
     align-items: center;
@@ -285,49 +268,41 @@ body {
     padding: 20px;
 }
 
-
-/* Ensure modals open when JS toggles the 'open' class */
 .reviews-modal.open {
     display: flex !important;
 }
 
-#tableDeleteModal.modal.show .modal-content {
-    background: linear-gradient(180deg, #2b2b2b 0%, #232323 100%) !important;
-    color: #fff !important;
-    border-radius: 12px !important;
-    padding: 24px !important;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(156, 39, 176, 0.2) !important;
-    min-width: 320px !important;
-    max-width: 480px !important;
-    width: 90% !important;
-    position: relative !important;
+.review-modal-content {
+    background: linear-gradient(180deg, #2b2b2b 0%, #232323 100%);
+    border-radius: 12px;
+    padding: 24px;
+    padding-bottom: 90px; /* reserve space so absolutely-positioned button doesn't overlap text */
+    width: min(92vw, 480px);
+    max-height: 80vh;
+    overflow: auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 2px 8px rgba(156,39,176,0.2);
+    color: #fff;
+    position: relative;
 }
 
-#tableDeleteModal .modal-close {
-    position: absolute !important;
-    top: 12px !important;
-    right: 16px !important;
-    font-size: 1.8rem !important;
-    width: 32px !important;
-    height: 32px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 50% !important;
-    cursor: pointer !important;
-    color: #fff !important;
-    transition: background 0.2s !important;
+.review-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
 }
 
-#tableDeleteModal.modal.show {
-    background: rgba(0, 0, 0, 0.7) !important;
-}
-
-/* Botones bien alineados */
-#tableDeleteModal .modal-actions {
-    justify-content: flex-end !important;
-    gap: 12px !important;
-    margin-top: 20px !important;
+.review-modal-close:hover {
+    background: rgba(255,255,255,0.1);
 }
 
 body.reviews-modal-open {
@@ -336,129 +311,149 @@ body.reviews-modal-open {
     touch-action: none;
 }
 
-#tableDeleteModal .modal-close:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* On small screens make modal content scrollable if needed */
-@media (max-height: 640px) {
-    .modal-content {
-        max-height: 90vh;
-        overflow: auto;
-    }
-}
-
-/* Responsive: on small screens return to centered, stacked layout */
 @media (max-width: 900px) {
     .app-reviews {
         padding-left: 20px;
         padding-right: 20px;
     }
-
-    .app-reviews .detail-back {
-        left: 20px;
-    }
-
-    .reviews-header {
-        width: 100%;
-        align-items: center;
-        padding: 0 20px;
-    }
-
-    .reviews-list {
-        width: 100%;
-        padding: 0 20px;
-    }
-
-    .filter-item.filter-sort {
-        width: 100%;
-    }
-
-    .review-body {
-        flex-direction: column;
-    }
-
-    .review-thumb {
-        width: 100%;
-        height: 200px;
-    }
+    .app-reviews .detail-back { left: 20px; }
+    .reviews-header, .reviews-list { width: 100%; padding: 0 20px; }
+    .filter-item.filter-sort { width: 100%; }
+    .review-body { flex-direction: column; }
+    .review-thumb { width: 100%; height: 200px; }
 }
 
-/* Delete button visual (square) */
 .btn-delete-review {
-    background: #d32f2f !important; /* Rojo oscuro */
-    color: #ffffff !important;       /* Ícono blanco */
+    background: #d32f2f !important;           /* Rojo oscuro */
+    color: white !important;                  /* Ícono blanco */
     border: none !important;
     width: 36px !important;
     height: 36px !important;
-    min-width: 36px !important;
-    border-radius: 6px !important; /* cuadrado con esquinas suaves */
-    display: inline-flex !important;
+    border-radius: 0 !important; /* cuadrado */
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
     box-shadow: 0 2px 6px rgba(211, 47, 47, 0.3) !important;
-    transition: all 0.15s ease !important;
-    font-size: 0.95rem !important;
-    padding: 0 !important;
+    transition: all 0.2s ease !important;
+    font-size: 0.9rem !important;
 }
 
-.btn-delete-review:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(211,47,47,0.25) !important;
-}
 
-/* Ensure modal-actions are a flex container by default so justify-content works */
-.modal-actions {
-    display: flex !important;
-    align-items: center;
-    gap: 12px;
-}
-
-/* Centered variant should span the modal content and center its children */
-.modal-actions.centered {
-    width: 100%;
+.card-md.review-card .btn-delete-review,
+.reviews-list .card-md .btn-delete-review {
+    background: #d32f2f !important;
+    color: #fff !important;
+    border: none !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
     justify-content: center !important;
-    padding-top: 12px;
+    padding: 0 !important;
+    box-shadow: 0 2px 6px rgba(211,47,47,0.3) !important;
+    border-radius: 0 !important;
+    font-size: 0.95rem !important;
 }
 
-/* Center modal actions and style the modal delete button */
-.modal-actions.centered .modal-delete-btn {
-    background-color: #d32f2f; /* rojo */
-    color: #fff;
-    border: none;
-    align-items: center;
-    padding: 10px 18px;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(211,47,47,0.2);
-    cursor: pointer;
-}
-
-.modal-actions.centered .modal-delete-btn:hover {
-    background-color: #b71c1c;
-}
-
-/* Ensure icon inside small buttons is centered */
-.btn-delete-review i, .modal-delete-btn i {
-    font-size: 0.95rem;
-    line-height: 1;
-}
-
-/* Force delete centered independently of sibling buttons inside review modal */
-.review-modal-content .modal-actions.centered {
-    position: relative !important;
-    padding-top: 18px !important;
-    min-height: 56px; /* ensure space for vertical centering */
-}
-.review-modal-content .modal-actions.centered .modal-delete-btn {
+.reviews-modal .review-modal-content .modal-actions.centered .modal-delete-btn {
+    background-color: #d32f2f !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 10px 18px !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px rgba(211,47,47,0.2) !important;
+    cursor: pointer !important;
     position: absolute !important;
     left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    bottom: 18px !important; /* place button above modal bottom */
+    transform: translateX(-50%) !important;
 }
-.review-modal-content .modal-actions.centered .btn-secondary {
+
+.reviews-modal .review-modal-content .modal-actions.centered .btn-secondary {
     position: absolute !important;
     left: 16px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
+    bottom: 18px !important;
+}
+
+
+button.btn-delete-review,
+button.btn-delete-review i {
+    background-color: #d32f2f !important;
+    color: #ffffff !important;
+    border: none !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.95rem !important;
+    border-radius: 0 !important;
+    box-shadow: 0 2px 6px rgba(211,47,47,0.3) !important;
+}
+button.btn-delete-review:hover,
+button.btn-delete-review:focus {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 14px rgba(211,47,47,0.35) !important;
+    outline: none !important;
+}
+button.btn-delete-review:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+/* Modal confirm delete button: element selector + class for high specificity */
+button.modal-delete-btn,
+button.modal-delete-btn i {
+    background-color: #d32f2f !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 10px 18px !important;
+    border-radius: 6px !important;
+    font-size: 1rem !important;
+    box-shadow: 0 4px 12px rgba(211,47,47,0.22) !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+}
+button.modal-delete-btn:hover,
+button.modal-delete-btn:focus {
+    background-color: #b71c1c !important;
+    box-shadow: 0 6px 18px rgba(183,28,28,0.28) !important;
+    outline: none !important;
+}
+button.modal-delete-btn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+}
+
+/* Accessibility: ensure sufficient contrast when focused */
+button.btn-delete-review:focus-visible,
+button.modal-delete-btn:focus-visible {
+    box-shadow: 0 0 0 4px rgba(211,47,47,0.16) !important;
+}
+
+
+.card-md.review-card .review-user-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+}
+
+.card-md.review-card .review-user-info .review-rating {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    margin-left: 6px !important;
+    order: 2 !important;
+    white-space: nowrap !important;
+}
+
+.card-md.review-card .review-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
 }
