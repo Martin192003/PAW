@@ -211,7 +211,7 @@ public class BookingAdminController {
         rOpt.ifPresent(r -> model.addAttribute("receipt", r));
 
         Optional<User> u = userService.findById(booking.getUser().getId());
-        model.addAttribute("user", u);
+        model.addAttribute("user", u.orElse(null));
 
         model.addAttribute("booking", booking);
         model.addAttribute("table", table);
