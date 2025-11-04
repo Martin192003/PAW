@@ -273,6 +273,81 @@ body {
     font-size: 0.95rem;
 }
 
+/* Modal overlay and content (for delete confirmation, lightboxes, etc.) */
+.reviews-modal {
+    position: fixed !important;   /* clave: nos aseguramos que no lo pisen */
+    inset: 0 !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.6);
+    z-index: 100000;
+    padding: 20px;
+}
+
+
+/* Ensure modals open when JS toggles the 'open' class */
+.reviews-modal.open {
+    display: flex !important;
+}
+
+#tableDeleteModal.modal.show .modal-content {
+    background: linear-gradient(180deg, #2b2b2b 0%, #232323 100%) !important;
+    color: #fff !important;
+    border-radius: 12px !important;
+    padding: 24px !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(156, 39, 176, 0.2) !important;
+    min-width: 320px !important;
+    max-width: 480px !important;
+    width: 90% !important;
+    position: relative !important;
+}
+
+#tableDeleteModal .modal-close {
+    position: absolute !important;
+    top: 12px !important;
+    right: 16px !important;
+    font-size: 1.8rem !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    cursor: pointer !important;
+    color: #fff !important;
+    transition: background 0.2s !important;
+}
+
+#tableDeleteModal.modal.show {
+    background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Botones bien alineados */
+#tableDeleteModal .modal-actions {
+    justify-content: flex-end !important;
+    gap: 12px !important;
+    margin-top: 20px !important;
+}
+
+body.reviews-modal-open {
+    overflow: hidden !important;
+    height: 100%;
+    touch-action: none;
+}
+
+#tableDeleteModal .modal-close:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* On small screens make modal content scrollable if needed */
+@media (max-height: 640px) {
+    .modal-content {
+        max-height: 90vh;
+        overflow: auto;
+    }
+}
+
 /* Responsive: on small screens return to centered, stacked layout */
 @media (max-width: 900px) {
     .app-reviews {
@@ -307,4 +382,83 @@ body {
         width: 100%;
         height: 200px;
     }
+}
+
+/* Delete button visual (square) */
+.btn-delete-review {
+    background: #d32f2f !important; /* Rojo oscuro */
+    color: #ffffff !important;       /* Ícono blanco */
+    border: none !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    border-radius: 6px !important; /* cuadrado con esquinas suaves */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(211, 47, 47, 0.3) !important;
+    transition: all 0.15s ease !important;
+    font-size: 0.95rem !important;
+    padding: 0 !important;
+}
+
+.btn-delete-review:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(211,47,47,0.25) !important;
+}
+
+/* Ensure modal-actions are a flex container by default so justify-content works */
+.modal-actions {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Centered variant should span the modal content and center its children */
+.modal-actions.centered {
+    width: 100%;
+    justify-content: center !important;
+    padding-top: 12px;
+}
+
+/* Center modal actions and style the modal delete button */
+.modal-actions.centered .modal-delete-btn {
+    background-color: #d32f2f; /* rojo */
+    color: #fff;
+    border: none;
+    align-items: center;
+    padding: 10px 18px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(211,47,47,0.2);
+    cursor: pointer;
+}
+
+.modal-actions.centered .modal-delete-btn:hover {
+    background-color: #b71c1c;
+}
+
+/* Ensure icon inside small buttons is centered */
+.btn-delete-review i, .modal-delete-btn i {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+/* Force delete centered independently of sibling buttons inside review modal */
+.review-modal-content .modal-actions.centered {
+    position: relative !important;
+    padding-top: 18px !important;
+    min-height: 56px; /* ensure space for vertical centering */
+}
+.review-modal-content .modal-actions.centered .modal-delete-btn {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+.review-modal-content .modal-actions.centered .btn-secondary {
+    position: absolute !important;
+    left: 16px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
 }

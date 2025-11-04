@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -28,4 +29,6 @@ public interface ReviewsDao {
     void updatePhotoId(UUID reviewId, UUID photoId);
     Review upsert(User user, Club club, int rating, String description, boolean fromTableGuest);
     Optional<Review> findByUserAndClub(User user, Club club);
+    void flush();
+
 }

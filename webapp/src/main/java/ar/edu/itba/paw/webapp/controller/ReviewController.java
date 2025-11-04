@@ -138,5 +138,24 @@ public class ReviewController {
         return "userReviews";
     }
 
+   @PostMapping("/reviews/{reviewId}/delete")
+   @PreAuthorize("isAuthenticated()")
+   public String deleteReview(@PathVariable UUID reviewId,
+                              @RequestHeader(value = "referer", required = false) String referer,
+                              RedirectAttributes ra) {
+       User user = securityService.getVerifiedLoggedUser();
+       try {
+           reviewService.deleteReview(reviewId);
+           ra.addFlashAttribute("success", "Review deleted");
+       } catch (Exception e) {
+           ra.addFlashAttribute("error", "Could not delete review");
+       }
+
+       // Redirect back to referer when possible to preserve pagination/sort state; otherwise redirect to root
+       if (referer != null && !referer.isBlank()) {
+           return "redirect:" + referer;
+       }
+       return "redirect:/";
+   }
 
 }

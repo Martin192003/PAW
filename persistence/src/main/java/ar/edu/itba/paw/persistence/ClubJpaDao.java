@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -486,6 +487,14 @@ public class ClubJpaDao implements ClubDao {
                 .setParameter("ids", ids)
                 .getResultList();
     }
+
+    @Override
+    public void updateRatingAndCount(UUID clubId, BigDecimal rating, int quantity) {
+        Club managed = em.find(Club.class, clubId, LockModeType.NONE);
+        managed.setRating(rating);
+        managed.setQuantityRatings(quantity);
+    }
+
 
 
     private static String nativeClubSort(final String a, final String sort) {
