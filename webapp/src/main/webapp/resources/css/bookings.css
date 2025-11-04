@@ -5,6 +5,9 @@
     font-style: normal;
 }
 
+/* ====== Base ====== */
+:root { --sidebar-w: 180px; }
+
 body {
     font-family: Arial, sans-serif;
     background-color: #1b1a1a;
@@ -12,7 +15,6 @@ body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-
 }
 
 .app-bookings {
@@ -20,16 +22,22 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    width: 100vw;
+
+    width: 100%;
+    max-width: calc(100vw - var(--sidebar-w) - 24px);
+    margin-left: var(--sidebar-w);
+
     min-height: 60vh;
     padding-top: 100px;
     box-sizing: border-box;
 }
 
-.app-bookings h1 {
+/* ====== Títulos ====== */
+.app-bookings h1,
+.clubActivity-title {
     font-size: 2.2rem;
     color: #9c27b0;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     font-family: 'Darklinos', Arial, sans-serif;
     letter-spacing: 1px;
     text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.2);
@@ -38,10 +46,11 @@ body {
     gap: 12px;
 }
 
+/* ====== Back button ====== */
 .app-bookings .detail-back {
     position: fixed;
     top: 106px;
-    left: 190px;
+    left: calc(var(--sidebar-w) + 10px);
     z-index: 120;
     margin: 0;
 }
@@ -52,6 +61,7 @@ body {
     justify-content: center;
 }
 
+/* ====== Badges ====== */
 .status-badge {
     display: inline-block;
     margin-left: 12px;
@@ -67,19 +77,9 @@ body {
 .status-badge.is-confirmed { background:#0a3a0a; color:#a7f3a7; border-color:#1f7a1f; }
 .status-badge.is-cancelled { background:#3a0a15; color:#ffb3c1; border-color:#8a233b; }
 
-.clubActivity-title {
-    font-size: 2.2rem;
-    color: #9c27b0;
-    margin-bottom: 32px;
-    font-family: 'Darklinos', Arial, sans-serif;
-    letter-spacing: 1px;
-    text-shadow: 2px 2px 4px rgba(216, 0, 183, 0.2);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.card-lg.booking-card {
+/* ====== Cards ====== */
+.card-lg.booking-card,
+.card-md.user-booking-card {
     background: #3c3c3c;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
@@ -91,49 +91,28 @@ body {
     transition: box-shadow 0.2s, transform 0.2s;
     position: relative;
 }
-.card-lg.booking-card:hover {
-    box-shadow: 0 4px 16px rgba(156, 39, 176, 0.25);
-    transform: scale(1.03);
-}
-.card-lg.booking-card a {
-    color: inherit;
-    text-decoration: none;
-    width: 100%;
-    display: block;
-}
-.card-lg.booking-card span {
-    font-size: 1.1rem;
-    color: #fff;
-}
-.card-md.user-booking-card {
-    background: #3c3c3c;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
-    margin-bottom: 24px;
-    padding: 12px 32px;
-    width: 420px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    transition: box-shadow 0.2s, transform 0.2s;
-    position: relative;
-}
+.card-md.user-booking-card { padding: 12px 32px; align-items: flex-start; }
+
+.card-lg.booking-card:hover,
 .card-md.user-booking-card:hover {
     box-shadow: 0 4px 16px rgba(156, 39, 176, 0.25);
     transform: scale(1.03);
 }
+.card-lg.booking-card a,
 .card-md.user-booking-card a {
     color: inherit;
     text-decoration: none;
     width: 100%;
     display: block;
 }
+.card-lg.booking-card span,
 .card-md.user-booking-card span {
     font-size: 1.1rem;
-    margin-bottom: 4px;
     color: #fff;
+    margin-bottom: 4px;
 }
 
+/* Estado en esquina */
 .booking-status-container {
     position: absolute;
     right: 16px;
@@ -143,90 +122,158 @@ body {
     align-items: flex-end;
 }
 
+/* =========================================================
+   FILTROS — SIN ESPACIOS, FECHA SIEMPRE VISIBLE, ID LABEL
+   ========================================================= */
+
 .filter-container {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: stretch;
     width: 100%;
-    margin: 20px 0;
-    max-width: 1300px;
-    z-index: 20;
+    margin: 16px 0 10px;
+    gap: 0;
+    max-width: 100%;
 }
 
 .filter-bar {
+    /* start at container start; allow wrapping instead of horizontal scroll */
+    margin-left: 0;
     display: flex;
-    align-items: stretch;
+    align-items: center;
     background: #3c3c3c;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    overflow: hidden;
-    flex: 1;
+    /* allow wrap so items don't force horizontal scroll */
     flex-wrap: wrap;
-    padding: 0;
-    position: relative;
+    padding: 0 6px;
+    gap: 8px;
+    width: 100%;
+    max-width: calc(100% - 24px);
+    padding-right: 0; /* ensure button can reach edge */
 }
 
-.filter-bar > .filter-bar {
-    background: transparent;
-    box-shadow: none;
-    flex: 1;
-    padding: 0;
-}
+.filter-bar::-webkit-scrollbar { height: 8px; }
+.filter-bar::-webkit-scrollbar-thumb { background: #5a5a5a; border-radius: 8px; }
 
+/* ---------- INPUTS ---------- */
 .filter-item {
-    flex: 0 1 160px;
-    max-width: 220px;
+    /* make controls flexible so they can shrink and wrap rather than forcing a horizontal scroll */
+    flex: 1 1 180px; /* grow, shrink, base 180px */
+    min-width: 120px;
+    max-width: 420px;
     border: none;
-    font-size: 14px;
-    height: 45px;
+    font-size: 12px;
+    height: 40px;
     color: #fff;
     background: #3c3c3c;
     outline: none;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
     box-sizing: border-box;
+    padding: 0 8px;
+    position: relative;
 }
-
-.filter-item.filter-name {
-    flex: 1 1 260px;
-    max-width: none;
+.filter-item.filter-name { flex: 1 1 200px; max-width: 360px; }
+/* Make status select smaller than other controls */
+.filter-item.filter-status {
+    flex: 0 0 100px; /* compact status select */
+    min-width: 80px;
+    max-width: 140px;
 }
-
+/* Make sort select larger so options are clearer */
 .filter-item.filter-sort {
-    flex: 0 0 80px;
+    flex: 0 0 160px; /* larger sort select */
+    min-width: 120px;
+    max-width: 260px;
 }
 
-select.filter-item option {
+/* Make the hasReceipt select a bit narrower than the previous control */
+.filter-item.filter-hasReceipt,
+.filter-hasReceipt {
+    flex: 0 0 110px;    /* fixed-ish small width */
+    min-width: 90px;
+    max-width: 140px;
+}
+
+/* **ID LABEL SIEMPRE VISIBLE** */
+.filter-id {
+    position: relative;
+}
+.filter-id::before {
+    content: 'ID de la reserva';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: #aaa;
+    pointer-events: none;
+    z-index: 1;
+}
+.filter-id input {
+    padding-left: 88px !important;   /* espacio para el label */
+}
+.filter-id input:focus::before,
+.filter-id input:not(:placeholder-shown)::before {
+    color: #9c27b0;
+}
+
+/* **FECHA SIEMPRE VISIBLE** */
+input[type="date"].filter-item {
     color: #fff;
-    background: #3c3c3c;
+    -webkit-text-fill-color: #fff;
 }
-.filter-item::placeholder,
-.filter-item option[disabled] {
-    color: #ffffff;
-    opacity: 1;
+input[type="date"].filter-item::before {
+    content: attr(placeholder);
+    color: #aaa;
+    pointer-events: none;
+}
+input[type="date"].filter-item:not(:focus):not(:valid)::before {
+    content: 'Fecha';
+}
+input[type="date"].filter-item:focus::before,
+input[type="date"].filter-item:valid::before {
+    display: none;
 }
 
+
+/* ---- FIX visibilidad de fecha (WebKit/Blink) ---- */
+input[type="date"].filter-item { color: #fff; -webkit-text-fill-color: #fff; }
+input[type="date"].filter-item::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .85; }
+input[type="date"].filter-item::-webkit-datetime-edit-text { color: #fff; opacity: 0.9; }
+input[type="date"].filter-item::-webkit-datetime-edit-year-field,
+input[type="date"].filter-item::-webkit-datetime-edit-month-field,
+input[type="date"].filter-item::-webkit-datetime-edit-day-field { color: #fff; opacity: 0.9; }
+input[type="date"].filter-item::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .85; }
+
+/* ---------- BOTÓN FILTRAR ---------- */
 .btn.btn-filter {
     background: #9c27b0;
     border: none;
     color: #fff;
-    height: 60px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     cursor: pointer;
     letter-spacing: 1px;
     transition: background 0.2s;
-    margin-left: 4px;
-}
-.btn.btn-filter:hover {
-    background: #d500f9;
-}
 
+    flex: 0 0 120px;
+    height: 40px; /* match inputs so it fits exactly */
+    padding: 0 10px;
+    font-size: 12px;
+    align-self: center;
+
+    margin-left: auto !important; /* consume remaining space and push to end */
+    margin-right: 0;
+    border-radius: 0 8px 8px 0;    /* rounded on the button's right side */
+    box-shadow: none;
+}
+.btn.btn-filter:hover { background: #d500f9; }
+
+/* Reset (fuera de la barra, opcional) */
 .btn-reset {
-    display: inline-flex;
-    flex-direction: row;
+    display: none; /* si lo usás, podés activarlo según JS */
     align-items: center;
     gap: 6px;
     white-space: nowrap;
@@ -235,24 +282,24 @@ select.filter-item option {
     color: #9c27b0;
     font-size: 14px;
     cursor: pointer;
-    padding-bottom: 16px;
+    padding-left: 8px;
     transition: color 0.2s ease;
 }
-.btn-reset:hover {
-    color: #540761;
-}
-.btn-reset i {
-    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
-}
-.btn-reset:hover i {
-    transform: rotate(360deg);
+
+.filter-bar > .filter-bar {
+    display: contents;
 }
 
+.btn-reset:hover { color: #540761; }
+.btn-reset i { transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+.btn-reset:hover i { transform: rotate(360deg); }
+
+/* ====== Paginación ====== */
 .pagination {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 20px 0;
+    margin: 18px 0;
     flex-wrap: wrap;
 }
 .page-btn {
@@ -264,99 +311,29 @@ select.filter-item option {
     border-radius: 4px;
     transition: all 0.2s;
 }
-.page-btn:hover {
-    color: #b1b1b1;
-}
+.page-btn:hover { color: #b1b1b1; }
 .page-info {
     color: #ffffff;
     margin: 0 10px;
     font-size: 0.95rem;
 }
 
-@media (min-width: 1280px) {
+/* ====== Responsivo ====== */
+@media (max-width: 900px) {
+    /* stack fields vertically on small screens and make labels appear above inputs */
+    .filter-bar { flex-wrap: wrap; width: calc(100vw - 24px); max-width: calc(100vw - 24px); padding: 8px; }
+    .filter-item { flex: 1 1 100%; min-width: 0; max-width: 100%; margin: 6px 0; }
+    .btn.btn-filter { flex: 1 1 100%; margin-left: 0; height: 44px; }
+
+    /* make ID label flow above the input on mobile to avoid consuming horizontal space */
+    .filter-id::before { position: relative; left: 0; top: 0; transform: none; display: block; margin-bottom: 6px; color: #aaa; }
+    .filter-id input { padding-left: 12px !important; }
+}
+/* En mobile (sidebar suele ocultarse) mantenemos fila única con scroll */
+@media (max-width: 900px) {
+    .app-bookings { margin-left: 0; max-width: 100%; }
     .filter-bar {
-        flex-wrap: nowrap;
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
     }
 }
-@media (max-width: 900px) {
-    .card-lg.booking-card {
-        width: 100%;
-        max-width: 480px;
-    }
-    .filter-item {
-        flex: 1 1 45%;
-        max-width: none;
-    }
-    .btn.btn-filter {
-        width: 100%;
-        margin-left: 0;
-    }
-}
-.app-bookings .filter-container {
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-    gap: 6px;
-    width: 100%;
-    max-width: 950px;
-}
-
-.app-bookings form.filter-bar {
-    flex: 0 0 100%;
-}
-
-.app-bookings .filter-bar .filter-item {
-    flex: 1 1 0;
-    min-width: 0;
-    height: 52px;
-    font-size: 16px;
-    padding: 0 10px;
-    box-sizing: border-box;
-}
-
-.app-bookings .filter-bar .btn.btn-filter {
-    margin-left:0; /* antes auto */
-}
-
-.app-bookings .filter-bar .filter-item.filter-sort {
-    margin-right:0;
-}
-@media (min-width: 1200px) {
-    .app-bookings .filter-container {
-        max-width: 950px;
-    }
-}
-
-@media (max-width: 900px) {
-    .app-bookings .filter-container {
-        max-width: 100%;
-        padding: 0 8px;
-    }
-    .app-bookings .filter-bar .filter-item {
-        flex: 1 1 48%;
-        max-width: 100%;
-    }
-}
-
-.receipt-thumb {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 16px 0;
-}
-
-.receipt-thumb img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.receipt-actions {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    margin-top: 16px;
-}
-

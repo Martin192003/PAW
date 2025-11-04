@@ -198,10 +198,7 @@
     <div class="modal-content">
         <span class="modal-close" onclick="closeCancelConfirmModal()">&times;</span>
         <h3 style="margin-top:8px;"><spring:message code="confirm.cancelBooking"/></h3>
-        <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
-            <button type="button" class="btn btn-secondary" onclick="closeCancelConfirmModal()">
-                <spring:message code="button.cancel" text="Cancelar"/>
-            </button>
+        <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:center;">
             <button id="confirmCancelBtn" type="button" class="btn btn-danger">
                 <spring:message code="booking.action.confirm"/>
             </button>

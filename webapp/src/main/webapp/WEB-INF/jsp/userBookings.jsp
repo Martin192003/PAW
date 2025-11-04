@@ -77,6 +77,12 @@
                     <form:option value="start_asc"><spring:message code="filter.sort.startAsc"/></form:option>
                 </form:select>
 
+                <form:select path="hasReceipt" cssClass="filter-item filter-hasReceipt">
+                    <form:option value=""><spring:message code="receipt.filter.any" text="Todos"/></form:option>
+                    <form:option value="true"><spring:message code="receipt.filter.with" text="Con comprobante"/></form:option>
+                    <form:option value="false"><spring:message code="receipt.filter.without" text="Sin comprobante"/></form:option>
+                </form:select>
+
                 <form:hidden path="page"/>
             </div>
 
@@ -167,12 +173,14 @@
         const bookingIdInput = form.querySelector('[name="bookingId"]');
         const statusSelect = form.querySelector('[name="status"]');
         const sortSelect = form.querySelector('[name="sort"]');
+        const hasReceiptSelect = form.querySelector('[name="hasReceipt"]');
 
         function hasActiveFilters() {
             return (clubSelect && clubSelect.value !== '') ||
                 (bookingIdInput && bookingIdInput.value.trim() !== '') ||
                 (statusSelect && statusSelect.value !== '') ||
-                (sortSelect && sortSelect.value !== 'created_desc');
+                (sortSelect && sortSelect.value !== 'created_desc') ||
+                (hasReceiptSelect && hasReceiptSelect.value !== '');
         }
 
         function updateResetButton() {
@@ -183,11 +191,10 @@
             }
         }
 
-        // Verificar al cargar la página
         updateResetButton();
 
-        // Escuchar cambios en los campos
-        [clubSelect, bookingIdInput, statusSelect, sortSelect].forEach(field => {
+        // Listen changes (include hasReceiptSelect)
+        [clubSelect, bookingIdInput, statusSelect, sortSelect, hasReceiptSelect].forEach(field => {
             if (field) {
                 field.addEventListener('change', updateResetButton);
                 field.addEventListener('input', updateResetButton);

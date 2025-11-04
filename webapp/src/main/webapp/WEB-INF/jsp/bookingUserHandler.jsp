@@ -82,7 +82,12 @@
                 </div>
                 <div class="row">
                     <dt><spring:message code="placeholder.cbu" text="CBU"/></dt>
-                    <dd><c:out value="${clubCbu}"/></dd>
+                    <dd class="cbu-value ${not hasReceipt ? 'cbu-missing' : ''}" tabindex="0">
+                        <c:out value="${clubCbu}"/>
+                        <c:if test="${not hasReceipt}">
+                            <span class="missing-note">(<spring:message code="receipt.missing" text="No hay comprobante cargado."/>)</span>
+                        </c:if>
+                    </dd>
                 </div>
                 <div class="row total">
                     <dt><spring:message code="booking.total" text="Total"/></dt>
@@ -174,16 +179,14 @@
         </aside>
     </section>
 </div>
+
 <div id="cancelBookingModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeCancelBookingModal()">&times;</span>
         <h3 style="margin-top:8px;"><spring:message code="confirm.cancelBooking"/></h3>
         <form id="cancelBookingForm" method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
             <input type="hidden" name="bookingId" id="cancelBookingId" value=""/>
-            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
-                <button type="button" class="btn btn-secondary" onclick="closeCancelBookingModal()">
-                    <spring:message code="button.cancel"/>
-                </button>
+            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:center;">
                 <button type="submit" class="btn btn-danger">
                     <spring:message code="booking.action.confirm"/>
                 </button>

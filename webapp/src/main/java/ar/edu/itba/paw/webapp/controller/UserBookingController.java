@@ -129,6 +129,7 @@ public class UserBookingController {
                     form.getStatus(),
                     form.getSort(),
                     bookingDate,
+                    form.getHasReceipt(),
                     size,
                     offset
             );
@@ -138,7 +139,8 @@ public class UserBookingController {
                     form.getClubId(),
                     bookingUuid,
                     form.getStatus(),
-                    bookingDate
+                    bookingDate,
+                    form.getHasReceipt()
             );
         }
 
