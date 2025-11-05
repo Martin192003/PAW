@@ -375,7 +375,21 @@
         </div>
 
         <div class ="tab-content" id="events-tab">
-            <h2><spring:message code="label.events" text="Eventos"/></h2>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">
+                    <spring:message code="label.events" text="Eventos"/>
+                </h2>
+
+                <form method="get" action="">
+                    <input type="hidden" name="clubId" value="${club.clubId}"/>
+                    <select name="filter" onchange="this.form.submit()" class="filter-select">
+                        <option value="all" ${filter == 'all' ? 'selected' : ''}>Todos</option>
+                        <option value="past" ${filter == 'past' ? 'selected' : ''}>Pasados</option>
+                        <option value="future" ${filter == 'future' ? 'selected' : ''}>Futuros</option>
+                    </select>
+                </form>
+            </div>
+
             <table class="styled-table">
                 <thead>
                 <tr>
@@ -438,6 +452,24 @@
                 </c:forEach>
                 </tbody>
             </table>
+
+            <c:if test="${totalPages > 1}">
+                <div class="pagination">
+                    <c:if test="${page > 1}">
+                        <a href="?clubId=${club.clubId}&filter=${filter}&page=${page - 1}" class="page-btn">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </a>
+                    </c:if>
+
+                    <span class="page-info">${page} de ${totalPages}</span>
+
+                    <c:if test="${page < totalPages}">
+                        <a href="?clubId=${club.clubId}&filter=${filter}&page=${page + 1}" class="page-btn">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </c:if>
+                </div>
+            </c:if>
 
             <spring:message code="placeholder.event.name" var="phEventName"/>
             <spring:message code="placeholder.event.date" var="phEventDate"/>
@@ -1133,6 +1165,40 @@
             document.getElementById(tabId).classList.add('active');
         });
     });
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabs = document.querySelectorAll(".tab-button");
+        const contents = document.querySelectorAll(".tab-content");
+
+        // Leer tab guardada
+        const savedTab = localStorage.getItem("activeTab");
+        if (savedTab) {
+            // Sacamos active a todas
+            tabs.forEach(t => t.classList.remove("active"));
+            contents.forEach(c => c.classList.remove("active"));
+
+            // Activamos la guardada
+            document.querySelector(`.tab-button[data-tab="${savedTab}"]`)?.classList.add("active");
+            document.getElementById(savedTab)?.classList.add("active");
+        }
+
+        // Al hacer click en una tab
+        tabs.forEach(button => {
+            button.addEventListener("click", () => {
+                const tabId = button.getAttribute("data-tab");
+
+                // Guardar la tab en localStorage
+                localStorage.setItem("activeTab", tabId);
+
+                // Activar visualmente
+                tabs.forEach(t => t.classList.remove("active"));
+                contents.forEach(c => c.classList.remove("active"));
+
+                button.classList.add("active");
+                document.getElementById(tabId).classList.add("active");
+            });
+        });
+    });
+
 </script>
 </body>
 </html>

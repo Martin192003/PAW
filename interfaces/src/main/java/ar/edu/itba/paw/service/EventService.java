@@ -43,4 +43,14 @@ public interface EventService {
     public boolean isEventPhoto(UUID clubId, UUID photoId);
 
     Set<UUID> getEventPhotoIds(UUID clubId);
+
+    List<Event> findUpcomingByClub(UUID clubId, int offset, int limit);
+
+    List<Event> findPastByClub(UUID clubId, int offset, int limit);
+
+    int countUpcomingByClub(UUID clubId);
+
+    int countPastByClub(UUID clubId);
+
+
 }

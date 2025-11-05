@@ -194,4 +194,28 @@ public class EventServiceImpl implements EventService {
         List<UUID> ids = eventDao.findEventPhotoIdsByClub(clubId);
         return new HashSet<>(ids);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Event> findUpcomingByClub(UUID clubId, int offset, int limit) {
+        return eventDao.findUpcomingByClub(clubId, offset, limit);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Event> findPastByClub(UUID clubId, int offset, int limit) {
+        return eventDao.findPastByClub(clubId, offset, limit);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countUpcomingByClub(UUID clubId) {
+        return eventDao.countUpcomingByClub(clubId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countPastByClub(UUID clubId) {
+        return eventDao.countPastByClub(clubId);
+    }
 }

@@ -91,7 +91,7 @@ public class EventsController {
                 form.getDate(),
                 form.getPhotoId()
         );
-        return "redirect:/clubs/handle?clubId=" + clubId;
+        return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
 
     @PostMapping("/{eventId}/edit")
@@ -151,7 +151,7 @@ public class EventsController {
             );
         }
 
-        return "redirect:/clubs/handle?clubId=" + clubId;
+        return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
 
 
@@ -159,7 +159,7 @@ public class EventsController {
     public String deleteEvent(@PathVariable UUID eventId, @RequestParam("clubId") UUID clubId) {
         checkLoggedUser(clubId);
         eventService.delete(clubId, eventId);
-        return "redirect:/clubs/handle?clubId=" + clubId;
+        return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
 
 
@@ -192,11 +192,10 @@ public class EventsController {
         }
     }
 
-    // En EventsController.java
     private void preloadClubHandler(Model model, UUID clubId) {
         var club = clubService.getClubById(clubId).orElseThrow();
         model.addAttribute("club", club);
-        model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+        model.addAttribute("events", eventService.listByClub(clubId, 0, 10));
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("menu", menuService.getMenuByClub(clubId));
         model.addAttribute("zones", Zone.values());
@@ -225,5 +224,13 @@ public class EventsController {
         model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
         model.addAttribute("carouselPhotos", carouselPhotos);
         model.addAttribute("tableLayoutUrl", tableLayoutUrl);
+    }
+
+    @GetMapping("/page/{clubId}/{page}")
+    @ResponseBody
+    public List<Event> getEventPage(@PathVariable UUID clubId,
+                                    @PathVariable int page) {
+        int pageSize = 10;
+        return eventService.listByClub(clubId, page, pageSize);
     }
 }

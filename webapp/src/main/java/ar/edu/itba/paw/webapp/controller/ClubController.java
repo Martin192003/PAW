@@ -236,7 +236,11 @@ public class ClubController {
     }
 
     @GetMapping("/handle")
-    public String handleClub(@RequestParam("clubId") UUID clubId, Model model) {
+    public String handleClub(@RequestParam("clubId") UUID clubId,
+                             @RequestParam(name = "page", defaultValue = "1") int page,
+                             @RequestParam(name = "size", defaultValue = "10") int size,
+                             @RequestParam(name = "filter", defaultValue = "all") String filter,
+                             Model model) {
         var user = securityService.getVerifiedLoggedUser();
         if (user == null) throw new UserNotFoundException("No logueado");
         clubService.assertAdmin(clubId, user.getId());
@@ -264,7 +268,33 @@ public class ClubController {
 
         var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
         String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
-        model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+
+        int pageIndex = page - 1;
+        List<Event> events;
+        int totalEvents;
+
+        switch (filter) {
+            case "past":
+                events = eventService.findPastByClub(clubId, pageIndex, size);
+                totalEvents = eventService.countPastByClub(clubId);
+                break;
+            case "future":
+                events = eventService.findUpcomingByClub(clubId, pageIndex, size);
+                totalEvents = eventService.countUpcomingByClub(clubId);
+                break;
+            default:
+                events = eventService.listByClub(clubId, pageIndex, size);
+                totalEvents = eventService.countByClub(clubId);
+                break;
+        }
+
+        int totalPages = (int) Math.ceil((double) totalEvents / size);
+        
+        model.addAttribute("filter", filter);
+        model.addAttribute("club", club);
+        model.addAttribute("events", events);
+        model.addAttribute("page", page);
+        model.addAttribute("totalPages", totalPages);
 
         EventAddForm eventForm = new EventAddForm();
         eventForm.setClubId(club.getClubId());
