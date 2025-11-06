@@ -50,20 +50,27 @@ public class UserBookingController {
     public String reserve(@PathVariable UUID clubId,
                           @RequestParam UUID tableId,
                           @RequestParam String date,
+                          @RequestParam(value = "fromEvent", defaultValue = "false") String fromEventStr,
                           Principal principal,
                           RedirectAttributes ra) {
+
+        boolean fromEvent = "true".equals(fromEventStr);
 
         final String username = Optional.ofNullable(principal)
                 .map(Principal::getName)
                 .orElseThrow(() -> new IllegalArgumentException("El usuario no está autenticado."));
 
         try {
-            Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
+            Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username, fromEvent);
             ra.addFlashAttribute("reservationSent", true);
             return "redirect:/booking?bookingId=" + booking.getBookingId();
         } catch (InvalidDateRangeException | ValidationException e) {
             ra.addFlashAttribute("error", "invalid.date");
             ra.addFlashAttribute("reservationError", true);
+        } catch (BadRequestException e) {
+            ra.addFlashAttribute("error", "tables.notavailable");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "error.generic");
         }
         return "redirect:/clubs/" + clubId + "?date=" + date + "#dd-tables";
     }

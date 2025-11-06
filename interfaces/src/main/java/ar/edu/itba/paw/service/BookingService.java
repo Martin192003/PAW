@@ -60,7 +60,7 @@ public interface BookingService {
 
 
     /** Devuelve la reserva creada (mejor que void). */
-    Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username);
+    Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username, boolean fromEvent);
 
     /** Comando idempotente: confirma si está PENDIENTE. */
     void confirm(UUID bookingId);

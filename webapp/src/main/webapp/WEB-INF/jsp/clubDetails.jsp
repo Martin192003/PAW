@@ -32,8 +32,7 @@
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="detail-page">
     <div class="detail-back">
-        <button type="button" class="btn btn-success"
-                onclick="window.location.href='<c:url value="/clubs"/>'">
+        <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/clubs"/>'">
             <i class="fa-solid fa-arrow-left"></i>
         </button>
     </div>
@@ -99,7 +98,6 @@
             </c:choose>
         </div>
 
-
         <div class="detail-info">
             <div class="detail-details">
                 <span><i class="fa-solid fa-location-dot"></i><c:out value="${locationText}"/></span><br>
@@ -119,7 +117,6 @@
                 </div>
             </div>
         </div>
-
 
         <!-- Fila con 2 dropdowns independientes -->
         <div class="bb-row">
@@ -193,18 +190,38 @@
                                 <label for="bookingDate" class="bb-label" style="margin-bottom:6px;">
                                     <spring:message code="title.reservation"/>
                                 </label>
-                                <input id="bookingDate"
-                                       name="date"
-                                       type="date"
-                                       class="input"
-                                       value="${selectedDate != null ? selectedDate : ''}" />
-                                <p class="bb-help" id="dateHelp" style="margin-top:6px; max-width:380px;">
-                                    <spring:message code="tables.accept"/> <strong><spring:message code="tables.days"/></strong>.
-                                    <spring:message code="tables.time"/> <strong>23:59 <spring:message code="tables.to"/> 06:00</strong>
-                                    (<spring:message code="tables.nextday"/>).
-                                </p>
+
+                                <c:if test="${empty selectedDate and empty param.fromEvent}">
+                                    <c:set var="selectedDate" value="${allowedDateStrings[0]}" />
+                                </c:if>
+                                <select id="bookingDate" name="date" class="input" required style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc;">
+                                    <c:choose>
+                                        <%-- CASO: Viene desde un evento -> mostrar solo esa fecha --%>
+                                        <c:when test="${param.fromEvent == 'true' && not empty param.date}">
+                                            <fmt:parseDate value="${param.date}" pattern="yyyy-MM-dd" var="eventDateParsed" type="date"/>
+                                            <fmt:formatDate var="eventDateLabel" value="${eventDateParsed}" pattern="EEEE d 'de' MMMM" />
+                                            <option value="${param.date}" selected>
+                                                    ${eventDateLabel}
+                                            </option>
+                                        </c:when>
+
+                                        <%-- CASO NORMAL: Dropdown con jueves, viernes, sábado --%>
+                                        <c:otherwise>
+                                            <c:forEach var="dateStr" items="${allowedDateStrings}">
+                                                <c:set var="dateValue" value="${dateStr}" />
+                                                <fmt:parseDate value="${dateStr}" pattern="yyyy-MM-dd" var="parsedDate" type="date"/>
+                                                <fmt:formatDate var="dateLabel" value="${parsedDate}" pattern="EEEE d 'de' MMMM" />
+                                                <option value="${dateValue}"
+                                                        <c:if test="${selectedDate == dateValue}">selected</c:if>>
+                                                        ${dateLabel}
+                                                </option>
+                                            </c:forEach>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </select>
                             </div>
                         </div>
+                        <input type="hidden" name="fromEvent" value="${param.fromEvent == 'true' ? 'true' : 'false'}" />
 
                         <c:choose>
                             <c:when test="${empty availableTables}">
@@ -242,7 +259,6 @@
                         </c:choose>
                         <div style="display:flex; justify-content:center; margin-top:12px; align-items:center;">
                             <button id="reserveBtn" type="submit" class="btn btn-success"
-                                    <c:if test="${empty availableTables}">disabled</c:if>
                                     style="height:40px; align-self:end; width: 160px">
                                 <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
                             </button>
@@ -595,7 +611,12 @@
             if (bookingDate) {
                 bookingDate.addEventListener('change', () => {
                     if (bookingDate.value) {
-                        window.location.href = "${clubUrl}?date=" + bookingDate.value + "#dd-tables";
+                        const url = new URL(window.location);
+                        url.searchParams.set('date', bookingDate.value);
+                        if (${param.fromEvent == 'true'}) {
+                            url.searchParams.set('fromEvent', 'true');
+                        }
+                        window.location.href = url.toString() + "#dd-tables";
                     }
                 });
             }

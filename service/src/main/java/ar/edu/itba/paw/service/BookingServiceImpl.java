@@ -406,17 +406,13 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
-    public Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username) {
+    public Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username, boolean fromEvent) {
         var tableOpt = tableService.findById(tableId);
         if (tableOpt.isEmpty()) throw new TableNotFoundException(tableId);
         var table = tableOpt.get();
 
         if (!clubId.equals(table.getClubId())) {
             throw new BadRequestException("El club no existe");
-        }
-
-        if (!ALLOWED_DAYS.contains(date.getDayOfWeek())) {
-            throw new InvalidDateRangeException("Solo se puede reservar para jueves, viernes o sábado.");
         }
 
         OffsetDateTime start = date.atTime(23, 59).atZone(ZONE_ID).toOffsetDateTime();
