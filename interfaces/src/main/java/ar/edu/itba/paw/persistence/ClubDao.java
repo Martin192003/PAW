@@ -47,4 +47,7 @@ public interface ClubDao {
     int countSearchAvailable(String nameLike, Zone location, String musicGenre,
                              String priceRange, Boolean isBar, LocalDate day);
 
+    void updateRatingAndCount(UUID clubId, BigDecimal rating, int quantity);
+
+
 }

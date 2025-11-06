@@ -24,10 +24,10 @@
             <spring:message code="menu.reservations" text="Reservas"/>
         </a>
 
-        <a href="<c:url value='/users/${user.id}/reviews' />" class="sidebar-btn ${activePage == 'reviews' ? 'active' : ''}">
-            <spring:message code="reviews.title" text="Reserñas"/>
+        <a href="<c:url value='/users/${user.id}/reviews'/>"
+           class="sidebar-btn ${activePage == 'reviews' ? 'active' : ''}">
+            <span><spring:message code="reviews.title" text="Reseñas"/></span>
         </a>
-
 
 
         <a href="<c:url value='/logout'/>" class="sidebar-btn logout-btn">

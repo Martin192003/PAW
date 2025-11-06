@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.InvalidClubException;
+import ar.edu.itba.paw.model.exceptions.ReviewNotFounException;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ReviewsDao;
@@ -181,4 +182,51 @@ public class ReviewServiceImpl implements ReviewService {
     public int countByUser(UUID userId) {
         return reviewsDao.countSearch(userId, null);
     }
+
+
+
+    @Override
+    @Transactional
+    public boolean deleteReview(UUID reviewId) {
+
+        final Review review = reviewsDao.findById(reviewId)
+                .orElseThrow(() -> new ReviewNotFounException("No se encontro la review"));
+
+        final UUID clubId  = review.getClub().getClubId();
+        final UUID photoId = review.getPhotoId();
+
+        final boolean deleted = reviewsDao.delete(reviewId);
+
+        reviewsDao.flush();
+
+        boolean photoDeleted = true;
+        if (photoId != null) {
+            try {
+                photoDeleted = photoService.delete(photoId);
+            } catch (Exception e) {
+                photoDeleted = false;
+            }
+        }
+
+        if (deleted) {
+            recalcClubRating(clubId);
+        }
+
+        return deleted && photoDeleted;
+    }
+
+    /** Recalcula rating y cantidad desde DB y persiste solo esas columnas. */
+    private void recalcClubRating(UUID clubId) {
+        final Double avgOrNull = reviewsDao.averageByClubId(clubId);
+        final double avg = (avgOrNull != null) ? avgOrNull : 0.0;
+
+        final int count = reviewsDao.countSearch(null,clubId); 
+
+        final BigDecimal rounded = BigDecimal
+                .valueOf(avg)
+                .setScale(1, java.math.RoundingMode.HALF_UP);
+
+        clubDao.updateRatingAndCount(clubId, rounded, count);
+    }
+
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -210,6 +211,10 @@ public class ReviewsJpaDao implements ReviewsDao {
                 .executeUpdate();
     }
 
+    @Override
+    public void flush() {
+        em.flush();
+    }
 
     private String resolveOrderBy(String sort) {
         if (sort == null) return "ORDER BY r.createdAt DESC";

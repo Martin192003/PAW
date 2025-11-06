@@ -26,4 +26,6 @@ public interface ReviewService {
     List<Review> getReviewsByClub(UUID clubId);
     List<Review> listByUser(UUID userId, String sort, int limit, int offset);
     int countByUser(UUID userId);
-    }
+    boolean deleteReview(UUID reviewId);
+
+}
