@@ -1011,6 +1011,16 @@
             }
         }
     });
+    document.addEventListener('DOMContentLoaded', () => {
+        ['dd-menu', 'dd-tables'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const btn = el.querySelector('.bb-btn');
+            const panel = el.querySelector('.bb-panel');
+            if (btn) btn.classList.add('active');
+            if (panel) panel.classList.add('show');
+        });
+    });
 </script>
 </body>
 </html>
