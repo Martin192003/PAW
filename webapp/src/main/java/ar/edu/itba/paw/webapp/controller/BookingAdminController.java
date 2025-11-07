@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
 import ar.edu.itba.paw.model.exceptions.InvalidStatusTransitionException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.BookingSearchForm;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -13,10 +14,19 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
+import java.time.Month;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 @Controller
 @RequestMapping("/admin")
@@ -121,6 +131,11 @@ public class BookingAdminController {
             }
         }
 
+        LocalDate bookingDate = null;
+        if (form.getBookingDate() != null && !form.getBookingDate().isBlank()) {
+            bookingDate = LocalDate.parse(form.getBookingDate());
+        }
+
         List<Booking> result = List.of();
         int totalBookings = 0;
 
@@ -131,13 +146,17 @@ public class BookingAdminController {
                     bookingUuid,
                     form.getStatus(),
                     form.getSort(),
+                    bookingDate,
+                    form.getHasReceipt(),
                     size, offset
             );
             totalBookings = bookingService.countSearchForAdmin(
                     current.getId(),
                     form.getClubId(),
                     bookingUuid,
-                    form.getStatus()
+                    form.getStatus(),
+                    bookingDate,
+                    form.getHasReceipt()
             );
         }
 
@@ -154,6 +173,17 @@ public class BookingAdminController {
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(java.util.stream.Collectors.joining("&"));
+
+        Map<UUID, Date> bookingStartDates = new HashMap<>();
+        for (Booking booking : result) {
+            if (booking.getBookingStart() != null) {
+                bookingStartDates.put(
+                        booking.getBookingId(),
+                        Date.from(booking.getBookingStart().toInstant())
+                );
+            }
+        }
+        model.addAttribute("bookingStartDates", bookingStartDates);
 
         Map<UUID, Boolean> hasReceiptMap = new HashMap<>();
         for (Booking b : result) {
@@ -220,11 +250,12 @@ public class BookingAdminController {
 
 
         ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-                .withLocale(new Locale("es","AR"));
 
-        String bookingStartLocal = booking.getBookingStart().atZoneSameInstant(zone).format(fmt);
-        String bookingEndLocal   = booking.getBookingEnd().atZoneSameInstant(zone).format(fmt);
+        ZonedDateTime startLocal = booking.getBookingStart().atZoneSameInstant(zone);
+        String bookingStartLocal = formatDateEsEn(startLocal);
+
+        ZonedDateTime endLocal = booking.getBookingEnd().atZoneSameInstant(zone);
+        String bookingEndLocal = formatDateEsEn(endLocal);
 
         model.addAttribute("bookingStartLocal", bookingStartLocal);
         model.addAttribute("bookingEndLocal", bookingEndLocal);
@@ -244,5 +275,24 @@ public class BookingAdminController {
         ra.addFlashAttribute(deleted ? "success" : "info",
                 deleted ? "receipt.deleted" : "receipt.notfound");
         return "redirect:/admin/booking?bookingId=" + bookingId;
+    }
+    private static String formatDateEsEn(ZonedDateTime zdt) {
+        var date = zdt.toLocalDate();
+        if (date == null) return "";
+        Locale locale = LocaleContextHolder.getLocale();
+        boolean isEs = "es".equalsIgnoreCase(locale.getLanguage());
+
+        Month m = date.getMonth();
+        String monthName = m.getDisplayName(TextStyle.FULL, locale);
+        if (isEs) {
+            monthName = capitalize(monthName, locale); // Java devuelve "noviembre"; se capitaliza -> "Noviembre"
+        }
+
+        String connector = isEs ? " de " : " of ";
+        return date.getDayOfMonth() + connector + monthName + ", " + date.getYear();
+    }
+    private static String capitalize(String s, Locale locale) {
+        if (s == null || s.isEmpty()) return s;
+        return s.substring(0, 1).toUpperCase(locale) + s.substring(1);
     }
 }

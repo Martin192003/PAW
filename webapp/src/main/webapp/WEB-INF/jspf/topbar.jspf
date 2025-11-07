@@ -10,7 +10,23 @@
     <c:if test="${showRightButtons == true}">
         <div class="right-buttons">
             <c:if test="${showAddClubButton == true}">
-                <a href="<c:url value='/clubs/new' />" class="add-club-btn"><spring:message code="menu.addClub"/></a>
+                <c:choose>
+                    <c:when test="${activePage == 'clubs'}">
+                        <a href="<c:url value='/clubs/new' />" class="add-club-btn">
+                            <spring:message code="menu.addClub" text="Add Club"/>
+                        </a>
+                    </c:when>
+                    <c:when test="${not empty user and user.role == 'ADMIN'}">
+                        <a href="<c:url value='/admin/clubs/activity?userId=${user.id}' />" class="add-club-btn">
+                            <spring:message code="menu.manageClubs" text="Manage Clubs"/>
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="<c:url value='/clubs/new' />" class="add-club-btn">
+                            <spring:message code="menu.addClub" text="Add Club"/>
+                        </a>
+                    </c:otherwise>
+                </c:choose>
             </c:if>
             <c:if test="${showProfileButton == true}">
                 <c:if test="${not empty user}">

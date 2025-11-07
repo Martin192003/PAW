@@ -514,7 +514,6 @@
 .star-rating i.inactive {
     color: #ccc;
 }
-
 .review-photos-section {
     margin: 20px 0;
 }
@@ -552,7 +551,6 @@
     transform: scale(1.05);
     z-index: 1;
 }
-
 .review-photo-item img {
     width: 100%;
     height: 100%;
@@ -591,8 +589,6 @@
 .review-photos-carousel-wrapper .carousel-btn.right {
     right: 10px;
 }
-
-/* Responsive: 2 en pantallas medianas, 1 en móviles */
 @media (max-width: 768px) {
     .review-photo-item {
         flex: 0 0 calc(50% - 6px);
@@ -665,6 +661,9 @@
     font-size: 0.85em;
     margin-top: 6px;
     display: block;
+}
+.review-date .month {
+    text-transform: capitalize;
 }
 /* Contenedor en fila: texto a la izquierda, foto a la derecha */
 .review-item .review-row {

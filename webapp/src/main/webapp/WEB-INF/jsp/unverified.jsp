@@ -25,7 +25,7 @@
             <h1 class="verify-title"><spring:message code="title.accountNotVerified"/></h1>
             <p><spring:message code="message.accountNotVerified"/></p>
             <form action="<c:url value='/resend-verification' />" method="post" class="verify-form">
-            <input type="hidden" name="usernameOrEmail" value="${username}">
+                <input type="hidden" name="usernameOrEmail" value="${username}">
                 <div class="verify-buttons">
                     <button type="submit" class="btn btn-success">
                         <spring:message code="button.resendVerification"/>

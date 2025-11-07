@@ -44,21 +44,6 @@ public interface BookingService {
     /** Comando: lanza excepción si usuario no es dueño. */
     void cancelByUser(UUID bookingId, UUID userId);
 
-    /** Búsqueda paginada + filtros básicos */
-    List<Booking> searchPaginated(UUID userId,
-                                  UUID clubId,
-                                  UUID bookingId,
-                                  Status status,
-                                  String sort,
-                                  int limit,
-                                  int offset);
-
-    int countSearch(UUID userId,
-                    UUID clubId,
-                    UUID bookingId,
-                    Status status);
-
-
     /** Devuelve la reserva creada (mejor que void). */
     Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username, boolean fromEvent);
 
@@ -69,16 +54,12 @@ public interface BookingService {
     Booking getForUser(UUID bookingId, UUID userId);
 
     /** Vista admin con paginado. */
-    List<Booking> searchForAdminPaginated(UUID adminUserId,
-                                          UUID clubId,
-                                          UUID bookingId,
-                                          Status status,
-                                          String sort,
-                                          int limit,
-                                          int offset);
+    List<Booking> searchForAdminPaginated(UUID adminUserId, UUID clubId, UUID bookingId, Status status, String sort, LocalDate bookingDate, Boolean hasReceipt,int limit, int offset);
 
-    int countSearchForAdmin(UUID adminUserId,
-                            UUID clubId,
-                            UUID bookingId,
-                            Status status);
+    int countSearch(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
+
+    List<Booking> searchPaginated(UUID userId, UUID clubId, UUID bookingId, Status status, String sort, LocalDate bookingDate, Boolean hasReceipt, int limit, int offset);
+
+    int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
+
 }

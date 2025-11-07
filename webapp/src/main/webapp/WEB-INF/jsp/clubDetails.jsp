@@ -1,4 +1,3 @@
-
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
@@ -32,7 +31,8 @@
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="detail-page">
     <div class="detail-back">
-        <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/clubs"/>'">
+        <button type="button" class="btn btn-success"
+                onclick="window.location.href='<c:url value="/clubs"/>'">
             <i class="fa-solid fa-arrow-left"></i>
         </button>
     </div>
@@ -324,6 +324,9 @@
                     <c:when test="${not empty reviews}">
                         <ul class="reviews-list">
                             <c:forEach var="review" items="${reviews}">
+                                <fmt:formatDate value="${review.createdAt}" pattern="d" var="reviewDay"/>
+                                <fmt:formatDate value="${review.createdAt}" pattern="MMMM" var="reviewMonth"/>
+                                <fmt:formatDate value="${review.createdAt}" pattern="yyyy" var="reviewYear"/>
                                 <li class="review-item">
                                     <div class="review-item-header">
                                         <strong class="review-user"><c:out value="${review.user.username}"/></strong>
@@ -341,7 +344,6 @@
                                               <i class="fa-solid fa-star" style="color:#FFD700;"></i>
                                         </span>
                                     </div>
-
                                     <div class="review-row">
                                         <div class="review-col">
                                             <p class="review-text">
@@ -349,7 +351,7 @@
                                             </p>
                                             <small class="review-date">
                                                 <spring:message code="reviews.date" text="Fecha"/>:
-                                                <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
+                                                    ${reviewDay} <spring:message code="pagination.of"/> <span class="month">${reviewMonth}</span>, ${reviewYear}
                                             </small>
                                         </div>
 
@@ -892,8 +894,6 @@
             behavior: 'smooth'
         });
     }
-
-    // Opcional: Lightbox simple al hacer click
     function openLightbox(src) {
         const lightbox = document.createElement('div');
         lightbox.style.position = 'fixed';
@@ -916,8 +916,6 @@
         lightbox.appendChild(img);
         document.body.appendChild(lightbox);
     }
-
-    // Mostrar/ocultar flechas según scroll
     document.addEventListener('DOMContentLoaded', () => {
         const carousel = document.getElementById('reviewPhotosCarousel');
         const leftBtn = document.querySelector('.review-photos-carousel-wrapper .left');
@@ -946,7 +944,6 @@
             initModalStarRating(); // reinicia estrellas
         }
     }
-
     function closeReviewModal() {
         const modal = document.getElementById('reviewModal');
         if (modal) {
@@ -959,7 +956,6 @@
             updateModalStars(5);
         }
     }
-
     // Inicializar estrellas en el modal
     function initModalStarRating() {
         const stars = document.querySelectorAll('#modalStarRating i');
@@ -984,8 +980,6 @@
 
         updateModalStars(currentRating);
     }
-
-    // Cerrar modal al hacer click fuera
     document.addEventListener('click', (e) => {
         const modal = document.getElementById('reviewModal');
         if (modal && modal.classList.contains('show') && !e.target.closest('.modal-content') && !e.target.closest('[onclick="openReviewModal()"]')) {
@@ -1024,5 +1018,3 @@
 </script>
 </body>
 </html>
-
-

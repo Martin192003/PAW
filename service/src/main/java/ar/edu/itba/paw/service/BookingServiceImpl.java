@@ -338,6 +338,8 @@ public class BookingServiceImpl implements BookingService {
                                                  UUID bookingId,
                                                  Status status,
                                                  String sort,
+                                                 LocalDate bookingDate,
+                                                 Boolean hasReceipt,
                                                  int limit,
                                                  int offset) {
 
@@ -354,15 +356,40 @@ public class BookingServiceImpl implements BookingService {
             adminClubIds = List.of(clubId);
         }
 
-        return bookingDao.searchByClubIdsPaginated(adminClubIds, bookingId, status, sort, limit, offset);
+        return bookingDao.searchByClubIdsPaginated(adminClubIds, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public int countSearchForAdmin(UUID adminUserId,
-                                   UUID clubId,
-                                   UUID bookingId,
-                                   Status status) {
+    public List<Booking> searchPaginated(UUID userId,
+                                         UUID clubId,
+                                         UUID bookingId,
+                                         Status status,
+                                         String sort,
+                                         LocalDate bookingDate,
+                                         Boolean hasReceipt,
+                                         int limit,
+                                         int offset) {
+        return bookingDao.searchPaginated(userId, clubId, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countSearch(UUID userId,
+                           UUID clubId,
+                           UUID bookingId,
+                           Status status,
+                           LocalDate bookingDate,
+                           Boolean hasReceipt) {
+        return bookingDao.countSearch(userId, clubId, bookingId, status, bookingDate, hasReceipt);
+    }
+
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt) {
 
         List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
         if (adminClubIds == null || adminClubIds.isEmpty()) {
@@ -374,34 +401,13 @@ public class BookingServiceImpl implements BookingService {
         }
 
         List<UUID> target = (clubId != null) ? List.of(clubId) : adminClubIds;
-        return bookingDao.countByClubIds(target, bookingId, status);
+        return bookingDao.countByClubIds(target, bookingId, status, bookingDate, hasReceipt);
     }
 
 
     @Override
     public void delete(UUID bookingId) {
         bookingDao.delete(bookingId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Booking> searchPaginated(UUID userId,
-                                         UUID clubId,
-                                         UUID bookingId,
-                                         Status status,
-                                         String sort,
-                                         int limit,
-                                         int offset) {
-        return bookingDao.searchPaginated(userId, clubId, bookingId, status, sort, limit, offset);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public int countSearch(UUID userId,
-                           UUID clubId,
-                           UUID bookingId,
-                           Status status) {
-        return bookingDao.countSearch(userId, clubId, bookingId, status);
     }
 
 
