@@ -28,7 +28,7 @@
 
 <div class="panel-content">
     <button type="button" class="btn btn-success"
-            onclick="window.location.href='<c:url value="/admin/clubs/activity?userId=${club.contactInfo.id}"/>'">
+            onclick="window.location.href='<c:url value="/admin/activity"/>'">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
 
