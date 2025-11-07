@@ -72,7 +72,7 @@ public class ClubServiceImplTest {
         User contact = Mockito.mock(User.class);
         UUID contactId = UUID.randomUUID();
         Mockito.when(contact.getId()).thenReturn(contactId);
-        Mockito.when(userService.findById(contactId)).thenReturn(contact);
+        Mockito.when(userService.findById(contactId)).thenReturn(Optional.of(contact));
         Mockito.when(contact.getRole()).thenReturn(Role.USER);
         Mockito.when(contact.getEmail()).thenReturn("test@mail.com");
         Mockito.when(mockDao.create(CLUB_NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, true, null)).thenReturn(club);

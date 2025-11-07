@@ -2,13 +2,15 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <c:if test="${user != null}">
     <div class="sidebar">
-        <a href="<c:url value='/profile?userId=${user.id}' />"
-           class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">
+        <c:url var="profileUrl" value="/profile">
+            <c:param name="userId" value="${user.id}"/>
+        </c:url>
+        <a href="${profileUrl}" class="sidebar-btn ${activePage == 'profile' ? 'active' : ''}">
             <spring:message code="title.myProfile"/>
         </a>
 
         <c:if test="${user.role != null and user.role.name() == 'ADMIN'}">
-            <a href="<c:url value='/admin/clubs/activity?userId=${user.id}' />"
+            <a href="<c:url value='/admin/activity' />"
                class="sidebar-btn ${activePage == 'clubs' ? 'active' : ''}">
                 <spring:message code="title.myClubs"/>
             </a>
@@ -21,6 +23,12 @@
         <a href="<c:url value='/bookings?userId=${user.id}' />" class="sidebar-btn ${activePage == 'bookings' ? 'active' : ''}">
             <spring:message code="menu.reservations" text="Reservas"/>
         </a>
+
+        <a href="<c:url value='/users/${user.id}/reviews'/>"
+           class="sidebar-btn ${activePage == 'reviews' ? 'active' : ''}">
+            <span><spring:message code="reviews.title" text="Reseñas"/></span>
+        </a>
+
 
         <a href="<c:url value='/logout'/>" class="sidebar-btn logout-btn">
             <i class="fa-solid fa-right-from-bracket"></i>&nbsp;&nbsp;<spring:message code="button.logout"/>

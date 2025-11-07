@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.BookingSearchForm;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,8 +20,11 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.security.Principal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,20 +54,27 @@ public class UserBookingController {
     public String reserve(@PathVariable UUID clubId,
                           @RequestParam UUID tableId,
                           @RequestParam String date,
+                          @RequestParam(value = "fromEvent", defaultValue = "false") String fromEventStr,
                           Principal principal,
                           RedirectAttributes ra) {
 
+        boolean fromEvent = "true".equals(fromEventStr);
+
         final String username = Optional.ofNullable(principal)
                 .map(Principal::getName)
-                .orElseThrow(() -> new IllegalArgumentException("El usuario no está autenticado."));
+                .orElseThrow(() -> new IllegalArgumentException("error.user.notAuthenticated"));
 
         try {
-            Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
+            Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username, fromEvent);
             ra.addFlashAttribute("reservationSent", true);
             return "redirect:/booking?bookingId=" + booking.getBookingId();
         } catch (InvalidDateRangeException | ValidationException e) {
             ra.addFlashAttribute("error", "invalid.date");
             ra.addFlashAttribute("reservationError", true);
+        } catch (BadRequestException e) {
+            ra.addFlashAttribute("error", "tables.notavailable");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "error.generic");
         }
         return "redirect:/clubs/" + clubId + "?date=" + date + "#dd-tables";
     }
@@ -100,12 +111,17 @@ public class UserBookingController {
             form.setUserId(current.getId());
         }
 
+        LocalDate bookingDate = null;
+        if (form.getBookingDate() != null && !form.getBookingDate().isBlank()) {
+            bookingDate = LocalDate.parse(form.getBookingDate());
+        }
+
         UUID bookingUuid = null;
         if (form.getBookingId() != null && !form.getBookingId().isBlank()) {
             try {
                 bookingUuid = UUID.fromString(form.getBookingId().trim());
             } catch (IllegalArgumentException e) {
-                br.rejectValue("bookingId", "bookingId.invalid", "El ID de reserva ingresado no es válido.");
+                br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
             }
         }
 
@@ -119,6 +135,8 @@ public class UserBookingController {
                     bookingUuid,
                     form.getStatus(),
                     form.getSort(),
+                    bookingDate,
+                    form.getHasReceipt(),
                     size,
                     offset
             );
@@ -127,7 +145,9 @@ public class UserBookingController {
                     form.getUserId(),
                     form.getClubId(),
                     bookingUuid,
-                    form.getStatus()
+                    form.getStatus(),
+                    bookingDate,
+                    form.getHasReceipt()
             );
         }
 
@@ -143,6 +163,17 @@ public class UserBookingController {
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
+
+        Map<UUID, Date> bookingStartDates = new HashMap<>();
+        for (Booking booking : bookings) {
+            if (booking.getBookingStart() != null) {
+                bookingStartDates.put(
+                        booking.getBookingId(),
+                        Date.from(booking.getBookingStart().toInstant())
+                );
+            }
+        }
+        model.addAttribute("bookingStartDates", bookingStartDates);
 
         // Datos para la vista
         model.addAttribute("bookings", bookings);
@@ -180,7 +211,7 @@ public class UserBookingController {
         var current = securityService.getVerifiedLoggedUser();
         if (errors.hasErrors()) {
             var booking = bookingService.findById(bookingId)
-                    .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+                    .orElseThrow(() -> new BookingNotFoundException("error.booking"));
 
             model.addAttribute("booking", booking);
             model.addAttribute("user", userService.findById(booking.getUser().getId()));
@@ -213,6 +244,11 @@ public class UserBookingController {
             return "bookingUserHandler";
         }
         try {
+            try {
+                receiptService.deleteByBookingForUser(bookingId, current.getId());
+            } catch (Exception e) {
+                // Ignorar errores al eliminar recibo previo
+            }
             String filename = Optional.ofNullable(form.getFile().getOriginalFilename()).orElse("receipt");
             receiptService.uploadForBooking(
                     bookingId, current.getId(), filename, form.getFile().getContentType(), form.getFile().getBytes());
@@ -261,8 +297,8 @@ public class UserBookingController {
             return "error/error";
         }
 
-        User u = userService.findById(booking.getUser().getId());
-        model.addAttribute("user", u);
+        Optional<User> u = userService.findById(booking.getUser().getId());
+        model.addAttribute("user", u.orElse(null));
 
         ClubTable table = tableService.findById(booking.getTableId()).orElse(null);
         model.addAttribute("table", table);
@@ -283,11 +319,12 @@ public class UserBookingController {
         model.addAttribute("booking", booking);
 
         ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-                .withLocale(new Locale("es","AR"));
 
-        String bookingStartLocal = booking.getBookingStart().atZoneSameInstant(zone).format(fmt);
-        String bookingEndLocal   = booking.getBookingEnd().atZoneSameInstant(zone).format(fmt);
+        ZonedDateTime startLocal = booking.getBookingStart().atZoneSameInstant(zone);
+        String bookingStartLocal = formatDateEsEn(startLocal);
+
+        ZonedDateTime endLocal = booking.getBookingEnd().atZoneSameInstant(zone);
+        String bookingEndLocal = formatDateEsEn(endLocal);
 
         model.addAttribute("bookingStartLocal", bookingStartLocal);
         model.addAttribute("bookingEndLocal", bookingEndLocal);
@@ -340,4 +377,23 @@ public class UserBookingController {
         return "redirect:/booking?bookingId=" + bookingId;
     }
 
+    private static String formatDateEsEn(ZonedDateTime zdt) {
+        var date = zdt.toLocalDate();
+        if (date == null) return "";
+        Locale locale = LocaleContextHolder.getLocale();
+        boolean isEs = "es".equalsIgnoreCase(locale.getLanguage());
+
+        Month m = date.getMonth();
+        String monthName = m.getDisplayName(TextStyle.FULL, locale);
+        if (isEs) {
+            monthName = capitalize(monthName, locale); // Java devuelve "noviembre"; se capitaliza -> "Noviembre"
+        }
+
+        String connector = isEs ? " de " : " of ";
+        return date.getDayOfMonth() + connector + monthName + ", " + date.getYear();
+    }
+    private static String capitalize(String s, Locale locale) {
+        if (s == null || s.isEmpty()) return s;
+        return s.substring(0, 1).toUpperCase(locale) + s.substring(1);
+    }
 }

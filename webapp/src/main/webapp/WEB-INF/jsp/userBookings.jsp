@@ -3,6 +3,8 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="jfn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 
 <html>
@@ -21,7 +23,7 @@
 <body>
 
 <c:set var="showRightButtons" value="true" />
-<c:set var="showProfileButton" value="false" />
+<c:set var="showProfileButton" value="true" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <c:set var="activePage" value="bookings" />
@@ -55,6 +57,9 @@
                     </form:select>
                 </c:if>
                 <div class="filter-item" style="display:flex; flex-direction:column;">
+                    <form:input path="bookingDate" type="date" placeholder="Fecha" cssClass="filter-item"/>
+                </div>
+                <div class="filter-item" style="display:flex; flex-direction:column;">
                     <form:input path="bookingId" placeholder="${phBookingId}" cssClass="filter-item"/>
                 </div>
 
@@ -70,6 +75,12 @@
                     <form:option value="created_asc"><spring:message code="filter.sort.createdAsc"/></form:option>
                     <form:option value="start_desc"><spring:message code="filter.sort.startDesc"/></form:option>
                     <form:option value="start_asc"><spring:message code="filter.sort.startAsc"/></form:option>
+                </form:select>
+
+                <form:select path="hasReceipt" cssClass="filter-item filter-hasReceipt">
+                    <form:option value=""><spring:message code="receipt.filter.any" text="Todos"/></form:option>
+                    <form:option value="true"><spring:message code="receipt.filter.with" text="Con comprobante"/></form:option>
+                    <form:option value="false"><spring:message code="receipt.filter.without" text="Sin comprobante"/></form:option>
                 </form:select>
 
                 <form:hidden path="page"/>
@@ -99,6 +110,15 @@
                     <div class="card-md user-booking-card" style="position:relative; margin-bottom:24px;">
                         <span><b><spring:message code='booking.id' text='ID de la Reserva'/>: </b> <c:out value="${booking.bookingId}"/></span><br/>
                         <span><b><spring:message code='filter.club' text='Boliche'/>: </b> <c:out value="${clubNames[booking.bookingId]}"/></span>
+                        <c:if test="${not empty booking.bookingStart}">
+                        <fmt:formatDate value="${bookingStartDates[booking.bookingId]}" pattern="d" var="bookingDay"/>
+                        <fmt:formatDate value="${bookingStartDates[booking.bookingId]}" pattern="MMMM" var="bookingMonth"/>
+                        <fmt:formatDate value="${bookingStartDates[booking.bookingId]}" pattern="yyyy" var="bookingYear"/>
+                        <span>
+                        <b><spring:message code="booking.date" text="Date"/>: </b>
+                        ${bookingDay} <spring:message code="pagination.of"/> <span class="month">${bookingMonth}</span> ${bookingYear}
+                        </span><br/>
+                        </c:if>
                         <div class="booking-status-container">
                             <c:choose>
                                 <c:when test="${jfn:trim(jfn:toUpperCase(booking.status)) == 'PENDIENTE'}">
@@ -145,5 +165,43 @@
         </div>
     </c:if>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('filtersForm');
+        const resetBtn = document.querySelector('.btn-reset');
+        const clubSelect = form.querySelector('[name="clubId"]');
+        const bookingIdInput = form.querySelector('[name="bookingId"]');
+        const statusSelect = form.querySelector('[name="status"]');
+        const sortSelect = form.querySelector('[name="sort"]');
+        const hasReceiptSelect = form.querySelector('[name="hasReceipt"]');
+
+        function hasActiveFilters() {
+            return (clubSelect && clubSelect.value !== '') ||
+                (bookingIdInput && bookingIdInput.value.trim() !== '') ||
+                (statusSelect && statusSelect.value !== '') ||
+                (sortSelect && sortSelect.value !== 'created_desc') ||
+                (hasReceiptSelect && hasReceiptSelect.value !== '');
+        }
+
+        function updateResetButton() {
+            if (hasActiveFilters()) {
+                resetBtn.style.display = 'inline-flex';
+            } else {
+                resetBtn.style.display = 'none';
+            }
+        }
+
+        updateResetButton();
+
+        // Listen changes (include hasReceiptSelect)
+        [clubSelect, bookingIdInput, statusSelect, sortSelect, hasReceiptSelect].forEach(field => {
+            if (field) {
+                field.addEventListener('change', updateResetButton);
+                field.addEventListener('input', updateResetButton);
+            }
+        });
+    });
+</script>
+
 </body>
 </html>

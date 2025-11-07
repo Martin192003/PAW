@@ -64,7 +64,7 @@
                                 <div class="carousel-slide${status.index == 0 ? ' active' : ''}">
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${status.index + 1}"
-                                         loading="lazy" draggable="false">
+                                         loading="lazy" draggable="false" style="object-fit: contain;">
                                 </div>
                             </c:forEach>
                         </div>
@@ -98,7 +98,6 @@
             </c:choose>
         </div>
 
-
         <div class="detail-info">
             <div class="detail-details">
                 <span><i class="fa-solid fa-location-dot"></i><c:out value="${locationText}"/></span><br>
@@ -118,7 +117,6 @@
                 </div>
             </div>
         </div>
-
 
         <!-- Fila con 2 dropdowns independientes -->
         <div class="bb-row">
@@ -192,18 +190,38 @@
                                 <label for="bookingDate" class="bb-label" style="margin-bottom:6px;">
                                     <spring:message code="title.reservation"/>
                                 </label>
-                                <input id="bookingDate"
-                                       name="date"
-                                       type="date"
-                                       class="input"
-                                       value="${selectedDate != null ? selectedDate : ''}" />
-                                <p class="bb-help" id="dateHelp" style="margin-top:6px; max-width:380px;">
-                                    <spring:message code="tables.accept"/> <strong><spring:message code="tables.days"/></strong>.
-                                    <spring:message code="tables.time"/> <strong>23:59 <spring:message code="tables.to"/> 06:00</strong>
-                                    (<spring:message code="tables.nextday"/>).
-                                </p>
+
+                                <c:if test="${empty selectedDate and empty param.fromEvent}">
+                                    <c:set var="selectedDate" value="${allowedDateStrings[0]}" />
+                                </c:if>
+                                <select id="bookingDate" name="date" class="input" required style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc;">
+                                    <c:choose>
+                                        <%-- CASO: Viene desde un evento -> mostrar solo esa fecha --%>
+                                        <c:when test="${param.fromEvent == 'true' && not empty param.date}">
+                                            <fmt:parseDate value="${param.date}" pattern="yyyy-MM-dd" var="eventDateParsed" type="date"/>
+                                            <fmt:formatDate var="eventDateLabel" value="${eventDateParsed}" pattern="EEEE d 'de' MMMM" />
+                                            <option value="${param.date}" selected>
+                                                    ${eventDateLabel}
+                                            </option>
+                                        </c:when>
+
+                                        <%-- CASO NORMAL: Dropdown con jueves, viernes, sábado --%>
+                                        <c:otherwise>
+                                            <c:forEach var="dateStr" items="${allowedDateStrings}">
+                                                <c:set var="dateValue" value="${dateStr}" />
+                                                <fmt:parseDate value="${dateStr}" pattern="yyyy-MM-dd" var="parsedDate" type="date"/>
+                                                <fmt:formatDate var="dateLabel" value="${parsedDate}" pattern="EEEE d 'de' MMMM" />
+                                                <option value="${dateValue}"
+                                                        <c:if test="${selectedDate == dateValue}">selected</c:if>>
+                                                        ${dateLabel}
+                                                </option>
+                                            </c:forEach>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </select>
                             </div>
                         </div>
+                        <input type="hidden" name="fromEvent" value="${param.fromEvent == 'true' ? 'true' : 'false'}" />
 
                         <c:choose>
                             <c:when test="${empty availableTables}">
@@ -239,12 +257,12 @@
                                 </ul>
                             </c:otherwise>
                         </c:choose>
-
-                        <button id="reserveBtn" type="submit" class="btn btn-success"
-                                <c:if test="${empty availableTables}">disabled</c:if>
-                                style="height:40px; align-self:end;">
-                            <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
-                        </button>
+                        <div style="display:flex; justify-content:center; margin-top:12px; align-items:center;">
+                            <button id="reserveBtn" type="submit" class="btn btn-success"
+                                    style="height:40px; align-self:end; width: 160px">
+                                <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -255,41 +273,30 @@
         </div>
 
         <c:if test="${not empty reviewPhotos}">
-            <!-- Usa el mismo ID que el CSS espera -->
-            <div id="club-carousel" class="photo-carousel review-carousel">
-                <h3><i class="fa-solid fa-images"></i>
-                    <spring:message code="reviews.photos" text="Fotos de reseñas"/>
-                </h3>
+            <div class="review-photos-section">
+                <h3><i class="fa-solid fa-images"></i> <spring:message code="reviews.photos" text="Fotos de reseñas"/></h3>
 
-                <div class="carousel-container">
-                    <div class="carousel-track">
-                        <c:forEach var="ph" items="${reviewPhotos}" varStatus="st">
-                            <div class="carousel-slide${st.index == 0 ? ' active' : ''}">
+                <div class="review-photos-carousel-wrapper">
+                    <button class="carousel-btn left" onclick="scrollReviewPhotos(-1)">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <div class="review-photos-carousel" id="reviewPhotosCarousel">
+                        <c:forEach var="ph" items="${reviewPhotos}">
+                            <div class="review-photo-item">
                                 <img src="<c:url value='/photos/${ph.photoId}'/>"
-                                     alt="Foto de reseña ${st.index + 1}"
-                                     loading="lazy" draggable="false">
+                                     alt="Foto de reseña"
+                                     loading="lazy"
+                                     onclick="openLightbox(this.src)"
+                                     style="cursor: pointer;" />
                             </div>
                         </c:forEach>
                     </div>
 
-                    <c:if test="${fn:length(reviewPhotos) > 1}">
-                        <button class="carousel-btn carousel-prev" type="button">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <button class="carousel-btn carousel-next" type="button">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                        <div class="carousel-counter">—</div>
-                    </c:if>
+                    <button class="carousel-btn right" onclick="scrollReviewPhotos(1)">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
                 </div>
-
-                <c:if test="${fn:length(reviewPhotos) > 1}">
-                    <div class="carousel-indicators">
-                        <c:forEach begin="0" end="${fn:length(reviewPhotos) - 1}" var="i">
-                            <button class="carousel-dot${i == 0 ? ' active' : ''}" type="button"></button>
-                        </c:forEach>
-                    </div>
-                </c:if>
             </div>
         </c:if>
 
@@ -301,32 +308,154 @@
         <!-- Reviews: listado -->
         <section id="reviews" class="reviews-list-section">
             <div class="contact-card reviews-card">
-                <h3 class="contact-title">
-                    <span><spring:message code="reviews.title" text="Reseñas"/></span>
-                </h3>
+                <div class="review-header">
+                    <h3 class="contact-title">
+                        <span><spring:message code="reviews.title" text="Reseñas"/></span>
+                    </h3>
+
+                    <c:if test="${isLoggedIn}">
+                        <button type="button" class="btn btn-primary" onclick="openReviewModal()" style="margin-bottom: 15px">
+                            <i class="fa-solid fa-star"></i> <spring:message code="reviews.add" text="Dejar una reseña"/>
+                        </button>
+                    </c:if>
+                </div>
 
                 <c:choose>
                     <c:when test="${not empty reviews}">
                         <ul class="reviews-list">
                             <c:forEach var="review" items="${reviews}">
+                                <fmt:formatDate value="${review.createdAt}" pattern="d" var="reviewDay"/>
+                                <fmt:formatDate value="${review.createdAt}" pattern="MMMM" var="reviewMonth"/>
+                                <fmt:formatDate value="${review.createdAt}" pattern="yyyy" var="reviewYear"/>
                                 <li class="review-item">
                                     <div class="review-item-header">
                                         <strong class="review-user"><c:out value="${review.user.username}"/></strong>
+
+                                        <!-- Badge si reservó mesa -->
+                                        <c:if test="${review.fromTableGuest}">
+                                            <span class="badge-guest">
+                                              <i class="fa-solid fa-ticket"></i>
+                                              <spring:message code="reviews.badge.guest" text="Reservó mesa"/>
+                                            </span>
+                                        </c:if>
+
                                         <span class="review-rating" aria-label="rating">
-                                            ${review.rating}
-                                            <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                                              ${review.rating}
+                                              <i class="fa-solid fa-star" style="color:#FFD700;"></i>
                                         </span>
                                     </div>
-                                    <p class="review-text">
-                                        <c:out value="${review.description}"/>
-                                    </p>
-                                    <small class="review-date">
-                                        <spring:message code="reviews.date" text="Fecha"/>:
-                                        <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
-                                    </small>
+                                    <div class="review-row">
+                                        <div class="review-col">
+                                            <p class="review-text">
+                                                <c:out value="${review.description}"/>
+                                            </p>
+                                            <small class="review-date">
+                                                <spring:message code="reviews.date" text="Fecha"/>:
+                                                    ${reviewDay} <spring:message code="pagination.of"/> <span class="month">${reviewMonth}</span>, ${reviewYear}
+                                            </small>
+                                        </div>
+
+                                        <c:if test="${not empty review.photoId}">
+                                            <img class="review-thumb"
+                                                 src="<c:url value='/photos/${review.photoId}'/>"
+                                                 alt="Foto de reseña de ${review.user.username}"
+                                                 loading="lazy"
+                                                 onclick="openLightbox(this.src)" />
+                                        </c:if>
+                                    </div>
                                 </li>
                             </c:forEach>
                         </ul>
+
+                        <!-- Paginación y resumen -->
+                        <c:set var="pLimit"  value="${limit != null ? limit : 10}" />
+                        <c:set var="pOffset" value="${offset != null ? offset : 0}" />
+                        <c:set var="pTotal"  value="${totalReviews != null ? totalReviews : 0}" />
+
+                        <c:set var="currentPage" value="${(pOffset / pLimit) + 1}" />
+                        <c:set var="totalPages"  value="${(pTotal + pLimit - 1) / pLimit}" />
+
+                        <c:if test="${pTotal > 0}">
+                            <c:set var="fromIdx" value="${pOffset + 1}" />
+                            <c:set var="toIdx"   value="${pOffset + reviews.size()}" />
+
+                            <!-- RESUMEN SIN SELECTOR -->
+                            <div class="reviews-summary"
+                                 style="display:flex; justify-content:flex-start; align-items:center; gap:12px; margin-top:10px;">
+                                <div class="reviews-count">
+                                    <spring:message code="pagination.showing" text="Mostrando"/>
+                                        ${fromIdx}–${toIdx} / ${pTotal}
+                                </div>
+                            </div>
+
+                            <!-- (El nav de paginación queda igual que antes) -->
+                            <c:if test="${totalPages > 1}">
+                                <nav class="pagination" aria-label="Reviews pagination" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                                    <!-- Prev -->
+                                    <c:set var="prevOffset" value="${pOffset - pLimit}" />
+                                    <c:choose>
+                                        <c:when test="${prevOffset >= 0}">
+                                            <c:url var="prevUrl" value="/clubs/${club.clubId}">
+                                                <c:param name="date"   value="${selectedDate}"/>
+                                                <c:param name="sort"   value="${sort}"/>
+                                                <c:param name="limit"  value="${pLimit}"/>
+                                                <c:param name="offset" value="${prevOffset}"/>
+                                            </c:url>
+                                            <a class="btn btn-secondary" href="${prevUrl}#reviews" rel="prev" aria-label="Anterior">&laquo;</a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="btn btn-secondary" aria-disabled="true" style="opacity:.5; pointer-events:none;">&laquo;</span>
+                                        </c:otherwise>
+                                    </c:choose>
+
+                                    <!-- Ventana de páginas (máx 7) -->
+                                    <c:set var="startPage" value="${currentPage - 3}" />
+                                    <c:if test="${startPage < 1}"><c:set var="startPage" value="1" /></c:if>
+                                    <c:set var="endPage" value="${startPage + 6}" />
+                                    <c:if test="${endPage > totalPages}"><c:set var="endPage" value="${totalPages}" /></c:if>
+                                    <c:if test="${endPage - startPage < 6}">
+                                        <c:set var="startPage" value="${endPage - 6}" />
+                                        <c:if test="${startPage < 1}"><c:set var="startPage" value="1" /></c:if>
+                                    </c:if>
+
+                                    <c:forEach var="pg" begin="${startPage}" end="${endPage}">
+                                        <c:set var="pageOffset" value="${(pg - 1) * pLimit}" />
+                                        <c:choose>
+                                            <c:when test="${pg == currentPage}">
+                                                <span class="btn btn-primary" aria-current="page">${pg}</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:url var="pageUrl" value="/clubs/${club.clubId}">
+                                                    <c:param name="date"   value="${selectedDate}"/>
+                                                    <c:param name="sort"   value="${sort}"/>
+                                                    <c:param name="limit"  value="${pLimit}"/>
+                                                    <c:param name="offset" value="${pageOffset}"/>
+                                                </c:url>
+                                                <a class="btn btn-secondary" href="${pageUrl}#reviews">${pg}</a>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:forEach>
+
+                                    <!-- Next -->
+                                    <c:set var="nextOffset" value="${pOffset + pLimit}" />
+                                    <c:choose>
+                                        <c:when test="${nextOffset < pTotal}">
+                                            <c:url var="nextUrl" value="/clubs/${club.clubId}">
+                                                <c:param name="date"   value="${selectedDate}"/>
+                                                <c:param name="sort"   value="${sort}"/>
+                                                <c:param name="limit"  value="${pLimit}"/>
+                                                <c:param name="offset" value="${nextOffset}"/>
+                                            </c:url>
+                                            <a class="btn btn-secondary" href="${nextUrl}#reviews" rel="next" aria-label="Siguiente">&raquo;</a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="btn btn-secondary" aria-disabled="true" style="opacity:.5; pointer-events:none;">&raquo;</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </nav>
+                            </c:if>
+                        </c:if>
+
                     </c:when>
                     <c:otherwise>
                         <p class="no-reviews">
@@ -336,68 +465,11 @@
                 </c:choose>
             </div>
         </section>
-
-        <c:if test="${isLoggedIn}">
-            <section class="review-section">
-                <div class="contact-card review-card">
-                    <div class="review-header">
-                        <h3 class="contact-title">
-                            <span><spring:message code="reviews.add" text="Dejar una reseña"/></span>
-                        </h3>
-                        <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
-                    </div>
-
-                    <c:url var="reviewAction" value="/clubs/${club.clubId}/reviews"/>
-
-                    <form:form method="post" modelAttribute="reviewForm"
-                          action="${reviewAction}"
-                          cssClass="review-form"
-                          enctype="multipart/form-data">
-                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-
-                        <div class="form-group">
-                            <label for="rating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
-                            <select name="rating" id="rating" class="form-control" required>
-                                <c:forEach var="i" begin="1" end="5">
-                                    <option value="${i}">${i}</option>
-                                </c:forEach>
-                            </select>
-
-                            <label for="photo" style="margin-top:16px"><spring:message code="reviews.photo" text="Foto (opcional)"/></label>
-                            <input type="file" id="photo" name="photo" accept="image/*" class="form-control"/>
-                            <small class="bb-help"><spring:message code="reviews.photo.help"
-                                                                   text="Formatos: JPG/PNG/WebP. Máx. 5MB."/></small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="description"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
-                            <form:textarea path="description" id="description" cssClass="form-control"/>
-                            <form:errors path="description" cssClass="formError"/>
-                        </div>
-
-                        <div class="contact-buttons">
-                            <button type="button" class="btn btn-secondary"
-                                    onclick="window.location.hash='#reviews';">
-                                <spring:message code="button.cancel" text="Cancelar"/>
-                            </button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa-solid fa-paper-plane"></i>
-                                <spring:message code="reviews.submit" text="Enviar reseña"/>
-                            </button>
-                        </div>
-                    </form:form>
-                </div>
-            </section>
-        </c:if>
-
-
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const address = "${club.location}"; // dirección guardada en la DB
-
-            let lat = -34.5891429; // coordenadas por defecto
-            let lng = -58.3961641;
+            const address = "${club.location}";
+            let lat = -34.5891429, lng = -58.3961641;
 
             try {
                 const response = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(address));
@@ -405,14 +477,21 @@
                 if (results && results.length > 0) {
                     lat = results[0].lat;
                     lng = results[0].lon;
-                } else {
-                    console.warn("No se encontró la ubicación, usando coordenadas por defecto");
                 }
-            } catch (error) {
-                console.error("Error al geocodificar la dirección:", error);
+            } catch (e) {
+                console.error("Error al geocodificar:", e);
             }
 
-            const map = L.map('clubMap').setView([lat, lng], 16);
+            const map = L.map('clubMap', {
+                center: [lat, lng],
+                zoom: 16,
+                zoomControl: false,
+                dragging: false,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+                keyboard: false
+            });
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
@@ -421,6 +500,30 @@
             L.marker([lat, lng]).addTo(map)
                 .bindPopup(`<b>${"${club.clubName}"}</b><br>${address}`)
                 .openPopup();
+
+            // Estado de interacción
+            let interactive = false;
+
+            // Escuchamos el click en el contenedor del mapa
+            const mapContainer = document.getElementById('clubMap');
+            mapContainer.style.cursor = "pointer";
+
+            mapContainer.addEventListener('click', () => {
+                if (!interactive) {
+                    // Activar interacción en el siguiente ciclo de event loop
+                    setTimeout(() => {
+                        map.dragging.enable();
+                        map.scrollWheelZoom.enable();
+                        map.doubleClickZoom.enable();
+                        map.boxZoom.enable();
+                        map.keyboard.enable();
+                        L.control.zoom({ position: 'topright' }).addTo(map);
+                        mapContainer.style.cursor = "grab";
+                        interactive = true;
+                        console.log("Mapa ahora es interactivo");
+                    }, 50);
+                }
+            });
         });
     </script>
     <c:if test="${not empty reservationSent}">
@@ -510,7 +613,12 @@
             if (bookingDate) {
                 bookingDate.addEventListener('change', () => {
                     if (bookingDate.value) {
-                        window.location.href = "${clubUrl}?date=" + bookingDate.value + "#dd-tables";
+                        const url = new URL(window.location);
+                        url.searchParams.set('date', bookingDate.value);
+                        if (${param.fromEvent == 'true'}) {
+                            url.searchParams.set('fromEvent', 'true');
+                        }
+                        window.location.href = url.toString() + "#dd-tables";
                     }
                 });
             }
@@ -571,34 +679,108 @@
         function cerrarModal() {
             window.location.href = "${clubUrl}";
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const stars = document.querySelectorAll('#starRating i');
+            const hiddenInput = document.getElementById('rating');
+            let currentRating = 5; // valor por defecto
+
+            const updateStars = (value) => {
+                stars.forEach(star => {
+                    star.classList.toggle('inactive', star.dataset.value > value);
+                });
+            };
+
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const value = parseInt(star.dataset.value);
+                    currentRating = value;
+                    hiddenInput.value = value;
+                    updateStars(value);
+                });
+
+                // efecto hover (opcional)
+                star.addEventListener('mouseenter', () => {
+                    updateStars(star.dataset.value);
+                });
+
+                star.addEventListener('mouseleave', () => {
+                    updateStars(currentRating);
+                });
+            });
+
+            // inicializa con todas activas
+            updateStars(currentRating);
+        });
     </script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </div>
-</div>
-<!-- Pop-up de confirmación de reserva -->
 <div id="reservationToast" class="toast-popup" style="display:none;">
     <i class="fa-solid fa-circle-check" style="color:#4caf50; font-size:24px;"></i>
     <span><spring:message code="reservation.sent"/></span>
 </div>
 
-<!-- Modal: disponibilidad de mesas para el evento (con estilos mínimos) -->
-<style>
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999}
-    .modal.show{display:flex}
-    .modal-content{background:#222;color:#fff;border-radius:10px;min-width:280px;max-width:520px;width:90%;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
-    .modal-content .modal-close{float:right;font-size:24px;cursor:pointer}
-    .modal-actions{margin-top:14px;display:flex;gap:10px;justify-content:flex-end}
-</style>
-
 <div id="eventAvailabilityModal" class="modal" aria-hidden="true" role="dialog">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEventAvailabilityModal()">&times;</span>
-        <h3 style="margin:0 0 10px;">Disponibilidad para el evento</h3>
+        <h3 style="margin:0 0 10px;"><spring:message code="event.availability.title"/></h3>
         <p id="eventAvailabilityText" style="margin:0 0 14px;"></p>
-        <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeEventAvailabilityModal()">Cerrar</button>
-            <button type="button" class="btn btn-success" onclick="closeEventAvailabilityModal()">OK</button>
+        <div class="modal-buttons">
+            <button type="button" class="btn btn-success" onclick="closeEventAvailabilityModal()"><spring:message code="event.availability.ok"/></button>
         </div>
+    </div>
+</div>
+<div id="reviewModal" class="modal" aria-hidden="true" role="dialog" >
+    <div class="modal-content" style="max-width: 520px; width: 90%;">
+        <span class="modal-close" onclick="closeReviewModal()">&times;</span>
+
+        <div class="review-modal-header" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size:26px"><spring:message code="reviews.add" text="Dejar una reseña"/></h3>
+            <span class="form-text-required"><spring:message code="form.required" text="Campos obligatorios"/></span>
+        </div>
+
+        <c:url var="reviewAction" value="/clubs/${club.clubId}/reviews"/>
+
+        <form:form method="post" modelAttribute="reviewForm"
+                   action="${reviewAction}"
+                   cssClass="review-form"
+                   enctype="multipart/form-data"
+                   id="reviewModalForm">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+
+            <div class="form-group">
+                <label for="modalRating"><spring:message code="reviews.rating" text="Puntuación"/> *</label>
+                <div id="modalStarRating" class="star-rating">
+                    <i class="fa-solid fa-star" data-value="1"></i>
+                    <i class="fa-solid fa-star" data-value="2"></i>
+                    <i class="fa-solid fa-star" data-value="3"></i>
+                    <i class="fa-solid fa-star" data-value="4"></i>
+                    <i class="fa-solid fa-star" data-value="5"></i>
+                </div>
+                <input type="hidden" name="rating" id="modalRating" value="5" />
+            </div>
+
+            <div class="form-group" style="margin-top: 16px;">
+                <label for="modalPhoto"><spring:message code="reviews.photo" text="Foto (opcional)"/></label>
+                <input type="file" id="modalPhoto" name="photo" accept="image/*" class="form-control"/>
+            </div>
+
+            <div class="form-group" style="margin-top: 16px;">
+                <label for="modalDescription"><spring:message code="reviews.comment" text="Mensaje"/> *</label>
+                <form:textarea path="description" id="modalDescription" cssClass="form-control" rows="4"/>
+                <form:errors path="description" cssClass="error"/>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeReviewModal()">
+                    <spring:message code="button.cancel" text="Cancelar"/>
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <spring:message code="reviews.submit" text="Enviar reseña"/>
+                </button>
+            </div>
+        </form:form>
     </div>
 </div>
 
@@ -672,24 +854,167 @@
             var params = new URLSearchParams(window.location.search);
             var fromEvent = params.get('fromEvent') === 'true';
             var dateParam = params.get('date');
-            if(!fromEvent || !dateParam) return;
+            if (!fromEvent || !dateParam) return;
 
-            // 1) Conteo del servidor (si availableTables está en el modelo)
-            var serverCount = Number('${empty availableTables ? 0 : fn:length(availableTables)}'.replace(/[^0-9]/g,''));
-            if(isNaN(serverCount)) serverCount = 0;
+            var serverCount = Number('<c:out value="${empty availableTables ? 0 : fn:length(availableTables)}"/>'.replace(/[^0-9]/g,''));
+            if (isNaN(serverCount)) serverCount = 0;
 
-            // 2) Fallback: contar ítems renderizados en la lista de mesas
             var domCount = document.querySelectorAll('.table-list li').length;
 
             var availableCount = Math.max(serverCount, domCount);
 
-            var msg = (availableCount > 0)
-                ? ('Quedan ' + availableCount + ' mesas disponibles para el evento (' + dateParam + ').')
-                : ('Se agotaron las mesas para el evento (' + dateParam + ').');
+            const availableTpl = `<spring:message code="event.availability.available"/>`;
+            const soldoutTpl  = `<spring:message code="event.availability.soldout"/>`;
+
+            function formatTpl(tpl, ...args) {
+                return tpl.replace(/\{(\d+)\}/g, (m, idx) => {
+                    const i = Number(idx);
+                    return (typeof args[i] !== 'undefined') ? args[i] : m;
+                });
+            }
+
+            const msg = (availableCount > 0)
+                ? formatTpl(availableTpl, availableCount, dateParam)
+                : formatTpl(soldoutTpl, dateParam);
 
             openEventAvailabilityModal(msg);
         });
+
     })();
+    function scrollReviewPhotos(direction) {
+        const carousel = document.getElementById('reviewPhotosCarousel');
+        if (!carousel) return;
+
+        const itemWidth = carousel.querySelector('.review-photo-item').offsetWidth;
+        const gap = 12; // del CSS
+        const scrollAmount = (itemWidth + gap) * 3; // 3 items visibles
+
+        carousel.scrollBy({
+            left: direction * scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+    function openLightbox(src) {
+        const lightbox = document.createElement('div');
+        lightbox.style.position = 'fixed';
+        lightbox.style.inset = '0';
+        lightbox.style.background = 'rgba(0,0,0,0.9)';
+        lightbox.style.display = 'flex';
+        lightbox.style.alignItems = 'center';
+        lightbox.style.justifyContent = 'center';
+        lightbox.style.zIndex = '10000';
+        lightbox.style.cursor = 'pointer';
+        lightbox.onclick = () => lightbox.remove();
+
+        const img = document.createElement('img');
+        img.src = src;
+        img.style.maxWidth = '90%';
+        img.style.maxHeight = '90%';
+        img.style.borderRadius = '12px';
+        img.style.boxShadow = '0 0 20px rgba(0,0,0,0.5)';
+
+        lightbox.appendChild(img);
+        document.body.appendChild(lightbox);
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const carousel = document.getElementById('reviewPhotosCarousel');
+        const leftBtn = document.querySelector('.review-photos-carousel-wrapper .left');
+        const rightBtn = document.querySelector('.review-photos-carousel-wrapper .right');
+
+        if (!carousel || !leftBtn || !rightBtn) return;
+
+        function updateButtons() {
+            leftBtn.style.opacity = carousel.scrollLeft <= 0 ? '0.3' : '1';
+            leftBtn.style.pointerEvents = carousel.scrollLeft <= 0 ? 'none' : 'auto';
+
+            const atEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10;
+            rightBtn.style.opacity = atEnd ? '0.3' : '1';
+            rightBtn.style.pointerEvents = atEnd ? 'none' : 'auto';
+        }
+
+        carousel.addEventListener('scroll', updateButtons);
+        updateButtons(); // inicial
+    });
+    function openReviewModal() {
+        const modal = document.getElementById('reviewModal');
+        if (modal) {
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden'; // evita scroll de fondo
+            initModalStarRating(); // reinicia estrellas
+        }
+    }
+    function closeReviewModal() {
+        const modal = document.getElementById('reviewModal');
+        if (modal) {
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            // reset form
+            document.getElementById('reviewModalForm').reset();
+            document.getElementById('modalRating').value = '5';
+            updateModalStars(5);
+        }
+    }
+    // Inicializar estrellas en el modal
+    function initModalStarRating() {
+        const stars = document.querySelectorAll('#modalStarRating i');
+        const hiddenInput = document.getElementById('modalRating');
+        let currentRating = 5;
+
+        const updateModalStars = (value) => {
+            stars.forEach(star => {
+                star.classList.toggle('inactive', star.dataset.value > value);
+            });
+        };
+
+        stars.forEach(star => {
+            star.onclick = () => {
+                currentRating = parseInt(star.dataset.value);
+                hiddenInput.value = currentRating;
+                updateModalStars(currentRating);
+            };
+            star.onmouseenter = () => updateModalStars(star.dataset.value);
+            star.onmouseleave = () => updateModalStars(currentRating);
+        });
+
+        updateModalStars(currentRating);
+    }
+    document.addEventListener('click', (e) => {
+        const modal = document.getElementById('reviewModal');
+        if (modal && modal.classList.contains('show') && !e.target.closest('.modal-content') && !e.target.closest('[onclick="openReviewModal()"]')) {
+            closeReviewModal();
+        }
+    });
+
+    // Cerrar con ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeReviewModal();
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Busca si hay algún elemento con clase "error" dentro del modal de reseña
+        const hasErrors = document.querySelector('#reviewModal .error') !== null;
+
+        if (hasErrors) {
+            // Si hay errores, muestra el modal automáticamente
+            const modal = document.getElementById('reviewModal');
+            if (modal) {
+                modal.classList.add('show');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden'; // Evita que se pueda scrollear el fondo
+            }
+        }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        ['dd-menu', 'dd-tables'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const btn = el.querySelector('.bb-btn');
+            const panel = el.querySelector('.bb-panel');
+            if (btn) btn.classList.add('active');
+            if (panel) panel.classList.add('show');
+        });
+    });
 </script>
 </body>
 </html>

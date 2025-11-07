@@ -12,6 +12,7 @@ import ar.edu.itba.paw.service.UserService;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -33,8 +34,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public User findById(final UUID id) {
-        return userDao.findById(id).orElse(null);
+    public Optional<User> findById(final UUID id) {
+        return userDao.findById(id);
     }
 
     @Override

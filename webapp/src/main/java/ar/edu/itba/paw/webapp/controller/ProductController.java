@@ -50,7 +50,7 @@ public class ProductController {
         UUID clubId = form.getClubId();
 
         var user = securityService.getVerifiedLoggedUser();
-        if (user == null) throw new UserNotFoundException("No logueado");
+        if (user == null) throw new UserNotFoundException("error.notLoggedIn");
         clubService.assertAdmin(clubId, user.getId());
 
         if (errors.hasErrors()) {
@@ -114,7 +114,7 @@ public class ProductController {
     ) {
         UUID clubId = form.getClubId();
         var user = securityService.getVerifiedLoggedUser();
-        if (user == null) throw new UserNotFoundException("No logueado");
+        if (user == null) throw new UserNotFoundException("error.notLoggedIn");
         clubService.assertAdmin(clubId, user.getId());
 
         if (errors.hasErrors()) {
