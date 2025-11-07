@@ -46,23 +46,24 @@ public class PhotoController {
                          Principal principal,
                          RedirectAttributes redirectAttributes) throws IOException {
         log.info("Attempting to upload photo for clubId: {}", clubId);
+
         try {
             String userEmail = principal != null ? principal.getName() : null;
             log.info("User email: {}, File size: {}", userEmail, file.getSize());
             UUID photoId = photoService.uploadPhotoForClub(clubId, userEmail, file);
             log.info("Photo uploaded successfully, photoId: {}", photoId);
-            redirectAttributes.addFlashAttribute("success", "Imagen subida correctamente.");
+            redirectAttributes.addFlashAttribute("success", "photo.upload.success");
             return "redirect:/clubs/handle?clubId=" + clubId;
         } catch (IllegalArgumentException e) {
             log.error("Error uploading photo: {}", e.getMessage());
-            String errorMsg = e.getMessage().contains("empty") ? "Por favor, selecciona una imagen válida." :
-                    e.getMessage().contains("User not found") ? "Usuario no encontrado." :
-                            "Error al subir la imagen.";
+            String errorMsg = e.getMessage().contains("empty") ? "photo.upload.empty" :
+                    e.getMessage().contains("User not found") ? "error.user.notfound" :
+                            "photo.upload.error";
             redirectAttributes.addFlashAttribute("error", errorMsg);
             return "redirect:/clubs/handle?clubId=" + clubId;
         } catch (Exception e) {
             log.error("Unexpected error uploading photo: {}", e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("error", "Error inesperado al subir la imagen.");
+            redirectAttributes.addFlashAttribute("error", "photo.upload.unexpected");
             return "redirect:/clubs/handle?clubId=" + clubId;
         }
     }
@@ -205,11 +206,11 @@ public class PhotoController {
     private void checkLoggedUser(UUID clubId) {
         User user = securityService.getVerifiedLoggedUser();
         if (user == null) {
-            throw new UserNotFoundException("No se encontró el usuario logueado.");
+            throw new UserNotFoundException("error.user.notfound");
         }
         List<User> clubUsers = clubService.getAdminsByClub(clubId);
         if (clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
+            throw new UnauthorizedException("error.user.unauthorized");
         }
     }
 

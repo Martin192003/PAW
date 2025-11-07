@@ -101,7 +101,7 @@ public class ReviewController {
 
         // Traer el usuario solo para mostrar nombre/validar existencia
         final User user = userService.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("error.user.notfound"));
 
 
         // Datos paginados
@@ -146,9 +146,9 @@ public class ReviewController {
        User user = securityService.getVerifiedLoggedUser();
        try {
            reviewService.deleteReview(reviewId);
-           ra.addFlashAttribute("success", "Review deleted");
+           ra.addFlashAttribute("success", "review.deleted");
        } catch (Exception e) {
-           ra.addFlashAttribute("error", "Could not delete review");
+           ra.addFlashAttribute("error", "review.notdeleted");
        }
 
        // Redirect back to referer when possible to preserve pagination/sort state; otherwise redirect to root

@@ -58,7 +58,7 @@ public class UserBookingController {
 
         final String username = Optional.ofNullable(principal)
                 .map(Principal::getName)
-                .orElseThrow(() -> new IllegalArgumentException("El usuario no está autenticado."));
+                .orElseThrow(() -> new IllegalArgumentException("error.user.notAuthenticated"));
 
         try {
             Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username, fromEvent);
@@ -112,7 +112,7 @@ public class UserBookingController {
             try {
                 bookingUuid = UUID.fromString(form.getBookingId().trim());
             } catch (IllegalArgumentException e) {
-                br.rejectValue("bookingId", "bookingId.invalid", "El ID de reserva ingresado no es válido.");
+                br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
             }
         }
 
@@ -187,7 +187,7 @@ public class UserBookingController {
         var current = securityService.getVerifiedLoggedUser();
         if (errors.hasErrors()) {
             var booking = bookingService.findById(bookingId)
-                    .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+                    .orElseThrow(() -> new BookingNotFoundException("error.booking"));
 
             model.addAttribute("booking", booking);
             model.addAttribute("user", userService.findById(booking.getUser().getId()));

@@ -65,7 +65,7 @@
                 Model model) {
 
             var club = clubService.getClubById(clubId)
-                    .orElseThrow(() -> new NotFoundException("El boliche no existe."));
+                    .orElseThrow(() -> new NotFoundException("error.club.notfound"));
 
             int limit  = 10;
             offset = Math.max(0, offset);
@@ -205,7 +205,7 @@
         }
 
         private String toLocationText(final String location) {
-            return (location == null || location.isBlank()) ? "Sin ubicación" : location;
+            return (location == null || location.isBlank()) ? "error.notLocation" : location;
         }
 
         private String toGenreText(final String genre) {

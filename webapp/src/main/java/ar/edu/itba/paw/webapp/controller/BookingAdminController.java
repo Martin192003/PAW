@@ -117,7 +117,7 @@ public class BookingAdminController {
             try {
                 bookingUuid = UUID.fromString(form.getBookingId().trim());
             } catch (IllegalArgumentException e) {
-                br.rejectValue("bookingId", "bookingId.invalid", "El ID de reserva ingresado no es válido.");
+                br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
             }
         }
 
@@ -187,7 +187,7 @@ public class BookingAdminController {
     public String bookingAdminHandler(@RequestParam UUID bookingId, Model model, @ModelAttribute("error") String error, @ModelAttribute("success") String success) {
         Optional<Booking> bookingOpt = bookingService.findById(bookingId);
         if (bookingOpt.isEmpty()) {
-            model.addAttribute("error", "Reserva no encontrada");
+            model.addAttribute("error", "error.no_reservation");
             return "error/error";
         }
         Booking booking = bookingOpt.get();
