@@ -82,7 +82,12 @@
                 </div>
                 <div class="row">
                     <dt><spring:message code="placeholder.cbu" text="CBU"/></dt>
-                    <dd><c:out value="${clubCbu}"/></dd>
+                    <dd class="cbu-value ${not hasReceipt ? 'cbu-missing' : ''}" tabindex="0">
+                        <c:out value="${clubCbu}"/>
+                        <c:if test="${not hasReceipt}">
+                            <span class="missing-note">(<spring:message code="receipt.missing" text="No hay comprobante cargado."/>)</span>
+                        </c:if>
+                    </dd>
                 </div>
                 <div class="row total">
                     <dt><spring:message code="booking.total" text="Total"/></dt>
@@ -174,6 +179,7 @@
         </aside>
     </section>
 </div>
+
 <div id="cancelBookingModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeCancelBookingModal()">&times;</span>

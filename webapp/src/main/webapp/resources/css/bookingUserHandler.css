@@ -548,3 +548,21 @@ body {
 .panel-header-flex .edit-form {
     margin-bottom: 0;
 }
+
+.cbu-missing {
+    border-left: 4px solid #ff6b6b;      /* accent color */
+    padding-left: 10px;
+    color: #ffd7de;                      /* warmer color to attract attention */
+    background: linear-gradient(90deg, rgba(255,107,107,0.03), transparent);
+    box-shadow: 0 0 0 rgba(255,107,107,0);
+    animation: cbuPulse 1.8s infinite;
+    border-radius: 4px;
+}
+
+.cbu-value {
+    color: #ffffff;           /* bright, clear */
+    opacity: 0.95;
+    font-weight: 700;
+    font-size: 1.02rem;
+    transition: box-shadow 0.2s, transform 0.15s, color 0.15s;
+}

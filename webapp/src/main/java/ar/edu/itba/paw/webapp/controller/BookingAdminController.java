@@ -147,6 +147,7 @@ public class BookingAdminController {
                     form.getStatus(),
                     form.getSort(),
                     bookingDate,
+                    form.getHasReceipt(),
                     size, offset
             );
             totalBookings = bookingService.countSearchForAdmin(
@@ -154,7 +155,8 @@ public class BookingAdminController {
                     form.getClubId(),
                     bookingUuid,
                     form.getStatus(),
-                    bookingDate
+                    bookingDate,
+                    form.getHasReceipt()
             );
         }
 

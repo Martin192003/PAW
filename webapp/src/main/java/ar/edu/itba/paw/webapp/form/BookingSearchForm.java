@@ -26,6 +26,8 @@ public class BookingSearchForm {
 
     private String bookingDate;
 
+    private Boolean hasReceipt;
+
     public UUID getUserId() {
         return userId;
     }
@@ -77,4 +79,7 @@ public class BookingSearchForm {
     public String getBookingDate() { return bookingDate; }
 
     public void setBookingDate(String bookingDate) { this.bookingDate = bookingDate; }
+
+    public Boolean getHasReceipt() { return hasReceipt; }
+    public void setHasReceipt(Boolean hasReceipt) { this.hasReceipt = hasReceipt; }
 }

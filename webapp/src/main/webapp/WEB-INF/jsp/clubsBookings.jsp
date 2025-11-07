@@ -63,7 +63,8 @@
                     </form:select>
                 </c:if>
                 <div class="filter-item" style="display:flex; flex-direction:column;">
-                    <form:input path="bookingDate" type="date" placeholder="Fecha" cssClass="filter-item"/>
+                    <spring:message code="filter.date" var="phBookingDate" text="Fecha"/>
+                    <form:input path="bookingDate" type="date" placeholder="${phBookingDate}" cssClass="filter-item"/>
                 </div>
                 <div class="filter-item" style="display:flex; flex-direction:column;">
                     <form:input path="bookingId" placeholder="${phBookingId}" cssClass="filter-item"/>
@@ -81,6 +82,12 @@
                     <form:option value="created_asc"><spring:message code="filter.sort.createdAsc"/></form:option>
                     <form:option value="start_desc"><spring:message code="filter.sort.startDesc"/></form:option>
                     <form:option value="start_asc"><spring:message code="filter.sort.startAsc"/></form:option>
+                </form:select>
+
+                <form:select path="hasReceipt" cssClass="filter-item filter-hasReceipt">
+                    <form:option value=""><spring:message code="receipt.filter.any" text="Todos"/></form:option>
+                    <form:option value="true"><spring:message code="receipt.filter.with" text="Con comprobante"/></form:option>
+                    <form:option value="false"><spring:message code="receipt.filter.without" text="Sin comprobante"/></form:option>
                 </form:select>
 
                 <form:hidden path="page"/>
@@ -185,12 +192,14 @@
         const bookingIdInput = form.querySelector('[name="bookingId"]');
         const statusSelect = form.querySelector('[name="status"]');
         const sortSelect = form.querySelector('[name="sort"]');
+        const hasReceiptSelect = form.querySelector('[name="hasReceipt"]');
 
         function hasActiveFilters() {
             return (clubSelect && clubSelect.value !== '') ||
                 (bookingIdInput && bookingIdInput.value.trim() !== '') ||
                 (statusSelect && statusSelect.value !== '') ||
-                (sortSelect && sortSelect.value !== 'created_desc');
+                (sortSelect && sortSelect.value !== 'created_desc') ||
+                (hasReceiptSelect && hasReceiptSelect.value !== '');
         }
 
         function updateResetButton() {
@@ -204,14 +213,15 @@
         // Verificar al cargar la página
         updateResetButton();
 
-        // Escuchar cambios en los campos
-        [clubSelect, bookingIdInput, statusSelect, sortSelect].forEach(field => {
+        // Escuchar cambios en los campos (include hasReceiptSelect)
+        [clubSelect, bookingIdInput, statusSelect, sortSelect, hasReceiptSelect].forEach(field => {
             if (field) {
                 field.addEventListener('change', updateResetButton);
                 field.addEventListener('input', updateResetButton);
             }
         });
     });
+
 </script>
 </body>
 </html>
