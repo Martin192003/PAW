@@ -51,4 +51,5 @@ public interface BookingDao {
 
     int countByClubIds(List<UUID> clubIds, UUID bookingId, Status status, LocalDate bookingDate);
 
+    boolean existsPastConfirmedByUserAndClub(UUID userId, UUID clubId, OffsetDateTime now);
 }

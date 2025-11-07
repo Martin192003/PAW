@@ -307,6 +307,27 @@ public class BookingsJpaDao implements BookingDao {
         return n.intValue();
     }
 
+    @Override
+    public boolean existsPastConfirmedByUserAndClub(UUID userId, UUID clubId, OffsetDateTime now) {
+        final Number oneOrZero = em.createNativeQuery("""
+      SELECT 1
+      FROM bookings b
+      JOIN club_tables t ON t.table_id = b.table_id
+      WHERE b.user_id = :uid
+        AND t.club_id = :cid
+        AND b.status = :confirmed
+        AND b.booking_end < :now
+      LIMIT 1
+      """)
+                .setParameter("uid", userId)
+                .setParameter("cid", clubId)
+                .setParameter("confirmed", Status.CONFIRMADA.db())
+                .setParameter("now", now).getResultList().size();
+
+
+        return oneOrZero.longValue() > 0;
+    }
+
 
 
     private static String resolveOrderBy(String sort, boolean nativeSql) {

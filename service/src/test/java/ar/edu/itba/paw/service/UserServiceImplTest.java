@@ -93,16 +93,16 @@ public class UserServiceImplTest {
     @Test
     public void testFindByIdFound() {
         Mockito.when(mockDao.findById(ID)).thenReturn(Optional.of(user));
-        User found = userService.findById(ID);
+        Optional<User> found = userService.findById(ID);
         Assert.assertNotNull(found);
-        Assert.assertEquals(USERNAME, found.getUsername());
+        Assert.assertEquals(USERNAME, found.get().getUsername());
     }
 
     @Test
     public void testFindByIdNotFound() {
         Mockito.when(mockDao.findById(ID)).thenReturn(Optional.empty());
-        User found = userService.findById(ID);
-        Assert.assertNull(found);
+        Optional<User> found = userService.findById(ID);
+        Assert.assertNull(found.orElse(null));
     }
 
     @Test

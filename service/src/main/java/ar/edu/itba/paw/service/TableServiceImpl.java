@@ -84,9 +84,6 @@ public class TableServiceImpl implements TableService {
     @Override
     @Transactional(readOnly = true)
     public List<ClubTable> findAvailableOnDate(UUID clubId, LocalDate date, ZoneId tz, Clock clock) {
-        if (!isAllowedDay(date)) {
-            throw new ValidationException("Fecha no permitida para reservas");
-        }
         if (isPastDate(date, clock, tz)) {
             throw new ValidationException("Fecha en el pasado");
         }

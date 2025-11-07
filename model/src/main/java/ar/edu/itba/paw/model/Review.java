@@ -37,6 +37,12 @@ public class Review {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
+    @Column(name = "from_table_guest")
+    private boolean fromTableGuest;
+
+    @Column(name = "photo_id")
+    private UUID photoId;
+
     public Review() {}
 
     public Review(UUID reviewId, User user, Club club, Integer rating,
@@ -72,4 +78,10 @@ public class Review {
 
     public Date getCreatedAt() { return createdAt == null ? null : Date.from(createdAt.toInstant()); }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+    public boolean isFromTableGuest() { return fromTableGuest; }
+    public void setFromTableGuest(boolean fromTableGuest) { this.fromTableGuest = fromTableGuest; }
+
+    public UUID getPhotoId() { return photoId; }
+    public void setPhotoId(UUID photoId) { this.photoId = photoId; }
 }

@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,68 +72,90 @@ public class ReviewController {
     public String submitReview(@PathVariable UUID clubId,
                                @Valid @ModelAttribute("reviewForm") ReviewForm form,
                                BindingResult br,
-                               Model model,
                                RedirectAttributes ra,
                                @RequestParam(required = false, name = "photo") MultipartFile photo) throws IOException {
 
         if (br.hasErrors()) {
-            Club club = clubService.getClubById(clubId)
-                    .orElseThrow(() -> new IllegalArgumentException("Club not found"));
-
-            model.addAttribute("club", club);
-            model.addAttribute("reviewForm", form); // Mantener el formulario con los datos ingresados
-            model.addAttribute("reviews", reviewService.getReviewsByClub(clubId));
-            model.addAttribute("isLoggedIn", securityService.getVerifiedLoggedUser() != null);
-
-            List<Photo> carouselPhotos = photoService.getClubPhotos(clubId, 10, 0);
-            model.addAttribute("clubPhotos", carouselPhotos);
-
-            List<Photo> reviewPhotos = photoService.getReviewPhotosByClub(clubId, 20, 0);
-            model.addAttribute("reviewPhotos", reviewPhotos);
-
-            var products = productsService.findByClub(club).stream()
-                    .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
-                    .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))
-                    .toList();
-            var grouped = products.stream().collect(Collectors.groupingBy(productsService::classifyCategory));
-            var desired = List.of("Cervezas", "Tragos", "Champagne", "Sin Alcohol");
-            var ordered = new LinkedHashMap<String, List<Product>>();
-            desired.forEach(cat -> {
-                var list = grouped.remove(cat);
-                if (list != null && !list.isEmpty()) ordered.put(cat, list);
-            });
-            grouped.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))
-                    .forEach(e -> ordered.put(e.getKey(), e.getValue()));
-            if (ordered.isEmpty() && !products.isEmpty()) ordered.put("Tragos", products);
-            model.addAttribute("productsByCategory", ordered);
-
-            User user = securityService.getVerifiedLoggedUser();
-            if (user != null) {
-                model.addAttribute("user", user);
-                model.addAttribute("userReview", reviewService.getUserReviewForClub(user.getId(), clubId).orElse(null));
-                model.addAttribute("isAuthenticated", true);
-                boolean isOwner = clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
-                model.addAttribute("isOwner", isOwner);
-            } else {
-                model.addAttribute("isAuthenticated", false);
-                model.addAttribute("isOwner", false);
-            }
-
-            String tableLayoutUrl = clubLayoutService.getLayoutByClub(clubId)
-                    .map(ClubLayout::getUrl)
-                    .orElse(null);
-            model.addAttribute("tableLayoutUrl", tableLayoutUrl);
-
-            model.addAttribute("locationText", club.getLocation() != null ? club.getLocation() : "Sin ubicación");
-            model.addAttribute("latitude", -34.5891429);
-            model.addAttribute("longitude", -58.3961641);
-
-            return "clubDetails";
+            ra.addFlashAttribute("org.springframework.validation.BindingResult.reviewForm", br);
+            ra.addFlashAttribute("reviewForm", form);
+            return "redirect:/clubs/" + clubId + "#reviews";
         }
 
         User user = securityService.getVerifiedLoggedUser();
         reviewService.createReview(user.getId(), clubId, form.getRating(), form.getDescription(), photo);
         return "redirect:/clubs/" + clubId + "#reviews";
     }
+
+    @GetMapping("/users/{userId}/reviews")
+    public String listUserReviews(@PathVariable UUID userId,
+                                  @RequestParam(defaultValue = "created_desc") String sort,
+                                  @RequestParam(defaultValue = "10") int limit,
+                                  @RequestParam(defaultValue = "0") int offset,
+                                  Model model) {
+
+
+        // Normalizar parámetros
+        limit = Math.max(1, Math.min(limit, 50));
+        offset = Math.max(0, offset);
+
+
+        // Traer el usuario solo para mostrar nombre/validar existencia
+        final User user = userService.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("error.user.notfound"));
+
+
+        // Datos paginados
+        final List<Review> reviews = reviewService.listByUser(userId, sort, limit, offset);
+        final int total = reviewService.countByUser(userId);
+
+
+        // Ajuste si el offset quedó fuera de rango (p. ej., se borraron reviews)
+        if (offset >= total && total > 0) {
+            int lastPage = (int) Math.floor((total - 1) / (double) limit);
+            offset = lastPage * limit;
+        }
+
+
+        // Si recalculamos offset, recargar la página
+        final List<Review> pageReviews = (offset == 0 || offset <= total)
+                ? reviewService.listByUser(userId, sort, limit, offset)
+                : reviews;
+
+
+        model.addAttribute("user", user);
+        model.addAttribute("reviews", pageReviews);
+        model.addAttribute("total", total);
+        model.addAttribute("limit", limit);
+        model.addAttribute("offset", offset);
+        model.addAttribute("sort", sort);
+
+
+        // Para UI (paginación)
+        model.addAttribute("currentPage", (offset / limit) + 1);
+        model.addAttribute("totalPages", (int) Math.ceil(total / (double) limit));
+
+
+        return "userReviews";
+    }
+
+   @PostMapping("/reviews/{reviewId}/delete")
+   @PreAuthorize("isAuthenticated()")
+   public String deleteReview(@PathVariable UUID reviewId,
+                              @RequestHeader(value = "referer", required = false) String referer,
+                              RedirectAttributes ra) {
+       User user = securityService.getVerifiedLoggedUser();
+       try {
+           reviewService.deleteReview(reviewId);
+           ra.addFlashAttribute("success", "review.deleted");
+       } catch (Exception e) {
+           ra.addFlashAttribute("error", "review.notdeleted");
+       }
+
+       // Redirect back to referer when possible to preserve pagination/sort state; otherwise redirect to root
+       if (referer != null && !referer.isBlank()) {
+           return "redirect:" + referer;
+       }
+       return "redirect:/";
+   }
+
 }

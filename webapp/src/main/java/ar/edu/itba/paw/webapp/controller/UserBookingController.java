@@ -54,20 +54,27 @@ public class UserBookingController {
     public String reserve(@PathVariable UUID clubId,
                           @RequestParam UUID tableId,
                           @RequestParam String date,
+                          @RequestParam(value = "fromEvent", defaultValue = "false") String fromEventStr,
                           Principal principal,
                           RedirectAttributes ra) {
 
+        boolean fromEvent = "true".equals(fromEventStr);
+
         final String username = Optional.ofNullable(principal)
                 .map(Principal::getName)
-                .orElseThrow(() -> new IllegalArgumentException("El usuario no está autenticado."));
+                .orElseThrow(() -> new IllegalArgumentException("error.user.notAuthenticated"));
 
         try {
-            Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username);
+            Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username, fromEvent);
             ra.addFlashAttribute("reservationSent", true);
             return "redirect:/booking?bookingId=" + booking.getBookingId();
         } catch (InvalidDateRangeException | ValidationException e) {
             ra.addFlashAttribute("error", "invalid.date");
             ra.addFlashAttribute("reservationError", true);
+        } catch (BadRequestException e) {
+            ra.addFlashAttribute("error", "tables.notavailable");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "error.generic");
         }
         return "redirect:/clubs/" + clubId + "?date=" + date + "#dd-tables";
     }
@@ -114,7 +121,7 @@ public class UserBookingController {
             try {
                 bookingUuid = UUID.fromString(form.getBookingId().trim());
             } catch (IllegalArgumentException e) {
-                br.rejectValue("bookingId", "bookingId.invalid", "El ID de reserva ingresado no es válido.");
+                br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
             }
         }
 
@@ -202,7 +209,7 @@ public class UserBookingController {
         var current = securityService.getVerifiedLoggedUser();
         if (errors.hasErrors()) {
             var booking = bookingService.findById(bookingId)
-                    .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+                    .orElseThrow(() -> new BookingNotFoundException("error.booking"));
 
             model.addAttribute("booking", booking);
             model.addAttribute("user", userService.findById(booking.getUser().getId()));
@@ -288,8 +295,8 @@ public class UserBookingController {
             return "error/error";
         }
 
-        User u = userService.findById(booking.getUser().getId());
-        model.addAttribute("user", u);
+        Optional<User> u = userService.findById(booking.getUser().getId());
+        model.addAttribute("user", u.orElse(null));
 
         ClubTable table = tableService.findById(booking.getTableId()).orElse(null);
         model.addAttribute("table", table);

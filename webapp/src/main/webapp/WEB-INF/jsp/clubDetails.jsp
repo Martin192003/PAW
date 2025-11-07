@@ -98,7 +98,6 @@
             </c:choose>
         </div>
 
-
         <div class="detail-info">
             <div class="detail-details">
                 <span><i class="fa-solid fa-location-dot"></i><c:out value="${locationText}"/></span><br>
@@ -118,7 +117,6 @@
                 </div>
             </div>
         </div>
-
 
         <!-- Fila con 2 dropdowns independientes -->
         <div class="bb-row">
@@ -192,18 +190,38 @@
                                 <label for="bookingDate" class="bb-label" style="margin-bottom:6px;">
                                     <spring:message code="title.reservation"/>
                                 </label>
-                                <input id="bookingDate"
-                                       name="date"
-                                       type="date"
-                                       class="input"
-                                       value="${selectedDate != null ? selectedDate : ''}" />
-                                <p class="bb-help" id="dateHelp" style="margin-top:6px; max-width:380px;">
-                                    <spring:message code="tables.accept"/> <strong><spring:message code="tables.days"/></strong>.
-                                    <spring:message code="tables.time"/> <strong>23:59 <spring:message code="tables.to"/> 06:00</strong>
-                                    (<spring:message code="tables.nextday"/>).
-                                </p>
+
+                                <c:if test="${empty selectedDate and empty param.fromEvent}">
+                                    <c:set var="selectedDate" value="${allowedDateStrings[0]}" />
+                                </c:if>
+                                <select id="bookingDate" name="date" class="input" required style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc;">
+                                    <c:choose>
+                                        <%-- CASO: Viene desde un evento -> mostrar solo esa fecha --%>
+                                        <c:when test="${param.fromEvent == 'true' && not empty param.date}">
+                                            <fmt:parseDate value="${param.date}" pattern="yyyy-MM-dd" var="eventDateParsed" type="date"/>
+                                            <fmt:formatDate var="eventDateLabel" value="${eventDateParsed}" pattern="EEEE d 'de' MMMM" />
+                                            <option value="${param.date}" selected>
+                                                    ${eventDateLabel}
+                                            </option>
+                                        </c:when>
+
+                                        <%-- CASO NORMAL: Dropdown con jueves, viernes, sábado --%>
+                                        <c:otherwise>
+                                            <c:forEach var="dateStr" items="${allowedDateStrings}">
+                                                <c:set var="dateValue" value="${dateStr}" />
+                                                <fmt:parseDate value="${dateStr}" pattern="yyyy-MM-dd" var="parsedDate" type="date"/>
+                                                <fmt:formatDate var="dateLabel" value="${parsedDate}" pattern="EEEE d 'de' MMMM" />
+                                                <option value="${dateValue}"
+                                                        <c:if test="${selectedDate == dateValue}">selected</c:if>>
+                                                        ${dateLabel}
+                                                </option>
+                                            </c:forEach>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </select>
                             </div>
                         </div>
+                        <input type="hidden" name="fromEvent" value="${param.fromEvent == 'true' ? 'true' : 'false'}" />
 
                         <c:choose>
                             <c:when test="${empty availableTables}">
@@ -241,7 +259,6 @@
                         </c:choose>
                         <div style="display:flex; justify-content:center; margin-top:12px; align-items:center;">
                             <button id="reserveBtn" type="submit" class="btn btn-success"
-                                    <c:if test="${empty availableTables}">disabled</c:if>
                                     style="height:40px; align-self:end; width: 160px">
                                 <i class="fa-solid fa-calendar-check"></i> <spring:message code="button.reservation"/>
                             </button>
@@ -313,21 +330,132 @@
                                 <li class="review-item">
                                     <div class="review-item-header">
                                         <strong class="review-user"><c:out value="${review.user.username}"/></strong>
+
+                                        <!-- Badge si reservó mesa -->
+                                        <c:if test="${review.fromTableGuest}">
+                                            <span class="badge-guest">
+                                              <i class="fa-solid fa-ticket"></i>
+                                              <spring:message code="reviews.badge.guest" text="Reservó mesa"/>
+                                            </span>
+                                        </c:if>
+
                                         <span class="review-rating" aria-label="rating">
-                                            ${review.rating}
-                                            <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                                              ${review.rating}
+                                              <i class="fa-solid fa-star" style="color:#FFD700;"></i>
                                         </span>
                                     </div>
-                                    <p class="review-text">
-                                        <c:out value="${review.description}"/>
-                                    </p>
-                                    <small class="review-date">
-                                        <spring:message code="reviews.date" text="Fecha"/>:
-                                            ${reviewDay} <spring:message code="pagination.of"/> <span class="month">${reviewMonth}</span>, ${reviewYear}
-                                    </small>
+                                    <div class="review-row">
+                                        <div class="review-col">
+                                            <p class="review-text">
+                                                <c:out value="${review.description}"/>
+                                            </p>
+                                            <small class="review-date">
+                                                <spring:message code="reviews.date" text="Fecha"/>:
+                                                    ${reviewDay} <spring:message code="pagination.of"/> <span class="month">${reviewMonth}</span>, ${reviewYear}
+                                            </small>
+                                        </div>
+
+                                        <c:if test="${not empty review.photoId}">
+                                            <img class="review-thumb"
+                                                 src="<c:url value='/photos/${review.photoId}'/>"
+                                                 alt="Foto de reseña de ${review.user.username}"
+                                                 loading="lazy"
+                                                 onclick="openLightbox(this.src)" />
+                                        </c:if>
+                                    </div>
                                 </li>
                             </c:forEach>
                         </ul>
+
+                        <!-- Paginación y resumen -->
+                        <c:set var="pLimit"  value="${limit != null ? limit : 10}" />
+                        <c:set var="pOffset" value="${offset != null ? offset : 0}" />
+                        <c:set var="pTotal"  value="${totalReviews != null ? totalReviews : 0}" />
+
+                        <c:set var="currentPage" value="${(pOffset / pLimit) + 1}" />
+                        <c:set var="totalPages"  value="${(pTotal + pLimit - 1) / pLimit}" />
+
+                        <c:if test="${pTotal > 0}">
+                            <c:set var="fromIdx" value="${pOffset + 1}" />
+                            <c:set var="toIdx"   value="${pOffset + reviews.size()}" />
+
+                            <!-- RESUMEN SIN SELECTOR -->
+                            <div class="reviews-summary"
+                                 style="display:flex; justify-content:flex-start; align-items:center; gap:12px; margin-top:10px;">
+                                <div class="reviews-count">
+                                    <spring:message code="pagination.showing" text="Mostrando"/>
+                                        ${fromIdx}–${toIdx} / ${pTotal}
+                                </div>
+                            </div>
+
+                            <!-- (El nav de paginación queda igual que antes) -->
+                            <c:if test="${totalPages > 1}">
+                                <nav class="pagination" aria-label="Reviews pagination" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                                    <!-- Prev -->
+                                    <c:set var="prevOffset" value="${pOffset - pLimit}" />
+                                    <c:choose>
+                                        <c:when test="${prevOffset >= 0}">
+                                            <c:url var="prevUrl" value="/clubs/${club.clubId}">
+                                                <c:param name="date"   value="${selectedDate}"/>
+                                                <c:param name="sort"   value="${sort}"/>
+                                                <c:param name="limit"  value="${pLimit}"/>
+                                                <c:param name="offset" value="${prevOffset}"/>
+                                            </c:url>
+                                            <a class="btn btn-secondary" href="${prevUrl}#reviews" rel="prev" aria-label="Anterior">&laquo;</a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="btn btn-secondary" aria-disabled="true" style="opacity:.5; pointer-events:none;">&laquo;</span>
+                                        </c:otherwise>
+                                    </c:choose>
+
+                                    <!-- Ventana de páginas (máx 7) -->
+                                    <c:set var="startPage" value="${currentPage - 3}" />
+                                    <c:if test="${startPage < 1}"><c:set var="startPage" value="1" /></c:if>
+                                    <c:set var="endPage" value="${startPage + 6}" />
+                                    <c:if test="${endPage > totalPages}"><c:set var="endPage" value="${totalPages}" /></c:if>
+                                    <c:if test="${endPage - startPage < 6}">
+                                        <c:set var="startPage" value="${endPage - 6}" />
+                                        <c:if test="${startPage < 1}"><c:set var="startPage" value="1" /></c:if>
+                                    </c:if>
+
+                                    <c:forEach var="pg" begin="${startPage}" end="${endPage}">
+                                        <c:set var="pageOffset" value="${(pg - 1) * pLimit}" />
+                                        <c:choose>
+                                            <c:when test="${pg == currentPage}">
+                                                <span class="btn btn-primary" aria-current="page">${pg}</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:url var="pageUrl" value="/clubs/${club.clubId}">
+                                                    <c:param name="date"   value="${selectedDate}"/>
+                                                    <c:param name="sort"   value="${sort}"/>
+                                                    <c:param name="limit"  value="${pLimit}"/>
+                                                    <c:param name="offset" value="${pageOffset}"/>
+                                                </c:url>
+                                                <a class="btn btn-secondary" href="${pageUrl}#reviews">${pg}</a>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:forEach>
+
+                                    <!-- Next -->
+                                    <c:set var="nextOffset" value="${pOffset + pLimit}" />
+                                    <c:choose>
+                                        <c:when test="${nextOffset < pTotal}">
+                                            <c:url var="nextUrl" value="/clubs/${club.clubId}">
+                                                <c:param name="date"   value="${selectedDate}"/>
+                                                <c:param name="sort"   value="${sort}"/>
+                                                <c:param name="limit"  value="${pLimit}"/>
+                                                <c:param name="offset" value="${nextOffset}"/>
+                                            </c:url>
+                                            <a class="btn btn-secondary" href="${nextUrl}#reviews" rel="next" aria-label="Siguiente">&raquo;</a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="btn btn-secondary" aria-disabled="true" style="opacity:.5; pointer-events:none;">&raquo;</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </nav>
+                            </c:if>
+                        </c:if>
+
                     </c:when>
                     <c:otherwise>
                         <p class="no-reviews">
@@ -485,7 +613,12 @@
             if (bookingDate) {
                 bookingDate.addEventListener('change', () => {
                     if (bookingDate.value) {
-                        window.location.href = "${clubUrl}?date=" + bookingDate.value + "#dd-tables";
+                        const url = new URL(window.location);
+                        url.searchParams.set('date', bookingDate.value);
+                        if (${param.fromEvent == 'true'}) {
+                            url.searchParams.set('fromEvent', 'true');
+                        }
+                        window.location.href = url.toString() + "#dd-tables";
                     }
                 });
             }
@@ -761,8 +894,6 @@
             behavior: 'smooth'
         });
     }
-
-    // Opcional: Lightbox simple al hacer click
     function openLightbox(src) {
         const lightbox = document.createElement('div');
         lightbox.style.position = 'fixed';
@@ -785,8 +916,6 @@
         lightbox.appendChild(img);
         document.body.appendChild(lightbox);
     }
-
-    // Mostrar/ocultar flechas según scroll
     document.addEventListener('DOMContentLoaded', () => {
         const carousel = document.getElementById('reviewPhotosCarousel');
         const leftBtn = document.querySelector('.review-photos-carousel-wrapper .left');
@@ -815,7 +944,6 @@
             initModalStarRating(); // reinicia estrellas
         }
     }
-
     function closeReviewModal() {
         const modal = document.getElementById('reviewModal');
         if (modal) {
@@ -828,7 +956,6 @@
             updateModalStars(5);
         }
     }
-
     // Inicializar estrellas en el modal
     function initModalStarRating() {
         const stars = document.querySelectorAll('#modalStarRating i');
@@ -853,8 +980,6 @@
 
         updateModalStars(currentRating);
     }
-
-    // Cerrar modal al hacer click fuera
     document.addEventListener('click', (e) => {
         const modal = document.getElementById('reviewModal');
         if (modal && modal.classList.contains('show') && !e.target.closest('.modal-content') && !e.target.closest('[onclick="openReviewModal()"]')) {
@@ -879,6 +1004,16 @@
                 document.body.style.overflow = 'hidden'; // Evita que se pueda scrollear el fondo
             }
         }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        ['dd-menu', 'dd-tables'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const btn = el.querySelector('.bb-btn');
+            const panel = el.querySelector('.bb-panel');
+            if (btn) btn.classList.add('active');
+            if (panel) panel.classList.add('show');
+        });
     });
 </script>
 </body>

@@ -180,10 +180,7 @@
         <h3 style="margin-top:8px;"><spring:message code="confirm.cancelBooking"/></h3>
         <form id="cancelBookingForm" method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
             <input type="hidden" name="bookingId" id="cancelBookingId" value=""/>
-            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
-                <button type="button" class="btn btn-secondary" onclick="closeCancelBookingModal()">
-                    <spring:message code="button.cancel"/>
-                </button>
+            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:center;">
                 <button type="submit" class="btn btn-danger">
                     <spring:message code="booking.action.confirm"/>
                 </button>

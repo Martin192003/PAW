@@ -140,7 +140,7 @@ public class BookingServiceImplTest {
         Mockito.when(table.getClubId()).thenReturn(CLUB_ID);
         Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
         Mockito.when(user.getId()).thenReturn(USER_ID);
-        Mockito.when(userService.findById(USER_ID)).thenReturn(user);
+        Mockito.when(userService.findById(USER_ID)).thenReturn(Optional.of(user));
         bookingService.cancel(BOOKING_ID);
 
 
