@@ -20,11 +20,11 @@
 <body>
 
 <c:set var="showRightButtons" value="true" />
-<c:set var="showProfileButton" value="false" />
+<c:set var="showProfileButton" value="true" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="detail-back">
-    <button type="button" class="btn btn-success" onclick="window.history.back();">
+    <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/bookings"><c:param name="userId" value="${user.id}"/></c:url>';">
         <i class="fa fa-arrow-left"></i>
     </button>
 </div>
@@ -74,15 +74,20 @@
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.start" text="Inicio"/></dt>
-                    <dd><c:out value="${bookingStartLocal}"/></dd>
+                    <dd><c:out value="${bookingStartLocal}"/> 23:59hs</dd>
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.end" text="Fin"/></dt>
-                    <dd><c:out value="${bookingEndLocal}"/></dd>
+                    <dd><c:out value="${bookingEndLocal}"/> 6:00hs</dd>
                 </div>
                 <div class="row">
                     <dt><spring:message code="placeholder.cbu" text="CBU"/></dt>
-                    <dd><c:out value="${clubCbu}"/></dd>
+                    <dd class="cbu-value ${not hasReceipt ? 'cbu-missing' : ''}" tabindex="0">
+                        <c:out value="${clubCbu}"/>
+                        <c:if test="${not hasReceipt}">
+                            <span class="missing-note">(<spring:message code="receipt.missing" text="No hay comprobante cargado."/>)</span>
+                        </c:if>
+                    </dd>
                 </div>
                 <div class="row total">
                     <dt><spring:message code="booking.total" text="Total"/></dt>
@@ -122,25 +127,34 @@
 
         <aside class="right-col">
             <article class="card-lg booking-card">
-                <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>
+                <div class="panel-header-flex">
+                    <h2 class="panel-title"><spring:message code="booking.receipt.title" text="Comprobante"/></h2>
+
+                    <c:if test="${hasReceipt and fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
+                        <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data"
+                                   action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt"
+                                   class="edit-form" id="receiptEditForm">
+
+                            <form:input type="file" path="file" id="receiptEditFile" cssStyle="display:none"
+                                        accept="image/*,application/pdf"/>
+
+                            <button type="button" class="btn btn-success" id="editReceiptBtn" title="Editar comprobante">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
+                        </form:form>
+                    </c:if>
+                </div>
                 <c:choose>
                     <c:when test="${hasReceipt}">
                         <div class="receipt-thumb">
                             <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>" alt="Receipt"/>
                         </div>
                         <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
-                            <div class="receipt-actions">
-                                <form method="post" action="<c:url value='/bookings/${booking.bookingId}/receipt/delete'/>">
-                                    <button type="submit" class="btn btn-secondary">
-                                        <spring:message code="receipt.delete" text="Eliminar"/>
-                                    </button>
-                                </form>
-                                <form>
-                                    <button type="button" class="btn btn-success" onclick="window.open('<c:url value="/bookings/${booking.bookingId}/receipt"/>', '_blank')">
-                                        <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
-                                    </button>
-                                </form>
-                            </div>
+                            <form class="receipt-actions">
+                                <button type="button" class="btn btn-success" onclick="window.open('<c:url value="/bookings/${booking.bookingId}/receipt"/>', '_blank')">
+                                    <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
+                                </button>
+                            </form>
                         </c:if>
                     </c:when>
                     <c:otherwise>
@@ -148,14 +162,15 @@
                         <c:if test="${fn:trim(fn:toUpperCase(booking.status)) != 'CANCELADA'}">
                             <form:form method="post" modelAttribute="receiptForm" enctype="multipart/form-data"
                                        action="${pageContext.request.contextPath}/bookings/${booking.bookingId}/receipt"
-                                       class="upload-form">
-                                <div class="form-group">
-                                    <form:input type="file" path="file"/>
-                                    <p cssClass="error-message"><form:errors path="file"/></p>
+                                       class="upload-form" id="receiptUploadForm">
+                                <form:input type="file" path="file" id="receiptFile" cssStyle="display:none"
+                                            accept="image/*,application/pdf"/>
+                                <div class="upload-receipt">
+                                    <button type="button" class="btn btn-success" id="uploadReceiptBtn">
+                                        <spring:message code="receipt.upload" text="Subir comprobante"/>
+                                    </button>
+                                    <p class="error"><form:errors path="file"/></p>
                                 </div>
-                                <button type="submit" class="btn btn-success btn-sm">
-                                    <spring:message code="receipt.upload" text="Subir comprobante"/>
-                                </button>
                             </form:form>
                         </c:if>
                     </c:otherwise>
@@ -164,16 +179,14 @@
         </aside>
     </section>
 </div>
+
 <div id="cancelBookingModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeCancelBookingModal()">&times;</span>
         <h3 style="margin-top:8px;"><spring:message code="confirm.cancelBooking"/></h3>
         <form id="cancelBookingForm" method="post" action="<c:url value='/bookings/${booking.bookingId}/cancel' />">
             <input type="hidden" name="bookingId" id="cancelBookingId" value=""/>
-            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
-                <button type="button" class="btn btn-secondary" onclick="closeCancelBookingModal()">
-                    <spring:message code="button.cancel"/>
-                </button>
+            <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:center;">
                 <button type="submit" class="btn btn-danger">
                     <spring:message code="booking.action.confirm"/>
                 </button>
@@ -226,6 +239,44 @@
         if (closeX) {
             closeX.addEventListener('click', closeCancelBookingModal);
         }
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('receiptUploadForm');
+        const fileInput = document.getElementById('receiptFile');
+        const btn = document.getElementById('uploadReceiptBtn');
+
+        if (!form || !fileInput || !btn) return;
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files.length > 0) {
+                form.submit();
+            }
+        });
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('receiptEditForm');
+        const fileInput = document.getElementById('receiptEditFile');
+        const btn = document.getElementById('editReceiptBtn');
+
+        if (!form || !fileInput || !btn) return;
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files.length > 0) {
+                form.submit();
+            }
+        });
     });
 </script>
 <c:if test="${not empty bookingAction}">

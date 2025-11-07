@@ -19,11 +19,11 @@
 </head>
 <body>
 <c:set var="showRightButtons" value="true" />
-<c:set var="showProfileButton" value="false" />
+<c:set var="showProfileButton" value="true" />
 <c:set var="showAddClubButton" value="false" />
 <%@ include file="/WEB-INF/jspf/topbar.jspf" %>
 <div class="detail-back">
-    <button type="button" class="btn btn-success" onclick="window.history.back();">
+    <button type="button" class="btn btn-success" onclick="window.location.href='<c:url value="/admin/clubs/bookings"><c:param name="userId" value="${user.id}"/></c:url>';">
         <i class="fa fa-arrow-left"></i>
     </button>
 </div>
@@ -101,11 +101,11 @@
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.start" text="Inicio"/></dt>
-                    <dd><c:out value="${bookingStartLocal}"/></dd>
+                    <dd><c:out value="${bookingStartLocal}"/> 23:59hs</dd>
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.end" text="Fin"/></dt>
-                    <dd><c:out value="${bookingEndLocal}"/></dd>
+                    <dd><c:out value="${bookingEndLocal}"/> 6:00hs</dd>
                 </div>
                 <div class="row">
                     <dt><spring:message code="booking.cbu" text="CBU"/></dt>
@@ -139,6 +139,7 @@
             <c:set var="statusNormalized" value="${fn:trim(fn:toUpperCase(booking.status))}" />
             <c:set var="isConfirmed" value="${statusNormalized == 'CONFIRMADA'}" />
             <c:set var="isCancelled" value="${statusNormalized == 'CANCELADA'}"/>
+            <c:set var="isPending" value="${statusNormalized == 'PENDIENTE'}"/>
             <c:if test="${not isCancelled}">
                 <div class="booking-actions">
                     <form id="adminCancelForm" class="confirm-cancel" method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/cancel' />">
@@ -176,19 +177,14 @@
                             <img src="<c:url value='/bookings/${booking.bookingId}/receipt'/>"
                                  alt="<spring:message code='receipt.alt' text='Comprobante'/>"/>
                         </div>
-
-                        <div class="receipt-actions">
-                            <form method="post" action="<c:url value='/admin/bookings/${booking.bookingId}/receipt/delete'/>">
-                                <button type="submit" class="btn btn-secondary">
-                                    <spring:message code="receipt.delete" text="Eliminar"/>
-                                </button>
-                            </form>
-                            <form>
-                                <button type="button" class="btn btn-success" onclick="window.open('<c:url value='/bookings/${booking.bookingId}/receipt'/>', '_blank')">
-                                    <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
-                                </button>
-                            </form>
-                        </div>
+                        <c:if test="${isPending or isConfirmed}">                            <div class="receipt-actions">
+                                <form style="justify-content: center; display: flex; align-items: center">
+                                    <button type="button" class="btn btn-success" onclick="window.open('<c:url value='/bookings/${booking.bookingId}/receipt'/>', '_blank')">
+                                        <spring:message code="receipt.view.tab" text="Ver en pestaña"/>
+                                    </button>
+                                </form>
+                            </div>
+                        </c:if>
                     </c:when>
                     <c:otherwise>
                         <p class="muted"><spring:message code="receipt.missing" text="No hay comprobante cargado."/></p>
@@ -202,10 +198,7 @@
     <div class="modal-content">
         <span class="modal-close" onclick="closeCancelConfirmModal()">&times;</span>
         <h3 style="margin-top:8px;"><spring:message code="confirm.cancelBooking"/></h3>
-        <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:space-between;">
-            <button type="button" class="btn btn-secondary" onclick="closeCancelConfirmModal()">
-                <spring:message code="button.cancel" text="Cancelar"/>
-            </button>
+        <div class="modal-actions" style="margin-top:18px; display:flex; justify-content:center;">
             <button id="confirmCancelBtn" type="button" class="btn btn-danger">
                 <spring:message code="booking.action.confirm"/>
             </button>

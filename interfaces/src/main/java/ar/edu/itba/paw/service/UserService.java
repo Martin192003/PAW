@@ -4,11 +4,12 @@ import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface UserService {
 
-    User findById(UUID id);
+    Optional<User> findById(UUID id);
 
 
     User create(String username, String name, String password, String surname, String email, String cellphone, String role);

@@ -29,4 +29,6 @@ public interface EmailService {
 
     void notifyConfirmationEmailToUser(Booking booking, Club club, ClubTable table, Locale locale);
 
+    void sendOwnerReviewAlert(Club club, Review review, Locale locale);
+
 }

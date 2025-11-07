@@ -3,6 +3,8 @@
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -73,7 +75,18 @@
                                         </div>
                                         <div class="event-date">
                                             <i class="fa-regular fa-calendar"></i>
-                                            <c:out value="${e.date}"/>
+                                            <c:choose>
+                                                <c:when test="${fn:contains(e.date, '-')}">
+                                                    <fmt:parseDate var="eventDate" value="${e.date}" pattern="yyyy-MM-dd"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:set var="eventDate" value="${e.date}"/>
+                                                </c:otherwise>
+                                            </c:choose>
+                                            <fmt:formatDate value="${eventDate}" pattern="d" var="eventDay"/>
+                                            <fmt:formatDate value="${eventDate}" pattern="MMMM" var="eventMonth"/>
+                                            <fmt:formatDate value="${eventDate}" pattern="yyyy" var="eventYear"/>
+                                                ${eventDay} <spring:message code="pagination.of"/><span class="month">${eventMonth}</span>${eventYear}
                                         </div>
                                         <div class="event-name"><c:out value="${e.eventName}"/></div>
                                         <c:if test="${not empty e.description}">
@@ -107,8 +120,8 @@
         <spring:message code="filter.name" var="phName"/>
         <spring:message code="filter.minRating" var="phMinrating"/>
         <spring:message code="filter.maxRating" var="phMaxrating"/>
-        <form method="get" action="<c:url value='/clubs' />" class="filter-bar">
-            <div class="filter-bar">
+        <c:set var="anyFilterApplied" value="${not empty name or not empty zone or not empty genre or not empty price or not empty isBar or not empty sort}" />
+        <form method="get" action="<c:url value='/clubs' />" class="filter-bar ${anyFilterApplied ? 'has-filters' : ''}">            <div class="filter-bar">
                 <!-- Name -->
                 <div class="input-with-icon">
                     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
@@ -190,18 +203,18 @@
                     </option>
                 </select>
             </div>
-
             <button type="submit" class="btn btn-filter">
                 <i class="fa-solid fa-filter"></i>&nbsp;<spring:message code="button.filter"/>
             </button>
         </form>
-        <button type="button" class="btn-reset" onclick="window.location.href='<c:url value="/clubs"/>'">
+        <c:set var="anyFilterApplied" value="${not empty param.name or not empty name or not empty param.zone or not empty zone or not empty param.genre or not empty genre or not empty param.price or not empty price or not empty param.isBar or not empty isBar or not empty param.sort or not empty sort}" />
+        <button id="resetButton" type="button" class="btn-reset" <c:if test="${not anyFilterApplied}">style="display:none;"</c:if>
+                onclick="window.location.href='<c:url value="/clubs"/>'">
             <i class="fa-solid fa-rotate-right"></i>
             <spring:message code="button.reset"/>
         </button>
     </div>
 
-    <c:set var="anyFilterApplied" value="${not empty name or not empty zone or not empty genre or not empty price or not empty isBar or not empty sort}" />
 
     <c:if test="${not empty zone}">
         <c:set var="zoneLabel" value="${zone}" />
@@ -343,9 +356,44 @@
     });
     function scrollCarousel(direction) {
         const carousel = document.getElementById('eventsCarousel');
-        const scrollAmount = 300; // distancia del desplazamiento
+        const scrollAmount = 300;
         carousel.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
     }
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form.filter-bar');
+        const resetBtn = document.getElementById('resetButton');
+        if (!form || !resetBtn) return;
+
+        const inputs = Array.from(form.querySelectorAll('input[name], select[name]'));
+
+        function anyFilled() {
+            return inputs.some(el => {
+                const v = el.value;
+                if (!v) return false;
+                if (el.tagName.toLowerCase() === 'input') return v.trim() !== '';
+                return v !== '';
+            });
+        }
+
+        function toggleReset() {
+            const hasFilters = anyFilled();
+            resetBtn.style.display = hasFilters ? '' : 'none';
+
+            if (hasFilters) {
+                form.classList.add('has-filters');
+            } else {
+                form.classList.remove('has-filters');
+            }
+        }
+
+        inputs.forEach(el => {
+            el.addEventListener('input', toggleReset);
+            el.addEventListener('change', toggleReset);
+        });
+
+        // sincronizar estado inicial (por si el servidor marcó valores en el DOM)
+        toggleReset();
+    });
 </script>
 </body>
 </html>

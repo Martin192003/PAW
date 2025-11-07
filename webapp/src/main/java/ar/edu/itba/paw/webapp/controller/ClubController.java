@@ -169,7 +169,7 @@ public class ClubController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
         model.addAttribute("pages", IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList()));
-        model.addAttribute("availableToday", availabilityMode); // reflejo modo disponibilidad
+        model.addAttribute("availableToday", availabilityMode);
         model.addAttribute("queryParams", queryParams);
         model.addAttribute("name", nameLike);
         model.addAttribute("zone", zone);
@@ -213,7 +213,7 @@ public class ClubController {
         }
 
         var contact = securityService.getVerifiedLoggedUser();
-        if (contact == null) throw new IllegalStateException("No se encontró el usuario de contacto.");
+        if (contact == null) throw new IllegalStateException("error.no_user");
         var roleAntes = contact.getRole();
 
         Club newClub = clubService.create(
@@ -222,7 +222,7 @@ public class ClubController {
         );
 
         if (roleAntes == Role.USER) {
-            User updatedUser = userService.findById(contact.getId());
+            User updatedUser = userService.findById(contact.getId()).orElseThrow(UserNotFoundException::new);
 
             Authentication newAuth = new UsernamePasswordAuthenticationToken(
                     updatedUser.getUsername(),
@@ -242,10 +242,10 @@ public class ClubController {
                              @RequestParam(name = "filter", defaultValue = "all") String filter,
                              Model model) {
         var user = securityService.getVerifiedLoggedUser();
-        if (user == null) throw new UserNotFoundException("No logueado");
+        if (user == null) throw new UserNotFoundException("error.notLoggedIn");
         clubService.assertAdmin(clubId, user.getId());
 
-        var club = clubService.getClubById(clubId).orElseThrow(() -> new NotFoundException("El boliche no existe."));
+        var club = clubService.getClubById(clubId).orElseThrow(() -> new NotFoundException("error.club.notfound"));
 
         var photos = photoService.listByClub(clubId, 0, 50);
 
@@ -347,7 +347,7 @@ public class ClubController {
         checkLoggedUser(clubId);
 
         var maybeClub = clubService.getClubById(clubId);
-        if (maybeClub.isEmpty()) throw new NotFoundException("El boliche no existe.");
+        if (maybeClub.isEmpty()) throw new NotFoundException("error.club.notfound");
         Club club = maybeClub.get();
 
         if (errors.hasErrors()) {
@@ -378,7 +378,7 @@ public class ClubController {
 
         clubService.updateClub(club);
 
-        ra.addFlashAttribute("successMessage", "Cambios guardados correctamente.");
+        ra.addFlashAttribute("successMessage", "changes.changesCorrectly");
 
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
@@ -419,11 +419,11 @@ public class ClubController {
     private void checkLoggedUser(UUID clubId) {
         User user = securityService.getVerifiedLoggedUser();
         if (user == null) {
-            throw new UserNotFoundException("No se encontró el usuario logueado.");
+            throw new UserNotFoundException("error.no_loggeduser");
         }
         List<User> clubUsers = clubService.getAdminsByClub(clubId);
         if (clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
+            throw new UnauthorizedException("error.notAdmin");
         }
     }
 
@@ -435,7 +435,7 @@ public class ClubController {
                 .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
                 .sorted((p1, p2) -> {
                     if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
-                        return p2.getCreatedAt().compareTo(p1.getCreatedAt()); // Newest first
+                        return p2.getCreatedAt().compareTo(p1.getCreatedAt());
                     }
                     return p2.getPhotoId().compareTo(p1.getPhotoId());
                 })

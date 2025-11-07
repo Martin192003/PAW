@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
 import ar.edu.itba.paw.model.exceptions.InvalidStatusTransitionException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.BookingSearchForm;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -13,10 +14,19 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
+import java.time.Month;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 @Controller
 @RequestMapping("/admin")
@@ -40,38 +50,39 @@ public class BookingAdminController {
         this.photoService = photoService;
     }
 
-
-    @GetMapping("/clubs/activity")
-    public String userClubs(@RequestParam("userId") UUID userId,
-                            @RequestParam(value = "page", defaultValue = "1") int page,
+    @GetMapping("/activity")
+    public String userClubs(@RequestParam(value = "page", defaultValue = "1") int page,
                             @RequestParam(value = "size", defaultValue = "10") int size,
                             Model model) {
+
         if (page < 1) page = 1;
         if (size < 1) size = 10;
         int offset = (page - 1) * size;
 
+        User current = securityService.getVerifiedLoggedUser();
+        UUID userId = current.getId();
+
         List<Club> clubs = clubService.getClubsByUserPaginated(userId, size, offset);
         int totalClubs = clubService.countClubsByUser(userId);
-        int totalPages = (int) Math.ceil((double) totalClubs / size);
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
 
         Map<UUID,String> photoUrlByClub = photoService.getCoverUrls(
                 clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
         );
 
-        model.addAttribute("user", userService.findById(userId));
+        model.addAttribute("user", current);
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("activePage", "clubs");
-        model.addAttribute("userId", userId);
         model.addAttribute("page", page);
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("totalResults", totalClubs);
         return "clubActivity";
     }
 
-    
+
     @PostMapping("/bookings/{bookingId}/confirm")
     public String confirm(@PathVariable UUID bookingId, RedirectAttributes ra) {
         try {
@@ -116,8 +127,13 @@ public class BookingAdminController {
             try {
                 bookingUuid = UUID.fromString(form.getBookingId().trim());
             } catch (IllegalArgumentException e) {
-                br.rejectValue("bookingId", "bookingId.invalid", "El ID de reserva ingresado no es válido.");
+                br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
             }
+        }
+
+        LocalDate bookingDate = null;
+        if (form.getBookingDate() != null && !form.getBookingDate().isBlank()) {
+            bookingDate = LocalDate.parse(form.getBookingDate());
         }
 
         List<Booking> result = List.of();
@@ -130,13 +146,17 @@ public class BookingAdminController {
                     bookingUuid,
                     form.getStatus(),
                     form.getSort(),
+                    bookingDate,
+                    form.getHasReceipt(),
                     size, offset
             );
             totalBookings = bookingService.countSearchForAdmin(
                     current.getId(),
                     form.getClubId(),
                     bookingUuid,
-                    form.getStatus()
+                    form.getStatus(),
+                    bookingDate,
+                    form.getHasReceipt()
             );
         }
 
@@ -153,6 +173,17 @@ public class BookingAdminController {
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
                 .collect(java.util.stream.Collectors.joining("&"));
+
+        Map<UUID, Date> bookingStartDates = new HashMap<>();
+        for (Booking booking : result) {
+            if (booking.getBookingStart() != null) {
+                bookingStartDates.put(
+                        booking.getBookingId(),
+                        Date.from(booking.getBookingStart().toInstant())
+                );
+            }
+        }
+        model.addAttribute("bookingStartDates", bookingStartDates);
 
         Map<UUID, Boolean> hasReceiptMap = new HashMap<>();
         for (Booking b : result) {
@@ -186,7 +217,7 @@ public class BookingAdminController {
     public String bookingAdminHandler(@RequestParam UUID bookingId, Model model, @ModelAttribute("error") String error, @ModelAttribute("success") String success) {
         Optional<Booking> bookingOpt = bookingService.findById(bookingId);
         if (bookingOpt.isEmpty()) {
-            model.addAttribute("error", "Reserva no encontrada");
+            model.addAttribute("error", "error.no_reservation");
             return "error/error";
         }
         Booking booking = bookingOpt.get();
@@ -209,8 +240,8 @@ public class BookingAdminController {
         model.addAttribute("hasReceipt", rOpt.isPresent());
         rOpt.ifPresent(r -> model.addAttribute("receipt", r));
 
-        User u = userService.findById(booking.getUser().getId());
-        model.addAttribute("user", u);
+        Optional<User> u = userService.findById(booking.getUser().getId());
+        model.addAttribute("user", u.orElse(null));
 
         model.addAttribute("booking", booking);
         model.addAttribute("table", table);
@@ -219,11 +250,12 @@ public class BookingAdminController {
 
 
         ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-                .withLocale(new Locale("es","AR"));
 
-        String bookingStartLocal = booking.getBookingStart().atZoneSameInstant(zone).format(fmt);
-        String bookingEndLocal   = booking.getBookingEnd().atZoneSameInstant(zone).format(fmt);
+        ZonedDateTime startLocal = booking.getBookingStart().atZoneSameInstant(zone);
+        String bookingStartLocal = formatDateEsEn(startLocal);
+
+        ZonedDateTime endLocal = booking.getBookingEnd().atZoneSameInstant(zone);
+        String bookingEndLocal = formatDateEsEn(endLocal);
 
         model.addAttribute("bookingStartLocal", bookingStartLocal);
         model.addAttribute("bookingEndLocal", bookingEndLocal);
@@ -243,5 +275,24 @@ public class BookingAdminController {
         ra.addFlashAttribute(deleted ? "success" : "info",
                 deleted ? "receipt.deleted" : "receipt.notfound");
         return "redirect:/admin/booking?bookingId=" + bookingId;
+    }
+    private static String formatDateEsEn(ZonedDateTime zdt) {
+        var date = zdt.toLocalDate();
+        if (date == null) return "";
+        Locale locale = LocaleContextHolder.getLocale();
+        boolean isEs = "es".equalsIgnoreCase(locale.getLanguage());
+
+        Month m = date.getMonth();
+        String monthName = m.getDisplayName(TextStyle.FULL, locale);
+        if (isEs) {
+            monthName = capitalize(monthName, locale); // Java devuelve "noviembre"; se capitaliza -> "Noviembre"
+        }
+
+        String connector = isEs ? " de " : " of ";
+        return date.getDayOfMonth() + connector + monthName + ", " + date.getYear();
+    }
+    private static String capitalize(String s, Locale locale) {
+        if (s == null || s.isEmpty()) return s;
+        return s.substring(0, 1).toUpperCase(locale) + s.substring(1);
     }
 }

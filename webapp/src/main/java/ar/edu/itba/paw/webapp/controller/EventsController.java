@@ -184,11 +184,11 @@ public class EventsController {
     private void checkLoggedUser(UUID clubId) {
         User user = securityService.getVerifiedLoggedUser();
         if (user == null) {
-            throw new UserNotFoundException("No se encontró el usuario logueado.");
+            throw new UserNotFoundException("error.no_loggeduser");
         }
         List<User> admins = clubService.getAdminsByClub(clubId);
         if (admins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("El usuario no es admin del club.");
+            throw new UnauthorizedException("error.notAdmin");
         }
     }
 

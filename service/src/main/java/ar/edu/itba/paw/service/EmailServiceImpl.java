@@ -16,13 +16,12 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import ar.edu.itba.paw.persistence.BookingDao;
+import java.lang.reflect.Method;
 
 import javax.mail.internet.MimeMessage;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -437,7 +436,7 @@ public class EmailServiceImpl implements EmailService {
         ownerModel.put("receiptUploadedAt", OffsetDateTime.now(ZONE_ID).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         ownerModel.put("bookingId", booking.getBookingId());
         ownerModel.put("brandName", "BlingBling");
-        ownerModel.put("brandFooter", "© 2025 BlingBling. Recibo de pago cargado.");
+        ownerModel.put("brandFooter", "© 2025 BlingBling.");
 
         String subject = messageSource.getMessage("email.receipt.uploaded", new Object[] { club.getClubName(), tableNum }, locale);
 
@@ -496,6 +495,99 @@ public class EmailServiceImpl implements EmailService {
         );
     }
 
+    @Override
+    @Async
+    public void sendOwnerReviewAlert(final Club club, final Review review, final Locale locale) {
+        Objects.requireNonNull(club, "club cannot be null");
+        Objects.requireNonNull(review, "review cannot be null");
+
+
+        String ownerEmail = null;
+        try {
+            if (club.getContactInfo() != null && club.getContactInfo().getEmail() != null) {
+                ownerEmail = club.getContactInfo().getEmail();
+            }
+        } catch (Exception ignore) {
+        }
+
+        if (ownerEmail == null || ownerEmail.isBlank()) {
+            LOGGER.warn("sendOwnerReviewAlert: no owner email found for club {}", club.getClubName());
+            return;
+        }
+
+        final String clubName   = Objects.requireNonNullElse(club.getClubName(), "Club");
+        final String reviewer   = (review.getUser() != null && review.getUser().getUsername() != null)
+                ? review.getUser().getUsername()
+                : "usuario";
+        final Integer rating    = review.getRating() != 0 ? review.getRating() : 5;
+        final String description = Objects.requireNonNullElse(review.getDescription(), "");
+        //final boolean fromTableGuest = Boolean.TRUE.equals(review.getFromTableGuest());
+
+        String photoUrl = null;
+        if (review.getPhotoId() != null) {
+            photoUrl = abs("/photos/" + review.getPhotoId());
+        }
+
+        final OffsetDateTime createdOdt = toOffsetDateTime(review.getCreatedAt());
+        final DateTimeFormatter fmt = REVIEW_DT_FMT(locale);
+
+        final String createdAtPretty = (createdOdt != null)
+                ? createdOdt.atZoneSameInstant(ZONE_ID).format(fmt)
+                : OffsetDateTime.now(ZONE_ID).format(fmt);
+
+        final String ctaUrl  = abs("/admin/clubs/handle?clubId=" + club.getClubId());
+        final String ctaText = "Abrir reseñas";
+
+        String subject;
+        try {
+            subject = messageSource.getMessage("email.review.owner.subject",
+                    new Object[]{ clubName, rating }, locale);
+        } catch (Exception e) {
+            subject = "Nueva reseña (" + rating + "★) - " + clubName;
+        }
+
+        final Map<String, Object> model = new HashMap<>();
+        model.put("clubName", clubName);
+        model.put("reviewer", reviewer);
+        model.put("rating", rating);
+        model.put("description", description);
+        model.put("fromTableGuest", true);
+        model.put("photoUrl", photoUrl);
+        model.put("createdAt", createdAtPretty);
+        model.put("brandName", "BlingBling");
+        model.put("brandFooter", "© 2025 BlingBling.");
+
+        sendTemplatedEmail(
+                ownerEmail,
+                subject,
+                "owner-review-alert",
+                model,
+                ctaText,
+                ctaUrl
+        );
+
+        LOGGER.info("Owner review alert sent to {} for club {}", ownerEmail, clubName);
+    }
+
+
+    private static DateTimeFormatter REVIEW_DT_FMT(Locale locale) {
+        return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", locale);
+    }
+
+
+    private OffsetDateTime toOffsetDateTime(final Object value) {
+        return switch (value) {
+            case null -> null;
+            case OffsetDateTime odt -> odt;
+            case ZonedDateTime zdt -> zdt.toOffsetDateTime();
+            case LocalDateTime ldt -> ldt.atZone(ZONE_ID).toOffsetDateTime();
+            case LocalDate ld -> ld.atStartOfDay(ZONE_ID).toOffsetDateTime();
+            case java.sql.Timestamp ts -> ts.toInstant().atZone(ZONE_ID).toOffsetDateTime();
+            case Date d -> d.toInstant().atZone(ZONE_ID).toOffsetDateTime();
+            default -> null;
+        };
+
+    }
 
     private boolean isLikelyEmail(String s) {
         return s != null && s.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");

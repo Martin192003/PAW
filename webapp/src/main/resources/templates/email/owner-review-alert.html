@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #ffffff;
+            background-color: #0d0f15;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            color: #a64ca6;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p, li, small {
+            color: #e6e6e6;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        b {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 10px;
+            background-color: #333333;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-img {
+            width:50%;
+            height:auto;
+            max-width:600px;
+            display:block;
+            margin-bottom:24px;
+            margin-left:auto;
+            margin-right:auto;
+        }
+
+        .meta {
+            background: #2c2c2c;
+            border: 1px solid #444;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin: 12px 0 18px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #a64ca6;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 5px 12px;
+            border-radius: 20px;
+            letter-spacing: .6px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .rating {
+            display:inline-block;
+            background:#1f1f27;
+            border:1px solid #444;
+            border-radius:16px;
+            padding:6px 10px;
+            font-weight:700;
+            color:#ffd166;
+            margin-left:8px;
+            font-size: 14px;
+        }
+
+        .message-section {
+            background: #2c2c2c;
+            border: 1px solid #444;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            color: #ffffff;
+            white-space: pre-wrap;
+        }
+
+        .thumb {
+            display:block;
+            max-width: 120px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            margin: 10px 0 0 auto; /* a la derecha */
+        }
+
+        .cta {
+            text-align:center;
+            margin-top: 24px;
+        }
+
+        .cta a {
+            display:inline-block;
+            background:#a64ca6;
+            color:#fff !important;
+            text-decoration:none;
+            padding:10px 16px;
+            border-radius:8px;
+            font-weight:700;
+        }
+
+        .divider {
+            height: 1px;
+            background: #444;
+            margin: 24px 0;
+            border: none;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #999999;
+            margin-top: 16px;
+            border-top: 1px solid #444;
+            padding-top: 16px;
+        }
+
+        .row {
+            display:flex;
+            gap:12px;
+            align-items:flex-start;
+        }
+
+        .col-left { flex: 1 1 auto; }
+        .col-right { flex: 0 0 auto; }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <img src="https://i.postimg.cc/G2fXVYJD/icon-PAW.png" alt="Header Image" class="header-img"/>
+
+    <h2 th:text="#{email.review.owner.title(${clubName})}">Nueva reseña</h2>
+
+    <div class="meta">
+        <p>
+            <b th:text="#{email.review.owner.reviewer(${reviewer})}">Reseña de: John</b>
+            <span class="rating">
+                <span th:text="${rating}">5</span> ★
+            </span>
+        </p>
+        <small th:text="#{email.review.owner.createdAt(${createdAt})}">Enviada el 01/11/2025 19:30</small>
+        <div th:if="${fromTableGuest}" class="badge" th:text="#{email.review.owner.badge}">Reservó mesa</div>
+    </div>
+
+    <div class="row">
+        <div class="col-left">
+            <p><b th:text="#{email.review.owner.comment}">Comentario</b></p>
+            <div class="message-section" th:text="${description}">Excelente música y ambiente.</div>
+        </div>
+        <div class="col-right" th:if="${photoUrl}">
+            <img class="thumb" th:src="${photoUrl}" alt="Foto de reseña"/>
+        </div>
+    </div>
+
+    <div class="cta">
+        <a th:href="${ctaUrl}" th:text="${ctaText}">Abrir reseñas</a>
+    </div>
+
+    <hr class="divider"/>
+
+    <div class="footer">
+        <p>
+            <span th:text="${brandName}">BlingBling</span> —
+            <span th:text="${brandFooter}">© 2025 BlingBling. Panel de administración.</span>
+        </p>
+    </div>
+</div>
+</body>
+</html>

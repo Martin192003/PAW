@@ -29,14 +29,14 @@
 
 <div class="panel-content">
     <button type="button" class="btn btn-success"
-            onclick="window.location.href='<c:url value="/admin/clubs/activity?userId=${club.contactInfo.id}"/>'">
+            onclick="window.location.href='<c:url value="/admin/activity"/>'">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
 
     <div class="club-image-container" style="position:relative;">
         <c:choose>
             <c:when test="${not empty coverPhotoUrl}">
-                <img src="<c:url value='${coverPhotoUrl}' />" alt="<c:out value='${club.clubName}'/>" class="card-image"/>
+                <img src="<c:url value='${coverPhotoUrl}' />" alt="<c:out value='${club.clubName}'/>" class="card-image" style="object-fit: contain;"/>
             </c:when>
             <c:otherwise>
                 <div class="card-no-image">
@@ -147,7 +147,7 @@
                                 <div class="carousel-slide${st.first ? ' active' : ''}">
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${st.index + 1}"
-                                         loading="lazy" draggable="false" style="object-fit: fill;"/>
+                                         loading="lazy" draggable="false" style="object-fit: contain;"/>
                                 </div>
                             </c:forEach>
                         </div>
@@ -380,6 +380,10 @@
                     <spring:message code="label.events" text="Eventos"/>
                 </h2>
 
+                <h2 style="margin: 0;">
+                    <spring:message code="label.events" text="Eventos"/>
+                </h2>
+
                 <form method="get" action="">
                     <input type="hidden" name="clubId" value="${club.clubId}"/>
                     <select name="filter" onchange="this.form.submit()" class="filter-select">
@@ -411,7 +415,22 @@
                 <c:forEach var="e" items="${events}">
                     <tr>
                         <td><c:out value="${e.eventName}"/></td>
-                        <td><c:out value="${e.date}"/></td>
+                        <td>
+                            <c:choose>
+                                <c:when test="${fn:contains(e.date, '-')}">
+                                    <fmt:parseDate var="eventDate" value="${e.date}" pattern="yyyy-MM-dd"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:set var="eventDate" value="${e.date}"/>
+                                </c:otherwise>
+                            </c:choose>
+
+                            <fmt:formatDate value="${eventDate}" pattern="d" var="eventDay"/>
+                            <fmt:formatDate value="${eventDate}" pattern="MMMM" var="eventMonth"/>
+                            <fmt:formatDate value="${eventDate}" pattern="yyyy" var="eventYear"/>
+
+                                ${eventDay} <spring:message code="pagination.of"/> <span class="month">${eventMonth}</span>, ${eventYear}
+                        </td>
                         <td>
                             <c:choose>
                                 <c:when test="${not empty e.description and fn:length(e.description) > 80}">

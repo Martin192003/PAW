@@ -302,14 +302,23 @@ select.filter-item option {
     display: block;
 }
 
+/* Sin filtros aplicados - campo más ancho */
 input.filter-item[name="name"],
 .filter-item.filter-name {
     flex: 0 0 38px;
-    max-width: 110px;
-    min-width: 38px;
+    max-width: 1300px;
+    min-width: 50px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Con filtros aplicados - campo más estrecho */
+.filter-bar.has-filters input.filter-item[name="name"],
+.filter-bar.has-filters .filter-item.filter-name {
+    flex: 0 0 38px;
+    max-width: 110px;
+    min-width: 38px;
 }
 select.filter-item[name="sort"],
 .filter-item.filter-sort {
@@ -458,5 +467,3 @@ select.filter-item[name="sort"],
     border-top-right-radius: 10px;
     font-family: 'Darklinos', Arial, sans-serif;
 }
-
-
