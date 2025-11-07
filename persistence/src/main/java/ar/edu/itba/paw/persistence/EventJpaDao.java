@@ -234,4 +234,107 @@ public class EventJpaDao implements EventDao {
         ev.setPhotoId(photoId);
         em.merge(ev);
     }
+
+    @Override
+    public List<Event> findUpcomingByClub(UUID clubId, int page, int size) {
+        final int limit  = Math.max(0, size);
+        final int offset = Math.max(0, page) * limit;
+
+        final String idSql = """
+        SELECT CAST(e.eventid AS TEXT) AS id_text
+        FROM event e
+        WHERE e.clubid = :clubId
+          AND e.date >= :today
+        ORDER BY e.date ASC, e.eventid ASC
+        LIMIT :limit OFFSET :offset
+    """;
+
+        List<String> idTexts = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .setParameter("clubId", clubId)
+                .setParameter("today", LocalDate.now())
+                .setParameter("limit", limit)
+                .setParameter("offset", offset)
+                .getResultList();
+
+        if (idTexts.isEmpty()) return List.of();
+        List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+        return em.createQuery("""
+        SELECT e FROM Event e
+        WHERE e.eventId IN :ids
+        ORDER BY e.date ASC, e.eventId ASC
+    """, Event.class)
+                .setParameter("ids", ids)
+                .getResultList();
+    }
+
+
+    @Override
+    public List<Event> findPastByClub(UUID clubId, int page, int size) {
+        final int limit  = Math.max(0, size);
+        final int offset = Math.max(0, page) * limit;
+
+        final String idSql = """
+        SELECT CAST(e.eventid AS TEXT) AS id_text
+        FROM event e
+        WHERE e.clubid = :clubId
+          AND e.date < :today
+        ORDER BY e.date DESC, e.eventid DESC
+        LIMIT :limit OFFSET :offset
+    """;
+
+        List<String> idTexts = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .setParameter("clubId", clubId)
+                .setParameter("today", LocalDate.now())
+                .setParameter("limit", limit)
+                .setParameter("offset", offset)
+                .getResultList();
+
+        if (idTexts.isEmpty()) return List.of();
+        List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+        return em.createQuery("""
+        SELECT e FROM Event e
+        WHERE e.eventId IN :ids
+        ORDER BY e.date DESC, e.eventId DESC
+    """, Event.class)
+                .setParameter("ids", ids)
+                .getResultList();
+    }
+
+
+    @Override
+    public int countUpcomingByClub(UUID clubId) {
+        return em.createQuery("""
+        SELECT COUNT(e)
+        FROM Event e
+        WHERE e.clubId = :clubId
+          AND e.date >= :today
+    """, Long.class)
+                .setParameter("clubId", clubId)
+                .setParameter("today", LocalDate.now())
+                .getSingleResult()
+                .intValue();
+    }
+
+
+    @Override
+    public int countPastByClub(UUID clubId) {
+        return em.createQuery("""
+        SELECT COUNT(e)
+        FROM Event e
+        WHERE e.clubId = :clubId
+          AND e.date < :today
+    """, Long.class)
+                .setParameter("clubId", clubId)
+                .setParameter("today", LocalDate.now())
+                .getSingleResult()
+                .intValue();
+    }
+
+
 }

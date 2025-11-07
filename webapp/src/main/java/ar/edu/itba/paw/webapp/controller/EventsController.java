@@ -31,11 +31,12 @@ public class EventsController {
     private final TableService tableService;
     private final MenuService menuService;
     private final ClubLayoutService clubLayoutService;
+    private final ProductService productService;
 
 
 
     @Autowired
-    public EventsController(EventService eventService, SecurityService securityService, ClubService clubService, PhotoService photoService, TableService tableService, MenuService menuService, ClubLayoutService clubLayoutService) {
+    public EventsController(EventService eventService, SecurityService securityService, ClubService clubService, PhotoService photoService, TableService tableService, MenuService menuService, ClubLayoutService clubLayoutService, ProductService productService) {
         this.eventService = eventService;
         this.securityService = securityService;
         this.clubService = clubService;
@@ -43,6 +44,7 @@ public class EventsController {
         this.tableService = tableService;
         this.menuService = menuService;
         this.clubLayoutService = clubLayoutService;
+        this.productService = productService;
     }
 
 
@@ -76,6 +78,8 @@ public class EventsController {
             clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
 
@@ -87,7 +91,7 @@ public class EventsController {
                 form.getDate(),
                 form.getPhotoId()
         );
-        return "redirect:/clubs/handle?clubId=" + clubId;
+        return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
 
     @PostMapping("/{eventId}/edit")
@@ -122,6 +126,8 @@ public class EventsController {
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("errors", errors);
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
 
@@ -145,7 +151,7 @@ public class EventsController {
             );
         }
 
-        return "redirect:/clubs/handle?clubId=" + clubId;
+        return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
 
 
@@ -153,7 +159,7 @@ public class EventsController {
     public String deleteEvent(@PathVariable UUID eventId, @RequestParam("clubId") UUID clubId) {
         checkLoggedUser(clubId);
         eventService.delete(clubId, eventId);
-        return "redirect:/clubs/handle?clubId=" + clubId;
+        return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
 
 
@@ -189,7 +195,7 @@ public class EventsController {
     private void preloadClubHandler(Model model, UUID clubId) {
         var club = clubService.getClubById(clubId).orElseThrow();
         model.addAttribute("club", club);
-        model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+        model.addAttribute("events", eventService.listByClub(clubId, 0, 10));
         model.addAttribute("tables", tableService.findByClubId(clubId));
         model.addAttribute("menu", menuService.getMenuByClub(clubId));
         model.addAttribute("zones", Zone.values());
@@ -218,5 +224,13 @@ public class EventsController {
         model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
         model.addAttribute("carouselPhotos", carouselPhotos);
         model.addAttribute("tableLayoutUrl", tableLayoutUrl);
+    }
+
+    @GetMapping("/page/{clubId}/{page}")
+    @ResponseBody
+    public List<Event> getEventPage(@PathVariable UUID clubId,
+                                    @PathVariable int page) {
+        int pageSize = 10;
+        return eventService.listByClub(clubId, page, pageSize);
     }
 }

@@ -34,4 +34,12 @@ public interface EventDao {
 
     void attachPhoto(UUID eventId, UUID photoId);
 
+    List<Event> findUpcomingByClub(UUID clubId, int offset, int limit);
+
+    List<Event> findPastByClub(UUID clubId, int offset, int limit);
+
+    int countUpcomingByClub(UUID clubId);
+
+    int countPastByClub(UUID clubId);
+
 }

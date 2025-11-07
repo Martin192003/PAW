@@ -19,6 +19,7 @@ import java.util.UUID;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductsDao productsDao;
+    private static final int MAX_MENU_PRODUCTS = 50;
 
     public ProductServiceImpl(ProductsDao productsDao) {
         this.productsDao = productsDao;
@@ -31,6 +32,10 @@ public class ProductServiceImpl implements ProductService {
             throw new ValidationException("Precio demasiado alto");
         if(name.length() > 100)
             throw new IllegalArgumentException("Nombre demasiado largo");
+        List<Product> current = productsDao.findByClub(club);
+        if (current.size() >= MAX_MENU_PRODUCTS) {
+            throw new ValidationException("max_products_menu");
+        }
         return productsDao.create(club, name, description, basePrice, type, isAvailable);
     }
 
@@ -92,6 +97,14 @@ public class ProductServiceImpl implements ProductService {
         if (type == ProductType.ALCOHOLICA) return "ALCOHOLICA";
 
         return "TRAGOS";
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean canAddProduct(Club club) {
+        if (club == null) return false;
+        List<Product> current = productsDao.findByClub(club);
+        return current.size() < MAX_MENU_PRODUCTS;
     }
 
 }

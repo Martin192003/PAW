@@ -51,9 +51,10 @@ public class ClubController {
     private final TableService tableService;
     private final EventService eventService;
     private final ClubLayoutService clubLayoutService;
+    private final ProductService productService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService,  EventService eventService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
@@ -62,6 +63,7 @@ public class ClubController {
         this.tableService = tableService;
         this.eventService = eventService;
         this.clubLayoutService = clubLayoutService;
+        this.productService = productService;
     }
 
     @GetMapping({"", "/"})
@@ -234,7 +236,11 @@ public class ClubController {
     }
 
     @GetMapping("/handle")
-    public String handleClub(@RequestParam("clubId") UUID clubId, Model model) {
+    public String handleClub(@RequestParam("clubId") UUID clubId,
+                             @RequestParam(name = "page", defaultValue = "1") int page,
+                             @RequestParam(name = "size", defaultValue = "10") int size,
+                             @RequestParam(name = "filter", defaultValue = "all") String filter,
+                             Model model) {
         var user = securityService.getVerifiedLoggedUser();
         if (user == null) throw new UserNotFoundException("error.notLoggedIn");
         clubService.assertAdmin(clubId, user.getId());
@@ -262,7 +268,33 @@ public class ClubController {
 
         var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
         String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
-        model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
+
+        int pageIndex = page - 1;
+        List<Event> events;
+        int totalEvents;
+
+        switch (filter) {
+            case "past":
+                events = eventService.findPastByClub(clubId, pageIndex, size);
+                totalEvents = eventService.countPastByClub(clubId);
+                break;
+            case "future":
+                events = eventService.findUpcomingByClub(clubId, pageIndex, size);
+                totalEvents = eventService.countUpcomingByClub(clubId);
+                break;
+            default:
+                events = eventService.listByClub(clubId, pageIndex, size);
+                totalEvents = eventService.countByClub(clubId);
+                break;
+        }
+
+        int totalPages = (int) Math.ceil((double) totalEvents / size);
+        
+        model.addAttribute("filter", filter);
+        model.addAttribute("club", club);
+        model.addAttribute("events", events);
+        model.addAttribute("page", page);
+        model.addAttribute("totalPages", totalPages);
 
         EventAddForm eventForm = new EventAddForm();
         eventForm.setClubId(club.getClubId());
@@ -284,6 +316,8 @@ public class ClubController {
         model.addAttribute("editTableForm", new EditTableForm());
         model.addAttribute("editProductForm", new EditProductForm());
         model.addAttribute("editField", "Event");
+        model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+        model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
 
         ClubHandlerForm form = new ClubHandlerForm();
         form.setClubId(club.getClubId());

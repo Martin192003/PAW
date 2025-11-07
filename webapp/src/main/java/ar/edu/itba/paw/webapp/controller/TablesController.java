@@ -29,9 +29,10 @@ public class TablesController {
      private final MenuService menuService;
      private final EventService eventService;
      private final ClubLayoutService clubLayoutService;
+     private final ProductService productService;
 
      @Autowired
-     public TablesController(TableService tableService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService, EventService eventService, ClubLayoutService clubLayoutService) {
+     public TablesController(TableService tableService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService, EventService eventService, ClubLayoutService clubLayoutService, ProductService productService) {
          this.tableService = tableService;
          this.securityService = securityService;
          this.clubService = clubService;
@@ -39,6 +40,7 @@ public class TablesController {
          this.menuService = menuService;
          this.eventService = eventService;
          this.clubLayoutService = clubLayoutService;
+         this.productService = productService;
      }
 
 
@@ -95,6 +97,8 @@ public class TablesController {
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
             model.addAttribute("carouselPhotos", carouselPhotos);
             model.addAttribute("tableLayoutUrl", tableLayoutUrl);
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
 
@@ -147,7 +151,8 @@ public class TablesController {
     public String addTable(
             @Valid @ModelAttribute("tableForm") AddTableForm tableForm,
             BindingResult errors,
-            Model model
+            Model model,
+            RedirectAttributes ra
     ) {
         UUID clubId = tableForm.getClubId();
         checkLoggedUser(clubId);
@@ -187,7 +192,15 @@ public class TablesController {
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editProductForm", new EditProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
+        }
+
+        Club club = clubService.getClubById(clubId).orElseThrow();
+        if (!tableService.canAddTable(club)) {
+            ra.addAttribute("err", "max_tables");
+            return "redirect:/clubs/handle?clubId=" + clubId ;
         }
 
         try {

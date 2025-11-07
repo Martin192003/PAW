@@ -46,7 +46,7 @@ public class ProductController {
 
     @PostMapping("/addProduct")
     public String addProduct(@Valid @ModelAttribute("productForm") AddProductForm form,
-                             BindingResult errors, Model model) {
+                             BindingResult errors, Model model, RedirectAttributes ra) {
         UUID clubId = form.getClubId();
 
         var user = securityService.getVerifiedLoggedUser();
@@ -81,10 +81,15 @@ public class ProductController {
             EventEditForm editEventForm = new EventEditForm();
             editEventForm.setClubId(club.getClubId());
             model.addAttribute("editEventForm", editEventForm);
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
 
-
+        if (!productService.canAddProduct(clubService.getClubById(clubId).orElseThrow())) {
+            ra.addAttribute("err", "max_products");
+            return "redirect:/clubs/handle?clubId=" + clubId;
+        }
 
         var club = clubService.getClubById(clubId).orElseThrow();
         productService.create(club, form.getProductName(), form.getDescription(),
@@ -155,6 +160,8 @@ public class ProductController {
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
             model.addAttribute("carouselPhotos", carouselPhotos);
             model.addAttribute("tableLayoutUrl", tableLayoutUrl);
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
 

@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/sidebar.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/activity.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/carousel.css' />" />
+    <link rel="stylesheet" href="<c:url value='/resources/css/tabs.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
 </head>
@@ -180,261 +181,346 @@
             </c:otherwise>
         </c:choose>
     </div>
+    <div class="tabs-container">
 
-    <h2><spring:message code="menu.menu"/></h2>
-    <table class="styled-table">
-        <thead>
-        <tr>
-            <th><spring:message code="label.product"/></th>
-            <th><spring:message code="form.description"/></th>
-            <th><spring:message code="label.price"/></th>
-            <th><spring:message code="label.type"/></th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <c:if test="${empty menu}">
-            <tr>
-                <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
-                    <spring:message code="error.noproducts"/>
-                </td>
-            </tr>
-        </c:if>
-        <c:forEach var="product" items="${menu}">
-            <tr>
-                <td><c:out value="${product.productName}"/></td>
-                <td><c:out value="${product.description}"/></td>
-                <td>$<fmt:formatNumber value="${product.basePrice}" type="number" groupingUsed="true" maxFractionDigits="0"/></td>
-                <td><spring:message code="productType.${product.productType}"/></td>
-                <td>
-                    <div style="display: flex; justify-content: right; margin-right: 12px">
-                        <button type="button" class="btn btn-success btn-edit-small"
-                                data-product-id="${product.productId}"
-                                data-product-name="<c:out value='${product.productName}'/>"
-                                data-product-description="<c:out value='${product.description}'/>"
-                                data-product-price="<fmt:formatNumber value='${product.basePrice}' type='number' groupingUsed='false' maxFractionDigits='0'/>"
-                                data-product-type="${product.productType}"
-                                onclick="openProductEditModal(this)" title="Editar producto">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button type="button" class="btn btn-danger btn-edit-small"
-                                onclick="openDeleteModal('${product.productId}')">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+        <div class="tabs">
+            <button class="tab-button active" data-tab="menu-tab">Menu</button>
+            <button class="tab-button" data-tab="tables-tab">Tables</button>
+            <button class="tab-button" data-tab="events-tab">Events</button>
+        </div>
+
+        <div class="tab-content active" id="menu-tab">
+            <h2><spring:message code="menu.menu"/></h2>
+            <table class="styled-table">
+                <thead>
+                <tr>
+                    <th><spring:message code="label.product"/></th>
+                    <th><spring:message code="form.description"/></th>
+                    <th><spring:message code="label.price"/></th>
+                    <th><spring:message code="label.type"/></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:if test="${empty menu}">
+                    <tr>
+                        <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
+                            <spring:message code="error.noproducts"/>
+                        </td>
+                    </tr>
+                </c:if>
+                <c:forEach var="product" items="${menu}">
+                    <tr>
+                        <td><c:out value="${product.productName}"/></td>
+                        <td><c:out value="${product.description}"/></td>
+                        <td>$<fmt:formatNumber value="${product.basePrice}" type="number" groupingUsed="true" maxFractionDigits="0"/></td>
+                        <td><spring:message code="productType.${product.productType}"/></td>
+                        <td>
+                            <div style="display: flex; justify-content: right; margin-right: 12px">
+                                <button type="button" class="btn btn-success btn-edit-small"
+                                        data-product-id="${product.productId}"
+                                        data-product-name="<c:out value='${product.productName}'/>"
+                                        data-product-description="<c:out value='${product.description}'/>"
+                                        data-product-price="<fmt:formatNumber value='${product.basePrice}' type='number' groupingUsed='false' maxFractionDigits='0'/>"
+                                        data-product-type="${product.productType}"
+                                        onclick="openProductEditModal(this)" title="Editar producto">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button type="button" class="btn btn-danger btn-edit-small"
+                                        onclick="openDeleteModal('${product.productId}')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+
+            <spring:message code="placeholder.menu.name" var="phProductName"/>
+            <spring:message code="placeholder.menu.description" var="phDescription"/>
+            <spring:message code="placeholder.price" var="phPrice"/>
+
+            <c:if test="${param.err == 'max_products'}">
+                <div class="alert alert-danger" style="margin-top: 10px; text-align:center;">
+                    <spring:message code="menu.limit"/>
+                </div>
+            </c:if>
+
+            <c:choose>
+                <c:when test="${maxProductsReached}">
+                    <div class="alert alert-warning" style="text-align:center; margin-top:10px;">
+                        <spring:message code="menu.limit"/>
                     </div>
-                </td>
-            </tr>
-        </c:forEach>
-        </tbody>
-    </table>
-
-    <spring:message code="placeholder.menu.name" var="phProductName"/>
-    <spring:message code="placeholder.menu.description" var="phDescription"/>
-    <spring:message code="placeholder.price" var="phPrice"/>
-
-    <form:form method="post" modelAttribute="productForm" action="${pageContext.request.contextPath}/clubs/products/addProduct" class="add-product-bar">
-        <form:hidden path="clubId" value="${club.clubId}" />
-        <div class="form-group">
-            <form:input path="productName" cssClass="add-product-name" placeholder="${phProductName}" />
-            <form:errors path="productName" cssClass="formError"/>
-        </div>
-        <div class="form-group">
-            <form:input path="description" cssClass="add-product-input" placeholder="${phDescription}" />
-            <form:errors path="description" cssClass="formError"/>
-        </div>
-        <div class="form-group">
-            <form:input path="basePrice" type="number" cssClass="add-product-input" placeholder="${phPrice}" />
-            <form:errors path="basePrice" cssClass="formError"/>
-        </div>
-        <div class="form-group">
-            <form:select path="productType" cssClass="input-text">
-                <form:option value="ALCOHOLICA" label="Alcohólica"/>
-                <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
-            </form:select>
-            <form:errors path="productType" cssClass="formError"/>
-        </div>
-        <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
-    </form:form>
-
-    <h2><spring:message code="button.tables"/></h2>
-    <table class="styled-table">
-        <thead>
-        <tr>
-            <th><spring:message code="label.number"/></th>
-            <th><spring:message code="label.capacity"/></th>
-            <th><spring:message code="label.price"/></th>
-            <th><spring:message code="label.discount"/> (%)</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <c:if test="${empty tables}">
-            <tr>
-                <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
-                    <spring:message code="error.notables"/>
-                </td>
-            </tr>
-        </c:if>
-        <c:forEach var="table" items="${tables}">
-            <tr>
-                <td><c:out value="${table.tableNumber}"/></td>
-                <td><c:out value="${table.capacity}"/></td>
-                <td>$<fmt:formatNumber value="${table.price}" type="number" groupingUsed="true" maxFractionDigits="0"/></td>
-                <td><c:out value="${table.discount}"/></td>
-                <td>
-                    <div style="display: flex; justify-content: right; margin-right: 12px">
-                        <button type="button" class="btn btn-success btn-edit-small"
-                                onclick="openTableEditModal('${table.tableId}', '${table.tableNumber}', '${table.capacity}', '${table.price}', '${table.discount}')">
-                            <i class="fa-solid fa-pen"></i>
+                </c:when>
+                <c:otherwise>
+                    <form:form method="post" modelAttribute="productForm"
+                               action="${pageContext.request.contextPath}/clubs/products/addProduct"
+                               class="add-product-bar">
+                        <form:hidden path="clubId" value="${club.clubId}" />
+                        <div class="form-group">
+                            <form:input path="productName" cssClass="add-product-name" placeholder="${phProductName}" />
+                            <form:errors path="productName" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="description" cssClass="add-product-input" placeholder="${phDescription}" />
+                            <form:errors path="description" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="basePrice" type="number" cssClass="add-product-input" placeholder="${phPrice}" />
+                            <form:errors path="basePrice" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:select path="productType" cssClass="input-text">
+                                <form:option value="ALCOHOLICA" label="Alcohólica"/>
+                                <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+                            </form:select>
+                            <form:errors path="productType" cssClass="formError"/>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-edit-small">
+                            <i class="fa-solid fa-plus"></i>
                         </button>
-                        <button type="button" class="btn btn-danger btn-edit-small"
-                                onclick="openTableDeleteModal('${table.tableId}')"
-                                title="<spring:message code='button.delete'/>">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                    </form:form>
+                </c:otherwise>
+            </c:choose>
+        </div>
+
+        <div class="tab-content" id="tables-tab">
+            <h2><spring:message code="button.tables"/></h2>
+            <table class="styled-table">
+                <thead>
+                <tr>
+                    <th><spring:message code="label.number"/></th>
+                    <th><spring:message code="label.capacity"/></th>
+                    <th><spring:message code="label.price"/></th>
+                    <th><spring:message code="label.discount"/> (%)</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:if test="${empty tables}">
+                    <tr>
+                        <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
+                            <spring:message code="error.notables"/>
+                        </td>
+                    </tr>
+                </c:if>
+                <c:forEach var="table" items="${tables}">
+                    <tr>
+                        <td><c:out value="${table.tableNumber}"/></td>
+                        <td><c:out value="${table.capacity}"/></td>
+                        <td>$<fmt:formatNumber value="${table.price}" type="number" groupingUsed="true" maxFractionDigits="0"/></td>
+                        <td><c:out value="${table.discount}"/></td>
+                        <td>
+                            <div style="display: flex; justify-content: right; margin-right: 12px">
+                                <button type="button" class="btn btn-success btn-edit-small"
+                                        onclick="openTableEditModal('${table.tableId}', '${table.tableNumber}', '${table.capacity}', '${table.price}', '${table.discount}')">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button type="button" class="btn btn-danger btn-edit-small"
+                                        onclick="openTableDeleteModal('${table.tableId}')"
+                                        title="<spring:message code='button.delete'/>">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+
+            <spring:message code="placeholder.tableNumber" var="phTableNumber"/>
+            <spring:message code="placeholder.capacity" var="phCapacity"/>
+            <spring:message code="placeholder.discount" var="phDiscount"/>
+
+            <c:if test="${param.err == 'max_tables'}">
+                <div class="alert alert-danger" style="margin-top: 10px; text-align:center;">
+                    <spring:message code="table.limit"/>
+                </div>
+            </c:if>
+
+            <c:choose>
+                <c:when test="${maxTablesReached}">
+                    <div class="alert alert-warning" style="text-align:center; margin-top:10px;">
+                        <spring:message code="table.limit"/>
                     </div>
-                </td>
-            </tr>
-        </c:forEach>
-        </tbody>
-    </table>
+                </c:when>
+                <c:otherwise>
+                    <form:form method="post" modelAttribute="tableForm" action="${pageContext.request.contextPath}/clubs/tables/addTable" class="add-product-bar">
+                        <form:hidden path="clubId" value="${club.clubId}" />
+                        <div class="form-group">
+                            <form:input path="tableNumber" type="number" cssClass="add-product-name" placeholder="${phTableNumber}" />
+                            <form:errors path="tableNumber" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="capacity" type="number" cssClass="add-product-input" placeholder="${phCapacity}" />
+                            <form:errors path="capacity" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}"/>
+                            <form:errors path="price" cssClass="formError"/>
+                        </div>
+                        <div class="form-group">
+                            <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}"/>
+                            <form:errors path="discount" cssClass="formError"/>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
+                    </form:form>
+                </c:otherwise>
+            </c:choose>
 
-    <spring:message code="placeholder.tableNumber" var="phTableNumber"/>
-    <spring:message code="placeholder.capacity" var="phCapacity"/>
-    <spring:message code="placeholder.discount" var="phDiscount"/>
+            <c:if test="${param.err == 'dup'}">
+                <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.duplicate"/></div>
+            </c:if>
+        </div>
 
-    <form:form method="post" modelAttribute="tableForm" action="${pageContext.request.contextPath}/clubs/tables/addTable" class="add-product-bar">
-        <form:hidden path="clubId" value="${club.clubId}" />
-        <div class="form-group">
-            <form:input path="tableNumber" type="number" cssClass="add-product-name" placeholder="${phTableNumber}" />
-            <form:errors path="tableNumber" cssClass="formError"/>
-        </div>
-        <div class="form-group">
-            <form:input path="capacity" type="number" cssClass="add-product-input" placeholder="${phCapacity}" />
-            <form:errors path="capacity" cssClass="formError"/>
-        </div>
-        <div class="form-group">
-            <form:input path="price" type="number" cssClass="add-product-input" placeholder="${phPrice}"/>
-            <form:errors path="price" cssClass="formError"/>
-        </div>
-        <div class="form-group">
-            <form:input path="discount" type="number" cssClass="add-product-input" placeholder="${phDiscount}"/>
-            <form:errors path="discount" cssClass="formError"/>
-        </div>
-        <button type="submit" class="btn btn-success btn-edit-small"><i class="fa-solid fa-plus"></i></button>
-    </form:form>
+        <div class ="tab-content" id="events-tab">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">
+                    <spring:message code="label.events" text="Eventos"/>
+                </h2>
 
-    <c:if test="${param.err == 'dup'}">
-        <div style="color:#e53935; font-size:0.9rem;"><spring:message code="error.table.duplicate"/></div>
-    </c:if>
+                <h2 style="margin: 0;">
+                    <spring:message code="label.events" text="Eventos"/>
+                </h2>
 
-    <h2><spring:message code="label.events" text="Eventos"/></h2>
-    <table class="styled-table">
-        <thead>
-        <tr>
-            <th><spring:message code="form.name"/></th>
-            <th><spring:message code="form.date"/></th>
-            <th><spring:message code="form.description"/></th>
-            <th><spring:message code="form.eventImage"/></th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <c:if test="${empty events}">
-            <tr>
-                <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
-                    <spring:message code="error.noevents"/>
-                </td>
-            </tr>
-        </c:if>
-        <c:forEach var="e" items="${events}">
-            <tr>
-                <td><c:out value="${e.eventName}"/></td>
-                <td>
-                    <c:choose>
-                    <c:when test="${fn:contains(e.date, '-')}">
-                        <fmt:parseDate var="eventDate" value="${e.date}" pattern="yyyy-MM-dd"/>
-                    </c:when>
-                    <c:otherwise>
-                        <c:set var="eventDate" value="${e.date}"/>
-                    </c:otherwise>
-                </c:choose>
+                <form method="get" action="">
+                    <input type="hidden" name="clubId" value="${club.clubId}"/>
+                    <select name="filter" onchange="this.form.submit()" class="filter-select">
+                        <option value="all" ${filter == 'all' ? 'selected' : ''}>Todos</option>
+                        <option value="past" ${filter == 'past' ? 'selected' : ''}>Pasados</option>
+                        <option value="future" ${filter == 'future' ? 'selected' : ''}>Futuros</option>
+                    </select>
+                </form>
+            </div>
 
-                    <fmt:formatDate value="${eventDate}" pattern="d" var="eventDay"/>
-                    <fmt:formatDate value="${eventDate}" pattern="MMMM" var="eventMonth"/>
-                    <fmt:formatDate value="${eventDate}" pattern="yyyy" var="eventYear"/>
+            <table class="styled-table">
+                <thead>
+                <tr>
+                    <th><spring:message code="form.name"/></th>
+                    <th><spring:message code="form.date"/></th>
+                    <th><spring:message code="form.description"/></th>
+                    <th><spring:message code="form.eventImage"/></th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:if test="${empty events}">
+                    <tr>
+                        <td colspan="5" class="styled-table-th" style="text-align:center; background:#3c3c3c; color:#fff; font-weight:bold;">
+                            <spring:message code="error.noevents"/>
+                        </td>
+                    </tr>
+                </c:if>
+                <c:forEach var="e" items="${events}">
+                    <tr>
+                        <td><c:out value="${e.eventName}"/></td>
+                        <td>
+                            <c:choose>
+                                <c:when test="${fn:contains(e.date, '-')}">
+                                    <fmt:parseDate var="eventDate" value="${e.date}" pattern="yyyy-MM-dd"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:set var="eventDate" value="${e.date}"/>
+                                </c:otherwise>
+                            </c:choose>
 
-                        ${eventDay} <spring:message code="pagination.of"/> <span class="month">${eventMonth}</span>, ${eventYear}</td>
-                <td>
-                    <c:choose>
-                        <c:when test="${not empty e.description and fn:length(e.description) > 80}">
-                            <c:out value="${fn:substring(e.description, 0, 80)}"/>...
-                        </c:when>
-                        <c:otherwise>
-                            <c:out value="${e.description}"/>
-                        </c:otherwise>
-                    </c:choose>
-                </td>
-                <td style="text-align:center;">
-                    <c:choose>
-                        <c:when test="${not empty e.photoId}">
-                            <img src="<c:url value='/photos/${e.photoId}'/>"
-                                 alt="Imagen del evento"
-                                 class="event-thumbnail"/>
-                        </c:when>
-                        <c:otherwise>
-                            <span style="color: #aaa; font-size: 0.85rem;"><spring:message code="label.noImage" text="Sin imagen"/></span>
-                        </c:otherwise>
-                    </c:choose>
-                </td>
-                <td>
-                    <div style="display: flex; justify-content: right; gap: 8px; margin-right: 12px">
-                        <button type="button" class="btn btn-success btn-edit-small"
-                                onclick="openEventEditModal('${e.eventId}', '${fn:escapeXml(e.eventName)}', '${e.date}', '${fn:escapeXml(e.description)}', '${e.photoId}')">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <form method="post" action="<c:url value='/clubs/events/${e.eventId}/delete'/>" style="display:inline;">
-                            <input type="hidden" name="clubId" value="${club.clubId}"/>
-                            <button type="submit" class="btn btn-danger btn-edit-small">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-        </c:forEach>
-        </tbody>
-    </table>
+                            <fmt:formatDate value="${eventDate}" pattern="d" var="eventDay"/>
+                            <fmt:formatDate value="${eventDate}" pattern="MMMM" var="eventMonth"/>
+                            <fmt:formatDate value="${eventDate}" pattern="yyyy" var="eventYear"/>
 
-    <spring:message code="placeholder.event.name" var="phEventName"/>
-    <spring:message code="placeholder.event.date" var="phEventDate"/>
-    <spring:message code="placeholder.event.description" var="phEventDesc"/>
+                                ${eventDay} <spring:message code="pagination.of"/> <span class="month">${eventMonth}</span>, ${eventYear}
+                        </td>
+                        <td>
+                            <c:choose>
+                                <c:when test="${not empty e.description and fn:length(e.description) > 80}">
+                                    <c:out value="${fn:substring(e.description, 0, 80)}"/>...
+                                </c:when>
+                                <c:otherwise>
+                                    <c:out value="${e.description}"/>
+                                </c:otherwise>
+                            </c:choose>
+                        </td>
+                        <td style="text-align:center;">
+                            <c:choose>
+                                <c:when test="${not empty e.photoId}">
+                                    <img src="<c:url value='/photos/${e.photoId}'/>"
+                                         alt="Imagen del evento"
+                                         class="event-thumbnail"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <span style="color: #aaa; font-size: 0.85rem;"><spring:message code="label.noImage" text="Sin imagen"/></span>
+                                </c:otherwise>
+                            </c:choose>
+                        </td>
+                        <td>
+                            <div style="display: flex; justify-content: right; gap: 8px; margin-right: 12px">
+                                <button type="button" class="btn btn-success btn-edit-small"
+                                        onclick="openEventEditModal('${e.eventId}', '${fn:escapeXml(e.eventName)}', '${e.date}', '${fn:escapeXml(e.description)}', '${e.photoId}')">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <form method="post" action="<c:url value='/clubs/events/${e.eventId}/delete'/>" style="display:inline;">
+                                    <input type="hidden" name="clubId" value="${club.clubId}"/>
+                                    <button type="submit" class="btn btn-danger btn-edit-small">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
 
-    <form:form method="post"
-               modelAttribute="eventForm"
-               action="${pageContext.request.contextPath}/clubs/events/add"
-               enctype="multipart/form-data"
-               cssClass="add-product-bar">
-        <form:hidden path="clubId" value="${club.clubId}"/>
-        <div class="form-group">
-            <form:input path="eventName" cssClass="add-product-name" placeholder="${phEventName}" />
-            <form:errors path="eventName" cssClass="formError"/>
+            <c:if test="${totalPages > 1}">
+                <div class="pagination">
+                    <c:if test="${page > 1}">
+                        <a href="?clubId=${club.clubId}&filter=${filter}&page=${page - 1}" class="page-btn">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </a>
+                    </c:if>
+
+                    <span class="page-info">${page} de ${totalPages}</span>
+
+                    <c:if test="${page < totalPages}">
+                        <a href="?clubId=${club.clubId}&filter=${filter}&page=${page + 1}" class="page-btn">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </c:if>
+                </div>
+            </c:if>
+
+            <spring:message code="placeholder.event.name" var="phEventName"/>
+            <spring:message code="placeholder.event.date" var="phEventDate"/>
+            <spring:message code="placeholder.event.description" var="phEventDesc"/>
+
+            <form:form method="post"
+                       modelAttribute="eventForm"
+                       action="${pageContext.request.contextPath}/clubs/events/add"
+                       enctype="multipart/form-data"
+                       cssClass="add-product-bar">
+                <form:hidden path="clubId" value="${club.clubId}"/>
+                <div class="form-group">
+                    <form:input path="eventName" cssClass="add-product-name" placeholder="${phEventName}" />
+                    <form:errors path="eventName" cssClass="formError"/>
+                </div>
+                <div class="form-group">
+                    <form:input path="date" type="date" cssClass="add-product-input" placeholder="${phEventDate}" />
+                    <form:errors path="date" cssClass="formError"/>
+                </div>
+                <div class="form-group">
+                    <form:input path="description" cssClass="add-product-input" placeholder="${phEventDesc}"/>
+                    <form:errors path="description" cssClass="formError"/>
+                </div>
+                <div class="form-group">
+                    <input type="file" id="editEventPhoto" name="photoId" accept="image/jpeg,image/png,image/webp"/>
+                </div>
+                <button type="submit" class="btn btn-success btn-edit-small">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </form:form>
         </div>
-        <div class="form-group">
-            <form:input path="date" type="date" cssClass="add-product-input" placeholder="${phEventDate}" />
-            <form:errors path="date" cssClass="formError"/>
-        </div>
-        <div class="form-group">
-            <form:input path="description" cssClass="add-product-input" placeholder="${phEventDesc}"/>
-            <form:errors path="description" cssClass="formError"/>
-        </div>
-        <div class="form-group">
-            <input type="file" id="editEventPhoto" name="photoId" accept="image/jpeg,image/png,image/webp"/>
-        </div>
-        <button type="submit" class="btn btn-success btn-edit-small">
-            <i class="fa-solid fa-plus"></i>
-        </button>
-    </form:form>
+    </div>
 </div>
 
 <div id="editModal" class="modal">
@@ -1085,6 +1171,53 @@
 
         </c:if>
     });
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
+
+            // desactivar todo
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+            // activar el seleccionado
+            button.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabs = document.querySelectorAll(".tab-button");
+        const contents = document.querySelectorAll(".tab-content");
+
+        // Leer tab guardada
+        const savedTab = localStorage.getItem("activeTab");
+        if (savedTab) {
+            // Sacamos active a todas
+            tabs.forEach(t => t.classList.remove("active"));
+            contents.forEach(c => c.classList.remove("active"));
+
+            // Activamos la guardada
+            document.querySelector(`.tab-button[data-tab="${savedTab}"]`)?.classList.add("active");
+            document.getElementById(savedTab)?.classList.add("active");
+        }
+
+        // Al hacer click en una tab
+        tabs.forEach(button => {
+            button.addEventListener("click", () => {
+                const tabId = button.getAttribute("data-tab");
+
+                // Guardar la tab en localStorage
+                localStorage.setItem("activeTab", tabId);
+
+                // Activar visualmente
+                tabs.forEach(t => t.classList.remove("active"));
+                contents.forEach(c => c.classList.remove("active"));
+
+                button.classList.add("active");
+                document.getElementById(tabId).classList.add("active");
+            });
+        });
+    });
+
 </script>
 </body>
 </html>
