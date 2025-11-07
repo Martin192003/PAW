@@ -69,18 +69,18 @@ public class LoginController {
                     form.getCellphone(),
                     "USER"
             );
-            ra.addFlashAttribute("success", "Usuario registrado correctamente. Revisa tu email para verificar tu cuenta.");
+            ra.addFlashAttribute("success", "registration.success");
             return "redirect:/verifyMailNotice";
         } catch (DuplicateEntityException e) {
             if (e.getMessage().contains("email")) {
-                binding.rejectValue("email", "duplicate.email", "Este email ya está registrado");
+                binding.rejectValue("email", "duplicate.email", "error.mailAlreadyRegistered");
             } else {
-                binding.rejectValue("username", "duplicate.username", "Este nombre de usuario ya está registrado");
+                binding.rejectValue("username", "duplicate.username", "error.usernameAlreadyRegistered");
             }
             return "register";
         } catch (Exception e) {
-            LOGGER.error("Error during registration", e);
-            binding.reject("registration.error", "Error durante el registro. Intenta nuevamente.");
+            LOGGER.error("error.registration", e);
+            binding.reject("registration.error", "error.during.registration");
             return "register";
         }
     }
@@ -150,10 +150,10 @@ public class LoginController {
                                      Model model) {
         boolean success = userService.resendVerificationToken(usernameOrEmail);
         if (success) {
-            model.addAttribute("success", "Verification email sent successfully.");
+            model.addAttribute("success", "verification.mail.sentSuccessfully");
             return "verifyMailNotice";
         } else {
-            model.addAttribute("error", "User not found or already verified.");
+            model.addAttribute("error", "error.userNotFound");
             model.addAttribute("username", usernameOrEmail);
             return "unverified";
         }
@@ -173,14 +173,14 @@ public class LoginController {
                 if (user != null) {
                     mav.setViewName("redirect:/clubs");
                 } else {
-                    mav.addObject("error", "Invalid credentials");
+                    mav.addObject("error", "error.invalidCredentials");
                 }
             } catch (IllegalStateException e) {
                 if (e.getMessage().contains("not verified")) {
-                    mav.addObject("error", "Please verify your account first");
+                    mav.addObject("error", "notification.verifyAccount");
                     mav.addObject("showResendLink", true);
                 } else {
-                    mav.addObject("error", "Authentication error");
+                    mav.addObject("error", "error.authentication");
                 }
             }
         }

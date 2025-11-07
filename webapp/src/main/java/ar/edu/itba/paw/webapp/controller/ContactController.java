@@ -27,7 +27,7 @@ public class ContactController {
     public String showContact(@RequestParam("id") UUID clubId, Model model) {
         Club club = clubService.getClubById(clubId).orElse(null);
         if (club == null) {
-            throw new NotFoundException("El boliche no existe.");
+            throw new NotFoundException("error.club.notfound");
         }
 
         model.addAttribute("clubId", club.getClubId());
@@ -45,7 +45,7 @@ public class ContactController {
 
         Club club = clubService.getClubById(clubId).orElse(null);
         if (club == null) {
-            throw new NotFoundException("El boliche no existe.");
+            throw new NotFoundException("error.club.notfound");
         }
 
         model.addAttribute("clubId", club.getClubId());
@@ -64,7 +64,7 @@ public class ContactController {
         );
 
         if (!sent) {
-            throw new EmailWasntSentException("No se pudo enviar el email, intente nuevamente más tarde.");
+            throw new EmailWasntSentException("error.emialNotSent");
         }
 
         model.addAttribute("sent", true);

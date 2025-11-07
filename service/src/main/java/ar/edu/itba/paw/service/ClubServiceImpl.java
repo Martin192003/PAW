@@ -42,7 +42,7 @@ public class ClubServiceImpl implements ClubService{
     public Club create(String name, String description, String location, Price priceRange,
                        User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, MultipartFile image) {
 
-        User managedContact = userService.findById(contactInfo.getId());
+        User managedContact = userService.findById(contactInfo.getId()).orElseThrow();
         if (managedContact.getRole() != Role.ADMIN) {
             managedContact.setRole(Role.ADMIN);
         }

@@ -79,14 +79,14 @@ public class PasswordController {
 
         User user = userService.findByResetPasswordToken(token);
         if (user == null) {
-            model.addAttribute("error", "Token inválido o expirado.");
+            model.addAttribute("error", "verify.error");
             model.addAttribute("token", token);
             return "resetPasswordResult";
         }
 
         boolean success = userService.resetPassword(token, form.getNewPassword());
         if (!success) {
-            model.addAttribute("error", "Token inválido o expirado.");
+            model.addAttribute("error", "verify.error");
             model.addAttribute("token", token);
             return "resetPasswordResult";
         }
