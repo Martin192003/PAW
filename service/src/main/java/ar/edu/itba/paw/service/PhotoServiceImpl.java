@@ -154,14 +154,11 @@ public class PhotoServiceImpl implements PhotoService {
         }
 
         // 2) Fallback: buscar entre CAROUSEL la más reciente no asociada a eventos
-        List<Photo> carousel = photoDao.findCarouselByClubId(clubId, 50, 0);
+        List<Photo> carousel = photoDao.findCarouselWithoutEventByClubId(clubId, 50, 0);
         return carousel.stream()
-                .filter(p -> p.getPhotoId() != null)
-                .filter(p -> !eventDao.findByPhotoIdAndClub(p.getPhotoId(), clubId).isPresent())
                 .sorted((p1, p2) -> {
-                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
+                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null)
                         return p2.getCreatedAt().compareTo(p1.getCreatedAt());
-                    }
                     return p2.getPhotoId().compareTo(p1.getPhotoId());
                 })
                 .findFirst()
@@ -172,11 +169,7 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional(readOnly = true)
     public Map<UUID, String> getCoverUrls(Set<UUID> clubIds) {
-        Map<UUID, String> result = new HashMap<>();
-        for (UUID clubId : clubIds) {
-            getCoverUrl(clubId).ifPresent(url -> result.put(clubId, url));
-        }
-        return result;
+        return photoDao.findAllCoversByClubIds(clubIds);
     }
 
     @Override

@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.ClubNotFoundException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
+import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import ar.edu.itba.paw.persistence.UserDao;
@@ -24,17 +25,17 @@ public class ClubServiceImpl implements ClubService{
 
     private final ClubDao clubDao;
     private final EmailService mailService;
-    private final ClubTablesDao tablesDao;
     private final PhotoService photoService;
     private final UserService userService;
+    private final BookingDao bookingDao;
 
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, ClubTablesDao tablesDao, PhotoService photoService, UserService userService) {
-        this.tablesDao = tablesDao;
+    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, ClubTablesDao tablesDao, PhotoService photoService, UserService userService, BookingDao bookingDao) {
         this.mailService = mailService;
         this.clubDao = clubDao;
         this.photoService = photoService;
         this.userService = userService;
+        this.bookingDao = bookingDao;
     }
 
     @Override
@@ -161,15 +162,11 @@ public class ClubServiceImpl implements ClubService{
     @Transactional(readOnly = true)
     @Override
     public Map<UUID, String> mapClubNames(List<Booking> bookings) {
-        var out = new HashMap<UUID, String>(Math.max(16, bookings.size()*2));
-        for (var b : bookings) {
-            tablesDao.findById(b.getTableId()).ifPresent(t ->
-                    clubDao.findById(t.getClubId()).ifPresent(c ->
-                            out.put(b.getBookingId(), c.getClubName())
-                    )
-            );
-        }
-        return out;
+        List<UUID> bookingIds = bookings.stream()
+                .map(Booking::getBookingId)
+                .toList();
+
+        return bookingDao.mapClubNamesForBookings(bookingIds);
     }
 
     @Override

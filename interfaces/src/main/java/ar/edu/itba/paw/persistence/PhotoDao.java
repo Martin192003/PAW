@@ -3,9 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.PhotoType;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public interface PhotoDao {
 
@@ -39,8 +37,9 @@ public interface PhotoDao {
     List<Photo> findReviewPhotosByClub(UUID clubId, int limit, int offset);
     Optional<Photo> findByReviewId(UUID reviewId);
     UUID createEventPhoto(UUID clubId, UUID eventId, UUID postedBy, String filename, String contentType, byte[] data);
+    public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset);
 
-
+    public Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds);
 
 
 }

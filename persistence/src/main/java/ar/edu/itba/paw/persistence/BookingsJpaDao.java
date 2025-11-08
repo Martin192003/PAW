@@ -413,4 +413,38 @@ public class BookingsJpaDao implements BookingDao {
         }
     }
 
+    @Override
+    public Map<UUID, String> mapClubNamesForBookings(List<UUID> bookingIds) {
+        if (bookingIds == null || bookingIds.isEmpty())
+            return Collections.emptyMap();
+
+        String placeholders = "";
+        for (int i = 0; i < bookingIds.size(); i++) {
+            placeholders += (i == 0 ? ":" : ", :") + "id" + i;
+        }
+
+        String sql = """
+        SELECT b.booking_id, c.club_name
+        FROM bookings b
+        JOIN club_tables t ON b.table_id = t.table_id
+        JOIN clubs c ON t.club_id = c.club_id
+        WHERE b.booking_id IN (%s)
+    """.formatted(placeholders);
+
+        var nq = em.createNativeQuery(sql);
+
+        for (int i = 0; i < bookingIds.size(); i++) {
+            nq.setParameter("id" + i, bookingIds.get(i));
+        }
+
+        List<Object[]> rows = nq.getResultList();
+        Map<UUID, String> result = new HashMap<>();
+        for (Object[] row : rows) {
+            result.put(UUID.fromString(row[0].toString()), (String) row[1]);
+        }
+
+        return result;
+    }
+
+
 }

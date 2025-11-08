@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Event;
+import ar.edu.itba.paw.model.Photo;
+import ar.edu.itba.paw.model.PhotoType;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -335,6 +337,7 @@ public class EventJpaDao implements EventDao {
                 .getSingleResult()
                 .intValue();
     }
+
 
 
 }

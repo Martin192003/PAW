@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Event;
+import ar.edu.itba.paw.model.Photo;
 
 import java.time.LocalDate;
 import java.util.List;

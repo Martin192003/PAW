@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,4 +44,6 @@ public interface BookingDao {
     int countByClubIds(List<UUID> clubIds, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
 
     boolean existsPastConfirmedByUserAndClub(UUID userId, UUID clubId, OffsetDateTime now);
+
+    public Map<UUID, String> mapClubNamesForBookings(List<UUID> bookingIds);
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class PhotoJpaDao implements PhotoDao {
@@ -226,14 +227,49 @@ public class PhotoJpaDao implements PhotoDao {
         return photos;
     }
 
-@Override
-public Optional<Photo> findByReviewId(UUID reviewId) {
-    List<Photo> list = em.createQuery(
-            "SELECT p FROM Photo p WHERE p.reviewId = :rid ORDER BY p.createdAt DESC",
-            Photo.class)
-        .setParameter("rid", reviewId)
-        .setMaxResults(1)
-        .getResultList();
-    return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
-}
+    @Override
+    public Optional<Photo> findByReviewId(UUID reviewId) {
+        List<Photo> list = em.createQuery(
+                "SELECT p FROM Photo p WHERE p.reviewId = :rid ORDER BY p.createdAt DESC",
+                Photo.class)
+            .setParameter("rid", reviewId)
+            .setMaxResults(1)
+            .getResultList();
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
+    }
+
+    public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset) {
+        return em.createQuery("""
+        SELECT p
+        FROM Photo p
+        LEFT JOIN Event e ON e.photoId = p.photoId
+        WHERE p.clubId = :clubId
+          AND p.photoType = :type
+          AND e.photoId IS NULL
+        ORDER BY p.createdAt DESC, p.photoId DESC
+    """, Photo.class)
+                .setParameter("clubId", clubId)
+                .setParameter("type", PhotoType.CAROUSEL)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
+    public Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds) {
+        List<Object[]> rows = em.createQuery("""
+        SELECT c.clubId, p.url
+        FROM Photo p
+        JOIN Club c ON p.clubId = c.clubId
+        WHERE p.photoType = :type
+          AND p.clubId IN :clubIds
+    """, Object[].class)
+                .setParameter("type", PhotoType.COVER)
+                .setParameter("clubIds", clubIds)
+                .getResultList();
+
+        return rows.stream().collect(Collectors.toMap(
+                row -> (UUID) row[0],
+                row -> (String) row[1]
+        ));
+    }
 }
