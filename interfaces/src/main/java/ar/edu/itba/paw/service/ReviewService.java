@@ -27,5 +27,7 @@ public interface ReviewService {
     List<Review> listByUser(UUID userId, String sort, int limit, int offset);
     int countByUser(UUID userId);
     boolean deleteReview(UUID reviewId);
+    List<Review> findByClubPaginated(UUID clubId, int page, int size);
+    int countByClubPaginated(UUID clubId);
 
 }

@@ -226,4 +226,52 @@ public class ReviewsJpaDao implements ReviewsDao {
         };
     }
 
+    @Override
+    public List<Review> findByClubPaginated(UUID clubId, int page, int size) {
+        final int limit  = Math.max(0, size);
+        final int offset = Math.max(0, page) * limit;
+
+        final String idSql = """
+        SELECT CAST(r.review_id AS TEXT) AS id_text
+        FROM reviews r
+        WHERE r.club_id = :clubId
+        ORDER BY r.created_at DESC, r.review_id DESC
+        LIMIT :limit OFFSET :offset
+    """;
+
+        List<String> idTexts = em.createNativeQuery(idSql)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .setParameter("clubId", clubId)
+                .setParameter("limit", limit)
+                .setParameter("offset", offset)
+                .getResultList();
+
+        if (idTexts.isEmpty()) return List.of();
+        List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+        return em.createQuery("""
+        SELECT r FROM Review r
+        JOIN FETCH r.user
+        WHERE r.reviewId IN :ids
+        ORDER BY r.createdAt DESC, r.reviewId DESC
+    """, Review.class)
+                .setParameter("ids", ids)
+                .getResultList();
+    }
+
+    @Override
+    public int countByClubPaginated(UUID clubId) {
+        return em.createQuery("""
+        SELECT COUNT(r)
+        FROM Review r
+        WHERE r.club.clubId = :clubId
+    """, Long.class)
+                .setParameter("clubId", clubId)
+                .getSingleResult()
+                .intValue();
+    }
+
+
+
 }

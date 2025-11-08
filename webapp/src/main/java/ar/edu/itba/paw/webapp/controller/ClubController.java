@@ -8,7 +8,6 @@ import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -29,7 +28,6 @@ import java.util.Collections;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.Principal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.UUID;
@@ -52,9 +50,10 @@ public class ClubController {
     private final EventService eventService;
     private final ClubLayoutService clubLayoutService;
     private final ProductService productService;
+    private final ReviewService reviewService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService, ReviewService reviewService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
@@ -64,6 +63,7 @@ public class ClubController {
         this.eventService = eventService;
         this.clubLayoutService = clubLayoutService;
         this.productService = productService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping({"", "/"})
@@ -240,6 +240,7 @@ public class ClubController {
                              @RequestParam(name = "page", defaultValue = "1") int page,
                              @RequestParam(name = "size", defaultValue = "10") int size,
                              @RequestParam(name = "filter", defaultValue = "all") String filter,
+                             @RequestParam(name = "reviewPage", defaultValue = "1") int reviewPage,
                              Model model) {
         var user = securityService.getVerifiedLoggedUser();
         if (user == null) throw new UserNotFoundException("error.notLoggedIn");
@@ -318,6 +319,17 @@ public class ClubController {
         model.addAttribute("editField", "Event");
         model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
         model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
+
+        int reviewPageIndex = reviewPage - 1;
+
+        List<Review> reviews = reviewService.findByClubPaginated(clubId, reviewPageIndex, size);
+        int totalReviews = reviewService.countByClubPaginated(clubId);
+
+        int totalReviewsPages = (int) Math.ceil((double) totalReviews / size);
+
+        model.addAttribute("reviews", reviews);
+        model.addAttribute("reviewPage", reviewPage);
+        model.addAttribute("totalReviewsPages", totalReviewsPages);
 
         ClubHandlerForm form = new ClubHandlerForm();
         form.setClubId(club.getClubId());

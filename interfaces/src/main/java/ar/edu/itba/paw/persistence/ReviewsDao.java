@@ -31,4 +31,6 @@ public interface ReviewsDao {
     Optional<Review> findByUserAndClub(User user, Club club);
     void flush();
 
+    int countByClubPaginated(UUID clubId);
+    List<Review> findByClubPaginated(UUID clubId, int page, int size);
 }

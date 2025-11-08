@@ -198,3 +198,68 @@ textarea.form-control {
 @media (max-width: 768px) {
     .contact-card { width: 92%; padding: 22px; }
 }
+
+.section-title {
+    font-size: 1.4rem;
+    margin-bottom: 18px;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.empty-message {
+    text-align: center;
+    color: #bfbfbf;
+    margin-top: 12px;
+}
+
+.review-card {
+    background: #1e1e1e;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    transition: transform .15s ease, border-color .15s ease;
+}
+
+.review-card:hover {
+    transform: translateY(-3px);
+    border-color: #9d4edd;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.review-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.review-user-name {
+    font-weight: 600;
+    color: #e6e6e6;
+}
+
+.review-rating {
+    color: #ffdd57;
+    font-weight: 600;
+}
+
+.review-text {
+    color: #d7d7d7;
+    margin: 8px 0 10px 0;
+    line-height: 1.4;
+}
+
+.review-photo {
+    max-width: 210px;
+    max-height: 200px;
+    border-radius: 8px;
+    margin-top: 6px;
+    display: block;
+    border: 1px solid #444;
+    object-fit: cover;
+}
