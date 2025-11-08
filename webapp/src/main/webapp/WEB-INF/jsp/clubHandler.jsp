@@ -148,6 +148,12 @@
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${st.index + 1}"
                                          loading="lazy" draggable="false" style="object-fit: contain;"/>
+                                    <button type="button"
+                                            class="delete-photo-btn"
+                                            title="Eliminar foto"
+                                            onclick="openDeletePhotoModal('${photo.photoId}')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
                                 </div>
                             </c:forEach>
                         </div>
@@ -376,10 +382,6 @@
 
         <div class ="tab-content" id="events-tab">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-                <h2 style="margin: 0;">
-                    <spring:message code="label.events" text="Eventos"/>
-                </h2>
-
                 <h2 style="margin: 0;">
                     <spring:message code="label.events" text="Eventos"/>
                 </h2>
@@ -708,6 +710,31 @@
         </form>
     </div>
 </div>
+
+<!-- Modal eliminar foto -->
+<div id="deletePhotoModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeDeletePhotoModal()">&times;</span>
+
+        <h3><spring:message code="confirm.deletePhotoMessage" text="¿Eliminar Foto?"/></h3>
+
+        <form id="deletePhotoForm" method="post" style="margin-top: 16px;">
+            <input type="hidden" name="photoId" id="deletePhotoId"/>
+            <input type="hidden" name="clubId" value="${club.clubId}"/>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDeletePhotoModal()">
+                    <spring:message code="button.cancel" text="Cancelar"/>
+                </button>
+
+                <button type="submit" class="btn btn-danger">
+                    <spring:message code="button.delete" text="Eliminar"/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 <div id="deleteModal" class="modal">
     <div class="modal-content">
@@ -1223,6 +1250,23 @@
             });
         });
     });
+    const ctx = '${pageContext.request.contextPath}';
+    const clubId = '${club.clubId}';
+    function openDeletePhotoModal(photoId) {
+        const form = document.getElementById("deletePhotoForm");
+        document.getElementById("deletePhotoId").value = photoId;
+
+        // Igual que los otros openXYZDeleteModal
+        form.action = ctx + "/clubs/" + clubId + "/photos/" + photoId + "/delete";
+
+        document.getElementById("deletePhotoModal").style.display = "flex"; // mantenés estilo igual al resto
+    }
+
+    function closeDeletePhotoModal() {
+        document.getElementById("deletePhotoForm").action = "";
+        document.getElementById("deletePhotoId").value = "";
+        document.getElementById("deletePhotoModal").style.display = "none";
+    }
 
 </script>
 </body>
