@@ -56,3 +56,10 @@
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+.tab-button.active,
+.tab-button.active:hover {
+    background-color: #6a1b9a !important;
+    color: #fff !important;
+    border-bottom: 3px solid #9c27b0 !important;
+}

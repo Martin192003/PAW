@@ -184,12 +184,12 @@
     <div class="tabs-container">
 
         <div class="tabs">
-            <button class="tab-button active" data-tab="menu-tab">Menu</button>
+            <button class="tab-button" data-tab="menu-tab">Menu</button>
             <button class="tab-button" data-tab="tables-tab">Tables</button>
             <button class="tab-button" data-tab="events-tab">Events</button>
         </div>
 
-        <div class="tab-content active" id="menu-tab">
+        <div class="tab-content" id="menu-tab">
             <h2><spring:message code="menu.menu"/></h2>
             <table class="styled-table">
                 <thead>
@@ -1188,31 +1188,37 @@
         const tabs = document.querySelectorAll(".tab-button");
         const contents = document.querySelectorAll(".tab-content");
 
-        // Leer tab guardada
-        const savedTab = localStorage.getItem("activeTab");
-        if (savedTab) {
-            // Sacamos active a todas
-            tabs.forEach(t => t.classList.remove("active"));
-            contents.forEach(c => c.classList.remove("active"));
-
-            // Activamos la guardada
-            document.querySelector(`.tab-button[data-tab="${savedTab}"]`)?.classList.add("active");
-            document.getElementById(savedTab)?.classList.add("active");
+        // Leer tab guardada, sino usar menu-tab
+        let savedTab = localStorage.getItem("activeTab");
+        if (!savedTab) {
+            savedTab = "menu-tab";
         }
 
-        // Al hacer click en una tab
-        tabs.forEach(button => {
-            button.addEventListener("click", () => {
-                const tabId = button.getAttribute("data-tab");
+        // Limpiar actives
+        tabs.forEach(t => t.classList.remove("active"));
+        contents.forEach(c => c.classList.remove("active"));
 
-                // Guardar la tab en localStorage
+        // Activar la guardada
+        const savedButton = document.querySelector('.tab-button[data-tab="' + savedTab + '"]');
+        const savedContent = document.getElementById(savedTab);
+
+        if (savedButton) savedButton.classList.add("active");
+        if (savedContent) savedContent.classList.add("active");
+
+        // Cuando se hace click en una tab
+        tabs.forEach(button => {
+            button.addEventListener("click", function () {
+                const tabId = this.getAttribute("data-tab");
+
+                // Guardar tab
                 localStorage.setItem("activeTab", tabId);
 
-                // Activar visualmente
+                // Reset
                 tabs.forEach(t => t.classList.remove("active"));
                 contents.forEach(c => c.classList.remove("active"));
 
-                button.classList.add("active");
+                // Activar
+                this.classList.add("active");
                 document.getElementById(tabId).classList.add("active");
             });
         });
