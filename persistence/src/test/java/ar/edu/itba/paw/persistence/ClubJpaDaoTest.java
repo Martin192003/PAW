@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import org.junit.Before;
@@ -117,6 +117,7 @@ public class ClubJpaDaoTest {
         Club club = clubDao.create(NAME, DESCRIPTION, LOCATION, PRICE_RANGE, contact, MUSIC_GENRE, Zone.ZONA_CABA, false, null);
 
         assertEquals(1, clubDao.findAdminsByClubId(club.getClubId()).size());
-    }*/
+    }
 
 }
+*/

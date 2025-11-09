@@ -54,7 +54,7 @@ public class EventsController {
             @Valid @ModelAttribute("eventForm") EventAddForm form,
             BindingResult errors,
             Model model
-    ) {
+    ) throws IOException {
         UUID clubId = form.getClubId();
         checkLoggedUser(clubId);
 
@@ -83,13 +83,18 @@ public class EventsController {
             return "clubHandler";
         }
 
+        // TODO: FIJARSE SI ES LOGICA DE NEGOCIO
+        Photo photo = new Photo();
+        photo.setFilename(form.getPhotoId() != null ? form.getPhotoId().getOriginalFilename() : null);
+        photo.setContentType(form.getPhotoId() != null ? form.getPhotoId().getContentType() : null);
+        photo.setData(form.getPhotoId() != null ? form.getPhotoId().getBytes() : null);
 
         eventService.create(
                 clubId,
                 form.getEventName(),
                 form.getDescription(),
                 form.getDate(),
-                form.getPhotoId()
+                photo
         );
         return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
@@ -132,13 +137,20 @@ public class EventsController {
         }
 
         if (photo != null && !photo.isEmpty()) {
+
+            //TODO: FIJARSE SI ESTA BIEN
+            Photo photoData = new Photo();
+            photoData.setFilename(photo.getOriginalFilename());
+            photoData.setContentType(photo.getContentType());
+            photoData.setData(photoData.getData());
+
             eventService.update(
                     clubId,
                     eventId,
                     form.getEventName(),
                     form.getDescription(),
                     form.getDate(),
-                    photo
+                    photoData
             );
         } else{
             eventService.update(

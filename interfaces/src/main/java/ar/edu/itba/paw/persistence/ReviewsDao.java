@@ -1,12 +1,9 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

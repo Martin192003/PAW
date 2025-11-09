@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.ClubLayout;
+import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ClubLayoutDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,7 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
 
     @Override
     @Transactional
-    public UUID uploadLayout(UUID clubId, String userEmail, MultipartFile file) {
-        try {
+    public UUID uploadLayout(UUID clubId, String userEmail, Photo file) {
             User uploader = userService.findByEmail(userEmail);
             clubService.assertAdmin(clubId, uploader.getId());
 
@@ -45,10 +45,10 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
 
             layout.setClubId(clubId);
             layout.setUploadedBy(uploader.getId());
-            layout.setFilename(file.getOriginalFilename());
+            layout.setFilename(file.getFilename());
             layout.setContentType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
 
-            byte[] data = file.getBytes();
+            byte[] data = file.getData();
             layout.setData(data);
             layout.setSizeBytes((long) data.length);
 
@@ -57,9 +57,6 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
 
             layoutDao.save(layout);
             return layout.getLayoutId();
-        } catch (IOException e) {
-            throw new RuntimeException("Error al leer el archivo del layout", e);
-        }
     }
 
 

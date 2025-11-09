@@ -1,11 +1,9 @@
 package ar.edu.itba.paw.service;
 
 import java.util.Locale;
-import java.util.Map;
 import ar.edu.itba.paw.model.*;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public interface EmailService {
 

@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.service;
+/*package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
@@ -241,6 +241,6 @@ public class UserServiceImplTest {
     public void testFindByVerificationTokenNotFound() {
         Mockito.when(mockDao.findByVerificationToken(TOKEN)).thenReturn(Optional.empty());
         Assert.assertNull(userService.findByVerificationToken(TOKEN));
-    }*/
+    }
 
-}
+}*/

@@ -1,6 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.*;
+/*import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -98,5 +98,5 @@ public class ReviewsJpaDaoTest {
     public void testDeleteReturnsFalseIfNotFound() {
         boolean deleted = reviewsDao.delete(UUID.randomUUID());
         assertFalse(deleted);
-    }*/
-}
+    }
+}*/

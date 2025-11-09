@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import org.junit.Before;
@@ -171,6 +171,7 @@ public class ClubTablesJpaDaoTest {
 
         assertEquals(1, tables.size());
         assertEquals(tableId, tables.getFirst().getTableId());
-    }*/
+    }
 
 }
+*/

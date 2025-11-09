@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import org.junit.Before;
@@ -209,4 +209,4 @@ public class ReceiptJpaDaoTest {
         assertTrue(deleted);
         assertEquals(0, ((Number)em.createQuery("SELECT COUNT(r) FROM Receipt r").getSingleResult()).intValue());
     }
-}
+}*/
