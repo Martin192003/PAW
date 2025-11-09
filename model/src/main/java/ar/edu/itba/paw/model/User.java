@@ -65,7 +65,7 @@ public class User {
     public User() {}
 
     public User(UUID userId, String userName, String name, String surname, String email,
-                String passwordHash, String cellphone, Role role, OffsetDateTime createdAt) {
+                String passwordHash, String cellphone, Role role, OffsetDateTime createdAt, String locale) {
         this.id = userId;
         this.username = userName;
         this.name = name;
@@ -75,6 +75,7 @@ public class User {
         this.cellphone = cellphone;
         this.role = role;
         this.createdAt = createdAt;
+        this.locale = locale;
     }
 
     public User(UUID userId) {
