@@ -176,7 +176,12 @@ public class EmailServiceImpl implements EmailService {
                 "brandFooter", "© 2025 BlingBling. Panel de administración."
         );
 
-        String subject = messageSource.getMessage("email.club.creation.title", null, LocaleContextHolder.getLocale()) + " - " + clubName;
+        Locale userLocale = userDao.findByEmail(to)
+                .map(user -> user.getLocale() != null ? Locale.forLanguageTag(user.getLocale()) : LocaleContextHolder.getLocale())
+                .orElse(LocaleContextHolder.getLocale());
+
+
+        String subject = messageSource.getMessage("email.club.creation.title", null, userLocale) + " - " + clubName;
 
         sendTemplatedEmail(
                 to,
@@ -202,7 +207,12 @@ public class EmailServiceImpl implements EmailService {
                 "brandFooter", "© 2025 BlingBling. Bienvenido a nuestra plataforma."
         );
 
-        String subject = messageSource.getMessage("email.registration.title.header", null, LocaleContextHolder.getLocale()) + " - " + username;
+        Locale userLocale = userDao.findByEmail(to)
+                .map(user -> user.getLocale() != null ? Locale.forLanguageTag(user.getLocale()) : LocaleContextHolder.getLocale())
+                .orElse(LocaleContextHolder.getLocale());
+
+
+        String subject = messageSource.getMessage("email.registration.title.header", null, userLocale) + " - " + username;
 
         sendTemplatedEmail(
                 to,
@@ -226,8 +236,12 @@ public class EmailServiceImpl implements EmailService {
                 "brandFooter", "© 2025 BlingBling. Recuperación de contraseña."
         );
 
+        Locale userLocale = userDao.findByEmail(toEmail)
+                .map(user -> user.getLocale() != null ? Locale.forLanguageTag(user.getLocale()) : LocaleContextHolder.getLocale())
+                .orElse(LocaleContextHolder.getLocale());
+
         String subject = messageSource.getMessage("email.password.reset.subject", null, LocaleContextHolder.getLocale()) +
-                " - " + messageSource.getMessage("app.title", null, LocaleContextHolder.getLocale());
+                " - " + messageSource.getMessage("app.title", null, userLocale);
 
         sendTemplatedEmail(
                 toEmail,
@@ -254,6 +268,7 @@ public class EmailServiceImpl implements EmailService {
         }
 
         LocalDate selectedDate = booking.getBookingStart().atZoneSameInstant(ZONE_ID).toLocalDate();
+
 
         String subject = messageSource.getMessage("email.booking.confirmed", new Object[] { club.getClubName() }, locale);
 
