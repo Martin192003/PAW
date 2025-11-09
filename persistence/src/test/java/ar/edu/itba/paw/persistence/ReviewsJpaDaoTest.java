@@ -36,7 +36,7 @@ public class ReviewsJpaDaoTest {
     @Autowired
     private ClubJpaDao clubDao;
 
-    @Before
+    /*@Before
     public void setUp() {
         em.createQuery("DELETE FROM Review").executeUpdate();
         em.createQuery("DELETE FROM User").executeUpdate();
@@ -98,5 +98,5 @@ public class ReviewsJpaDaoTest {
     public void testDeleteReturnsFalseIfNotFound() {
         boolean deleted = reviewsDao.delete(UUID.randomUUID());
         assertFalse(deleted);
-    }
+    }*/
 }

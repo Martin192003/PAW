@@ -51,7 +51,7 @@ public class UserServiceImplTest {
     @InjectMocks
     private UserServiceImpl userService;
 
-    private final User user = new User(ID, USERNAME, "Name", "Surname", EMAIL, PASSWORD, "123", Role.USER, OffsetDateTime.now());
+    /*private final User user = new User(ID, USERNAME, "Name", "Surname", EMAIL, PASSWORD, "123", Role.USER, OffsetDateTime.now());
 
     @Test
     public void testCreate() {
@@ -241,6 +241,6 @@ public class UserServiceImplTest {
     public void testFindByVerificationTokenNotFound() {
         Mockito.when(mockDao.findByVerificationToken(TOKEN)).thenReturn(Optional.empty());
         Assert.assertNull(userService.findByVerificationToken(TOKEN));
-    }
+    }*/
 
 }

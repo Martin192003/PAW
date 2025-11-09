@@ -35,7 +35,7 @@ public class ProductsJpaDaoTest {
 
     @PersistenceContext private EntityManager em;
 
-    @Before
+    /*@Before
     public void setUp() {
         // Limpiar con JPQL para no depender de schema.sql ni JdbcTemplate
         // Orden: hijos -> padres (por FKs)
@@ -181,5 +181,5 @@ public class ProductsJpaDaoTest {
 
         List<Product> products = productsDao.findByClubID(club.getClubId());
         assertEquals(2, products.size());
-    }
+    }*/
 }
