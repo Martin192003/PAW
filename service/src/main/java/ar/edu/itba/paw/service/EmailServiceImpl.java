@@ -587,6 +587,27 @@ public class EmailServiceImpl implements EmailService {
         LOGGER.info("Owner review alert sent to {} for club {}", ownerEmail, clubName);
     }
 
+    @Override
+    @Async
+    public void sendReviewRequestEmail(Booking booking, User user, Club club) {
+        Locale locale = user.getLocale() != null ? Locale.forLanguageTag(user.getLocale()) : LocaleContextHolder.getLocale();
+        String subject = messageSource.getMessage("email.review.request.subject", null, locale);
+        String clubName = club != null ? club.getClubName() : "Club";
+        Map<String, Object> model = Map.of(
+                "username", user.getUsername(),
+                "clubName", clubName,
+                "date", booking.getBookingStart().toString()
+        );
+        sendTemplatedEmail(
+                user.getEmail(),
+                subject,
+                "review-request",
+                model,
+                "Dejar reseña",
+                abs("/review?bookingId=" + booking.getBookingId())
+        );
+    }
+
 
     private static DateTimeFormatter REVIEW_DT_FMT(Locale locale) {
         return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", locale);

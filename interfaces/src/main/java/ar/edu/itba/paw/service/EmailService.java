@@ -29,4 +29,6 @@ public interface EmailService {
 
     void sendOwnerReviewAlert(Club club, Review review, Locale locale);
 
+    void sendReviewRequestEmail(Booking booking, User user, Club club);
+
 }
