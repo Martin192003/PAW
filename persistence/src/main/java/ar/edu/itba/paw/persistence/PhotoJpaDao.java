@@ -3,6 +3,7 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.PhotoType;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.*;
@@ -32,7 +33,7 @@ public class PhotoJpaDao implements PhotoDao {
         final int lim = Math.max(0, limit);
         final int off = Math.max(0, offset);
 
-        // 1) Página de IDs (SQL nativo) — evita traer el BLOB `data`
+        // 1) Página de IDs
         final String idSql = """
         SELECT CAST(p.photo_id AS TEXT) AS id_text
         FROM photos p
@@ -83,6 +84,7 @@ public class PhotoJpaDao implements PhotoDao {
         return Optional.of(p);
     }
     @Override
+
     public UUID save(Photo p) {
         if (p.getPhotoId() == null) {
             em.persist(p);
@@ -238,6 +240,7 @@ public class PhotoJpaDao implements PhotoDao {
         return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
     }
 
+    @Override
     public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset) {
         return em.createQuery("""
         SELECT p
@@ -257,6 +260,7 @@ public class PhotoJpaDao implements PhotoDao {
 
 
     // TODO: Fijarse si esta bien habria que paginar y hacer QUERY 1+1
+    @Override
     public Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds) {
         List<Object[]> rows = em.createQuery("""
         SELECT c.clubId, p.url

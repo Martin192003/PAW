@@ -13,8 +13,6 @@ import java.util.UUID;
 public interface ReviewService {
     double getAverageRating(UUID clubId);
 
-    Review upsertReview(UUID userId, UUID clubId, int rating, String description, Locale locale);
-
     void updateClubRating(Club club);
 
     void createReview(UUID userId, UUID clubId, int rating, String description, Photo photo) throws IOException;
