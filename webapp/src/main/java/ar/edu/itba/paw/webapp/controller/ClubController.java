@@ -216,9 +216,19 @@ public class ClubController {
         if (contact == null) throw new IllegalStateException("error.no_user");
         var roleAntes = contact.getRole();
 
+
+        // TODO: FIJARSE ESTO POR AHI ES LOGICA DE NEGOCIO
+        Photo photo = new Photo();
+        if (f.getImage() != null && !f.getImage().isEmpty()) {
+            photo.setFilename(f.getImage().getOriginalFilename());
+            photo.setContentType(f.getImage().getContentType());
+            photo.setData(f.getImage().getBytes());
+        } else {
+            photo = null;
+        }
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
-                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getCbu(), f.getImage()
+                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getCbu(), photo
         );
 
         if (roleAntes == Role.USER) {
@@ -391,9 +401,16 @@ public class ClubController {
     @PostMapping("/club/{clubId}/layout")
     public String uploadLayout(@PathVariable UUID clubId,
                                @RequestParam("file") MultipartFile file,
-                               RedirectAttributes ra) {
+                               RedirectAttributes ra) throws IOException {
         final User user = securityService.getVerifiedLoggedUser();
-        clubLayoutService.uploadLayout(clubId, user.getEmail(), file);
+
+        //TODO: FIJARSE SI ESTO ESTA BIEN
+        Photo photo = new Photo();
+        photo.setFilename(file.getOriginalFilename());
+        photo.setContentType(file.getContentType());
+        photo.setData(file.getBytes());
+
+        clubLayoutService.uploadLayout(clubId, user.getEmail(), photo);
         ra.addFlashAttribute("layoutUploaded", true);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }

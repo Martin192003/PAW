@@ -24,7 +24,7 @@ public interface PhotoDao {
 
     boolean delete(UUID photoId);
 
-    public Optional<Photo> findByBooking(UUID bookingId);
+    Optional<Photo> findByBooking(UUID bookingId);
 
     List<Photo> findByClubIdPaginated(UUID clubId, int limit, int offset);
 

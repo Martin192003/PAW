@@ -1,11 +1,9 @@
 package ar.edu.itba.paw.service;
 
 import java.util.Locale;
-import java.util.Map;
 import ar.edu.itba.paw.model.*;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public interface EmailService {
 
@@ -30,5 +28,7 @@ public interface EmailService {
     void notifyConfirmationEmailToUser(Booking booking, Club club, ClubTable table, Locale locale);
 
     void sendOwnerReviewAlert(Club club, Review review, Locale locale);
+
+    void sendReviewRequestEmail(Booking booking, User user, Club club);
 
 }

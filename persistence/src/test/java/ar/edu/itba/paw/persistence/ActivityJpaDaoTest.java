@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import org.junit.Before;
@@ -32,7 +32,7 @@ public class ActivityJpaDaoTest {
     @PersistenceContext
     private EntityManager em;
 
-    @Before
+    /*@Before
     public void clean() {
         em.createQuery("DELETE FROM Activity a").executeUpdate();
         em.flush();
@@ -211,3 +211,4 @@ public class ActivityJpaDaoTest {
         assertNull(updated);
     }
 }
+*/

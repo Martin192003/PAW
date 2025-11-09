@@ -51,6 +51,9 @@ public class User {
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
+    @Column(name = "locale")
+    private String locale;
+
     @ManyToMany
     @JoinTable(
             name = "club_admins",
@@ -62,7 +65,7 @@ public class User {
     public User() {}
 
     public User(UUID userId, String userName, String name, String surname, String email,
-                String passwordHash, String cellphone, Role role, OffsetDateTime createdAt) {
+                String passwordHash, String cellphone, Role role, OffsetDateTime createdAt, String locale) {
         this.id = userId;
         this.username = userName;
         this.name = name;
@@ -72,6 +75,7 @@ public class User {
         this.cellphone = cellphone;
         this.role = role;
         this.createdAt = createdAt;
+        this.locale = locale;
     }
 
     public User(UUID userId) {
@@ -117,4 +121,7 @@ public class User {
 
     public Set<Club> getAdminOfClubs() { return adminOfClubs; }
     public void setAdminOfClubs(Set<Club> adminOfClubs) { this.adminOfClubs = adminOfClubs; }
+
+    public String getLocale() { return locale; }
+    public void setLocale(String locale) { this.locale = locale; }
 }

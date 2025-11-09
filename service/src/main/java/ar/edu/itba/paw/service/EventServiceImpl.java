@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Event;
+import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.PhotoType;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.InvalidClubException;
@@ -34,13 +35,13 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event create(UUID clubId, String eventName, String description, LocalDate date, MultipartFile image) {
+    public Event create(UUID clubId, String eventName, String description, LocalDate date, Photo image) {
         validateName(eventName);
         validateDate(date);
 
         Event ev = eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, null);
 
-        if (image != null && !image.isEmpty()) {
+        if (image != null) {
             try {
                 User loggedUser = securityService.getVerifiedLoggedUser();
                 UUID photoId = photoService.uploadEventPhoto(
@@ -62,7 +63,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event update(UUID clubId, UUID eventId, String eventName, String description, LocalDate date, MultipartFile image) {
+    public Event update(UUID clubId, UUID eventId, String eventName, String description, LocalDate date, Photo image) {
         validateName(eventName);
         validateDate(date);
 
@@ -73,19 +74,15 @@ public class EventServiceImpl implements EventService {
             throw new InvalidClubException("Event does not belong to the provided club");
 
         UUID photoId = current.getPhotoId();
-        if (image != null && !image.isEmpty()) {
-            try {
+        if (image != null) {
                 User loggedUser = securityService.getVerifiedLoggedUser();
                 photoId = photoService.upload(
                         clubId,
                         loggedUser.getId(),
-                        image.getOriginalFilename(),
+                        image.getFilename(),
                         image.getContentType(),
-                        image.getBytes()
+                        image.getData()
                 );
-            } catch (IOException e) {
-                throw new RuntimeException("Error al leer la imagen subida del evento", e);
-            }
         }
 
         final Event updated = eventDao.update(eventId, clubId, eventName.trim(), trimOrNull(description), date, photoId);

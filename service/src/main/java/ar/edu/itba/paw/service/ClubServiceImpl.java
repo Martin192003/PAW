@@ -41,7 +41,7 @@ public class ClubServiceImpl implements ClubService{
     @Override
     @Transactional
     public Club create(String name, String description, String location, Price priceRange,
-                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, MultipartFile image) {
+                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, Photo image) {
 
         User managedContact = userService.findById(contactInfo.getId()).orElseThrow();
         if (managedContact.getRole() != Role.ADMIN) {
@@ -50,18 +50,14 @@ public class ClubServiceImpl implements ClubService{
 
         Club newClub = clubDao.create(name, description, location, priceRange, managedContact, musicGenre, zone, isBar, cbu);
 
-        if (image != null && !image.isEmpty()) {
-            try {
+        if (image != null) {
                 photoService.uploadCover(
                         newClub.getClubId(),
                         managedContact.getId(),
-                        image.getOriginalFilename(),
+                        image.getFilename(),
                         image.getContentType(),
-                        image.getBytes()
+                        image.getData()
                 );
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to read uploaded image", e);
-            }
         }
 
         mailService.sendClubCreationConfirmation(managedContact.getEmail(), name, newClub.getClubId());

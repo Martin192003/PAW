@@ -424,12 +424,12 @@ public class BookingsJpaDao implements BookingDao {
         }
 
         String sql = """
-        SELECT b.booking_id, c.club_name
-        FROM bookings b
-        JOIN club_tables t ON b.table_id = t.table_id
-        JOIN clubs c ON t.club_id = c.club_id
-        WHERE b.booking_id IN (%s)
-    """.formatted(placeholders);
+    SELECT CAST(b.booking_id AS TEXT) AS booking_id, c.club_name
+    FROM bookings b
+    JOIN club_tables t ON b.table_id = t.table_id
+    JOIN clubs c ON t.club_id = c.club_id
+    WHERE b.booking_id IN (%s)
+""".formatted(placeholders);
 
         var nq = em.createNativeQuery(sql);
 

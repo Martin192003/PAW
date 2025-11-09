@@ -22,6 +22,7 @@ import ar.edu.itba.paw.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -67,7 +68,8 @@ public class LoginController {
                     form.getSurname(),
                     form.getEmail(),
                     form.getCellphone(),
-                    "USER"
+                    "USER",
+                    form.getLocale()
             );
             ra.addFlashAttribute("success", "registration.success");
             return "redirect:/verifyMailNotice";
@@ -162,7 +164,8 @@ public class LoginController {
     @RequestMapping("/login")
     public ModelAndView login(@RequestParam(value = "success", required = false) final boolean success,
                               @RequestParam(value = "usernameOrEmail", required = false) final String usernameOrEmail,
-                              @RequestParam(value = "password", required = false) final String password) {
+                              @RequestParam(value = "password", required = false) final String password,
+                              final HttpServletRequest request) {
         ModelAndView mav = new ModelAndView("login");
         mav.addObject("success", success);
         mav.addObject("usernameOrEmail", usernameOrEmail);
@@ -171,6 +174,11 @@ public class LoginController {
             try {
                 User user = userService.authenticateAndGetUser(usernameOrEmail, password);
                 if (user != null) {
+                    String detectedLocale = request.getLocale().toLanguageTag();
+                    userService.updateUserLocale(user.getId(), detectedLocale);
+
+                    userService.sendReviewRequestsForPastBookings(user);
+
                     mav.setViewName("redirect:/clubs");
                 } else {
                     mav.addObject("error", "error.invalidCredentials");

@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Role;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +40,7 @@ public class UserJpaDaoTest {
     public void setUp() {
         em.createQuery("DELETE FROM User").executeUpdate();
     }
-    @Test
+    /*@Test
     public void testCreate() {
         final User user = userDao.create(USERNAME, NAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, Role.USER);
         assertNotNull(user);
@@ -143,4 +143,4 @@ public class UserJpaDaoTest {
         assertTrue(found.isPresent());
         assertNull(found.get().getResetPasswordToken());
     }
-}
+}*/

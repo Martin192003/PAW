@@ -7,6 +7,7 @@ import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -208,8 +209,9 @@ public class BookingServiceImpl implements BookingService {
         bookingForEmail.setStatus(Status.CANCELADA);
         bookingForEmail.setTotalAmount(existing.getTotalAmount());
 
-        Locale locale = new Locale("es", "AR");
-
+        Locale locale = completeUser.getLocale() != null
+                ? Locale.forLanguageTag(completeUser.getLocale())
+                : LocaleContextHolder.getLocale();
         try {
             emailService.notifyBookingCancelledToUser(bookingForEmail, club, table, locale);
         } catch (Exception e) {
@@ -268,8 +270,9 @@ public class BookingServiceImpl implements BookingService {
         bookingForEmail.setStatus(Status.CANCELADA);
         bookingForEmail.setTotalAmount(existing.getTotalAmount());
 
-        Locale locale = new Locale("es", "AR");
-
+        Locale locale = completeUser.getLocale() != null
+                ? Locale.forLanguageTag(completeUser.getLocale())
+                : LocaleContextHolder.getLocale();
         try {
             emailService.notifyBookingCancelledToUser(bookingForEmail, club, table, locale);
         } catch (Exception e) {
@@ -312,7 +315,11 @@ public class BookingServiceImpl implements BookingService {
             final Booking updated = bookingDao.findById(bookingId).orElseThrow();
             final ClubTable table = ensureTableExists(updated.getTableId());
             final Club club = clubDao.findById(table.getClubId()).orElseThrow();
-            Locale locale = new Locale("es", "AR");
+            final User completeUser = userService.findById(updated.getUser().getId())
+                    .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado: " + updated.getUser().getId()));
+            Locale locale = completeUser.getLocale() != null
+                    ? Locale.forLanguageTag(completeUser.getLocale())
+                    : LocaleContextHolder.getLocale();
             emailService.notifyConfirmationEmailToUser(updated, club, table, locale);
         } catch (Exception e) {
             LOGGER.error("Error sending confirmation email for booking {}", bookingId, e);
@@ -447,7 +454,9 @@ public class BookingServiceImpl implements BookingService {
         var admins = clubService.getAdminsByClub(clubId);
         var owner = admins.isEmpty() ? null : admins.get(0);
 
-        Locale locale = new Locale("es", "AR");
+        Locale locale = user.getLocale() != null
+                ? Locale.forLanguageTag(user.getLocale())
+                : LocaleContextHolder.getLocale();
         try {
             emailService.notifyTableReservedToUser(booking, club, table, locale);
             if (owner != null && owner.getEmail() != null && !owner.getEmail().isBlank()) {

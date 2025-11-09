@@ -1,11 +1,9 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Booking;
-import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 
-import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

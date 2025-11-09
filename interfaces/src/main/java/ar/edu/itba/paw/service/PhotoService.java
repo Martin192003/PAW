@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Photo;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
@@ -27,7 +26,7 @@ public interface PhotoService {
 
     Optional<String> getCoverUrl(UUID clubId);
     Map<UUID,String> getCoverUrls(Set<UUID> clubIds);
-    UUID uploadPhotoForClub(UUID clubId, String userEmail, MultipartFile file) throws IOException;
+    UUID uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException;
 
     void uploadCover(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
     void uploadCarousel(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
@@ -35,8 +34,8 @@ public interface PhotoService {
     List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset);
     List<Photo> getClubPhotos(UUID clubId, int limit, int offset);
 
-    UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException;
-    UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, MultipartFile file) throws IOException;
+    UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, Photo file) throws IOException;
+    UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, Photo file) throws IOException;
     List<Photo> getReviewPhotosByClub(UUID clubId, int limit, int offset);
     Optional<Photo> getPhotoByReview(UUID reviewId);
 }

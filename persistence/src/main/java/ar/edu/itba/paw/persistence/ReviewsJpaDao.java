@@ -216,6 +216,17 @@ public class ReviewsJpaDao implements ReviewsDao {
         em.flush();
     }
 
+    @Override
+    public boolean existsByUserAndClub(UUID userId, UUID clubId) {
+        Long count = em.createQuery(
+                        "SELECT COUNT(r) FROM Review r WHERE r.user.id = :userId AND r.club.clubId = :clubId", Long.class
+                )
+                .setParameter("userId", userId)
+                .setParameter("clubId", clubId)
+                .getSingleResult();
+        return count > 0;
+    }
+
     private String resolveOrderBy(String sort) {
         if (sort == null) return "ORDER BY r.createdAt DESC";
         return switch (sort) {

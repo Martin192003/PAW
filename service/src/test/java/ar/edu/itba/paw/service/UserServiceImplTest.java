@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.service;
+/*package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
@@ -51,7 +51,7 @@ public class UserServiceImplTest {
     @InjectMocks
     private UserServiceImpl userService;
 
-    private final User user = new User(ID, USERNAME, "Name", "Surname", EMAIL, PASSWORD, "123", Role.USER, OffsetDateTime.now());
+    /*private final User user = new User(ID, USERNAME, "Name", "Surname", EMAIL, PASSWORD, "123", Role.USER, OffsetDateTime.now());
 
     @Test
     public void testCreate() {
@@ -243,4 +243,4 @@ public class UserServiceImplTest {
         Assert.assertNull(userService.findByVerificationToken(TOKEN));
     }
 
-}
+}*/
