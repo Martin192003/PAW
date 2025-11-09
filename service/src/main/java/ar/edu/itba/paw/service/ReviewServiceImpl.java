@@ -122,45 +122,18 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewsDao.findByClub(club);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public List<Review> listByClub(UUID clubId, String sort, int limit, int offset) {
         return reviewsDao.searchPaginated(null, clubId, sort, limit, offset);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public int countByClub(UUID clubId) {
         return reviewsDao.countSearch(null, clubId);
     }
 
-    @Override
-    @Transactional
-    public Review upsertReview(UUID userId, UUID clubId, int rating, String description, Locale locale) {
-        final User user = userDao.findById(userId).orElseThrow();
-        final Club club = clubDao.findById(clubId).orElseThrow();
-
-        final boolean hadTable = true;
-
-        Review review = reviewsDao.upsert(user, club, rating, description, hadTable);
-
-        // setear tag si decidiste persistirlo:
-        if (review != null && hasFromTableGuestField(review)) { // helper para no romper si no agregaste la columna
-            review.setFromTableGuest(hadTable);
-        }
-
-        // Notificar al dueño del club si corresponde
-//        if (hadTable) {
-//            final UUID ownerId = club.getContactInfo() != null ? club.getContactInfo().getId() : null; // adaptar a tu modelo
-//            if (ownerId != null) {
-//                notificationService.notifyNewTableGuestReview(ownerId, clubId, review.getReviewId(), rating);
-//
-//                // Enviar mail DESDE EL SERVICE (regla de negocio) y con el locale del destinatario si lo tenés guardado,
-//                // no el del cliente que crea la review.  :contentReference[oaicite:6]{index=6} :contentReference[oaicite:7]{index=7}
-//                mailService.sendOwnerReviewAlert(ownerId, clubId, review.getReviewId(), locale);
-//            }
-//        }
-
-        return review;
-    }
 
     private boolean hasFromTableGuestField(Review review) {
         try {
