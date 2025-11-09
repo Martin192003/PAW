@@ -119,8 +119,8 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID uploadPhotoForClub(UUID clubId, String userEmail, MultipartFile file) throws IOException {
-        if (file == null || file.isEmpty()) {
+    public UUID uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException {
+        if (file == null) {
             throw new IllegalArgumentException("File is empty");
         }
 
@@ -135,9 +135,9 @@ public class PhotoServiceImpl implements PhotoService {
         return upload(
                 clubId,
                 effectiveUser.getId(),
-                file.getOriginalFilename(),
+                file.getFilename(),
                 file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
+                file.getData()
         );
     }
 
@@ -199,30 +199,30 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException {
-        if (file == null || file.isEmpty()) throw new IllegalArgumentException("File is empty");
+    public UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, Photo file) {
+        if (file == null ) throw new IllegalArgumentException("File is empty");
         final String ct = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
         return photoDao.createReviewPhoto(
                 clubId, reviewId, userId,
-                file.getOriginalFilename(), ct, file.getBytes()
+                file.getFilename(), ct, file.getData()
         );
     }
 
     @Override
     @Transactional
-    public UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, MultipartFile file) throws IOException {
+    public UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, Photo file) {
         // Validaciones básicas
         Objects.requireNonNull(clubId,  "clubId no puede ser null");
         Objects.requireNonNull(eventId, "eventId no puede ser null");
         Objects.requireNonNull(userId,  "userId no puede ser null");
 
-        if (file == null || file.isEmpty()) {
+        if (file == null) {
             throw new IllegalArgumentException("El archivo de la foto del evento está vacío o es null");
         }
 
-        final String filename    = file.getOriginalFilename();
+        final String filename    = file.getFilename();
         final String contentType = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
-        final byte[]  data       = file.getBytes();
+        final byte[]  data       = file.getData();
 
 
         return photoDao.createEventPhoto(clubId, eventId, userId, filename, contentType, data);

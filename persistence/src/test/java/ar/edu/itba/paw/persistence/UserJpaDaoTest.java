@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Role;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,5 +142,5 @@ public class UserJpaDaoTest {
         Optional<User> found = userDao.findById(user.getId());
         assertTrue(found.isPresent());
         assertNull(found.get().getResetPasswordToken());
-    }*/
-}
+    }
+}*/

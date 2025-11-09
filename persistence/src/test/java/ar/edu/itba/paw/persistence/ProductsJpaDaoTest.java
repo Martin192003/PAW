@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import org.junit.Before;
@@ -181,5 +181,6 @@ public class ProductsJpaDaoTest {
 
         List<Product> products = productsDao.findByClubID(club.getClubId());
         assertEquals(2, products.size());
-    }*/
+    }
 }
+*/

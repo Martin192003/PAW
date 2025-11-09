@@ -1,9 +1,7 @@
 package ar.edu.itba.paw.service;
 
-import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 

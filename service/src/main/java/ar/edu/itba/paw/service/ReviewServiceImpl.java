@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.InvalidClubException;
@@ -71,7 +72,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public void createReview(UUID userId, UUID clubId, int rating, String description, MultipartFile photo) throws IOException {
+    public void createReview(UUID userId, UUID clubId, int rating, String description, Photo photo) throws IOException {
         User user = userDao.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Club club = clubDao.findById(clubId)
@@ -85,7 +86,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         Review review = reviewsDao.upsert(user, club, rating, description, hadTable);
         updateClubRating(club);
-        if (photo != null && !photo.isEmpty()) {
+        if (photo != null) {
             UUID photoId = photoService.uploadReviewPhoto(clubId, review.getReviewId(), user.getId(), photo);
             if (photoId != null) {
                 reviewsDao.updatePhotoId(review.getReviewId(), photoId);

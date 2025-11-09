@@ -81,8 +81,14 @@ public class ReviewController {
             return "redirect:/clubs/" + clubId + "#reviews";
         }
 
+        //TODO: FIJARSE SI ESTA BIEN ESTO
+        Photo image = new Photo();
+        image.setFilename(photo.getOriginalFilename());
+        image.setContentType(photo.getContentType());
+        image.setData(photo.getBytes());
+
         User user = securityService.getVerifiedLoggedUser();
-        reviewService.createReview(user.getId(), clubId, form.getRating(), form.getDescription(), photo);
+        reviewService.createReview(user.getId(), clubId, form.getRating(), form.getDescription(), image);
         return "redirect:/clubs/" + clubId + "#reviews";
     }
 

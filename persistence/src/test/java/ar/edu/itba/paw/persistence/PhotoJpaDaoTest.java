@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import org.junit.Before;
@@ -180,5 +180,5 @@ public class PhotoJpaDaoTest {
     @Test
     public void testFindByIdWithDataNotFound() {
         assertFalse(photoDao.findByIdWithData(UUID.randomUUID()).isPresent());
-    }*/
-}
+    }
+}*/

@@ -255,6 +255,8 @@ public class PhotoJpaDao implements PhotoDao {
                 .getResultList();
     }
 
+
+    // TODO: Fijarse si esta bien habria que paginar y hacer QUERY 1+1
     public Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds) {
         List<Object[]> rows = em.createQuery("""
         SELECT c.clubId, p.url
@@ -267,9 +269,14 @@ public class PhotoJpaDao implements PhotoDao {
                 .setParameter("clubIds", clubIds)
                 .getResultList();
 
-        return rows.stream().collect(Collectors.toMap(
-                row -> (UUID) row[0],
-                row -> (String) row[1]
-        ));
+        // TODO: VER QUE SI ESTO ESTA BIEN, sin esto no anda tira Duplicate key
+        Map<UUID, String> covers = rows.stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (String) row[1],
+                        (existing, replacement) -> existing,         // keep first if duplicate
+                        LinkedHashMap::new                           // preserve order (optional)
+                ));
+        return covers;
     }
 }

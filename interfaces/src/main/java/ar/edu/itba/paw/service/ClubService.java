@@ -1,8 +1,6 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,7 +15,7 @@ public interface ClubService {
 
     List<Club> advancedSearch(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar, String sort);
 
-    Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, MultipartFile image);
+    Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, Photo image);
 
     Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu);
 

@@ -50,7 +50,14 @@ public class PhotoController {
         try {
             String userEmail = principal != null ? principal.getName() : null;
             log.info("User email: {}, File size: {}", userEmail, file.getSize());
-            UUID photoId = photoService.uploadPhotoForClub(clubId, userEmail, file);
+
+            //TODO: FIJARSE SI ESTA BIEN ESTO
+            Photo photo = new Photo();
+            photo.setFilename(file.getOriginalFilename());
+            photo.setContentType(file.getContentType());
+            photo.setData(file.getBytes());
+
+            UUID photoId = photoService.uploadPhotoForClub(clubId, userEmail, photo);
             log.info("Photo uploaded successfully, photoId: {}", photoId);
             redirectAttributes.addFlashAttribute("success", "photo.upload.success");
             return "redirect:/clubs/handle?clubId=" + clubId;
