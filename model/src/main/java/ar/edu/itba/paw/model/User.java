@@ -51,6 +51,9 @@ public class User {
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
+    @Column(name = "locale")
+    private String locale;
+
     @ManyToMany
     @JoinTable(
             name = "club_admins",
@@ -117,4 +120,7 @@ public class User {
 
     public Set<Club> getAdminOfClubs() { return adminOfClubs; }
     public void setAdminOfClubs(Set<Club> adminOfClubs) { this.adminOfClubs = adminOfClubs; }
+
+    public String getLocale() { return locale; }
+    public void setLocale(String locale) { this.locale = locale; }
 }

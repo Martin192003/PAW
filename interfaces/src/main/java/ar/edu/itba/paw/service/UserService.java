@@ -12,7 +12,7 @@ public interface UserService {
     Optional<User> findById(UUID id);
 
 
-    User create(String username, String name, String password, String surname, String email, String cellphone, String role);
+    User create(String username, String name, String password, String surname, String email, String cellphone, String role, String locale);
     User update(User user);
     boolean delete(UUID id);
 
@@ -31,4 +31,6 @@ public interface UserService {
     boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
     User findByResetPasswordToken(String token);
     boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword);
+    public void updateUserLocale(UUID userId, String locale);
+
 }

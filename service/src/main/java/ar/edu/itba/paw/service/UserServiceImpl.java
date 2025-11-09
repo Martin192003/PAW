@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User create(String username, String name, String password, String surname, String email, String cellphone, String role){
+    public User create(String username, String name, String password, String surname, String email, String cellphone, String role, String locale){
         try {
             User user = userDao.create(
                     username,
@@ -49,7 +49,8 @@ public class UserServiceImpl implements UserService {
                     surname,
                     email,
                     cellphone,
-                    Role.USER
+                    Role.USER,
+                    locale
             );
             if(user == null) {
                 return null;
@@ -81,7 +82,8 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 existingUser.getPassword(),
                 user.getCellphone(),
-                existingUser.getRole()
+                existingUser.getRole(),
+                user.getLocale()
         );
     }
 
@@ -187,7 +189,8 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 encodedPassword,
                 user.getCellphone(),
-                user.getRole()
+                user.getRole(),
+                user.getLocale()
         );
 
         userDao.clearResetPasswordToken(user.getId());
@@ -235,7 +238,8 @@ public class UserServiceImpl implements UserService {
                 existingUser.getEmail(),
                 existingUser.getPassword(),
                 existingUser.getCellphone(),
-                existingUser.getRole()
+                existingUser.getRole(),
+                existingUser.getLocale()
         );
     }
 
@@ -293,9 +297,16 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 encodedPassword,
                 user.getCellphone(),
-                user.getRole()
+                user.getRole(),
+                user.getLocale()
         );
         return true;
+    }
+
+    @Override
+    @Transactional
+    public void updateUserLocale(UUID userId, String locale) {
+        userDao.updateLocale(userId, locale);
     }
 
 }

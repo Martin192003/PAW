@@ -72,8 +72,9 @@ public class EmailServiceImpl implements EmailService {
                                     Map<String, Object> variables, String ctaText, String ctaUrl,
                                     String attachmentName, byte[] attachmentData, String attachmentContentType) {
         try {
-            Locale userLocale = LocaleContextHolder.getLocale();
-            Context context = new Context(userLocale);
+            Locale userLocale = userDao.findByEmail(to)
+                    .map(user -> user.getLocale() != null ? Locale.forLanguageTag(user.getLocale()) : LocaleContextHolder.getLocale())
+                    .orElse(LocaleContextHolder.getLocale());            Context context = new Context(userLocale);
 
             Map<String, Object> mutableVariables = new HashMap<>(variables);
 
@@ -114,8 +115,10 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendContact(String to, String clubName, String fromEmail, String name, String phone, String message) {
-        try {
-            Locale userLocale = LocaleContextHolder.getLocale();
+        /*try {
+            Locale userLocale = userDao.findByEmail(to)
+                    .map(user -> user.getLocale() != null ? Locale.forLanguageTag(user.getLocale()) : LocaleContextHolder.getLocale())
+                    .orElse(LocaleContextHolder.getLocale());
 
             Map<String, Object> clubModel = Map.of(
                     "clubName", clubName,
@@ -159,7 +162,7 @@ public class EmailServiceImpl implements EmailService {
             LOGGER.info("SMTP contact emails sent OK to {} and {}", to, fromEmail);
         } catch (Exception e) {
             LOGGER.error("SMTP contact emails FAILED: {}", e.getMessage(), e);
-        }
+        }*/
     }
 
     @Override
