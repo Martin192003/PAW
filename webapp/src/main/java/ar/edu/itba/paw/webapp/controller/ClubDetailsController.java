@@ -149,7 +149,7 @@
             if (user != null) {
                 model.addAttribute("user", user);
             }
-            boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
+            boolean isOwner = securityService.isClubAdmin(clubId);
             model.addAttribute("isOwner", isOwner);
 
             List<Photo> carouselPhotos = photoService.getClubPhotos(clubId, 10, 0);

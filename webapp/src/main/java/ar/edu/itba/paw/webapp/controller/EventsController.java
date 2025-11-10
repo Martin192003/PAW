@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -50,13 +51,13 @@ public class EventsController {
 
 
     @PostMapping("/add")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
     public String addEvent(
             @Valid @ModelAttribute("eventForm") EventAddForm form,
             BindingResult errors,
             Model model
     ) throws IOException {
         UUID clubId = form.getClubId();
-        checkLoggedUser(clubId);
 
         if (errors.hasErrors()) {
             preloadClubHandler(model, clubId);
@@ -100,6 +101,7 @@ public class EventsController {
     }
 
     @PostMapping("/{eventId}/edit")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
     public String editEvent(
             @PathVariable UUID eventId,
             @Valid @ModelAttribute("editEventForm") EventEditForm form,
@@ -108,8 +110,6 @@ public class EventsController {
             Model model
     ) {
         UUID clubId = form.getClubId();
-        checkLoggedUser(clubId);
-
         if (errors.hasErrors()) {
             preloadClubHandler(model, clubId);
             var club = clubService.getClubById(clubId).orElseThrow();
@@ -168,8 +168,8 @@ public class EventsController {
 
 
     @PostMapping("/{eventId}/delete")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String deleteEvent(@PathVariable UUID eventId, @RequestParam("clubId") UUID clubId) {
-        checkLoggedUser(clubId);
         eventService.delete(clubId, eventId);
         return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
@@ -191,17 +191,6 @@ public class EventsController {
         model.addAttribute("total", total);
         model.addAttribute("totalPages", totalPages);
         return "eventsUpcoming";
-    }
-
-    private void checkLoggedUser(UUID clubId) {
-        User user = securityService.getVerifiedLoggedUser();
-        if (user == null) {
-            throw new UserNotFoundException("error.no_loggeduser");
-        }
-        List<User> admins = clubService.getAdminsByClub(clubId);
-        if (admins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("error.notAdmin");
-        }
     }
 
     private void preloadClubHandler(Model model, UUID clubId) {
