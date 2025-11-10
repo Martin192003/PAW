@@ -391,9 +391,9 @@
                 <form method="get" action="">
                     <input type="hidden" name="clubId" value="${club.clubId}"/>
                     <select name="filter" onchange="this.form.submit()" class="filter-select">
-                        <option value="all" ${filter == 'all' ? 'selected' : ''}>Todos</option>
-                        <option value="past" ${filter == 'past' ? 'selected' : ''}>Pasados</option>
-                        <option value="future" ${filter == 'future' ? 'selected' : ''}>Futuros</option>
+                        <option value="all" ${filter == 'all' ? 'selected' : ''}><spring:message code="event.all" text="todos"/></option>
+                        <option value="past" ${filter == 'past' ? 'selected' : ''}><spring:message code="event.past" text="pasados"/></option>
+                        <option value="future" ${filter == 'future' ? 'selected' : ''}><spring:message code="event.future" text="futuros"/></option>
                     </select>
                 </form>
             </div>

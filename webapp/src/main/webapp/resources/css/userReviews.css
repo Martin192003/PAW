@@ -125,6 +125,8 @@ body {
     flex-direction: column;
     transition: box-shadow 0.2s, transform 0.2s;
     position: relative;
+    overflow-wrap: anywhere;
+    word-break: normal;
 }
 
 .card-md.review-card:hover {
@@ -186,10 +188,14 @@ body {
     display: flex;
     gap: 20px;
     align-items: flex-start;
+    width: 100%;
 }
 
 .review-content {
     flex: 1;
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .review-club-name {
@@ -204,7 +210,12 @@ body {
     line-height: 1.6;
     font-size: 1rem;
     margin: 8px 0;
+
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
 }
+
 
 .review-date {
     color: #aaa;
@@ -220,6 +231,7 @@ body {
     box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
     cursor: pointer;
     transition: transform 0.2s;
+    flex-shrink: 0;
 }
 
 .review-thumb:hover {
