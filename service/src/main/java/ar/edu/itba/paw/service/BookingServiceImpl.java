@@ -99,12 +99,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Booking> findByTable(UUID tableId) {
-        return bookingDao.findByTable(tableId);
-    }
-
-    @Override
     public Booking update(UUID bookingId,
                           User user,
                           UUID tableId,

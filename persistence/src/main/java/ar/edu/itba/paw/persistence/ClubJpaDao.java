@@ -86,63 +86,6 @@ public class ClubJpaDao implements ClubDao {
 
 
     @Override
-    public Integer incrementQuantityRatings(UUID clubId, int delta) {
-        final int updated = em.createQuery(
-                        "UPDATE Club c SET c.quantityRatings = c.quantityRatings + :delta WHERE c.clubId = :id")
-                .setParameter("delta", delta)
-                .setParameter("id", clubId)
-                .executeUpdate();
-        if (updated == 0) return null;
-        return em.createQuery(
-                        "SELECT c.quantityRatings FROM Club c WHERE c.clubId = :id", Integer.class)
-                .setParameter("id", clubId)
-                .getSingleResult();
-    }
-
-    @Override
-    public List<Club> search(String nameLike, Zone location, String musicGenre,
-                             String priceRange, Boolean isBar, String sort) {
-        final var cb = em.getCriteriaBuilder();
-        final var cq = cb.createQuery(Club.class);
-        final var root = cq.from(Club.class);
-
-        final var predicates = new java.util.ArrayList<javax.persistence.criteria.Predicate>();
-
-        if (nameLike != null && !nameLike.isBlank()) {
-            predicates.add(cb.like(cb.lower(root.get("clubName")), "%" + nameLike.toLowerCase() + "%"));
-        }
-        if (location != null) {
-            predicates.add(cb.equal(root.get("zone"), location));
-        }
-        if (musicGenre != null && !musicGenre.isBlank()) {
-            predicates.add(cb.equal(root.get("musicGenre"), MusicalGenre.valueOf(musicGenre)));
-        }
-        if (priceRange != null && !priceRange.isBlank()) {
-            predicates.add(cb.equal(root.get("priceRange"), Price.valueOf(priceRange)));
-        }
-        if (isBar != null) {
-            predicates.add(cb.equal(root.get("isBar"), isBar));
-        }
-
-        cq.where(predicates.toArray(new javax.persistence.criteria.Predicate[0]));
-
-        String sortField = switch (sort == null ? "" : sort) {
-            case "name_asc"  -> "clubName";
-            case "name_desc" -> "clubName";
-            case "rating_desc" -> "rating";
-            case "rating_asc"  -> "rating";
-            default -> null;
-        };
-        if (sortField != null) {
-            boolean desc = sort.endsWith("desc");
-            cq.orderBy(desc ? cb.desc(root.get(sortField)) : cb.asc(root.get(sortField)));
-        }
-
-        return em.createQuery(cq).getResultList();
-    }
-
-
-    @Override
     public List<Club> findByUserId(UUID userId) {
         return em.createQuery("""
         select distinct c
@@ -189,24 +132,6 @@ public class ClubJpaDao implements ClubDao {
         }
         return new java.util.ArrayList<>(byId.values());
     }
-
-
-
-    @Override
-    public List<Club> findAllPaginated(int limit, int offset) {
-        return em.createQuery("SELECT c FROM Club c ORDER BY c.createdAt DESC", Club.class)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
-                .getResultList();
-    }
-
-    @Override
-    public int countAll() {
-        return em.createQuery("SELECT COUNT(c) FROM Club c", Long.class)
-                .getSingleResult()
-                .intValue();
-    }
-
 
     @Override
     public int countSearch(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar) {

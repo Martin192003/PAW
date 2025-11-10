@@ -26,7 +26,6 @@ public interface UserService {
 
     User updateUserField(UUID userId, String field, String value);
     User authenticateAndGetUser(String usernameOrEmail, String password);
-    boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
     User findByResetPasswordToken(String token);
     boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword);
     void updateUserLocale(UUID userId, String locale);

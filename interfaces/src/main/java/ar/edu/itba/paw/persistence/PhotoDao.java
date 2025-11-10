@@ -26,8 +26,6 @@ public interface PhotoDao {
 
     Optional<Photo> findByBooking(UUID bookingId);
 
-    List<Photo> findByClubIdPaginated(UUID clubId, int limit, int offset);
-
     Optional<Photo> findCoverByClubId(UUID clubId);
     List<Photo> findCarouselByClubId(UUID clubId, int limit, int offset);
     void deleteCoverByClubId(UUID clubId);
@@ -37,9 +35,9 @@ public interface PhotoDao {
     List<Photo> findReviewPhotosByClub(UUID clubId, int limit, int offset);
     Optional<Photo> findByReviewId(UUID reviewId);
     UUID createEventPhoto(UUID clubId, UUID eventId, UUID postedBy, String filename, String contentType, byte[] data);
-    public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset);
+    List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset);
 
-    public Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds);
+    Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds);
 
 
 }

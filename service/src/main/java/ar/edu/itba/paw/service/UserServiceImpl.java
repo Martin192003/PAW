@@ -277,21 +277,6 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean authenticateUsernameOrEmail(String usernameOrEmail, String password){
-        User user = userDao.findByUserName(usernameOrEmail).orElse(null);
-        if(user == null){
-            user = userDao.findByEmail(usernameOrEmail).orElse(null);
-            if(user == null) return false;
-        }
-        if(!user.isVerified()){
-            throw new IllegalStateException("User not verified");
-        }
-        return passwordEncoder.matches(password, user.getPassword());
-    }
-
     @Override
     @Transactional
     public boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword) {

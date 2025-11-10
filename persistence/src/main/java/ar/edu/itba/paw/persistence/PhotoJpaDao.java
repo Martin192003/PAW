@@ -117,15 +117,6 @@ public class PhotoJpaDao implements PhotoDao {
     }
 
     @Override
-    public List<Photo> findByClubIdPaginated(UUID clubId, int limit, int offset) {
-        return em.createQuery("SELECT p FROM Photo p WHERE p.clubId = :clubId ORDER BY p.createdAt DESC", Photo.class)
-                .setParameter("clubId", clubId)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
-                .getResultList();
-    }
-
-    @Override
     public Optional<Photo> findCoverByClubId(UUID clubId) {
         return em.createQuery(
                         "SELECT p FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type", Photo.class)

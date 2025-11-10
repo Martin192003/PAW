@@ -174,12 +174,6 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Photo> getCoverPhoto(UUID clubId) {
-        return photoDao.findCoverByClubId(clubId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset) {
         List<Photo> photos = photoDao.findCarouselByClubId(clubId, limit, offset);
         System.out.println("getCarouselPhotos for clubId " + clubId + ": " +
@@ -233,12 +227,5 @@ public class PhotoServiceImpl implements PhotoService {
     public List<Photo> getReviewPhotosByClub(UUID clubId, int limit, int offset) {
         return photoDao.findReviewPhotosByClub(clubId, limit, offset);
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<Photo> getPhotoByReview(UUID reviewId) {
-        return photoDao.findByReviewId(reviewId);
-    }
-
 
 }

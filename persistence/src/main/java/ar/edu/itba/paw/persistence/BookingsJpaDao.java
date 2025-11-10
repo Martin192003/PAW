@@ -106,15 +106,6 @@ public class BookingsJpaDao implements BookingDao {
 
 
     @Override
-    public int countAll() {
-        Long cnt = em.createQuery("SELECT COUNT(b) FROM Booking b", Long.class)
-                .getSingleResult();
-        return cnt.intValue();
-    }
-
-
-
-    @Override
     public List<Booking> searchByClubIdsPaginated(final List<java.util.UUID> clubIds,
                                                   final java.util.UUID bookingId,
                                                   final Status status,
