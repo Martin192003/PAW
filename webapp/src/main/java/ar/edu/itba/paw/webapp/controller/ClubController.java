@@ -397,7 +397,6 @@ public class ClubController {
         photo.setFilename(file.getOriginalFilename());
         photo.setContentType(file.getContentType());
         photo.setData(file.getBytes());
-        final User user = securityService.getVerifiedLoggedUser();
         clubLayoutService.uploadLayout(clubId, user.getEmail() ,photo);
 
         clubLayoutService.uploadLayout(clubId, user.getEmail(), photo);
