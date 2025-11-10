@@ -29,32 +29,19 @@ public class ReviewController {
     private final ReviewService reviewService;
     private final UserService userService;
     private final SecurityService securityService;
-    private final PhotoService photoService;
-    private final ClubService clubService;
-    private final ProductService productsService;
-    private final ClubLayoutService clubLayoutService;
 
-    public ReviewController(ReviewService reviewService, UserService userService, SecurityService securityService, PhotoService photoService, ClubService clubService, ProductService productsService, ClubLayoutService clubLayoutService) {
+    public ReviewController(ReviewService reviewService, UserService userService, SecurityService securityService) {
         this.reviewService = reviewService;
         this.userService = userService;
         this.securityService = securityService;
-        this.photoService = photoService;
-        this.clubService = clubService;
-        this.productsService = productsService;
-        this.clubLayoutService = clubLayoutService;
     }
 
 
     @GetMapping("/reviews/clubs/{clubId}/user")
+    @PreAuthorize("isAuthenticated()")
     @ResponseBody
     public Review getUserReview(@PathVariable UUID clubId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            return null;
-        }
-
-        String username = auth.getName();
-        User user = userService.findByEmail(username);
+        User user = securityService.getVerifiedLoggedUser();
         if (user == null) {
             return null;
         }
@@ -149,7 +136,6 @@ public class ReviewController {
    public String deleteReview(@PathVariable UUID reviewId,
                               @RequestHeader(value = "referer", required = false) String referer,
                               RedirectAttributes ra) {
-       User user = securityService.getVerifiedLoggedUser();
        try {
            reviewService.deleteReview(reviewId);
            ra.addFlashAttribute("success", "review.deleted");
@@ -157,7 +143,6 @@ public class ReviewController {
            ra.addFlashAttribute("error", "review.notdeleted");
        }
 
-       // Redirect back to referer when possible to preserve pagination/sort state; otherwise redirect to root
        if (referer != null && !referer.isBlank()) {
            return "redirect:" + referer;
        }

@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.form.VerificationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -196,7 +197,8 @@ public class LoginController {
     }
 
     @RequestMapping("/user")
-    public ModelAndView index(@RequestParam(value = "id", required = true) final UUID id) {
+    @PreAuthorize("@securityServiceImpl.getLoggedUser().orElse(null)?.id == #id or hasRole('ADMIN')")
+    public ModelAndView index(@RequestParam("id") UUID id) {
         final ModelAndView mav = new ModelAndView("user");
         mav.addObject("user", userService.findById(id));
         return mav;

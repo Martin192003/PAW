@@ -7,6 +7,7 @@ import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -45,6 +46,7 @@ public class TablesController {
 
 
     @PostMapping("/{tableId}/edit")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
     public String editTable(
             @PathVariable UUID tableId,
             @Valid @ModelAttribute("editTableForm") EditTableForm form,
@@ -52,18 +54,15 @@ public class TablesController {
             RedirectAttributes ra,
             Model model
     ) {
-        UUID clubId = form.getClubId();
-        checkLoggedUser(clubId);
-
         if (errors.hasErrors()) {
-            var club = clubService.getClubById(clubId).orElseThrow();
+            var club = clubService.getClubById(form.getClubId()).orElseThrow();
             model.addAttribute("club", club);
-            model.addAttribute("tables", tableService.findByClubId(clubId));
-            model.addAttribute("menu", menuService.getMenuByClub(clubId));
+            model.addAttribute("tables", tableService.findByClubId(form.getClubId()));
+            model.addAttribute("menu", menuService.getMenuByClub(form.getClubId()));
             model.addAttribute("zones", Zone.values());
             model.addAttribute("genres", MusicalGenre.values());
             model.addAttribute("prices", Price.values());
-            model.addAttribute("coverPhotoUrl", photoService.listByClub(clubId, 0, 1)
+            model.addAttribute("coverPhotoUrl", photoService.listByClub(form.getClubId(), 0, 1)
                     .stream()
                     .findFirst()
                     .map(p -> p.getUrl())
@@ -89,12 +88,12 @@ public class TablesController {
             editEventForm.setClubId(club.getClubId());
             model.addAttribute("editEventForm", editEventForm);
             model.addAttribute("errors", errors);
-            model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
-            var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
-            var tableLayout = clubLayoutService.getLayoutByClub(clubId);
+            model.addAttribute("events", eventService.listByClub(form.getClubId(), 0, 20));
+            var carouselPhotos = photoService.getCarouselPhotos(form.getClubId(), 10, 0);
+            var tableLayout = clubLayoutService.getLayoutByClub(form.getClubId());
             String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
 
-            model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
+            model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(form.getClubId()).orElse(null));
             model.addAttribute("carouselPhotos", carouselPhotos);
             model.addAttribute("tableLayoutUrl", tableLayoutUrl);
             model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
@@ -105,7 +104,7 @@ public class TablesController {
         try {
             tableService.update(
                     tableId,
-                    clubId,
+                    form.getClubId(),
                     form.getTableNumber(),
                     form.getCapacity(),
                     TableState.DISPONIBLE,
@@ -125,13 +124,13 @@ public class TablesController {
         } catch (IllegalArgumentException e) {
             ra.addAttribute("err", "discount");
         }
-        return "redirect:/clubs/handle?clubId=" + clubId;
+        return "redirect:/clubs/handle?clubId=" + form.getClubId();
     }
 
 
     @PostMapping("/{tableId}/delete")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String deleteTable(@PathVariable UUID tableId, @RequestParam("clubId") UUID clubId) {
-        checkLoggedUser(clubId);
         tableService.delete(tableId);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
@@ -148,6 +147,7 @@ public class TablesController {
     }
 
     @PostMapping("/addTable")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#tableForm.clubId)")
     public String addTable(
             @Valid @ModelAttribute("tableForm") AddTableForm tableForm,
             BindingResult errors,
@@ -155,7 +155,6 @@ public class TablesController {
             RedirectAttributes ra
     ) {
         UUID clubId = tableForm.getClubId();
-        checkLoggedUser(clubId);
 
         if (tableForm.getDiscount() == null) {
             tableForm.setDiscount(BigDecimal.ZERO);

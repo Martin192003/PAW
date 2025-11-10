@@ -8,6 +8,7 @@ import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,7 +24,6 @@ import java.util.UUID;
 @Controller
 @RequestMapping("/clubs/products")
 public class ProductController {
-
     private final ProductService productService;
     private final SecurityService securityService;
     private final TableService tableService;
@@ -45,14 +45,9 @@ public class ProductController {
     }
 
     @PostMapping("/addProduct")
-    public String addProduct(@Valid @ModelAttribute("productForm") AddProductForm form,
-                             BindingResult errors, Model model, RedirectAttributes ra) {
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
+    public String addProduct(@Valid @ModelAttribute("productForm") AddProductForm form, BindingResult errors, Model model, RedirectAttributes ra) {
         UUID clubId = form.getClubId();
-
-        var user = securityService.getVerifiedLoggedUser();
-        if (user == null) throw new UserNotFoundException("error.notLoggedIn");
-        clubService.assertAdmin(clubId, user.getId());
-
         if (errors.hasErrors()) {
             var club = clubService.getClubById(clubId).orElseThrow();
             model.addAttribute("club", club);
@@ -85,43 +80,28 @@ public class ProductController {
             model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
-
         if (!productService.canAddProduct(clubService.getClubById(clubId).orElseThrow())) {
             ra.addAttribute("err", "max_products");
             return "redirect:/clubs/handle?clubId=" + clubId;
         }
-
         var club = clubService.getClubById(clubId).orElseThrow();
-        productService.create(club, form.getProductName(), form.getDescription(),
-                form.getBasePrice(), form.getProductType(), form.getIsAvailable());
+        productService.create(club, form.getProductName(), form.getDescription(), form.getBasePrice(), form.getProductType(), form.getIsAvailable());
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
     @PostMapping("/deleteProduct")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
     public String deleteProduct(@RequestParam("productId") UUID productId) {
         var product = productService.findById(productId).orElseThrow();
         UUID clubId = product.getClub().getClubId();
-
-        var user = securityService.getVerifiedLoggedUser();
-        if (user == null) throw new UserNotFoundException("No logueado");
-        clubService.assertAdmin(clubId, user.getId());
-
         productService.delete(productId);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
     @PostMapping("/editProduct")
-    public String editProduct(
-            @Valid @ModelAttribute("editProductForm") EditProductForm form,
-            BindingResult errors,
-            RedirectAttributes ra,
-            Model model
-    ) {
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
+    public String editProduct(@Valid @ModelAttribute("editProductForm") EditProductForm form, BindingResult errors, RedirectAttributes ra, Model model) {
         UUID clubId = form.getClubId();
-        var user = securityService.getVerifiedLoggedUser();
-        if (user == null) throw new UserNotFoundException("error.notLoggedIn");
-        clubService.assertAdmin(clubId, user.getId());
-
         if (errors.hasErrors()) {
             var club = clubService.getClubById(clubId).orElseThrow();
             model.addAttribute("club", club);
@@ -156,7 +136,6 @@ public class ProductController {
             var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
             var tableLayout = clubLayoutService.getLayoutByClub(clubId);
             String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
-
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
             model.addAttribute("carouselPhotos", carouselPhotos);
             model.addAttribute("tableLayoutUrl", tableLayoutUrl);
@@ -164,17 +143,8 @@ public class ProductController {
             model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
-
         try {
-            productService.update(
-                    form.getProductId(),
-                    clubId,
-                    form.getProductName(),
-                    form.getDescription(),
-                    form.getBasePrice(),
-                    form.getProductType(),
-                    form.getIsAvailable()
-            );
+            productService.update(form.getProductId(), clubId, form.getProductName(), form.getDescription(), form.getBasePrice(), form.getProductType(), form.getIsAvailable());
         } catch (ValidationException e) {
             ra.addAttribute("err", "price_max_product");
         } catch (IllegalArgumentException e) {
@@ -182,5 +152,4 @@ public class ProductController {
         }
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
-
 }

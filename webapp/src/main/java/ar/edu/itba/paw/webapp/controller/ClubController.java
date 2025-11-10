@@ -388,16 +388,17 @@ public class ClubController {
     }
 
     @PostMapping("/club/{clubId}/layout")
-    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String uploadLayout(@PathVariable UUID clubId,
                                @RequestParam("file") MultipartFile file,
                                RedirectAttributes ra) throws IOException {
+        final User user = securityService.getVerifiedLoggedUser();
         //TODO: FIJARSE SI ESTO ESTA BIEN
         Photo photo = new Photo();
         photo.setFilename(file.getOriginalFilename());
         photo.setContentType(file.getContentType());
         photo.setData(file.getBytes());
 
+        clubLayoutService.uploadLayout(clubId, user.getEmail(), photo);
         ra.addFlashAttribute("layoutUploaded", true);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
@@ -495,8 +496,5 @@ public class ClubController {
         model.addAttribute("eventsByClub", eventsByClub);
         model.addAttribute("clubsForEvents", clubsForEvents);
     }
-
-
-
 
 }
