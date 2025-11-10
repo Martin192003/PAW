@@ -29,6 +29,7 @@ public interface UserService {
     boolean authenticateUsernameOrEmail(String usernameOrEmail, String password);
     User findByResetPasswordToken(String token);
     boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword);
-    public void updateUserLocale(UUID userId, String locale);
+    void updateUserLocale(UUID userId, String locale);
+    void sendReviewRequestsForPastBookings(User user);
 
 }

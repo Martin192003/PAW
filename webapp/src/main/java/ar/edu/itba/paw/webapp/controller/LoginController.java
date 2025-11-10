@@ -22,6 +22,7 @@ import ar.edu.itba.paw.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -175,6 +176,8 @@ public class LoginController {
                 if (user != null) {
                     String detectedLocale = request.getLocale().toLanguageTag();
                     userService.updateUserLocale(user.getId(), detectedLocale);
+
+                    userService.sendReviewRequestsForPastBookings(user);
 
                     mav.setViewName("redirect:/clubs");
                 } else {

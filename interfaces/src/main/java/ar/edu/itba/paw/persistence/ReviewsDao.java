@@ -27,5 +27,6 @@ public interface ReviewsDao {
     Review upsert(User user, Club club, int rating, String description, boolean fromTableGuest);
     Optional<Review> findByUserAndClub(User user, Club club);
     void flush();
+    boolean existsByUserAndClub(UUID userId, UUID clubId);
 
 }
