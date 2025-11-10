@@ -1,4 +1,3 @@
-/* ===== Base tomada de tu estilo ===== */
 .contact-card {
     pointer-events: auto;
     transform: none;
@@ -161,6 +160,9 @@ textarea.form-control {
     border-radius: 8px;
     padding: 14px 16px;
     color: #e6e6e6;
+    /* Opcional: evita que el contenido rompa el diseño en pantallas pequeñas
+    overflow: hidden;
+    */
 }
 
 .review-item-header {
@@ -183,6 +185,14 @@ textarea.form-control {
 .review-text {
     margin: 6px 0 8px;
     line-height: 1.45;
+    color: #d7d7d7;
+    word-break: break-word;        /* rompe palabras muy largas */
+    overflow-wrap: anywhere;        /* alternativa para romper líneas en cualquier punto */
+    word-wrap: break-word;           /* compatibilidad histórica */
+    white-space: normal;              /* asegura que el texto haga wrap normalmente */
+    /* Si quieres limitar altura y mostrar más contenido en otra línea, añade:
+       max-height: 4.2em; overflow: hidden; (pero esto recorta)
+    */
 }
 
 .review-date {
