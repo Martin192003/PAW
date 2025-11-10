@@ -6,7 +6,6 @@ import ar.edu.itba.paw.model.Review;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,7 +18,6 @@ public interface ReviewService {
     List<Review> listByClub(UUID clubId, String sort, int limit, int offset);
     int countByClub(UUID clubId);
     Optional<Review> getUserReviewForClub(UUID userId, UUID clubId);
-    List<Review> getReviewsByClub(UUID clubId);
     List<Review> listByUser(UUID userId, String sort, int limit, int offset);
     int countByUser(UUID userId);
     boolean deleteReview(UUID reviewId);

@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Event;
-import ar.edu.itba.paw.model.Photo;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,7 +28,7 @@ public interface EventDao {
 
     int countUpcoming(LocalDate fromInclusive);
 
-    public Optional<Event> findByPhotoIdAndClub(UUID photoId, UUID clubId);
+    Optional<Event> findByPhotoIdAndClub(UUID photoId, UUID clubId);
 
     List<UUID> findEventPhotoIdsByClub(UUID clubId);
 

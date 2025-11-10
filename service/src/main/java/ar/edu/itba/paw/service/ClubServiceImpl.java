@@ -73,17 +73,6 @@ public class ClubServiceImpl implements ClubService{
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Club> advancedSearch(String nameLike,
-                                     Zone location,
-                                     String musicGenre,
-                                     String priceRange,
-                                     Boolean isBar,
-                                     String sort) {
-        return clubDao.search(nameLike, location, musicGenre, priceRange, isBar, sort);
-    }
-
-    @Override
     @Transactional
     public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu) {
         return clubDao.update(clubId, name, location, rating, quantityRatings, priceRange, description, contactInfoId, musicGenre, zone, isBar, cbu);

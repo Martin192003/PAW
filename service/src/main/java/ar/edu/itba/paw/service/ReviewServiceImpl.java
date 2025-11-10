@@ -116,14 +116,6 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Review> getReviewsByClub(UUID clubId) {
-        Club club = clubDao.findById(clubId)
-                .orElseThrow(() -> new IllegalArgumentException("Club not found"));
-        return reviewsDao.findByClub(club);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<Review> listByClub(UUID clubId, String sort, int limit, int offset) {
         return reviewsDao.searchPaginated(null, clubId, sort, limit, offset);
     }

@@ -40,8 +40,6 @@ public interface EventService {
     /** Total de próximos eventos (count) */
     int countUpcoming();
 
-    public boolean isEventPhoto(UUID clubId, UUID photoId);
-
     Set<UUID> getEventPhotoIds(UUID clubId);
 
     List<Event> findUpcomingByClub(UUID clubId, int offset, int limit);

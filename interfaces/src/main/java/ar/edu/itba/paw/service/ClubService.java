@@ -13,7 +13,6 @@ public interface ClubService {
 
     Optional<Club> getClubById(UUID clubId);
 
-    List<Club> advancedSearch(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar, String sort);
 
     Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, Photo image);
 

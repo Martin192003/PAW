@@ -82,27 +82,6 @@ public class ReviewsJpaDao implements ReviewsDao {
     }
 
     @Override
-    public List<Review> findAll() {
-        return em.createQuery("""
-                SELECT r
-                FROM Review r
-                ORDER BY r.createdAt DESC
-                """, Review.class).getResultList();
-    }
-
-    @Override
-    public List<Review> findByUser(User user) {
-        return em.createQuery("""
-                SELECT r
-                FROM Review r
-                WHERE r.user = :u
-                ORDER BY r.createdAt DESC
-                """, Review.class)
-                .setParameter("u", user)
-                .getResultList();
-    }
-
-    @Override
     public List<Review> findByClub(Club club) {
         return em.createQuery("""
             SELECT r

@@ -23,8 +23,6 @@ public interface BookingService {
 
     List<Booking> findByUser(UUID userId);
 
-    List<Booking> findByTable(UUID tableId);
-
     Booking updateStatus(UUID bookingId, Status newStatus);
 
     Booking update(UUID bookingId,
@@ -35,25 +33,18 @@ public interface BookingService {
                    BigDecimal totalAmount,
                    Status status);
 
-    /** Comando: lanza excepción si no existe o no es cancelable. */
     void cancel(UUID bookingId);
 
-    /** Comando: lanza excepción si no existe. */
     void delete(UUID bookingId);
 
-    /** Comando: lanza excepción si usuario no es dueño. */
     void cancelByUser(UUID bookingId, UUID userId);
 
-    /** Devuelve la reserva creada (mejor que void). */
     Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username, boolean fromEvent);
 
-    /** Comando idempotente: confirma si está PENDIENTE. */
     void confirm(UUID bookingId);
 
-    /** Acceso controlado a una reserva por usuario. */
     Booking getForUser(UUID bookingId, UUID userId);
 
-    /** Vista admin con paginado. */
     List<Booking> searchForAdminPaginated(UUID adminUserId, UUID clubId, UUID bookingId, Status status, String sort, LocalDate bookingDate, Boolean hasReceipt,int limit, int offset);
 
     int countSearch(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);

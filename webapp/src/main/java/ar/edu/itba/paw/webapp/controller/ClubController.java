@@ -397,6 +397,8 @@ public class ClubController {
         photo.setFilename(file.getOriginalFilename());
         photo.setContentType(file.getContentType());
         photo.setData(file.getBytes());
+        final User user = securityService.getVerifiedLoggedUser();
+        clubLayoutService.uploadLayout(clubId, user.getEmail() ,photo);
 
         ra.addFlashAttribute("layoutUploaded", true);
         return "redirect:/clubs/handle?clubId=" + clubId;

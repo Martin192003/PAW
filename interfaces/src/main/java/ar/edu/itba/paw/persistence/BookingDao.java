@@ -17,15 +17,13 @@ public interface BookingDao {
     List<Booking> findByUser(UUID userId);
     List<Booking> findByTable(UUID tableId);
 
-    public Booking create(User user, UUID table, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
+    Booking create(User user, UUID table, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
 
     Optional<Booking> update(UUID bookingId, User user, UUID tableId, Status status, BigDecimal totalAmount, OffsetDateTime bookingStart, OffsetDateTime bookingEnd);
 
     Optional<Booking> updateStatus(UUID bookingId, Status newStatus);
 
     boolean delete(UUID bookingId);
-
-    int countAll();
 
     List<Booking> searchByClubIdsPaginated(List<UUID> clubIds,
                                            UUID bookingId,
@@ -43,5 +41,5 @@ public interface BookingDao {
 
     boolean existsPastConfirmedByUserAndClub(UUID userId, UUID clubId, OffsetDateTime now);
 
-    public Map<UUID, String> mapClubNamesForBookings(List<UUID> bookingIds);
+    Map<UUID, String> mapClubNamesForBookings(List<UUID> bookingIds);
 }

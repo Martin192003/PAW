@@ -10,8 +10,6 @@ import java.util.UUID;
 
 public interface ReviewsDao {
     Optional<Review> findById(UUID id);
-    List<Review> findAll();
-    List<Review> findByUser(User user);
     List<Review> findByClub(Club club);
 
     List<Review> searchPaginated(UUID userId, UUID clubId, String sort, int limit, int offset);
