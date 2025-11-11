@@ -50,7 +50,7 @@ public class ClubServiceImpl implements ClubService{
 
         Club newClub = clubDao.create(name, description, location, priceRange, managedContact, musicGenre, zone, isBar, cbu);
 
-        if (image != null) {
+        if (image.getPhotoId() != null) {
                 photoService.uploadCover(
                         newClub.getClubId(),
                         managedContact.getId(),
