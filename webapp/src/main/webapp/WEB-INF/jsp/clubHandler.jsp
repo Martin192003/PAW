@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/activity.css' />">
     <link rel="stylesheet" href="<c:url value='/resources/css/carousel.css' />" />
     <link rel="stylesheet" href="<c:url value='/resources/css/tabs.css' />">
+    <link rel="stylesheet" href="<c:url value='/resources/css/userReviews.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
 </head>
@@ -148,6 +149,12 @@
                                     <img src="<c:url value='${photo.url}'/>"
                                          alt="<c:out value='${club.clubName}'/> - Foto ${st.index + 1}"
                                          loading="lazy" draggable="false" style="object-fit: contain;"/>
+                                    <button type="button"
+                                            class="delete-photo-btn"
+                                            title="Eliminar foto"
+                                            onclick="openDeletePhotoModal('${photo.photoId}')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
                                 </div>
                             </c:forEach>
                         </div>
@@ -187,6 +194,7 @@
             <button class="tab-button" data-tab="menu-tab">Menu</button>
             <button class="tab-button" data-tab="tables-tab">Tables</button>
             <button class="tab-button" data-tab="events-tab">Events</button>
+            <button class="tab-button" data-tab="reviews-tab">Reviews</button>
         </div>
 
         <div class="tab-content" id="menu-tab">
@@ -380,16 +388,12 @@
                     <spring:message code="label.events" text="Eventos"/>
                 </h2>
 
-                <h2 style="margin: 0;">
-                    <spring:message code="label.events" text="Eventos"/>
-                </h2>
-
                 <form method="get" action="">
                     <input type="hidden" name="clubId" value="${club.clubId}"/>
                     <select name="filter" onchange="this.form.submit()" class="filter-select">
-                        <option value="all" ${filter == 'all' ? 'selected' : ''}>Todos</option>
-                        <option value="past" ${filter == 'past' ? 'selected' : ''}>Pasados</option>
-                        <option value="future" ${filter == 'future' ? 'selected' : ''}>Futuros</option>
+                        <option value="all" ${filter == 'all' ? 'selected' : ''}><spring:message code="event.all" text="todos"/></option>
+                        <option value="past" ${filter == 'past' ? 'selected' : ''}><spring:message code="event.past" text="pasados"/></option>
+                        <option value="future" ${filter == 'future' ? 'selected' : ''}><spring:message code="event.future" text="futuros"/></option>
                     </select>
                 </form>
             </div>
@@ -480,7 +484,7 @@
                         </a>
                     </c:if>
 
-                    <span class="page-info">${page} de ${totalPages}</span>
+                    <span class="page-info">${page} <spring:message code="pagination.of.word" text="de"/> ${totalPages}</span>
 
                     <c:if test="${page < totalPages}">
                         <a href="?clubId=${club.clubId}&filter=${filter}&page=${page + 1}" class="page-btn">
@@ -520,6 +524,85 @@
                 </button>
             </form:form>
         </div>
+
+        <div class="tab-content" id="reviews-tab">
+
+            <spring:message code="reviews.date.pattern" var="datePattern" text="dd/MM/yyyy HH:mm"/>
+
+            <h2 class="section-title"> <spring:message code="reviews.title" text="Reseñas"/> </h2>
+
+            <c:if test="${empty reviews}">
+                <div class="empty-state">
+                    <spring:message code="reviews.empty" text="El club no tiene reseñas"/>
+                </div>
+            </c:if>
+
+            <div class="reviews-list">
+                <c:forEach var="r" items="${reviews}">
+                    <div class="card-md review-card">
+
+                        <div class="review-header">
+                            <div class="review-user-info">
+                                <strong class="review-username"><c:out value="${r.user.username}"/></strong>
+
+                                <c:if test="${r.fromTableGuest}">
+                            <span class="badge-guest">
+                                <i class="fa-solid fa-ticket"></i>
+                                <spring:message code="reviews.badge.guest" text="Reservó mesa"/>
+                            </span>
+                                </c:if>
+
+                                <span class="review-rating">
+                            <c:out value="${r.rating}"/> <i class="fa-solid fa-star"></i>
+                        </span>
+                            </div>
+                        </div>
+
+                        <div class="review-body">
+                            <div class="review-content">
+                                <p class="review-text"><c:out value="${r.description}"/></p>
+                                <small class="review-date">
+                                    <spring:message code="reviews.date" text="Fecha"/>:
+                                    <fmt:formatDate value="${r.createdAt}" pattern="${datePattern}"/>
+                                </small>
+                            </div>
+
+                            <c:if test="${r.photoId != null}">
+                                <img class="review-thumb"
+                                     src="<c:url value='/photos/${r.photoId}'/>"
+                                     alt="<spring:message code='reviews.photo.alt' text='Foto de reseña'/>"
+                                     loading="lazy"
+                                     onclick="openLightbox(this.src)"/>
+                            </c:if>
+                        </div>
+
+                    </div>
+                </c:forEach>
+            </div>
+
+            <c:if test="${totalReviewsPages > 1}">
+                <div class="pagination">
+                    <c:if test="${reviewPage > 1}">
+                        <a href="?clubId=${club.clubId}&reviewPage=${reviewPage - 1}" class="page-btn">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </a>
+                    </c:if>
+
+                    <span class="page-info">
+                ${reviewPage}
+                <spring:message code="pagination.of.word" text="de"/>
+                ${totalReviewsPages}
+            </span>
+
+                    <c:if test="${reviewPage < totalReviewsPages}">
+                        <a href="?clubId=${club.clubId}&reviewPage=${reviewPage + 1}" class="page-btn">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </c:if>
+                </div>
+            </c:if>
+        </div>
+
     </div>
 </div>
 
@@ -708,6 +791,31 @@
         </form>
     </div>
 </div>
+
+<!-- Modal eliminar foto -->
+<div id="deletePhotoModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeDeletePhotoModal()">&times;</span>
+
+        <h3><spring:message code="confirm.deletePhotoMessage" text="¿Eliminar Foto?"/></h3>
+
+        <form id="deletePhotoForm" method="post" style="margin-top: 16px;">
+            <input type="hidden" name="photoId" id="deletePhotoId"/>
+            <input type="hidden" name="clubId" value="${club.clubId}"/>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDeletePhotoModal()">
+                    <spring:message code="button.cancel" text="Cancelar"/>
+                </button>
+
+                <button type="submit" class="btn btn-danger">
+                    <spring:message code="button.delete" text="Eliminar"/>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 <div id="deleteModal" class="modal">
     <div class="modal-content">
@@ -1223,6 +1331,23 @@
             });
         });
     });
+    const ctx = '${pageContext.request.contextPath}';
+    const clubId = '${club.clubId}';
+    function openDeletePhotoModal(photoId) {
+        const form = document.getElementById("deletePhotoForm");
+        document.getElementById("deletePhotoId").value = photoId;
+
+        // Igual que los otros openXYZDeleteModal
+        form.action = ctx + "/clubs/" + clubId + "/photos/" + photoId + "/delete";
+
+        document.getElementById("deletePhotoModal").style.display = "flex"; // mantenés estilo igual al resto
+    }
+
+    function closeDeletePhotoModal() {
+        document.getElementById("deletePhotoForm").action = "";
+        document.getElementById("deletePhotoId").value = "";
+        document.getElementById("deletePhotoModal").style.display = "none";
+    }
 
 </script>
 </body>

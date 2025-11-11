@@ -175,6 +175,26 @@ public class PhotoController {
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
+    @PostMapping("/clubs/{clubId}/photos/{photoId}/delete")
+    public String deletePhoto(@PathVariable UUID clubId,
+                              @PathVariable UUID photoId,
+                              RedirectAttributes redirectAttributes) {
+
+        // Verifico que el usuario tenga permisos
+        checkLoggedUser(clubId);
+
+        boolean deleted = photoService.delete(photoId);
+
+        if (deleted) {
+            redirectAttributes.addFlashAttribute("success", "photo.deleted.success");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "photo.delete.error");
+        }
+
+        return "redirect:/clubs/handle?clubId=" + clubId;
+    }
+
+
 
     private static MediaType sniff(byte[] d) {
         if (d.length >= 4 && (d[0] & 0xFF) == 0x89 && d[1] == 'P' && d[2] == 'N' && d[3] == 'G') {

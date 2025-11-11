@@ -92,3 +92,30 @@
     #club-carousel .carousel-container{ aspect-ratio: 4 / 3; }
     #club-carousel .carousel-btn{ width: 40px; height: 40px; }
 }
+
+.delete-photo-form {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    margin: 0;
+}
+
+.delete-photo-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background-color: #bd2130;
+    border: none #bd2130;
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    z-index: 20; /* Asegura que quede arriba */
+}
+
+.delete-photo-btn:hover {
+    background-color: #b71c1c;
+    border-color: #b71c1c;
+    box-shadow: 0 4px 15px rgba(229, 57, 53, 0.5);
+}

@@ -535,3 +535,33 @@ html, body {
     margin-bottom: 12px;
 }
 
+.filter-select {
+    background-color: #2a2a2a;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Hover */
+.filter-select:hover {
+    border-color: #a020f0; /* Violeta */
+}
+
+/* Focus (cuando está abierto o seleccionado) */
+.filter-select:focus {
+    border-color: #a020f0;
+    box-shadow: 0 0 0 2px rgba(160, 32, 240, 0.4);
+}
+
+/* Opciones dentro del menú desplegable */
+.filter-select option {
+    background-color: #2a2a2a;
+    color: #fff;
+}
+
+

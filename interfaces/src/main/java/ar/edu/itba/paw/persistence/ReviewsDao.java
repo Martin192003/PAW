@@ -27,4 +27,6 @@ public interface ReviewsDao {
     void flush();
     boolean existsByUserAndClub(UUID userId, UUID clubId);
 
+    int countByClubPaginated(UUID clubId);
+    List<Review> findByClubPaginated(UUID clubId, int page, int size);
 }

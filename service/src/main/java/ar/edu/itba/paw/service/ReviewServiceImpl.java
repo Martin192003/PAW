@@ -195,4 +195,11 @@ public class ReviewServiceImpl implements ReviewService {
         clubDao.updateRatingAndCount(clubId, rounded, count);
     }
 
+    public List<Review> findByClubPaginated(UUID clubId, int page, int size) {
+        return reviewsDao.findByClubPaginated(clubId, page, size);
+    }
+
+    public int countByClubPaginated(UUID clubId) {
+        return reviewsDao.countByClubPaginated(clubId);
+    }
 }
