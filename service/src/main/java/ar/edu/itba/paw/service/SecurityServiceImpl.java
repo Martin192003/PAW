@@ -47,13 +47,12 @@ public class SecurityServiceImpl implements SecurityService{
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             Object principal = authentication.getPrincipal();
-            if (principal instanceof User) {
-                return Optional.of((User) principal);
-            } else if (principal instanceof org.springframework.security.core.userdetails.User) {
-                String username = ((org.springframework.security.core.userdetails.User) principal).getUsername();
+            if (principal instanceof User user) {
+                return Optional.of(user);
+            } else if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
+                String username = userDetails.getUsername();
                 return userDao.findByUserName(username).or(() -> userDao.findByEmail(username));
-            } else if (principal instanceof String) {
-                String username = (String) principal;
+            } else if (principal instanceof String username) {
                 return userDao.findByUserName(username).or(() -> userDao.findByEmail(username));
             }
         }
@@ -69,24 +68,18 @@ public class SecurityServiceImpl implements SecurityService{
 
         Object principal = auth.getPrincipal();
 
-        if (principal instanceof ar.edu.itba.paw.model.User) {
-            return (ar.edu.itba.paw.model.User) principal;
+        if (principal instanceof User user) {
+            return user;
         }
-
-        if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
-            String username = springUser.getUsername();
-
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
+            String username = userDetails.getUsername();
             return userDao.findByUserName(username)
-                    .orElseGet(() -> userDao.findByEmail(username)
-                            .orElse(null));
+                    .orElseGet(() -> userDao.findByEmail(username).orElse(null));
         }
-
         if (principal instanceof String username) {
             return userDao.findByUserName(username)
-                    .orElseGet(() -> userDao.findByEmail(username)
-                            .orElse(null));
+                    .orElseGet(() -> userDao.findByEmail(username).orElse(null));
         }
-
         return null;
     }
 
