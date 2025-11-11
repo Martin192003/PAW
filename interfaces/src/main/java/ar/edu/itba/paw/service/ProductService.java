@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ProductService {
-    Product create(Club club, String name, String description, BigDecimal basePrice, ProductType type, boolean isAvailable);
+    Product create(UUID clubID, String name, String description, BigDecimal basePrice, ProductType type, boolean isAvailable);
 
     Product update(UUID productId, UUID clubId, String name, String description, BigDecimal basePrice, ProductType type, Boolean isAvailable);
 

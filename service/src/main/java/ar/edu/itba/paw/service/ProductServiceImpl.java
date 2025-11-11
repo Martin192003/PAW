@@ -3,6 +3,7 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
+import ar.edu.itba.paw.model.exceptions.ClubNotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import org.springframework.stereotype.Service;
@@ -19,15 +20,18 @@ import java.util.UUID;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductsDao productsDao;
+    private final ClubService clubService;
     private static final int MAX_MENU_PRODUCTS = 50;
 
-    public ProductServiceImpl(ProductsDao productsDao) {
+    public ProductServiceImpl(ProductsDao productsDao, ClubService clubService) {
         this.productsDao = productsDao;
+        this.clubService = clubService;
     }
 
     @Override
     @Transactional
-    public Product create(Club club, String name, String description, BigDecimal basePrice, ProductType type, boolean isAvailable) {
+    public Product create(UUID clubID, String name, String description, BigDecimal basePrice, ProductType type, boolean isAvailable) {
+        Club club = clubService.getClubById(clubID).orElseThrow(ClubNotFoundException::new);
         if(basePrice.compareTo(BigDecimal.valueOf(100000000)) >= 0)
             throw new ValidationException("Precio demasiado alto");
         if(name.length() > 100)

@@ -82,8 +82,7 @@ public class ProductController {
             ra.addAttribute("err", "max_products");
             return "redirect:/clubs/handle?clubId=" + clubId;
         }
-        var club = clubService.getClubById(clubId).orElseThrow();
-        productService.create(club, form.getProductName(), form.getDescription(), form.getBasePrice(), form.getProductType(), form.getIsAvailable());
+        productService.create(clubId, form.getProductName(), form.getDescription(), form.getBasePrice(), form.getProductType(), form.getIsAvailable());
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
