@@ -197,7 +197,7 @@ public class LoginController {
     }
 
     @RequestMapping("/user")
-    @PreAuthorize("@securityServiceImpl.getLoggedUser().orElse(null)?.id == #id or hasRole('ADMIN')")
+    @PreAuthorize("@securityServiceImpl.canAccessUser(#id)")
     public ModelAndView index(@RequestParam("id") UUID id) {
         final ModelAndView mav = new ModelAndView("user");
         mav.addObject("user", userService.findById(id));

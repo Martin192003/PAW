@@ -10,4 +10,5 @@ public interface SecurityService {
     Optional<String> getLoggedUserEmail();
     User getVerifiedLoggedUser();
     public boolean isClubAdmin(UUID clubId);
+    public boolean canAccessUser(UUID id);
 }

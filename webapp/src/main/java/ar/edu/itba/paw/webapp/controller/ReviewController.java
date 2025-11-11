@@ -3,11 +3,13 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,30 +30,22 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final UserService userService;
-    private final SecurityService securityService;
 
-    public ReviewController(ReviewService reviewService, UserService userService, SecurityService securityService) {
+    public ReviewController(ReviewService reviewService, UserService userService) {
         this.reviewService = reviewService;
         this.userService = userService;
-        this.securityService = securityService;
     }
 
 
     @GetMapping("/reviews/clubs/{clubId}/user")
     @PreAuthorize("isAuthenticated()")
     @ResponseBody
-    public Review getUserReview(@PathVariable UUID clubId) {
-        User user = securityService.getVerifiedLoggedUser();
-        if (user == null) {
+    public Review getUserReview(@PathVariable UUID clubId, @AuthenticationPrincipal PawUserDetails userDetails) {
+        if (userDetails == null) {
             return null;
         }
 
-        return reviewService.getUserReviewForClub(user.getId(), clubId).orElse(null);
-    }
-
-    @ModelAttribute("isAuthenticated")
-    public boolean isAuthenticated(Authentication auth) {
-        return auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken);
+        return reviewService.getUserReviewForClub(userDetails.getId(), clubId).orElse(null);
     }
 
     @PostMapping("/clubs/{clubId}/reviews")
@@ -60,7 +54,7 @@ public class ReviewController {
                                @Valid @ModelAttribute("reviewForm") ReviewForm form,
                                BindingResult br,
                                RedirectAttributes ra,
-                               @RequestParam(required = false, name = "photo") MultipartFile photo) throws IOException {
+                               @RequestParam(required = false, name = "photo") MultipartFile photo, @AuthenticationPrincipal PawUserDetails userDetails) throws IOException {
 
         if (br.hasErrors()) {
             ra.addFlashAttribute("org.springframework.validation.BindingResult.reviewForm", br);
@@ -74,8 +68,7 @@ public class ReviewController {
         image.setContentType(photo.getContentType());
         image.setData(photo.getBytes());
 
-        User user = securityService.getVerifiedLoggedUser();
-        reviewService.createReview(user.getId(), clubId, form.getRating(), form.getDescription(), image);
+        reviewService.createReview(userDetails.getId(), clubId, form.getRating(), form.getDescription(), image);
         return "redirect:/clubs/" + clubId + "#reviews";
     }
 

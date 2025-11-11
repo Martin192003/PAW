@@ -5,8 +5,11 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
 import ar.edu.itba.paw.model.exceptions.InvalidStatusTransitionException;
 import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.BookingSearchForm;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -33,16 +36,14 @@ import java.time.OffsetDateTime;
 public class BookingAdminController {
 
     private final BookingService bookingService;
-    private final SecurityService securityService;
     private final ClubService clubService;
     private final TableService tableService;
     private final UserService userService;
     private final ReceiptService receiptService;
     private final PhotoService photoService;
 
-    public BookingAdminController(BookingService bookingService, SecurityService securityService, ClubService clubService, TableService tableService, UserService userService, ReceiptService receiptService, PhotoService photoService) {
+    public BookingAdminController(BookingService bookingService, ClubService clubService, TableService tableService, UserService userService, ReceiptService receiptService, PhotoService photoService) {
         this.bookingService = bookingService;
-        this.securityService = securityService;
         this.clubService = clubService;
         this.tableService = tableService;
         this.userService = userService;
@@ -50,27 +51,26 @@ public class BookingAdminController {
         this.photoService = photoService;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/activity")
     public String userClubs(@RequestParam(value = "page", defaultValue = "1") int page,
                             @RequestParam(value = "size", defaultValue = "10") int size,
-                            Model model) {
+                            Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
 
         if (page < 1) page = 1;
         if (size < 1) size = 10;
         int offset = (page - 1) * size;
 
-        User current = securityService.getVerifiedLoggedUser();
-        UUID userId = current.getId();
 
-        List<Club> clubs = clubService.getClubsByUserPaginated(userId, size, offset);
-        int totalClubs = clubService.countClubsByUser(userId);
+        List<Club> clubs = clubService.getClubsByUserPaginated(userDetails.getId(), size, offset);
+        int totalClubs = clubService.countClubsByUser(userDetails.getId());
         int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
 
         Map<UUID,String> photoUrlByClub = photoService.getCoverUrls(
                 clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
         );
 
-        model.addAttribute("user", current);
+        model.addAttribute("user", userDetails.getUser());
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("zones", Zone.values());
@@ -111,16 +111,15 @@ public class BookingAdminController {
         return "redirect:/admin/booking?bookingId=" + bookingId;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/clubs/bookings", produces = "text/html;charset=UTF-8")
     public String bookingsOfMyClubs(@ModelAttribute("bookingSearchForm") BookingSearchForm form,
-                                    BindingResult br,
-                                    Model model) {
+                                    BindingResult br, Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
 
         final int size = 10;
         final int page = Math.max(form.getPage(), 1);
         final int offset = (page - 1) * size;
 
-        final User current = securityService.getVerifiedLoggedUser();
 
         UUID bookingUuid = null;
         if (form.getBookingId() != null && !form.getBookingId().isBlank()) {
@@ -141,7 +140,7 @@ public class BookingAdminController {
 
         if (!br.hasErrors()) {
             result = bookingService.searchForAdminPaginated(
-                    current.getId(),
+                    userDetails.getId(),
                     form.getClubId(),
                     bookingUuid,
                     form.getStatus(),
@@ -151,7 +150,7 @@ public class BookingAdminController {
                     size, offset
             );
             totalBookings = bookingService.countSearchForAdmin(
-                    current.getId(),
+                    userDetails.getId(),
                     form.getClubId(),
                     bookingUuid,
                     form.getStatus(),
@@ -203,9 +202,9 @@ public class BookingAdminController {
         model.addAttribute("clubId", form.getClubId());
         model.addAttribute("bookingId", form.getBookingId());
 
-        model.addAttribute("clubs", clubService.getClubsByUser(current.getId()));
+        model.addAttribute("clubs", clubService.getClubsByUser(userDetails.getId()));
 
-        model.addAttribute("user", current);
+        model.addAttribute("user", userDetails.getUser());
         model.addAttribute("activePage", "clubsBookings");
         model.addAttribute("bookingSearchForm", form);
 

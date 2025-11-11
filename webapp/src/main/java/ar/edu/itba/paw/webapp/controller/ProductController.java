@@ -25,7 +25,6 @@ import java.util.UUID;
 @RequestMapping("/clubs/products")
 public class ProductController {
     private final ProductService productService;
-    private final SecurityService securityService;
     private final TableService tableService;
     private final ClubService clubService;
     private final MenuService menuService;
@@ -33,9 +32,8 @@ public class ProductController {
     private final EventService eventService;
     private final ClubLayoutService clubLayoutService;
 
-    public ProductController(ProductService productService, SecurityService securityService, TableService tableService, ClubService clubService, MenuService menuService, PhotoService photoService, EventService eventService, ClubLayoutService clubLayoutService) {
+    public ProductController(ProductService productService, TableService tableService, ClubService clubService, MenuService menuService, PhotoService photoService, EventService eventService, ClubLayoutService clubLayoutService) {
         this.productService = productService;
-        this.securityService = securityService;
         this.tableService = tableService;
         this.clubService = clubService;
         this.menuService = menuService;
@@ -90,10 +88,9 @@ public class ProductController {
     }
 
     @PostMapping("/deleteProduct")
-    @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
-    public String deleteProduct(@RequestParam("productId") UUID productId) {
-        var product = productService.findById(productId).orElseThrow();
-        UUID clubId = product.getClub().getClubId();
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
+    public String deleteProduct(@RequestParam("productId") UUID productId,
+                                @RequestParam("clubId") UUID clubId) {
         productService.delete(productId);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }

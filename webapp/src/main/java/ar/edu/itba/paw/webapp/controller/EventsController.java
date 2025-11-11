@@ -202,26 +202,9 @@ public class EventsController {
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
-
-        var photos = photoService.listByClub(clubId, 0, 50);
-        var eventPhotoIds = eventService.getEventPhotoIds(clubId);
-        var clubOnlyPhotos = photos.stream()
-                .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
-                .sorted((p1, p2) -> {
-                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
-                        return p2.getCreatedAt().compareTo(p1.getCreatedAt());
-                    }
-                    return p2.getPhotoId().compareTo(p1.getPhotoId());
-                })
-                .toList();
-
         var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
         var tableLayout = clubLayoutService.getLayoutByClub(clubId);
         String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
-
-        System.out.println("carouselPhotos URLs: " + carouselPhotos.stream().map(Photo::getUrl).toList());
-        System.out.println("tableLayoutUrl: " + tableLayoutUrl);
-
         model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
         model.addAttribute("carouselPhotos", carouselPhotos);
         model.addAttribute("tableLayoutUrl", tableLayoutUrl);

@@ -24,7 +24,6 @@ import java.util.UUID;
 public class TablesController {
 
      private final TableService tableService;
-     private  final SecurityService securityService;
      private final ClubService clubService;
      private final PhotoService photoService;
      private final MenuService menuService;
@@ -33,9 +32,8 @@ public class TablesController {
      private final ProductService productService;
 
      @Autowired
-     public TablesController(TableService tableService, SecurityService securityService, ClubService clubService, PhotoService photoService, MenuService menuService, EventService eventService, ClubLayoutService clubLayoutService, ProductService productService) {
+     public TablesController(TableService tableService, ClubService clubService, PhotoService photoService, MenuService menuService, EventService eventService, ClubLayoutService clubLayoutService, ProductService productService) {
          this.tableService = tableService;
-         this.securityService = securityService;
          this.clubService = clubService;
          this.photoService = photoService;
          this.menuService = menuService;
@@ -65,7 +63,7 @@ public class TablesController {
             model.addAttribute("coverPhotoUrl", photoService.listByClub(form.getClubId(), 0, 1)
                     .stream()
                     .findFirst()
-                    .map(p -> p.getUrl())
+                    .map(Photo::getUrl)
                     .orElse(null));
             model.addAttribute("tableForm", new AddTableForm());
             model.addAttribute("productForm", new AddProductForm());
@@ -133,17 +131,6 @@ public class TablesController {
     public String deleteTable(@PathVariable UUID tableId, @RequestParam("clubId") UUID clubId) {
         tableService.delete(tableId);
         return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
-    private void checkLoggedUser(UUID clubId){
-        User user = securityService.getVerifiedLoggedUser();
-        if(user == null) {
-            throw new UserNotFoundException("error.no_loggeduser");
-        }
-        List<User> clubUsers = clubService.getAdminsByClub(clubId);
-        if(clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("error.notAdmin");
-        }
     }
 
     @PostMapping("/addTable")

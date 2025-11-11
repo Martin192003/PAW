@@ -94,4 +94,12 @@ public class SecurityServiceImpl implements SecurityService{
                 .stream()
                 .anyMatch(u -> u.getId().equals(user.getId()));
     }
+
+    @Override
+    public boolean canAccessUser(UUID id) {
+        var logged = getLoggedUser();
+        if (logged.isEmpty()) return false;
+        var user = logged.get();
+        return user.getId().equals(id) || user.getRole() == Role.ADMIN;
+    }
 }
