@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -50,13 +51,13 @@ public class EventsController {
 
 
     @PostMapping("/add")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
     public String addEvent(
             @Valid @ModelAttribute("eventForm") EventAddForm form,
             BindingResult errors,
             Model model
-    ) {
+    ) throws IOException {
         UUID clubId = form.getClubId();
-        checkLoggedUser(clubId);
 
         if (errors.hasErrors()) {
             preloadClubHandler(model, clubId);
@@ -83,18 +84,24 @@ public class EventsController {
             return "clubHandler";
         }
 
+        // TODO: FIJARSE SI ES LOGICA DE NEGOCIO
+        Photo photo = new Photo();
+        photo.setFilename(form.getPhotoId() != null ? form.getPhotoId().getOriginalFilename() : null);
+        photo.setContentType(form.getPhotoId() != null ? form.getPhotoId().getContentType() : null);
+        photo.setData(form.getPhotoId() != null ? form.getPhotoId().getBytes() : null);
 
         eventService.create(
                 clubId,
                 form.getEventName(),
                 form.getDescription(),
                 form.getDate(),
-                form.getPhotoId()
+                photo
         );
         return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
 
     @PostMapping("/{eventId}/edit")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
     public String editEvent(
             @PathVariable UUID eventId,
             @Valid @ModelAttribute("editEventForm") EventEditForm form,
@@ -103,8 +110,6 @@ public class EventsController {
             Model model
     ) {
         UUID clubId = form.getClubId();
-        checkLoggedUser(clubId);
-
         if (errors.hasErrors()) {
             preloadClubHandler(model, clubId);
             var club = clubService.getClubById(clubId).orElseThrow();
@@ -132,13 +137,20 @@ public class EventsController {
         }
 
         if (photo != null && !photo.isEmpty()) {
+
+            //TODO: FIJARSE SI ESTA BIEN
+            Photo photoData = new Photo();
+            photoData.setFilename(photo.getOriginalFilename());
+            photoData.setContentType(photo.getContentType());
+            photoData.setData(photoData.getData());
+
             eventService.update(
                     clubId,
                     eventId,
                     form.getEventName(),
                     form.getDescription(),
                     form.getDate(),
-                    photo
+                    photoData
             );
         } else{
             eventService.update(
@@ -156,8 +168,8 @@ public class EventsController {
 
 
     @PostMapping("/{eventId}/delete")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String deleteEvent(@PathVariable UUID eventId, @RequestParam("clubId") UUID clubId) {
-        checkLoggedUser(clubId);
         eventService.delete(clubId, eventId);
         return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
@@ -181,17 +193,6 @@ public class EventsController {
         return "eventsUpcoming";
     }
 
-    private void checkLoggedUser(UUID clubId) {
-        User user = securityService.getVerifiedLoggedUser();
-        if (user == null) {
-            throw new UserNotFoundException("error.no_loggeduser");
-        }
-        List<User> admins = clubService.getAdminsByClub(clubId);
-        if (admins.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("error.notAdmin");
-        }
-    }
-
     private void preloadClubHandler(Model model, UUID clubId) {
         var club = clubService.getClubById(clubId).orElseThrow();
         model.addAttribute("club", club);
@@ -201,26 +202,9 @@ public class EventsController {
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
-
-        var photos = photoService.listByClub(clubId, 0, 50);
-        var eventPhotoIds = eventService.getEventPhotoIds(clubId);
-        var clubOnlyPhotos = photos.stream()
-                .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
-                .sorted((p1, p2) -> {
-                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
-                        return p2.getCreatedAt().compareTo(p1.getCreatedAt());
-                    }
-                    return p2.getPhotoId().compareTo(p1.getPhotoId());
-                })
-                .toList();
-
         var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
         var tableLayout = clubLayoutService.getLayoutByClub(clubId);
         String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
-
-        System.out.println("carouselPhotos URLs: " + carouselPhotos.stream().map(Photo::getUrl).toList());
-        System.out.println("tableLayoutUrl: " + tableLayoutUrl);
-
         model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
         model.addAttribute("carouselPhotos", carouselPhotos);
         model.addAttribute("tableLayoutUrl", tableLayoutUrl);

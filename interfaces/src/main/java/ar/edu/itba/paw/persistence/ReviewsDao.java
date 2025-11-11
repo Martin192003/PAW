@@ -1,20 +1,15 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface ReviewsDao {
     Optional<Review> findById(UUID id);
-    List<Review> findAll();
-    List<Review> findByUser(User user);
     List<Review> findByClub(Club club);
 
     List<Review> searchPaginated(UUID userId, UUID clubId, String sort, int limit, int offset);
@@ -30,6 +25,7 @@ public interface ReviewsDao {
     Review upsert(User user, Club club, int rating, String description, boolean fromTableGuest);
     Optional<Review> findByUserAndClub(User user, Club club);
     void flush();
+    boolean existsByUserAndClub(UUID userId, UUID clubId);
 
     int countByClubPaginated(UUID clubId);
     List<Review> findByClubPaginated(UUID clubId, int page, int size);

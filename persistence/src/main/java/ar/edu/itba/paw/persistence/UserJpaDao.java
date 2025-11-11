@@ -16,7 +16,7 @@ public class UserJpaDao implements UserDao {
 
     @Override
     public User create(String username, String name, String passwordHash, String surname,
-                       String email, String cellphone, Role role) {
+                       String email, String cellphone, Role role, String locale) {
 
         final User u = new User();
         u.setUserId(UUID.randomUUID());
@@ -30,6 +30,7 @@ public class UserJpaDao implements UserDao {
         u.setVerified(false);
         u.setVerificationToken(UUID.randomUUID().toString());
         u.setCreatedAt(java.time.OffsetDateTime.now());
+        u.setLocale(locale);
 
         em.persist(u);
         return u;
@@ -37,7 +38,7 @@ public class UserJpaDao implements UserDao {
 
     @Override
     public User update(UUID userId, String userName, String name, String surname, String email,
-                       String passwordHash, String cellphone, Role role) {
+                       String passwordHash, String cellphone, Role role, String locale) {
 
         User u = em.find(User.class, userId);
         if (u == null)
@@ -50,6 +51,7 @@ public class UserJpaDao implements UserDao {
         u.setPasswordHash(passwordHash);
         u.setCellphone(cellphone);
         u.setRole(role);
+        u.setLocale(locale);
 
         return em.merge(u);
     }
@@ -123,6 +125,15 @@ public class UserJpaDao implements UserDao {
         User u = em.find(User.class, userId);
         if (u != null) {
             u.setResetPasswordToken(null);
+        }
+    }
+
+    @Override
+    public void updateLocale(UUID userId, String locale) {
+        User u = em.find(User.class, userId);
+        if (u != null) {
+            u.setLocale(locale);
+            em.merge(u);
         }
     }
 }

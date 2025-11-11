@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Event;
-import org.springframework.web.multipart.MultipartFile;
+import ar.edu.itba.paw.model.Photo;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -10,8 +10,8 @@ import java.util.UUID;
 
 
 public interface EventService {
-    Event create(UUID clubId, String eventName, String description, LocalDate date, MultipartFile image);
-    Event update(UUID clubId, UUID eventId, String eventName, String description, LocalDate date, MultipartFile image);
+    Event create(UUID clubId, String eventName, String description, LocalDate date, Photo image);
+    Event update(UUID clubId, UUID eventId, String eventName, String description, LocalDate date, Photo image);
     void delete(UUID clubId, UUID eventId);
 
 
@@ -39,8 +39,6 @@ public interface EventService {
 
     /** Total de próximos eventos (count) */
     int countUpcoming();
-
-    public boolean isEventPhoto(UUID clubId, UUID photoId);
 
     Set<UUID> getEventPhotoIds(UUID clubId);
 

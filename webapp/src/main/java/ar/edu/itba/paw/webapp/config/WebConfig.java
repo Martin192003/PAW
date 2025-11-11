@@ -20,9 +20,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 import javax.persistence.EntityManagerFactory;
@@ -38,6 +39,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.lang.management.PlatformLoggingMXBean;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -67,16 +70,16 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("classpath:/db/schema.sql")
     private Resource schemaSql;
 
-    @Value("${local.db.host}")
+    @Value("${app.db.host}")
     private String dbHost;
-    @Value("${local.db.port}")
+    @Value("${app.db.port}")
     private String dbPort;
-    @Value("${local.db.name}")
+    @Value("${app.db.name}")
     private String dbName;
 
-    @Value("${local.db.user}")
+    @Value("${app.db.user}")
     private String dbUser;
-    @Value("${local.db.pass}")
+    @Value("${app.db.pass}")
     private String dbPass;
 
     @Value("${local.schema.init:false}")
@@ -97,7 +100,8 @@ public class WebConfig implements WebMvcConfigurer {
         messageSource.addBasenames("classpath:i18n/messages");
         messageSource.setDefaultEncoding(StandardCharsets.UTF_8.displayName());
         messageSource.setCacheSeconds((int) TimeUnit.MINUTES.toSeconds(5));
-
+        messageSource.setDefaultLocale(new Locale("en"));
+        messageSource.setFallbackToSystemLocale(false);
         return messageSource;
     }
 
@@ -146,7 +150,7 @@ public class WebConfig implements WebMvcConfigurer {
         emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
         var props = new Properties();
-        props.setProperty("hibernate.hbm2ddl.auto", "update");
+        props.setProperty("hibernate.hbm2ddl.auto", "none");
         props.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQL92Dialect");
         emf.setJpaProperties(props);
         return emf;
@@ -202,6 +206,14 @@ public class WebConfig implements WebMvcConfigurer {
         ex.setThreadNamePrefix("Async-");
         ex.initialize();
         return ex;
+    }
+
+    @Bean
+    public LocaleResolver localeResolver() {
+        final AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
+        resolver.setSupportedLocales(Arrays.asList(new Locale("en"), new Locale("es")));
+        resolver.setDefaultLocale(new Locale("en"));
+        return resolver;
     }
 
 

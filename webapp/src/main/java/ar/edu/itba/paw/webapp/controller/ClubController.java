@@ -6,12 +6,15 @@ import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -45,7 +48,6 @@ public class ClubController {
     private final PhotoService photoService;
     private final UserService userService;
     private final MenuService menuService;
-    private final SecurityService securityService;
     private final TableService tableService;
     private final EventService eventService;
     private final ClubLayoutService clubLayoutService;
@@ -53,17 +55,16 @@ public class ClubController {
     private final ReviewService reviewService;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, SecurityService securityService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService, ReviewService reviewService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService, ReviewService reviewService) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
         this.menuService = menuService;
-        this.securityService = securityService;
+        this.reviewService = reviewService;
         this.tableService = tableService;
         this.eventService = eventService;
         this.clubLayoutService = clubLayoutService;
         this.productService = productService;
-        this.reviewService = reviewService;
     }
 
     @GetMapping({"", "/"})
@@ -76,7 +77,7 @@ public class ClubController {
                        @RequestParam(value = "sort", required = false) String sort,
                        @RequestParam(value = "page", defaultValue = "1") int page,
                        @RequestParam(value = "size", defaultValue = "10") int size,
-                       Model model) {
+                       Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
 
         if (size < 1) size = 10;
         if (page < 1) page = 1;
@@ -99,7 +100,7 @@ public class ClubController {
         }
 
         // Valido día permitido
-        boolean invalidDay = availabilityMode && (selectedDay == null || !tableService.isAllowedDay(selectedDay));
+        boolean invalidDay = availabilityMode && !tableService.isAllowedDay(selectedDay);
         model.addAttribute("invalidDay", invalidDay);
         model.addAttribute("selectedAvailabilityDate", selectedDay);
 
@@ -141,9 +142,9 @@ public class ClubController {
         Map<UUID, String> photoUrlByClub = photoService.getCoverUrls(
                 clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
         );
-
-        var user = securityService.getVerifiedLoggedUser();
-        if (user != null) model.addAttribute("user", user);
+        if (userDetails != null) {
+            model.addAttribute("user", userDetails.getUser());
+        }
 
         Map<String, String> filters = new LinkedHashMap<>();
         if (nameLike != null && !nameLike.isBlank()) filters.put("name", nameLike);
@@ -185,67 +186,62 @@ public class ClubController {
 
 
     @GetMapping("/new")
+    @PreAuthorize("isAuthenticated()")
     public String showClubForm(Model model) {
 
-        User user = securityService.getVerifiedLoggedUser();
-        if (user != null) model.addAttribute("user", user);
         model.addAttribute("clubForm", new AddClubForm());
         model.addAttribute("postPath", "/clubs/create");
         model.addAttribute("priceValues", Price.values());
         model.addAttribute("genreValues", MusicalGenre.values());
         model.addAttribute("zoneValues", Zone.values());
-
         return "clubForm";
     }
 
     @PostMapping("/create")
+    @PreAuthorize("isAuthenticated()")
     public String createClub(Model model,
                              @Valid @ModelAttribute("clubForm") AddClubForm f,
-                             BindingResult errors) throws IOException {
+                             BindingResult errors, @AuthenticationPrincipal PawUserDetails userDetails) throws IOException {
         if (errors.hasErrors()) {
             model.addAttribute("clubForm", f);
             model.addAttribute("postPath", "/clubs/create");
             model.addAttribute("priceValues", Price.values());
             model.addAttribute("genreValues", MusicalGenre.values());
             model.addAttribute("zoneValues", Zone.values());
-
             return "clubForm";
         }
 
-        var contact = securityService.getVerifiedLoggedUser();
-        if (contact == null) throw new IllegalStateException("error.no_user");
-        var roleAntes = contact.getRole();
+        var roleAntes = userDetails.getUser().getRole();
 
+
+        Photo photo = new Photo();
+        if (f.getImage() != null && !f.getImage().isEmpty()) {
+            photo.setFilename(f.getImage().getOriginalFilename());
+            photo.setContentType(f.getImage().getContentType());
+            photo.setData(f.getImage().getBytes());
+        } else {
+            photo = null;
+        }
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
-                contact, f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getCbu(), f.getImage()
+                userDetails.getUser(), f.getMusicGenre(), f.getZone(), f.getIsBar(), f.getCbu(), photo
         );
 
         if (roleAntes == Role.USER) {
-            User updatedUser = userService.findById(contact.getId()).orElseThrow(UserNotFoundException::new);
-
-            Authentication newAuth = new UsernamePasswordAuthenticationToken(
-                    updatedUser.getUsername(),
-                    null,
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + updatedUser.getRole().name()))
-            );
-            SecurityContextHolder.getContext().setAuthentication(newAuth);
+            User updatedUser = userService.findById(userDetails.getId()).orElseThrow(UserNotFoundException::new);
         }
 
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();
     }
 
     @GetMapping("/handle")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String handleClub(@RequestParam("clubId") UUID clubId,
                              @RequestParam(name = "page", defaultValue = "1") int page,
                              @RequestParam(name = "size", defaultValue = "10") int size,
                              @RequestParam(name = "filter", defaultValue = "all") String filter,
                              @RequestParam(name = "reviewPage", defaultValue = "1") int reviewPage,
                              Model model) {
-        var user = securityService.getVerifiedLoggedUser();
-        if (user == null) throw new UserNotFoundException("error.notLoggedIn");
-        clubService.assertAdmin(clubId, user.getId());
-
         var club = clubService.getClubById(clubId).orElseThrow(() -> new NotFoundException("error.club.notfound"));
 
         var photos = photoService.listByClub(clubId, 0, 50);
@@ -254,7 +250,7 @@ public class ClubController {
 
         var clubOnlyPhotos = photos.stream()
                 .filter(p -> p.getPhotoId() != null && !eventPhotoIds.contains(p.getPhotoId()))
-                .collect(Collectors.toList());
+                .toList();
 
         String coverPhotoUrl = photoService.getCoverUrl(clubId)
                 .orElse("/resources/img/default-club-placeholder.png");
@@ -272,22 +268,20 @@ public class ClubController {
 
         int pageIndex = page - 1;
         List<Event> events;
-        int totalEvents;
-
-        switch (filter) {
-            case "past":
+        int totalEvents = switch (filter) {
+            case "past" -> {
                 events = eventService.findPastByClub(clubId, pageIndex, size);
-                totalEvents = eventService.countPastByClub(clubId);
-                break;
-            case "future":
+                yield eventService.countPastByClub(clubId);
+            }
+            case "future" -> {
                 events = eventService.findUpcomingByClub(clubId, pageIndex, size);
-                totalEvents = eventService.countUpcomingByClub(clubId);
-                break;
-            default:
+                yield eventService.countUpcomingByClub(clubId);
+            }
+            default -> {
                 events = eventService.listByClub(clubId, pageIndex, size);
-                totalEvents = eventService.countByClub(clubId);
-                break;
-        }
+                yield eventService.countByClub(clubId);
+            }
+        };
 
         int totalPages = (int) Math.ceil((double) totalEvents / size);
         
@@ -339,7 +333,7 @@ public class ClubController {
         form.setZone(club.getZone() != null ? club.getZone().name() : null);
         form.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
         form.setDescription(club.getDescription() != null ? club.getDescription() : "");
-        form.setImage(coverPhotoUrl != null ? coverPhotoUrl : "");
+        form.setImage(coverPhotoUrl);
         form.setCbu(club.getCbu() != null ? club.getCbu() : "");
 
 
@@ -348,6 +342,7 @@ public class ClubController {
     }
 
     @PostMapping("/editClub")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String editClub(
             @Valid @ModelAttribute("clubHandlerForm") ClubHandlerForm clubHandlerForm,
             BindingResult errors,
@@ -356,8 +351,6 @@ public class ClubController {
             Model model,
             RedirectAttributes ra
     ) {
-        checkLoggedUser(clubId);
-
         var maybeClub = clubService.getClubById(clubId);
         if (maybeClub.isEmpty()) throw new NotFoundException("error.club.notfound");
         Club club = maybeClub.get();
@@ -401,19 +394,23 @@ public class ClubController {
     }
 
     @PostMapping("/club/{clubId}/layout")
+    @PreAuthorize("isAuthenticated()")
     public String uploadLayout(@PathVariable UUID clubId,
                                @RequestParam("file") MultipartFile file,
-                               RedirectAttributes ra) {
-        final User user = securityService.getVerifiedLoggedUser();
-        clubLayoutService.uploadLayout(clubId, user.getEmail(), file);
+                               RedirectAttributes ra, @AuthenticationPrincipal PawUserDetails userDetails) throws IOException {
+        //TODO: FIJARSE SI ESTO ESTA BIEN
+        Photo photo = new Photo();
+        photo.setFilename(file.getOriginalFilename());
+        photo.setContentType(file.getContentType());
+        photo.setData(file.getBytes());
+        clubLayoutService.uploadLayout(clubId, userDetails.getUser().getEmail() ,photo);
         ra.addFlashAttribute("layoutUploaded", true);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
     @GetMapping("/club/{clubId}/layout/{layoutId}/image")
     public ResponseEntity<byte[]> getLayoutImage(
-            @PathVariable UUID clubId,
-            @PathVariable UUID layoutId) {
+            @PathVariable UUID clubId) {
 
         var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
 
@@ -425,18 +422,6 @@ public class ClubController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(layout.getContentType()))
                 .body(layout.getData());
-    }
-
-
-    private void checkLoggedUser(UUID clubId) {
-        User user = securityService.getVerifiedLoggedUser();
-        if (user == null) {
-            throw new UserNotFoundException("error.no_loggeduser");
-        }
-        List<User> clubUsers = clubService.getAdminsByClub(clubId);
-        if (clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("error.notAdmin");
-        }
     }
 
     private void populateClubHandlerModel(Model model, Club club) {
@@ -453,10 +438,7 @@ public class ClubController {
                 })
                 .toList();
 
-        String coverPhoto = clubOnlyPhotos.isEmpty()
-                ? "/resources/img/default-club-placeholder.png"
-                : clubOnlyPhotos.getFirst().getUrl();
-        String coverPhotoUrl = clubOnlyPhotos.isEmpty() ? null : clubOnlyPhotos.get(0).getUrl();
+        String coverPhotoUrl = clubOnlyPhotos.isEmpty() ? null : clubOnlyPhotos.getFirst().getUrl();
 
         var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
         String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
@@ -515,8 +497,5 @@ public class ClubController {
         model.addAttribute("eventsByClub", eventsByClub);
         model.addAttribute("clubsForEvents", clubsForEvents);
     }
-
-
-
 
 }

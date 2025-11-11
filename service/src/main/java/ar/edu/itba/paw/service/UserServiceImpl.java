@@ -1,6 +1,11 @@
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.Booking;
+import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.persistence.BookingDao;
+import ar.edu.itba.paw.persistence.ClubDao;
+import ar.edu.itba.paw.persistence.ReviewsDao;
 import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.model.Role;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +16,7 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.service.UserService;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,13 +29,19 @@ public class UserServiceImpl implements UserService {
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
     private final EmailService mailService;
+    private final BookingDao bookingDao;
+    private final ReviewsDao reviewDao;
+    private final ClubDao clubDao;
 
 
     @Autowired
-    public UserServiceImpl(final UserDao userDao, final PasswordEncoder passwordEncoder, final EmailService mailService) {
+    public UserServiceImpl(final UserDao userDao, final PasswordEncoder passwordEncoder, final EmailService mailService, final BookingDao bookingDao, final ReviewsDao reviewDao, final ClubDao clubDao) {
         this.passwordEncoder = passwordEncoder;
         this.userDao = userDao;
         this.mailService = mailService;
+        this.bookingDao = bookingDao;
+        this.reviewDao = reviewDao;
+        this.clubDao = clubDao;
     }
 
     @Override
@@ -40,7 +52,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User create(String username, String name, String password, String surname, String email, String cellphone, String role){
+    public User create(String username, String name, String password, String surname, String email, String cellphone, String role, String locale){
         try {
             User user = userDao.create(
                     username,
@@ -49,7 +61,8 @@ public class UserServiceImpl implements UserService {
                     surname,
                     email,
                     cellphone,
-                    Role.USER
+                    Role.USER,
+                    locale
             );
             if(user == null) {
                 return null;
@@ -81,7 +94,8 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 existingUser.getPassword(),
                 user.getCellphone(),
-                existingUser.getRole()
+                existingUser.getRole(),
+                user.getLocale()
         );
     }
 
@@ -187,7 +201,8 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 encodedPassword,
                 user.getCellphone(),
-                user.getRole()
+                user.getRole(),
+                user.getLocale()
         );
 
         userDao.clearResetPasswordToken(user.getId());
@@ -235,7 +250,8 @@ public class UserServiceImpl implements UserService {
                 existingUser.getEmail(),
                 existingUser.getPassword(),
                 existingUser.getCellphone(),
-                existingUser.getRole()
+                existingUser.getRole(),
+                existingUser.getLocale()
         );
     }
 
@@ -261,21 +277,6 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean authenticateUsernameOrEmail(String usernameOrEmail, String password){
-        User user = userDao.findByUserName(usernameOrEmail).orElse(null);
-        if(user == null){
-            user = userDao.findByEmail(usernameOrEmail).orElse(null);
-            if(user == null) return false;
-        }
-        if(!user.isVerified()){
-            throw new IllegalStateException("User not verified");
-        }
-        return passwordEncoder.matches(password, user.getPassword());
-    }
-
     @Override
     @Transactional
     public boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword) {
@@ -293,9 +294,28 @@ public class UserServiceImpl implements UserService {
                 user.getEmail(),
                 encodedPassword,
                 user.getCellphone(),
-                user.getRole()
+                user.getRole(),
+                user.getLocale()
         );
         return true;
+    }
+
+    @Override
+    @Transactional
+    public void updateUserLocale(UUID userId, String locale) {
+        userDao.updateLocale(userId, locale);
+    }
+
+    @Override
+    @Transactional
+    public void sendReviewRequestsForPastBookings(User user) {
+        List<Booking> bookings = bookingDao.findByUser(user.getId());
+        for (Booking booking : bookings) {
+            if (booking.getBookingEnd().isBefore(java.time.OffsetDateTime.now())
+                    && !reviewDao.existsByUserAndClub(user.getId(), booking.getTable().getClubId())) {
+                mailService.sendReviewRequestEmail(booking, user, clubDao.findById(booking.getTable().getClubId()).orElse(null));
+            }
+        }
     }
 
 }

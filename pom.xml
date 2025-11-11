@@ -29,6 +29,9 @@
     <org.hibernate.version>5.6.15.Final</org.hibernate.version>
     <org.hibernate.jpa.version>1.0.0.Final</org.hibernate.jpa.version>
     <javax.xml.bind.version>2.3.1</javax.xml.bind.version>
+    <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
+    <commons-fileupload.version>1.5</commons-fileupload.version>
+    <commons-io.version>2.15.1</commons-io.version>
   </properties>
 
   <dependencyManagement>
@@ -193,7 +196,7 @@
                     <artifactId>maven-war-plugin</artifactId>
                     <version>${maven-war-plugin.version}</version>
                     <configuration>
-                        <packagingExcludes>**/logback-test.xml</packagingExcludes>
+<!--                        <packagingExcludes>**/logback-test.xml</packagingExcludes>-->
                     </configuration>
                 </plugin>
             </plugins>

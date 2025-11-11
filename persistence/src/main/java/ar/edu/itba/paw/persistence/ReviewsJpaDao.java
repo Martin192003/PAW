@@ -82,27 +82,6 @@ public class ReviewsJpaDao implements ReviewsDao {
     }
 
     @Override
-    public List<Review> findAll() {
-        return em.createQuery("""
-                SELECT r
-                FROM Review r
-                ORDER BY r.createdAt DESC
-                """, Review.class).getResultList();
-    }
-
-    @Override
-    public List<Review> findByUser(User user) {
-        return em.createQuery("""
-                SELECT r
-                FROM Review r
-                WHERE r.user = :u
-                ORDER BY r.createdAt DESC
-                """, Review.class)
-                .setParameter("u", user)
-                .getResultList();
-    }
-
-    @Override
     public List<Review> findByClub(Club club) {
         return em.createQuery("""
             SELECT r
@@ -214,6 +193,17 @@ public class ReviewsJpaDao implements ReviewsDao {
     @Override
     public void flush() {
         em.flush();
+    }
+
+    @Override
+    public boolean existsByUserAndClub(UUID userId, UUID clubId) {
+        Long count = em.createQuery(
+                        "SELECT COUNT(r) FROM Review r WHERE r.user.id = :userId AND r.club.clubId = :clubId", Long.class
+                )
+                .setParameter("userId", userId)
+                .setParameter("clubId", clubId)
+                .getSingleResult();
+        return count > 0;
     }
 
     private String resolveOrderBy(String sort) {

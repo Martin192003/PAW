@@ -7,11 +7,14 @@ import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
 import ar.edu.itba.paw.service.PhotoService;
 import ar.edu.itba.paw.service.SecurityService;
+import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -31,13 +34,10 @@ public class PhotoController {
     private static final Logger log = LoggerFactory.getLogger(PhotoController.class);
 
     private final PhotoService photoService;
-    private final SecurityService securityService;
-    private final ClubService clubService;
 
-    public PhotoController(PhotoService photoService, SecurityService securityService, ClubService clubService) {
+    public PhotoController(PhotoService photoService) {
         this.photoService = photoService;
-        this.securityService = securityService;
-        this.clubService = clubService;
+
     }
 
     @PostMapping("/clubs/{clubId}/photos")
@@ -50,7 +50,14 @@ public class PhotoController {
         try {
             String userEmail = principal != null ? principal.getName() : null;
             log.info("User email: {}, File size: {}", userEmail, file.getSize());
-            UUID photoId = photoService.uploadPhotoForClub(clubId, userEmail, file);
+
+            //TODO: FIJARSE SI ESTA BIEN ESTO
+            Photo photo = new Photo();
+            photo.setFilename(file.getOriginalFilename());
+            photo.setContentType(file.getContentType());
+            photo.setData(file.getBytes());
+
+            UUID photoId = photoService.uploadPhotoForClub(clubId, userEmail, photo);
             log.info("Photo uploaded successfully, photoId: {}", photoId);
             redirectAttributes.addFlashAttribute("success", "photo.upload.success");
             return "redirect:/clubs/handle?clubId=" + clubId;
@@ -89,19 +96,17 @@ public class PhotoController {
     }
 
     @PostMapping("/clubs/club/{clubId}/gallery")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String addPhotosToGallery(@PathVariable UUID clubId,
                                      @RequestParam("files") MultipartFile[] files,
-                                     RedirectAttributes redirectAttributes) {
-        User user = securityService.getVerifiedLoggedUser();
-        checkLoggedUser(clubId);
-
+                                     RedirectAttributes redirectAttributes, @AuthenticationPrincipal PawUserDetails userDetails) {
         int uploaded = 0;
         for (MultipartFile file : files) {
             if (file != null && !file.isEmpty()) {
                 try {
                     photoService.uploadCarousel(
                             clubId,
-                            user.getId(),
+                            userDetails.getId(),
                             file.getOriginalFilename(),
                             file.getContentType() != null ? file.getContentType() : "application/octet-stream",
                             file.getBytes()
@@ -121,20 +126,17 @@ public class PhotoController {
     }
 
     @PostMapping("/clubs/club/{clubId}/cover")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String uploadCover(@PathVariable UUID clubId,
-                              @RequestParam("file") MultipartFile file) throws IOException {
+                              @RequestParam("file") MultipartFile file, @AuthenticationPrincipal PawUserDetails userDetails) throws IOException {
 
         if (file == null || file.isEmpty()) {
             return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
         }
 
-        User user = securityService.getVerifiedLoggedUser();
-        checkLoggedUser(clubId);
-
-
         photoService.uploadCover(
                 clubId,
-                user.getId(),
+                userDetails.getId(),
                 file.getOriginalFilename(),
                 file.getContentType() != null ? file.getContentType() : "application/octet-stream",
                 file.getBytes()
@@ -144,19 +146,17 @@ public class PhotoController {
     }
 
     @PostMapping("/clubs/club/{clubId}/carousel")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String uploadCarousel(@PathVariable UUID clubId,
-                                 @RequestParam("file") MultipartFile file ) throws IOException {
+                                 @RequestParam("file") MultipartFile file, @AuthenticationPrincipal PawUserDetails userDetails) throws IOException {
 
         if (file == null || file.isEmpty()) {
             return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
         }
 
-        User user = securityService.getVerifiedLoggedUser();
-        checkLoggedUser(clubId);
-
         photoService.uploadCarousel(
                 clubId,
-                user.getId(),
+                userDetails.getId(),
                 file.getOriginalFilename(),
                 file.getContentType() != null ? file.getContentType() : "application/octet-stream",
                 file.getBytes()
@@ -166,25 +166,12 @@ public class PhotoController {
     }
 
     @PostMapping("/clubs/club/{clubId}/photos")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String upload(@PathVariable UUID clubId,
-                         @RequestParam("file") MultipartFile file,
-                         Principal principal) throws IOException {
-
+                         @RequestParam("file") MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
             return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
         }
-
-        User user = securityService.getVerifiedLoggedUser();
-        checkLoggedUser(clubId);
-
-        UUID photoId = photoService.upload(
-                clubId,
-                user.getId(),
-                file.getOriginalFilename(),
-                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
-        );
-
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
@@ -221,17 +208,6 @@ public class PhotoController {
             if ("WEBP".equals(fourCC)) return MediaType.parseMediaType("image/webp");
         }
         return MediaType.APPLICATION_OCTET_STREAM;
-    }
-
-    private void checkLoggedUser(UUID clubId) {
-        User user = securityService.getVerifiedLoggedUser();
-        if (user == null) {
-            throw new UserNotFoundException("error.user.notfound");
-        }
-        List<User> clubUsers = clubService.getAdminsByClub(clubId);
-        if (clubUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            throw new UnauthorizedException("error.user.unauthorized");
-        }
     }
 
 

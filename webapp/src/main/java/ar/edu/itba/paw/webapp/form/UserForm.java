@@ -42,6 +42,8 @@ public class UserForm {
     @Size(max = 30, message = "{error.cellphone}")
     private String cellphone;
 
+    private String locale;
+
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
@@ -66,4 +68,7 @@ public class UserForm {
     public void setPasswordRepeat(String passwordRepeat) {
         this.passwordRepeat = passwordRepeat;
     }
+
+    public String getLocale() {return locale;}
+    public void setLocale(String locale) {this.locale = locale;}
 }

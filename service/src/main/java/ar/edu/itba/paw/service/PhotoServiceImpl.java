@@ -119,8 +119,8 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID uploadPhotoForClub(UUID clubId, String userEmail, MultipartFile file) throws IOException {
-        if (file == null || file.isEmpty()) {
+    public UUID uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException {
+        if (file == null) {
             throw new IllegalArgumentException("File is empty");
         }
 
@@ -135,9 +135,9 @@ public class PhotoServiceImpl implements PhotoService {
         return upload(
                 clubId,
                 effectiveUser.getId(),
-                file.getOriginalFilename(),
+                file.getFilename(),
                 file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
+                file.getData()
         );
     }
 
@@ -154,14 +154,11 @@ public class PhotoServiceImpl implements PhotoService {
         }
 
         // 2) Fallback: buscar entre CAROUSEL la más reciente no asociada a eventos
-        List<Photo> carousel = photoDao.findCarouselByClubId(clubId, 50, 0);
+        List<Photo> carousel = photoDao.findCarouselWithoutEventByClubId(clubId, 50, 0);
         return carousel.stream()
-                .filter(p -> p.getPhotoId() != null)
-                .filter(p -> !eventDao.findByPhotoIdAndClub(p.getPhotoId(), clubId).isPresent())
                 .sorted((p1, p2) -> {
-                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null) {
+                    if (p1.getCreatedAt() != null && p2.getCreatedAt() != null)
                         return p2.getCreatedAt().compareTo(p1.getCreatedAt());
-                    }
                     return p2.getPhotoId().compareTo(p1.getPhotoId());
                 })
                 .findFirst()
@@ -172,17 +169,7 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional(readOnly = true)
     public Map<UUID, String> getCoverUrls(Set<UUID> clubIds) {
-        Map<UUID, String> result = new HashMap<>();
-        for (UUID clubId : clubIds) {
-            getCoverUrl(clubId).ifPresent(url -> result.put(clubId, url));
-        }
-        return result;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<Photo> getCoverPhoto(UUID clubId) {
-        return photoDao.findCoverByClubId(clubId);
+        return photoDao.findAllCoversByClubIds(clubIds);
     }
 
     @Override
@@ -206,30 +193,30 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, MultipartFile file) throws IOException {
-        if (file == null || file.isEmpty()) throw new IllegalArgumentException("File is empty");
+    public UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, Photo file) {
+        if (file == null ) throw new IllegalArgumentException("File is empty");
         final String ct = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
         return photoDao.createReviewPhoto(
                 clubId, reviewId, userId,
-                file.getOriginalFilename(), ct, file.getBytes()
+                file.getFilename(), ct, file.getData()
         );
     }
 
     @Override
     @Transactional
-    public UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, MultipartFile file) throws IOException {
+    public UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, Photo file) {
         // Validaciones básicas
         Objects.requireNonNull(clubId,  "clubId no puede ser null");
         Objects.requireNonNull(eventId, "eventId no puede ser null");
         Objects.requireNonNull(userId,  "userId no puede ser null");
 
-        if (file == null || file.isEmpty()) {
+        if (file == null) {
             throw new IllegalArgumentException("El archivo de la foto del evento está vacío o es null");
         }
 
-        final String filename    = file.getOriginalFilename();
+        final String filename    = file.getFilename();
         final String contentType = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
-        final byte[]  data       = file.getBytes();
+        final byte[]  data       = file.getData();
 
 
         return photoDao.createEventPhoto(clubId, eventId, userId, filename, contentType, data);
@@ -240,12 +227,5 @@ public class PhotoServiceImpl implements PhotoService {
     public List<Photo> getReviewPhotosByClub(UUID clubId, int limit, int offset) {
         return photoDao.findReviewPhotosByClub(clubId, limit, offset);
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<Photo> getPhotoByReview(UUID reviewId) {
-        return photoDao.findByReviewId(reviewId);
-    }
-
 
 }

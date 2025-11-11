@@ -5,8 +5,10 @@
     import ar.edu.itba.paw.model.exceptions.NotFoundException;
     import ar.edu.itba.paw.model.exceptions.ValidationException;
     import ar.edu.itba.paw.service.*;
+    import ar.edu.itba.paw.webapp.auth.PawUserDetails;
     import ar.edu.itba.paw.webapp.form.ReviewForm;
     import org.springframework.format.annotation.DateTimeFormat;
+    import org.springframework.security.core.annotation.AuthenticationPrincipal;
     import org.springframework.stereotype.Controller;
     import org.springframework.ui.Model;
     import org.springframework.web.bind.annotation.*;
@@ -27,10 +29,8 @@
         private final ProductService productsService;
         private final PhotoService photoService;
         private final TableService tableService;
-        private final SecurityService securityService;
         private final ReviewService reviewService;
         private final ClubLayoutService clubLayoutService;
-        private final BookingService bookingService;
 
         private final ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
         private final Clock clock = Clock.system(zone);
@@ -39,18 +39,14 @@
                                      final ProductService productsService,
                                      final PhotoService photoService,
                                      final TableService tableService,
-                                     final SecurityService securityService,
                                      final ClubLayoutService clubLayoutService,
-                                     final ReviewService reviewService,
-                                     final BookingService bookingService) {
+                                     final ReviewService reviewService) {
             this.clubService = clubService;
             this.productsService = productsService;
             this.photoService = photoService;
             this.tableService = tableService;
-            this.securityService = securityService;
             this.clubLayoutService = clubLayoutService;
             this.reviewService = reviewService;
-            this.bookingService = bookingService;
         }
 
         @GetMapping("/{clubId}")
@@ -62,7 +58,7 @@
                 HttpServletRequest request,
                 @RequestParam(defaultValue = "created_desc") String sort,
                 @RequestParam(defaultValue = "0") int offset,
-                Model model) {
+                Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
 
             var club = clubService.getClubById(clubId)
                     .orElseThrow(() -> new NotFoundException("error.club.notfound"));
@@ -74,9 +70,7 @@
             LocalDate ld;
 
             if (fromEvent && date != null) {
-                // Viene de un evento → aceptar cualquier fecha
                 ld = date;
-                // Pero generamos allowedDateStrings con solo esa fecha
                 List<String> allowedDateStrings = List.of(date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                 model.addAttribute("allowedDateStrings", allowedDateStrings);
             } else {
@@ -145,21 +139,25 @@
                     .orElse(null);
             model.addAttribute("tableLayoutUrl", tableLayoutUrl);
 
-            User user = securityService.getVerifiedLoggedUser();
-            if (user != null) {
-                model.addAttribute("user", user);
-            }
-            boolean isOwner = user != null && clubService.getAdminsByClub(clubId).stream().anyMatch(u -> u.getId().equals(user.getId()));
-            model.addAttribute("isOwner", isOwner);
+            if (userDetails != null) {
+                model.addAttribute("user", userDetails.getUser());
+                model.addAttribute("isLoggedIn", true);
 
+                boolean isOwner = userDetails.getUser().getRole().equals(Role.ADMIN)
+                        || clubService.getAdminsByClub(clubId)
+                        .stream()
+                        .anyMatch(u -> u.getId().equals(userDetails.getUser().getId()));
+
+                model.addAttribute("isOwner", isOwner);
+            } else {
+                model.addAttribute("isLoggedIn", false);
+                model.addAttribute("isOwner", false);
+            }
             List<Photo> carouselPhotos = photoService.getClubPhotos(clubId, 10, 0);
             List<Photo> reviewPhotos = photoService.getReviewPhotosByClub(clubId, 20, 0);
             model.addAttribute("reviewPhotos", reviewPhotos);
-
-            model.addAttribute("isLoggedIn", securityService.getVerifiedLoggedUser() != null);
             model.addAttribute("coverPhotoUrl", coverPhotoUrl);
             model.addAttribute("clubPhotos", carouselPhotos);
-
             model.addAttribute("latitude",-34.5891429);
             model.addAttribute("longitude",-58.3961641);
             model.addAttribute("club", club);
@@ -193,8 +191,8 @@
             model.addAttribute("sort", sort);
             model.addAttribute("hasMore", offset + reviews.size() < total);
 
-            if (user != null) {
-                Optional<Review> userReview = reviewService.getUserReviewForClub(user.getId(), clubId);
+            if (userDetails != null) {
+                Optional<Review> userReview = reviewService.getUserReviewForClub(userDetails.getId(), clubId);
                 model.addAttribute("userReview", userReview.orElse(null));
                 model.addAttribute("isAuthenticated", true);
             } else {
