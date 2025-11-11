@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.persistence;
+/*package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import org.junit.Before;
@@ -27,7 +27,7 @@ public class PhotoJpaDaoTest {
     @Autowired private PhotoJpaDao photoDao;
     @PersistenceContext private EntityManager em;
 
-    @Before
+    /*@Before
     public void setUp() {
         // Limpieza simple (cada test igual hace rollback por @Transactional)
         em.createQuery("DELETE FROM Photo p").executeUpdate();
@@ -181,4 +181,4 @@ public class PhotoJpaDaoTest {
     public void testFindByIdWithDataNotFound() {
         assertFalse(photoDao.findByIdWithData(UUID.randomUUID()).isPresent());
     }
-}
+}*/

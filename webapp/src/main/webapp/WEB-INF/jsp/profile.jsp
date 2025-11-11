@@ -102,7 +102,7 @@
         <form:form action="${pageContext.request.contextPath}/profile/edit/name" method="post"
                    modelAttribute="editUserForm">
             <label for="name"><spring:message code="profile.name"/></label>
-            <form:input path="username" id="username" data-original="${user.name}"/>
+            <form:input path="name" id="name" data-original="${user.name}"/>
             <form:errors path="name" cssClass="error"/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editNameModal')"><spring:message
@@ -120,7 +120,7 @@
         <form:form action="${pageContext.request.contextPath}/profile/edit/surname" method="post"
                    modelAttribute="editUserForm">
             <label for="surname"><spring:message code="profile.surname"/></label>
-            <form:input path="username" id="username" data-original="${user.surname}"/>
+            <form:input path="surname" id="surname" data-original="${user.surname}"/>
             <form:errors path="surname" cssClass="error"/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editSurnameModal')"><spring:message
@@ -138,7 +138,7 @@
         <form:form action="${pageContext.request.contextPath}/profile/edit/email" method="post"
                    modelAttribute="editUserForm">
             <label for="email"><spring:message code="profile.email"/></label>
-            <form:input path="username" id="username" data-original="${user.email}"/>
+            <form:input path="email" id="email" data-original="${user.email}"/>
             <form:errors path="email" cssClass="error"/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editEmailModal')"><spring:message
@@ -156,7 +156,7 @@
         <form:form action="${pageContext.request.contextPath}/profile/edit/cellphone" method="post"
                    modelAttribute="editUserForm">
             <label for="cellphone"><spring:message code="profile.cellphone"/></label>
-            <form:input path="username" id="username" data-original="${user.cellphone}"/>
+            <form:input path="cellphone" id="cellphone" data-original="${user.cellphone}"/>
             <form:errors path="cellphone" cssClass="error"/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editCellphoneModal')">

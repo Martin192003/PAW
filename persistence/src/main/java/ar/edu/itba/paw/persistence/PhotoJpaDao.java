@@ -3,9 +3,11 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.PhotoType;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class PhotoJpaDao implements PhotoDao {
@@ -31,7 +33,7 @@ public class PhotoJpaDao implements PhotoDao {
         final int lim = Math.max(0, limit);
         final int off = Math.max(0, offset);
 
-        // 1) Página de IDs (SQL nativo) — evita traer el BLOB `data`
+        // 1) Página de IDs
         final String idSql = """
         SELECT CAST(p.photo_id AS TEXT) AS id_text
         FROM photos p
@@ -82,6 +84,7 @@ public class PhotoJpaDao implements PhotoDao {
         return Optional.of(p);
     }
     @Override
+
     public UUID save(Photo p) {
         if (p.getPhotoId() == null) {
             em.persist(p);
@@ -111,15 +114,6 @@ public class PhotoJpaDao implements PhotoDao {
         if (p == null) return false;
         em.remove(p);
         return true;
-    }
-
-    @Override
-    public List<Photo> findByClubIdPaginated(UUID clubId, int limit, int offset) {
-        return em.createQuery("SELECT p FROM Photo p WHERE p.clubId = :clubId ORDER BY p.createdAt DESC", Photo.class)
-                .setParameter("clubId", clubId)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
-                .getResultList();
     }
 
     @Override
@@ -226,14 +220,58 @@ public class PhotoJpaDao implements PhotoDao {
         return photos;
     }
 
-@Override
-public Optional<Photo> findByReviewId(UUID reviewId) {
-    List<Photo> list = em.createQuery(
-            "SELECT p FROM Photo p WHERE p.reviewId = :rid ORDER BY p.createdAt DESC",
-            Photo.class)
-        .setParameter("rid", reviewId)
-        .setMaxResults(1)
-        .getResultList();
-    return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
-}
+    @Override
+    public Optional<Photo> findByReviewId(UUID reviewId) {
+        List<Photo> list = em.createQuery(
+                "SELECT p FROM Photo p WHERE p.reviewId = :rid ORDER BY p.createdAt DESC",
+                Photo.class)
+            .setParameter("rid", reviewId)
+            .setMaxResults(1)
+            .getResultList();
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
+    }
+
+    @Override
+    public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset) {
+        return em.createQuery("""
+        SELECT p
+        FROM Photo p
+        LEFT JOIN Event e ON e.photoId = p.photoId
+        WHERE p.clubId = :clubId
+          AND p.photoType = :type
+          AND e.photoId IS NULL
+        ORDER BY p.createdAt DESC, p.photoId DESC
+    """, Photo.class)
+                .setParameter("clubId", clubId)
+                .setParameter("type", PhotoType.CAROUSEL)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
+
+    // TODO: Fijarse si esta bien habria que paginar y hacer QUERY 1+1
+    @Override
+    public Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds) {
+        List<Object[]> rows = em.createQuery("""
+        SELECT c.clubId, p.url
+        FROM Photo p
+        JOIN Club c ON p.clubId = c.clubId
+        WHERE p.photoType = :type
+          AND p.clubId IN :clubIds
+    """, Object[].class)
+                .setParameter("type", PhotoType.COVER)
+                .setParameter("clubIds", clubIds)
+                .getResultList();
+
+        // TODO: VER QUE SI ESTO ESTA BIEN, sin esto no anda tira Duplicate key
+        Map<UUID, String> covers = rows.stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (String) row[1],
+                        (existing, replacement) -> existing,         // keep first if duplicate
+                        LinkedHashMap::new                           // preserve order (optional)
+                ));
+        return covers;
+    }
 }

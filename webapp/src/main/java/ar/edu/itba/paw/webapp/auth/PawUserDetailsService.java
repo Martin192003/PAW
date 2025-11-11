@@ -17,24 +17,20 @@ import java.util.Collection;
 public class PawUserDetailsService implements UserDetailsService {
     @Autowired
     private UserService us;
+
     @Override
     public UserDetails loadUserByUsername(final String usernameOrEmail) throws UsernameNotFoundException {
         User user = us.findByUserName(usernameOrEmail);
-        if(user == null){
+        if (user == null) {
             user = us.findByEmail(usernameOrEmail);
             if (user == null) {
-                throw new UsernameNotFoundException("No user by the name " +
-                        usernameOrEmail);
+                throw new UsernameNotFoundException("No user by the name " + usernameOrEmail);
             }
         }
 
-        if(!user.isVerified()){
+        if (!user.isVerified()) {
             throw new UsernameNotFoundException("User is not verified");
         }
 
-        final Collection<? extends GrantedAuthority> authorities = Arrays.asList(
-                new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase())
-        );
-        return new org.springframework.security.core.userdetails.User(usernameOrEmail, user.getPassword(), authorities);
-    }
+        return new PawUserDetails(user, usernameOrEmail);    }
 }

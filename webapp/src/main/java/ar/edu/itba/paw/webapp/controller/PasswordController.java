@@ -4,6 +4,7 @@ import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.webapp.form.ForgotPasswordForm;
 import ar.edu.itba.paw.webapp.form.ResetPasswordForm;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -30,14 +31,9 @@ public class PasswordController {
         this.userService = userService;
     }
 
+    @PreAuthorize("isAnonymous()")
     @GetMapping("/forgot-password")
     public String showForgotForm(Model model) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && !"anonymousUser".equals(authentication.getName())) {
-            return "redirect:/profile";
-        }
-
         if (!model.containsAttribute("forgotPasswordForm")) {
             model.addAttribute("forgotPasswordForm", new ForgotPasswordForm());
         }

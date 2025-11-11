@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.ClubNotFoundException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
+import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import ar.edu.itba.paw.persistence.UserDao;
@@ -24,23 +25,23 @@ public class ClubServiceImpl implements ClubService{
 
     private final ClubDao clubDao;
     private final EmailService mailService;
-    private final ClubTablesDao tablesDao;
     private final PhotoService photoService;
     private final UserService userService;
+    private final BookingDao bookingDao;
 
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, ClubTablesDao tablesDao, PhotoService photoService, UserService userService) {
-        this.tablesDao = tablesDao;
+    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, ClubTablesDao tablesDao, PhotoService photoService, UserService userService, BookingDao bookingDao) {
         this.mailService = mailService;
         this.clubDao = clubDao;
         this.photoService = photoService;
         this.userService = userService;
+        this.bookingDao = bookingDao;
     }
 
     @Override
     @Transactional
     public Club create(String name, String description, String location, Price priceRange,
-                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, MultipartFile image) {
+                       User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, Photo image) {
 
         User managedContact = userService.findById(contactInfo.getId()).orElseThrow();
         if (managedContact.getRole() != Role.ADMIN) {
@@ -49,18 +50,14 @@ public class ClubServiceImpl implements ClubService{
 
         Club newClub = clubDao.create(name, description, location, priceRange, managedContact, musicGenre, zone, isBar, cbu);
 
-        if (image != null && !image.isEmpty()) {
-            try {
+        if (image != null) {
                 photoService.uploadCover(
                         newClub.getClubId(),
                         managedContact.getId(),
-                        image.getOriginalFilename(),
+                        image.getFilename(),
                         image.getContentType(),
-                        image.getBytes()
+                        image.getData()
                 );
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to read uploaded image", e);
-            }
         }
 
         mailService.sendClubCreationConfirmation(managedContact.getEmail(), name, newClub.getClubId());
@@ -73,17 +70,6 @@ public class ClubServiceImpl implements ClubService{
     @Transactional(readOnly = true)
     public Optional<Club> getClubById(UUID clubId) {
         return clubDao.findById(clubId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Club> advancedSearch(String nameLike,
-                                     Zone location,
-                                     String musicGenre,
-                                     String priceRange,
-                                     Boolean isBar,
-                                     String sort) {
-        return clubDao.search(nameLike, location, musicGenre, priceRange, isBar, sort);
     }
 
     @Override
@@ -161,15 +147,11 @@ public class ClubServiceImpl implements ClubService{
     @Transactional(readOnly = true)
     @Override
     public Map<UUID, String> mapClubNames(List<Booking> bookings) {
-        var out = new HashMap<UUID, String>(Math.max(16, bookings.size()*2));
-        for (var b : bookings) {
-            tablesDao.findById(b.getTableId()).ifPresent(t ->
-                    clubDao.findById(t.getClubId()).ifPresent(c ->
-                            out.put(b.getBookingId(), c.getClubName())
-                    )
-            );
-        }
-        return out;
+        List<UUID> bookingIds = bookings.stream()
+                .map(Booking::getBookingId)
+                .toList();
+
+        return bookingDao.mapClubNamesForBookings(bookingIds);
     }
 
     @Override

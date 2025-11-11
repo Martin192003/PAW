@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.form.VerificationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +23,7 @@ import ar.edu.itba.paw.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -67,7 +69,8 @@ public class LoginController {
                     form.getSurname(),
                     form.getEmail(),
                     form.getCellphone(),
-                    "USER"
+                    "USER",
+                    form.getLocale()
             );
             ra.addFlashAttribute("success", "registration.success");
             return "redirect:/verifyMailNotice";
@@ -162,7 +165,8 @@ public class LoginController {
     @RequestMapping("/login")
     public ModelAndView login(@RequestParam(value = "success", required = false) final boolean success,
                               @RequestParam(value = "usernameOrEmail", required = false) final String usernameOrEmail,
-                              @RequestParam(value = "password", required = false) final String password) {
+                              @RequestParam(value = "password", required = false) final String password,
+                              final HttpServletRequest request) {
         ModelAndView mav = new ModelAndView("login");
         mav.addObject("success", success);
         mav.addObject("usernameOrEmail", usernameOrEmail);
@@ -171,6 +175,11 @@ public class LoginController {
             try {
                 User user = userService.authenticateAndGetUser(usernameOrEmail, password);
                 if (user != null) {
+                    String detectedLocale = request.getLocale().toLanguageTag();
+                    userService.updateUserLocale(user.getId(), detectedLocale);
+
+                    userService.sendReviewRequestsForPastBookings(user);
+
                     mav.setViewName("redirect:/clubs");
                 } else {
                     mav.addObject("error", "error.invalidCredentials");
@@ -188,7 +197,8 @@ public class LoginController {
     }
 
     @RequestMapping("/user")
-    public ModelAndView index(@RequestParam(value = "id", required = true) final UUID id) {
+    @PreAuthorize("@securityServiceImpl.canAccessUser(#id)")
+    public ModelAndView index(@RequestParam("id") UUID id) {
         final ModelAndView mav = new ModelAndView("user");
         mav.addObject("user", userService.findById(id));
         return mav;

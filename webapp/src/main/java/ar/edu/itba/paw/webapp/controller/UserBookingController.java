@@ -3,12 +3,15 @@ package ar.edu.itba.paw.webapp.controller;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.BookingSearchForm;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -36,17 +39,15 @@ public class UserBookingController {
     private final TableService tableService;
     private final UserService userService;
     private final ClubService clubService;
-    private final SecurityService securityService;
     private final ReceiptService receiptService;
 
     public UserBookingController(BookingService bookingService,
                              TableService tableService,
-                             UserService userService, ClubService clubService, EmailService emailService, SecurityService securityService, ReceiptService receiptService) {
+                             UserService userService, ClubService clubService, ReceiptService receiptService) {
         this.bookingService = bookingService;
         this.tableService = tableService;
         this.userService = userService;
         this.clubService = clubService;
-        this.securityService = securityService;
         this.receiptService = receiptService;
     }
 
@@ -81,10 +82,10 @@ public class UserBookingController {
 
 
     @PostMapping("/bookings/{bookingId}/cancel")
-    public String cancelUser(@PathVariable UUID bookingId, RedirectAttributes ra) {
-        var current = securityService.getVerifiedLoggedUser();
+    @PreAuthorize("isAuthenticated()")
+    public String cancelUser(@PathVariable UUID bookingId, RedirectAttributes ra, @AuthenticationPrincipal PawUserDetails userDetails) {
         try {
-            bookingService.cancelByUser(bookingId, current.getId());
+            bookingService.cancelByUser(bookingId, userDetails.getId());
             ra.addFlashAttribute("success", "booking.cancelled");
             ra.addFlashAttribute("bookingAction", "cancelled");
         } catch (UnauthorizedException e) {
@@ -98,17 +99,16 @@ public class UserBookingController {
     }
 
     @GetMapping("/bookings")
+    @PreAuthorize("isAuthenticated()")
     public String listUserBookings(@Valid @ModelAttribute("bookingSearchForm") BookingSearchForm form,
-                                   BindingResult br,
-                                   Model model) {
+                                   BindingResult br, Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
 
         final int size = 10;
         int page = Math.max(form.getPage(), 1);
         int offset = (page - 1) * size;
 
         if (form.getUserId() == null) {
-            var current = securityService.getVerifiedLoggedUser();
-            form.setUserId(current.getId());
+            form.setUserId(userDetails.getId());
         }
 
         LocalDate bookingDate = null;
@@ -190,7 +190,7 @@ public class UserBookingController {
         model.addAttribute("status", form.getStatus());
         model.addAttribute("clubId", form.getClubId());
         model.addAttribute("bookingId", form.getBookingId());
-        model.addAttribute("user", securityService.getVerifiedLoggedUser());
+        model.addAttribute("user", userDetails.getUser());
         model.addAttribute("activePage", "bookings");
         model.addAttribute("bookingSearchForm", form);
 
@@ -199,16 +199,16 @@ public class UserBookingController {
 
 
     @PostMapping(path = "/bookings/{bookingId}/receipt", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
     public String uploadReceipt(@PathVariable UUID bookingId,
                                 @Valid @ModelAttribute("receiptForm") ReceiptUploadForm form,
                                 BindingResult errors,
                                 RedirectAttributes ra,
                                 @RequestHeader(value = "Referer", required = false) String referer,
-                                Model model) {
+                                Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
         if (form.getFile() == null || form.getFile().isEmpty()) {
             errors.rejectValue("file", "receipt.file.required");
         }
-        var current = securityService.getVerifiedLoggedUser();
         if (errors.hasErrors()) {
             var booking = bookingService.findById(bookingId)
                     .orElseThrow(() -> new BookingNotFoundException("error.booking"));
@@ -245,13 +245,13 @@ public class UserBookingController {
         }
         try {
             try {
-                receiptService.deleteByBookingForUser(bookingId, current.getId());
+                receiptService.deleteByBookingForUser(bookingId, userDetails.getId());
             } catch (Exception e) {
                 // Ignorar errores al eliminar recibo previo
             }
             String filename = Optional.ofNullable(form.getFile().getOriginalFilename()).orElse("receipt");
             receiptService.uploadForBooking(
-                    bookingId, current.getId(), filename, form.getFile().getContentType(), form.getFile().getBytes());
+                    bookingId, userDetails.getId(), filename, form.getFile().getContentType(), form.getFile().getBytes());
             ra.addFlashAttribute("success", "receipt.uploaded");
         } catch (UnauthorizedException e) {
             ra.addFlashAttribute("error", "receipt.upload.notAllowed");
@@ -264,31 +264,29 @@ public class UserBookingController {
         } catch (BookingNotFoundException e) {
             ra.addFlashAttribute("error", "booking.notfound");
         }
-
-
         return safeRedirect(referer, bookingId);
     }
 
 
     private String safeRedirect(String referer, UUID bookingId) {
-        if (referer != null && !referer.isEmpty() && referer.contains("/booking")) {
+        if (referer != null && referer.contains("/booking")) {
             return "redirect:" + referer;
         }
         return "redirect:/booking?bookingId=" + bookingId;
     }
 
     @GetMapping("/booking")
+    @PreAuthorize("isAuthenticated()")
     public String bookingUserHandler(@RequestParam UUID bookingId,
                                      Model model,
                                      @ModelAttribute("error") String error,
                                      @ModelAttribute("errorKey") String errorKey,
                                      @ModelAttribute("success") String success,
-                                     @ModelAttribute("info") String info) {
+                                     @ModelAttribute("info") String info, @AuthenticationPrincipal PawUserDetails userDetails) {
 
-        var current = securityService.getVerifiedLoggedUser();
         final Booking booking;
         try {
-            booking = bookingService.getForUser(bookingId, current.getId());
+            booking = bookingService.getForUser(bookingId, userDetails.getId());
         } catch (BookingNotFoundException e) {
             model.addAttribute("errorKey", "booking.notfound");
             return "error/error";
@@ -360,11 +358,11 @@ public class UserBookingController {
     }
 
     @PostMapping("/bookings/{bookingId}/receipt/delete")
-    public String deleteReceiptForUser(@PathVariable UUID bookingId, RedirectAttributes ra) {
-            var current = securityService.getVerifiedLoggedUser();
+    @PreAuthorize("isAuthenticated()")
+    public String deleteReceiptForUser(@PathVariable UUID bookingId, RedirectAttributes ra, @AuthenticationPrincipal PawUserDetails userDetails) {
             boolean deleted;
             try {
-                    deleted = receiptService.deleteByBookingForUser(bookingId, current.getId());
+                    deleted = receiptService.deleteByBookingForUser(bookingId, userDetails.getId());
                 } catch (UnauthorizedException e) {
                     ra.addFlashAttribute("error", "receipt.delete.notAllowed");
                     return "redirect:/booking?bookingId=" + bookingId;

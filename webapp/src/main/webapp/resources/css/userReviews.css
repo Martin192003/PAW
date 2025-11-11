@@ -5,6 +5,10 @@
     font-style: normal;
 }
 
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 body {
     font-family: Arial, sans-serif;
     background-color: #1b1a1a;
@@ -71,15 +75,6 @@ body {
     font-size: 2rem;
 }
 
-.reviews-sort-form {
-    order: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: auto;
-    margin: 0;
-}
-
 .filter-item.filter-sort {
     background: #3c3c3c;
     color: #fff;
@@ -99,11 +94,6 @@ body {
     border-color: #d800b7;
 }
 
-.filter-item.filter-sort option {
-    background: #3c3c3c;
-    color: #fff;
-}
-
 .reviews-list {
     width: calc(100% - 240px);
     max-width: none;
@@ -113,6 +103,7 @@ body {
     gap: 16px;
 }
 
+/* ==================== CARD PRINCIPAL ==================== */
 .card-md.review-card {
     background: #3c3c3c;
     border-radius: 12px;
@@ -125,6 +116,9 @@ body {
     flex-direction: column;
     transition: box-shadow 0.2s, transform 0.2s;
     position: relative;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
 }
 
 .card-md.review-card:hover {
@@ -132,6 +126,7 @@ body {
     transform: scale(1.01);
 }
 
+/* ==================== HEADER CON TACHO EN LA MISMA LÍNEA ==================== */
 .review-header {
     display: flex;
     justify-content: space-between;
@@ -139,8 +134,9 @@ body {
     margin-bottom: 16px;
     padding-bottom: 12px;
     border-bottom: 1px solid #555;
-    flex-wrap: wrap;
     gap: 12px;
+    flex-wrap: nowrap;
+    position: relative;
 }
 
 .review-user-info {
@@ -148,25 +144,15 @@ body {
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
 }
 
 .review-username {
     color: #d800b7;
     font-size: 1.1rem;
     font-weight: 700;
-}
-
-.badge-guest {
-    background: linear-gradient(135deg, #9c27b0, #d800b7);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 2px 6px rgba(156, 39, 176, 0.4);
+    white-space: nowrap;
 }
 
 .review-rating {
@@ -176,20 +162,52 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 
 .review-rating i {
     color: #ffd700;
 }
 
+/* BOTÓN DE BASURA EN LA MISMA LÍNEA */
+.review-header .btn-delete-review {
+    background: #d32f2f !important;
+    color: white !important;
+    border: none !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(211, 47, 47, 0.3) !important;
+    transition: all 0.2s ease !important;
+    font-size: 0.95rem !important;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.review-header .btn-delete-review:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 14px rgba(211, 47, 47, 0.4) !important;
+}
+
+/* ==================== CUERPO - CRECE SIN LÍMITE ==================== */
 .review-body {
     display: flex;
     gap: 20px;
     align-items: flex-start;
+    flex-wrap: nowrap;
+    width: 100%;
+    margin-top: 8px;
 }
 
 .review-content {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .review-club-name {
@@ -197,18 +215,25 @@ body {
     font-size: 1.05rem;
     display: block;
     margin-bottom: 8px;
+    font-weight: 600;
 }
 
 .review-text {
     color: #eee;
-    line-height: 1.6;
+    line-height: 1.65;
     font-size: 1rem;
     margin: 8px 0;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    width: 100%;
+    max-width: 100%;
 }
 
 .review-date {
     color: #aaa;
     font-size: 0.9rem;
+    margin-top: 12px;
 }
 
 .review-thumb {
@@ -220,12 +245,47 @@ body {
     box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
     cursor: pointer;
     transition: transform 0.2s;
+    flex-shrink: 0;
+    align-self: flex-start;
 }
 
 .review-thumb:hover {
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 900px) {
+    .app-reviews {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .app-reviews .detail-back { left: 20px; }
+    .reviews-header, .reviews-list {
+        width: 100%;
+        padding: 0 20px;
+    }
+    .filter-item.filter-sort { width: 100%; }
+
+    /* En móvil el tacho sigue en la misma línea pero se ajusta */
+    .review-header {
+        flex-wrap: wrap;
+    }
+    .review-header .btn-delete-review {
+        margin-left: auto;
+        margin-top: 8px;
+    }
+
+    .review-body {
+        flex-direction: column;
+    }
+    .review-thumb {
+        width: 100%;
+        height: 200px;
+        justify-self: start;
+    }
+}
+
+/* ==================== PAGINACIÓN Y MODAL (sin cambios) ==================== */
 .pagination {
     display: flex;
     justify-content: center;
@@ -256,14 +316,13 @@ body {
     font-size: 0.95rem;
 }
 
-/* MODAL DE RESEÑAS - FUNCIONA PERFECTO */
 .reviews-modal {
     position: fixed !important;
     inset: 0 !important;
     display: none;
     align-items: center;
     justify-content: center;
-    background: rgba(0,0,0,.6);
+    background: rgba(0,0,0,.8);
     z-index: 100000;
     padding: 20px;
 }
@@ -276,12 +335,11 @@ body {
     background: linear-gradient(180deg, #2b2b2b 0%, #232323 100%);
     border-radius: 12px;
     padding: 24px;
-    padding-bottom: 90px; /* reserve space so absolutely-positioned button doesn't overlap text */
+    padding-bottom: 90px;
     width: min(92vw, 480px);
-    max-height: 80vh;
-    overflow: auto;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.6), 0 2px 8px rgba(156,39,176,0.2);
-    color: #fff;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
     position: relative;
 }
 
@@ -292,168 +350,117 @@ body {
     font-size: 1.8rem;
     cursor: pointer;
     color: #fff;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: background 0.2s;
 }
 
 .review-modal-close:hover {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.15);
 }
 
-body.reviews-modal-open {
-    overflow: hidden !important;
-    height: 100%;
-    touch-action: none;
-}
-
-@media (max-width: 900px) {
-    .app-reviews {
-        padding-left: 20px;
-        padding-right: 20px;
-    }
-    .app-reviews .detail-back { left: 20px; }
-    .reviews-header, .reviews-list { width: 100%; padding: 0 20px; }
-    .filter-item.filter-sort { width: 100%; }
-    .review-body { flex-direction: column; }
-    .review-thumb { width: 100%; height: 200px; }
-}
-
-.btn-delete-review {
-    background: #d32f2f !important;           /* Rojo oscuro */
-    color: white !important;                  /* Ícono blanco */
-    border: none !important;
-    width: 36px !important;
-    height: 36px !important;
-    border-radius: 0 !important; /* cuadrado */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    box-shadow: 0 2px 6px rgba(211, 47, 47, 0.3) !important;
-    transition: all 0.2s ease !important;
-    font-size: 0.9rem !important;
-}
-
-
-.card-md.review-card .btn-delete-review,
-.reviews-list .card-md .btn-delete-review {
-    background: #d32f2f !important;
-    color: #fff !important;
-    border: none !important;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-    box-shadow: 0 2px 6px rgba(211,47,47,0.3) !important;
-    border-radius: 0 !important;
-    font-size: 0.95rem !important;
-}
-
-.reviews-modal .review-modal-content .modal-actions.centered .modal-delete-btn {
+.modal-delete-btn {
     background-color: #d32f2f !important;
     color: #fff !important;
     border: none !important;
-    padding: 10px 18px !important;
-    border-radius: 6px !important;
-    box-shadow: 0 4px 12px rgba(211,47,47,0.2) !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
     cursor: pointer !important;
     position: absolute !important;
     left: 50% !important;
-    bottom: 18px !important; /* place button above modal bottom */
+    bottom: 20px !important;
     transform: translateX(-50%) !important;
+    font-weight: 600 !important;
 }
 
-.reviews-modal .review-modal-content .modal-actions.centered .btn-secondary {
-    position: absolute !important;
-    left: 16px !important;
-    bottom: 18px !important;
-}
-
-
-button.btn-delete-review,
-button.btn-delete-review i {
-    background-color: #d32f2f !important;
-    color: #ffffff !important;
-    border: none !important;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    padding: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 0.95rem !important;
-    border-radius: 0 !important;
-    box-shadow: 0 2px 6px rgba(211,47,47,0.3) !important;
-}
-button.btn-delete-review:hover,
-button.btn-delete-review:focus {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 14px rgba(211,47,47,0.35) !important;
-    outline: none !important;
-}
-button.btn-delete-review:disabled {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-}
-
-/* Modal confirm delete button: element selector + class for high specificity */
-button.modal-delete-btn,
-button.modal-delete-btn i {
-    background-color: #d32f2f !important;
-    color: #fff !important;
-    border: none !important;
-    padding: 10px 18px !important;
-    border-radius: 6px !important;
-    font-size: 1rem !important;
-    box-shadow: 0 4px 12px rgba(211,47,47,0.22) !important;
-    cursor: pointer !important;
-    display: inline-block !important;
-}
-button.modal-delete-btn:hover,
-button.modal-delete-btn:focus {
+.modal-delete-btn:hover {
     background-color: #b71c1c !important;
-    box-shadow: 0 6px 18px rgba(183,28,28,0.28) !important;
-    outline: none !important;
-}
-button.modal-delete-btn:disabled {
-    opacity: 0.6 !important;
-    cursor: not-allowed !important;
 }
 
-/* Accessibility: ensure sufficient contrast when focused */
-button.btn-delete-review:focus-visible,
-button.modal-delete-btn:focus-visible {
-    box-shadow: 0 0 0 4px rgba(211,47,47,0.16) !important;
+/* --- Sidebar: ocupar toda la altura visible --- */
+.sidebar{
+    position: fixed;
+    top: 90px;        /* altura de la topbar */
+    left: 0;
+    bottom: 0;        /* LLEGA HASTA EL FINAL DE LA PANTALLA */
+    width: 180px;
+    height: auto;     /* anula calc(...) */
+    min-height: 0;
+    background: #222;
+    display: flex;
+    flex-direction: column;
+    padding-top: 40px;
+    overflow-y: auto; /* por si hay muchos ítems */
+    z-index: 100;
 }
 
-
-.card-md.review-card .review-user-info {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    justify-content: flex-start !important;
+/* --- Contenido: reservar 180px (no 240px) para el sidebar --- */
+.app-reviews{
+    width: 100%;
+    padding-left: 0;      /* quitamos padding que sumaba ancho */
+    margin-left: 180px;   /* coincide con el ancho real del sidebar */
+    box-sizing: border-box;
 }
 
-.card-md.review-card .review-user-info .review-rating {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    margin-left: 6px !important;
-    order: 2 !important;
-    white-space: nowrap !important;
+/* Los contenedores internos usan el ancho disponible */
+.app-reviews .reviews-header,
+.app-reviews .reviews-list{
+    width: 100%;
+    max-width: none;
 }
 
-.card-md.review-card .review-header {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
+/* Botón “volver” alineado con el nuevo offset */
+.app-reviews .detail-back{
+    left: 200px;   /* 180 + margen visual */
+}
+
+/* Si tuvieras reglas previas que forzaban 240px, neutralizalas */
+.reviews-header,
+.reviews-list{
+    width: 100% !important;  /* en caso de que persista calc(100% - 240px) */
+}
+
+/* --- Responsive: cuando el sidebar colapsa --- */
+@media (max-width: 900px){
+    .app-reviews{ margin-left: 0; }
+    .app-reviews .detail-back{ left: 20px; }
+}
+
+/* --- Columna de contenido acotada y centrada --- */
+.app-reviews{
+    margin-left: 180px;                 /* coincide con el sidebar */
+    padding: 100px 24px 40px;           /* respiración lateral */
+    width: auto;                        /* no forzar 100vw */
+}
+
+.app-reviews .reviews-header,
+.app-reviews .reviews-list{
+    width: 100% !important;
+    max-width: 980px;                   /* << ancho como “antes” */
+    margin-left: auto;
+    margin-right: auto;                 /* centra la columna */
+}
+
+/* Cards usan el ancho de la columna, no se estiran a pantalla completa */
+.card-md.review-card{
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 20px 24px;                 /* padding más contenido */
+}
+
+/* Evitar que algún calc viejo las vuelva a ensanchar */
+.reviews-header,
+.reviews-list{
+    max-width: 980px !important;
+}
+
+/* Responsive: en mobile la columna ocupa todo el ancho */
+@media (max-width: 900px){
+    .app-reviews{ margin-left: 0; padding: 100px 16px 32px; }
+    .app-reviews .reviews-header,
+    .app-reviews .reviews-list{ max-width: 100%; }
 }

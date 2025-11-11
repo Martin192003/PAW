@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Club;
+import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.InvalidClubException;
@@ -71,7 +72,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public void createReview(UUID userId, UUID clubId, int rating, String description, MultipartFile photo) throws IOException {
+    public void createReview(UUID userId, UUID clubId, int rating, String description, Photo photo) throws IOException {
         User user = userDao.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Club club = clubDao.findById(clubId)
@@ -85,7 +86,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         Review review = reviewsDao.upsert(user, club, rating, description, hadTable);
         updateClubRating(club);
-        if (photo != null && !photo.isEmpty()) {
+        if (photo != null) {
             UUID photoId = photoService.uploadReviewPhoto(clubId, review.getReviewId(), user.getId(), photo);
             if (photoId != null) {
                 reviewsDao.updatePhotoId(review.getReviewId(), photoId);
@@ -115,51 +116,16 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Review> getReviewsByClub(UUID clubId) {
-        Club club = clubDao.findById(clubId)
-                .orElseThrow(() -> new IllegalArgumentException("Club not found"));
-        return reviewsDao.findByClub(club);
-    }
-
-    @Transactional(readOnly = true)
     public List<Review> listByClub(UUID clubId, String sort, int limit, int offset) {
         return reviewsDao.searchPaginated(null, clubId, sort, limit, offset);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public int countByClub(UUID clubId) {
         return reviewsDao.countSearch(null, clubId);
     }
 
-    @Override
-    @Transactional
-    public Review upsertReview(UUID userId, UUID clubId, int rating, String description, Locale locale) {
-        final User user = userDao.findById(userId).orElseThrow();
-        final Club club = clubDao.findById(clubId).orElseThrow();
-
-        final boolean hadTable = true;
-
-        Review review = reviewsDao.upsert(user, club, rating, description, hadTable);
-
-        // setear tag si decidiste persistirlo:
-        if (review != null && hasFromTableGuestField(review)) { // helper para no romper si no agregaste la columna
-            review.setFromTableGuest(hadTable);
-        }
-
-        // Notificar al dueño del club si corresponde
-//        if (hadTable) {
-//            final UUID ownerId = club.getContactInfo() != null ? club.getContactInfo().getId() : null; // adaptar a tu modelo
-//            if (ownerId != null) {
-//                notificationService.notifyNewTableGuestReview(ownerId, clubId, review.getReviewId(), rating);
-//
-//                // Enviar mail DESDE EL SERVICE (regla de negocio) y con el locale del destinatario si lo tenés guardado,
-//                // no el del cliente que crea la review.  :contentReference[oaicite:6]{index=6} :contentReference[oaicite:7]{index=7}
-//                mailService.sendOwnerReviewAlert(ownerId, clubId, review.getReviewId(), locale);
-//            }
-//        }
-
-        return review;
-    }
 
     private boolean hasFromTableGuestField(Review review) {
         try {

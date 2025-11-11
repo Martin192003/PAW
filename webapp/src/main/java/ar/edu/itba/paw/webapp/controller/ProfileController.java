@@ -2,11 +2,14 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.EditUserForm;
 import ar.edu.itba.paw.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,128 +32,94 @@ public class ProfileController {
         this.userService = userService;
     }
 
-    private UUID getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() ||
-                "anonymousUser".equals(authentication.getName())) {
-            throw new SecurityException("error.user.notAuthenticated");
-        }
-
-        String identifier = authentication.getName();
-        User user = userService.findByUserName(identifier);
-        if (user == null) user = userService.findByEmail(identifier);
-        if (user == null) throw new SecurityException("error.user.notAuthenticated" + ":" + identifier);
-
-        return user.getId();
-    }
-
-
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/edit")
-    public String editProfile(Model model) {
-        prepareProfileModel(model);
+    public String editProfile(Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
+        prepareProfileModel(model, userDetails.getUser());
         return "profile";
     }
 
+
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
-    public String showProfile(Model model) {
-        prepareProfileModel(model);
+    public String showProfile(Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
+        prepareProfileModel(model, userDetails.getUser());
         return "profile";
     }
 
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/edit/username")
     public String editUsername(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                               BindingResult errors, Model model, RedirectAttributes ra) {
-        return handleFieldUpdate("username", form.getUsername(), "Usuario", errors, model, ra, true);
+                               BindingResult errors, Model model, RedirectAttributes ra,
+                               @AuthenticationPrincipal PawUserDetails userDetails) {
+        return handleFieldUpdate(userDetails.getUser(), "username", form.getUsername(), "Usuario", errors, model, ra, true);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/edit/name")
     public String editName(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                           BindingResult errors, Model model, RedirectAttributes ra) {
-        return handleFieldUpdate("name", form.getName(), "Nombre", errors, model, ra, false);
+                           BindingResult errors, Model model, RedirectAttributes ra,
+                           @AuthenticationPrincipal PawUserDetails userDetails) {
+        return handleFieldUpdate(userDetails.getUser(), "name", form.getName(), "Nombre", errors, model, ra, false);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/edit/surname")
     public String editSurname(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                              BindingResult errors, Model model, RedirectAttributes ra) {
-        return handleFieldUpdate("surname", form.getSurname(), "Apellido", errors, model, ra, false);
+                              BindingResult errors, Model model, RedirectAttributes ra,
+                              @AuthenticationPrincipal PawUserDetails userDetails) {
+        return handleFieldUpdate(userDetails.getUser(), "surname", form.getSurname(), "Apellido", errors, model, ra, false);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/edit/cellphone")
     public String editCellphone(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                                BindingResult errors, Model model, RedirectAttributes ra) {
-        return handleFieldUpdate("cellphone", form.getCellphone(), "Celular", errors, model, ra, false);
+                                BindingResult errors, Model model, RedirectAttributes ra,
+                                @AuthenticationPrincipal PawUserDetails userDetails) {
+        return handleFieldUpdate(userDetails.getUser(), "cellphone", form.getCellphone(), "Celular", errors, model, ra, false);
     }
 
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/edit/email")
     public String editEmail(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                            BindingResult errors, Model model, RedirectAttributes ra) {
-        return handleFieldUpdate("email", form.getEmail(), "Email", errors, model, ra, false);
+                            BindingResult errors, Model model, RedirectAttributes ra,
+                            @AuthenticationPrincipal PawUserDetails userDetails) {
+        return handleFieldUpdate(userDetails.getUser(), "email", form.getEmail(), "Email", errors, model, ra, false);
     }
 
+
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/edit/password")
     public String editPassword(@Valid @ModelAttribute("editUserForm") EditUserForm form,
-                               BindingResult errors, Model model, RedirectAttributes ra) {
+                               BindingResult errors, Model model, RedirectAttributes ra,
+                               @AuthenticationPrincipal PawUserDetails userDetails) {
         if (!form.getPassword().equals(form.getConfirmPassword())) {
             errors.rejectValue("confirmPassword", "password.mismatch", "reset.password.mismatch");
         }
 
         if (errors.hasFieldErrors("password") || errors.hasFieldErrors("confirmPassword")) {
-            return handleValidationError("password", model);
+            return handleValidationError(userDetails.getUser(), "password", model);
         }
 
         try {
-            UUID currentUserId = getCurrentUserId();
-            boolean success = userService.changePasswordForAuthenticatedUser(currentUserId, form.getPassword());
+            boolean success = userService.changePasswordForAuthenticatedUser(userDetails.getUser().getId(), form.getPassword());
 
             if (success) {
                 ra.addFlashAttribute("success", "password.updated");
                 return "redirect:/profile";
             } else {
                 model.addAttribute("error", "error.updated.password");
-                return handleValidationError("password", model);
+                return handleValidationError(userDetails.getUser(), "password", model);
             }
         } catch (Exception e) {
             model.addAttribute("error", "error.updated.password");
-            return handleValidationError("password", model);
+            return handleValidationError(userDetails.getUser(), "password", model);
         }
     }
 
-    private void prepareProfileModel(Model model) {
-        User user = userService.findById(getCurrentUserId())
-                .orElseThrow(() -> new IllegalStateException("error.user.notfound"));
-        model.addAttribute("user", user);
-
-        EditUserForm editUserForm = new EditUserForm();
-        editUserForm.setUsername(user.getUsername());
-        editUserForm.setName(user.getName());
-        editUserForm.setSurname(user.getSurname());
-        editUserForm.setEmail(user.getEmail());
-        editUserForm.setCellphone(user.getCellphone());
-        model.addAttribute("editUserForm", editUserForm);
-    }
-
-    private String handleDuplicateError(String field, Model model) {
-        User user = userService.findById(getCurrentUserId())
-                .orElseThrow(() -> new IllegalStateException("error.user.notfound"));
-        model.addAttribute("user", user);
-        model.addAttribute("openModal", true);
-        model.addAttribute("editField", field);
-        model.addAttribute("error", field.equals("username") ? "error.username.exists" : "error.email.exists");
-        return "profile";
-    }
-
-    private String handleValidationError(String field, Model model) {
-        User user = userService.findById(getCurrentUserId())
-                .orElseThrow(() -> new IllegalStateException("error.user.notfound"));
-        model.addAttribute("user", user);
-        model.addAttribute("openModal", true);
-        model.addAttribute("editField", field);
-        return "profile";
-    }
-
-
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/resend-verification")
     public String resendVerification(@RequestParam("usernameOrEmail") String usernameOrEmail,
                                      Model model) {
@@ -165,15 +134,42 @@ public class ProfileController {
         }
     }
 
-    private String handleFieldUpdate(String field, String value, String fieldName,
+    private void prepareProfileModel(Model model, User user) {
+        model.addAttribute("user", user);
+
+        EditUserForm editUserForm = new EditUserForm();
+        editUserForm.setUsername(user.getUsername());
+        editUserForm.setName(user.getName());
+        editUserForm.setSurname(user.getSurname());
+        editUserForm.setEmail(user.getEmail());
+        editUserForm.setCellphone(user.getCellphone());
+        model.addAttribute("editUserForm", editUserForm);
+    }
+
+    private String handleDuplicateError(User user, String field, Model model) {
+        model.addAttribute("user", user);
+        model.addAttribute("openModal", true);
+        model.addAttribute("editField", field);
+        model.addAttribute("error", field.equals("username") ? "error.username.exists" : "error.email.exists");
+        return "profile";
+    }
+
+    private String handleValidationError(User user, String field, Model model) {
+        model.addAttribute("user", user);
+        model.addAttribute("openModal", true);
+        model.addAttribute("editField", field);
+        return "profile";
+    }
+
+    private String handleFieldUpdate(User user, String field, String value, String fieldName,
                                      BindingResult errors, Model model,
                                      RedirectAttributes ra, boolean requiresAuthUpdate) {
         if (errors.hasFieldErrors(field)) {
-            return handleValidationError(field, model);
+            return handleValidationError(user, field, model);
         }
 
         try {
-            User updatedUser = userService.updateUserField(getCurrentUserId(), field, value);
+            User updatedUser = userService.updateUserField(user.getId(), field, value);
 
             if (requiresAuthUpdate) {
                 updateAuthenticationContext(updatedUser);
@@ -182,17 +178,19 @@ public class ProfileController {
             ra.addFlashAttribute("success", fieldName + "updated.correctly");
             return "redirect:/profile";
         } catch (DuplicateEntityException e) {
-            return handleDuplicateError(field, model);
+            return handleDuplicateError(user, field, model);
         }
     }
+
     private void updateAuthenticationContext(User updatedUser) {
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        updatedUser.getUsername(),
-                        updatedUser.getPassword(),
-                        SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+        PawUserDetails newDetails = new PawUserDetails(updatedUser, updatedUser.getUsername());
+        org.springframework.security.authentication.UsernamePasswordAuthenticationToken authentication =
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        newDetails,
+                        null,
+                        newDetails.getAuthorities()
                 );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
 

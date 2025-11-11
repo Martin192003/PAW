@@ -16,6 +16,7 @@ public class ClubLayoutJpaDao implements ClubLayoutDao {
     @PersistenceContext
     private EntityManager em;
 
+    @Override
     public ClubLayout save(ClubLayout layout) {
         if (layout.getLayoutId() == null) {
             em.persist(layout);
@@ -25,6 +26,7 @@ public class ClubLayoutJpaDao implements ClubLayoutDao {
         }
     }
 
+    @Override
     public Optional<ClubLayout> findByClubId(UUID clubId) {
         List<ClubLayout> result = em.createQuery(
                         "SELECT l FROM ClubLayout l WHERE l.clubId = :clubId", ClubLayout.class)
@@ -33,7 +35,7 @@ public class ClubLayoutJpaDao implements ClubLayoutDao {
                 .getResultList();
         return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
-
+    @Override
     public boolean deleteByClubId(UUID clubId) {
         int deleted = em.createQuery("DELETE FROM ClubLayout l WHERE l.clubId = :clubId")
                 .setParameter("clubId", clubId)
@@ -42,3 +44,4 @@ public class ClubLayoutJpaDao implements ClubLayoutDao {
         return deleted > 0;
     }
 }
+
