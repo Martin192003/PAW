@@ -67,6 +67,7 @@ public class EventServiceImpl implements EventService {
         validateName(eventName);
         validateDate(date);
 
+
         final Event current = eventDao.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
 

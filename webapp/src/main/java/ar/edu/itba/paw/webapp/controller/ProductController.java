@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.ClubLayout;
 import ar.edu.itba.paw.model.MusicalGenre;
 import ar.edu.itba.paw.model.Price;
 import ar.edu.itba.paw.model.Zone;
-import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
@@ -78,11 +77,11 @@ public class ProductController {
             model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
-        if (!productService.canAddProduct(clubService.getClubById(clubId).orElseThrow())) {
+        try{
+            productService.create(clubId, form.getProductName(), form.getDescription(), form.getBasePrice(), form.getProductType(), form.getIsAvailable());
+        } catch (ValidationException e){
             ra.addAttribute("err", "max_products");
-            return "redirect:/clubs/handle?clubId=" + clubId;
         }
-        productService.create(clubId, form.getProductName(), form.getDescription(), form.getBasePrice(), form.getProductType(), form.getIsAvailable());
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 

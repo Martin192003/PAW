@@ -1,12 +1,8 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.*;
-import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
-import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
-import ar.edu.itba.paw.service.ClubService;
-import ar.edu.itba.paw.service.EventService;
+
 import ar.edu.itba.paw.service.PhotoService;
-import ar.edu.itba.paw.service.SecurityService;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.*;
 import org.slf4j.Logger;
@@ -16,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -24,7 +19,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -180,8 +174,6 @@ public class PhotoController {
                               @PathVariable UUID photoId,
                               RedirectAttributes redirectAttributes) {
 
-        // Verifico que el usuario tenga permisos
-        checkLoggedUser(clubId);
 
         boolean deleted = photoService.delete(photoId);
 

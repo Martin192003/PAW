@@ -1,14 +1,11 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.*;
-import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
-import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,13 +17,11 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/clubs/events")
 public class EventsController {
     private final EventService eventService;
-    private final SecurityService securityService;
     private final ClubService clubService;
     private final PhotoService photoService;
     private final TableService tableService;
@@ -37,9 +32,8 @@ public class EventsController {
 
 
     @Autowired
-    public EventsController(EventService eventService, SecurityService securityService, ClubService clubService, PhotoService photoService, TableService tableService, MenuService menuService, ClubLayoutService clubLayoutService, ProductService productService) {
+    public EventsController(EventService eventService, ClubService clubService, PhotoService photoService, TableService tableService, MenuService menuService, ClubLayoutService clubLayoutService, ProductService productService) {
         this.eventService = eventService;
-        this.securityService = securityService;
         this.clubService = clubService;
         this.photoService = photoService;
         this.tableService = tableService;
@@ -136,32 +130,25 @@ public class EventsController {
             return "clubHandler";
         }
 
+        Photo photoData = null;
+
         if (photo != null && !photo.isEmpty()) {
 
             //TODO: FIJARSE SI ESTA BIEN
-            Photo photoData = new Photo();
+            photoData = new Photo();
             photoData.setFilename(photo.getOriginalFilename());
             photoData.setContentType(photo.getContentType());
             photoData.setData(photoData.getData());
-
-            eventService.update(
-                    clubId,
-                    eventId,
-                    form.getEventName(),
-                    form.getDescription(),
-                    form.getDate(),
-                    photoData
-            );
-        } else{
-            eventService.update(
-                    clubId,
-                    eventId,
-                    form.getEventName(),
-                    form.getDescription(),
-                    form.getDate(),
-                    null
-            );
         }
+
+        eventService.update(
+                clubId,
+                eventId,
+                form.getEventName(),
+                form.getDescription(),
+                form.getDate(),
+                photoData
+        );
 
         return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }

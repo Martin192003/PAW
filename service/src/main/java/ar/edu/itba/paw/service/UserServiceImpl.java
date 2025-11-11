@@ -187,6 +187,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public boolean resetPassword(String token, String newPassword) {
+
         User user = userDao.findByResetPasswordToken(token).orElse(null);
         if (user == null) {
             return false;

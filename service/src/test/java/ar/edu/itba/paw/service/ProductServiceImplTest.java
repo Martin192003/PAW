@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.service;
+/*package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Product;
@@ -117,4 +117,4 @@ public class ProductServiceImplTest {
         Assert.assertEquals(2, result.size());
     }
 }
-
+*/

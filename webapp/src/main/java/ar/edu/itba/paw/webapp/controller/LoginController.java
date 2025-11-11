@@ -23,7 +23,6 @@ import ar.edu.itba.paw.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -93,6 +92,7 @@ public class LoginController {
         return "verifyMailNotice";
     }
 
+    //TODO: SE USA ESTO??
     @PostMapping("/verify")
     public String verifyToken(
             @Valid @ModelAttribute("verificationForm") VerificationForm form,
@@ -177,7 +177,6 @@ public class LoginController {
                 if (user != null) {
                     String detectedLocale = request.getLocale().toLanguageTag();
                     userService.updateUserLocale(user.getId(), detectedLocale);
-
                     userService.sendReviewRequestsForPastBookings(user);
 
                     mav.setViewName("redirect:/clubs");

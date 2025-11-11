@@ -823,6 +823,7 @@
         <h3><spring:message code="confirm.deleteProduct"/></h3>
         <form id="deleteForm" method="post" action="<c:url value='/clubs/products/deleteProduct' />">
             <input type="hidden" name="productId" id="deleteProductId" value=""/>
+            <input type="hidden" name="clubId" value="${club.clubId}"/>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
                     <spring:message code="button.cancel"/>

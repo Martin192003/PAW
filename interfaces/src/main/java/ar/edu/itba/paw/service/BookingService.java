@@ -53,4 +53,8 @@ public interface BookingService {
 
     int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
 
+    String formatDateStart(Booking booking);
+
+    String formatDateEnd(Booking booking);
+
 }
