@@ -80,12 +80,10 @@
                                         <spring:message code="reviews.badge.guest" text="Reservó mesa"/>
                                     </span>
                                 </c:if>
-                                <!-- moved rating here so it stays left-aligned with username -->
                                 <span class="review-rating">
                                     <c:out value="${r.rating}"/> <i class="fa-solid fa-star"></i>
                                 </span>
                             </div>
-                            <c:if test="${isAuthenticated and (pageContext.request.userPrincipal.name == r.user.username or pageContext.request.userPrincipal.name == r.user.email)}">
                                 <button
                                         type="button"
                                         class="btn-delete-review js-open-delete"
@@ -94,7 +92,6 @@
                                         title="<spring:message code='button.delete'/>">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
-                            </c:if>
                         </div>
 
                         <div class="review-body">
