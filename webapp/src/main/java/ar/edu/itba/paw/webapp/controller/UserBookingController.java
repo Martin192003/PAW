@@ -52,6 +52,7 @@ public class UserBookingController {
     }
 
     @PostMapping("/clubs/{clubId}/reserve")
+    @PreAuthorize("isAuthenticated()")
     public String reserve(@PathVariable UUID clubId,
                           @RequestParam UUID tableId,
                           @RequestParam String date,
