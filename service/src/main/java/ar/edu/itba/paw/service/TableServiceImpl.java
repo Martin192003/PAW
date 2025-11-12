@@ -11,14 +11,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TableServiceImpl implements TableService {
 
     private static final Set<DayOfWeek> ALLOWED = Set.of(DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY);
     private static final int MAX_TABLES_PER_CLUB = 50;
-
+    private final ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
+    private final Clock clock = Clock.system(zone);
 
     private final ClubDao clubDao;
     private final ClubTablesDao clubTablesDao;
@@ -122,5 +125,48 @@ public class TableServiceImpl implements TableService {
         int count = clubTablesDao.findByClub(club).size();
         return count < MAX_TABLES_PER_CLUB;
     }
+
+    public List<LocalDate> getAllowedBookingDates(LocalDate startDate, int numberOfDays) {
+        List<LocalDate> allowedDates = new ArrayList<>();
+        for (int i = 0; i < numberOfDays; i++) {
+            LocalDate d = startDate.plusDays(i);
+            DayOfWeek day = d.getDayOfWeek();
+            // Acá va tu lógica de Jue/Vie/Sab
+            if ((day == DayOfWeek.THURSDAY || day == DayOfWeek.FRIDAY || day == DayOfWeek.SATURDAY) && !isPastDate(d, clock, zone)) {
+                allowedDates.add(d);
+            }
+        }
+        return allowedDates;
+    }
+
+    public LocalDate getNextAllowedDate(LocalDate from) {
+        LocalDate d = from;
+        int guard = 0;
+        while (!isAllowedDay(d) || isPastDate(d, clock, zone)) {
+            d = d.plusDays(1);
+            if (++guard > 14) break;
+        }
+        return d;
+    }
+
+    @Override
+    public LocalDate resolveSelectedDate(LocalDate date, boolean fromEvent) {
+        if (fromEvent && date != null) {
+            return date;
+        }
+        LocalDate defaultDate = getNextAllowedDate(LocalDate.now());
+        return (date == null) ? defaultDate : date;
+    }
+
+
+    @Override
+    public List<String> getAllowedDateStrings(LocalDate baseDate, int days) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        List<LocalDate> allowedDates = getAllowedBookingDates(baseDate, days);
+        return allowedDates.stream()
+                .map(d -> d.format(formatter))
+                .collect(Collectors.toList());
+    }
+
 
 }

@@ -201,4 +201,30 @@ public class ReviewServiceImpl implements ReviewService {
     public int countByClubPaginated(UUID clubId) {
         return reviewsDao.countByClubPaginated(clubId);
     }
+
+    @Override
+    public int getCorrectedOffset(int totalCount, int limit, int offset) {
+        if (offset >= totalCount && totalCount > 0) {
+            int lastPage = (int) Math.floor((totalCount - 1) / (double) limit);
+            return lastPage * limit;
+        }
+        return offset;
+    }
+
+    public record PaginatedReviews(
+            List<Review> reviews,
+            int total,
+            int correctedOffset,
+            int limit,
+            String sort,
+            boolean hasMore
+    ) {}
+
+    public PaginatedReviews getPaginatedReviewsForClub(UUID clubId, String sort, int limit, int offset) {
+        int total = countByClub(clubId);
+        int correctedOffset = getCorrectedOffset(total, limit, offset);
+        List<Review> reviews = listByClub(clubId, sort, limit, correctedOffset);
+        boolean hasMore = correctedOffset + reviews.size() < total;
+        return new PaginatedReviews(reviews, total, correctedOffset, limit, sort, hasMore);
+    }
 }

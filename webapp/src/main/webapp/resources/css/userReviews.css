@@ -121,12 +121,6 @@ body {
     height: auto !important;
     min-height: auto !important;
 }
-
-.card-md.review-card:hover {
-    box-shadow: 0 4px 16px rgba(156, 39, 176, 0.25);
-    transform: scale(1.01);
-}
-
 /* ==================== HEADER CON TACHO EN LA MISMA LÍNEA ==================== */
 .review-header {
     display: flex;
