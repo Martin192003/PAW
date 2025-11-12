@@ -1,6 +1,9 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.exceptions.*;
+import ar.edu.itba.paw.webapp.form.AddProductForm;
+import  ar.edu.itba.paw.webapp.component.ClubHandlerModelBuilder;
+import ar.edu.itba.paw.webapp.form.EditProductForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
@@ -11,7 +14,12 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.ui.ExtendedModelMap;
+import org.springframework.ui.ModelMap;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -24,6 +32,7 @@ import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
@@ -33,6 +42,7 @@ public class GlobalErrorControllerAdvice {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalErrorControllerAdvice.class);
 
     private final MessageSource messageSource;
+    private final ClubHandlerModelBuilder clubHandlerModelBuilder;
 
     private static final Map<Class<? extends Exception>, String> EXCEPTION_CODE_MAP = new LinkedHashMap<>();
     static {
@@ -74,8 +84,9 @@ public class GlobalErrorControllerAdvice {
         EXCEPTION_CODE_MAP.put(EmailWasntSentException.class,              "error.bad_gateway");
     }
 
-    public GlobalErrorControllerAdvice(MessageSource messageSource) {
+    public GlobalErrorControllerAdvice(MessageSource messageSource, ClubHandlerModelBuilder clubHandlerModelBuilder) {
         this.messageSource = messageSource;
+        this.clubHandlerModelBuilder = clubHandlerModelBuilder;
     }
 
     /* ------------ 400 (request mal formado) ------------ */
@@ -135,7 +146,6 @@ public class GlobalErrorControllerAdvice {
             BindException.class,
             InvalidCapacityException.class,
             InvalidTableNumberException.class,
-            InvalidPriceException.class
     })
     public ModelAndView unprocessable(Exception ex, HttpServletRequest req) {
         return view(HttpStatus.UNPROCESSABLE_ENTITY, ex, req);
@@ -180,6 +190,46 @@ public class GlobalErrorControllerAdvice {
         mv.addObject("path", req.getRequestURI());
         return mv;
     }
+
+    @ExceptionHandler(MaxProductsReachedException.class)
+    public ModelAndView handleMaxProducts(MaxProductsReachedException ex) {
+        UUID clubId = ex.getClubId();
+
+        AddProductForm form = new AddProductForm();
+        form.setClubId(clubId);
+
+        BindingResult br = new BeanPropertyBindingResult(form, "productForm");
+        br.addError(new ObjectError("productForm", "{max_products}"));
+
+        ExtendedModelMap model = new ExtendedModelMap();
+        clubHandlerModelBuilder.populateForAdd(model, clubId, form);
+        model.addAttribute(BindingResult.MODEL_KEY_PREFIX + "productForm", br);
+
+        ModelAndView mv = new ModelAndView("clubHandler", model);
+        mv.setStatus(HttpStatus.UNPROCESSABLE_ENTITY);
+        return mv;
+    }
+
+    @ExceptionHandler(InvalidPriceException.class)
+    public ModelAndView handleEditInvalidPrice(InvalidPriceException ex) {
+        UUID clubId = ex.getClubId();
+
+        EditProductForm form = new EditProductForm();
+        form.setClubId(clubId);
+
+        BindingResult br = new BeanPropertyBindingResult(form, "editProductForm");
+        br.addError(new ObjectError("editProductForm", "{price_max_product}"));
+
+        ExtendedModelMap model = new ExtendedModelMap();
+        clubHandlerModelBuilder.populateForEditErrors(model, clubId, form);
+        model.addAttribute(BindingResult.MODEL_KEY_PREFIX + "editProductForm", br);
+        model.addAttribute("openModal", "editProduct");
+
+        ModelAndView mv = new ModelAndView("clubHandler", model);
+        mv.setStatus(HttpStatus.UNPROCESSABLE_ENTITY);
+        return mv;
+    }
+
 
     private String resolveGenericMessage(HttpStatus status, Exception ex) {
         Locale locale = LocaleContextHolder.getLocale();

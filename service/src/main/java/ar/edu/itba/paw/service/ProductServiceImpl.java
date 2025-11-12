@@ -4,10 +4,11 @@ import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
 import ar.edu.itba.paw.model.exceptions.ClubNotFoundException;
+import ar.edu.itba.paw.model.exceptions.InvalidPriceException;
+import ar.edu.itba.paw.model.exceptions.MaxProductsReachedException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import org.springframework.stereotype.Service;
-import ar.edu.itba.paw.service.ProductService;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -32,13 +33,13 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public Product create(UUID clubID, String name, String description, BigDecimal basePrice, ProductType type, boolean isAvailable) {
         Club club = clubService.getClubById(clubID).orElseThrow(ClubNotFoundException::new);
-        if(basePrice.compareTo(BigDecimal.valueOf(100000000)) >= 0)
-            throw new ValidationException("Precio demasiado alto");
-        if(name.length() > 100)
-            throw new IllegalArgumentException("Nombre demasiado largo");
+
         List<Product> current = productsDao.findByClub(club);
         if (current.size() >= MAX_MENU_PRODUCTS) {
-            throw new ValidationException("max_products_menu");
+            throw new MaxProductsReachedException(clubID);
+        }
+        if (basePrice.compareTo(BigDecimal.valueOf(100000000)) >= 0) {
+            throw new InvalidPriceException(clubID, "price too high");
         }
         return productsDao.create(club, name, description, basePrice, type, isAvailable);
     }
@@ -46,8 +47,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public Product update(UUID productId, UUID clubId, String name, String description, BigDecimal basePrice, ProductType type, Boolean isAvailable) {
-        if(basePrice.compareTo(BigDecimal.valueOf(100000000)) >= 0)
-            throw new ValidationException("Precio demasiado alto");
+        if (basePrice.compareTo(BigDecimal.valueOf(100000000)) >= 0) {
+            throw new InvalidPriceException(clubId, productId, "price too high");
+        }
         return productsDao.update(productId, clubId, name, description, basePrice, type, isAvailable);
     }
 

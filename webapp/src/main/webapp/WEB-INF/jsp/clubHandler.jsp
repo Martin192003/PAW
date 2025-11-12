@@ -127,7 +127,7 @@
     </div>
 
 
-    <!-- Sección de Galería de Fotos -->
+    <!-- Galería de Fotos -->
     <div class="photo-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h2>
@@ -140,7 +140,6 @@
 
         <c:choose>
             <c:when test="${not empty carouselPhotos}">
-                <!-- Carrusel scopeado -->
                 <div id="club-carousel" class="photo-carousel">
                     <div class="carousel-container">
                         <div class="carousel-track" id="carouselTrack">
@@ -178,7 +177,6 @@
                         </div>
                     </c:if>
                 </div>
-                <!-- FIN carrusel scopeado -->
             </c:when>
             <c:otherwise>
                 <div class="no-photos">
@@ -188,6 +186,7 @@
             </c:otherwise>
         </c:choose>
     </div>
+
     <div class="tabs-container">
 
         <div class="tabs">
@@ -526,9 +525,7 @@
         </div>
 
         <div class="tab-content" id="reviews-tab">
-
             <spring:message code="reviews.date.pattern" var="datePattern" text="dd/MM/yyyy HH:mm"/>
-
             <h2 class="section-title"> <spring:message code="reviews.title" text="Reseñas"/> </h2>
 
             <c:if test="${empty reviews}">
@@ -540,21 +537,18 @@
             <div class="reviews-list">
                 <c:forEach var="r" items="${reviews}">
                     <div class="card-md review-card">
-
                         <div class="review-header">
                             <div class="review-user-info">
                                 <strong class="review-username"><c:out value="${r.user.username}"/></strong>
-
                                 <c:if test="${r.fromTableGuest}">
-                            <span class="badge-guest">
-                                <i class="fa-solid fa-ticket"></i>
-                                <spring:message code="reviews.badge.guest" text="Reservó mesa"/>
-                            </span>
+                                    <span class="badge-guest">
+                                        <i class="fa-solid fa-ticket"></i>
+                                        <spring:message code="reviews.badge.guest" text="Reservó mesa"/>
+                                    </span>
                                 </c:if>
-
                                 <span class="review-rating">
-                            <c:out value="${r.rating}"/> <i class="fa-solid fa-star"></i>
-                        </span>
+                                    <c:out value="${r.rating}"/> <i class="fa-solid fa-star"></i>
+                                </span>
                             </div>
                         </div>
 
@@ -575,7 +569,6 @@
                                      onclick="openLightbox(this.src)"/>
                             </c:if>
                         </div>
-
                     </div>
                 </c:forEach>
             </div>
@@ -589,10 +582,10 @@
                     </c:if>
 
                     <span class="page-info">
-                ${reviewPage}
-                <spring:message code="pagination.of.word" text="de"/>
-                ${totalReviewsPages}
-            </span>
+                        ${reviewPage}
+                        <spring:message code="pagination.of.word" text="de"/>
+                        ${totalReviewsPages}
+                    </span>
 
                     <c:if test="${reviewPage < totalReviewsPages}">
                         <a href="?clubId=${club.clubId}&reviewPage=${reviewPage + 1}" class="page-btn">
@@ -713,7 +706,7 @@
     </div>
 </div>
 
-<!-- Modal for adding a single carousel photo -->
+<!-- Modal agregar una foto -->
 <div id="addCarouselPhotoModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeAddCarouselPhotoModal()">&times;</span>
@@ -816,7 +809,6 @@
     </div>
 </div>
 
-
 <div id="deleteModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
@@ -893,7 +885,7 @@
     </div>
 </div>
 
-<!-- Modal eliminar producto (duplicado resuelto arriba) -->
+<!-- Modal editar evento -->
 <div id="eventEditModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEventEditModal()" style="color:#fff;">&times;</span>
@@ -991,22 +983,18 @@
         if (!modal) return;
         modal.style.display = 'flex';
 
-        // Set the hidden editedField input
         const editedFieldInput = document.getElementById('editedField');
         if (editedFieldInput) editedFieldInput.value = field;
 
-        // Hide all field containers
         const fields = ['clubName', 'location', 'zone', 'musicGenre', 'priceRange', 'description', 'cbu'];
         fields.forEach(f => {
             const el = document.getElementById('editField_' + f);
             if (el) el.style.display = 'none';
         });
 
-        // Show the relevant field container
         const visibleField = document.getElementById('editField_' + field);
         if (visibleField) visibleField.style.display = 'block';
 
-        // Map fields to their input/select IDs
         const inputIds = {
             'clubName': 'editFieldValue_clubName',
             'location': 'editFieldValue_location',
@@ -1023,17 +1011,13 @@
         const inputElement = document.getElementById(inputId);
         if (!inputElement) return;
 
-        // Handle value setting based on element type
         if (inputElement.tagName === 'SELECT') {
-            // For <select> elements, ensure the value matches an option
             const validValue = (value === undefined || value === null || value === '') ? '' : value;
             inputElement.value = validValue;
-            // If no valid option is selected, reset to the first option
             if (validValue && !inputElement.querySelector(`option[value="${validValue}"]`)) {
                 inputElement.value = '';
             }
         } else {
-            // For <input> and <textarea>, set the value directly
             inputElement.value = (value === undefined || value === null) ? '' : value;
         }
     }
@@ -1044,6 +1028,7 @@
             clearFormErrors('editModal');
         }
     }
+
     function openTableEditModal(tableId, tableNumber, capacity, price, discount) {
         document.getElementById('tableEditModal').style.display = 'flex';
         document.getElementById('editTableNumber').value = tableNumber;
@@ -1075,6 +1060,7 @@
         document.getElementById('productEditModal').style.display = 'none';
         clearFormErrors('productEditModal');
     }
+
     function clearFormErrors(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -1094,7 +1080,7 @@
         document.getElementById('editEventDescription').value = eventDesc || '';
         document.getElementById('eventEditForm').action = '${pageContext.request.contextPath}/clubs/events/' + eventId + '/edit';
         const fileInfo = document.getElementById('editEventFileInfo');
-        fileInfo.textContent = photoId ? ('Current image: event_' + photoId + '.jpg') : 'No image';
+        if (fileInfo) fileInfo.textContent = photoId ? ('Current image: event_' + photoId + '.jpg') : 'No image';
     }
     function closeEventEditModal() {
         document.getElementById('eventEditModal').style.display = 'none';
@@ -1103,7 +1089,8 @@
         document.getElementById('editEventName').value = '';
         document.getElementById('editEventDate').value = '';
         document.getElementById('editEventDescription').value = '';
-        document.getElementById('editEventFileInfo').textContent = '';
+        const fileInfo = document.getElementById('editEventFileInfo');
+        if (fileInfo) fileInfo.textContent = '';
     }
     function openEventDeleteModal(eventId) {
         document.getElementById('eventDeleteModal').style.display = 'flex';
@@ -1113,7 +1100,7 @@
 
     document.getElementById('editEventPhoto')?.addEventListener('change', function() {
         const info = document.getElementById('editEventFileInfo');
-        if (this.files && this.files[0]) info.textContent = this.files[0].name; else info.textContent = '';
+        if (info) info.textContent = (this.files && this.files[0]) ? this.files[0].name : '';
     });
 
     function closeLayoutModal() {
@@ -1130,7 +1117,6 @@
             input.addEventListener('keydown', function(e) { if (e.key === '-' || e.key === 'Subtract') e.preventDefault(); });
             input.addEventListener('input', function() { this.value = this.value.replace(/-/g, ''); });
         });
-
     });
 
     function openAddCarouselPhotoModal() { document.getElementById('addCarouselPhotoModal').style.display = 'flex'; }
@@ -1166,6 +1152,7 @@
         });
     });
 
+    // Carrusel
     document.addEventListener('DOMContentLoaded', () => {
         const root = document.getElementById('club-carousel');
         if (!root) return;
@@ -1174,8 +1161,6 @@
         if (!track) return;
 
         let slides = Array.from(track.querySelectorAll('.carousel-slide'));
-        console.log('Carousel images:', slides.map(s => s.querySelector('img').src));
-
         if (!slides.length) return;
 
         const prevBtn = root.querySelector('#prevBtn');
@@ -1229,66 +1214,98 @@
 
         requestAnimationFrame(paint);
     });
-    document.addEventListener('DOMContentLoaded', function() {
-        <c:if test="${not empty editEventForm and not empty errors and editField == 'event'}">
-        openEventEditModal(
-            '<c:out value="${editEventForm.eventId}"/>',
-            '<c:out value="${fn:escapeXml(editEventForm.eventName)}"/>',
-            '<c:out value="${editEventForm.date}"/>',
-            '<c:out value="${fn:escapeXml(editEventForm.description)}"/>',
-            '<c:out value="${editEventForm.photoIdId}"/>'
-        );
-        </c:if>
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-        <c:if test="${not empty editProductForm and not empty errors and editField == 'product'}">
-            document.getElementById('productEditModal').style.display = 'flex';
-            document.getElementById('editProductId').value = '<c:out value="${editProductForm.productId}"/>';
-            document.getElementById('editProductName').value = '<c:out value="${fn:escapeXml(editProductForm.productName)}"/>';
-            document.getElementById('editProductDescription').value = '<c:out value="${fn:escapeXml(editProductForm.description)}"/>';
-            document.getElementById('editProductPrice').value = '<c:out value="${editProductForm.basePrice}"/>';
-            document.getElementById('editProductType').value = '<c:out value="${editProductForm.productType}"/>';
-        </c:if>
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-        <c:if test="${not empty editTableForm and not empty errors and editField == 'table'}">
-            document.getElementById('tableEditModal').style.display = 'flex';
-            document.getElementById('editTableNumber').value = '<c:out value="${editTableForm.tableNumber}"/>';
-            document.getElementById('editTableCapacity').value = '<c:out value="${editTableForm.capacity}"/>';
-            document.getElementById('editTablePrice').value = '<c:out value="${editTableForm.price}"/>';
-            document.getElementById('editTableDiscount').value = '<c:out value="${editTableForm.discount}"/>';
-            document.getElementById('tableEditForm').action = '${pageContext.request.contextPath}/clubs/tables/<c:out value="${editTableForm.tableId}"/>/edit';
-        </c:if>
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-        <c:if test="${not empty clubHandlerForm and not empty errors and not empty editField}">
-            <c:if test="${editField == 'clubName' or editField == 'location' or editField == 'zone' or editField == 'musicGenre' or editField == 'priceRange' or editField == 'description' or editField == 'cbu'}">
-            openEditModal(
-                '<c:out value="${editField}"/>',
-                <c:choose>
-                <c:when test="${editField == 'clubName'}">'<c:out value="${fn:escapeXml(clubHandlerForm.name)}"/>'</c:when>
-            <c:when test="${editField == 'location'}">'<c:out value="${fn:escapeXml(clubHandlerForm.location)}"/>'</c:when>
-            <c:when test="${editField == 'zone'}">'<c:out value="${clubHandlerForm.zone}"/>'</c:when>
-            <c:when test="${editField == 'musicGenre'}">'<c:out value="${clubHandlerForm.musicGenre}"/>'</c:when>
-            <c:when test="${editField == 'priceRange'}">'<c:out value="${clubHandlerForm.priceRange}"/>'</c:when>
-            <c:when test="${editField == 'description'}">'<c:out value="${fn:escapeXml(clubHandlerForm.description)}"/>'</c:when>
-            <c:when test="${editField == 'cbu'}">'<c:out value="${fn:escapeXml(clubHandlerForm.cbu)}"/>'</c:when>
-            <c:otherwise>''</c:otherwise>
-            </c:choose>
-            )
-        </c:if>
 
-        </c:if>
+    // ----- REAPERTURA AUTOMÁTICA DE MODALES POR ERRORES -----
+
+    // 1) Si hay errores en editProductForm, reabrir modal y rellenar con el form
+    <spring:hasBindErrors name="editProductForm">
+    document.addEventListener('DOMContentLoaded', function() {
+        const id = '<c:out value="${editProductForm.productId}"/>';
+        const name = '<c:out value="${fn:escapeXml(editProductForm.productName)}"/>';
+        const desc = '<c:out value="${fn:escapeXml(editProductForm.description)}"/>';
+        const price = '<c:out value="${editProductForm.basePrice}"/>';
+        const type = '<c:out value="${editProductForm.productType}"/>';
+        clearFormErrors('productEditModal');
+        document.getElementById('productEditModal').style.display = 'flex';
+        document.getElementById('editProductId').value = id;
+        document.getElementById('editProductName').value = name;
+        document.getElementById('editProductDescription').value = desc;
+        document.getElementById('editProductPrice').value = price;
+        document.getElementById('editProductType').value = type;
     });
+    </spring:hasBindErrors>
+
+    // 2) Si hay errores en editTableForm, reabrir modal y rellenar
+    <spring:hasBindErrors name="editTableForm">
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('tableEditModal').style.display = 'flex';
+        document.getElementById('editTableNumber').value = '<c:out value="${editTableForm.tableNumber}"/>';
+        document.getElementById('editTableCapacity').value = '<c:out value="${editTableForm.capacity}"/>';
+        document.getElementById('editTablePrice').value = '<c:out value="${editTableForm.price}"/>';
+        document.getElementById('editTableDiscount').value = '<c:out value="${editTableForm.discount}"/>';
+        // Ojo: si querés mantener la URL de acción cuando falla, seteala acá si tenés tableId en el form
+        document.getElementById('tableEditForm').action =
+            '${pageContext.request.contextPath}/clubs/tables/<c:out value="${editTableForm.tableId}"/>/edit';
+    });
+    </spring:hasBindErrors>
+
+    // 3) Si hay errores en editEventForm, reabrir modal y rellenar
+    <spring:hasBindErrors name="editEventForm">
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('eventEditModal').style.display = 'flex';
+        document.getElementById('editEventId').value = '<c:out value="${editEventForm.eventId}"/>';
+        document.getElementById('editEventName').value = '<c:out value="${fn:escapeXml(editEventForm.eventName)}"/>';
+        document.getElementById('editEventDate').value = '<c:out value="${editEventForm.date}"/>';
+        document.getElementById('editEventDescription').value = '<c:out value="${fn:escapeXml(editEventForm.description)}"/>';
+        document.getElementById('eventEditForm').action =
+            '${pageContext.request.contextPath}/clubs/events/<c:out value="${editEventForm.eventId}"/>/edit';
+    });
+    </spring:hasBindErrors>
+
+    // 4) Si hay errores en clubHandlerForm (edición de campos del club), reabrir el modal correcto
+    <spring:hasBindErrors name="clubHandlerForm">
+    document.addEventListener('DOMContentLoaded', function() {
+        var field = '<c:out value="${editField}"/>';
+        if (!field) return;
+        openEditModal(
+            field,
+            (function(){
+                switch(field){
+                    case 'clubName':    return '<c:out value="${fn:escapeXml(clubHandlerForm.name)}"/>';
+                    case 'location':    return '<c:out value="${fn:escapeXml(clubHandlerForm.location)}"/>';
+                    case 'zone':        return '<c:out value="${clubHandlerForm.zone}"/>';
+                    case 'musicGenre':  return '<c:out value="${clubHandlerForm.musicGenre}"/>';
+                    case 'priceRange':  return '<c:out value="${clubHandlerForm.priceRange}"/>';
+                    case 'description': return '<c:out value="${fn:escapeXml(clubHandlerForm.description)}"/>';
+                    case 'cbu':         return '<c:out value="${fn:escapeXml(clubHandlerForm.cbu)}"/>';
+                    default: return '';
+                }
+            })()
+        );
+    });
+    </spring:hasBindErrors>
+
+    // 5) Soporte a la flag openModal del controller/advice (por ejemplo "editProduct")
+    <c:if test="${not empty openModal}">
+    document.addEventListener('DOMContentLoaded', function () {
+        var key = '${fn:escapeXml(openModal)}';
+        if (key === 'editProduct') {
+            document.getElementById('productEditModal').style.display = 'flex';
+        } else if (key === 'tableEdit') {
+            document.getElementById('tableEditModal').style.display = 'flex';
+        } else if (key === 'eventEdit') {
+            document.getElementById('eventEditModal').style.display = 'flex';
+        }
+    });
+    </c:if>
+    // ----- FIN REAPERTURA -----
+
+    // Tabs
     document.querySelectorAll('.tab-button').forEach(button => {
         button.addEventListener('click', () => {
             const tabId = button.getAttribute('data-tab');
-
-            // desactivar todo
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-
-            // activar el seleccionado
             button.classList.add('active');
             document.getElementById(tabId).classList.add('active');
         });
@@ -1296,60 +1313,39 @@
     document.addEventListener("DOMContentLoaded", function () {
         const tabs = document.querySelectorAll(".tab-button");
         const contents = document.querySelectorAll(".tab-content");
-
-        // Leer tab guardada, sino usar menu-tab
         let savedTab = localStorage.getItem("activeTab");
-        if (!savedTab) {
-            savedTab = "menu-tab";
-        }
-
-        // Limpiar actives
+        if (!savedTab) savedTab = "menu-tab";
         tabs.forEach(t => t.classList.remove("active"));
         contents.forEach(c => c.classList.remove("active"));
-
-        // Activar la guardada
         const savedButton = document.querySelector('.tab-button[data-tab="' + savedTab + '"]');
         const savedContent = document.getElementById(savedTab);
-
         if (savedButton) savedButton.classList.add("active");
         if (savedContent) savedContent.classList.add("active");
-
-        // Cuando se hace click en una tab
         tabs.forEach(button => {
             button.addEventListener("click", function () {
                 const tabId = this.getAttribute("data-tab");
-
-                // Guardar tab
                 localStorage.setItem("activeTab", tabId);
-
-                // Reset
                 tabs.forEach(t => t.classList.remove("active"));
                 contents.forEach(c => c.classList.remove("active"));
-
-                // Activar
                 this.classList.add("active");
                 document.getElementById(tabId).classList.add("active");
             });
         });
     });
+
     const ctx = '${pageContext.request.contextPath}';
     const clubId = '${club.clubId}';
     function openDeletePhotoModal(photoId) {
         const form = document.getElementById("deletePhotoForm");
         document.getElementById("deletePhotoId").value = photoId;
-
-        // Igual que los otros openXYZDeleteModal
         form.action = ctx + "/clubs/" + clubId + "/photos/" + photoId + "/delete";
-
-        document.getElementById("deletePhotoModal").style.display = "flex"; // mantenés estilo igual al resto
+        document.getElementById("deletePhotoModal").style.display = "flex";
     }
-
     function closeDeletePhotoModal() {
         document.getElementById("deletePhotoForm").action = "";
         document.getElementById("deletePhotoId").value = "";
         document.getElementById("deletePhotoModal").style.display = "none";
     }
-
 </script>
 </body>
 </html>

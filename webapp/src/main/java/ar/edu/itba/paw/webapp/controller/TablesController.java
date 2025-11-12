@@ -117,8 +117,6 @@ public class TablesController {
             ra.addAttribute("err", "table_number");
         } catch (InvalidCapacityException e) {
             ra.addAttribute("err", "capacity");
-        } catch (InvalidPriceException e) {
-            ra.addAttribute("err", "price");
         } catch (IllegalArgumentException e) {
             ra.addAttribute("err", "discount");
         }

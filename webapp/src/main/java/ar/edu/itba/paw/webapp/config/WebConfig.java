@@ -53,7 +53,8 @@ import java.util.concurrent.TimeUnit;
         "ar.edu.itba.paw.service",
         "ar.edu.itba.paw.persistence",
         "ar.edu.itba.paw.service.config",
-        "ar.edu.itba.paw.webapp.config"
+        "ar.edu.itba.paw.webapp.config",
+        "ar.edu.itba.paw.webapp.component"
 
 })
 @Configuration
