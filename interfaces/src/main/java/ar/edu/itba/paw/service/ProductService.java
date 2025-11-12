@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.ProductType;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,4 +22,5 @@ public interface ProductService {
     List<Product> findByClubID(UUID clubId);
     String classifyCategory(Product p);
     boolean canAddProduct(Club club);
+    Map<String, List<Product>> getVisibleProductsByCategory(Club club);
 }

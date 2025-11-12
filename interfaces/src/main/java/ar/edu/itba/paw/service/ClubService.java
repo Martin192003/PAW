@@ -46,4 +46,6 @@ public interface ClubService {
 
     int countSearchAvailable(String nameLike, Zone location, String musicGenre,
                              String priceRange, Boolean isBar, LocalDate day);
+
+    boolean isUserOwner(UUID clubId, User user);
 }

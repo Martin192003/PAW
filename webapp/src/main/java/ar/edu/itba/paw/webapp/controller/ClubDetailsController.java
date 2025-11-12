@@ -14,9 +14,7 @@
     import org.springframework.web.bind.annotation.*;
 
     import javax.servlet.http.HttpServletRequest;
-    import java.security.Principal;
     import java.time.*;
-    import java.time.format.DateTimeParseException;
     import java.util.*;
     import java.util.stream.Collectors;
     import java.util.UUID;
@@ -60,46 +58,21 @@
                 @RequestParam(defaultValue = "0") int offset,
                 Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
 
-            var club = clubService.getClubById(clubId)
-                    .orElseThrow(() -> new NotFoundException("error.club.notfound"));
+            var club = clubService.getClubById(clubId).orElseThrow(() -> new NotFoundException("error.club.notfound"));
 
             int limit  = 10;
             offset = Math.max(0, offset);
 
             boolean fromEvent = "true".equals(request.getParameter("fromEvent"));
-            LocalDate ld;
 
-            if (fromEvent && date != null) {
-                ld = date;
-                List<String> allowedDateStrings = List.of(date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                model.addAttribute("allowedDateStrings", allowedDateStrings);
-            } else {
-                // Caso normal → solo Jue/Vie/Sáb
-                LocalDate defaultDate = nextAllowedFrom(LocalDate.now(zone));
-                List<LocalDate> allowedDates = new ArrayList<>();
-                LocalDate today = LocalDate.now(zone);
-                for (int i = 0; i < 15; i++) {
-                    LocalDate d = today.plusDays(i);
-                    DayOfWeek day = d.getDayOfWeek();
-                    if (day == DayOfWeek.THURSDAY || day == DayOfWeek.FRIDAY || day == DayOfWeek.SATURDAY) {
-                        allowedDates.add(d);
-                    }
-                }
-                List<String> allowedDateStrings = allowedDates.stream()
-                        .map(d -> d.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                        .collect(Collectors.toList());
-
-                model.addAttribute("allowedDateStrings", allowedDateStrings);
-                ld = (date == null) ? defaultDate : date;
-            }
-
+            LocalDate ld = tableService.resolveSelectedDate(date, fromEvent);
+            model.addAttribute("allowedDateStrings", tableService.getAllowedDateStrings(LocalDate.now(zone), 15));
             model.addAttribute("selectedDate", ld.toString());
             model.addAttribute("availableTables", List.of());
 
             OffsetDateTime start = null;
             OffsetDateTime end = null;
             List<ar.edu.itba.paw.model.ClubTable> available = List.of();
-
             try {
                 if (tableService.isPastDate(ld, clock, zone)) {
                     model.addAttribute("error", "tables.pastdate");
@@ -111,29 +84,9 @@
             } catch (ValidationException | InvalidDateRangeException ex) {
                 model.addAttribute("error", "invalid.date");
             }
-
             model.addAttribute("availableTables", available);
-
-            var products = productsService.findByClub(club).stream()
-                    .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
-                    .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))
-                    .toList();
-
-            var grouped = products.stream().collect(Collectors.groupingBy(productsService::classifyCategory));
-            var desired = List.of("Cervezas","Tragos","Champagne","Sin Alcohol");
-            var ordered = new LinkedHashMap<String, List<Product>>();
-            desired.forEach(cat -> {
-                var list = grouped.remove(cat);
-                if (list != null && !list.isEmpty()) ordered.put(cat, list);
-            });
-            grouped.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))
-                    .forEach(e -> ordered.put(e.getKey(), e.getValue()));
-            if (ordered.isEmpty() && !products.isEmpty()) ordered.put("Tragos", products);
-
-            String coverPhotoUrl = photoService.getCoverUrl(clubId)
-                    .orElse("/resources/img/default-club-placeholder.png");
-
+            var ordered = productsService.getVisibleProductsByCategory(club);
+            String coverPhotoUrl = photoService.getCoverUrl(clubId).orElse("/resources/img/default-club-placeholder.png");
             String tableLayoutUrl = clubLayoutService.getLayoutByClub(clubId)
                     .map(ClubLayout::getUrl)
                     .orElse(null);
@@ -142,12 +95,7 @@
             if (userDetails != null) {
                 model.addAttribute("user", userDetails.getUser());
                 model.addAttribute("isLoggedIn", true);
-
-                boolean isOwner = userDetails.getUser().getRole().equals(Role.ADMIN)
-                        || clubService.getAdminsByClub(clubId)
-                        .stream()
-                        .anyMatch(u -> u.getId().equals(userDetails.getUser().getId()));
-
+                boolean isOwner = clubService.isUserOwner(clubId, userDetails.getUser());
                 model.addAttribute("isOwner", isOwner);
             } else {
                 model.addAttribute("isLoggedIn", false);
@@ -169,28 +117,19 @@
             model.addAttribute("coverPhotoUrl", coverPhotoUrl);
             model.addAttribute("clubId", clubId);
             model.addAttribute("reviewForm", new ReviewForm());
-
             if (start != null && end != null) {
                 model.addAttribute("dayStart", start);
                 model.addAttribute("dayEnd", end);
             }
-
-            List<Review> reviews = reviewService.listByClub(clubId, sort, limit, offset);
             int total = reviewService.countByClub(clubId);
-
-            if (offset >= total && total > 0) {
-                int lastPage = (int) Math.floor((total - 1) / (double) limit);
-                offset = lastPage * limit;
-                reviews = reviewService.listByClub(clubId, sort, limit, offset);
-            }
-
+            int correctedOffset = reviewService.getCorrectedOffset(total, limit, offset);
+            List<Review> reviews = reviewService.listByClub(clubId, sort, limit, correctedOffset);
             model.addAttribute("reviews", reviews);
             model.addAttribute("totalReviews", total);
             model.addAttribute("limit", limit);
-            model.addAttribute("offset", offset);
+            model.addAttribute("offset", correctedOffset);
             model.addAttribute("sort", sort);
-            model.addAttribute("hasMore", offset + reviews.size() < total);
-
+            model.addAttribute("hasMore", correctedOffset + reviews.size() < total);
             if (userDetails != null) {
                 Optional<Review> userReview = reviewService.getUserReviewForClub(userDetails.getId(), clubId);
                 model.addAttribute("userReview", userReview.orElse(null));
@@ -208,15 +147,5 @@
 
         private String toGenreText(final String genre) {
             return (genre == null || genre.isBlank()) ? "—" : genre;
-        }
-
-        private LocalDate nextAllowedFrom(LocalDate from) {
-            LocalDate d = from;
-            int guard = 0;
-            while (!tableService.isAllowedDay(d) || tableService.isPastDate(d, clock, zone)) {
-                d = d.plusDays(1);
-                if (++guard > 14) break;
-            }
-            return d;
         }
     }
