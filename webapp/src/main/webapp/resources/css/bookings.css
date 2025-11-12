@@ -130,7 +130,7 @@ body {
     display: flex;
     justify-content: flex-start;
     align-items: stretch;
-    width: 100%;
+    width: 90%;
     margin: 16px 0 10px;
     gap: 0;
     max-width: 100%;
@@ -271,10 +271,10 @@ input[type="date"].filter-item::-webkit-calendar-picker-indicator { filter: inve
 }
 .btn.btn-filter:hover { background: #d500f9; }
 
-/* Reset (fuera de la barra, opcional) */
 .btn-reset {
-    display: none; /* si lo usás, podés activarlo según JS */
+    display: none;
     align-items: center;
+    margin-bottom: 16px;
     gap: 6px;
     white-space: nowrap;
     background: none;
