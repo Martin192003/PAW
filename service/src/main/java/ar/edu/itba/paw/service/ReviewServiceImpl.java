@@ -93,7 +93,6 @@ public class ReviewServiceImpl implements ReviewService {
             }
         }
 
-        // Notificar al dueño del club si corresponde
         if (hadTable) {
             final UUID ownerId = club.getContactInfo() != null ? club.getContactInfo().getId() : null;
             if (ownerId != null) {
@@ -126,7 +125,7 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewsDao.countSearch(null, clubId);
     }
 
-
+    //TODO: no se usa sacar (?)
     private boolean hasFromTableGuestField(Review review) {
         try {
             review.getClass().getDeclaredField("fromTableGuest");
