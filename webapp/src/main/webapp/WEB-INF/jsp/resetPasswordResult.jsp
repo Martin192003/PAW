@@ -34,8 +34,7 @@
                        action="${pageContext.request.contextPath}/reset-password"
                        modelAttribute="resetPasswordForm">
                 <input type="hidden" name="token" value="${token}"/>
-
-                <div class="form-group">
+               <div class="form-group">
                     <form:password path="newPassword" cssClass="form-control" placeholder="${phNewPassword}"/>
                     <form:errors path="newPassword" cssClass="error"/>
                 </div>

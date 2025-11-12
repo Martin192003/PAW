@@ -104,7 +104,6 @@ public class ClubServiceImpl implements ClubService{
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<User> getAdminsByClub(UUID clubId) {
         return clubDao.findAdminsByClubId(clubId);
     }
@@ -233,5 +232,17 @@ public class ClubServiceImpl implements ClubService{
     public int countSearchAvailable(String nameLike, Zone location, String musicGenre,
                                     String priceRange, Boolean isBar, LocalDate day) {
         return clubDao.countSearchAvailable(nameLike, location, musicGenre, priceRange, isBar, day);
+    }
+
+    public boolean isUserOwner(UUID clubId, User user) {
+        if (user == null) {
+            return false;
+        }
+        if (user.getRole().equals(Role.ADMIN)) {
+            return true;
+        }
+        return getAdminsByClub(clubId)
+                .stream()
+                .anyMatch(u -> u.getId().equals(user.getId()));
     }
 }
