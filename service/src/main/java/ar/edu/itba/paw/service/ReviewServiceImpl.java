@@ -210,21 +210,4 @@ public class ReviewServiceImpl implements ReviewService {
         }
         return offset;
     }
-
-    public record PaginatedReviews(
-            List<Review> reviews,
-            int total,
-            int correctedOffset,
-            int limit,
-            String sort,
-            boolean hasMore
-    ) {}
-
-    public PaginatedReviews getPaginatedReviewsForClub(UUID clubId, String sort, int limit, int offset) {
-        int total = countByClub(clubId);
-        int correctedOffset = getCorrectedOffset(total, limit, offset);
-        List<Review> reviews = listByClub(clubId, sort, limit, correctedOffset);
-        boolean hasMore = correctedOffset + reviews.size() < total;
-        return new PaginatedReviews(reviews, total, correctedOffset, limit, sort, hasMore);
-    }
 }

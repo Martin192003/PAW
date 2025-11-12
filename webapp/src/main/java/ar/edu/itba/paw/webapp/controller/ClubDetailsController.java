@@ -86,7 +86,7 @@
             }
             model.addAttribute("availableTables", available);
             var ordered = productsService.getVisibleProductsByCategory(club);
-            String coverPhotoUrl = photoService.getCoverUrl(clubId).orElse("/resources/img/default-club-placeholder.png");
+            String coverPhotoUrl = photoService.getCoverUrl(clubId).orElse(null);
             String tableLayoutUrl = clubLayoutService.getLayoutByClub(clubId)
                     .map(ClubLayout::getUrl)
                     .orElse(null);
