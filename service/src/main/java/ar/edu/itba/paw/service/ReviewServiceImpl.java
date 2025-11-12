@@ -125,7 +125,7 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewsDao.countSearch(null, clubId);
     }
 
-
+    //TODO: no se usa sacar (?)
     private boolean hasFromTableGuestField(Review review) {
         try {
             review.getClass().getDeclaredField("fromTableGuest");

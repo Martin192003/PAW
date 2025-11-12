@@ -39,34 +39,13 @@ public class PhotoController {
                          @RequestParam("file") MultipartFile file,
                          Principal principal,
                          RedirectAttributes redirectAttributes) throws IOException {
-        log.info("Attempting to upload photo for clubId: {}", clubId);
-
-        try {
-            String userEmail = principal != null ? principal.getName() : null;
-            log.info("User email: {}, File size: {}", userEmail, file.getSize());
-
-            //TODO: FIJARSE SI ESTA BIEN ESTO
-            Photo photo = new Photo();
-            photo.setFilename(file.getOriginalFilename());
-            photo.setContentType(file.getContentType());
-            photo.setData(file.getBytes());
-
-            UUID photoId = photoService.uploadPhotoForClub(clubId, userEmail, photo);
-            log.info("Photo uploaded successfully, photoId: {}", photoId);
-            redirectAttributes.addFlashAttribute("success", "photo.upload.success");
-            return "redirect:/clubs/handle?clubId=" + clubId;
-        } catch (IllegalArgumentException e) {
-            log.error("Error uploading photo: {}", e.getMessage());
-            String errorMsg = e.getMessage().contains("empty") ? "photo.upload.empty" :
-                    e.getMessage().contains("User not found") ? "error.user.notfound" :
-                            "photo.upload.error";
-            redirectAttributes.addFlashAttribute("error", errorMsg);
-            return "redirect:/clubs/handle?clubId=" + clubId;
-        } catch (Exception e) {
-            log.error("Unexpected error uploading photo: {}", e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("error", "photo.upload.unexpected");
-            return "redirect:/clubs/handle?clubId=" + clubId;
-        }
+        String userEmail = principal != null ? principal.getName() : null;
+        Photo photo = new Photo();
+        photo.setFilename(file.getOriginalFilename());
+        photo.setContentType(file.getContentType());
+        photo.setData(file.getBytes());
+        photoService.uploadPhotoForClub(clubId, userEmail, photo);
+        return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
     @GetMapping("/photos/{photoId}")
@@ -107,7 +86,7 @@ public class PhotoController {
                     );
                     uploaded++;
                 } catch (IOException e) {
-                    // Optionally log or handle error
+                    log.error("Failed to upload photo to gallery for club {}: {}", clubId, e.getMessage());
                 }
             }
         }
