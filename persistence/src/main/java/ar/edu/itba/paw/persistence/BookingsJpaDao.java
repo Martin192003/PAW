@@ -62,7 +62,7 @@ public class BookingsJpaDao implements BookingDao {
     }
 
     @Override
-     public boolean delete(UUID bookingId) {
+    public boolean delete(UUID bookingId) {
         Booking b = em.find(Booking.class, bookingId);
         if (b == null) return false;
         em.remove(b);
@@ -75,20 +75,20 @@ public class BookingsJpaDao implements BookingDao {
     }
 
     @Override
-     public Optional<Booking> updateStatus(UUID bookingId, Status newStatus) {
+    public Optional<Booking> updateStatus(UUID bookingId, Status newStatus) {
         Booking b = em.find(Booking.class, bookingId);
         if (b == null) return Optional.empty();
         b.setStatus(newStatus);
         return Optional.of(b);
-     }
+    }
 
     @Override
     public List<Booking> findByUser(UUID userId) {
         return em.createQuery("""
-                SELECT b
-                FROM Booking b
-                WHERE b.user.id = :uid
-                """, Booking.class)
+                        SELECT b
+                        FROM Booking b
+                        WHERE b.user.id = :uid
+                        """, Booking.class)
                 .setParameter("uid", userId)
                 .getResultList();
     }
@@ -96,10 +96,10 @@ public class BookingsJpaDao implements BookingDao {
     @Override
     public List<Booking> findByTable(UUID tableId) {
         return em.createQuery("""
-            SELECT b
-            FROM Booking b
-            WHERE b.table.id = :tid
-            """, Booking.class)
+                        SELECT b
+                        FROM Booking b
+                        WHERE b.table.id = :tid
+                        """, Booking.class)
                 .setParameter("tid", tableId) // ahora sí, UUID
                 .getResultList();
     }
@@ -119,10 +119,10 @@ public class BookingsJpaDao implements BookingDao {
         final String ph = placeholders("cid", clubIds.size());
 
         final StringBuilder inner = new StringBuilder("""
-        SELECT DISTINCT b.booking_id, b.created_at, b.booking_start, b.status
-        FROM bookings b
-        JOIN club_tables t ON t.table_id = b.table_id
-        """);
+                SELECT DISTINCT b.booking_id, b.created_at, b.booking_start, b.status
+                FROM bookings b
+                JOIN club_tables t ON t.table_id = b.table_id
+                """);
 
         if (hasReceipt != null) {
             inner.append("LEFT JOIN receipts r ON r.booking_id = b.booking_id\n");
@@ -131,18 +131,18 @@ public class BookingsJpaDao implements BookingDao {
         inner.append("WHERE t.club_id IN ( %s )\n".formatted(ph));
 
         if (bookingId != null) inner.append("AND b.booking_id = :bookingId\n");
-        if (status != null)    inner.append("AND LOWER(b.status) = LOWER(:status)\n");
+        if (status != null) inner.append("AND LOWER(b.status) = LOWER(:status)\n");
         if (bookingDate != null) inner.append("AND DATE(b.booking_start) = :bookingDate\n");
         if (hasReceipt != null) {
             if (hasReceipt) inner.append("AND r.booking_id IS NOT NULL\n");
-            else            inner.append("AND r.booking_id IS NULL\n");
+            else inner.append("AND r.booking_id IS NULL\n");
         }
 
         final String idSql = """
-        SELECT CAST(x.booking_id AS TEXT) AS id_text
-        FROM ( %s ) x
-        ORDER BY %s
-    """.formatted(inner, nativeSortForAlias("x", sort));
+                    SELECT CAST(x.booking_id AS TEXT) AS id_text
+                    FROM ( %s ) x
+                    ORDER BY %s
+                """.formatted(inner, nativeSortForAlias("x", sort));
 
         final var nq = em.createNativeQuery(idSql)
                 .unwrap(org.hibernate.query.NativeQuery.class)
@@ -152,12 +152,11 @@ public class BookingsJpaDao implements BookingDao {
 
         bindUuidList(nq, "cid", clubIds);
         if (bookingId != null) nq.setParameter("bookingId", bookingId);
-        if (status != null)    nq.setParameter("status", status.db());
+        if (status != null) nq.setParameter("status", status.db());
         if (bookingDate != null) nq.setParameter("bookingDate", bookingDate);
 
 
-        @SuppressWarnings("unchecked")
-        final java.util.List<String> idTexts = nq.getResultList();
+        @SuppressWarnings("unchecked") final java.util.List<String> idTexts = nq.getResultList();
         if (idTexts.isEmpty()) return java.util.List.of();
 
         final java.util.List<java.util.UUID> ids = idTexts.stream()
@@ -183,9 +182,9 @@ public class BookingsJpaDao implements BookingDao {
                                          final int offset) {
 
         final StringBuilder inner = new StringBuilder("""
-        SELECT DISTINCT b.booking_id, b.created_at, b.booking_start, b.status
-        FROM bookings b
-        """);
+                SELECT DISTINCT b.booking_id, b.created_at, b.booking_start, b.status
+                FROM bookings b
+                """);
 
         if (clubId != null) {
             inner.append("LEFT JOIN club_tables t ON t.table_id = b.table_id\n");
@@ -196,21 +195,21 @@ public class BookingsJpaDao implements BookingDao {
         }
 
         inner.append("WHERE 1=1\n");
-        if (clubId != null)    inner.append("AND t.club_id = :clubId\n");
-        if (userId != null)    inner.append("AND b.user_id = :userId\n");
+        if (clubId != null) inner.append("AND t.club_id = :clubId\n");
+        if (userId != null) inner.append("AND b.user_id = :userId\n");
         if (bookingId != null) inner.append("AND b.booking_id = :bookingId\n");
-        if (status != null)    inner.append("AND LOWER(b.status) = LOWER(:status)\n");
+        if (status != null) inner.append("AND LOWER(b.status) = LOWER(:status)\n");
         if (bookingDate != null) inner.append("AND DATE(b.booking_start) = :bookingDate\n");
         if (hasReceipt != null) {
             if (hasReceipt) inner.append("AND r.booking_id IS NOT NULL\n");
-            else            inner.append("AND r.booking_id IS NULL\n");
+            else inner.append("AND r.booking_id IS NULL\n");
         }
 
         final String idSql = """
-        SELECT CAST(x.booking_id AS TEXT) AS id_text
-        FROM ( %s ) x
-        ORDER BY %s
-    """.formatted(inner, nativeSortForAlias("x", sort));
+                    SELECT CAST(x.booking_id AS TEXT) AS id_text
+                    FROM ( %s ) x
+                    ORDER BY %s
+                """.formatted(inner, nativeSortForAlias("x", sort));
 
         final var nq = em.createNativeQuery(idSql)
                 .unwrap(org.hibernate.query.NativeQuery.class)
@@ -218,14 +217,13 @@ public class BookingsJpaDao implements BookingDao {
                 .setFirstResult(offset)
                 .setMaxResults(limit);
 
-        if (clubId != null)    nq.setParameter("clubId", clubId);
-        if (userId != null)    nq.setParameter("userId", userId);
+        if (clubId != null) nq.setParameter("clubId", clubId);
+        if (userId != null) nq.setParameter("userId", userId);
         if (bookingId != null) nq.setParameter("bookingId", bookingId);
-        if (status != null)    nq.setParameter("status", status.db());
+        if (status != null) nq.setParameter("status", status.db());
         if (bookingDate != null) nq.setParameter("bookingDate", bookingDate);
 
-        @SuppressWarnings("unchecked")
-        final java.util.List<String> idTexts = nq.getResultList();
+        @SuppressWarnings("unchecked") final java.util.List<String> idTexts = nq.getResultList();
         if (idTexts.isEmpty()) return java.util.List.of();
 
         final java.util.List<java.util.UUID> ids = idTexts.stream()
@@ -240,25 +238,25 @@ public class BookingsJpaDao implements BookingDao {
     }
 
 
-        @Override
+    @Override
     public int countByClubIds(final List<java.util.UUID> clubIds, final java.util.UUID bookingId, final Status status, final LocalDate bookingDate, final Boolean hasReceipt) {
         if (clubIds == null || clubIds.isEmpty()) return 0;
 
         final String ph = placeholders("cid", clubIds.size());
 
         final StringBuilder sql = new StringBuilder("""
-        SELECT COUNT(*) FROM bookings b
-        JOIN club_tables t ON t.table_id = b.table_id
-        """);
+                SELECT COUNT(*) FROM bookings b
+                JOIN club_tables t ON t.table_id = b.table_id
+                """);
         if (hasReceipt != null) sql.append("LEFT JOIN receipts r ON r.booking_id = b.booking_id\n");
         sql.append("WHERE t.club_id IN ( %s )\n".formatted(ph));
 
         if (bookingId != null) sql.append("AND b.booking_id = :bookingId\n");
-        if (status != null)    sql.append("AND LOWER(b.status) = LOWER(:status)\n");
+        if (status != null) sql.append("AND LOWER(b.status) = LOWER(:status)\n");
         if (bookingDate != null) sql.append(" AND DATE(b.booking_start) = :bookingDate");
         if (hasReceipt != null) {
             if (hasReceipt) sql.append(" AND r.booking_id IS NOT NULL\n");
-            else            sql.append(" AND r.booking_id IS NULL\n");
+            else sql.append(" AND r.booking_id IS NULL\n");
         }
 
         final var nq = em.createNativeQuery(sql.toString()).unwrap(NativeQuery.class);
@@ -266,7 +264,7 @@ public class BookingsJpaDao implements BookingDao {
         bindUuidList(nq, "cid", clubIds);
 
         if (bookingId != null) nq.setParameter("bookingId", bookingId);
-        if (status != null)    nq.setParameter("status", status.db());
+        if (status != null) nq.setParameter("status", status.db());
         if (bookingDate != null) nq.setParameter("bookingDate", bookingDate);
 
         final Number n = (Number) nq.getSingleResult();
@@ -287,21 +285,21 @@ public class BookingsJpaDao implements BookingDao {
             if (hasReceipt != null) sql.append("LEFT JOIN receipts r ON r.booking_id = b.booking_id ");
             sql.append("WHERE t.club_id = :clubId\n");
 
-            if (userId != null)    sql.append(" AND b.user_id = :userId");
+            if (userId != null) sql.append(" AND b.user_id = :userId");
             if (bookingId != null) sql.append(" AND b.booking_id = :bookingId");
-            if (status != null)    sql.append(" AND LOWER(b.status) = LOWER(:status)");
+            if (status != null) sql.append(" AND LOWER(b.status) = LOWER(:status)");
             if (bookingDate != null) sql.append(" AND DATE(b.booking_start) = :bookingDate");
             if (hasReceipt != null) {
                 if (hasReceipt) sql.append(" AND r.booking_id IS NOT NULL");
-                else            sql.append(" AND r.booking_id IS NULL");
+                else sql.append(" AND r.booking_id IS NULL");
             }
 
             Query q = em.createNativeQuery(sql.toString())
                     .setParameter("clubId", clubId);
 
-            if (userId != null)    q.setParameter("userId", userId);
+            if (userId != null) q.setParameter("userId", userId);
             if (bookingId != null) q.setParameter("bookingId", bookingId);
-            if (status != null)    q.setParameter("status", status.db());
+            if (status != null) q.setParameter("status", status.db());
             if (bookingDate != null) q.setParameter("bookingDate", bookingDate);
 
             Number n = (Number) q.getSingleResult();
@@ -309,22 +307,31 @@ public class BookingsJpaDao implements BookingDao {
         }
 
         StringBuilder jpql = new StringBuilder("SELECT COUNT(b) FROM Booking b WHERE 1=1");
-        Map<String,Object> params = new HashMap<>();
-        if (userId != null)    { jpql.append(" AND b.user.id = :userId"); params.put("userId", userId); }
-        if (bookingId != null) { jpql.append(" AND b.bookingId = :bookingId"); params.put("bookingId", bookingId); }
-        if (status != null)    { jpql.append(" AND b.status = :status"); params.put("status", status); }
+        Map<String, Object> params = new HashMap<>();
+        if (userId != null) {
+            jpql.append(" AND b.user.id = :userId");
+            params.put("userId", userId);
+        }
+        if (bookingId != null) {
+            jpql.append(" AND b.bookingId = :bookingId");
+            params.put("bookingId", bookingId);
+        }
+        if (status != null) {
+            jpql.append(" AND b.status = :status");
+            params.put("status", status);
+        }
 
         // JPQL cannot easily express receipt existence without entity mapping; fall back to native
         if (hasReceipt != null) {
             // use native query when filtering by receipts and no clubId
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM bookings b ");
             sql.append("LEFT JOIN receipts r ON r.booking_id = b.booking_id WHERE 1=1 ");
-            if (userId != null)    sql.append(" AND b.user_id = :userId");
+            if (userId != null) sql.append(" AND b.user_id = :userId");
             if (bookingId != null) sql.append(" AND b.booking_id = :bookingId");
-            if (status != null)    sql.append(" AND LOWER(b.status) = LOWER(:status)");
+            if (status != null) sql.append(" AND LOWER(b.status) = LOWER(:status)");
             if (bookingDate != null) sql.append(" AND DATE(b.booking_start) = :bookingDate");
             if (hasReceipt) sql.append(" AND r.booking_id IS NOT NULL");
-            else            sql.append(" AND r.booking_id IS NULL");
+            else sql.append(" AND r.booking_id IS NULL");
 
             Query q = em.createNativeQuery(sql.toString());
             if (userId != null) q.setParameter("userId", userId);
@@ -380,11 +387,10 @@ public class BookingsJpaDao implements BookingDao {
         final String a = alias == null ? "x" : alias;
         return switch (sort == null ? "" : sort) {
             case "created_asc" -> a + ".created_at ASC NULLS LAST, " + a + ".booking_id ASC";
-            case "start_desc"  -> a + ".booking_start DESC NULLS LAST, " + a + ".booking_id DESC";
-            case "start_asc"   -> a + ".booking_start ASC NULLS LAST, " + a + ".booking_id ASC";
-            case "status_asc"  -> a + ".status ASC NULLS LAST, " + a + ".booking_id ASC";
-            default /* created_desc */ ->
-                    a + ".created_at DESC NULLS LAST, " + a + ".booking_id DESC";
+            case "start_desc" -> a + ".booking_start DESC NULLS LAST, " + a + ".booking_id DESC";
+            case "start_asc" -> a + ".booking_start ASC NULLS LAST, " + a + ".booking_id ASC";
+            case "status_asc" -> a + ".status ASC NULLS LAST, " + a + ".booking_id ASC";
+            default /* created_desc */ -> a + ".created_at DESC NULLS LAST, " + a + ".booking_id DESC";
         };
     }
 
@@ -414,12 +420,12 @@ public class BookingsJpaDao implements BookingDao {
         }
 
         String sql = """
-    SELECT CAST(b.booking_id AS TEXT) AS booking_id, c.club_name
-    FROM bookings b
-    JOIN club_tables t ON b.table_id = t.table_id
-    JOIN clubs c ON t.club_id = c.club_id
-    WHERE b.booking_id IN (%s)
-""".formatted(placeholders);
+                    SELECT CAST(b.booking_id AS TEXT) AS booking_id, c.club_name
+                    FROM bookings b
+                    JOIN club_tables t ON b.table_id = t.table_id
+                    JOIN clubs c ON t.club_id = c.club_id
+                    WHERE b.booking_id IN (%s)
+                """.formatted(placeholders);
 
         var nq = em.createNativeQuery(sql);
 

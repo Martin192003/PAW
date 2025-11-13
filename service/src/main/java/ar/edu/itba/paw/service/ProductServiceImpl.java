@@ -63,13 +63,6 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Product> findByName(String name) {
-        return productsDao.findByName(name);
-    }
-
-
-    @Override
-    @Transactional(readOnly = true)
     public List<Product> findByClub(Club club) {
         return productsDao.findByClub(club);
     }

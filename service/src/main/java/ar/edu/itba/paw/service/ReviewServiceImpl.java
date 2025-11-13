@@ -12,7 +12,6 @@ import ar.edu.itba.paw.persistence.ReviewsDao;
 import ar.edu.itba.paw.persistence.UserDao;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -152,7 +151,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public boolean deleteReview(UUID reviewId) {
+    public void deleteReview(UUID reviewId) {
 
         final Review review = reviewsDao.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFounException("No se encontro la review"));
@@ -177,7 +176,6 @@ public class ReviewServiceImpl implements ReviewService {
             recalcClubRating(clubId);
         }
 
-        return deleted && photoDeleted;
     }
 
     /** Recalcula rating y cantidad desde DB y persiste solo esas columnas. */

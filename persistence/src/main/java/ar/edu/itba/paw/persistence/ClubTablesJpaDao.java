@@ -37,7 +37,7 @@ public class ClubTablesJpaDao implements ClubTablesDao {
     @Override
     @Transactional
     public ClubTable update(UUID tableId, UUID clubId, Integer tableNumber, Integer capacity,
-                        TableState state, BigDecimal price, BigDecimal discount) {
+                            TableState state, BigDecimal price, BigDecimal discount) {
 
         ClubTable t = em.find(ClubTable.class, tableId);
         if (t == null) return null;
@@ -70,20 +70,20 @@ public class ClubTablesJpaDao implements ClubTablesDao {
                                                                 final int offset) {
         // 1) IDs paginados
         final String idSql = """
-        SELECT CAST(ct.table_id AS TEXT) AS id_text
-        FROM club_tables ct
-        WHERE ct.club_id = :clubId
-          AND NOT EXISTS (
-              SELECT 1
-              FROM bookings b
-              WHERE b.table_id = ct.table_id
-                AND LOWER(b.status) IN (:blocking)
-                AND b.booking_start < :to_ts
-                AND b.booking_end   > :from_ts
-          )
-        ORDER BY ct.table_number ASC, ct.table_id ASC
-        LIMIT :limit OFFSET :offset
-    """;
+                    SELECT CAST(ct.table_id AS TEXT) AS id_text
+                    FROM club_tables ct
+                    WHERE ct.club_id = :clubId
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM bookings b
+                          WHERE b.table_id = ct.table_id
+                            AND LOWER(b.status) IN (:blocking)
+                            AND b.booking_start < :to_ts
+                            AND b.booking_end   > :from_ts
+                      )
+                    ORDER BY ct.table_number ASC, ct.table_id ASC
+                    LIMIT :limit OFFSET :offset
+                """;
 
         final java.util.List<String> blocking =
                 java.util.List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
@@ -95,12 +95,11 @@ public class ClubTablesJpaDao implements ClubTablesDao {
         nq.setParameter("clubId", clubId);
         nq.setParameterList("blocking", blocking);
         nq.setParameter("from_ts", java.sql.Timestamp.from(from.toInstant()));
-        nq.setParameter("to_ts",   java.sql.Timestamp.from(to.toInstant()));
-        nq.setParameter("limit",   limit);
-        nq.setParameter("offset",  offset);
+        nq.setParameter("to_ts", java.sql.Timestamp.from(to.toInstant()));
+        nq.setParameter("limit", limit);
+        nq.setParameter("offset", offset);
 
-        @SuppressWarnings("unchecked")
-        final java.util.List<String> idTexts = nq.getResultList();
+        @SuppressWarnings("unchecked") final java.util.List<String> idTexts = nq.getResultList();
         if (idTexts.isEmpty()) return java.util.List.of();
 
         final java.util.List<java.util.UUID> ids = idTexts.stream()
@@ -109,11 +108,11 @@ public class ClubTablesJpaDao implements ClubTablesDao {
 
         // 2) Entidades
         return em.createQuery("""
-            SELECT ct
-            FROM ClubTable ct
-            WHERE ct.tableid IN :ids
-            ORDER BY ct.tableNumber ASC, ct.tableid ASC
-        """, ClubTable.class)
+                            SELECT ct
+                            FROM ClubTable ct
+                            WHERE ct.tableid IN :ids
+                            ORDER BY ct.tableNumber ASC, ct.tableid ASC
+                        """, ClubTable.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
@@ -123,18 +122,18 @@ public class ClubTablesJpaDao implements ClubTablesDao {
                                             final OffsetDateTime from,
                                             final OffsetDateTime to) {
         final String countSql = """
-        SELECT COUNT(*)
-        FROM club_tables ct
-        WHERE ct.club_id = :clubId
-          AND NOT EXISTS (
-              SELECT 1
-              FROM bookings b
-              WHERE b.table_id = ct.table_id
-                AND LOWER(b.status) IN (:blocking)
-                AND b.booking_start < :to_ts
-                AND b.booking_end   > :from_ts
-          )
-    """;
+                    SELECT COUNT(*)
+                    FROM club_tables ct
+                    WHERE ct.club_id = :clubId
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM bookings b
+                          WHERE b.table_id = ct.table_id
+                            AND LOWER(b.status) IN (:blocking)
+                            AND b.booking_start < :to_ts
+                            AND b.booking_end   > :from_ts
+                      )
+                """;
 
         final java.util.List<String> blocking =
                 java.util.List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
@@ -145,7 +144,7 @@ public class ClubTablesJpaDao implements ClubTablesDao {
         nq.setParameter("clubId", clubId);
         nq.setParameterList("blocking", blocking);
         nq.setParameter("from_ts", java.sql.Timestamp.from(from.toInstant()));
-        nq.setParameter("to_ts",   java.sql.Timestamp.from(to.toInstant()));
+        nq.setParameter("to_ts", java.sql.Timestamp.from(to.toInstant()));
 
         final Number n = (Number) nq.getSingleResult();
         return n.intValue();
@@ -169,11 +168,11 @@ public class ClubTablesJpaDao implements ClubTablesDao {
     @Override
     public List<ClubTable> findByClub(Club club) {
         return em.createQuery("""
-                SELECT ct
-                FROM ClubTable ct
-                WHERE ct.clubId = :cid
-                ORDER BY ct.tableNumber ASC
-                """, ClubTable.class)
+                        SELECT ct
+                        FROM ClubTable ct
+                        WHERE ct.clubId = :cid
+                        ORDER BY ct.tableNumber ASC
+                        """, ClubTable.class)
                 .setParameter("cid", club.getClubId())
                 .getResultList();
     }

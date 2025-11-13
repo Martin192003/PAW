@@ -35,6 +35,7 @@ public class ClubLayoutJpaDao implements ClubLayoutDao {
                 .getResultList();
         return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
+
     @Override
     public boolean deleteByClubId(UUID clubId) {
         int deleted = em.createQuery("DELETE FROM ClubLayout l WHERE l.clubId = :clubId")
