@@ -1,4 +1,5 @@
 html, body {
+    margin-top: 40px;
     height: auto;
     min-height: 100vh;
     overflow-y: auto;
@@ -82,7 +83,7 @@ html, body {
 .panel-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 80px 24px 0 24px;
+    padding: 70px 24px 0 24px;
     width: 100%;
     box-sizing: border-box;
 }
