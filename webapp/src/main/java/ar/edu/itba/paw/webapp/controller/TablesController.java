@@ -87,7 +87,7 @@ public class TablesController {
             model.addAttribute("editEventForm", editEventForm);
             model.addAttribute("errors", errors);
             model.addAttribute("events", eventService.listByClub(form.getClubId(), 0, 20));
-            var carouselPhotos = photoService.getCarouselPhotos(form.getClubId(), 10, 0);
+            var carouselPhotos = photoService.getCarouselPhotos(form.getClubId());
             var tableLayout = clubLayoutService.getLayoutByClub(form.getClubId());
             String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
 
