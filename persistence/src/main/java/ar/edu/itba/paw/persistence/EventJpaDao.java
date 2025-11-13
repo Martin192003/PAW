@@ -220,16 +220,6 @@ public class EventJpaDao implements EventDao {
     }
 
     @Override
-    public List<UUID> findEventPhotoIdsByClub(UUID clubId) {
-        return em.createQuery(
-                        "SELECT e.photoId FROM Event e WHERE e.clubId = :clubId AND e.photoId IS NOT NULL",
-                        UUID.class
-                )
-                .setParameter("clubId", clubId)
-                .getResultList();
-    }
-
-    @Override
     public void attachPhoto(UUID eventId, UUID photoId) {
         Event ev = em.find(Event.class, eventId);
         if (ev == null) throw new IllegalArgumentException("Evento no encontrado");

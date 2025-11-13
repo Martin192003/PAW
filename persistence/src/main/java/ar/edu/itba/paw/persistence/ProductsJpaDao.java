@@ -80,16 +80,6 @@ public class ProductsJpaDao implements ProductsDao {
         return Optional.ofNullable(em.find(Product.class, id));
     }
 
-    @Override
-    public Optional<Product> findByName(String name) {
-        return em.createQuery("""
-                SELECT p
-                FROM Product p
-                WHERE LOWER(p.productName) = LOWER(:name)
-                """, Product.class)
-                .setParameter("name", name)
-                .getResultList().stream().findFirst();
-    }
 
     @Override
     public List<Product> findByClub(final Club club) {

@@ -1,6 +1,5 @@
 package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.ClubLayout;
 import org.springframework.stereotype.Repository;
 
@@ -37,12 +36,11 @@ public class ClubLayoutJpaDao implements ClubLayoutDao {
     }
 
     @Override
-    public boolean deleteByClubId(UUID clubId) {
+    public void deleteByClubId(UUID clubId) {
         int deleted = em.createQuery("DELETE FROM ClubLayout l WHERE l.clubId = :clubId")
                 .setParameter("clubId", clubId)
                 .executeUpdate();
         em.flush();
-        return deleted > 0;
     }
 }
 
