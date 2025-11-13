@@ -26,11 +26,11 @@ public interface PhotoService {
 
     Optional<String> getCoverUrl(UUID clubId);
     Map<UUID,String> getCoverUrls(Set<UUID> clubIds);
-    UUID uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException;
+    void uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException;
 
     void uploadCover(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
     void uploadCarousel(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
-    List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset);
+    List<Photo> getCarouselPhotos(UUID clubId);
     List<Photo> getClubPhotos(UUID clubId, int limit, int offset);
 
     UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, Photo file) throws IOException;

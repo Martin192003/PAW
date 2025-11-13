@@ -1,8 +1,6 @@
 package ar.edu.itba.paw.service;
 
-import ar.edu.itba.paw.model.Booking;
-import ar.edu.itba.paw.model.Status;
-import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -52,5 +50,16 @@ public interface BookingService {
     List<Booking> searchPaginated(UUID userId, UUID clubId, UUID bookingId, Status status, String sort, LocalDate bookingDate, Boolean hasReceipt, int limit, int offset);
 
     int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
+
+    String getDateStart(Booking booking);
+
+    String getDateEnd(Booking booking);
+
+    User getBookingUser(Booking booking);
+
+    ClubTable getBookingTable(Booking booking);
+
+    Club getBookingClub(Booking booking);
+
 
 }

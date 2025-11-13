@@ -8,17 +8,15 @@ import ar.edu.itba.paw.persistence.PhotoDao;
 import ar.edu.itba.paw.model.Photo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class PhotoServiceImpl implements PhotoService {
 
-    private static final long MAX_BYTES = 5L * 1024 * 1024; // 5 MB (ajustá si querés)
+    private static final long MAX_BYTES = 5L * 1024 * 1024; // 5 MB
     private static final Set<String> ALLOWED_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp"
     );
@@ -66,6 +64,11 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional
     public void uploadCarousel(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
+        long existingPhotos = photoDao.countByClubIdAndType(clubId, PhotoType.CAROUSEL);
+
+        if (existingPhotos >= 20) {
+            throw new IllegalStateException("No se pueden subir más de 20 fotos al club.");
+        }
         Photo photo = new Photo();
         photo.setClubId(clubId);
         photo.setPostedBy(userId);
@@ -119,7 +122,7 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException {
+    public void uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException {
         if (file == null) {
             throw new IllegalArgumentException("File is empty");
         }
@@ -132,7 +135,7 @@ public class PhotoServiceImpl implements PhotoService {
             throw new IllegalArgumentException("User not found");
         }
 
-        return upload(
+        upload(
                 clubId,
                 effectiveUser.getId(),
                 file.getFilename(),
@@ -174,20 +177,19 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset) {
-        List<Photo> photos = photoDao.findCarouselByClubId(clubId, limit, offset);
+    public List<Photo> getCarouselPhotos(UUID clubId) {
+        List<Photo> photos = photoDao.findCarouselByClubId(clubId);
         System.out.println("getCarouselPhotos for clubId " + clubId + ": " +
                 photos.stream().map(p -> p.getUrl() + " [type: " + p.getPhotoType() + "]").toList());
         return photos;
     }
-
 
     @Override
     @Transactional(readOnly = true)
     public List<Photo> getClubPhotos(UUID clubId, int limit, int offset) {
         List<Photo> result = new ArrayList<>();
         photoDao.findCoverByClubId(clubId).ifPresent(result::add);
-        result.addAll(photoDao.findCarouselByClubId(clubId, limit, offset));
+        result.addAll(photoDao.findCarouselByClubId(clubId));
         return result;
     }
 
@@ -205,7 +207,6 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional
     public UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, Photo file) {
-        // Validaciones básicas
         Objects.requireNonNull(clubId,  "clubId no puede ser null");
         Objects.requireNonNull(eventId, "eventId no puede ser null");
         Objects.requireNonNull(userId,  "userId no puede ser null");
@@ -217,7 +218,6 @@ public class PhotoServiceImpl implements PhotoService {
         final String filename    = file.getFilename();
         final String contentType = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
         final byte[]  data       = file.getData();
-
 
         return photoDao.createEventPhoto(clubId, eventId, userId, filename, contentType, data);
     }

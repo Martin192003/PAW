@@ -64,7 +64,7 @@ public class Club {
 
     @Column(name = "cbu", length = 50)
     private String cbu;
-
+    // Solo puede haber 1
     @ManyToMany(mappedBy = "adminOfClubs")
     private Set<User> admins = new HashSet<>();
 

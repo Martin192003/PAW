@@ -7,7 +7,6 @@ import ar.edu.itba.paw.model.exceptions.InvalidStatusTransitionException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.BookingSearchForm;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -16,12 +15,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.validation.Valid;
-import java.time.Month;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Date;
@@ -29,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 
 @Controller
 @RequestMapping("/admin")
@@ -184,6 +176,7 @@ public class BookingAdminController {
         }
         model.addAttribute("bookingStartDates", bookingStartDates);
 
+        // Result esta paginado de esa manera no es tan ineficiente ya que iteramos sobre un maximo de 10
         Map<UUID, Boolean> hasReceiptMap = new HashMap<>();
         for (Booking b : result) {
             hasReceiptMap.put(b.getBookingId(), receiptService.findByBooking(b.getBookingId()).isPresent());
@@ -219,7 +212,7 @@ public class BookingAdminController {
             model.addAttribute("error", "error.no_reservation");
             return "error/error";
         }
-        Booking booking = bookingOpt.get();
+        Booking  booking = bookingOpt.get();
 
         Optional<ClubTable> tableOpt = tableService.findById(booking.getTableId());
         ClubTable table = tableOpt.orElse(null);
@@ -247,17 +240,8 @@ public class BookingAdminController {
         model.addAttribute("clubName", clubName);
         model.addAttribute("clubCbu", clubCbu);
 
-
-        ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
-
-        ZonedDateTime startLocal = booking.getBookingStart().atZoneSameInstant(zone);
-        String bookingStartLocal = formatDateEsEn(startLocal);
-
-        ZonedDateTime endLocal = booking.getBookingEnd().atZoneSameInstant(zone);
-        String bookingEndLocal = formatDateEsEn(endLocal);
-
-        model.addAttribute("bookingStartLocal", bookingStartLocal);
-        model.addAttribute("bookingEndLocal", bookingEndLocal);
+        model.addAttribute("bookingStartLocal", bookingService.getDateStart(booking));
+        model.addAttribute("bookingEndLocal", bookingService.getDateEnd(booking));
 
         if (error != null && !error.isEmpty()) {
             model.addAttribute("errorKey", error);
@@ -274,24 +258,5 @@ public class BookingAdminController {
         ra.addFlashAttribute(deleted ? "success" : "info",
                 deleted ? "receipt.deleted" : "receipt.notfound");
         return "redirect:/admin/booking?bookingId=" + bookingId;
-    }
-    private static String formatDateEsEn(ZonedDateTime zdt) {
-        var date = zdt.toLocalDate();
-        if (date == null) return "";
-        Locale locale = LocaleContextHolder.getLocale();
-        boolean isEs = "es".equalsIgnoreCase(locale.getLanguage());
-
-        Month m = date.getMonth();
-        String monthName = m.getDisplayName(TextStyle.FULL, locale);
-        if (isEs) {
-            monthName = capitalize(monthName, locale); // Java devuelve "noviembre"; se capitaliza -> "Noviembre"
-        }
-
-        String connector = isEs ? " de " : " of ";
-        return date.getDayOfMonth() + connector + monthName + ", " + date.getYear();
-    }
-    private static String capitalize(String s, Locale locale) {
-        if (s == null || s.isEmpty()) return s;
-        return s.substring(0, 1).toUpperCase(locale) + s.substring(1);
     }
 }

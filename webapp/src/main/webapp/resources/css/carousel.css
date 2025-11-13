@@ -111,7 +111,7 @@
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.2s;
-    z-index: 20; /* Asegura que quede arriba */
+    z-index: 100; /* Asegura que quede arriba */
 }
 
 .delete-photo-btn:hover {

@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.ClubLayout;
 import ar.edu.itba.paw.model.MusicalGenre;
 import ar.edu.itba.paw.model.Price;
 import ar.edu.itba.paw.model.Zone;
-import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.form.*;
@@ -78,12 +77,11 @@ public class ProductController {
             model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
             return "clubHandler";
         }
-        if (!productService.canAddProduct(clubService.getClubById(clubId).orElseThrow())) {
+        try{
+            productService.create(clubId, form.getProductName(), form.getDescription(), form.getBasePrice(), form.getProductType(), form.getIsAvailable());
+        } catch (ValidationException e){
             ra.addAttribute("err", "max_products");
-            return "redirect:/clubs/handle?clubId=" + clubId;
         }
-        var club = clubService.getClubById(clubId).orElseThrow();
-        productService.create(club, form.getProductName(), form.getDescription(), form.getBasePrice(), form.getProductType(), form.getIsAvailable());
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
@@ -130,7 +128,7 @@ public class ProductController {
             model.addAttribute("errors", errors);
             model.addAttribute("editEventForm", editEventForm);
             model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
-            var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+            var carouselPhotos = photoService.getCarouselPhotos(clubId);
             var tableLayout = clubLayoutService.getLayoutByClub(clubId);
             String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));

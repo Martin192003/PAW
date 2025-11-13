@@ -23,7 +23,6 @@ import ar.edu.itba.paw.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -93,24 +92,6 @@ public class LoginController {
         return "verifyMailNotice";
     }
 
-    @PostMapping("/verify")
-    public String verifyToken(
-            @Valid @ModelAttribute("verificationForm") VerificationForm form,
-            BindingResult bindingResult,
-            Model model
-    ) {
-        if (bindingResult.hasErrors()) {
-            return "verify";
-        }
-        boolean success = userService.verifyUser(form.getToken());
-        if (success) {
-            model.addAttribute("success", "register.valid.token");
-            return "verifyResult";
-        } else {
-            model.addAttribute("error", "register.invalid.token");
-        }
-        return "verify";
-    }
 
     @GetMapping("/verify-account")
     public String verifyAccountFromEmail(@RequestParam(value = "token", required = false) String token,
@@ -177,7 +158,6 @@ public class LoginController {
                 if (user != null) {
                     String detectedLocale = request.getLocale().toLanguageTag();
                     userService.updateUserLocale(user.getId(), detectedLocale);
-
                     userService.sendReviewRequestsForPastBookings(user);
 
                     mav.setViewName("redirect:/clubs");

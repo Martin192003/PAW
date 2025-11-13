@@ -18,7 +18,7 @@ public interface ClubService {
 
     Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu);
 
-    Club updateClub(Club club);
+    void updateClub(Club club);
 
     List<Club> getClubsByUser(UUID userId);
 
@@ -46,4 +46,6 @@ public interface ClubService {
 
     int countSearchAvailable(String nameLike, Zone location, String musicGenre,
                              String priceRange, Boolean isBar, LocalDate day);
+
+    boolean isUserOwner(UUID clubId, User user);
 }

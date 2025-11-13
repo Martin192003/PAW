@@ -1,12 +1,8 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.*;
-import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
-import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
-import ar.edu.itba.paw.service.ClubService;
-import ar.edu.itba.paw.service.EventService;
+
 import ar.edu.itba.paw.service.PhotoService;
-import ar.edu.itba.paw.service.SecurityService;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.*;
 import org.slf4j.Logger;
@@ -16,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -24,7 +19,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,34 +39,13 @@ public class PhotoController {
                          @RequestParam("file") MultipartFile file,
                          Principal principal,
                          RedirectAttributes redirectAttributes) throws IOException {
-        log.info("Attempting to upload photo for clubId: {}", clubId);
-
-        try {
-            String userEmail = principal != null ? principal.getName() : null;
-            log.info("User email: {}, File size: {}", userEmail, file.getSize());
-
-            //TODO: FIJARSE SI ESTA BIEN ESTO
-            Photo photo = new Photo();
-            photo.setFilename(file.getOriginalFilename());
-            photo.setContentType(file.getContentType());
-            photo.setData(file.getBytes());
-
-            UUID photoId = photoService.uploadPhotoForClub(clubId, userEmail, photo);
-            log.info("Photo uploaded successfully, photoId: {}", photoId);
-            redirectAttributes.addFlashAttribute("success", "photo.upload.success");
-            return "redirect:/clubs/handle?clubId=" + clubId;
-        } catch (IllegalArgumentException e) {
-            log.error("Error uploading photo: {}", e.getMessage());
-            String errorMsg = e.getMessage().contains("empty") ? "photo.upload.empty" :
-                    e.getMessage().contains("User not found") ? "error.user.notfound" :
-                            "photo.upload.error";
-            redirectAttributes.addFlashAttribute("error", errorMsg);
-            return "redirect:/clubs/handle?clubId=" + clubId;
-        } catch (Exception e) {
-            log.error("Unexpected error uploading photo: {}", e.getMessage(), e);
-            redirectAttributes.addFlashAttribute("error", "photo.upload.unexpected");
-            return "redirect:/clubs/handle?clubId=" + clubId;
-        }
+        String userEmail = principal != null ? principal.getName() : null;
+        Photo photo = new Photo();
+        photo.setFilename(file.getOriginalFilename());
+        photo.setContentType(file.getContentType());
+        photo.setData(file.getBytes());
+        photoService.uploadPhotoForClub(clubId, userEmail, photo);
+        return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
     @GetMapping("/photos/{photoId}")
@@ -99,11 +72,13 @@ public class PhotoController {
     @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String addPhotosToGallery(@PathVariable UUID clubId,
                                      @RequestParam("files") MultipartFile[] files,
-                                     RedirectAttributes redirectAttributes, @AuthenticationPrincipal PawUserDetails userDetails) {
+                                     RedirectAttributes redirectAttributes,
+                                     @AuthenticationPrincipal PawUserDetails userDetails) {
         int uploaded = 0;
-        for (MultipartFile file : files) {
-            if (file != null && !file.isEmpty()) {
-                try {
+
+        try {
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
                     photoService.uploadCarousel(
                             clubId,
                             userDetails.getId(),
@@ -112,14 +87,18 @@ public class PhotoController {
                             file.getBytes()
                     );
                     uploaded++;
-                } catch (IOException e) {
-                    // Optionally log or handle error
                 }
             }
-        }
-        if (uploaded > 0) {
-            redirectAttributes.addFlashAttribute("success", "photos.added.successfully");
-        } else {
+
+            if (uploaded > 0) {
+                redirectAttributes.addFlashAttribute("success", "photos.added.successfully");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "photos.upload.error");
+            }
+
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", "photos.upload.max");
+        } catch (IOException e) {
             redirectAttributes.addFlashAttribute("error", "photos.upload.error");
         }
         return "redirect:/clubs/handle?clubId=" + clubId;
@@ -145,26 +124,6 @@ public class PhotoController {
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
-    @PostMapping("/clubs/club/{clubId}/carousel")
-    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
-    public String uploadCarousel(@PathVariable UUID clubId,
-                                 @RequestParam("file") MultipartFile file, @AuthenticationPrincipal PawUserDetails userDetails) throws IOException {
-
-        if (file == null || file.isEmpty()) {
-            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
-        }
-
-        photoService.uploadCarousel(
-                clubId,
-                userDetails.getId(),
-                file.getOriginalFilename(),
-                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
-        );
-
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
     @PostMapping("/clubs/club/{clubId}/photos")
     @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String upload(@PathVariable UUID clubId,
@@ -180,8 +139,6 @@ public class PhotoController {
                               @PathVariable UUID photoId,
                               RedirectAttributes redirectAttributes) {
 
-        // Verifico que el usuario tenga permisos
-        checkLoggedUser(clubId);
 
         boolean deleted = photoService.delete(photoId);
 

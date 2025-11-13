@@ -26,23 +26,6 @@ public class SecurityServiceImpl implements SecurityService{
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<String> getLoggedUserEmail() {
-        final SecurityContext securityContext = SecurityContextHolder.getContext();
-        if(securityContext.getAuthentication() != null && securityContext.getAuthentication().isAuthenticated()) {
-            Object principal = securityContext.getAuthentication().getPrincipal();
-            if (principal instanceof User) {
-                return Optional.of(((User) principal).getUsername());
-            }
-            else if(principal instanceof String) {
-                return Optional.of((String) principal);
-            }
-
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Optional<User> getLoggedUser() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {

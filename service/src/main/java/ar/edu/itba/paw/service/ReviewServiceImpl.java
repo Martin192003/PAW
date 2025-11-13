@@ -12,7 +12,6 @@ import ar.edu.itba.paw.persistence.ReviewsDao;
 import ar.edu.itba.paw.persistence.UserDao;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -93,7 +92,6 @@ public class ReviewServiceImpl implements ReviewService {
             }
         }
 
-        // Notificar al dueño del club si corresponde
         if (hadTable) {
             final UUID ownerId = club.getContactInfo() != null ? club.getContactInfo().getId() : null;
             if (ownerId != null) {
@@ -126,7 +124,7 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewsDao.countSearch(null, clubId);
     }
 
-
+    //TODO: no se usa sacar (?)
     private boolean hasFromTableGuestField(Review review) {
         try {
             review.getClass().getDeclaredField("fromTableGuest");
@@ -153,7 +151,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
-    public boolean deleteReview(UUID reviewId) {
+    public void deleteReview(UUID reviewId) {
 
         final Review review = reviewsDao.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFounException("No se encontro la review"));
@@ -178,7 +176,6 @@ public class ReviewServiceImpl implements ReviewService {
             recalcClubRating(clubId);
         }
 
-        return deleted && photoDeleted;
     }
 
     /** Recalcula rating y cantidad desde DB y persiste solo esas columnas. */
@@ -201,5 +198,14 @@ public class ReviewServiceImpl implements ReviewService {
 
     public int countByClubPaginated(UUID clubId) {
         return reviewsDao.countByClubPaginated(clubId);
+    }
+
+    @Override
+    public int getCorrectedOffset(int totalCount, int limit, int offset) {
+        if (offset >= totalCount && totalCount > 0) {
+            int lastPage = (int) Math.floor((totalCount - 1) / (double) limit);
+            return lastPage * limit;
+        }
+        return offset;
     }
 }

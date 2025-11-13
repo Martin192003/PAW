@@ -16,7 +16,6 @@ public interface ProductsDao {
 
     boolean delete(UUID id);
     Optional<Product> findById(UUID id);
-    Optional<Product> findByName(String name);
     List<Product> findByClub(Club club);
     List<Product> findByClubID(UUID clubId);
 }

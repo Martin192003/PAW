@@ -220,16 +220,6 @@ public class EventJpaDao implements EventDao {
     }
 
     @Override
-    public List<UUID> findEventPhotoIdsByClub(UUID clubId) {
-        return em.createQuery(
-                        "SELECT e.photoId FROM Event e WHERE e.clubId = :clubId AND e.photoId IS NOT NULL",
-                        UUID.class
-                )
-                .setParameter("clubId", clubId)
-                .getResultList();
-    }
-
-    @Override
     public void attachPhoto(UUID eventId, UUID photoId) {
         Event ev = em.find(Event.class, eventId);
         if (ev == null) throw new IllegalArgumentException("Evento no encontrado");
@@ -243,13 +233,13 @@ public class EventJpaDao implements EventDao {
         final int offset = Math.max(0, page) * limit;
 
         final String idSql = """
-        SELECT CAST(e.eventid AS TEXT) AS id_text
-        FROM event e
-        WHERE e.clubid = :clubId
-          AND e.date >= :today
-        ORDER BY e.date ASC, e.eventid ASC
-        LIMIT :limit OFFSET :offset
-    """;
+                    SELECT CAST(e.eventid AS TEXT) AS id_text
+                    FROM event e
+                    WHERE e.clubid = :clubId
+                      AND e.date >= :today
+                    ORDER BY e.date ASC, e.eventid ASC
+                    LIMIT :limit OFFSET :offset
+                """;
 
         List<String> idTexts = em.createNativeQuery(idSql)
                 .unwrap(org.hibernate.query.NativeQuery.class)
@@ -264,10 +254,10 @@ public class EventJpaDao implements EventDao {
         List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
 
         return em.createQuery("""
-        SELECT e FROM Event e
-        WHERE e.eventId IN :ids
-        ORDER BY e.date ASC, e.eventId ASC
-    """, Event.class)
+                            SELECT e FROM Event e
+                            WHERE e.eventId IN :ids
+                            ORDER BY e.date ASC, e.eventId ASC
+                        """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
@@ -279,13 +269,13 @@ public class EventJpaDao implements EventDao {
         final int offset = Math.max(0, page) * limit;
 
         final String idSql = """
-        SELECT CAST(e.eventid AS TEXT) AS id_text
-        FROM event e
-        WHERE e.clubid = :clubId
-          AND e.date < :today
-        ORDER BY e.date DESC, e.eventid DESC
-        LIMIT :limit OFFSET :offset
-    """;
+                    SELECT CAST(e.eventid AS TEXT) AS id_text
+                    FROM event e
+                    WHERE e.clubid = :clubId
+                      AND e.date < :today
+                    ORDER BY e.date DESC, e.eventid DESC
+                    LIMIT :limit OFFSET :offset
+                """;
 
         List<String> idTexts = em.createNativeQuery(idSql)
                 .unwrap(org.hibernate.query.NativeQuery.class)
@@ -301,9 +291,9 @@ public class EventJpaDao implements EventDao {
 
         return em.createQuery("""
         SELECT e FROM Event e
-        WHERE e.eventId IN :ids
-        ORDER BY e.date DESC, e.eventId DESC
-    """, Event.class)
+                            WHERE e.eventId IN :ids
+                            ORDER BY e.date DESC, e.eventId DESC
+                        """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
@@ -312,11 +302,11 @@ public class EventJpaDao implements EventDao {
     @Override
     public int countUpcomingByClub(UUID clubId) {
         return em.createQuery("""
-        SELECT COUNT(e)
-        FROM Event e
-        WHERE e.clubId = :clubId
-          AND e.date >= :today
-    """, Long.class)
+                            SELECT COUNT(e)
+                            FROM Event e
+                            WHERE e.clubId = :clubId
+                              AND e.date >= :today
+                        """, Long.class)
                 .setParameter("clubId", clubId)
                 .setParameter("today", LocalDate.now())
                 .getSingleResult()

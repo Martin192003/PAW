@@ -15,6 +15,9 @@ public class PhotoJpaDao implements PhotoDao {
     @PersistenceContext
     private EntityManager em;
 
+    private final int MAX_LIMIT_CAROUSEL = 20;
+    private final int OFFSET_CAROUSEL = 0;
+
     @Override
     public UUID create(UUID clubId, UUID postedBy, String filename, String contentType, byte[] data, PhotoType photoType) {
         Photo p = new Photo();
@@ -128,13 +131,13 @@ public class PhotoJpaDao implements PhotoDao {
     }
 
     @Override
-    public List<Photo> findCarouselByClubId(UUID clubId, int limit, int offset) {
+    public List<Photo> findCarouselByClubId(UUID clubId) {
         return em.createQuery(
                         "SELECT p FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type ORDER BY p.createdAt DESC", Photo.class)
                 .setParameter("clubId", clubId)
                 .setParameter("type", PhotoType.CAROUSEL)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
+                .setFirstResult(OFFSET_CAROUSEL)
+                .setMaxResults(MAX_LIMIT_CAROUSEL)
                 .getResultList();
     }
 
@@ -220,16 +223,6 @@ public class PhotoJpaDao implements PhotoDao {
         return photos;
     }
 
-    @Override
-    public Optional<Photo> findByReviewId(UUID reviewId) {
-        List<Photo> list = em.createQuery(
-                "SELECT p FROM Photo p WHERE p.reviewId = :rid ORDER BY p.createdAt DESC",
-                Photo.class)
-            .setParameter("rid", reviewId)
-            .setMaxResults(1)
-            .getResultList();
-        return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
-    }
 
     @Override
     public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset) {
@@ -273,5 +266,13 @@ public class PhotoJpaDao implements PhotoDao {
                         LinkedHashMap::new                           // preserve order (optional)
                 ));
         return covers;
+    }
+
+    public long countByClubIdAndType(UUID clubId, PhotoType type) {
+        return em.createQuery(
+                        "SELECT COUNT(p) FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type", Long.class)
+                .setParameter("clubId", clubId)
+                .setParameter("type", type)
+                .getSingleResult();
     }
 }

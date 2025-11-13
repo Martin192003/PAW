@@ -20,8 +20,8 @@ public interface ReviewService {
     Optional<Review> getUserReviewForClub(UUID userId, UUID clubId);
     List<Review> listByUser(UUID userId, String sort, int limit, int offset);
     int countByUser(UUID userId);
-    boolean deleteReview(UUID reviewId);
+    void deleteReview(UUID reviewId);
     List<Review> findByClubPaginated(UUID clubId, int page, int size);
     int countByClubPaginated(UUID clubId);
-
+    int getCorrectedOffset(int totalCount, int limit, int offset);
 }

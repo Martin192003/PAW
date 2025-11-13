@@ -130,7 +130,7 @@ body {
     display: flex;
     justify-content: flex-start;
     align-items: stretch;
-    width: 100%;
+    width: 80%;
     margin: 16px 0 10px;
     gap: 0;
     max-width: 100%;
@@ -159,8 +159,8 @@ body {
 /* ---------- INPUTS ---------- */
 .filter-item {
     /* make controls flexible so they can shrink and wrap rather than forcing a horizontal scroll */
-    flex: 1 1 180px; /* grow, shrink, base 180px */
-    min-width: 120px;
+    flex: 1 1 140px; /* grow, shrink, base 180px */
+    min-width: 80px;
     max-width: 420px;
     border: none;
     font-size: 12px;
@@ -172,7 +172,7 @@ body {
     padding: 0 8px;
     position: relative;
 }
-.filter-item.filter-name { flex: 1 1 200px; max-width: 360px; }
+.filter-item.filter-name { flex: 1 1 100px; max-width: 360px; }
 /* Make status select smaller than other controls */
 .filter-item.filter-status {
     flex: 0 0 100px; /* compact status select */
@@ -245,7 +245,6 @@ input[type="date"].filter-item::-webkit-datetime-edit-month-field,
 input[type="date"].filter-item::-webkit-datetime-edit-day-field { color: #fff; opacity: 0.9; }
 input[type="date"].filter-item::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .85; }
 
-/* ---------- BOTÓN FILTRAR ---------- */
 .btn.btn-filter {
     background: #9c27b0;
     border: none;
@@ -257,24 +256,23 @@ input[type="date"].filter-item::-webkit-calendar-picker-indicator { filter: inve
     cursor: pointer;
     letter-spacing: 1px;
     transition: background 0.2s;
-
-    flex: 0 0 120px;
-    height: 40px; /* match inputs so it fits exactly */
+    flex: 0 0 80px;
+    height: 40px;
     padding: 0 10px;
     font-size: 12px;
     align-self: center;
-
-    margin-left: auto !important; /* consume remaining space and push to end */
+    margin-left: auto !important;
     margin-right: 0;
-    border-radius: 0 8px 8px 0;    /* rounded on the button's right side */
+    border-radius: 0 8px 8px 0;
     box-shadow: none;
 }
+
 .btn.btn-filter:hover { background: #d500f9; }
 
-/* Reset (fuera de la barra, opcional) */
 .btn-reset {
-    display: none; /* si lo usás, podés activarlo según JS */
+    display: none;
     align-items: center;
+    margin-bottom: 16px;
     gap: 6px;
     white-space: nowrap;
     background: none;
@@ -322,7 +320,7 @@ input[type="date"].filter-item::-webkit-calendar-picker-indicator { filter: inve
 @media (max-width: 900px) {
     /* stack fields vertically on small screens and make labels appear above inputs */
     .filter-bar { flex-wrap: wrap; width: calc(100vw - 24px); max-width: calc(100vw - 24px); padding: 8px; }
-    .filter-item { flex: 1 1 100%; min-width: 0; max-width: 100%; margin: 6px 0; }
+    .filter-item { flex: 1 1 90%; min-width: 0; max-width: 80%; margin: 6px 0; }
     .btn.btn-filter { flex: 1 1 100%; margin-left: 0; height: 44px; }
 
     /* make ID label flow above the input on mobile to avoid consuming horizontal space */

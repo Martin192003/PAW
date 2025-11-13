@@ -41,7 +41,7 @@ public class EventServiceImpl implements EventService {
 
         Event ev = eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, null);
 
-        if (image != null) {
+        if (image.getPhotoId() != null) {
             try {
                 User loggedUser = securityService.getVerifiedLoggedUser();
                 UUID photoId = photoService.uploadEventPhoto(
@@ -67,6 +67,7 @@ public class EventServiceImpl implements EventService {
         validateName(eventName);
         validateDate(date);
 
+
         final Event current = eventDao.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
 
@@ -74,7 +75,7 @@ public class EventServiceImpl implements EventService {
             throw new InvalidClubException("Event does not belong to the provided club");
 
         UUID photoId = current.getPhotoId();
-        if (image != null) {
+        if (image.getPhotoId() != null) {
                 User loggedUser = securityService.getVerifiedLoggedUser();
                 photoId = photoService.upload(
                         clubId,
@@ -184,12 +185,6 @@ public class EventServiceImpl implements EventService {
     }
     public boolean isEventPhoto(UUID clubId, UUID photoId) {
         return eventDao.findByPhotoIdAndClub(photoId, clubId).isPresent();
-    }
-    @Override
-    @Transactional(readOnly = true)
-    public Set<UUID> getEventPhotoIds(UUID clubId) {
-        List<UUID> ids = eventDao.findEventPhotoIdsByClub(clubId);
-        return new HashSet<>(ids);
     }
 
     @Override

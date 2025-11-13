@@ -170,6 +170,7 @@ public class ProfileController {
 
         try {
             User updatedUser = userService.updateUserField(user.getId(), field, value);
+            updateAuthenticationContext(updatedUser);
 
             if (requiresAuthUpdate) {
                 updateAuthenticationContext(updatedUser);

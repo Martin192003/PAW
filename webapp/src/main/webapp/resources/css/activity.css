@@ -1,7 +1,9 @@
 html, body {
+    margin-top: 40px;
     height: auto;
     min-height: 100vh;
     overflow-y: auto;
+    margin-bottom: 20px;
 }
 .club-image-container {
     width: 100%;
@@ -81,7 +83,7 @@ html, body {
 .panel-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 80px 24px 0 24px;
+    padding: 70px 24px 0 24px;
     width: 100%;
     box-sizing: border-box;
 }
@@ -91,7 +93,7 @@ html, body {
     box-sizing: border-box;
 }
 .club-info > div {
-    width: 98%;
+    width: 100%;
 }
 .add-product-bar .btn-edit-small {
     margin-right: 12px;
@@ -514,7 +516,6 @@ html, body {
 
 .layout-section {
     margin: 10px 0;
-    padding: 10px 12px;
     border-radius: 6px;
     color: #fff;
 }
@@ -531,7 +532,7 @@ html, body {
     color: #fff;
 }
 .layout-section .table-layout-container {
-    text-align: center;
+    text-align: start;
     margin-bottom: 12px;
 }
 

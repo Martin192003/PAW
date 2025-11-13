@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ClubLayoutService {
-    UUID uploadLayout(UUID clubId, String userEmail, Photo file);
+    void uploadLayout(UUID clubId, String userEmail, Photo file);
     Optional<ClubLayout> getLayoutByClub(UUID clubId);
-    boolean deleteLayout(UUID clubId);
 }

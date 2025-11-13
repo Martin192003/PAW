@@ -13,14 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.*;
+import java.time.format.TextStyle;
 import java.util.*;
 
 @Service
-@Transactional
 public class BookingServiceImpl implements BookingService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BookingServiceImpl.class);
@@ -53,6 +50,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public Booking create(final User user,
                           final UUID tableId,
                           final OffsetDateTime bookingStart,
@@ -99,6 +97,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public Booking update(UUID bookingId,
                           User user,
                           UUID tableId,
@@ -134,6 +133,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public Booking updateStatus(UUID bookingId, Status newStatus) {
         final Booking current = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
@@ -167,6 +167,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public void cancel(UUID bookingId) {
         final Booking existing = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
@@ -227,6 +228,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public void cancelByUser(UUID bookingId, UUID userId) {
         final Booking existing = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
@@ -288,6 +290,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public void confirm(UUID bookingId) {
         Booking b = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException("booking.notfound"));
@@ -405,14 +408,26 @@ public class BookingServiceImpl implements BookingService {
         return bookingDao.countByClubIds(target, bookingId, status, bookingDate, hasReceipt);
     }
 
+    @Override
+    public String getDateStart(Booking booking) {
+        return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
+    }
 
     @Override
+    public String getDateEnd(Booking booking) {
+        return formatDateEsEn(booking.getBookingEnd().atZoneSameInstant(ZoneId.systemDefault()));
+    }
+
+
+    @Override
+    @Transactional
     public void delete(UUID bookingId) {
         bookingDao.delete(bookingId);
     }
 
 
     @Override
+    @Transactional
     public Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username, boolean fromEvent) {
         var tableOpt = tableService.findById(tableId);
         if (tableOpt.isEmpty()) throw new TableNotFoundException(tableId);
@@ -481,6 +496,26 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
+
+    @Override
+    public User getBookingUser(Booking booking) {
+        return userService.findById(booking.getUser().getId()).orElse(null);
+    }
+
+    @Override
+    public ClubTable getBookingTable(Booking booking) {
+        return tableService.findById(booking.getTableId()).orElse(null);
+    }
+
+    @Override
+    public Club getBookingClub(Booking booking) {
+        ClubTable table = getBookingTable(booking);
+        if (table == null) {
+            return null;
+        }
+        return clubService.getClubById(table.getClubId()).orElse(null);
+    }
+
     private void validateStatusTransition(Status from, Status to) {
         if (from == to) return;
 
@@ -530,5 +565,26 @@ public class BookingServiceImpl implements BookingService {
         if (overlaps) {
             throw new TableAlreadyBookedException();
         }
+    }
+
+    private static String formatDateEsEn(ZonedDateTime zdt) {
+        var date = zdt.toLocalDate();
+        if (date == null) return "";
+        Locale locale = LocaleContextHolder.getLocale();
+        boolean isEs = "es".equalsIgnoreCase(locale.getLanguage());
+
+        Month m = date.getMonth();
+        String monthName = m.getDisplayName(TextStyle.FULL, locale);
+        if (isEs) {
+            monthName = capitalize(monthName, locale); // Java devuelve "noviembre"; se capitaliza -> "Noviembre"
+        }
+
+        String connector = isEs ? " de " : " of ";
+        return date.getDayOfMonth() + connector + monthName + ", " + date.getYear();
+    }
+
+    private static String capitalize(String s, Locale locale) {
+        if (s == null || s.isEmpty()) return s;
+        return s.substring(0, 1).toUpperCase(locale) + s.substring(1);
     }
 }

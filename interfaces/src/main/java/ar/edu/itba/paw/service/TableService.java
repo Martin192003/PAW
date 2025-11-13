@@ -30,5 +30,9 @@ public interface TableService {
 
     OffsetDateTime windowStart(LocalDate date, ZoneId tz);
     OffsetDateTime windowEnd(LocalDate date, ZoneId tz);
+    LocalDate getNextAllowedDate(LocalDate from);
+    List<LocalDate> getAllowedBookingDates(LocalDate startDate, int numberOfDays);
+    LocalDate resolveSelectedDate(LocalDate date, boolean fromEvent);
+    List<String> getAllowedDateStrings(LocalDate baseDate, int days);
 
 }

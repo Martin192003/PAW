@@ -12,5 +12,6 @@ public interface ReceiptService {
     boolean deleteByBooking(UUID bookingId);
     void uploadForBooking(UUID bookingId, UUID userId, String filename, String contentType, byte[] data);
     boolean deleteByBookingForUser(UUID bookingId, UUID userId);
+    Optional<Receipt> getReceiptForBooking(UUID bookingId);
 
 }

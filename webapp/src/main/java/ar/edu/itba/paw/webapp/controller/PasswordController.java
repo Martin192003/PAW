@@ -45,12 +45,8 @@ public class PasswordController {
         if (bindingResult.hasErrors()) {
             return "forgotPasswordResult";
         }
-        boolean success = userService.requestPasswordReset(form.getEmail());
-        if (success) {
-            model.addAttribute("success", "forgot.password.sent");
-        } else {
-            model.addAttribute("success", "forgot.password.sent");
-        }
+        userService.requestPasswordReset(form.getEmail());
+        model.addAttribute("success", "forgot.password.sent");
         return "forgotPasswordResult";
     }
 
@@ -73,13 +69,6 @@ public class PasswordController {
             return "resetPasswordResult";
         }
 
-        User user = userService.findByResetPasswordToken(token);
-        if (user == null) {
-            model.addAttribute("error", "verify.error");
-            model.addAttribute("token", token);
-            return "resetPasswordResult";
-        }
-
         boolean success = userService.resetPassword(token, form.getNewPassword());
         if (!success) {
             model.addAttribute("error", "verify.error");
@@ -87,6 +76,7 @@ public class PasswordController {
             return "resetPasswordResult";
         }
 
+        User user = userService.findByResetPasswordToken(token);
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 user.getUsername(),
                 null,
