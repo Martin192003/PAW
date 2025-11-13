@@ -41,7 +41,7 @@ public class EventServiceImpl implements EventService {
 
         Event ev = eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, null);
 
-        if (image.getPhotoId() != null) {
+        if (image != null && image.getData() != null && image.getData().length > 0) {
             try {
                 User loggedUser = securityService.getVerifiedLoggedUser();
                 UUID photoId = photoService.uploadEventPhoto(
@@ -53,7 +53,7 @@ public class EventServiceImpl implements EventService {
                 eventDao.attachPhoto(ev.getEventId(), photoId);
                 ev.setPhotoId(photoId);
             } catch (IOException e) {
-                throw new RuntimeException("Error al leer la imagen subida del evento", e);
+                throw new RuntimeException("Error collecting event image", e);
             }
         }
 
@@ -67,7 +67,6 @@ public class EventServiceImpl implements EventService {
         validateName(eventName);
         validateDate(date);
 
-
         final Event current = eventDao.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
 
@@ -75,15 +74,19 @@ public class EventServiceImpl implements EventService {
             throw new InvalidClubException("Event does not belong to the provided club");
 
         UUID photoId = current.getPhotoId();
-        if (image.getPhotoId() != null) {
+
+        if (image != null && image.getData() != null && image.getData().length > 0) {
+            try {
                 User loggedUser = securityService.getVerifiedLoggedUser();
-                photoId = photoService.upload(
+                photoId = photoService.uploadEventPhoto(
                         clubId,
+                        current.getEventId(),
                         loggedUser.getId(),
-                        image.getFilename(),
-                        image.getContentType(),
-                        image.getData()
+                        image
                 );
+            } catch (IOException e) {
+                throw new RuntimeException("Error collecting event image", e);
+            }
         }
 
         final Event updated = eventDao.update(eventId, clubId, eventName.trim(), trimOrNull(description), date, photoId);
@@ -92,6 +95,7 @@ public class EventServiceImpl implements EventService {
 
         return updated;
     }
+
 
     @Override
     @Transactional

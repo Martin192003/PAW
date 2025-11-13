@@ -223,34 +223,3 @@ CREATE TABLE IF NOT EXISTS club_layouts (
 CREATE INDEX IF NOT EXISTS idx_club_layouts_club_id
     ON club_layouts (club_id);
 
------------------------------------------------------------------------
--- TRIGGER HSQL PARA booking_items.line_total
--- (equivalente lógico al plpgsql de PostgreSQL)
------------------------------------------------------------------------
-CREATE TRIGGER trg_booking_items_line_total
-    BEFORE INSERT OR UPDATE OF quantity, unit_price
-    ON booking_items
-    REFERENCING NEW ROW AS newrow
-    FOR EACH ROW
-BEGIN ATOMIC
-        IF newrow.quantity IS NULL OR newrow.unit_price IS NULL THEN
-            SIGNAL SQLSTATE '45000'
-SET MESSAGE_TEXT = 'quantity y unit_price no pueden ser NULL';
-END IF;
-
-IF newrow.quantity <= 0 THEN
-            SIGNAL SQLSTATE '45000'
-SET MESSAGE_TEXT = 'quantity debe ser > 0';
-END IF;
-
-IF newrow.unit_price < 0 THEN
-            SIGNAL SQLSTATE '45000'
-SET MESSAGE_TEXT = 'unit_price debe ser >= 0';
-END IF;
-
-SET newrow.line_total = ROUND(newrow.unit_price * newrow.quantity, 2);
-END;
-
--- Normaliza datos ya existentes (por si cargás fixtures antes del trigger)
-UPDATE booking_items
-SET line_total = ROUND(unit_price * quantity, 2);
