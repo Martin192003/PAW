@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Service
 public class PhotoServiceImpl implements PhotoService {
 
-    private static final long MAX_BYTES = 5L * 1024 * 1024; // 5 MB (ajustá si querés)
+    private static final long MAX_BYTES = 5L * 1024 * 1024; // 5 MB
     private static final Set<String> ALLOWED_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp"
     );
@@ -186,7 +186,6 @@ public class PhotoServiceImpl implements PhotoService {
         return photos;
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public List<Photo> getClubPhotos(UUID clubId, int limit, int offset) {
@@ -210,7 +209,6 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional
     public UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, Photo file) {
-        // Validaciones básicas
         Objects.requireNonNull(clubId,  "clubId no puede ser null");
         Objects.requireNonNull(eventId, "eventId no puede ser null");
         Objects.requireNonNull(userId,  "userId no puede ser null");
@@ -222,7 +220,6 @@ public class PhotoServiceImpl implements PhotoService {
         final String filename    = file.getFilename();
         final String contentType = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
         final byte[]  data       = file.getData();
-
 
         return photoDao.createEventPhoto(clubId, eventId, userId, filename, contentType, data);
     }

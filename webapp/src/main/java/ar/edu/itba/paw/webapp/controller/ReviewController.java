@@ -62,7 +62,7 @@ public class ReviewController {
             return "redirect:/clubs/" + clubId + "#reviews";
         }
 
-        //TODO: FIJARSE SI ESTA BIEN ESTO
+        //TODO: FIJARSE SI ESTA BIEN ESTO --> creo q si
         Photo image = new Photo();
         image.setFilename(photo.getOriginalFilename());
         image.setContentType(photo.getContentType());

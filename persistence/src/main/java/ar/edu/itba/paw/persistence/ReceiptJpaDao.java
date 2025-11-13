@@ -50,6 +50,7 @@ public class ReceiptJpaDao implements ReceiptDao {
     public Optional<Receipt> findById(UUID receiptId) {
         return Optional.ofNullable(em.find(Receipt.class, receiptId));
     }
+
     @Override
     public Optional<Receipt> findByIdWithData(UUID receiptId) {
         return Optional.ofNullable(em.find(Receipt.class, receiptId));

@@ -93,7 +93,6 @@ public class ReviewServiceImpl implements ReviewService {
             }
         }
 
-        // Notificar al dueño del club si corresponde
         if (hadTable) {
             final UUID ownerId = club.getContactInfo() != null ? club.getContactInfo().getId() : null;
             if (ownerId != null) {
@@ -126,7 +125,7 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewsDao.countSearch(null, clubId);
     }
 
-
+    //TODO: no se usa sacar (?)
     private boolean hasFromTableGuestField(Review review) {
         try {
             review.getClass().getDeclaredField("fromTableGuest");
@@ -201,5 +200,14 @@ public class ReviewServiceImpl implements ReviewService {
 
     public int countByClubPaginated(UUID clubId) {
         return reviewsDao.countByClubPaginated(clubId);
+    }
+
+    @Override
+    public int getCorrectedOffset(int totalCount, int limit, int offset) {
+        if (offset >= totalCount && totalCount > 0) {
+            int lastPage = (int) Math.floor((totalCount - 1) / (double) limit);
+            return lastPage * limit;
+        }
+        return offset;
     }
 }

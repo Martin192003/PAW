@@ -41,7 +41,7 @@ public class EventServiceImpl implements EventService {
 
         Event ev = eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, null);
 
-        if (image != null) {
+        if (image.getPhotoId() != null) {
             try {
                 User loggedUser = securityService.getVerifiedLoggedUser();
                 UUID photoId = photoService.uploadEventPhoto(
@@ -75,7 +75,7 @@ public class EventServiceImpl implements EventService {
             throw new InvalidClubException("Event does not belong to the provided club");
 
         UUID photoId = current.getPhotoId();
-        if (image != null) {
+        if (image.getPhotoId() != null) {
                 User loggedUser = securityService.getVerifiedLoggedUser();
                 photoId = photoService.upload(
                         clubId,

@@ -2,6 +2,7 @@ html, body {
     height: auto;
     min-height: 100vh;
     overflow-y: auto;
+    margin-bottom: 20px;
 }
 .club-image-container {
     width: 100%;
@@ -91,7 +92,7 @@ html, body {
     box-sizing: border-box;
 }
 .club-info > div {
-    width: 98%;
+    width: 100%;
 }
 .add-product-bar .btn-edit-small {
     margin-right: 12px;

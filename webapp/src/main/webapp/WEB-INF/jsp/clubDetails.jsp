@@ -358,9 +358,10 @@
                                         <c:if test="${not empty review.photoId}">
                                             <img class="review-thumb"
                                                  src="<c:url value='/photos/${review.photoId}'/>"
-                                                 alt="Foto de reseña de ${review.user.username}"
                                                  loading="lazy"
-                                                 onclick="openLightbox(this.src)" />
+                                                 onclick="openLightbox(this.src)"
+                                                 onerror="this.style.display='none';"
+                                                 alt="" />
                                         </c:if>
                                     </div>
                                 </li>
