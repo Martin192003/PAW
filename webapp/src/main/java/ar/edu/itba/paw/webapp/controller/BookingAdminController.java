@@ -240,8 +240,8 @@ public class BookingAdminController {
         model.addAttribute("clubName", clubName);
         model.addAttribute("clubCbu", clubCbu);
 
-        model.addAttribute("bookingStartLocal", bookingService.formatDateStart(booking));
-        model.addAttribute("bookingEndLocal", bookingService.formatDateEnd(booking));
+        model.addAttribute("bookingStartLocal", bookingService.getDateStart(booking));
+        model.addAttribute("bookingEndLocal", bookingService.getDateEnd(booking));
 
         if (error != null && !error.isEmpty()) {
             model.addAttribute("errorKey", error);

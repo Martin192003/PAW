@@ -516,7 +516,6 @@ html, body {
 
 .layout-section {
     margin: 10px 0;
-    padding: 10px 12px;
     border-radius: 6px;
     color: #fff;
 }
@@ -533,7 +532,7 @@ html, body {
     color: #fff;
 }
 .layout-section .table-layout-container {
-    text-align: center;
+    text-align: start;
     margin-bottom: 12px;
 }
 

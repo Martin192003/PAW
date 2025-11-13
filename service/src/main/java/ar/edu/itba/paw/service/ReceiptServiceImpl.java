@@ -186,6 +186,14 @@ public class ReceiptServiceImpl implements ReceiptService {
         return true;
     }
 
+    @Override
+    @Transactional
+    public Optional<Receipt> getReceiptForBooking(UUID bookingId) {
+        return findByBooking(bookingId)
+                .flatMap(meta -> getWithId(meta.getReceiptId())
+                        .or(() -> Optional.of(meta)));
+    }
+
 
 
 }

@@ -132,9 +132,19 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h2>
             <div>
-                <button type="button" class="btn btn-success" onclick="openAddPhotosModal()">
-                    <i class="fa-solid fa-plus"></i> <spring:message code="button.addPhotos" text="Agregar Fotos"/>
+                <c:set var="photoCount" value="${fn:length(carouselPhotos)}" />
+
+                <button type="button"
+                        class="btn btn-success"
+                        onclick="openAddPhotosModal()"
+                        <c:if test="${photoCount >= 20}">disabled</c:if>>
+                    <i class="fa-solid fa-plus"></i>
+                    <spring:message code="button.addPhotos" text="Agregar Fotos"/>
                 </button>
+
+                <c:if test="${photoCount >= 20}">
+                    <small style="color: red;"><spring:message code="photos.upload.max" text="Max de fotos"/></small>
+                </c:if>
             </div>
         </div>
 
@@ -1349,7 +1359,6 @@
         document.getElementById("deletePhotoId").value = "";
         document.getElementById("deletePhotoModal").style.display = "none";
     }
-
 </script>
 </body>
 </html>

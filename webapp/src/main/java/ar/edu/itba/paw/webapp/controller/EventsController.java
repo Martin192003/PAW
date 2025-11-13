@@ -189,7 +189,7 @@ public class EventsController {
         model.addAttribute("zones", Zone.values());
         model.addAttribute("genres", MusicalGenre.values());
         model.addAttribute("prices", Price.values());
-        var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+        var carouselPhotos = photoService.getCarouselPhotos(clubId);
         var tableLayout = clubLayoutService.getLayoutByClub(clubId);
         String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
         model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));

@@ -66,6 +66,11 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional
     public void uploadCarousel(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
+        long existingPhotos = photoDao.countByClubIdAndType(clubId, PhotoType.CAROUSEL);
+
+        if (existingPhotos >= 20) {
+            throw new IllegalStateException("No se pueden subir más de 20 fotos al club.");
+        }
         Photo photo = new Photo();
         photo.setClubId(clubId);
         photo.setPostedBy(userId);
@@ -174,8 +179,8 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Photo> getCarouselPhotos(UUID clubId, int limit, int offset) {
-        List<Photo> photos = photoDao.findCarouselByClubId(clubId, limit, offset);
+    public List<Photo> getCarouselPhotos(UUID clubId) {
+        List<Photo> photos = photoDao.findCarouselByClubId(clubId);
         System.out.println("getCarouselPhotos for clubId " + clubId + ": " +
                 photos.stream().map(p -> p.getUrl() + " [type: " + p.getPhotoType() + "]").toList());
         return photos;
@@ -186,7 +191,7 @@ public class PhotoServiceImpl implements PhotoService {
     public List<Photo> getClubPhotos(UUID clubId, int limit, int offset) {
         List<Photo> result = new ArrayList<>();
         photoDao.findCoverByClubId(clubId).ifPresent(result::add);
-        result.addAll(photoDao.findCarouselByClubId(clubId, limit, offset));
+        result.addAll(photoDao.findCarouselByClubId(clubId));
         return result;
     }
 

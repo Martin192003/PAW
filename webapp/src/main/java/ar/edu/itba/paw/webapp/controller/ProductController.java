@@ -128,7 +128,7 @@ public class ProductController {
             model.addAttribute("errors", errors);
             model.addAttribute("editEventForm", editEventForm);
             model.addAttribute("events", eventService.listByClub(clubId, 0, 20));
-            var carouselPhotos = photoService.getCarouselPhotos(clubId, 10, 0);
+            var carouselPhotos = photoService.getCarouselPhotos(clubId);
             var tableLayout = clubLayoutService.getLayoutByClub(clubId);
             String tableLayoutUrl = tableLayout.map(ClubLayout::getUrl).orElse(null);
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));

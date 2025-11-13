@@ -72,11 +72,13 @@ public class PhotoController {
     @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String addPhotosToGallery(@PathVariable UUID clubId,
                                      @RequestParam("files") MultipartFile[] files,
-                                     RedirectAttributes redirectAttributes, @AuthenticationPrincipal PawUserDetails userDetails) {
+                                     RedirectAttributes redirectAttributes,
+                                     @AuthenticationPrincipal PawUserDetails userDetails) {
         int uploaded = 0;
-        for (MultipartFile file : files) {
-            if (file != null && !file.isEmpty()) {
-                try {
+
+        try {
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
                     photoService.uploadCarousel(
                             clubId,
                             userDetails.getId(),
@@ -85,14 +87,18 @@ public class PhotoController {
                             file.getBytes()
                     );
                     uploaded++;
-                } catch (IOException e) {
-                    log.error("Failed to upload photo to gallery for club {}: {}", clubId, e.getMessage());
                 }
             }
-        }
-        if (uploaded > 0) {
-            redirectAttributes.addFlashAttribute("success", "photos.added.successfully");
-        } else {
+
+            if (uploaded > 0) {
+                redirectAttributes.addFlashAttribute("success", "photos.added.successfully");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "photos.upload.error");
+            }
+
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", "photos.upload.max");
+        } catch (IOException e) {
             redirectAttributes.addFlashAttribute("error", "photos.upload.error");
         }
         return "redirect:/clubs/handle?clubId=" + clubId;
