@@ -120,8 +120,6 @@ public class ProductsJpaDao implements ProductsDao {
     @Override
     public List<Product> findByClubID(final UUID clubId) {
         Objects.requireNonNull(clubId, "clubId is required");
-
-        // 1) IDs del club
         final String idSql = """
         SELECT CAST(p.product_id AS TEXT) AS id_text
         FROM products p
