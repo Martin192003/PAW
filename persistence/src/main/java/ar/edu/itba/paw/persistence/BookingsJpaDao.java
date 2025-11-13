@@ -80,7 +80,7 @@ public class BookingsJpaDao implements BookingDao {
         if (b == null) return Optional.empty();
         b.setStatus(newStatus);
         return Optional.of(b);
-    }
+     }
 
     @Override
     public List<Booking> findByUser(UUID userId) {
@@ -343,20 +343,19 @@ public class BookingsJpaDao implements BookingDao {
     @Override
     public boolean existsPastConfirmedByUserAndClub(UUID userId, UUID clubId, OffsetDateTime now) {
         final Number oneOrZero = em.createNativeQuery("""
-      SELECT 1
-      FROM bookings b
-      JOIN club_tables t ON t.table_id = b.table_id
-      WHERE b.user_id = :uid
-        AND t.club_id = :cid
-        AND b.status = :confirmed
-        AND b.booking_end < :now
-      LIMIT 1
-      """)
+                        SELECT 1
+                        FROM bookings b
+                        JOIN club_tables t ON t.table_id = b.table_id
+                        WHERE b.user_id = :uid
+                          AND t.club_id = :cid
+                          AND b.status = :confirmed
+                          AND b.booking_end < :now
+                        LIMIT 1
+                        """)
                 .setParameter("uid", userId)
                 .setParameter("cid", clubId)
                 .setParameter("confirmed", Status.CONFIRMADA.db())
                 .setParameter("now", now).getResultList().size();
-
 
         return oneOrZero.longValue() > 0;
     }
