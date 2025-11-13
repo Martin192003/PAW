@@ -43,7 +43,7 @@ public class PhotoJpaDao implements PhotoDao {
         WHERE p.club_id = :clubId
         ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
         LIMIT :limit OFFSET :offset
-    """;
+        """;
 
         @SuppressWarnings("unchecked")
         final List<String> idTexts = em.createNativeQuery(idSql)
@@ -58,7 +58,6 @@ public class PhotoJpaDao implements PhotoDao {
 
         final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
 
-        // 2) Entidades por IDs (JPQL) con el mismo orden lógico
         final List<Photo> photos = em.createQuery("""
             SELECT p
             FROM Photo p
@@ -226,20 +225,35 @@ public class PhotoJpaDao implements PhotoDao {
 
     @Override
     public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset) {
-        return em.createQuery("""
-        SELECT p
-        FROM Photo p
-        LEFT JOIN Event e ON e.photoId = p.photoId
-        WHERE p.clubId = :clubId
-          AND p.photoType = :type
-          AND e.photoId IS NULL
-        ORDER BY p.createdAt DESC, p.photoId DESC
-    """, Photo.class)
+        final List<UUID> ids = em.createQuery("""
+                            SELECT p.photoId
+                            FROM Photo p
+                            LEFT JOIN Event e ON e.photoId = p.photoId
+                            WHERE p.clubId = :clubId
+                              AND p.photoType = :type
+                              AND e.photoId IS NULL
+                            ORDER BY p.createdAt DESC, p.photoId DESC
+                        """, UUID.class)
                 .setParameter("clubId", clubId)
                 .setParameter("type", PhotoType.CAROUSEL)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
                 .getResultList();
+
+        if (ids.isEmpty()) return List.of();
+        List<Photo> photos = em.createQuery("""
+                            SELECT p
+                            FROM Photo p
+                            WHERE p.photoId IN :ids
+                            ORDER BY p.createdAt DESC, p.photoId DESC
+                        """, Photo.class)
+                .setParameter("ids", ids)
+                .getResultList();
+        photos.forEach(p -> {
+            em.detach(p);
+            p.setData(null);
+        });
+        return photos;
     }
 
 
