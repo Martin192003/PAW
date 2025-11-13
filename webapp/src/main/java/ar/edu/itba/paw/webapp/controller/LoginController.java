@@ -92,25 +92,6 @@ public class LoginController {
         return "verifyMailNotice";
     }
 
-    //TODO: SE USA ESTO??
-    @PostMapping("/verify")
-    public String verifyToken(
-            @Valid @ModelAttribute("verificationForm") VerificationForm form,
-            BindingResult bindingResult,
-            Model model
-    ) {
-        if (bindingResult.hasErrors()) {
-            return "verify";
-        }
-        boolean success = userService.verifyUser(form.getToken());
-        if (success) {
-            model.addAttribute("success", "register.valid.token");
-            return "verifyResult";
-        } else {
-            model.addAttribute("error", "register.invalid.token");
-        }
-        return "verify";
-    }
 
     @GetMapping("/verify-account")
     public String verifyAccountFromEmail(@RequestParam(value = "token", required = false) String token,
