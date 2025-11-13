@@ -409,12 +409,12 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public String formatDateStart(Booking booking) {
+    public String getDateStart(Booking booking) {
         return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
     }
 
     @Override
-    public String formatDateEnd(Booking booking) {
+    public String getDateEnd(Booking booking) {
         return formatDateEsEn(booking.getBookingEnd().atZoneSameInstant(ZoneId.systemDefault()));
     }
 
@@ -494,6 +494,26 @@ public class BookingServiceImpl implements BookingService {
                     table.getDiscount()
             );
         }
+    }
+
+
+    @Override
+    public User getBookingUser(Booking booking) {
+        return userService.findById(booking.getUser().getId()).orElse(null);
+    }
+
+    @Override
+    public ClubTable getBookingTable(Booking booking) {
+        return tableService.findById(booking.getTableId()).orElse(null);
+    }
+
+    @Override
+    public Club getBookingClub(Booking booking) {
+        ClubTable table = getBookingTable(booking);
+        if (table == null) {
+            return null;
+        }
+        return clubService.getClubById(table.getClubId()).orElse(null);
     }
 
     private void validateStatusTransition(Status from, Status to) {

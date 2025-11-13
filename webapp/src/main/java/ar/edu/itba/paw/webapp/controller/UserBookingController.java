@@ -5,7 +5,6 @@ import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.BookingSearchForm;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -23,11 +22,6 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.security.Principal;
 import java.time.LocalDate;
-import java.time.Month;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,17 +30,11 @@ import java.util.stream.Collectors;
 public class UserBookingController {
 
     private final BookingService bookingService;
-    private final TableService tableService;
-    private final UserService userService;
     private final ClubService clubService;
     private final ReceiptService receiptService;
 
-    public UserBookingController(BookingService bookingService,
-                             TableService tableService,
-                             UserService userService, ClubService clubService, ReceiptService receiptService) {
+    public UserBookingController(BookingService bookingService, ClubService clubService, ReceiptService receiptService) {
         this.bookingService = bookingService;
-        this.tableService = tableService;
-        this.userService = userService;
         this.clubService = clubService;
         this.receiptService = receiptService;
     }
@@ -206,53 +194,57 @@ public class UserBookingController {
                                 BindingResult errors,
                                 RedirectAttributes ra,
                                 @RequestHeader(value = "Referer", required = false) String referer,
-                                Model model, @AuthenticationPrincipal PawUserDetails userDetails) {
+                                Model model,
+                                @AuthenticationPrincipal PawUserDetails userDetails) {
+
         if (form.getFile() == null || form.getFile().isEmpty()) {
             errors.rejectValue("file", "receipt.file.required");
         }
+
         if (errors.hasErrors()) {
-            var booking = bookingService.findById(bookingId)
-                    .orElseThrow(() -> new BookingNotFoundException("error.booking"));
+            final Booking booking = bookingService.getForUser(bookingId, userDetails.getId());
 
             model.addAttribute("booking", booking);
-            model.addAttribute("user", userService.findById(booking.getUser().getId()));
 
-            ClubTable table = tableService.findById(booking.getTableId()).orElse(null);
+            model.addAttribute("user", bookingService.getBookingUser(booking));
+
+            ClubTable table = bookingService.getBookingTable(booking);
             model.addAttribute("table", table);
 
-            String clubName = "";
-            String clubCbu = "";
-            if (table != null) {
-                Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
-                if (clubOpt.isPresent()) {
-                    Club club = clubOpt.get();
-                    clubName = club.getClubName();
-                    clubCbu = club.getCbu();
-                }
-            }
-            ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withLocale(new Locale("es","AR"));
-            model.addAttribute("clubName", clubName);
-            model.addAttribute("clubCbu", clubCbu);
-            var rOpt = receiptService.findByBooking(bookingId);
+            Club club = bookingService.getBookingClub(booking);
+            model.addAttribute("clubName", club != null ? club.getClubName() : "");
+            model.addAttribute("clubCbu",  club != null ? club.getCbu() : null);
+
+            model.addAttribute("bookingStartLocal", bookingService.getDateStart(booking));
+            model.addAttribute("bookingEndLocal",   bookingService.getDateEnd(booking));
+
+            var rOpt = receiptService.getReceiptForBooking(bookingId);
             model.addAttribute("hasReceipt", rOpt.isPresent());
             rOpt.ifPresent(r -> model.addAttribute("receipt", r));
-            model.addAttribute("activePage", "bookings");
-            model.addAttribute("bookingStartLocal", booking.getBookingStart().atZoneSameInstant(zone).format(fmt));
-            model.addAttribute("bookingEndLocal", booking.getBookingEnd().atZoneSameInstant(zone).format(fmt));
 
+            model.addAttribute("activePage", "bookings");
 
             return "bookingUserHandler";
         }
+
         try {
             try {
                 receiptService.deleteByBookingForUser(bookingId, userDetails.getId());
             } catch (Exception e) {
                 // Ignorar errores al eliminar recibo previo
             }
-            String filename = Optional.ofNullable(form.getFile().getOriginalFilename()).orElse("receipt");
+
+            String filename = Optional.ofNullable(form.getFile().getOriginalFilename())
+                    .orElse("receipt");
+
             receiptService.uploadForBooking(
-                    bookingId, userDetails.getId(), filename, form.getFile().getContentType(), form.getFile().getBytes());
+                    bookingId,
+                    userDetails.getId(),
+                    filename,
+                    form.getFile().getContentType(),
+                    form.getFile().getBytes()
+            );
+
             ra.addFlashAttribute("success", "receipt.uploaded");
         } catch (UnauthorizedException e) {
             ra.addFlashAttribute("error", "receipt.upload.notAllowed");
@@ -265,15 +257,8 @@ public class UserBookingController {
         } catch (BookingNotFoundException e) {
             ra.addFlashAttribute("error", "booking.notfound");
         }
+
         return safeRedirect(referer, bookingId);
-    }
-
-
-    private String safeRedirect(String referer, UUID bookingId) {
-        if (referer != null && referer.contains("/booking")) {
-            return "redirect:" + referer;
-        }
-        return "redirect:/booking?bookingId=" + bookingId;
     }
 
     @GetMapping("/booking")
@@ -283,7 +268,8 @@ public class UserBookingController {
                                      @ModelAttribute("error") String error,
                                      @ModelAttribute("errorKey") String errorKey,
                                      @ModelAttribute("success") String success,
-                                     @ModelAttribute("info") String info, @AuthenticationPrincipal PawUserDetails userDetails) {
+                                     @ModelAttribute("info") String info,
+                                     @AuthenticationPrincipal PawUserDetails userDetails) {
 
         final Booking booking;
         try {
@@ -296,66 +282,60 @@ public class UserBookingController {
             return "error/error";
         }
 
-        Optional<User> u = userService.findById(booking.getUser().getId());
-        model.addAttribute("user", u.orElse(null));
-
-        ClubTable table = tableService.findById(booking.getTableId()).orElse(null);
-        model.addAttribute("table", table);
-
-        String clubName = "";
-        String clubCbu = null;
-        if (table != null) {
-            var clubOpt = clubService.getClubById(table.getClubId());
-            clubName = clubOpt.map(Club::getClubName).orElse("");
-            clubCbu = clubOpt.map(Club::getCbu).orElse(null);
-        }
-        model.addAttribute("clubName", clubName);
-        model.addAttribute("clubCbu", clubCbu);
-        if(!model.containsAttribute("receiptForm")) {
-            model.addAttribute("receiptForm", new ReceiptUploadForm());
-        }
 
         model.addAttribute("booking", booking);
 
-        ZoneId zone = ZoneId.of("America/Argentina/Buenos_Aires");
+        User bookingUser = bookingService.getBookingUser(booking);
+        model.addAttribute("user", bookingUser);
 
-        ZonedDateTime startLocal = booking.getBookingStart().atZoneSameInstant(zone);
-        String bookingStartLocal = formatDateEsEn(startLocal);
+        ClubTable table = bookingService.getBookingTable(booking);
+        model.addAttribute("table", table);
 
-        ZonedDateTime endLocal = booking.getBookingEnd().atZoneSameInstant(zone);
-        String bookingEndLocal = formatDateEsEn(endLocal);
+        Club club = bookingService.getBookingClub(booking);
+        model.addAttribute("clubName", club != null ? club.getClubName() : "");
+        model.addAttribute("clubCbu",  club != null ? club.getCbu() : null);
 
-        model.addAttribute("bookingStartLocal", bookingStartLocal);
-        model.addAttribute("bookingEndLocal", bookingEndLocal);
+        model.addAttribute("bookingStartLocal", bookingService.getDateStart(booking));
+        model.addAttribute("bookingEndLocal",   bookingService.getDateEnd(booking));
 
-        var rOpt = receiptService.findByBooking(bookingId);
-        model.addAttribute("hasReceipt", rOpt.isPresent());
-        rOpt.ifPresent(r -> model.addAttribute("receipt", r));
+        var receiptOpt = receiptService.getReceiptForBooking(bookingId);
+        model.addAttribute("hasReceipt", receiptOpt.isPresent());
+        receiptOpt.ifPresent(r -> model.addAttribute("receipt", r));
 
-        if (errorKey != null && !errorKey.isEmpty()) model.addAttribute("errorKey", errorKey);
-        if (error != null && !error.isEmpty())       model.addAttribute("error", error);
-        if (success != null && !success.isEmpty())   model.addAttribute("success", success);
-        if (info != null && !info.isEmpty())         model.addAttribute("info", info);
+
+
+        if (!model.containsAttribute("receiptForm")) {
+            model.addAttribute("receiptForm", new ReceiptUploadForm());
+        }
+        if (errorKey != null && !errorKey.isEmpty()) {
+            model.addAttribute("errorKey", errorKey);
+        }
+        if (error != null && !error.isEmpty()) {
+            model.addAttribute("error", error);
+        }
+        if (success != null && !success.isEmpty()) {
+            model.addAttribute("success", success);
+        }
+        if (info != null && !info.isEmpty()) {
+            model.addAttribute("info", info);
+        }
 
         model.addAttribute("activePage", "bookings");
 
         return "bookingUserHandler";
     }
 
-
     @GetMapping("/bookings/{bookingId}/receipt")
     @ResponseBody
     public ResponseEntity<byte[]> getReceipt(@PathVariable UUID bookingId) {
-        var rOpt = receiptService.findByBooking(bookingId);
-        if (rOpt.isEmpty()) return ResponseEntity.notFound().build();
 
-        var rMeta = rOpt.get();
-        var r = receiptService.getWithId(rMeta.getReceiptId()).orElse(rMeta);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + r.getFilename() + "\"")
-                .contentType(MediaType.parseMediaType(r.getContentType()))
-                .body(r.getData());
+        return receiptService.getReceiptForBooking(bookingId)
+                .map(r -> ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                                "inline; filename=\"" + r.getFilename() + "\"")
+                        .contentType(MediaType.parseMediaType(r.getContentType()))
+                        .body(r.getData()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/bookings/{bookingId}/receipt/delete")
@@ -376,23 +356,13 @@ public class UserBookingController {
         return "redirect:/booking?bookingId=" + bookingId;
     }
 
-    private static String formatDateEsEn(ZonedDateTime zdt) {
-        var date = zdt.toLocalDate();
-        if (date == null) return "";
-        Locale locale = LocaleContextHolder.getLocale();
-        boolean isEs = "es".equalsIgnoreCase(locale.getLanguage());
 
-        Month m = date.getMonth();
-        String monthName = m.getDisplayName(TextStyle.FULL, locale);
-        if (isEs) {
-            monthName = capitalize(monthName, locale); // Java devuelve "noviembre"; se capitaliza -> "Noviembre"
+    private String safeRedirect(String referer, UUID bookingId) {
+        if (referer != null && referer.contains("/booking")) {
+            return "redirect:" + referer;
         }
+        return "redirect:/booking?bookingId=" + bookingId;
+    }
 
-        String connector = isEs ? " de " : " of ";
-        return date.getDayOfMonth() + connector + monthName + ", " + date.getYear();
-    }
-    private static String capitalize(String s, Locale locale) {
-        if (s == null || s.isEmpty()) return s;
-        return s.substring(0, 1).toUpperCase(locale) + s.substring(1);
-    }
+
 }
