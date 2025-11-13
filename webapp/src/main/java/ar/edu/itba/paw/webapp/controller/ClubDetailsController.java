@@ -85,7 +85,7 @@
                 model.addAttribute("error", "invalid.date");
             }
             model.addAttribute("availableTables", available);
-            var ordered = productsService.getVisibleProductsByCategory(club);
+            var ordered = productsService.getVisibleProductsByCategory(clubId);
             String coverPhotoUrl = photoService.getCoverUrl(clubId).orElse(null);
             String tableLayoutUrl = clubLayoutService.getLayoutByClub(clubId)
                     .map(ClubLayout::getUrl)

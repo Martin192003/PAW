@@ -111,12 +111,14 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<String, List<Product>> getVisibleProductsByCategory(Club club) {
+    public Map<String, List<Product>> getVisibleProductsByCategory(UUID clubId) { // <-- Recibe UUID
 
-        var products = this.findByClub(club).stream()
+        // Usa findByClubID en lugar de findByClub
+        var products = this.findByClubID(clubId).stream()
                 .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
                 .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
+
         var grouped = products.stream().collect(Collectors.groupingBy(this::classifyCategory));
         var desired = List.of("Cervezas", "Tragos", "Champagne", "Sin Alcohol");
         var ordered = new LinkedHashMap<String, List<Product>>();

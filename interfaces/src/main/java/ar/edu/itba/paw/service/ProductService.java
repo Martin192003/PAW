@@ -22,5 +22,5 @@ public interface ProductService {
     List<Product> findByClubID(UUID clubId);
     String classifyCategory(Product p);
     boolean canAddProduct(Club club);
-    Map<String, List<Product>> getVisibleProductsByCategory(Club club);
+    public Map<String, List<Product>> getVisibleProductsByCategory(UUID clubId);
 }
