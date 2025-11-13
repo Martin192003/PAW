@@ -8,12 +8,10 @@ import ar.edu.itba.paw.persistence.PhotoDao;
 import ar.edu.itba.paw.model.Photo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class PhotoServiceImpl implements PhotoService {
@@ -124,7 +122,7 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public UUID uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException {
+    public void uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException {
         if (file == null) {
             throw new IllegalArgumentException("File is empty");
         }
@@ -137,7 +135,7 @@ public class PhotoServiceImpl implements PhotoService {
             throw new IllegalArgumentException("User not found");
         }
 
-        return upload(
+        upload(
                 clubId,
                 effectiveUser.getId(),
                 file.getFilename(),

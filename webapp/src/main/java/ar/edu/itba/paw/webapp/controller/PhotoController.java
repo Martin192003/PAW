@@ -124,26 +124,6 @@ public class PhotoController {
         return "redirect:/clubs/handle?clubId=" + clubId;
     }
 
-    @PostMapping("/clubs/club/{clubId}/carousel")
-    @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
-    public String uploadCarousel(@PathVariable UUID clubId,
-                                 @RequestParam("file") MultipartFile file, @AuthenticationPrincipal PawUserDetails userDetails) throws IOException {
-
-        if (file == null || file.isEmpty()) {
-            return "redirect:/clubs/handle?clubId=" + clubId + "&err=empty";
-        }
-
-        photoService.uploadCarousel(
-                clubId,
-                userDetails.getId(),
-                file.getOriginalFilename(),
-                file.getContentType() != null ? file.getContentType() : "application/octet-stream",
-                file.getBytes()
-        );
-
-        return "redirect:/clubs/handle?clubId=" + clubId;
-    }
-
     @PostMapping("/clubs/club/{clubId}/photos")
     @PreAuthorize("@securityServiceImpl.isClubAdmin(#clubId)")
     public String upload(@PathVariable UUID clubId,

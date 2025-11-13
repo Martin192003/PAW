@@ -133,17 +133,18 @@
             <h2><i class="fa-solid fa-images"></i> <spring:message code="photos.gallery" text="Galería de Fotos"/></h2>
             <div>
                 <c:set var="photoCount" value="${fn:length(carouselPhotos)}" />
-
-                <button type="button"
-                        class="btn btn-success"
-                        onclick="openAddPhotosModal()"
-                        <c:if test="${photoCount >= 20}">disabled</c:if>>
-                    <i class="fa-solid fa-plus"></i>
-                    <spring:message code="button.addPhotos" text="Agregar Fotos"/>
-                </button>
+                <c:if test="${photoCount < 20}">
+                    <button type="button"
+                            class="btn btn-success"
+                            onclick="openAddPhotosModal()"
+                            <c:if test="${photoCount >= 20}">disabled</c:if>>
+                        <i class="fa-solid fa-plus"></i>
+                        <spring:message code="button.addPhotos" text="Agregar Fotos"/>
+                    </button>
+                </c:if>
 
                 <c:if test="${photoCount >= 20}">
-                    <small style="color: red;"><spring:message code="photos.upload.max" text="Max de fotos"/></small>
+                    <small style="color: #aaa;"><spring:message code="photos.upload.max" text="Maximo de fotos"/></small>
                 </c:if>
             </div>
         </div>
@@ -723,23 +724,6 @@
     </div>
 </div>
 
-<!-- Modal for adding a single carousel photo -->
-<div id="addCarouselPhotoModal" class="modal">
-    <div class="modal-content">
-        <span class="modal-close" onclick="closeAddCarouselPhotoModal()">&times;</span>
-        <h3>Add Photo to Carousel</h3>
-        <form method="post" action="<c:url value='/clubs/club/${club.clubId}/carousel' />" enctype="multipart/form-data">
-            <input type="file" name="file" accept="image/*" required />
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeAddCarouselPhotoModal()">Cancel</button>
-                <button type="submit" class="btn btn-success">
-                    <i class="fa-solid fa-upload"></i> Upload Photo
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <div id="productEditModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeProductEditModal()">&times;</span>
@@ -1143,8 +1127,6 @@
 
     });
 
-    function openAddCarouselPhotoModal() { document.getElementById('addCarouselPhotoModal').style.display = 'flex'; }
-    function closeAddCarouselPhotoModal() { document.getElementById('addCarouselPhotoModal').style.display = 'none'; }
     function openAddPhotosModal() { document.getElementById('addPhotosModal').style.display = 'flex'; }
     function closeAddPhotosModal() { document.getElementById('addPhotosModal').style.display = 'none'; }
 

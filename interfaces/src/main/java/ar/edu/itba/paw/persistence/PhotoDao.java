@@ -33,7 +33,6 @@ public interface PhotoDao {
     UUID createReviewPhoto(UUID clubId, UUID reviewId, UUID postedBy,
                            String filename, String contentType, byte[] data);
     List<Photo> findReviewPhotosByClub(UUID clubId, int limit, int offset);
-    Optional<Photo> findByReviewId(UUID reviewId);
     UUID createEventPhoto(UUID clubId, UUID eventId, UUID postedBy, String filename, String contentType, byte[] data);
     List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset);
 

@@ -26,7 +26,7 @@ public interface PhotoService {
 
     Optional<String> getCoverUrl(UUID clubId);
     Map<UUID,String> getCoverUrls(Set<UUID> clubIds);
-    UUID uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException;
+    void uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException;
 
     void uploadCover(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
     void uploadCarousel(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);

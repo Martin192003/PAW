@@ -1,23 +1,17 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
-import ar.edu.itba.paw.model.exceptions.ClubNotFoundException;
-import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
-import ar.edu.itba.paw.persistence.UserDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.*;
 
 @Service
@@ -80,8 +74,8 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     @Transactional
-    public Club updateClub(Club club) {
-        return clubDao.update(
+    public void updateClub(Club club) {
+        clubDao.update(
                 club.getClubId(),
                 club.getClubName(),
                 club.getLocation(),

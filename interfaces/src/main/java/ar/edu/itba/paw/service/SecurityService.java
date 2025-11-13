@@ -7,8 +7,7 @@ import java.util.UUID;
 
 public interface SecurityService {
     Optional<User> getLoggedUser();
-    Optional<String> getLoggedUserEmail();
     User getVerifiedLoggedUser();
-    public boolean isClubAdmin(UUID clubId);
-    public boolean canAccessUser(UUID id);
+    boolean isClubAdmin(UUID clubId);
+    boolean canAccessUser(UUID id);
 }

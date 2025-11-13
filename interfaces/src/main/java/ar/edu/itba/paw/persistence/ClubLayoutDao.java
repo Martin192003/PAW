@@ -10,5 +10,5 @@ public interface ClubLayoutDao{
 
     Optional<ClubLayout> findByClubId(UUID clubId);
 
-    boolean deleteByClubId(UUID clubId);
+    void deleteByClubId(UUID clubId);
 }

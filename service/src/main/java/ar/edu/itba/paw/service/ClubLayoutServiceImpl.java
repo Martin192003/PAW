@@ -6,11 +6,9 @@ import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ClubLayoutDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,7 +28,7 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
 
     @Override
     @Transactional
-    public UUID uploadLayout(UUID clubId, String userEmail, Photo file) {
+    public void uploadLayout(UUID clubId, String userEmail, Photo file) {
             User uploader = userService.findByEmail(userEmail);
             clubService.assertAdmin(clubId, uploader.getId());
 
@@ -56,7 +54,6 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
             layout.setUrl("/clubs/club/" + clubId + "/layout/" + newId + "/image");
 
             layoutDao.save(layout);
-            return layout.getLayoutId();
     }
 
 
@@ -66,10 +63,5 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
         return layoutDao.findByClubId(clubId);
     }
 
-    @Override
-    @Transactional
-    public boolean deleteLayout(UUID clubId) {
-        return layoutDao.deleteByClubId(clubId);
-    }
 }
 

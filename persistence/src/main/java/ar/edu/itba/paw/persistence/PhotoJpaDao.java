@@ -223,16 +223,6 @@ public class PhotoJpaDao implements PhotoDao {
         return photos;
     }
 
-    @Override
-    public Optional<Photo> findByReviewId(UUID reviewId) {
-        List<Photo> list = em.createQuery(
-                "SELECT p FROM Photo p WHERE p.reviewId = :rid ORDER BY p.createdAt DESC",
-                Photo.class)
-            .setParameter("rid", reviewId)
-            .setMaxResults(1)
-            .getResultList();
-        return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
-    }
 
     @Override
     public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset) {

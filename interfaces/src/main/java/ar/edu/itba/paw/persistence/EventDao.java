@@ -30,8 +30,6 @@ public interface EventDao {
 
     Optional<Event> findByPhotoIdAndClub(UUID photoId, UUID clubId);
 
-    List<UUID> findEventPhotoIdsByClub(UUID clubId);
-
     void attachPhoto(UUID eventId, UUID photoId);
 
     List<Event> findUpcomingByClub(UUID clubId, int offset, int limit);

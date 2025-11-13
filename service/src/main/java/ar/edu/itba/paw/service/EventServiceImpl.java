@@ -186,12 +186,6 @@ public class EventServiceImpl implements EventService {
     public boolean isEventPhoto(UUID clubId, UUID photoId) {
         return eventDao.findByPhotoIdAndClub(photoId, clubId).isPresent();
     }
-    @Override
-    @Transactional(readOnly = true)
-    public Set<UUID> getEventPhotoIds(UUID clubId) {
-        List<UUID> ids = eventDao.findEventPhotoIdsByClub(clubId);
-        return new HashSet<>(ids);
-    }
 
     @Override
     @Transactional(readOnly = true)
