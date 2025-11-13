@@ -95,6 +95,7 @@ public class ClubController {
         model.addAttribute("invalidDay", invalidDay);
         model.addAttribute("selectedAvailabilityDate", selectedDay);
 
+        //Sección de paginación
         int totalClubs = 0;
         int offset = (page - 1) * size;
         List<Club> clubs = Collections.emptyList();
@@ -136,6 +137,7 @@ public class ClubController {
             model.addAttribute("user", userDetails.getUser());
         }
 
+        //Seccion de filtrado
         Map<String, String> filters = new LinkedHashMap<>();
         if (nameLike != null && !nameLike.isBlank()) filters.put("name", nameLike);
         if (zone != null) filters.put("zone", zone.name());
@@ -202,14 +204,12 @@ public class ClubController {
 
         var roleAntes = userDetails.getUser().getRole();
 
-
-        Photo photo = new Photo();
+        Photo photo = null;
         if (f.getImage() != null && !f.getImage().isEmpty()) {
+            photo = new Photo();
             photo.setFilename(f.getImage().getOriginalFilename());
             photo.setContentType(f.getImage().getContentType());
             photo.setData(f.getImage().getBytes());
-        } else {
-            photo = null;
         }
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
@@ -260,7 +260,7 @@ public class ClubController {
         };
 
         int totalPages = (int) Math.ceil((double) totalEvents / size);
-        
+
         model.addAttribute("filter", filter);
         model.addAttribute("club", club);
         model.addAttribute("events", events);
