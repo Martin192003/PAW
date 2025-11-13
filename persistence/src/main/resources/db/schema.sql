@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
     created_at    TIMESTAMPTZ DEFAULT NOW(),
     is_verified   BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(100),
-    reset_password_token VARCHAR(255)
+    reset_password_token VARCHAR(255),
+    locale       VARCHAR(255)
 
     );
 
@@ -73,6 +74,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     rating      INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     description TEXT,
     created_at  TIMESTAMPTZ DEFAULT NOW(),
+    photo_id    UUID REFERENCES photos(photo_id) ON DELETE SET NULL,
+    from_table_guest BOOLEAN NOT NULL DEFAULT FALSE
     UNIQUE (user_id, club_id)
     );
 

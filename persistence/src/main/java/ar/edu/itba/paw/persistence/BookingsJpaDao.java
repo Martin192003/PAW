@@ -5,7 +5,6 @@ import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import org.hibernate.query.NativeQuery;
-import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
 
 
@@ -278,28 +277,32 @@ public class BookingsJpaDao implements BookingDao {
                            UUID bookingId,
                            Status status,
                            LocalDate bookingDate,
-                           Boolean hasReceipt) { // NEW
+                           Boolean hasReceipt) {
 
         if (clubId != null) {
-            StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM bookings b LEFT JOIN club_tables t ON t.table_id = b.table_id ");
-            if (hasReceipt != null) sql.append("LEFT JOIN receipts r ON r.booking_id = b.booking_id ");
-            sql.append("WHERE t.club_id = :clubId\n");
+            StringBuilder sql = new StringBuilder(
+                    "SELECT COUNT(*) FROM bookings b LEFT JOIN club_tables t ON t.table_id = b.table_id "
+            );
+            if (hasReceipt != null) {
+                sql.append("LEFT JOIN receipts r ON r.booking_id = b.booking_id ");
+            }
+            sql.append("WHERE t.club_id = :clubId");
 
-            if (userId != null) sql.append(" AND b.user_id = :userId");
+            if (userId != null)   sql.append(" AND b.user_id = :userId");
             if (bookingId != null) sql.append(" AND b.booking_id = :bookingId");
-            if (status != null) sql.append(" AND LOWER(b.status) = LOWER(:status)");
+            if (status != null)   sql.append(" AND LOWER(b.status) = LOWER(:status)");
             if (bookingDate != null) sql.append(" AND DATE(b.booking_start) = :bookingDate");
             if (hasReceipt != null) {
                 if (hasReceipt) sql.append(" AND r.booking_id IS NOT NULL");
-                else sql.append(" AND r.booking_id IS NULL");
+                else           sql.append(" AND r.booking_id IS NULL");
             }
 
             Query q = em.createNativeQuery(sql.toString())
                     .setParameter("clubId", clubId);
 
-            if (userId != null) q.setParameter("userId", userId);
+            if (userId != null)   q.setParameter("userId", userId);
             if (bookingId != null) q.setParameter("bookingId", bookingId);
-            if (status != null) q.setParameter("status", status.db());
+            if (status != null)   q.setParameter("status", status.db());
             if (bookingDate != null) q.setParameter("bookingDate", bookingDate);
 
             Number n = (Number) q.getSingleResult();
@@ -308,6 +311,7 @@ public class BookingsJpaDao implements BookingDao {
 
         StringBuilder jpql = new StringBuilder("SELECT COUNT(b) FROM Booking b WHERE 1=1");
         Map<String, Object> params = new HashMap<>();
+
         if (userId != null) {
             jpql.append(" AND b.user.id = :userId");
             params.put("userId", userId);
@@ -321,23 +325,27 @@ public class BookingsJpaDao implements BookingDao {
             params.put("status", status);
         }
 
-        // JPQL cannot easily express receipt existence without entity mapping; fall back to native
+        if (hasReceipt == null && bookingDate != null) {
+            jpql.append(" AND FUNCTION('date', b.bookingStart) = :bookingDate");
+            params.put("bookingDate", bookingDate);
+        }
+
         if (hasReceipt != null) {
-            // use native query when filtering by receipts and no clubId
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM bookings b ");
             sql.append("LEFT JOIN receipts r ON r.booking_id = b.booking_id WHERE 1=1 ");
-            if (userId != null) sql.append(" AND b.user_id = :userId");
+            if (userId != null)   sql.append(" AND b.user_id = :userId");
             if (bookingId != null) sql.append(" AND b.booking_id = :bookingId");
-            if (status != null) sql.append(" AND LOWER(b.status) = LOWER(:status)");
+            if (status != null)   sql.append(" AND LOWER(b.status) = LOWER(:status)");
             if (bookingDate != null) sql.append(" AND DATE(b.booking_start) = :bookingDate");
             if (hasReceipt) sql.append(" AND r.booking_id IS NOT NULL");
-            else sql.append(" AND r.booking_id IS NULL");
+            else            sql.append(" AND r.booking_id IS NULL");
 
             Query q = em.createNativeQuery(sql.toString());
-            if (userId != null) q.setParameter("userId", userId);
+            if (userId != null)   q.setParameter("userId", userId);
             if (bookingId != null) q.setParameter("bookingId", bookingId);
-            if (status != null) q.setParameter("status", status.db());
+            if (status != null)   q.setParameter("status", status.db());
             if (bookingDate != null) q.setParameter("bookingDate", bookingDate);
+
             Number n = (Number) q.getSingleResult();
             return n.intValue();
         }
@@ -346,6 +354,7 @@ public class BookingsJpaDao implements BookingDao {
         params.forEach(q::setParameter);
         return q.getSingleResult().intValue();
     }
+
 
     @Override
     public boolean existsPastConfirmedByUserAndClub(UUID userId, UUID clubId, OffsetDateTime now) {
@@ -394,20 +403,6 @@ public class BookingsJpaDao implements BookingDao {
         };
     }
 
-    private static String placeholders(final String base, final int n) {
-        final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < n; i++) {
-            if (i > 0) sb.append(", ");
-            sb.append(':').append(base).append(i);
-        }
-        return sb.toString();
-    }
-
-    private static void bindUuidList(final NativeQuery<?> nq, final String base, final List<UUID> values) {
-        for (int i = 0; i < values.size(); i++) {
-            nq.setParameter(base + i, values.get(i));
-        }
-    }
 
     @Override
     public Map<UUID, String> mapClubNamesForBookings(List<UUID> bookingIds) {
@@ -443,4 +438,19 @@ public class BookingsJpaDao implements BookingDao {
     }
 
 
+
+    private static String placeholders(final String base, final int n) {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(':').append(base).append(i);
+        }
+        return sb.toString();
+    }
+
+    private static void bindUuidList(final NativeQuery<?> nq, final String base, final List<UUID> values) {
+        for (int i = 0; i < values.size(); i++) {
+            nq.setParameter(base + i, values.get(i));
+        }
+    }
 }

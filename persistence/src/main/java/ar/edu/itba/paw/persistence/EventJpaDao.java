@@ -1,10 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Event;
-import ar.edu.itba.paw.model.Photo;
-import ar.edu.itba.paw.model.PhotoType;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -58,7 +55,7 @@ public class EventJpaDao implements EventDao {
         final int limit  = Math.max(0, size);
         final int offset = Math.max(0, page) * limit;
 
-        // 1) Página de IDs (SQL nativo, orden estable + tie-break por PK)
+        // 1) Pagina de IDs
         final String idSql = """
         SELECT CAST(e.eventid AS TEXT) AS id_text
         FROM event e
@@ -82,7 +79,7 @@ public class EventJpaDao implements EventDao {
                 .map(UUID::fromString)
                 .toList();
 
-        // 2) Entidades por IDs (JPQL) con el mismo orden lógico
+        // 2) Entidades por IDs
         return em.createQuery("""
             SELECT e
             FROM Event e
@@ -102,7 +99,7 @@ public class EventJpaDao implements EventDao {
         final int limit  = Math.max(0, size);
         final int offset = Math.max(0, page) * limit;
 
-        // 1) Página de IDs
+        // 1) Pagina de IDs
         final String idSql = """
             SELECT CAST(e.eventid AS TEXT) AS id_text
             FROM event e
@@ -127,7 +124,7 @@ public class EventJpaDao implements EventDao {
                 .map(java.util.UUID::fromString)
                 .toList();
 
-        // 2) Entidades por IDs (mismo orden)
+        // 2) Entidades por IDs
         return em.createQuery("""
             SELECT e
             FROM Event e
@@ -165,7 +162,7 @@ public class EventJpaDao implements EventDao {
         final int limit  = Math.max(0, size);
         final int offset = Math.max(0, page) * limit;
 
-        // 1) Página de IDs
+        // 1) Pagina de IDs
         final String idSql = """
                   SELECT CAST(e.eventid AS TEXT) AS id_text
                   FROM event e
@@ -189,6 +186,7 @@ public class EventJpaDao implements EventDao {
                 .map(java.util.UUID::fromString)
                 .toList();
 
+        // 2) Entidades por IDs
         return em.createQuery("""
             SELECT e
             FROM Event e
