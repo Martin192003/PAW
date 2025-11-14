@@ -24,6 +24,10 @@ public class BookingsJpaDao implements BookingDao {
     public Booking create(User user, UUID tableId, Status status, BigDecimal totalAmount,
                           OffsetDateTime bookingStart, OffsetDateTime bookingEnd) {
 
+        if (bookingEnd != null && bookingStart != null && !bookingEnd.isAfter(bookingStart)) {
+            throw new PersistenceException("booking_end must be greater than booking_start");
+        }
+
         Booking b = new Booking();
         b.setBookingId(UUID.randomUUID());
         b.setUser(user);
@@ -105,15 +109,15 @@ public class BookingsJpaDao implements BookingDao {
 
 
     @Override
-    public List<Booking> searchByClubIdsPaginated(final List<java.util.UUID> clubIds,
-                                                  final java.util.UUID bookingId,
+    public List<Booking> searchByClubIdsPaginated(final List<UUID> clubIds,
+                                                  final UUID bookingId,
                                                   final Status status,
                                                   final String sort,
                                                   final LocalDate bookingDate,
                                                   final Boolean hasReceipt, // NEW
                                                   final int limit,
                                                   final int offset) {
-        if (clubIds == null || clubIds.isEmpty()) return java.util.List.of();
+        if (clubIds == null || clubIds.isEmpty()) return List.of();
 
         final String ph = placeholders("cid", clubIds.size());
 
@@ -131,7 +135,7 @@ public class BookingsJpaDao implements BookingDao {
 
         if (bookingId != null) inner.append("AND b.booking_id = :bookingId\n");
         if (status != null) inner.append("AND LOWER(b.status) = LOWER(:status)\n");
-        if (bookingDate != null) inner.append("AND DATE(b.booking_start) = :bookingDate\n");
+        if (bookingDate != null) inner.append("AND CAST(b.booking_start AS DATE) = :bookingDate\n");
         if (hasReceipt != null) {
             if (hasReceipt) inner.append("AND r.booking_id IS NOT NULL\n");
             else inner.append("AND r.booking_id IS NULL\n");
@@ -155,11 +159,11 @@ public class BookingsJpaDao implements BookingDao {
         if (bookingDate != null) nq.setParameter("bookingDate", bookingDate);
 
 
-        @SuppressWarnings("unchecked") final java.util.List<String> idTexts = nq.getResultList();
-        if (idTexts.isEmpty()) return java.util.List.of();
+        @SuppressWarnings("unchecked") final List<String> idTexts = nq.getResultList();
+        if (idTexts.isEmpty()) return List.of();
 
-        final java.util.List<java.util.UUID> ids = idTexts.stream()
-                .map(java.util.UUID::fromString)
+        final List<UUID> ids = idTexts.stream()
+                .map(UUID::fromString)
                 .toList();
 
         final String orderBy = resolveOrderBy(sort, false);
@@ -198,7 +202,7 @@ public class BookingsJpaDao implements BookingDao {
         if (userId != null) inner.append("AND b.user_id = :userId\n");
         if (bookingId != null) inner.append("AND b.booking_id = :bookingId\n");
         if (status != null) inner.append("AND LOWER(b.status) = LOWER(:status)\n");
-        if (bookingDate != null) inner.append("AND DATE(b.booking_start) = :bookingDate\n");
+        if (bookingDate != null) inner.append("AND CAST(b.booking_start AS DATE) = :bookingDate\n");
         if (hasReceipt != null) {
             if (hasReceipt) inner.append("AND r.booking_id IS NOT NULL\n");
             else inner.append("AND r.booking_id IS NULL\n");
@@ -222,11 +226,11 @@ public class BookingsJpaDao implements BookingDao {
         if (status != null) nq.setParameter("status", status.db());
         if (bookingDate != null) nq.setParameter("bookingDate", bookingDate);
 
-        @SuppressWarnings("unchecked") final java.util.List<String> idTexts = nq.getResultList();
-        if (idTexts.isEmpty()) return java.util.List.of();
+        @SuppressWarnings("unchecked") final List<String> idTexts = nq.getResultList();
+        if (idTexts.isEmpty()) return List.of();
 
-        final java.util.List<java.util.UUID> ids = idTexts.stream()
-                .map(java.util.UUID::fromString)
+        final List<UUID> ids = idTexts.stream()
+                .map(UUID::fromString)
                 .toList();
 
         final String orderBy = resolveOrderBy(sort, false);
@@ -238,7 +242,7 @@ public class BookingsJpaDao implements BookingDao {
 
 
     @Override
-    public int countByClubIds(final List<java.util.UUID> clubIds, final java.util.UUID bookingId, final Status status, final LocalDate bookingDate, final Boolean hasReceipt) {
+    public int countByClubIds(final List<UUID> clubIds, final UUID bookingId, final Status status, final LocalDate bookingDate, final Boolean hasReceipt) {
         if (clubIds == null || clubIds.isEmpty()) return 0;
 
         final String ph = placeholders("cid", clubIds.size());
@@ -252,7 +256,7 @@ public class BookingsJpaDao implements BookingDao {
 
         if (bookingId != null) sql.append("AND b.booking_id = :bookingId\n");
         if (status != null) sql.append("AND LOWER(b.status) = LOWER(:status)\n");
-        if (bookingDate != null) sql.append(" AND DATE(b.booking_start) = :bookingDate");
+        if (bookingDate != null) sql.append(" AND CAST(b.booking_start AS DATE) = :bookingDate");
         if (hasReceipt != null) {
             if (hasReceipt) sql.append(" AND r.booking_id IS NOT NULL\n");
             else sql.append(" AND r.booking_id IS NULL\n");
@@ -291,7 +295,7 @@ public class BookingsJpaDao implements BookingDao {
             if (userId != null)   sql.append(" AND b.user_id = :userId");
             if (bookingId != null) sql.append(" AND b.booking_id = :bookingId");
             if (status != null)   sql.append(" AND LOWER(b.status) = LOWER(:status)");
-            if (bookingDate != null) sql.append(" AND DATE(b.booking_start) = :bookingDate");
+            if (bookingDate != null) sql.append(" AND CAST(b.booking_start AS DATE) = :bookingDate");
             if (hasReceipt != null) {
                 if (hasReceipt) sql.append(" AND r.booking_id IS NOT NULL");
                 else           sql.append(" AND r.booking_id IS NULL");
@@ -325,18 +329,13 @@ public class BookingsJpaDao implements BookingDao {
             params.put("status", status);
         }
 
-        if (hasReceipt == null && bookingDate != null) {
-            jpql.append(" AND FUNCTION('date', b.bookingStart) = :bookingDate");
-            params.put("bookingDate", bookingDate);
-        }
-
         if (hasReceipt != null) {
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM bookings b ");
             sql.append("LEFT JOIN receipts r ON r.booking_id = b.booking_id WHERE 1=1 ");
             if (userId != null)   sql.append(" AND b.user_id = :userId");
             if (bookingId != null) sql.append(" AND b.booking_id = :bookingId");
             if (status != null)   sql.append(" AND LOWER(b.status) = LOWER(:status)");
-            if (bookingDate != null) sql.append(" AND DATE(b.booking_start) = :bookingDate");
+            if (bookingDate != null) sql.append(" AND CAST(b.booking_start AS DATE) = :bookingDate");
             if (hasReceipt) sql.append(" AND r.booking_id IS NOT NULL");
             else            sql.append(" AND r.booking_id IS NULL");
 

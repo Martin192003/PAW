@@ -10,11 +10,10 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public class ClubJpaDao implements ClubDao {
@@ -116,7 +115,7 @@ public class ClubJpaDao implements ClubDao {
                 .setParameter("cid", clubId)
                 .getSingleResult();
 
-        java.util.LinkedHashMap<UUID, User> byId = new java.util.LinkedHashMap<>();
+        LinkedHashMap<UUID, User> byId = new LinkedHashMap<>();
         if (contact != null && contact.getId() != null) {
             byId.put(contact.getId(), contact);
         }
@@ -125,7 +124,7 @@ public class ClubJpaDao implements ClubDao {
                 byId.putIfAbsent(u.getId(), u);
             }
         }
-        return new java.util.ArrayList<>(byId.values());
+        return new ArrayList<>(byId.values());
     }
 
     @Override
@@ -261,7 +260,7 @@ public class ClubJpaDao implements ClubDao {
         final var zone = ZoneOffset.UTC;
         final var dayStart = day.atStartOfDay().atOffset(zone);
         final var dayEnd = day.plusDays(1).atStartOfDay().atOffset(zone);
-        final var blocking = java.util.List.of(Status.CONFIRMADA, Status.PENDIENTE);
+        final var blocking = List.of(Status.CONFIRMADA, Status.PENDIENTE);
 
         StringBuilder jpql = new StringBuilder("""
             select count(distinct c)
@@ -328,13 +327,13 @@ public class ClubJpaDao implements ClubDao {
                                                final String priceRange,
                                                final Boolean isBar,
                                                final String sort,
-                                               final java.time.LocalDate day,
+                                               final LocalDate day,
                                                final int limit,
                                                final int offset) {
-        final var zone = java.time.ZoneOffset.UTC;
+        final var zone = ZoneOffset.UTC;
         final var dayStart = day.atStartOfDay().atOffset(zone);
         final var dayEnd = day.plusDays(1).atStartOfDay().atOffset(zone);
-        final var blocking = java.util.List.of(Status.CONFIRMADA, Status.PENDIENTE);
+        final var blocking = List.of(Status.CONFIRMADA, Status.PENDIENTE);
 
         // 1) IDs paginados
         final StringBuilder where = new StringBuilder("WHERE 1=1\n");
@@ -381,8 +380,8 @@ public class ClubJpaDao implements ClubDao {
                 .unwrap(org.hibernate.query.NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("blocking", blocking.stream().map(Status::db).map(String::toLowerCase).toList())
-                .setParameter("dayStart", java.sql.Timestamp.from(dayStart.toInstant()))
-                .setParameter("dayEnd", java.sql.Timestamp.from(dayEnd.toInstant()))
+                .setParameter("dayStart", Timestamp.from(dayStart.toInstant()))
+                .setParameter("dayEnd", Timestamp.from(dayEnd.toInstant()))
                 .setFirstResult(offset)
                 .setMaxResults(limit);
 
@@ -393,24 +392,24 @@ public class ClubJpaDao implements ClubDao {
             nq.setParameter("priceRange", Price.valueOf(priceRange).getLabel().toLowerCase()); // <- minúsculas DB
         if (isBar != null) nq.setParameter("isBar", isBar);
 
-        @SuppressWarnings("unchecked") final java.util.List<String> idTexts = nq.getResultList();
-        if (idTexts.isEmpty()) return java.util.List.of();
+        @SuppressWarnings("unchecked") final List<String> idTexts = nq.getResultList();
+        if (idTexts.isEmpty()) return List.of();
 
-        final java.util.List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+        final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
 
         // 2) Entidades (JPQL)
         if (sortByAvailability) {
-            final java.util.List<Club> clubs = em.createQuery(
+            final List<Club> clubs = em.createQuery(
                             "SELECT c FROM Club c WHERE c.clubId IN :ids", Club.class)
                     .setParameter("ids", ids)
                     .getResultList();
 
-            final java.util.Map<UUID, Integer> indexById = new java.util.HashMap<>();
+            final Map<UUID, Integer> indexById = new HashMap<>();
             for (int i = 0; i < ids.size(); i++) {
                 indexById.put(ids.get(i), i);
             }
 
-            clubs.sort(java.util.Comparator.comparingInt(
+            clubs.sort(Comparator.comparingInt(
                     c -> indexById.getOrDefault(c.getClubId(), Integer.MAX_VALUE)
             ));
 
@@ -461,7 +460,7 @@ public class ClubJpaDao implements ClubDao {
             Root<Club> root,
             String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar) {
 
-        final var predicates = new java.util.ArrayList<javax.persistence.criteria.Predicate>();
+        final var predicates = new ArrayList<Predicate>();
         if (nameLike != null && !nameLike.isBlank())
             predicates.add(cb.like(cb.lower(root.get("clubName")), "%" + nameLike.toLowerCase() + "%"));
         if (location != null)

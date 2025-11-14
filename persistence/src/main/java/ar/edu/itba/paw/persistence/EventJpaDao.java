@@ -55,41 +55,36 @@ public class EventJpaDao implements EventDao {
         final int limit  = Math.max(0, size);
         final int offset = Math.max(0, page) * limit;
 
-        // 1) Pagina de IDs
-        final String idSql = """
-        SELECT CAST(e.eventid AS TEXT) AS id_text
-        FROM event e
-        WHERE e.clubid = :clubId
-        ORDER BY e.date DESC, e.eventid DESC
-        LIMIT :limit OFFSET :offset
-    """;
+        if (limit == 0) {
+            return List.of();
+        }
 
-        @SuppressWarnings("unchecked")
-        final List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+        // 1) Paginamos solo IDs
+        List<UUID> ids = em.createQuery("""
+                SELECT e.eventId
+                FROM Event e
+                WHERE e.clubId = :clubId
+                ORDER BY e.date DESC, e.eventId DESC
+                """, UUID.class)
                 .setParameter("clubId", clubId)
-                .setParameter("limit",  limit)
-                .setParameter("offset", offset)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
                 .getResultList();
 
-        if (idTexts.isEmpty()) return List.of();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
 
-        final List<UUID> ids = idTexts.stream()
-                .map(UUID::fromString)
-                .toList();
-
-        // 2) Entidades por IDs
+        // 2) Traemos las entidades por ID
         return em.createQuery("""
-            SELECT e
-            FROM Event e
-            WHERE e.eventId IN :ids
-            ORDER BY e.date DESC, e.eventId DESC
-        """, Event.class)
+                SELECT e
+                FROM Event e
+                WHERE e.eventId IN :ids
+                ORDER BY e.date DESC, e.eventId DESC
+                """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
-
 
     @Override
     public List<Event> searchByDateRangePaginated(final LocalDate startDate,
@@ -99,42 +94,37 @@ public class EventJpaDao implements EventDao {
         final int limit  = Math.max(0, size);
         final int offset = Math.max(0, page) * limit;
 
-        // 1) Pagina de IDs
-        final String idSql = """
-            SELECT CAST(e.eventid AS TEXT) AS id_text
-            FROM event e
-            WHERE e.date BETWEEN :start AND :end
-            ORDER BY e.date ASC, e.eventid ASC
-            LIMIT :limit OFFSET :offset
-                """;
+        if (limit == 0) {
+            return List.of();
+        }
 
-        @SuppressWarnings("unchecked")
-        final java.util.List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+        // 1) IDs por rango de fechas
+        List<UUID> ids = em.createQuery("""
+                SELECT e.eventId
+                FROM Event e
+                WHERE e.date BETWEEN :start AND :end
+                ORDER BY e.date ASC, e.eventId ASC
+                """, UUID.class)
                 .setParameter("start", startDate)
-                .setParameter("end",   endDate)
-                .setParameter("limit",  limit)
-                .setParameter("offset", offset)
+                .setParameter("end", endDate)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
                 .getResultList();
 
-        if (idTexts.isEmpty()) return java.util.List.of();
-
-        final java.util.List<java.util.UUID> ids = idTexts.stream()
-                .map(java.util.UUID::fromString)
-                .toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
 
         // 2) Entidades por IDs
         return em.createQuery("""
-            SELECT e
-            FROM Event e
-            WHERE e.eventId IN :ids
-            ORDER BY e.date ASC, e.eventId ASC
-        """, Event.class)
+                SELECT e
+                FROM Event e
+                WHERE e.eventId IN :ids
+                ORDER BY e.date ASC, e.eventId ASC
+                """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
-
 
     @Override
     public int countByDateRange(LocalDate startDate, LocalDate endDate) {
@@ -162,41 +152,36 @@ public class EventJpaDao implements EventDao {
         final int limit  = Math.max(0, size);
         final int offset = Math.max(0, page) * limit;
 
-        // 1) Pagina de IDs
-        final String idSql = """
-                  SELECT CAST(e.eventid AS TEXT) AS id_text
-                  FROM event e
-                  WHERE e.date >= :from
-                  ORDER BY e.date ASC, e.eventid ASC
-                  LIMIT :limit OFFSET :offset
-                """;
+        if (limit == 0) {
+            return List.of();
+        }
 
-        @SuppressWarnings("unchecked")
-        final java.util.List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+        // 1) IDs futuros desde fromInclusive
+        List<UUID> ids = em.createQuery("""
+                SELECT e.eventId
+                FROM Event e
+                WHERE e.date >= :from
+                ORDER BY e.date ASC, e.eventId ASC
+                """, UUID.class)
                 .setParameter("from", fromInclusive)
-                .setParameter("limit",  limit)
-                .setParameter("offset", offset)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
                 .getResultList();
 
-        if (idTexts.isEmpty()) return java.util.List.of();
-
-        final java.util.List<java.util.UUID> ids = idTexts.stream()
-                .map(java.util.UUID::fromString)
-                .toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
 
         // 2) Entidades por IDs
         return em.createQuery("""
-            SELECT e
-            FROM Event e
-            WHERE e.eventId IN :ids
-            ORDER BY e.date ASC, e.eventId ASC
-        """, Event.class)
+                SELECT e
+                FROM Event e
+                WHERE e.eventId IN :ids
+                ORDER BY e.date ASC, e.eventId ASC
+                """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
-
 
     @Override
     public int countUpcoming(LocalDate fromInclusive) {
@@ -230,80 +215,84 @@ public class EventJpaDao implements EventDao {
         final int limit  = Math.max(0, size);
         final int offset = Math.max(0, page) * limit;
 
-        final String idSql = """
-                    SELECT CAST(e.eventid AS TEXT) AS id_text
-                    FROM event e
-                    WHERE e.clubid = :clubId
-                      AND e.date >= :today
-                    ORDER BY e.date ASC, e.eventid ASC
-                    LIMIT :limit OFFSET :offset
-                """;
+        if (limit == 0) {
+            return List.of();
+        }
 
-        List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+        // 1) IDs futuros de un club
+        List<UUID> ids = em.createQuery("""
+                SELECT e.eventId
+                FROM Event e
+                WHERE e.clubId = :clubId
+                  AND e.date >= :today
+                ORDER BY e.date ASC, e.eventId ASC
+                """, UUID.class)
                 .setParameter("clubId", clubId)
                 .setParameter("today", LocalDate.now())
-                .setParameter("limit", limit)
-                .setParameter("offset", offset)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
                 .getResultList();
 
-        if (idTexts.isEmpty()) return List.of();
-        List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
 
+        // 2) Entidades por IDs
         return em.createQuery("""
-                            SELECT e FROM Event e
-                            WHERE e.eventId IN :ids
-                            ORDER BY e.date ASC, e.eventId ASC
-                        """, Event.class)
+                SELECT e
+                FROM Event e
+                WHERE e.eventId IN :ids
+                ORDER BY e.date ASC, e.eventId ASC
+                """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
-
 
     @Override
     public List<Event> findPastByClub(UUID clubId, int page, int size) {
         final int limit  = Math.max(0, size);
         final int offset = Math.max(0, page) * limit;
 
-        final String idSql = """
-                    SELECT CAST(e.eventid AS TEXT) AS id_text
-                    FROM event e
-                    WHERE e.clubid = :clubId
-                      AND e.date < :today
-                    ORDER BY e.date DESC, e.eventid DESC
-                    LIMIT :limit OFFSET :offset
-                """;
+        if (limit == 0) {
+            return List.of();
+        }
 
-        List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+        // 1) IDs pasados de un club
+        List<UUID> ids = em.createQuery("""
+                SELECT e.eventId
+                FROM Event e
+                WHERE e.clubId = :clubId
+                  AND e.date < :today
+                ORDER BY e.date DESC, e.eventId DESC
+                """, UUID.class)
                 .setParameter("clubId", clubId)
                 .setParameter("today", LocalDate.now())
-                .setParameter("limit", limit)
-                .setParameter("offset", offset)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
                 .getResultList();
 
-        if (idTexts.isEmpty()) return List.of();
-        List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
 
+        // 2) Entidades por IDs
         return em.createQuery("""
-        SELECT e FROM Event e
-                            WHERE e.eventId IN :ids
-                            ORDER BY e.date DESC, e.eventId DESC
-                        """, Event.class)
+                SELECT e
+                FROM Event e
+                WHERE e.eventId IN :ids
+                ORDER BY e.date DESC, e.eventId DESC
+                """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
 
-
     @Override
     public int countUpcomingByClub(UUID clubId) {
         return em.createQuery("""
-                            SELECT COUNT(e)
-                            FROM Event e
-                            WHERE e.clubId = :clubId
-                              AND e.date >= :today
+                        SELECT COUNT(e)
+                        FROM Event e
+                        WHERE e.clubId = :clubId
+                          AND e.date >= :today
                         """, Long.class)
                 .setParameter("clubId", clubId)
                 .setParameter("today", LocalDate.now())
@@ -311,21 +300,17 @@ public class EventJpaDao implements EventDao {
                 .intValue();
     }
 
-
     @Override
     public int countPastByClub(UUID clubId) {
         return em.createQuery("""
-        SELECT COUNT(e)
-        FROM Event e
-        WHERE e.clubId = :clubId
-          AND e.date < :today
-    """, Long.class)
+                        SELECT COUNT(e)
+                        FROM Event e
+                        WHERE e.clubId = :clubId
+                          AND e.date < :today
+                        """, Long.class)
                 .setParameter("clubId", clubId)
                 .setParameter("today", LocalDate.now())
                 .getSingleResult()
                 .intValue();
     }
-
-
-
 }

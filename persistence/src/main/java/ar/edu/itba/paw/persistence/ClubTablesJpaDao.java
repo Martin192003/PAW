@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -85,8 +86,8 @@ public class ClubTablesJpaDao implements ClubTablesDao {
                     LIMIT :limit OFFSET :offset
                 """;
 
-        final java.util.List<String> blocking =
-                java.util.List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
+        final List<String> blocking =
+                List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
 
         final org.hibernate.query.NativeQuery<String> nq = em.createNativeQuery(idSql)
                 .unwrap(org.hibernate.query.NativeQuery.class)
@@ -94,16 +95,16 @@ public class ClubTablesJpaDao implements ClubTablesDao {
 
         nq.setParameter("clubId", clubId);
         nq.setParameterList("blocking", blocking);
-        nq.setParameter("from_ts", java.sql.Timestamp.from(from.toInstant()));
-        nq.setParameter("to_ts", java.sql.Timestamp.from(to.toInstant()));
+        nq.setParameter("from_ts", Timestamp.from(from.toInstant()));
+        nq.setParameter("to_ts", Timestamp.from(to.toInstant()));
         nq.setParameter("limit", limit);
         nq.setParameter("offset", offset);
 
-        @SuppressWarnings("unchecked") final java.util.List<String> idTexts = nq.getResultList();
-        if (idTexts.isEmpty()) return java.util.List.of();
+        @SuppressWarnings("unchecked") final List<String> idTexts = nq.getResultList();
+        if (idTexts.isEmpty()) return List.of();
 
-        final java.util.List<java.util.UUID> ids = idTexts.stream()
-                .map(java.util.UUID::fromString)
+        final List<UUID> ids = idTexts.stream()
+                .map(UUID::fromString)
                 .toList();
 
         // 2) Entidades
@@ -135,16 +136,16 @@ public class ClubTablesJpaDao implements ClubTablesDao {
                       )
                 """;
 
-        final java.util.List<String> blocking =
-                java.util.List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
+        final List<String> blocking =
+                List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
 
         final org.hibernate.query.NativeQuery<?> nq = em.createNativeQuery(countSql)
                 .unwrap(org.hibernate.query.NativeQuery.class);
 
         nq.setParameter("clubId", clubId);
         nq.setParameterList("blocking", blocking);
-        nq.setParameter("from_ts", java.sql.Timestamp.from(from.toInstant()));
-        nq.setParameter("to_ts", java.sql.Timestamp.from(to.toInstant()));
+        nq.setParameter("from_ts", Timestamp.from(from.toInstant()));
+        nq.setParameter("to_ts", Timestamp.from(to.toInstant()));
 
         final Number n = (Number) nq.getSingleResult();
         return n.intValue();
