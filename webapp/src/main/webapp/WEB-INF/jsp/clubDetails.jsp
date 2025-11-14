@@ -843,12 +843,19 @@
             textEl.textContent = message;
             modal.classList.add('show');
             modal.setAttribute('aria-hidden','false');
+
+            const scrollbarComp = window.innerWidth - document.documentElement.clientWidth;
+            document.body.style.overflow = 'hidden';
+            if (scrollbarComp > 0) document.body.style.paddingRight = scrollbarComp + 'px';
         }
         window.closeEventAvailabilityModal = function(){
             var modal = document.getElementById('eventAvailabilityModal');
             if(!modal) return;
             modal.classList.remove('show');
             modal.setAttribute('aria-hidden','true');
+
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
         };
 
         document.addEventListener('DOMContentLoaded', function(){
