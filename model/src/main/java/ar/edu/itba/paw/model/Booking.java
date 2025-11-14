@@ -84,5 +84,6 @@ public class Booking {
     public ClubTable getTable() { return table; }
     public void setTable(ClubTable table) { this.table = table; }
 
+    public void setTableId(UUID tableId) { this.tableId = tableId; }
     public UUID getTableId() { return tableId; }
 }
