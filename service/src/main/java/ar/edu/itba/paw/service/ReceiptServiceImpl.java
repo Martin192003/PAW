@@ -26,17 +26,16 @@ public class ReceiptServiceImpl implements ReceiptService {
     private final ReceiptDao receiptDao;
     private final BookingService bookingService;
 
-    private final ReceiptDao dao;
     private final TableService tableService;
     private final ClubService clubService;
     private final EmailService emailService;
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiptServiceImpl.class);
 
-    public ReceiptServiceImpl(ReceiptDao receiptRepository, BookingService bookingService, ReceiptDao dao,
-                              TableService tableService, ClubService clubService, EmailService emailService) {
-        this.receiptDao = receiptRepository;
+    public ReceiptServiceImpl(ReceiptDao receiptDao, BookingService bookingService,
+                              TableService tableService, ClubService clubService,
+                              EmailService emailService) {
+        this.receiptDao = receiptDao;
         this.bookingService = bookingService;
-        this.dao = dao;
         this.tableService = tableService;
         this.clubService = clubService;
         this.emailService = emailService;
@@ -49,20 +48,20 @@ public class ReceiptServiceImpl implements ReceiptService {
         if (data.length > MAX_BYTES) throw new IllegalArgumentException("Image too large");
         if (contentType == null || !ALLOWED.contains(contentType)) throw new IllegalArgumentException("Invalid type");
         if (filename == null || filename.isBlank()) throw new IllegalArgumentException("Invalid filename");
-        return dao.create(bookingId, uploadedBy, filename, contentType, data);
+        return receiptDao.create(bookingId, uploadedBy, filename, contentType, data);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Receipt> findByBooking(UUID bookingId) { return dao.findByBooking(bookingId); }
+    public Optional<Receipt> findByBooking(UUID bookingId) { return receiptDao.findByBooking(bookingId); }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Receipt> getWithId(UUID receiptId) { return dao.findByIdWithData(receiptId); }
+    public Optional<Receipt> getWithId(UUID receiptId) { return receiptDao.findByIdWithData(receiptId); }
 
     @Override
     @Transactional
-    public boolean deleteByBooking(UUID bookingId) { return dao.deleteByBooking(bookingId); }
+    public boolean deleteByBooking(UUID bookingId) { return receiptDao.deleteByBooking(bookingId); }
 
     @Override
     @Transactional

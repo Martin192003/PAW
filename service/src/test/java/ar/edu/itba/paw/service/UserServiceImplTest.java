@@ -1,246 +1,228 @@
-/*package ar.edu.itba.paw.service;
+package ar.edu.itba.paw.service;
 
-import ar.edu.itba.paw.model.Role;
-import ar.edu.itba.paw.model.User;
-
-import org.junit.Assert;
+import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.persistence.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnitRunner;
-
-
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-
-import ar.edu.itba.paw.persistence.UserDao;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@RunWith(MockitoJUnitRunner.class)
+import java.time.OffsetDateTime;
+import java.util.*;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
 public class UserServiceImplTest {
 
-    private static final UUID ID = UUID.randomUUID();
-    private static final String USERNAME = "Username";
-    private static final String EMAIL = "email@test.com";
-    private static final String PASSWORD = "Password";
-    private static final String ENCODED_PASSWORD = "Encoded";
-    private static final String TOKEN = "token";
-    private static final String ROLE1 = "user";
-    private static final String NAME = "name";
-    private static final String LASTNAME = "lastname";
-    private static final String CELLPHONE = "123456";
-    private static final Role ROLE = Role.USER;
-    private static final OffsetDateTime now = OffsetDateTime.now();
-
     @Mock
-    private UserDao mockDao;
+    private UserDao userDao;
 
     @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private EmailServiceImpl mailService;
+    private EmailService mailService;
+
+    @Mock
+    private BookingDao bookingDao;
+
+    @Mock
+    private ReviewsDao reviewDao;
+
+    @Mock
+    private ClubDao clubDao;
 
     @InjectMocks
     private UserServiceImpl userService;
 
-    /*private final User user = new User(ID, USERNAME, "Name", "Surname", EMAIL, PASSWORD, "123", Role.USER, OffsetDateTime.now());
+    @Before
+    public void setup() {
+        userDao = mock(UserDao.class);
+        passwordEncoder = mock(PasswordEncoder.class);
+        mailService = mock(EmailService.class);
+        bookingDao = mock(BookingDao.class);
+        reviewDao = mock(ReviewsDao.class);
+        clubDao = mock(ClubDao.class);
+
+        userService = new UserServiceImpl(userDao, passwordEncoder, mailService, bookingDao, reviewDao, clubDao);
+    }
+
+    private User makeUser(UUID id) {
+        User u = new User();
+        u.setUserId(id);
+        u.setUserName("test");
+        u.setName("Test");
+        u.setSurname("Test");
+        u.setEmail("test@mail.com");
+        u.setPasswordHash("pw");
+        u.setCellphone("111");
+        u.setRole(Role.USER);
+        u.setLocale("es");
+        return u;
+    }
+
 
     @Test
-    public void testCreate() {
-        // 1. Setup!
-        Mockito.when(mockDao.create(USERNAME, NAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, ROLE))
-                .thenReturn(new User(UUID.randomUUID(), USERNAME, NAME, LASTNAME, EMAIL, PASSWORD, CELLPHONE, ROLE, now));
-        Mockito.when(passwordEncoder.encode(PASSWORD)).thenReturn(PASSWORD);
-        // 2. "ejercito" la class under test
-        User maybeUser = userService.create(USERNAME, NAME, PASSWORD, LASTNAME, EMAIL, CELLPHONE, ROLE1);
-        // 3. Asserts!
-        Assert.assertNotNull(maybeUser);
-        //Assert.assertTrue(maybeUser.isPresent());
-        Assert.assertEquals(USERNAME, maybeUser.getUsername());
-        Assert.assertEquals(PASSWORD, maybeUser.getPassword());
+    public void testCreateSuccess() {
+        UUID id = UUID.randomUUID();
+        User created = makeUser(id);
+
+        when(passwordEncoder.encode("pw")).thenReturn("ENC");
+        when(userDao.create(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), any(Role.class), anyString()))
+                .thenReturn(created);
+
+        User result = userService.create("test","Test","pw","Test","mail@mail.com","123","USER","es");
+
+        assertNotNull(result);
+        assertEquals(id, result.getId());
+    }
+
+    @Test(expected = DuplicateEntityException.class)
+    public void testCreateDuplicateEmailThrows() {
+        when(passwordEncoder.encode("pw")).thenReturn("ENC");
+        when(userDao.create(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), any(Role.class), anyString()))
+                .thenThrow(new DataIntegrityViolationException(""));
+
+        userService.create("test","Test","pw","Test","mail@mail.com","123","USER","es");
     }
 
     @Test
-    public void testCreateEmptyPassword() {
-        // 1. Setup!
-        // 2. "ejercito" la class under test
-        User maybeUser = userService.create(USERNAME, NAME, "", LASTNAME, EMAIL, CELLPHONE, ROLE1);
-        // 3. Asserts!
-        Assert.assertNull(maybeUser);
-        //Assert.assertFalse(maybeUser.isPresent());
+    public void testUpdateSuccess() {
+        UUID id = UUID.randomUUID();
+        User dbUser = makeUser(id);
+        User newUser = makeUser(id);
+        newUser.setUserName("nuevo");
+
+        when(userDao.findById(id)).thenReturn(Optional.of(dbUser));
+        when(userDao.update(any(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), any(Role.class), anyString()))
+                .thenReturn(newUser);
+
+        User updated = userService.update(newUser);
+
+        assertEquals("nuevo", updated.getUsername());
+    }
+
+    @Test(expected = DuplicateEntityException.class)
+    public void testUpdateDuplicateUsernameThrows() {
+        UUID id = UUID.randomUUID();
+        User dbUser = makeUser(id);
+        User newUser = makeUser(id);
+        newUser.setUserName("newName");
+
+        when(userDao.findById(id)).thenReturn(Optional.of(dbUser));
+        when(userDao.findByUserName("newName")).thenReturn(Optional.of(new User()));
+
+        userService.update(newUser);
     }
 
     @Test
-    public void testCreateAlreadyExists() {
-        // 1. Setup!
-        Mockito.lenient().when(mockDao.findByUserName(Mockito.eq(USERNAME)))
-                .thenReturn(Optional.of(new User(UUID.randomUUID(), USERNAME, NAME, LASTNAME, EMAIL, PASSWORD, CELLPHONE, ROLE, now)));
-        // 2. "ejercito" la class under test
-        User maybeUser = userService.create(USERNAME, NAME, "", LASTNAME, EMAIL, CELLPHONE, ROLE1);
-        // 3. Asserts!
-        Assert.assertNull(maybeUser);
-        //Assert.assertFalse(maybeUser.isPresent());
+    public void testDelete() {
+        when(userDao.delete(any())).thenReturn(true);
+        assertTrue(userService.delete(UUID.randomUUID()));
     }
 
     @Test
-    public void testFindByIdFound() {
-        Mockito.when(mockDao.findById(ID)).thenReturn(Optional.of(user));
-        Optional<User> found = userService.findById(ID);
-        Assert.assertNotNull(found);
-        Assert.assertEquals(USERNAME, found.get().getUsername());
+    public void testFindByEmail() {
+        User user = makeUser(UUID.randomUUID());
+        when(userDao.findByEmail("mail@mail.com")).thenReturn(Optional.of(user));
+
+        assertEquals(user, userService.findByEmail("mail@mail.com"));
     }
 
     @Test
-    public void testFindByIdNotFound() {
-        Mockito.when(mockDao.findById(ID)).thenReturn(Optional.empty());
-        Optional<User> found = userService.findById(ID);
-        Assert.assertNull(found.orElse(null));
+    public void testFindByUsername() {
+        User user = makeUser(UUID.randomUUID());
+        when(userDao.findByUserName("test")).thenReturn(Optional.of(user));
+
+        assertEquals(user, userService.findByUserName("test"));
     }
 
     @Test
-    public void testFindByEmailFound() {
-        Mockito.when(mockDao.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        User found = userService.findByEmail(EMAIL);
-        Assert.assertEquals(EMAIL, found.getEmail());
+    public void testVerifyUserOk() {
+        User user = makeUser(UUID.randomUUID());
+        when(userDao.findByVerificationToken("abc")).thenReturn(Optional.of(user));
+
+        boolean result = userService.verifyUser("abc");
+        assertTrue(result);
     }
 
     @Test
-    public void testFindByEmailNotFound() {
-        Mockito.when(mockDao.findByEmail(EMAIL)).thenReturn(Optional.empty());
-        Assert.assertNull(userService.findByEmail(EMAIL));
+    public void testVerifyUserFail() {
+        when(userDao.findByVerificationToken("abc")).thenReturn(Optional.empty());
+        assertFalse(userService.verifyUser("abc"));
     }
 
     @Test
-    public void testFindByUserNameFound() {
-        Mockito.when(mockDao.findByUserName(USERNAME)).thenReturn(Optional.of(user));
-        Assert.assertEquals(USERNAME, userService.findByUserName(USERNAME).getUsername());
+    public void testResendVerificationSuccess() {
+        User user = makeUser(UUID.randomUUID());
+        when(userDao.findByUserName("test")).thenReturn(Optional.of(user));
+        assertTrue(userService.resendVerificationToken("test"));
     }
 
     @Test
-    public void testFindByUserNameNotFound() {
-        Mockito.when(mockDao.findByUserName(USERNAME)).thenReturn(Optional.empty());
-        Assert.assertNull(userService.findByUserName(USERNAME));
-    }
-
-    @Test
-    public void testDeleteReturnsTrue() {
-        Mockito.when(mockDao.delete(ID)).thenReturn(true);
-        Assert.assertTrue(userService.delete(ID));
-    }
-
-    @Test
-    public void testDeleteReturnsFalse() {
-        Mockito.when(mockDao.delete(ID)).thenReturn(false);
-        Assert.assertFalse(userService.delete(ID));
-    }
-
-    @Test
-    public void testVerifyUserTokenExists() {
-        Mockito.when(mockDao.findByVerificationToken(TOKEN)).thenReturn(Optional.of(user));
-        Assert.assertTrue(userService.verifyUser(TOKEN));
-    }
-
-    @Test
-    public void testVerifyUserTokenNotExists() {
-        Mockito.when(mockDao.findByVerificationToken(TOKEN)).thenReturn(Optional.empty());
-        Assert.assertFalse(userService.verifyUser(TOKEN));
-    }
-
-    @Test
-    public void testAuthenticateByUsername() {
-        user.setVerified(true);
-        Mockito.when(mockDao.findByUserName(USERNAME)).thenReturn(Optional.of(user));
-        Mockito.when(passwordEncoder.matches(PASSWORD, PASSWORD)).thenReturn(true);
-        Assert.assertTrue(userService.authenticateUsernameOrEmail(USERNAME, PASSWORD));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testAuthenticateNotVerified() {
-        user.setVerified(false);
-        Mockito.when(mockDao.findByUserName(USERNAME)).thenReturn(Optional.of(user));
-        userService.authenticateUsernameOrEmail(USERNAME, PASSWORD);
-    }
-
-    @Test
-    public void testAuthenticateFallbackToEmail() {
-        user.setVerified(true);
-        Mockito.when(mockDao.findByUserName(USERNAME)).thenReturn(Optional.empty());
-        Mockito.when(mockDao.findByEmail(USERNAME)).thenReturn(Optional.of(user));
-        Mockito.when(passwordEncoder.matches(PASSWORD, PASSWORD)).thenReturn(true);
-        Assert.assertTrue(userService.authenticateUsernameOrEmail(USERNAME, PASSWORD));
-    }
-
-    @Test
-    public void testAuthenticateNotFound() {
-        Mockito.when(mockDao.findByUserName(USERNAME)).thenReturn(Optional.empty());
-        Mockito.when(mockDao.findByEmail(USERNAME)).thenReturn(Optional.empty());
-        Assert.assertFalse(userService.authenticateUsernameOrEmail(USERNAME, PASSWORD));
-    }
-
-    @Test
-    public void testResendVerificationTokenUserFound() {
-        user.setVerified(false);
-        Mockito.when(mockDao.findByUserName(USERNAME)).thenReturn(Optional.of(user));
-        Assert.assertTrue(userService.resendVerificationToken(USERNAME));
-    }
-
-    @Test
-    public void testResendVerificationTokenVerified() {
-        user.setVerified(true);
-        Mockito.when(mockDao.findByUserName(USERNAME)).thenReturn(Optional.of(user));
-        Assert.assertFalse(userService.resendVerificationToken(USERNAME));
-    }
-
-    @Test
-    public void testResendVerificationTokenUserNotFound() {
-        Mockito.when(mockDao.findByUserName(USERNAME)).thenReturn(Optional.empty());
-        Mockito.when(mockDao.findByEmail(USERNAME)).thenReturn(Optional.empty());
-        Assert.assertFalse(userService.resendVerificationToken(USERNAME));
-    }
-
-    @Test
-    public void testRequestPasswordResetSuccess() {
-        Mockito.when(mockDao.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        Assert.assertTrue(userService.requestPasswordReset(EMAIL));
-    }
-
-    @Test
-    public void testRequestPasswordResetUserNotFound() {
-        Mockito.when(mockDao.findByEmail(EMAIL)).thenReturn(Optional.empty());
-        Assert.assertFalse(userService.requestPasswordReset(EMAIL));
+    public void testResendVerificationUserNotFound() {
+        when(userDao.findByUserName("test")).thenReturn(Optional.empty());
+        when(userDao.findByEmail("test")).thenReturn(Optional.empty());
+        assertFalse(userService.resendVerificationToken("test"));
     }
 
     @Test
     public void testResetPasswordSuccess() {
-        Mockito.when(mockDao.findByResetPasswordToken(TOKEN)).thenReturn(Optional.of(user));
-        Mockito.when(passwordEncoder.encode(Mockito.anyString())).thenReturn(ENCODED_PASSWORD);
-        Assert.assertTrue(userService.resetPassword(TOKEN, PASSWORD));
+        User user = makeUser(UUID.randomUUID());
+        when(userDao.findByResetPasswordToken("tok")).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("newpw")).thenReturn("ENC");
+
+        assertTrue(userService.resetPassword("tok","newpw"));
     }
 
     @Test
-    public void testResetPasswordTokenNotFound() {
-        Mockito.when(mockDao.findByResetPasswordToken(TOKEN)).thenReturn(Optional.empty());
-        Assert.assertFalse(userService.resetPassword(TOKEN, PASSWORD));
+    public void testChangePasswordForAuthenticatedUser() {
+        User user = makeUser(UUID.randomUUID());
+        when(userDao.findById(user.getId())).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("123")).thenReturn("ENC");
+
+        assertTrue(userService.changePasswordForAuthenticatedUser(user.getId(),"123"));
     }
 
     @Test
-    public void testFindByVerificationTokenFound() {
-        Mockito.when(mockDao.findByVerificationToken(TOKEN)).thenReturn(Optional.of(user));
-        Assert.assertNotNull(userService.findByVerificationToken(TOKEN));
+    public void testUpdateFieldSuccess() {
+        UUID id = UUID.randomUUID();
+        User u = makeUser(id);
+        when(userDao.findById(id)).thenReturn(Optional.of(u));
+        when(userDao.update(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(u);
+
+        User result = userService.updateUserField(id,"name","Nuevo");
+        assertEquals("Nuevo", result.getName());
+    }
+
+    @Test(expected = DuplicateEntityException.class)
+    public void testUpdateFieldDuplicateEmail() {
+        UUID id = UUID.randomUUID();
+        User u = makeUser(id);
+
+        when(userDao.findById(id)).thenReturn(Optional.of(u));
+        when(userDao.findByEmail("dup@mail.com")).thenReturn(Optional.of(new User()));
+
+        userService.updateUserField(id,"email","dup@mail.com");
     }
 
     @Test
-    public void testFindByVerificationTokenNotFound() {
-        Mockito.when(mockDao.findByVerificationToken(TOKEN)).thenReturn(Optional.empty());
-        Assert.assertNull(userService.findByVerificationToken(TOKEN));
-    }
+    public void testSendReviewRequests() {
+        User user = makeUser(UUID.randomUUID());
+        Booking past = mock(Booking.class);
+        when(bookingDao.findByUser(user.getId())).thenReturn(Collections.singletonList(past));
 
-}*/
+        when(past.getBookingEnd()).thenReturn(OffsetDateTime.now().minusDays(1));
+        when(past.getTable()).thenReturn(mock(ClubTable.class));
+        when(past.getTable().getClubId()).thenReturn(UUID.randomUUID());
+        when(reviewDao.existsByUserAndClub(any(), any())).thenReturn(false);
+        when(clubDao.findById(any())).thenReturn(Optional.of(mock(Club.class)));
+
+        userService.sendReviewRequestsForPastBookings(user);
+    }
+}
