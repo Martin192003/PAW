@@ -261,7 +261,4 @@ public class ReviewsJpaDao implements ReviewsDao {
                 .getSingleResult()
                 .intValue();
     }
-
-
-
 }

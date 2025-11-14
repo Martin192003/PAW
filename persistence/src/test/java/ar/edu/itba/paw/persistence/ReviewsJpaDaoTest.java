@@ -1,102 +1,207 @@
 package ar.edu.itba.paw.persistence;
 
-/*import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import javax.persistence.PersistenceException;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
-@Sql("classpath:schema.sql")
 @Transactional
 public class ReviewsJpaDaoTest {
 
-    private static final int RATING = 5;
-    private static final String DESCRIPTION = "Excelente club";
+    @Autowired
+    private ReviewsJpaDao reviewsDao;
 
     @PersistenceContext
     private EntityManager em;
-    @Autowired
-    private ReviewsJpaDao reviewsDao;
-    @Autowired
-    private UserJpaDao userDao;
-    @Autowired
-    private ClubJpaDao clubDao;
 
-    /*@Before
+    private User user;
+    private Review review;
+
+    @Before
     public void setUp() {
-        em.createQuery("DELETE FROM Review").executeUpdate();
-        em.createQuery("DELETE FROM User").executeUpdate();
-        em.createQuery("DELETE FROM Club").executeUpdate();
+        em.createQuery("DELETE FROM Review r").executeUpdate();
+        em.createQuery("DELETE FROM Club c").executeUpdate();
+        em.createQuery("DELETE FROM User u").executeUpdate();
+        em.flush();
+
+        user = persistUser("u1");
+        Club club = persistClub(user);
+
+        review = persistReview(user, club);
+        em.flush();
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /*                                CREATE                                   */
+    /* ---------------------------------------------------------------------- */
+
+    @Test
+    public void testCreateBasic() {
+        User u2 = persistUser("u2");
+        Club c2 = persistClub(u2);
+
+        Review r = reviewsDao.create(u2, c2, 5, "Excelente");
+        em.flush();
+
+        assertNotNull(r);
+        assertEquals(u2.getId(), r.getUser().getId());
+        assertEquals(c2.getClubId(), r.getClub().getClubId());
+        assertEquals(Integer.valueOf(5), r.getRating());
+        assertEquals("Excelente", r.getDescription());
+        assertEquals(2L, countReviews());
     }
 
     @Test
-    public void testCreateReview() {
-        User user = userDao.create("user", "name","pass", "last", "email", "cell", Role.USER);
-        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, user, MusicalGenre.ROCK, Zone.ZONA_CABA, false, null);
-        Review review = reviewsDao.create(user, club, RATING, DESCRIPTION);
+    public void testCreateInvalidUserThrows() {
+        Club c2 = persistClub(user);
 
-        assertNotNull(review);
-        assertEquals(Optional.of(RATING), Optional.of(review.getRating()));
-        assertEquals(DESCRIPTION, review.getDescription());
-        assertEquals(user.getId(), review.getUser().getId());
-        assertEquals(club.getClubId(), review.getClub().getClubId());
-        assertEquals(1, ((Number)em.createQuery("SELECT COUNT(r) FROM Review r").getSingleResult()).intValue());
+        assertThrows(PersistenceException.class,
+                () -> reviewsDao.create(null, c2, 5, "desc"));
     }
 
     @Test
-    public void testFindByIdReturnsEmpty() {
-        Optional<Review> result = reviewsDao.findById(UUID.randomUUID());
-        assertTrue(result.isEmpty());
+    public void testCreateInvalidClubThrows() {
+        User u2 = persistUser("uu");
+
+        assertThrows(PersistenceException.class,
+                () -> reviewsDao.create(u2, null, 5, "desc"));
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /*                                UPDATE                                   */
+    /* ---------------------------------------------------------------------- */
+
+    @Test
+    public void testUpdateWorks() {
+        UUID id = review.getReviewId();
+
+        Review updated = reviewsDao.update(id, 1, "Bad review");
+        em.flush();
+
+        assertNotNull(updated);
+        assertEquals(Integer.valueOf(1), updated.getRating());
+        assertEquals("Bad review", updated.getDescription());
     }
 
     @Test
-    public void testFindAllReturnsEmptyList() {
-        List<Review> result = reviewsDao.findAll();
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+    public void testUpdateNotFoundReturnsNull() {
+        Review r = reviewsDao.update(UUID.randomUUID(), 3, "Unknown");
+        assertNull(r);
     }
 
     @Test
-    public void testFindByUserReturnsEmptyList() {
-        User user = new User();
-        user.setUserId(UUID.randomUUID());
-        List<Review> result = reviewsDao.findByUser(user);
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+    public void testUpdateNullIdThrows() {
+        assertThrows(NullPointerException.class,
+                () -> reviewsDao.update(null, 3, "desc"));
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /*                                DELETE                                   */
+    /* ---------------------------------------------------------------------- */
+
+    @Test
+    public void testDelete() {
+        boolean deleted = reviewsDao.delete(review.getReviewId());
+        em.flush();
+
+        assertTrue(deleted);
+        assertEquals(0L, countReviews());
     }
 
     @Test
-    public void testFindByClubReturnsEmptyList() {
-        Club club = new Club();
-        club.setClubId(UUID.randomUUID());
-        List<Review> result = reviewsDao.findByClub(club);
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    public void testUpdateReturnsNullIfNotFound() {
-        Review result = reviewsDao.update(UUID.randomUUID(), 4, "Actualizado");
-        assertNull(result);
-    }
-
-    @Test
-    public void testDeleteReturnsFalseIfNotFound() {
+    public void testDeleteNotFoundReturnsFalse() {
         boolean deleted = reviewsDao.delete(UUID.randomUUID());
         assertFalse(deleted);
+        assertEquals(1L, countReviews());
     }
-}*/
+
+    /* ---------------------------------------------------------------------- */
+    /*                               FIND BY ID                                */
+    /* ---------------------------------------------------------------------- */
+
+    @Test
+    public void testFindById() {
+        Optional<Review> found = reviewsDao.findById(review.getReviewId());
+
+        assertTrue(found.isPresent());
+        assertEquals(review.getReviewId(), found.get().getReviewId());
+    }
+
+    @Test
+    public void testFindByIdNotFound() {
+        Optional<Review> found = reviewsDao.findById(UUID.randomUUID());
+        assertFalse(found.isPresent());
+    }
+
+
+    /* ---------------------------------------------------------------------- */
+    /*                            HELPERS                                      */
+    /* ---------------------------------------------------------------------- */
+
+    private long countReviews() {
+        return em.createQuery("SELECT COUNT(r) FROM Review r", Long.class)
+                .getSingleResult();
+    }
+
+    private User persistUser(String username) {
+        User u = new User();
+        u.setUserId(UUID.randomUUID());
+        u.setUserName(username);
+        u.setName("n");
+        u.setSurname("l");
+        u.setEmail(username + "@mail.com");
+        u.setRole(Role.USER);
+        u.setCreatedAt(OffsetDateTime.now());
+        u.setLocale(null);
+        u.setPasswordHash("password");
+        u.setCellphone("123");
+        em.persist(u);
+        return u;
+    }
+
+    private Club persistClub(User contact) {
+        Club c = new Club(
+                "Club Test",
+                "Location",
+                new BigDecimal("5.0"),
+                1,
+                null,
+                "desc",
+                contact,
+                null,
+                OffsetDateTime.now(),
+                null,
+                Boolean.FALSE,
+                null
+        );
+        em.persist(c);
+        return c;
+    }
+
+    private Review persistReview(User u, Club c) {
+        Review r = new Review();
+        r.setUser(u);
+        r.setClub(c);
+        r.setRating(4);
+        r.setDescription("Very nice");
+        em.persist(r);
+        return r;
+    }
+
+
+}

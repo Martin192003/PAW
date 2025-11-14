@@ -1,212 +1,304 @@
-/*package ar.edu.itba.paw.persistence;
+package ar.edu.itba.paw.persistence;
 
-import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.Receipt;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import java.math.BigDecimal;
+import javax.persistence.*;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertThrows;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
-@Sql("classpath:schema.sql")
 @Transactional
 public class ReceiptJpaDaoTest {
 
-    @PersistenceContext
-    private EntityManager em;
     @Autowired
     private ReceiptJpaDao receiptDao;
 
+    @PersistenceContext
+    private EntityManager em;
+
+    private UUID bookingId;
+    private UUID uploadedBy;
+    private byte[] data;
+
     @Before
     public void setUp() {
-        em.createQuery("DELETE FROM Receipt").executeUpdate();
-        em.createQuery("DELETE FROM Booking").executeUpdate();
-        em.createQuery("DELETE FROM ClubTable").executeUpdate();
-        em.createQuery("DELETE FROM Club").executeUpdate();
-        em.createQuery("DELETE FROM User").executeUpdate();
+        em.createQuery("DELETE FROM Receipt r").executeUpdate();
+        em.flush();
+
+        bookingId = UUID.randomUUID();
+        uploadedBy = UUID.randomUUID();
+        data = new byte[]{1, 2, 3};
     }
 
-    private User insertUser(UUID userId) {
-        User user = new User();
-        user.setUserId(userId);
-        user.setUserName("Test");
-        user.setName("TestName");
-        user.setSurname("User");
-        user.setEmail(userId.toString() + "@example.com");
-        user.setPasswordHash("hash");
-        user.setCellphone("123456");
-        user.setRole(Role.USER);
-        user.setCreatedAt(OffsetDateTime.now());
-        em.persist(user);
-        return user;
-    }
+    // -------------------------------------------------------------------
+    // CREATE
+    // -------------------------------------------------------------------
 
-    private Club insertClub(UUID clubId, User contact) {
-        Club club = em.find(Club.class, clubId);
-        if (club != null) {
-            return club;
-        }
-        club = new Club();
-        club.setClubId(clubId);
-        club.setClubName("Club Test");
-        club.setLocation("Location");
-        club.setRating(BigDecimal.ZERO);
-        club.setQuantityRatings(1);
-        club.setPriceRange(Price.MEDIO);
-        club.setDescription("desc");
-        club.setContactInfo(em.merge(contact));
-        club.setMusicGenre(MusicalGenre.POP);
-        club.setZone(Zone.ZONA_CABA);
-        club.setIsBar(false);
-        club.setCreatedAt(OffsetDateTime.now());
-        club.setAdmins(new HashSet<>());
-        return em.merge(club);
-    }
+    @Test
+    public void testCreate() {
+        UUID id = receiptDao.create(
+                bookingId,
+                uploadedBy,
+                "file.jpg",
+                "image/jpeg",
+                data
+        );
+        em.flush();
 
-    private ClubTable insertTable(UUID tableId, Club club) {
-        ClubTable table = new ClubTable();
-        table.setTableId(tableId);
-        table.setClubId(club.getClubId());
-        table.setTableNumber(1);
-        table.setCapacity(4);
-        table.setTableState(TableState.DISPONIBLE);
-        table.setPrice(BigDecimal.valueOf(100.0));
-        table.setDiscount(BigDecimal.valueOf(0.0));
-        em.persist(table);
-        return table;
-    }
+        assertNotNull(id);
 
-    private Booking insertBooking(UUID bookingId, User user, ClubTable table) {
-        Booking booking = new Booking();
-        booking.setBookingId(bookingId);
-        booking.setUser(user);
-        booking.setTable(table);
-        booking.setBookingStart(OffsetDateTime.now());
-        booking.setBookingEnd(OffsetDateTime.now().plusHours(1));
-        booking.setStatus(Status.CONFIRMADA);
-        booking.setCreatedAt(OffsetDateTime.now());
-        booking.setTotalAmount(BigDecimal.valueOf(100.0));
-        em.persist(booking);
-        return booking;
+        Receipt r = em.find(Receipt.class, id);
+        assertNotNull(r);
+        assertEquals(bookingId, r.getBookingId());
+        assertEquals(uploadedBy, r.getUploadedBy());
+        assertEquals("file.jpg", r.getFilename());
+        assertEquals("image/jpeg", r.getContentType());
+        assertNotNull(r.getUrl());              // generado en prePersist
+        assertNotNull(r.getCreatedAt());        // generado en prePersist
+        assertEquals(3, r.getSizeBytes().longValue());
+        assertArrayEquals(data, r.getData());
     }
 
     @Test
-    public void testCreateAndFindByIdWithData() {
-        UUID userId = UUID.randomUUID();
-        User user = insertUser(userId);
-        UUID clubId = UUID.randomUUID();
-        Club club = insertClub(clubId, user);
-        UUID tableId = UUID.randomUUID();
-        ClubTable table = insertTable(tableId, club);
-        UUID bookingId = UUID.randomUUID();
-        Booking booking = insertBooking(bookingId, user, table);
-        String filename = "receipt.pdf";
-        String contentType = "application/pdf";
-        byte[] data = new byte[]{1,2,3,4,5};
-        UUID receiptId = receiptDao.create(bookingId, userId, filename, contentType, data);
-        assertNotNull(receiptId);
-        Optional<Receipt> receiptOpt = receiptDao.findByIdWithData(receiptId);
-        assertTrue(receiptOpt.isPresent());
-        Receipt receipt = receiptOpt.get();
-        assertEquals(bookingId, receipt.getBookingId());
-        assertEquals(userId, receipt.getUploadedBy());
-        assertEquals(filename, receipt.getFilename());
-        assertEquals(contentType, receipt.getContentType());
-        assertArrayEquals(data, receipt.getData());
+    public void testCreateNullBookingThrows() {
+        assertThrows(PersistenceException.class, () -> {
+            receiptDao.create(
+                    null,
+                    uploadedBy,
+                    "file.jpg",
+                    "image/jpeg",
+                    data
+            );
+            em.flush();
+        });
     }
 
     @Test
-    public void testFindByBooking() {
-        UUID userId = UUID.randomUUID();
-        User user = insertUser(userId);
-        UUID clubId = UUID.randomUUID();
-        Club club = insertClub(clubId, user);
-        UUID tableId = UUID.randomUUID();
-        ClubTable table = insertTable(tableId, club);
-        UUID bookingId = UUID.randomUUID();
-        Booking booking = insertBooking(bookingId, user, table);
-        String filename = "receipt2.pdf";
-        String contentType = "application/pdf";
-        byte[] data = new byte[]{10,20,30};
-        receiptDao.create(bookingId, userId, filename, contentType, data);
-        Optional<Receipt> receiptOpt = receiptDao.findByBooking(bookingId);
-        assertTrue(receiptOpt.isPresent());
-        Receipt receipt = receiptOpt.get();
-        assertEquals(bookingId, receipt.getBookingId());
-        assertEquals(filename, receipt.getFilename());
+    public void testCreateNullUploadedByThrows() {
+        assertThrows(PersistenceException.class, () -> {
+            receiptDao.create(
+                    bookingId,
+                    null,
+                    "file.jpg",
+                    "image/jpeg",
+                    data
+            );
+            em.flush();
+        });
     }
+
+    @Test
+    public void testCreateNullDataThrows() {
+        assertThrows(PersistenceException.class, () -> {
+            receiptDao.create(
+                    bookingId,
+                    uploadedBy,
+                    "file.jpg",
+                    "image/jpeg",
+                    null
+            );
+            em.flush();
+        });
+    }
+
+    @Test
+    public void testCreateNullFilenameThrows() {
+        assertThrows(PersistenceException.class, () -> {
+            receiptDao.create(
+                    bookingId,
+                    uploadedBy,
+                    null,
+                    "image/jpeg",
+                    data
+            );
+            em.flush();
+        });
+    }
+
+    @Test
+    public void testCreateNullContentTypeThrows() {
+        assertThrows(PersistenceException.class, () -> {
+            receiptDao.create(
+                    bookingId,
+                    uploadedBy,
+                    "file.jpg",
+                    null,
+                    data
+            );
+            em.flush();
+        });
+    }
+
+    // -------------------------------------------------------------------
+    // FIND BY ID (without data)
+    // -------------------------------------------------------------------
 
     @Test
     public void testFindById() {
-        UUID userId = UUID.randomUUID();
-        User user = insertUser(userId);
-        UUID clubId = UUID.randomUUID();
-        Club club = insertClub(clubId, user);
-        UUID tableId = UUID.randomUUID();
-        ClubTable table = insertTable(tableId, club);
-        UUID bookingId = UUID.randomUUID();
-        Booking booking = insertBooking(bookingId, user, table);
-        String filename = "receipt3.pdf";
-        String contentType = "application/pdf";
-        byte[] data = new byte[]{7,8,9};
-        UUID receiptId = receiptDao.create(bookingId, userId, filename, contentType, data);
-        Optional<Receipt> receiptOpt = receiptDao.findById(receiptId);
-        assertTrue(receiptOpt.isPresent());
-        Receipt receipt = receiptOpt.get();
-        assertEquals(bookingId, receipt.getBookingId());
-        assertEquals(filename, receipt.getFilename());
-        assertNotNull(receipt.getData());
+        UUID id = insertReceipt();
+        em.flush();
+
+        Optional<Receipt> r = receiptDao.findById(id);
+
+        assertTrue(r.isPresent());
+        assertEquals(id, r.get().getReceiptId());
+        assertEquals("test.jpg", r.get().getFilename());
+        assertEquals("image/jpeg", r.get().getContentType());
+        assertNotNull(r.get().getData()); // findById NO limpia data
     }
+
+    @Test
+    public void testFindByIdNotFound() {
+        Optional<Receipt> r = receiptDao.findById(UUID.randomUUID());
+        assertFalse(r.isPresent());
+    }
+
+    // -------------------------------------------------------------------
+    // FIND BY ID WITH DATA
+    // -------------------------------------------------------------------
+
+    @Test
+    public void testFindByIdWithData() {
+        UUID id = insertReceipt();
+        em.flush();
+
+        Optional<Receipt> r = receiptDao.findByIdWithData(id);
+
+        assertTrue(r.isPresent());
+        assertArrayEquals(data, r.get().getData());
+    }
+
+    @Test
+    public void testFindByIdWithDataNotFound() {
+        Optional<Receipt> r = receiptDao.findByIdWithData(UUID.randomUUID());
+        assertFalse(r.isPresent());
+    }
+
+    // -------------------------------------------------------------------
+    // FIND BY BOOKING
+    // -------------------------------------------------------------------
+
+    @Test
+    public void testFindByBooking() {
+        UUID id = insertReceipt();
+        em.flush();
+
+        Optional<Receipt> r = receiptDao.findByBooking(bookingId);
+
+        assertTrue(r.isPresent());
+        assertEquals(id, r.get().getReceiptId());
+        assertNull(r.get().getData()); // findByBooking detacha y pone data = null
+    }
+
+    @Test
+    public void testFindByBookingReturnsLatest() {
+        // Insert older receipt
+        insertReceiptWithCreatedAt(OffsetDateTime.now().minusDays(1));
+
+        // Insert latest receipt
+        UUID newestId = insertReceiptWithCreatedAt(OffsetDateTime.now());
+
+        em.flush();
+
+        Optional<Receipt> r = receiptDao.findByBooking(bookingId);
+
+        assertTrue(r.isPresent());
+        assertEquals(newestId, r.get().getReceiptId());
+    }
+
+    @Test
+    public void testFindByBookingNotFound() {
+        Optional<Receipt> r = receiptDao.findByBooking(UUID.randomUUID());
+        assertFalse(r.isPresent());
+    }
+
+    // -------------------------------------------------------------------
+    // DELETE BY BOOKING
+    // -------------------------------------------------------------------
 
     @Test
     public void testDeleteByBooking() {
-        UUID userId = UUID.randomUUID();
-        User user = insertUser(userId);
-        UUID clubId = UUID.randomUUID();
-        Club club = insertClub(clubId, user);
-        UUID tableId = UUID.randomUUID();
-        ClubTable table = insertTable(tableId, club);
-        UUID bookingId = UUID.randomUUID();
-        Booking booking = insertBooking(bookingId, user, table);
-        String filename = "receipt4.pdf";
-        String contentType = "application/pdf";
-        byte[] data = new byte[]{11,12,13};
-        receiptDao.create(bookingId, userId, filename, contentType, data);
+        insertReceipt();
+        em.flush();
+
         boolean deleted = receiptDao.deleteByBooking(bookingId);
+        em.flush();
+
         assertTrue(deleted);
-        assertEquals(0, ((Number)em.createQuery("SELECT COUNT(r) FROM Receipt r").getSingleResult()).intValue());
+        assertEquals(0L, countReceipts());
     }
 
     @Test
-    public void testDeleteById() {
-        UUID userId = UUID.randomUUID();
-        User user = insertUser(userId);
-        UUID clubId = UUID.randomUUID();
-        Club club = insertClub(clubId, user);
-        UUID tableId = UUID.randomUUID();
-        ClubTable table = insertTable(tableId, club);
-        UUID bookingId = UUID.randomUUID();
-        Booking booking = insertBooking(bookingId, user, table);
-        String filename = "receipt5.pdf";
-        String contentType = "application/pdf";
-        byte[] data = new byte[]{21,22,23};
-        UUID receiptId = receiptDao.create(bookingId, userId, filename, contentType, data);
-        boolean deleted = receiptDao.delete(receiptId);
-        assertTrue(deleted);
-        assertEquals(0, ((Number)em.createQuery("SELECT COUNT(r) FROM Receipt r").getSingleResult()).intValue());
+    public void testDeleteByBookingNotFound() {
+        boolean deleted = receiptDao.deleteByBooking(UUID.randomUUID());
+        assertFalse(deleted);
     }
-}*/
+
+    // -------------------------------------------------------------------
+    // DELETE BY ID
+    // -------------------------------------------------------------------
+
+    @Test
+    public void testDelete() {
+        UUID id = insertReceipt();
+        em.flush();
+
+        boolean deleted = receiptDao.delete(id);
+        em.flush();
+
+        assertTrue(deleted);
+        assertEquals(0L, countReceipts());
+    }
+
+    @Test
+    public void testDeleteNotFound() {
+        boolean deleted = receiptDao.delete(UUID.randomUUID());
+        assertFalse(deleted);
+    }
+
+    // -------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------
+
+    private UUID insertReceipt() {
+        return insertReceiptWithCreatedAt(OffsetDateTime.now());
+    }
+
+    private UUID insertReceiptWithCreatedAt(OffsetDateTime createdAt) {
+        UUID id = UUID.randomUUID();
+
+        em.createNativeQuery("""
+                INSERT INTO receipts (receipt_id, booking_id, uploaded_by, url, filename,
+                                       content_type, size_bytes, created_at, data)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """)
+                .setParameter(1, id)
+                .setParameter(2, bookingId)
+                .setParameter(3, uploadedBy)
+                .setParameter(4, "http://test.com/receipt")
+                .setParameter(5, "test.jpg")
+                .setParameter(6, "image/jpeg")
+                .setParameter(7, (long) data.length)
+                .setParameter(8, createdAt)
+                .setParameter(9, data)
+                .executeUpdate();
+
+        return id;
+    }
+
+    private long countReceipts() {
+        return em.createQuery("SELECT COUNT(r) FROM Receipt r", Long.class)
+                .getSingleResult();
+    }
+}

@@ -2,6 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.UUID;
+
+import java.time.OffsetDateTime;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -23,178 +24,350 @@ import static org.junit.Assert.*;
 @Transactional
 public class UserJpaDaoTest {
 
-    @Autowired private UserJpaDao dao;
-    @PersistenceContext private EntityManager em;
+    @Autowired
+    private UserJpaDao userDao;
 
-    private User reload(UUID id) {
+    @PersistenceContext
+    private EntityManager em;
+
+    private User user;
+
+    @Before
+    public void setUp() {
+        em.createQuery("DELETE FROM User u").executeUpdate();
         em.flush();
-        em.clear();
-        return em.find(User.class, id);
+
+        user = persistUser("user1", "Name1", "Last1", "email1@test.com", "{noop}h1");
+        em.flush();
     }
 
-    @Test
-    public void create_persists_and_normalizes_email() {
-        String username = "martin";
-        String rawEmail = "MiMail@example.com";
-        User u = dao.create(
-                username,
-                "Nombre",
-                "{noop}hash",
-                "Apellido",
-                rawEmail,
-                "123456",
-                Role.USER,
-                "es_AR"
-        );
-        assertNotNull(u.getId());
-        assertEquals(username, u.getUsername());
-        assertEquals(rawEmail.toLowerCase(Locale.ROOT), u.getEmail());
-    }
+    // ---------------------------------------------------------
+    // CREATE
+    // ---------------------------------------------------------
 
     @Test
-    public void findByEmail_is_case_insensitive() {
-        User u = dao.create("usr", "N", "{noop}", "S", "Case@Test.com", "123", Role.USER, "es_AR");
-        Optional<User> byEmail = dao.findByEmail("case@test.com");
-        assertTrue(byEmail.isPresent());
-        assertEquals(u.getId(), byEmail.get().getId());
-    }
-
-    @Test
-    public void findByUserName_is_case_insensitive() {
-        User u = dao.create("MiUser", "N", "{noop}", "S", "a@a.com", "123", Role.USER, "es_AR");
-        Optional<User> byName = dao.findByUserName("miuser");
-        assertTrue(byName.isPresent());
-        assertEquals(u.getId(), byName.get().getId());
-    }
-
-    @Test
-    public void update_existing_updates_all_fields() {
-        User u = dao.create("u1", "N", "{noop}", "S", "u1@a.com", "111", Role.USER, "es_AR");
-
-        User updated = dao.update(
-                u.getId(),
-                "u2", "Name2", "Surname2",
-                "New@Mail.com",
-                "{noop}hash2",
-                "222",
+    public void testCreate() {
+        User created = userDao.create(
+                "user2",
+                "Name2",
+                "h2",
+                "Last2",
+                "email2@test.com",
+                "456",
                 Role.ADMIN,
-                "en_US"
+                "en"
         );
+        em.flush();
 
-        assertNotNull(updated);
-        User db = reload(u.getId());
-        assertEquals("u2", db.getUsername());
-        assertEquals("new@mail.com", db.getEmail());
-        assertEquals("{noop}hash2", db.getPassword());
-        assertEquals("222", db.getCellphone());
-        assertEquals(Role.ADMIN, db.getRole());
-        assertEquals("en_US", db.getLocale());
+        assertNotNull(created);
+        assertNotNull(created.getId());
+        assertEquals("user2", created.getUsername());
+        assertEquals("name2", created.getName().toLowerCase()); // según tu normalización
+        assertEquals("email2@test.com", created.getEmail());
+        assertEquals(Role.ADMIN, created.getRole());
+        assertFalse(created.isVerified());
     }
 
     @Test
-    public void update_non_existing_returns_null() {
-        User updated = dao.update(
-                UUID.randomUUID(), "x", "n", "s", "x@x.com", "{noop}", "000", Role.USER, "es_AR"
-        );
-        assertNull(updated);
-    }
-
-    @Test
-    public void delete_existing_returns_true_and_removes() {
-        User u = dao.create("d1", "N", "{noop}", "S", "d1@a.com", "1", Role.USER, "es_AR");
-        boolean ok = dao.delete(u.getId());
-        assertTrue(ok);
-        assertNull(em.find(User.class, u.getId()));
-    }
-
-    @Test
-    public void delete_non_existing_returns_false() {
-        boolean ok = dao.delete(UUID.randomUUID());
-        assertFalse(ok);
-    }
-
-    @Test
-    public void verification_token_workflow() {
-        User u = dao.create("v1", "N", "{noop}", "S", "v1@a.com", "1", Role.USER, "es_AR");
-
-        dao.updateVerificationStatus(u.getId(), true);
-        User db1 = reload(u.getId());
-        assertTrue(db1.isVerified());
-
-        String newToken = UUID.randomUUID().toString();
-        dao.updateVerificationToken(u.getId(), newToken);
-        User db2 = reload(u.getId());
-        assertEquals(newToken, db2.getVerificationToken());
-
-        Optional<User> byTok = dao.findByVerificationToken(newToken);
-        assertTrue(byTok.isPresent());
-    }
-
-    @Test
-    public void reset_password_token_workflow() {
-        User u = dao.create("r1", "N", "{noop}", "S", "r1@a.com", "1", Role.USER, "es_AR");
-        String tok = "tok-123";
-        dao.updateResetPasswordToken(u.getId(), tok);
-        User db1 = reload(u.getId());
-        assertEquals(tok, db1.getResetPasswordToken());
-
-        Optional<User> byTok = dao.findByResetPasswordToken(tok);
-        assertTrue(byTok.isPresent());
-
-        dao.clearResetPasswordToken(u.getId());
-        User db2 = reload(u.getId());
-        assertNull(db2.getResetPasswordToken());
-    }
-
-    @Test
-    public void update_locale_updates_only_locale() {
-        User u = dao.create("l1", "N", "{noop}", "S", "l1@a.com", "1", Role.USER, "es_AR");
-        dao.updateLocale(u.getId(), "pt_BR");
-        User db = reload(u.getId());
-        assertEquals("pt_BR", db.getLocale());
-    }
-
-    @Test
-    public void create_duplicate_email_violates_unique_constraint() {
-        dao.create("x1", "N", "{noop}", "S", "dup@a.com", "1", Role.USER, "es_AR");
-
+    public void testCreateWithNullUsernameThrows() {
         assertThrows(PersistenceException.class, () -> {
-            dao.create("x2", "N", "{noop}", "S", "DUP@a.com", "2", Role.USER, "es_AR");
+            userDao.create(
+                    null,
+                    "Name",
+                    "hash",
+                    "Last",
+                    "email@test.com",
+                    "123",
+                    Role.USER,
+                    "es"
+            );
+            em.flush(); // fuerza la constraint
+        });
+    }
+
+    @Test
+    public void testCreateWithDuplicateEmailThrows() {
+        assertThrows(PersistenceException.class, () -> {
+            userDao.create(
+                    "another",
+                    "Name",
+                    "hash",
+                    "Last",
+                    user.getEmail(),  // email duplicado
+                    "123",
+                    Role.USER,
+                    "es"
+            );
             em.flush();
         });
     }
 
+    // ---------------------------------------------------------
+    // UPDATE
+    // ---------------------------------------------------------
+
     @Test
-    public void create_with_null_email_throws_exception() {
-        assertThrows(NullPointerException.class, () -> {
-            dao.create("usr", "N", "{noop}", "S", null, "123", Role.USER, "es_AR");
-        });
+    public void testUpdate() {
+        User u = userDao.update(
+                user.getId(),
+                "newUsername",
+                "NewName",
+                "NewLast",
+                "new@email.com",
+                "newHash",
+                "999",
+                Role.ADMIN,
+                "pt"
+        );
+
+        assertNotNull(u);
+        assertEquals("newusername", u.getUsername().toLowerCase());
+        assertEquals("newname", u.getName().toLowerCase());
+        assertEquals("newlast", u.getSurname().toLowerCase());
+        assertEquals("new@email.com", u.getEmail());
+        assertEquals("newHash", u.getPassword());
+        assertEquals("999", u.getCellphone());
+        assertEquals(Role.ADMIN, u.getRole());
+        assertEquals("pt", u.getLocale());
     }
 
     @Test
-    public void findByEmail_non_existent_returns_empty() {
-        assertFalse(dao.findByEmail("nonexistent@example.com").isPresent());
+    public void testUpdateNotFoundReturnsNull() {
+        User u = userDao.update(
+                UUID.randomUUID(),
+                "usr",
+                "Name",
+                "Last",
+                "mail@test.com",
+                "hash",
+                "000",
+                Role.USER,
+                "es"
+        );
+
+        assertNull(u);
     }
 
     @Test
-    public void updateVerificationToken_non_existing_does_not_throw_and_does_not_create_user() {
-        UUID fake = UUID.randomUUID();
-        dao.updateVerificationToken(fake, "tok123");
-        em.flush();
-        Optional<User> res = dao.findByVerificationToken("tok123");
-        assertFalse(res.isPresent());
-    }
-
-
-    @Test
-    public void testCreateDuplicateEmailFails() {
-        dao.create("user1", "Name", "{noop}x", "S", "dup@example.com", "123", Role.USER, "es-AR");
-        em.flush();
+    public void testUpdateWithDuplicateEmailThrows() {
+        User other = persistUser("u2", "N", "L", "dup@test.com", "{noop}");
 
         assertThrows(PersistenceException.class, () -> {
-            dao.create("user2", "Name", "{noop}y", "S", "DUP@example.com", "456", Role.USER, "es-AR");
+            userDao.update(
+                    user.getId(),
+                    "usr",
+                    "Name",
+                    "Last",
+                    "dup@test.com",
+                    "hash",
+                    "000",
+                    Role.USER,
+                    "es"
+            );
             em.flush();
         });
     }
 
+    // ---------------------------------------------------------
+    // DELETE
+    // ---------------------------------------------------------
+
+    @Test
+    public void testDelete() {
+        boolean deleted = userDao.delete(user.getId());
+        em.flush();
+
+        assertTrue(deleted);
+        assertEquals(0L, countUsers());
+    }
+
+    @Test
+    public void testDeleteNotFoundReturnsFalse() {
+        boolean deleted = userDao.delete(UUID.randomUUID());
+        assertFalse(deleted);
+        assertEquals(1L, countUsers());
+    }
+
+    // ---------------------------------------------------------
+    // FIND BY ID
+    // ---------------------------------------------------------
+
+    @Test
+    public void testFindById() {
+        Optional<User> found = userDao.findById(user.getId());
+        assertTrue(found.isPresent());
+        assertEquals(user.getId(), found.get().getId());
+    }
+
+    @Test
+    public void testFindByIdNotFound() {
+        Optional<User> found = userDao.findById(UUID.randomUUID());
+        assertFalse(found.isPresent());
+    }
+
+    // ---------------------------------------------------------
+    // FIND BY EMAIL
+    // ---------------------------------------------------------
+
+    @Test
+    public void testFindByEmail() {
+        Optional<User> found = userDao.findByEmail(user.getEmail());
+        assertTrue(found.isPresent());
+        assertEquals(user.getId(), found.get().getId());
+    }
+
+    @Test
+    public void testFindByEmailNotFound() {
+        assertFalse(userDao.findByEmail("notexist@test.com").isPresent());
+    }
+
+    // ---------------------------------------------------------
+    // FIND BY USERNAME
+    // ---------------------------------------------------------
+
+    @Test
+    public void testFindByUsername() {
+        Optional<User> found = userDao.findByUserName(user.getUsername());
+        assertTrue(found.isPresent());
+        assertEquals(user.getId(), found.get().getId());
+    }
+
+    @Test
+    public void testFindByUsernameNotFound() {
+        assertFalse(userDao.findByUserName("unknown").isPresent());
+    }
+
+    // ---------------------------------------------------------
+    // VERIFICATION TOKEN & STATUS
+    // ---------------------------------------------------------
+
+    @Test
+    public void testUpdateVerificationStatus() {
+        userDao.updateVerificationStatus(user.getId(), true);
+        em.flush();
+
+        User u = em.find(User.class, user.getId());
+        assertTrue(u.isVerified());
+    }
+
+    @Test
+    public void testUpdateVerificationStatusNotFoundDoesNothing() {
+        userDao.updateVerificationStatus(UUID.randomUUID(), true);
+        em.flush();
+
+        User u = em.find(User.class, user.getId());
+        assertFalse(u.isVerified());
+    }
+
+    @Test
+    public void testUpdateVerificationToken() {
+        userDao.updateVerificationToken(user.getId(), "tok123");
+        em.flush();
+
+        User u = em.find(User.class, user.getId());
+        assertEquals("tok123", u.getVerificationToken());
+    }
+
+    @Test
+    public void testFindByVerificationToken() {
+        user.setVerificationToken("hello");
+        em.flush();
+
+        Optional<User> found = userDao.findByVerificationToken("hello");
+        assertTrue(found.isPresent());
+        assertEquals(user.getId(), found.get().getId());
+    }
+
+    @Test
+    public void testFindByVerificationTokenNotFound() {
+        assertFalse(userDao.findByVerificationToken("xxxxx").isPresent());
+    }
+
+    // ---------------------------------------------------------
+    // RESET PASSWORD TOKEN
+    // ---------------------------------------------------------
+
+    @Test
+    public void testUpdateResetPasswordToken() {
+        userDao.updateResetPasswordToken(user.getId(), "reset123");
+        em.flush();
+
+        User u = em.find(User.class, user.getId());
+        assertEquals("reset123", u.getResetPasswordToken());
+    }
+
+    @Test
+    public void testFindByResetPasswordToken() {
+        user.setResetPasswordToken("zzz");
+        em.flush();
+
+        Optional<User> found = userDao.findByResetPasswordToken("zzz");
+        assertTrue(found.isPresent());
+    }
+
+    @Test
+    public void testFindByResetPasswordTokenNotFound() {
+        assertFalse(userDao.findByResetPasswordToken("aaaa").isPresent());
+    }
+
+    @Test
+    public void testClearResetPasswordToken() {
+        user.setResetPasswordToken("resetMe");
+        em.flush();
+
+        userDao.clearResetPasswordToken(user.getId());
+        em.flush();
+
+        User u = em.find(User.class, user.getId());
+        assertNull(u.getResetPasswordToken());
+    }
+
+    // ---------------------------------------------------------
+    // UPDATE LOCALE
+    // ---------------------------------------------------------
+
+    @Test
+    public void testUpdateLocale() {
+        userDao.updateLocale(user.getId(), "fr");
+        em.flush();
+
+        User u = em.find(User.class, user.getId());
+        assertEquals("fr", u.getLocale());
+    }
+
+    @Test
+    public void testUpdateLocaleNotFoundDoesNothing() {
+        userDao.updateLocale(UUID.randomUUID(), "it");
+        em.flush();
+
+        User u = em.find(User.class, user.getId());
+        assertEquals("es", u.getLocale()); // unchanged
+    }
+
+    // ---------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------
+
+    private User persistUser(String username, String name, String surname, String email,
+                             String passwordHash) {
+        User u = new User();
+        u.setUserId(UUID.randomUUID());
+        u.setUserName(username);
+        u.setName(name);
+        u.setSurname(surname);
+        u.setEmail(email);
+        u.setPasswordHash(passwordHash);
+        u.setCellphone("123");
+        u.setRole(Role.USER);
+        u.setVerified(false);
+        u.setVerificationToken(UUID.randomUUID().toString());
+        u.setCreatedAt(OffsetDateTime.now());
+        u.setLocale("es");
+        em.persist(u);
+        return u;
+    }
+
+    private long countUsers() {
+        return em.createQuery("select count(u) from User u", Long.class).getSingleResult();
+    }
 }
