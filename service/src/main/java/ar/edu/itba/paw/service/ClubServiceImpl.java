@@ -39,6 +39,7 @@ public class ClubServiceImpl implements ClubService{
         User managedContact = userService.findById(contactInfo.getId()).orElseThrow();
         if (managedContact.getRole() != Role.ADMIN) {
             managedContact.setRole(Role.ADMIN);
+            userService.updateRole(managedContact.getId(), Role.ADMIN);
         }
 
         Club newClub = clubDao.create(name, description, location, priceRange, managedContact, musicGenre, zone, isBar, cbu);
@@ -216,8 +217,8 @@ public class ClubServiceImpl implements ClubService{
         if (user == null) {
             return false;
         }
-        if (user.getRole().equals(Role.ADMIN)) {
-            return true;
+        if (!user.getRole().equals(Role.ADMIN)) {
+            return false;
         }
         return getAdminsByClub(clubId)
                 .stream()

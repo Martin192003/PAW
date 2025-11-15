@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
+import ar.edu.itba.paw.webapp.auth.WebSecurity;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,9 +45,10 @@ public class ClubController {
     private final ClubLayoutService clubLayoutService;
     private final ProductService productService;
     private final ReviewService reviewService;
+    private final WebSecurity webSecurity;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService, ReviewService reviewService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService, ReviewService reviewService, WebSecurity webSecurity) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
@@ -56,6 +58,7 @@ public class ClubController {
         this.eventService = eventService;
         this.clubLayoutService = clubLayoutService;
         this.productService = productService;
+        this.webSecurity = webSecurity;
     }
 
     @GetMapping({"", "/"})
@@ -218,6 +221,7 @@ public class ClubController {
 
         if (roleAntes == Role.USER) {
             User updatedUser = userService.findById(userDetails.getId()).orElseThrow(UserNotFoundException::new);
+            webSecurity.refreshAuthentication(updatedUser);
         }
 
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();

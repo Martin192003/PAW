@@ -319,4 +319,20 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
+    @Transactional
+    public void updateRole(UUID userId, Role newRole) {
+        User user = userDao.findById(userId).orElseThrow();
+        userDao.update(
+                user.getId(),
+                user.getUsername(),
+                user.getName(),
+                user.getSurname(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getCellphone(),
+                newRole,
+                user.getLocale()
+        );
+    }
 }
