@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.NotFoundException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,7 +13,6 @@ import java.util.UUID;
 public interface ClubService {
 
     Optional<Club> getClubById(UUID clubId);
-
 
     Club create(String name, String description, String location, Price priceRange, User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, Photo image);
 
@@ -48,4 +48,6 @@ public interface ClubService {
                              String priceRange, Boolean isBar, LocalDate day);
 
     boolean isUserOwner(UUID clubId, User user);
+
+    Club getClubByIdOrThrow(UUID clubId) throws NotFoundException;
 }
