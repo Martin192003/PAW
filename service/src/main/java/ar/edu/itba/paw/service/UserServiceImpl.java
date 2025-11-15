@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Booking;
-import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
@@ -13,10 +12,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.service.UserService;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -128,6 +125,7 @@ public class UserServiceImpl implements UserService {
     public User findByResetPasswordToken(String token) {
         return userDao.findByResetPasswordToken(token).orElse(null);
     }
+
     @Override
     @Transactional
     public boolean verifyUser(String token) {
@@ -186,28 +184,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public boolean resetPassword(String token, String newPassword) {
+    public Optional<User> resetPassword(String token, String newPassword) {
 
-        User user = userDao.findByResetPasswordToken(token).orElse(null);
-        if (user == null) {
-            return false;
+        Optional<User> maybeUser = userDao.findByResetPasswordToken(token);
+        if (maybeUser.isEmpty()) {
+            return Optional.empty();
         }
 
-        String encodedPassword = passwordEncoder.encode(newPassword);
-        userDao.update(
-                user.getId(),
-                user.getUsername(),
-                user.getName(),
-                user.getSurname(),
-                user.getEmail(),
-                encodedPassword,
-                user.getCellphone(),
-                user.getRole(),
-                user.getLocale()
-        );
+        User user = maybeUser.get();
 
-        userDao.clearResetPasswordToken(user.getId());
-        return true;
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+
+        user.setResetPasswordToken(null);
+
+        return Optional.of(user);
     }
 
     @Override

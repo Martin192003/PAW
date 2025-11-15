@@ -8,7 +8,6 @@ import ar.edu.itba.paw.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -18,8 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
-import java.util.Optional;
-import java.util.UUID;
 
 @Controller
 @RequestMapping("/profile")
@@ -185,13 +182,13 @@ public class ProfileController {
 
     private void updateAuthenticationContext(User updatedUser) {
         PawUserDetails newDetails = new PawUserDetails(updatedUser, updatedUser.getUsername());
-        org.springframework.security.authentication.UsernamePasswordAuthenticationToken authentication =
-                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
                         newDetails,
                         null,
                         newDetails.getAuthorities()
                 );
-        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authentication);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
 

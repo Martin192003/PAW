@@ -5,25 +5,18 @@ import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
 import java.io.IOException;
-import java.security.Principal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Controller
 public class ReviewController {
@@ -62,7 +55,6 @@ public class ReviewController {
             return "redirect:/clubs/" + clubId + "#reviews";
         }
 
-        //TODO: FIJARSE SI ESTA BIEN ESTO --> creo q si
         Photo image = new Photo();
         image.setFilename(photo.getOriginalFilename());
         image.setContentType(photo.getContentType());
@@ -85,24 +77,20 @@ public class ReviewController {
         offset = Math.max(0, offset);
 
 
-        // Traer el usuario solo para mostrar nombre/validar existencia
         final User user = userService.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("error.user.notfound"));
 
 
-        // Datos paginados
         final List<Review> reviews = reviewService.listByUser(userId, sort, limit, offset);
         final int total = reviewService.countByUser(userId);
 
 
-        // Ajuste si el offset quedó fuera de rango (p. ej., se borraron reviews)
         if (offset >= total && total > 0) {
             int lastPage = (int) Math.floor((total - 1) / (double) limit);
             offset = lastPage * limit;
         }
 
 
-        // Si recalculamos offset, recargar la página
         final List<Review> pageReviews = (offset == 0 || offset <= total)
                 ? reviewService.listByUser(userId, sort, limit, offset)
                 : reviews;
@@ -116,7 +104,6 @@ public class ReviewController {
         model.addAttribute("sort", sort);
 
 
-        // Para UI (paginación)
         model.addAttribute("currentPage", (offset / limit) + 1);
         model.addAttribute("totalPages", (int) Math.ceil(total / (double) limit));
 

@@ -121,7 +121,7 @@
                 model.addAttribute("dayEnd", end);
             }
             int total = reviewService.countByClub(clubId);
-            int correctedOffset = reviewService.getCorrectedOffset(total, limit, offset);
+            int correctedOffset = reviewService.getCorrectedOffset(clubId,limit, offset);
             List<Review> reviews = reviewService.listByClub(clubId, sort, limit, correctedOffset);
             model.addAttribute("reviews", reviews);
             model.addAttribute("totalReviews", total);

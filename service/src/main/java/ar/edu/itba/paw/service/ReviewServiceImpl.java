@@ -201,7 +201,9 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public int getCorrectedOffset(int totalCount, int limit, int offset) {
+    @Transactional(readOnly = true)
+    public int getCorrectedOffset(UUID clubId,int limit, int offset) {
+        int totalCount = countByClub(clubId);
         if (offset >= totalCount && totalCount > 0) {
             int lastPage = (int) Math.floor((totalCount - 1) / (double) limit);
             return lastPage * limit;
