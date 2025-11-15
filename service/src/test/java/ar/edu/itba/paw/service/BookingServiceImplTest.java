@@ -83,22 +83,15 @@ public class BookingServiceImplTest {
         mockBooking.setStatus(Status.PENDIENTE);
     }
 
-    // ========================
-    // CREATE - HAPPY PATH
-    // ========================
-
     @Test
     public void testCreate_Success() {
-        // 1. Setup
         Mockito.when(tablesDao.findById(TABLE_ID)).thenReturn(Optional.of(mockTable));
         Mockito.when(bookingDao.findByTable(TABLE_ID)).thenReturn(List.of());
         Mockito.when(bookingDao.create(mockUser, TABLE_ID, Status.PENDIENTE, TOTAL_AMOUNT, START, END))
                 .thenReturn(mockBooking);
 
-        // 2. Exercise
         Booking result = bookingService.create(mockUser, TABLE_ID, START, END, TOTAL_AMOUNT);
 
-        // 3. Asserts
         Assert.assertNotNull(result);
         Assert.assertEquals(BOOKING_ID, result.getBookingId());
         Assert.assertEquals(mockUser, result.getUser());
@@ -109,16 +102,8 @@ public class BookingServiceImplTest {
         Assert.assertEquals(TOTAL_AMOUNT, result.getTotalAmount());
     }
 
-    // ========================
-    // CREATE - UNHAPPY PATHS
-    // ========================
-
     @Test
     public void testCreate_NullUser() {
-        // 1. Setup
-        // (ningún mock necesario)
-
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(IllegalArgumentException.class, () -> {
             bookingService.create(null, TABLE_ID, START, END, TOTAL_AMOUNT);
         });
@@ -126,12 +111,10 @@ public class BookingServiceImplTest {
 
     @Test
     public void testCreate_TableNotAvailable() {
-        // 1. Setup
         mockTable.setTableState(TableState.RESERVADA);
         Mockito.when(tablesDao.findById(Mockito.eq(TABLE_ID)))
                 .thenReturn(Optional.of(mockTable));
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(TableAlreadyBookedException.class, () -> {
             bookingService.create(mockUser, TABLE_ID, START, END, TOTAL_AMOUNT);
         });
@@ -139,7 +122,6 @@ public class BookingServiceImplTest {
 
     @Test
     public void testCreate_OverlapWithActiveBooking() {
-        // 1. Setup
         Booking overlapping = new Booking();
         overlapping.setBookingId(UUID.randomUUID());
         overlapping.setBookingStart(START.minusHours(1));
@@ -151,7 +133,6 @@ public class BookingServiceImplTest {
         Mockito.when(bookingDao.findByTable(Mockito.eq(TABLE_ID)))
                 .thenReturn(List.of(overlapping));
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(TableAlreadyBookedException.class, () -> {
             bookingService.create(mockUser, TABLE_ID, START, END, TOTAL_AMOUNT);
         });
@@ -159,18 +140,10 @@ public class BookingServiceImplTest {
 
     @Test
     public void testCreate_InvalidDateRange_StartAfterEnd() {
-        // 1. Setup
-        // (ningún mock necesario)
-
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(InvalidDateRangeException.class, () -> {
             bookingService.create(mockUser, TABLE_ID, END, START, TOTAL_AMOUNT);
         });
     }
-
-    // ========================
-    // UPDATE - HAPPY PATH
-    // ========================
 
     @Test
     public void testUpdate_Success() {
@@ -186,7 +159,6 @@ public class BookingServiceImplTest {
         updatedBooking.setTotalAmount(newAmount);
 
         Mockito.when(bookingDao.findById(BOOKING_ID)).thenReturn(Optional.of(mockBooking));
-        Mockito.when(tablesDao.findById(TABLE_ID)).thenReturn(Optional.of(mockTable));
         Mockito.when(bookingDao.findByTable(TABLE_ID)).thenReturn(List.of(mockBooking));
         Mockito.when(bookingDao.update(BOOKING_ID, mockUser, TABLE_ID, Status.CONFIRMADA, newAmount, newStart, newEnd))
                 .thenReturn(Optional.of(updatedBooking));
@@ -200,13 +172,8 @@ public class BookingServiceImplTest {
         Assert.assertEquals(newAmount, result.getTotalAmount());
     }
 
-    // ========================
-    // UPDATE STATUS - HAPPY PATH
-    // ========================
-
     @Test
     public void testUpdateStatus_ToConfirmed() {
-        // 1. Setup
         mockBooking.setStatus(Status.PENDIENTE);
 
         User user = new User();
@@ -220,7 +187,6 @@ public class BookingServiceImplTest {
         updatedBooking.setUser(user);
         updatedBooking.setTable(mockBooking.getTable());
 
-        // 2. Mocks
         Mockito.when(bookingDao.findById(BOOKING_ID)).thenReturn(Optional.of(mockBooking));
         Mockito.when(bookingDao.update(
                 Mockito.eq(BOOKING_ID),
@@ -232,45 +198,33 @@ public class BookingServiceImplTest {
                 Mockito.eq(mockBooking.getBookingEnd())
         )).thenReturn(Optional.of(updatedBooking));
 
-        // 3. Exercise
         Booking result = bookingService.updateStatus(BOOKING_ID, Status.CONFIRMADA);
 
-        // 4. Assert
         Assert.assertEquals(Status.CONFIRMADA, result.getStatus());
     }
 
     @Test
     public void testUpdateStatus_InvalidTransition() {
-        // 1. Setup
         mockBooking.setStatus(Status.CANCELADA);
         Mockito.when(bookingDao.findById(Mockito.eq(BOOKING_ID)))
                 .thenReturn(Optional.of(mockBooking));
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(InvalidStatusTransitionException.class, () -> {
             bookingService.updateStatus(BOOKING_ID, Status.PENDIENTE);
         });
     }
 
-    // ========================
-    // CANCEL - HAPPY PATH
-    // ========================
-
     @Test
     public void testCancel_Success() {
-        // Estado inicial
         mockBooking.setStatus(Status.PENDIENTE);
 
-        // Datos del club
         Club club = new Club();
         club.setClubId(CLUB_ID);
 
-        // Usuario completo (el service lo pide)
         User completeUser = new User();
         completeUser.setUserId(USER_ID);
         completeUser.setEmail("user@example.com");
 
-        // Mocks principales
         Mockito.when(bookingDao.findById(BOOKING_ID))
                 .thenReturn(Optional.of(mockBooking));
 
@@ -291,80 +245,59 @@ public class BookingServiceImplTest {
             return Optional.of(mockBooking);
         });
 
-        // Ejecutar
         bookingService.cancel(BOOKING_ID);
 
-        // Assert
         Assert.assertEquals(Status.CANCELADA, mockBooking.getStatus());
     }
 
-    // ========================
-    // CONFIRM - HAPPY PATH
-    // ========================
-
     @Test
     public void testConfirm_PendingToConfirmed() {
-        // Arrange
         mockBooking.setStatus(Status.PENDIENTE);
         mockBooking.setTableId(TABLE_ID);
         mockBooking.setUser(mockUser);
 
-        // 1) findById inicial
         Mockito.when(bookingDao.findById(BOOKING_ID))
-                .thenReturn(Optional.of(mockBooking))        // primera llamada
-                .thenReturn(Optional.of(mockBooking));       // segunda llamada dentro del email
+                .thenReturn(Optional.of(mockBooking))
+                .thenReturn(Optional.of(mockBooking));
 
-        // 2) updateStatus debe modificar el estado
         Mockito.when(bookingDao.updateStatus(BOOKING_ID, Status.CONFIRMADA))
                 .thenAnswer(inv -> {
                     mockBooking.setStatus(Status.CONFIRMADA);
                     return Optional.of(mockBooking);
                 });
 
-        // 3) ensureTableExists → usa tablesDao
         Mockito.when(tablesDao.findById(TABLE_ID))
                 .thenReturn(Optional.of(mockTable));
 
-        // 4) clubDao
         Club club = new Club();
         club.setClubId(CLUB_ID);
         Mockito.when(clubDao.findById(CLUB_ID))
                 .thenReturn(Optional.of(club));
 
-        // 5) userService
         mockUser.setEmail("mail@test.com");
         mockUser.setLocale("es");
         Mockito.when(userService.findById(USER_ID))
                 .thenReturn(Optional.of(mockUser));
 
-        // 6) email no hace nada
         Mockito.doNothing().when(emailService)
                 .notifyConfirmationEmailToUser(any(), any(), any(), any());
 
-        // Act
         bookingService.confirm(BOOKING_ID);
 
-        // Assert
         Assert.assertEquals(Status.CONFIRMADA, mockBooking.getStatus());
     }
 
 
     @Test
     public void testConfirm_AlreadyCancelled() {
-        // 1. Setup
         mockBooking.setStatus(Status.CANCELADA);
         Mockito.when(bookingDao.findById(Mockito.eq(BOOKING_ID)))
                 .thenReturn(Optional.of(mockBooking));
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(InvalidStatusTransitionException.class, () -> {
             bookingService.confirm(BOOKING_ID);
         });
     }
-
-    // ========================
-    // FIND BY ID
-    // ========================
 
     @Test
     public void testFindById_Exists() {
@@ -385,9 +318,6 @@ public class BookingServiceImplTest {
         Assert.assertFalse(result.isPresent());
     }
 
-    // ========================
-    // GET FOR USER - AUTH
-    // ========================
 
     @Test
     public void testGetForUser_Authorized() {
@@ -400,11 +330,9 @@ public class BookingServiceImplTest {
 
     @Test
     public void testGetForUser_Unauthorized() {
-        // 1. Setup
         Mockito.when(bookingDao.findById(Mockito.eq(BOOKING_ID)))
                 .thenReturn(Optional.of(mockBooking));
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(UnauthorizedException.class, () -> {
             bookingService.getForUser(BOOKING_ID, UUID.randomUUID());
         });
