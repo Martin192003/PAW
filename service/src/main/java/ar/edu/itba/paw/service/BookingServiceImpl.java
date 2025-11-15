@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.TextStyle;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -513,6 +514,40 @@ public class BookingServiceImpl implements BookingService {
             return null;
         }
         return clubService.getClubById(table.getClubId()).orElse(null);
+    }
+
+    public UUID parseBookingId(String bookingId) {
+        if (bookingId == null || bookingId.isBlank()) return null;
+        try {
+            return UUID.fromString(bookingId.trim());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    public LocalDate parseBookingDate(String bookingDate) {
+        if (bookingDate == null || bookingDate.isBlank()) return null;
+        try {
+            return LocalDate.parse(bookingDate);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String buildQueryParams(Map<String, String> filters) {
+        return filters.entrySet().stream()
+                .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
+                .collect(Collectors.joining("&"));
+    }
+
+    public Map<UUID, Date> mapBookingStartDates(List<Booking> bookings) {
+        Map<UUID, Date> bookingStartDates = new HashMap<>();
+        for (Booking booking : bookings) {
+            if (booking.getBookingStart() != null) {
+                bookingStartDates.put(booking.getBookingId(), Date.from(booking.getBookingStart().toInstant()));
+            }
+        }
+        return bookingStartDates;
     }
 
     private void validateStatusTransition(Status from, Status to) {

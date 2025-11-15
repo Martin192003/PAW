@@ -113,19 +113,12 @@ public class BookingAdminController {
         final int offset = (page - 1) * size;
 
 
-        UUID bookingUuid = null;
-        if (form.getBookingId() != null && !form.getBookingId().isBlank()) {
-            try {
-                bookingUuid = UUID.fromString(form.getBookingId().trim());
-            } catch (IllegalArgumentException e) {
-                br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
-            }
+        UUID bookingUuid = bookingService.parseBookingId(form.getBookingId());
+        if (form.getBookingId() != null && !form.getBookingId().isBlank() && bookingUuid == null) {
+            br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
         }
 
-        LocalDate bookingDate = null;
-        if (form.getBookingDate() != null && !form.getBookingDate().isBlank()) {
-            bookingDate = LocalDate.parse(form.getBookingDate());
-        }
+        LocalDate bookingDate = bookingService.parseBookingDate(form.getBookingDate());
 
         List<Booking> result = List.of();
         int totalBookings = 0;
@@ -161,19 +154,9 @@ public class BookingAdminController {
         if (form.getSort() != null && !form.getSort().isBlank()) filters.put("sort", form.getSort());
 
 
-        String queryParams = filters.entrySet().stream()
-                .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
-                .collect(java.util.stream.Collectors.joining("&"));
+        String queryParams = bookingService.buildQueryParams(filters);
 
-        Map<UUID, Date> bookingStartDates = new HashMap<>();
-        for (Booking booking : result) {
-            if (booking.getBookingStart() != null) {
-                bookingStartDates.put(
-                        booking.getBookingId(),
-                        Date.from(booking.getBookingStart().toInstant())
-                );
-            }
-        }
+        Map<UUID, Date> bookingStartDates = bookingService.mapBookingStartDates(result);
         model.addAttribute("bookingStartDates", bookingStartDates);
 
         // Result esta paginado de esa manera no es tan ineficiente ya que iteramos sobre un maximo de 10

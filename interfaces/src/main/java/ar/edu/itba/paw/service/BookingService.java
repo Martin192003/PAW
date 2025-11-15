@@ -5,9 +5,7 @@ import ar.edu.itba.paw.model.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public interface BookingService {
 
@@ -61,5 +59,12 @@ public interface BookingService {
 
     Club getBookingClub(Booking booking);
 
+    UUID parseBookingId(String bookingId);
+
+    LocalDate parseBookingDate(String bookingDate);
+
+    String buildQueryParams(Map<String, String> filters);
+
+    Map<UUID, Date> mapBookingStartDates(List<Booking> bookings);
 
 }
