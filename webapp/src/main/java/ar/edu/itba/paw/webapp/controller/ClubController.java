@@ -370,7 +370,8 @@ public class ClubController {
         String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
 
         model.addAttribute("tables", tableService.findByClubId(clubId));
-        model.addAttribute("club", clubService.getClubById(clubId));
+        Club club = clubService.getClubByIdOrThrow(clubId);
+        model.addAttribute("club", club);
         model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
         model.addAttribute("tableLayoutUrl", tableLayoutUrl);
         model.addAttribute("zones", Zone.values());

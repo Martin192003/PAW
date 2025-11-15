@@ -118,7 +118,6 @@ public class BookingServiceImpl implements BookingService {
 
         validateDateRange(bookingStart, bookingEnd);
 
-        final ClubTable table = ensureTableExists(tableId);
 
         // Chequear solapamiento sólo si va a quedar 'activa'
         if (status == Status.PENDIENTE || status == Status.CONFIRMADA) {

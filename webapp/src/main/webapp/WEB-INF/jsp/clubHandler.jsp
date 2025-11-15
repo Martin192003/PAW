@@ -37,7 +37,7 @@
     <div class="club-image-container" style="position:relative;">
         <c:choose>
             <c:when test="${not empty coverPhotoUrl}">
-                <img src="<c:url value='${coverPhotoUrl}' />" alt="<c:out value='${club.clubName}'/>" class="card-image" style="object-fit: contain;"/>
+                <img src="<c:url value='${coverPhotoUrl}' />" alt="Foto del club" class="card-image" style="object-fit: contain;"/>
             </c:when>
             <c:otherwise>
                 <div class="card-no-image">
@@ -202,10 +202,10 @@
     <div class="tabs-container">
 
         <div class="tabs">
-            <button class="tab-button" data-tab="menu-tab">Menu</button>
-            <button class="tab-button" data-tab="tables-tab">Tables</button>
-            <button class="tab-button" data-tab="events-tab">Events</button>
-            <button class="tab-button" data-tab="reviews-tab">Reviews</button>
+            <button class="tab-button" data-tab="menu-tab"><spring:message code="menu.menu"/></button>
+            <button class="tab-button" data-tab="tables-tab"><spring:message code="button.tables"/></button>
+            <button class="tab-button" data-tab="events-tab"><spring:message code="label.events"/></button>
+            <button class="tab-button" data-tab="reviews-tab"><spring:message code="reviews.title"/></button>
         </div>
 
         <div class="tab-content" id="menu-tab">

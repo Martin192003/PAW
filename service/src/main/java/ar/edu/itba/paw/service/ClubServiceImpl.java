@@ -1,16 +1,15 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
-import ar.edu.itba.paw.persistence.ClubTablesDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -24,7 +23,7 @@ public class ClubServiceImpl implements ClubService{
     private final BookingDao bookingDao;
 
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, ClubTablesDao tablesDao, PhotoService photoService, UserService userService, BookingDao bookingDao) {
+    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, PhotoService photoService, UserService userService, BookingDao bookingDao) {
         this.mailService = mailService;
         this.clubDao = clubDao;
         this.photoService = photoService;
@@ -183,26 +182,11 @@ public class ClubServiceImpl implements ClubService{
         return "paw2025b06@gmail.com";
     }
 
-    private Zone parseZoneFlexible(String raw) {
-        if (raw == null) throw new IllegalArgumentException("Zona vacía");
-        String normalized = normalizeEnumToken(raw);
-        try {
-            return Zone.valueOf(normalized);
-        } catch (IllegalArgumentException ignore) {
-            for (Zone z : Zone.values()) {
-                String db = z.getDbValue();
-                if (db != null && db.equalsIgnoreCase(raw)) {
-                    return z;
-                }
-            }
-            throw new IllegalArgumentException("Zona inválida: " + raw);
-        }
-    }
-
-    private String normalizeEnumToken(String v) {
-        String s = v.trim().replace('-', '_').replace(' ', '_');
-        s = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        return s.toUpperCase(Locale.ROOT);
+    @Override
+    @Transactional(readOnly = true)
+    public Club getClubByIdOrThrow(UUID clubId) {
+        return clubDao.findById(clubId)
+                .orElseThrow(() -> new NotFoundException("error.club.notfound"));
     }
 
     @Override
