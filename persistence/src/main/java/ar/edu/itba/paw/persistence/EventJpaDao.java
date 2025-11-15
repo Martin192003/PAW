@@ -219,34 +219,41 @@ public class EventJpaDao implements EventDao {
             return List.of();
         }
 
-        // 1) IDs futuros de un club
-        List<UUID> ids = em.createQuery("""
-                SELECT e.eventId
-                FROM Event e
-                WHERE e.clubId = :clubId
-                  AND e.date >= :today
-                ORDER BY e.date ASC, e.eventId ASC
-                """, UUID.class)
+        // 1) Query nativa: obtener IDs
+        List<UUID> ids = ((List<String>) em.createNativeQuery("""
+        SELECT CAST(eventid AS VARCHAR)
+        FROM event
+        WHERE clubid = :clubId
+          AND date >= :today
+        ORDER BY date ASC, eventid ASC
+        LIMIT :limit OFFSET :offset
+        """)
                 .setParameter("clubId", clubId)
                 .setParameter("today", LocalDate.now())
-                .setFirstResult(offset)
-                .setMaxResults(limit)
-                .getResultList();
+                .setParameter("limit", limit)
+                .setParameter("offset", offset)
+                .getResultList())
+                .stream()
+                .map(UUID::fromString)
+                .toList();
+
 
         if (ids.isEmpty()) {
             return List.of();
         }
 
-        // 2) Entidades por IDs
+        // 2) Query tipada
         return em.createQuery("""
-                SELECT e
-                FROM Event e
-                WHERE e.eventId IN :ids
-                ORDER BY e.date ASC, e.eventId ASC
-                """, Event.class)
+            SELECT e
+            FROM Event e
+            WHERE e.eventId IN :ids
+            ORDER BY e.date ASC, e.eventId ASC
+            """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
+
+
 
     @Override
     public List<Event> findPastByClub(UUID clubId, int page, int size) {
@@ -257,34 +264,39 @@ public class EventJpaDao implements EventDao {
             return List.of();
         }
 
-        // 1) IDs pasados de un club
-        List<UUID> ids = em.createQuery("""
-                SELECT e.eventId
-                FROM Event e
-                WHERE e.clubId = :clubId
-                  AND e.date < :today
-                ORDER BY e.date DESC, e.eventId DESC
-                """, UUID.class)
+        // 1) Query nativa → solo IDs
+        List<UUID> ids = ((List<String>) em.createNativeQuery("""
+            SELECT CAST(eventid AS VARCHAR)
+            FROM event
+            WHERE clubid = :clubId
+              AND date < :today
+            ORDER BY date DESC, eventid DESC
+            LIMIT :limit OFFSET :offset
+            """)
                 .setParameter("clubId", clubId)
                 .setParameter("today", LocalDate.now())
-                .setFirstResult(offset)
-                .setMaxResults(limit)
-                .getResultList();
+                .setParameter("limit", limit)
+                .setParameter("offset", offset)
+                .getResultList())
+                .stream()
+                .map(UUID::fromString)
+                .toList();
 
         if (ids.isEmpty()) {
             return List.of();
         }
 
-        // 2) Entidades por IDs
+        // 2) Query tipada → buscar entidades
         return em.createQuery("""
-                SELECT e
-                FROM Event e
-                WHERE e.eventId IN :ids
-                ORDER BY e.date DESC, e.eventId DESC
-                """, Event.class)
+            SELECT e
+            FROM Event e
+            WHERE e.eventId IN :ids
+            ORDER BY e.date DESC, e.eventId DESC
+            """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
+
 
     @Override
     public int countUpcomingByClub(UUID clubId) {
