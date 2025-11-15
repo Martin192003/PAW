@@ -219,30 +219,25 @@ public class EventJpaDao implements EventDao {
             return List.of();
         }
 
-        // 1) Query nativa: obtener IDs
-        List<UUID> ids = ((List<String>) em.createNativeQuery("""
-        SELECT CAST(eventid AS VARCHAR)
-        FROM event
-        WHERE clubid = :clubId
-          AND date >= :today
-        ORDER BY date ASC, eventid ASC
-        LIMIT :limit OFFSET :offset
-        """)
+        // 1) Obtenemos sólo IDs con JPQL
+        List<UUID> ids = em.createQuery("""
+            SELECT e.eventId
+            FROM Event e
+            WHERE e.clubId = :clubId
+              AND e.date >= :today
+            ORDER BY e.date ASC, e.eventId ASC
+            """, UUID.class)
                 .setParameter("clubId", clubId)
                 .setParameter("today", LocalDate.now())
-                .setParameter("limit", limit)
-                .setParameter("offset", offset)
-                .getResultList())
-                .stream()
-                .map(UUID::fromString)
-                .toList();
-
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
 
         if (ids.isEmpty()) {
             return List.of();
         }
 
-        // 2) Query tipada
+        // 2) Traemos las entidades por ID
         return em.createQuery("""
             SELECT e
             FROM Event e
@@ -253,8 +248,6 @@ public class EventJpaDao implements EventDao {
                 .getResultList();
     }
 
-
-
     @Override
     public List<Event> findPastByClub(UUID clubId, int page, int size) {
         final int limit  = Math.max(0, size);
@@ -264,29 +257,25 @@ public class EventJpaDao implements EventDao {
             return List.of();
         }
 
-        // 1) Query nativa → solo IDs
-        List<UUID> ids = ((List<String>) em.createNativeQuery("""
-            SELECT CAST(eventid AS VARCHAR)
-            FROM event
-            WHERE clubid = :clubId
-              AND date < :today
-            ORDER BY date DESC, eventid DESC
-            LIMIT :limit OFFSET :offset
-            """)
+        // 1) Obtenemos sólo IDs con JPQL
+        List<UUID> ids = em.createQuery("""
+            SELECT e.eventId
+            FROM Event e
+            WHERE e.clubId = :clubId
+              AND e.date < :today
+            ORDER BY e.date DESC, e.eventId DESC
+            """, UUID.class)
                 .setParameter("clubId", clubId)
                 .setParameter("today", LocalDate.now())
-                .setParameter("limit", limit)
-                .setParameter("offset", offset)
-                .getResultList())
-                .stream()
-                .map(UUID::fromString)
-                .toList();
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
 
         if (ids.isEmpty()) {
             return List.of();
         }
 
-        // 2) Query tipada → buscar entidades
+        // 2) Traemos las entidades por ID
         return em.createQuery("""
             SELECT e
             FROM Event e

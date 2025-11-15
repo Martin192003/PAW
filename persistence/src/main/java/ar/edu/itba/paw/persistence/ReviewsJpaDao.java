@@ -50,14 +50,14 @@ public class ReviewsJpaDao implements ReviewsDao {
         UUID provisionalId = UUID.randomUUID();
 
         em.createNativeQuery("""
-        INSERT INTO reviews (review_id, user_id, club_id, rating, description, from_table_guest)
-        VALUES (:rid, :uid, :cid, :rating, :desc, :ftg)
-        ON CONFLICT (user_id, club_id) DO UPDATE
-          SET rating = EXCLUDED.rating,
-              description = EXCLUDED.description,
-              from_table_guest = EXCLUDED.from_table_guest,
-              created_at = NOW()
-    """)
+                            INSERT INTO reviews (review_id, user_id, club_id, rating, description, from_table_guest)
+                            VALUES (:rid, :uid, :cid, :rating, :desc, :ftg)
+                            ON CONFLICT (user_id, club_id) DO UPDATE
+                              SET rating = EXCLUDED.rating,
+                                  description = EXCLUDED.description,
+                                  from_table_guest = EXCLUDED.from_table_guest,
+                                  created_at = NOW()
+                        """)
                 .setParameter("rid", provisionalId)
                 .setParameter("uid", user.getId())
                 .setParameter("cid", club.getClubId())

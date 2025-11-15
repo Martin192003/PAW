@@ -6,8 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +22,9 @@ import ar.edu.itba.paw.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import ar.edu.itba.paw.service.UserService;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
-import java.util.Collections;
 
 @Controller
 public class LoginController {
@@ -28,10 +32,14 @@ public class LoginController {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
 
     private final UserService userService;
+    private final UserDetailsService userDetailsService;
+    private final HttpServletRequest request;
 
     @Autowired
-    public LoginController(UserService userService) {
+    public LoginController(UserService userService, UserDetailsService userDetailsService, HttpServletRequest request) {
         this.userService = userService;
+        this.userDetailsService = userDetailsService;
+        this.request = request;
     }
 
     @GetMapping({"", "/"})
@@ -100,22 +108,33 @@ public class LoginController {
         if (userToVerify != null && !userToVerify.isVerified()) {
             boolean isValid = userService.verifyUser(token);
             if (isValid) {
+
+                UserDetails userDetails = userDetailsService.loadUserByUsername(userToVerify.getUsername());
+
                 Authentication auth = new UsernamePasswordAuthenticationToken(
-                        userToVerify.getUsername(),
+                        userDetails,
                         null,
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                        userDetails.getAuthorities()
                 );
-                SecurityContextHolder.getContext().setAuthentication(auth);
+
+                SecurityContext context = SecurityContextHolder.createEmptyContext();
+                context.setAuthentication(auth);
+                SecurityContextHolder.setContext(context);
+
+                HttpSession session = request.getSession(true);
+                session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
                 model.addAttribute("success", "register.valid.token");
                 model.addAttribute("userAuthenticated", true);
-                return "verifyResult";
+
+                return "verifyResult"; // o "redirect:/clubs" si querés mandar directo
             }
         }
 
         return "redirect:/unverified";
     }
-    
+
+
     @GetMapping("/unverified")
     public String showUnverifiedPage(@RequestParam(required = false) String username, Model model) {
         if (username != null) {

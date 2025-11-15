@@ -37,8 +37,7 @@ public class PhotoController {
     @PostMapping("/clubs/{clubId}/photos")
     public String upload(@PathVariable UUID clubId,
                          @RequestParam("file") MultipartFile file,
-                         Principal principal,
-                         RedirectAttributes redirectAttributes) throws IOException {
+                         Principal principal) throws IOException {
         String userEmail = principal != null ? principal.getName() : null;
         Photo photo = new Photo();
         photo.setFilename(file.getOriginalFilename());

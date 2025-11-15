@@ -25,11 +25,9 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         User user = userService.findByUserName(username);
 
         if (user != null) {
-            // Actualizar locale del usuario
             String detectedLocale = request.getLocale().toLanguageTag();
             userService.updateUserLocale(user.getId(), detectedLocale);
 
-            // Enviar emails de review para reservas pasadas
             userService.sendReviewRequestsForPastBookings(user);
         }
 

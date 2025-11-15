@@ -97,7 +97,7 @@ public class ClubController {
 
         //Sección de paginación
         int totalClubs = 0;
-        int offset = (page - 1) * size;
+        int offset;
         List<Club> clubs = Collections.emptyList();
 
         if (availabilityMode) {
@@ -217,7 +217,7 @@ public class ClubController {
         );
 
         if (roleAntes == Role.USER) {
-            User updatedUser = userService.findById(userDetails.getId()).orElseThrow(UserNotFoundException::new);
+           userService.findById(userDetails.getId()).orElseThrow(UserNotFoundException::new);
         }
 
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();

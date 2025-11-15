@@ -40,8 +40,7 @@ public class ContactController {
     public String sendContact(@RequestParam("id") UUID clubId,
                               @ModelAttribute("clubForm") @Valid ClubForm clubForm,
                               BindingResult bindingResult,
-                              Model model,
-                              RedirectAttributes ra) {
+                              Model model) {
 
         Club club = clubService.getClubById(clubId).orElse(null);
         if (club == null) {
