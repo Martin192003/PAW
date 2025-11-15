@@ -10,6 +10,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @EnableWebSecurity
 @ComponentScan("ar.edu.itba.paw.webapp.auth")
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebAuthConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private PawUserDetailsService userDetailsService;

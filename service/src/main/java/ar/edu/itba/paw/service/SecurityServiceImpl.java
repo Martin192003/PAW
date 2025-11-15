@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.UserDao;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,11 +66,12 @@ public class SecurityServiceImpl implements SecurityService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean isClubAdmin(UUID clubId) {
         User user = getVerifiedLoggedUser();
         if (user == null) return false;
-
-        if (user.getRole() == Role.ADMIN) return true;
+        if (!user.isVerified()) return false;
+        if (user.getRole() != Role.ADMIN) return false;
 
         return clubService.getAdminsByClub(clubId)
                 .stream()
@@ -79,6 +79,7 @@ public class SecurityServiceImpl implements SecurityService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean canAccessUser(UUID id) {
         var logged = getLoggedUser();
         if (logged.isEmpty()) return false;

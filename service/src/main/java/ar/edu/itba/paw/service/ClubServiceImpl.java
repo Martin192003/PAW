@@ -216,8 +216,8 @@ public class ClubServiceImpl implements ClubService{
         if (user == null) {
             return false;
         }
-        if (user.getRole().equals(Role.ADMIN)) {
-            return true;
+        if (!user.getRole().equals(Role.ADMIN)) {
+            return false;
         }
         return getAdminsByClub(clubId)
                 .stream()
