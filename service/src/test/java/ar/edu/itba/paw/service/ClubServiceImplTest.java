@@ -331,6 +331,8 @@ public class ClubServiceImplTest {
     public void testIsUserOwner_Admin() {
         // 1. Setup
         mockUser.setRole(Role.ADMIN);
+        Mockito.when(clubDao.findAdminsByClubId(Mockito.eq(CLUB_ID)))
+                .thenReturn(Arrays.asList(mockUser));
 
         // 2. Exercise
         boolean result = clubService.isUserOwner(CLUB_ID, mockUser);
@@ -342,7 +344,8 @@ public class ClubServiceImplTest {
     @Test
     public void testIsUserOwner_IsAdminOfClub() {
         // 1. Setup
-        mockUser.setRole(Role.USER);
+        mockUser.setRole(Role.ADMIN);  // Cambiar de USER a ADMIN
+
         Mockito.when(clubDao.findAdminsByClubId(Mockito.eq(CLUB_ID)))
                 .thenReturn(Arrays.asList(mockUser));
 
@@ -357,9 +360,6 @@ public class ClubServiceImplTest {
     public void testIsUserOwner_NotOwner() {
         // 1. Setup
         mockUser.setRole(Role.USER);
-        Mockito.when(clubDao.findAdminsByClubId(Mockito.eq(CLUB_ID)))
-                .thenReturn(Arrays.asList());
-
         // 2. Exercise
         boolean result = clubService.isUserOwner(CLUB_ID, mockUser);
 

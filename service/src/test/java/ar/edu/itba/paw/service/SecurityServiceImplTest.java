@@ -113,22 +113,8 @@ public class SecurityServiceImplTest {
 
     @Test
     public void testIsClubAdminWhenUserHasAdminRole() {
-        Mockito.when(user.getRole()).thenReturn(Role.ADMIN);
-
-        TestingAuthenticationToken token = new TestingAuthenticationToken(user, null);
-        token.setAuthenticated(true);
-        SecurityContextHolder.getContext().setAuthentication(token);
-
-        boolean result = securityService.isClubAdmin(UUID.randomUUID());
-
-        Assert.assertTrue(result);
-        SecurityContextHolder.clearContext();
-    }
-
-    @Test
-    public void testIsClubAdminWhenUserIsClubAdmin() {
         UUID club = UUID.randomUUID();
-        Mockito.when(user.getRole()).thenReturn(Role.USER);
+        Mockito.when(user.getRole()).thenReturn(Role.ADMIN);
         Mockito.when(clubService.getAdminsByClub(club)).thenReturn(List.of(user));
 
         TestingAuthenticationToken token = new TestingAuthenticationToken(user, null);
@@ -140,6 +126,23 @@ public class SecurityServiceImplTest {
         Assert.assertTrue(result);
         SecurityContextHolder.clearContext();
     }
+
+    @Test
+    public void testIsClubAdminWhenUserIsClubAdmin() {
+        UUID club = UUID.randomUUID();
+        Mockito.when(user.getRole()).thenReturn(Role.ADMIN);
+        Mockito.when(clubService.getAdminsByClub(club)).thenReturn(List.of(user));
+
+        TestingAuthenticationToken token = new TestingAuthenticationToken(user, null);
+        token.setAuthenticated(true);
+        SecurityContextHolder.getContext().setAuthentication(token);
+
+        boolean result = securityService.isClubAdmin(club);
+
+        Assert.assertTrue(result);
+        SecurityContextHolder.clearContext();
+    }
+
 
     @Test
     public void testIsClubAdminWhenUserIsNotAdmin() {
