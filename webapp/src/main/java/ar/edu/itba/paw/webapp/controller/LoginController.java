@@ -2,10 +2,8 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.webapp.form.UserForm;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
-import ar.edu.itba.paw.webapp.form.VerificationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,10 +19,8 @@ import ar.edu.itba.paw.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import ar.edu.itba.paw.service.UserService;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.Collections;
-import java.util.UUID;
 
 @Controller
 public class LoginController {
@@ -117,7 +113,6 @@ public class LoginController {
             }
         }
 
-        // Token inválido - redirigir a unverified
         return "redirect:/unverified";
     }
     
@@ -144,43 +139,7 @@ public class LoginController {
     }
 
     @RequestMapping("/login")
-    public ModelAndView login(@RequestParam(value = "success", required = false) final boolean success,
-                              @RequestParam(value = "usernameOrEmail", required = false) final String usernameOrEmail,
-                              @RequestParam(value = "password", required = false) final String password,
-                              final HttpServletRequest request) {
-        ModelAndView mav = new ModelAndView("login");
-        mav.addObject("success", success);
-        mav.addObject("usernameOrEmail", usernameOrEmail);
-
-        if (usernameOrEmail != null && password != null) {
-            try {
-                User user = userService.authenticateAndGetUser(usernameOrEmail, password);
-                if (user != null) {
-                    String detectedLocale = request.getLocale().toLanguageTag();
-                    userService.updateUserLocale(user.getId(), detectedLocale);
-                    userService.sendReviewRequestsForPastBookings(user);
-
-                    mav.setViewName("redirect:/clubs");
-                } else {
-                    mav.addObject("error", "error.invalidCredentials");
-                }
-            } catch (IllegalStateException e) {
-                if (e.getMessage().contains("not verified")) {
-                    mav.addObject("error", "notification.verifyAccount");
-                    mav.addObject("showResendLink", true);
-                } else {
-                    mav.addObject("error", "error.authentication");
-                }
-            }
-        }
-        return mav;
-    }
-
-    @RequestMapping("/user")
-    @PreAuthorize("@securityServiceImpl.canAccessUser(#id)")
-    public ModelAndView index(@RequestParam("id") UUID id) {
-        final ModelAndView mav = new ModelAndView("user");
-        mav.addObject("user", userService.findById(id));
-        return mav;
+    public ModelAndView login() {
+        return new ModelAndView("login");
     }
 }
