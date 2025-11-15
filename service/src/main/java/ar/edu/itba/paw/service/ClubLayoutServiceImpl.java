@@ -28,32 +28,24 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
 
     @Override
     @Transactional
-    public void uploadLayout(UUID clubId, String userEmail, Photo file) {
-            User uploader = userService.findByEmail(userEmail);
-            clubService.assertAdmin(clubId, uploader.getId());
+    public void uploadLayout(UUID clubId, String userEmail, String filename, String contentType, byte[] data) {
+        User uploader = userService.findByEmail(userEmail);
+        clubService.assertAdmin(clubId, uploader.getId());
 
-            // elimina el layout anterior si existe
-            layoutDao.deleteByClubId(clubId);
+        layoutDao.deleteByClubId(clubId);
 
-            ClubLayout layout = new ClubLayout();
+        ClubLayout layout = new ClubLayout();
+        UUID newId = UUID.randomUUID();
+        layout.setLayoutId(newId);
+        layout.setClubId(clubId);
+        layout.setUploadedBy(uploader.getId());
+        layout.setFilename(filename);
+        layout.setContentType(contentType != null ? contentType : "application/octet-stream");
+        layout.setData(data);
+        layout.setSizeBytes((long) data.length);
+        layout.setUrl("/clubs/club/" + clubId + "/layout/" + newId + "/image");
 
-            // Generar id en la aplicación para poder construir la URL antes del persist
-            UUID newId = UUID.randomUUID();
-            layout.setLayoutId(newId);
-
-            layout.setClubId(clubId);
-            layout.setUploadedBy(uploader.getId());
-            layout.setFilename(file.getFilename());
-            layout.setContentType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
-
-            byte[] data = file.getData();
-            layout.setData(data);
-            layout.setSizeBytes((long) data.length);
-
-            // Construir URL ahora que tenemos el id
-            layout.setUrl("/clubs/club/" + clubId + "/layout/" + newId + "/image");
-
-            layoutDao.save(layout);
+        layoutDao.save(layout);
     }
 
 
