@@ -202,10 +202,10 @@
     <div class="tabs-container">
 
         <div class="tabs">
-            <button class="tab-button" data-tab="menu-tab">Menu</button>
-            <button class="tab-button" data-tab="tables-tab">Tables</button>
-            <button class="tab-button" data-tab="events-tab">Events</button>
-            <button class="tab-button" data-tab="reviews-tab">Reviews</button>
+            <button class="tab-button" data-tab="menu-tab"><spring:message code="menu.menu"/></button>
+            <button class="tab-button" data-tab="tables-tab"><spring:message code="button.tables"/></button>
+            <button class="tab-button" data-tab="events-tab"><spring:message code="label.events"/></button>
+            <button class="tab-button" data-tab="reviews-tab"><spring:message code="reviews.title"/></button>
         </div>
 
         <div class="tab-content" id="menu-tab">
