@@ -130,24 +130,6 @@ public class EventServiceImpl implements EventService {
         return eventDao.countByClub(clubId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Event> searchByDate(LocalDate start, LocalDate end, int page, int size) {
-        validatePaging(page, size);
-        Objects.requireNonNull(start, "start");
-        Objects.requireNonNull(end, "end");
-        if (end.isBefore(start)) throw new InvalidDateRangeException("end date cannot be before start date");
-        return eventDao.searchByDateRangePaginated(start, end, page, size);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public int countByDate(LocalDate start, LocalDate end) {
-        Objects.requireNonNull(start, "start");
-        Objects.requireNonNull(end, "end");
-        if (end.isBefore(start)) throw new InvalidDateRangeException("end date cannot be before start date");
-        return eventDao.countByDateRange(start, end);
-    }
 
     @Override
     @Transactional(readOnly = true)

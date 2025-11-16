@@ -26,12 +26,6 @@ public interface EventService {
     int countByClub(UUID clubId);
 
 
-    /** Búsqueda por rango de fechas con paginación (data) */
-    List<Event> searchByDate(LocalDate start, LocalDate end, int page, int size);
-
-
-    /** Total para paginación (count) */
-    int countByDate(LocalDate start, LocalDate end);
 
 
     /** Próximos eventos desde hoy (data) */

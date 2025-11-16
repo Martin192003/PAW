@@ -60,80 +60,36 @@ public class EventJpaDao implements EventDao {
         }
 
         // 1) Paginamos solo IDs
-        List<UUID> ids = em.createQuery("""
-                SELECT e.eventId
-                FROM Event e
-                WHERE e.clubId = :clubId
-                ORDER BY e.date DESC, e.eventId DESC
-                """, UUID.class)
+        @SuppressWarnings("unchecked")
+        List<Object> rawIds = em.createNativeQuery("""
+                    SELECT CAST(eventid AS TEXT)
+                    FROM event
+                    WHERE clubid = :clubId
+                    ORDER BY date DESC, eventid DESC
+                    """)
                 .setParameter("clubId", clubId)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
                 .getResultList();
 
-        if (ids.isEmpty()) {
+        if (rawIds.isEmpty()) {
             return List.of();
         }
 
-        // 2) Traemos las entidades por ID
+        // Convertimos los IDs (String) a UUID
+        List<UUID> ids = rawIds.stream()
+                .map(o -> UUID.fromString(o.toString()))
+                .toList();
+
+        // 2) Traemos las entidades por ID (JPQL)
         return em.createQuery("""
-                SELECT e
-                FROM Event e
-                WHERE e.eventId IN :ids
-                ORDER BY e.date DESC, e.eventId DESC
-                """, Event.class)
+            SELECT e
+            FROM Event e
+            WHERE e.eventId IN :ids
+            ORDER BY e.date DESC, e.eventId DESC
+            """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
-    }
-
-    @Override
-    public List<Event> searchByDateRangePaginated(final LocalDate startDate,
-                                                  final LocalDate endDate,
-                                                  final int page,
-                                                  final int size) {
-        final int limit  = Math.max(0, size);
-        final int offset = Math.max(0, page) * limit;
-
-        if (limit == 0) {
-            return List.of();
-        }
-
-        // 1) IDs por rango de fechas
-        List<UUID> ids = em.createQuery("""
-                SELECT e.eventId
-                FROM Event e
-                WHERE e.date BETWEEN :start AND :end
-                ORDER BY e.date ASC, e.eventId ASC
-                """, UUID.class)
-                .setParameter("start", startDate)
-                .setParameter("end", endDate)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
-                .getResultList();
-
-        if (ids.isEmpty()) {
-            return List.of();
-        }
-
-        // 2) Entidades por IDs
-        return em.createQuery("""
-                SELECT e
-                FROM Event e
-                WHERE e.eventId IN :ids
-                ORDER BY e.date ASC, e.eventId ASC
-                """, Event.class)
-                .setParameter("ids", ids)
-                .getResultList();
-    }
-
-    @Override
-    public int countByDateRange(LocalDate startDate, LocalDate endDate) {
-        final Long total = em.createQuery(
-                        "SELECT COUNT(e) FROM Event e WHERE e.date BETWEEN :start AND :end", Long.class)
-                .setParameter("start", startDate)
-                .setParameter("end", endDate)
-                .getSingleResult();
-        return total.intValue();
     }
 
     @Override
@@ -149,39 +105,53 @@ public class EventJpaDao implements EventDao {
     public List<Event> findUpcoming(final LocalDate fromInclusive,
                                     final int page,
                                     final int size) {
-        final int limit  = Math.max(0, size);
-        final int offset = Math.max(0, page) * limit;
 
+        // Si no me dan fecha de referencia, no tiene sentido buscar
+        if (fromInclusive == null) {
+            return List.of();
+        }
+
+        final int limit = Math.max(0, size);
         if (limit == 0) {
             return List.of();
         }
 
-        // 1) IDs futuros desde fromInclusive
-        List<UUID> ids = em.createQuery("""
-                SELECT e.eventId
-                FROM Event e
-                WHERE e.date >= :from
-                ORDER BY e.date ASC, e.eventId ASC
-                """, UUID.class)
+        final int safePage = Math.max(0, page);
+        final int offset   = safePage * limit;
+
+        // 1) IDs futuros desde fromInclusive (NATIVE)
+        @SuppressWarnings("unchecked")
+        List<Object> rawIds = em.createNativeQuery("""
+            SELECT CAST(eventid AS TEXT)
+            FROM event
+            WHERE date >= :from
+            ORDER BY date ASC, eventid ASC
+            """)
                 .setParameter("from", fromInclusive)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
                 .getResultList();
 
-        if (ids.isEmpty()) {
+        if (rawIds.isEmpty()) {
             return List.of();
         }
 
-        // 2) Entidades por IDs
+        // Convertimos los IDs (String) a UUID
+        List<UUID> ids = rawIds.stream()
+                .map(o -> UUID.fromString(o.toString()))
+                .toList();
+
+        // 2) Entidades por IDs (JPQL, mismo orden)
         return em.createQuery("""
-                SELECT e
-                FROM Event e
-                WHERE e.eventId IN :ids
-                ORDER BY e.date ASC, e.eventId ASC
-                """, Event.class)
+            SELECT e
+            FROM Event e
+            WHERE e.eventId IN :ids
+            ORDER BY e.date ASC, e.eventId ASC
+            """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
+
 
     @Override
     public int countUpcoming(LocalDate fromInclusive) {
@@ -212,79 +182,108 @@ public class EventJpaDao implements EventDao {
 
     @Override
     public List<Event> findUpcomingByClub(UUID clubId, int page, int size) {
-        final int limit  = Math.max(0, size);
-        final int offset = Math.max(0, page) * limit;
 
+        // Si no hay clubId, no tiene sentido buscar
+        if (clubId == null) {
+            return List.of();
+        }
+
+        final int limit = Math.max(0, size);
         if (limit == 0) {
             return List.of();
         }
 
-        // 1) IDs futuros de un club
-        List<UUID> ids = em.createQuery("""
-                SELECT e.eventId
-                FROM Event e
-                WHERE e.clubId = :clubId
-                  AND e.date >= :today
-                ORDER BY e.date ASC, e.eventId ASC
-                """, UUID.class)
+        final int safePage = Math.max(0, page);
+        final int offset   = safePage * limit;
+
+        LocalDate today = LocalDate.now();
+
+        // 1) Query de IDs
+        @SuppressWarnings("unchecked")
+        List<Object> rawIds = em.createNativeQuery("""
+            SELECT CAST(eventid AS TEXT)
+            FROM event
+            WHERE clubid = :clubId
+              AND date >= :today
+            ORDER BY date ASC, eventid ASC
+            """)
                 .setParameter("clubId", clubId)
-                .setParameter("today", LocalDate.now())
+                .setParameter("today", today)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
                 .getResultList();
 
-        if (ids.isEmpty()) {
+        if (rawIds.isEmpty()) {
             return List.of();
         }
 
-        // 2) Entidades por IDs
+        List<UUID> ids = rawIds.stream()
+                .map(o -> UUID.fromString(o.toString()))
+                .toList();
+
+        // 2) Entidades
         return em.createQuery("""
-                SELECT e
-                FROM Event e
-                WHERE e.eventId IN :ids
-                ORDER BY e.date ASC, e.eventId ASC
-                """, Event.class)
+            SELECT e
+            FROM Event e
+            WHERE e.eventId IN :ids
+            ORDER BY e.date ASC, e.eventId ASC
+            """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
 
     @Override
     public List<Event> findPastByClub(UUID clubId, int page, int size) {
-        final int limit  = Math.max(0, size);
-        final int offset = Math.max(0, page) * limit;
 
+        // Si no hay clubId, no tiene sentido buscar
+        if (clubId == null) {
+            return List.of();
+        }
+
+        final int limit = Math.max(0, size);
         if (limit == 0) {
             return List.of();
         }
 
-        // 1) IDs pasados de un club
-        List<UUID> ids = em.createQuery("""
-                SELECT e.eventId
-                FROM Event e
-                WHERE e.clubId = :clubId
-                  AND e.date < :today
-                ORDER BY e.date DESC, e.eventId DESC
-                """, UUID.class)
+        final int safePage = Math.max(0, page);
+        final int offset   = safePage * limit;
+
+        LocalDate today = LocalDate.now();
+
+        // 1) Query de IDs
+        @SuppressWarnings("unchecked")
+        List<Object> rawIds = em.createNativeQuery("""
+            SELECT CAST(eventid AS TEXT)
+            FROM event
+            WHERE clubid = :clubId
+              AND date < :today
+            ORDER BY date DESC, eventid DESC
+            """)
                 .setParameter("clubId", clubId)
-                .setParameter("today", LocalDate.now())
+                .setParameter("today", today)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
                 .getResultList();
 
-        if (ids.isEmpty()) {
+        if (rawIds.isEmpty()) {
             return List.of();
         }
 
+        List<UUID> ids = rawIds.stream()
+                .map(o -> UUID.fromString(o.toString()))
+                .toList();
+
         // 2) Entidades por IDs
         return em.createQuery("""
-                SELECT e
-                FROM Event e
-                WHERE e.eventId IN :ids
-                ORDER BY e.date DESC, e.eventId DESC
-                """, Event.class)
+            SELECT e
+            FROM Event e
+            WHERE e.eventId IN :ids
+            ORDER BY e.date DESC, e.eventId DESC
+            """, Event.class)
                 .setParameter("ids", ids)
                 .getResultList();
     }
+
 
     @Override
     public int countUpcomingByClub(UUID clubId) {

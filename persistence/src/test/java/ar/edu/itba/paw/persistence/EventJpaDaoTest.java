@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -35,89 +36,119 @@ public class EventJpaDaoTest {
     private EntityManager em;
 
     private User user;
-    private Club clubMain;
-    private Club clubOther;
+    private Club club;
+    private UUID clubId;
 
-    private Event evPastMain;
-    private Event evTodayMain;
-    private Event evFutureMain;
-    private Event evPastOther;
-    private Event evFutureOther;
+    private UUID photoId;
 
-    private LocalDate today;
+    private Event pastEvent;
+    private Event todayEvent;
+    private Event futureEvent;
 
     @Before
     public void setUp() {
-        // Limpieza (por las dudas, aunque hay rollback por test)
+        // Limpieza básica (en orden para respetar FKs)
         em.createQuery("DELETE FROM Event e").executeUpdate();
         em.createQuery("DELETE FROM Club c").executeUpdate();
         em.createQuery("DELETE FROM User u").executeUpdate();
+        em.createNativeQuery("DELETE FROM photos").executeUpdate();
         em.flush();
 
-        today = LocalDate.now();
+        // Datos base
+        user = persistUser("user", "name", "last", "email", "cell");
+        club = persistClub(user);
+        clubId = club.getClubId();
 
-        user = persistUser();
-        clubMain = persistClub(user, "Main Club");
-        clubOther = persistClub(user, "Other Club");
+        photoId = UUID.randomUUID();
+        insertPhoto(photoId, clubId, user.getId());
 
-        evPastMain   = persistEvent(clubMain, "PastMain", today.minusDays(2));
-        evTodayMain  = persistEvent(clubMain, "TodayMain", today);
-        evFutureMain = persistEvent(clubMain, "FutureMain", today.plusDays(2));
+        LocalDate today = LocalDate.now();
 
-        evPastOther   = persistEvent(clubOther, "PastOther", today.minusDays(1));
-        evFutureOther = persistEvent(clubOther, "FutureOther", today.plusDays(1));
+        pastEvent = persistEvent(UUID.randomUUID(), clubId,
+                "Past Event", "Past description",
+                today.minusDays(2), photoId);
+
+        todayEvent = persistEvent(UUID.randomUUID(), clubId,
+                "Today Event", "Today description",
+                today, null);
+
+        futureEvent = persistEvent(UUID.randomUUID(), clubId,
+                "Future Event", "Future description",
+                today.plusDays(2), null);
 
         em.flush();
     }
 
-
-    // ----------------------------- create -----------------------------
+    // ----------------------------------------------------------------
+    // create
+    // ----------------------------------------------------------------
 
     @Test
     public void testCreate() {
-        long before = countEvents();
+        LocalDate date = LocalDate.now().plusDays(5);
+        UUID newPhotoId = UUID.randomUUID();
+        insertPhoto(newPhotoId, clubId, user.getId());
 
-        UUID clubId = clubMain.getClubId();
-        UUID photoId = UUID.randomUUID();
-        LocalDate date = today.plusDays(5);
-
-        Event created = eventDao.create(clubId, "NewEvent", "new desc", date, photoId);
+        Event created = eventDao.create(
+                clubId,
+                "New Event",
+                "New description",
+                date,
+                newPhotoId
+        );
         em.flush();
+        em.clear();
 
         assertNotNull(created);
         assertNotNull(created.getEventId());
         assertEquals(clubId, created.getClubId());
-        assertEquals("NewEvent", created.getEventName());
-        assertEquals("new desc", created.getDescription());
+        assertEquals("New Event", created.getEventName());
+        assertEquals("New description", created.getDescription());
         assertEquals(date, created.getDate());
-        assertEquals(photoId, created.getPhotoId());
+        assertEquals(newPhotoId, created.getPhotoId());
 
-        assertEquals(before + 1, countEvents());
+        assertEquals(4L, countEvents());
     }
 
-    // ----------------------------- update -----------------------------
+    @Test
+    public void testCreateWithInvalidClubThrows() {
+        LocalDate date = LocalDate.now();
+
+        assertThrows(PersistenceException.class, () -> {
+            eventDao.create(
+                    UUID.randomUUID(),
+                    "Invalid Event",
+                    "Should fail",
+                    date,
+                    null
+            );
+            em.flush();
+        });
+    }
+
+    // ----------------------------------------------------------------
+    // update
+    // ----------------------------------------------------------------
 
     @Test
     public void testUpdate() {
-        UUID newClubId = clubOther.getClubId();
+        LocalDate newDate = todayEvent.getDate().plusDays(10);
         UUID newPhotoId = UUID.randomUUID();
-        LocalDate newDate = today.plusDays(10);
+        insertPhoto(newPhotoId, clubId, user.getId());
 
         Event updated = eventDao.update(
-                evPastMain.getEventId(),
-                newClubId,
-                "UpdatedName",
-                "UpdatedDesc",
+                todayEvent.getEventId(),
+                clubId,
+                "Updated name",
+                "Updated description",
                 newDate,
                 newPhotoId
         );
-        em.flush();
 
         assertNotNull(updated);
-        assertEquals(evPastMain.getEventId(), updated.getEventId());
-        assertEquals(newClubId, updated.getClubId());
-        assertEquals("UpdatedName", updated.getEventName());
-        assertEquals("UpdatedDesc", updated.getDescription());
+        assertEquals(todayEvent.getEventId(), updated.getEventId());
+        assertEquals("Updated name", updated.getEventName());
+        assertEquals("Updated description", updated.getDescription());
         assertEquals(newDate, updated.getDate());
         assertEquals(newPhotoId, updated.getPhotoId());
     }
@@ -126,46 +157,47 @@ public class EventJpaDaoTest {
     public void testUpdateNotFoundReturnsNull() {
         Event updated = eventDao.update(
                 UUID.randomUUID(),
-                clubMain.getClubId(),
-                "Name",
-                "Desc",
-                today,
+                clubId,
+                "Does not exist",
+                "No description",
+                LocalDate.now(),
                 null
         );
+
         assertNull(updated);
     }
 
-    // ----------------------------- delete -----------------------------
+    // ----------------------------------------------------------------
+    // delete
+    // ----------------------------------------------------------------
 
     @Test
     public void testDelete() {
-        long before = countEvents();
-
-        boolean deleted = eventDao.delete(evTodayMain.getEventId());
+        boolean deleted = eventDao.delete(todayEvent.getEventId());
         em.flush();
+        em.clear();
 
         assertTrue(deleted);
-        assertEquals(before - 1, countEvents());
-        assertNull(em.find(Event.class, evTodayMain.getEventId()));
+        assertEquals(2L, countEvents());
+        assertNull(em.find(Event.class, todayEvent.getEventId()));
     }
-
     @Test
     public void testDeleteNotFoundReturnsFalse() {
-        long before = countEvents();
-
         boolean deleted = eventDao.delete(UUID.randomUUID());
 
         assertFalse(deleted);
-        assertEquals(before, countEvents());
+        assertEquals(3L, countEvents());
     }
 
-    // ----------------------------- findById -----------------------------
+    // ----------------------------------------------------------------
+    // findById
+    // ----------------------------------------------------------------
 
     @Test
     public void testFindById() {
-        Optional<Event> found = eventDao.findById(evFutureMain.getEventId());
+        Optional<Event> found = eventDao.findById(pastEvent.getEventId());
         assertTrue(found.isPresent());
-        assertEquals(evFutureMain.getEventId(), found.get().getEventId());
+        assertEquals(pastEvent.getEventId(), found.get().getEventId());
     }
 
     @Test
@@ -174,218 +206,397 @@ public class EventJpaDaoTest {
         assertFalse(found.isPresent());
     }
 
-    // ----------------------------- findByClub (paginado) -----------------------------
+    // ----------------------------------------------------------------
+    // findByClub (paginado)
+    // ----------------------------------------------------------------
 
     @Test
-    public void testFindByClubPaginatedFirstPageOrdersByDateDesc() {
-        List<Event> page0 = eventDao.findByClub(clubMain.getClubId(), 0, 2);
-
-        assertEquals(2, page0.size());
-        assertEquals(evFutureMain.getDate(), page0.get(0).getDate());
-        assertEquals(evTodayMain.getDate(),  page0.get(1).getDate());
-    }
-
-    @Test
-    public void testFindByClubPaginatedSecondPageOrdersByDateDesc() {
-        List<Event> page1 = eventDao.findByClub(clubMain.getClubId(), 1, 2);
-
-        assertEquals(1, page1.size());
-        assertEquals(evPastMain.getDate(), page1.getFirst().getDate());
-    }
-
-    @Test
-    public void testFindByClubEmptyWhenNoEvents() {
-        Club emptyClub = persistClub(user, "Empty Club");
-        em.flush();
-
-        List<Event> events = eventDao.findByClub(emptyClub.getClubId(), 0, 10);
-        assertTrue(events.isEmpty());
-    }
-
-    @Test
-    public void testFindByClubSizeZeroReturnsEmpty() {
-        List<Event> events = eventDao.findByClub(clubMain.getClubId(), 0, 0);
-        assertTrue(events.isEmpty());
-    }
-
-    // ----------------------------- searchByDateRangePaginated -----------------------------
-
-    @Test
-    public void testSearchByDateRangePaginatedBasic() {
-        LocalDate start = today.minusDays(2);
-        LocalDate end   = today;
-
-        List<Event> result = eventDao.searchByDateRangePaginated(
-                start,
-                end,
-                0,
-                10
-        );
+    public void testFindByClubReturnsAllOrderedByDateDesc() {
+        List<Event> result = eventDao.findByClub(clubId, 0, 10);
 
         assertEquals(3, result.size());
-        assertEquals(evPastMain.getDate(),   result.get(0).getDate());
-        assertEquals(evPastOther.getDate(),  result.get(1).getDate());
-        assertEquals(evTodayMain.getDate(),  result.get(2).getDate());
+        assertEquals(futureEvent.getEventId(), result.get(0).getEventId());
+        assertEquals(todayEvent.getEventId(), result.get(1).getEventId());
+        assertEquals(pastEvent.getEventId(), result.get(2).getEventId());
     }
 
     @Test
-    public void testSearchByDateRangePaginatedEmptyWhenNoMatch() {
-        LocalDate start = today.plusDays(20);
-        LocalDate end   = today.plusDays(30);
+    public void testFindByClubPaginatesPage0() {
+        List<Event> page0 = eventDao.findByClub(clubId, 0, 2);
+        assertEquals(2, page0.size());
+        assertEquals(futureEvent.getEventId(), page0.get(0).getEventId());
+        assertEquals(todayEvent.getEventId(), page0.get(1).getEventId());
+    }
 
-        List<Event> result = eventDao.searchByDateRangePaginated(
-                start, end, 0, 10
-        );
+    @Test
+    public void testFindByClubPaginatesPage1() {
+        List<Event> page1 = eventDao.findByClub(clubId, 1, 2);
+        assertEquals(1, page1.size());
+        assertEquals(pastEvent.getEventId(), page1.get(0).getEventId());
+    }
+
+    @Test
+    public void testFindByClubPaginatesPage2() {
+        List<Event> page2 = eventDao.findByClub(clubId, 2, 2);
+        assertTrue(page2.isEmpty());
+    }
+
+    @Test
+    public void testFindByClubWithZeroSizeReturnsEmpty() {
+        List<Event> result = eventDao.findByClub(clubId, 0, 0);
         assertTrue(result.isEmpty());
     }
 
-    // ----------------------------- countByDateRange / countByClub -----------------------------
-
     @Test
-    public void testCountByDateRange() {
-        LocalDate start = today.minusDays(2);
-        LocalDate end   = today;
+    public void testFindByClubWithoutEventsReturnsEmpty() {
+        UUID otherClubId = UUID.randomUUID();
+        // Insertamos club sin eventos
+        Club otherClub = new Club(
+                "Other Club",
+                "Other Location",
+                new BigDecimal("5.0"),
+                0,
+                null,
+                "desc",
+                user,
+                null,
+                OffsetDateTime.now(),
+                null,
+                Boolean.FALSE,
+                null
+        );
+        em.persist(otherClub);
+        em.flush();
 
-        int count = eventDao.countByDateRange(start, end);
-        assertEquals(3, count);
+        List<Event> result = eventDao.findByClub(otherClub.getClubId(), 0, 10);
+        assertTrue(result.isEmpty());
     }
+
+    // ----------------------------------------------------------------
+    // countByClub
+    // ----------------------------------------------------------------
 
     @Test
     public void testCountByClub() {
-        int mainCount  = eventDao.countByClub(clubMain.getClubId());
-        int otherCount = eventDao.countByClub(clubOther.getClubId());
-
-        assertEquals(3, mainCount);
-        assertEquals(2, otherCount);
-    }
-
-    // ----------------------------- findUpcoming / countUpcoming -----------------------------
-
-    @Test
-    public void testFindUpcomingFromToday() {
-        List<Event> upcoming = eventDao.findUpcoming(today, 0, 10);
-
-        // upcoming (>= today): evTodayMain, evFutureOther, evFutureMain
-        assertEquals(3, upcoming.size());
-        assertEquals(today,             upcoming.get(0).getDate());
-        assertEquals(today.plusDays(1), upcoming.get(1).getDate());
-        assertEquals(today.plusDays(2), upcoming.get(2).getDate());
-    }
-
-    @Test
-    public void testFindUpcomingPaginatedFirstPage() {
-        List<Event> page0 = eventDao.findUpcoming(today, 0, 2);
-
-        assertEquals(2, page0.size());
-        assertEquals(today,             page0.get(0).getDate());
-        assertEquals(today.plusDays(1), page0.get(1).getDate());
-    }
-
-    @Test
-    public void testFindUpcomingPaginatedSecondPage() {
-        List<Event> page1 = eventDao.findUpcoming(today, 1, 2);
-
-        assertEquals(1, page1.size());
-        assertEquals(today.plusDays(2), page1.getFirst().getDate());
-    }
-
-    @Test
-    public void testCountUpcomingFromToday() {
-        int count = eventDao.countUpcoming(today);
+        int count = eventDao.countByClub(clubId);
         assertEquals(3, count);
     }
 
-    // ----------------------------- findByPhotoIdAndClub -----------------------------
-
     @Test
-    public void testFindByPhotoIdAndClubNotFoundWhenNoEventHasPhoto() {
-        Optional<Event> notFound = eventDao.findByPhotoIdAndClub(
-                UUID.randomUUID(), clubMain.getClubId()
+    public void testCountByClubZeroWhenNoEvents() {
+        UUID otherClubId = UUID.randomUUID();
+        Club otherClub = new Club(
+                "Empty Club",
+                "Location",
+                new BigDecimal("4.0"),
+                0,
+                null,
+                "desc",
+                user,
+                null,
+                OffsetDateTime.now(),
+                null,
+                Boolean.FALSE,
+                null
         );
-        assertFalse(notFound.isPresent());
-    }
-
-    @Test
-    public void testFindByPhotoIdAndClubNotFoundWhenPhotoBelongsToOtherClub() {
-        UUID photoId = UUID.randomUUID();
-
-        Event managed = em.find(Event.class, evFutureOther.getEventId());
-        managed.setPhotoId(photoId);
+        em.persist(otherClub);
         em.flush();
 
-        Optional<Event> wrongClub = eventDao.findByPhotoIdAndClub(photoId, clubMain.getClubId());
-        assertFalse(wrongClub.isPresent());
+        int count = eventDao.countByClub(otherClub.getClubId());
+        assertEquals(0, count);
     }
 
-    // ----------------------------- attachPhoto -----------------------------
+    // ----------------------------------------------------------------
+    // findUpcoming (global)
+    // ----------------------------------------------------------------
 
     @Test
-    public void testAttachPhotoUpdatesPhotoId() {
-        UUID newPhoto = UUID.randomUUID();
+    public void testFindUpcomingFromTodayReturnsTodayAndFuture() {
+        LocalDate today = LocalDate.now();
 
-        eventDao.attachPhoto(evPastMain.getEventId(), newPhoto);
+        List<Event> result = eventDao.findUpcoming(today, 0, 10);
+
+        assertEquals(2, result.size());
+        assertEquals(todayEvent.getEventId(), result.get(0).getEventId());
+        assertEquals(futureEvent.getEventId(), result.get(1).getEventId());
+    }
+
+    @Test
+    public void testFindUpcomingFromFutureDateReturnsOnlyFuture() {
+        LocalDate from = LocalDate.now().plusDays(1);
+
+        List<Event> result = eventDao.findUpcoming(from, 0, 10);
+
+        assertEquals(1, result.size());
+        assertEquals(futureEvent.getEventId(), result.get(0).getEventId());
+    }
+
+    @Test
+    public void testFindUpcomingWithNullFromReturnsEmpty() {
+        List<Event> result = eventDao.findUpcoming(null, 0, 10);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void testFindUpcomingWithZeroSizeReturnsEmpty() {
+        List<Event> result = eventDao.findUpcoming(LocalDate.now(), 0, 0);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void testFindUpcomingPaginatesPage0() {
+        LocalDate today = LocalDate.now();
+
+        List<Event> page0 = eventDao.findUpcoming(today, 0, 1);
+        assertEquals(1, page0.size());
+        assertEquals(todayEvent.getEventId(), page0.get(0).getEventId());
+    }
+
+    @Test
+    public void testFindUpcomingPaginatesPage1() {
+        LocalDate today = LocalDate.now();
+
+        List<Event> page1 = eventDao.findUpcoming(today, 1, 1);
+        assertEquals(1, page1.size());
+        assertEquals(futureEvent.getEventId(), page1.get(0).getEventId());
+    }
+
+    @Test
+    public void testFindUpcomingPaginatesPage2Empty() {
+        LocalDate today = LocalDate.now();
+
+        List<Event> page2 = eventDao.findUpcoming(today, 2, 1);
+        assertTrue(page2.isEmpty());
+    }
+
+    // ----------------------------------------------------------------
+    // countUpcoming (global)
+    // ----------------------------------------------------------------
+
+    @Test
+    public void testCountUpcomingFromToday() {
+        LocalDate today = LocalDate.now();
+        int count = eventDao.countUpcoming(today);
+        assertEquals(2, count);
+    }
+
+    @Test
+    public void testCountUpcomingFromAfterFutureReturnsZero() {
+        LocalDate from = LocalDate.now().plusDays(10);
+        int count = eventDao.countUpcoming(from);
+        assertEquals(0, count);
+    }
+
+    // ----------------------------------------------------------------
+    // findByPhotoIdAndClub
+    // ----------------------------------------------------------------
+
+    @Test
+    public void testFindByPhotoIdAndClubFound() {
+        Optional<Event> result = eventDao.findByPhotoIdAndClub(photoId, clubId);
+
+        assertTrue(result.isPresent());
+        assertEquals(pastEvent.getEventId(), result.get().getEventId());
+    }
+
+ @Test
+ public void testFindByPhotoIdAndClubNotFoundByPhoto() {
+     Optional<Event> result = eventDao.findByPhotoIdAndClub(UUID.randomUUID(), clubId);
+     assertFalse(result.isPresent());
+ }
+
+ @Test
+ public void testFindByPhotoIdAndClubNotFoundByClub() {
+     Optional<Event> result = eventDao.findByPhotoIdAndClub(photoId, UUID.randomUUID());
+     assertFalse(result.isPresent());
+ }
+    // ----------------------------------------------------------------
+    // attachPhoto
+    // ----------------------------------------------------------------
+
+    @Test
+    public void testAttachPhotoUpdatesEventPhoto() {
+        UUID newPhotoId = UUID.randomUUID();
+        insertPhoto(newPhotoId, clubId, user.getId());
+
+        eventDao.attachPhoto(todayEvent.getEventId(), newPhotoId);
         em.flush();
+        em.clear();
 
-        Event reloaded = em.find(Event.class, evPastMain.getEventId());
-        assertEquals(newPhoto, reloaded.getPhotoId());
+        Event reloaded = em.find(Event.class, todayEvent.getEventId());
+        assertNotNull(reloaded);
+        assertEquals(newPhotoId, reloaded.getPhotoId());
     }
 
     @Test
-    public void testAttachPhotoThrowsWhenEventNotFound() {
-        UUID randomEventId = UUID.randomUUID();
-        UUID randomPhotoId = UUID.randomUUID();
+    public void testAttachPhotoNotFoundThrows() {
+        UUID newPhotoId = UUID.randomUUID();
+        insertPhoto(newPhotoId, clubId, user.getId());
 
         assertThrows(IllegalArgumentException.class, () ->
-                eventDao.attachPhoto(randomEventId, randomPhotoId)
+                eventDao.attachPhoto(UUID.randomUUID(), newPhotoId)
         );
     }
 
-    // ----------------------------- upcoming/past by club -----------------------------
+    // ----------------------------------------------------------------
+    // findUpcomingByClub
+    // ----------------------------------------------------------------
 
     @Test
-    public void testFindUpcomingByClub() {
-        List<Event> upcomingMain = eventDao.findUpcomingByClub(clubMain.getClubId(), 0, 10);
+    public void testFindUpcomingByClubReturnsTodayAndFutureForClub() {
+        List<Event> result = eventDao.findUpcomingByClub(clubId, 0, 10);
 
-        assertEquals(2, upcomingMain.size());
-        assertEquals(today,             upcomingMain.get(0).getDate());
-        assertEquals(today.plusDays(2), upcomingMain.get(1).getDate());
-        upcomingMain.forEach(e -> assertEquals(clubMain.getClubId(), e.getClubId()));
+        assertEquals(2, result.size());
+        assertEquals(todayEvent.getEventId(), result.get(0).getEventId());
+        assertEquals(futureEvent.getEventId(), result.get(1).getEventId());
+    }
+
+@Test
+public void testFindUpcomingByClubPaginatesPage0() {
+    // page 0: today
+    List<Event> page0 = eventDao.findUpcomingByClub(clubId, 0, 1);
+    assertEquals(1, page0.size());
+    assertEquals(todayEvent.getEventId(), page0.get(0).getEventId());
+}
+
+@Test
+public void testFindUpcomingByClubPaginatesPage1() {
+    // page 1: future
+    List<Event> page1 = eventDao.findUpcomingByClub(clubId, 1, 1);
+    assertEquals(1, page1.size());
+    assertEquals(futureEvent.getEventId(), page1.get(0).getEventId());
+}
+
+@Test
+public void testFindUpcomingByClubPaginatesPage2Empty() {
+    // page 2: empty
+    List<Event> page2 = eventDao.findUpcomingByClub(clubId, 2, 1);
+    assertTrue(page2.isEmpty());
+}
+
+    @Test
+    public void testFindUpcomingByClubWithNullClubReturnsEmpty() {
+        List<Event> result = eventDao.findUpcomingByClub(null, 0, 10);
+        assertTrue(result.isEmpty());
     }
 
     @Test
-    public void testFindPastByClub() {
-        List<Event> pastMain = eventDao.findPastByClub(clubMain.getClubId(), 0, 10);
-
-        assertEquals(1, pastMain.size());
-        assertEquals(evPastMain.getDate(), pastMain.getFirst().getDate());
-        assertEquals(clubMain.getClubId(), pastMain.getFirst().getClubId());
+    public void testFindUpcomingByClubWithZeroSizeReturnsEmpty() {
+        List<Event> result = eventDao.findUpcomingByClub(clubId, 0, 0);
+        assertTrue(result.isEmpty());
     }
+
+    // ----------------------------------------------------------------
+    // findPastByClub
+    // ----------------------------------------------------------------
+
+    @Test
+    public void testFindPastByClubReturnsOnlyPastEvents() {
+        List<Event> result = eventDao.findPastByClub(clubId, 0, 10);
+
+        assertEquals(1, result.size());
+        assertEquals(pastEvent.getEventId(), result.get(0).getEventId());
+    }
+
+  @Test
+  public void testFindPastByClubPage0ReturnsPastEvent() {
+      // Sólo 1 evento pasado en page 0
+      List<Event> page0 = eventDao.findPastByClub(clubId, 0, 1);
+      assertEquals(1, page0.size());
+      assertEquals(pastEvent.getEventId(), page0.get(0).getEventId());
+  }
+
+  @Test
+  public void testFindPastByClubPage1IsEmpty() {
+      // Cualquier página >0 debe dar vacío
+      List<Event> page1 = eventDao.findPastByClub(clubId, 1, 1);
+      assertTrue(page1.isEmpty());
+  }
+
+    @Test
+    public void testFindPastByClubWithNullClubReturnsEmpty() {
+        List<Event> result = eventDao.findPastByClub(null, 0, 10);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void testFindPastByClubWithZeroSizeReturnsEmpty() {
+        List<Event> result = eventDao.findPastByClub(clubId, 0, 0);
+        assertTrue(result.isEmpty());
+    }
+
+    // ----------------------------------------------------------------
+    // countUpcomingByClub / countPastByClub
+    // ----------------------------------------------------------------
 
     @Test
     public void testCountUpcomingByClub() {
-        int mainUpcoming  = eventDao.countUpcomingByClub(clubMain.getClubId());
-
-        assertEquals(2, mainUpcoming);
+        int count = eventDao.countUpcomingByClub(clubId);
+        assertEquals(2, count); // today + future
     }
 
     @Test
     public void testCountPastByClub() {
-        int mainPast  = eventDao.countPastByClub(clubMain.getClubId());
-
-        assertEquals(1, mainPast);
+        int count = eventDao.countPastByClub(clubId);
+        assertEquals(1, count); // sólo past
     }
 
-    // ----------------------------- Helpers -----------------------------
+  @Test
+  public void testCountUpcomingByClubWithoutEvents() {
+      Club otherClub = new Club(
+              "No Events Club - Upcoming",
+              "Location",
+              new BigDecimal("4.5"),
+              0,
+              null,
+              "desc",
+              user,
+              null,
+              OffsetDateTime.now(),
+              null,
+              Boolean.FALSE,
+              null
+      );
+      em.persist(otherClub);
+      em.flush();
 
-    private User persistUser() {
+      assertEquals(0, eventDao.countUpcomingByClub(otherClub.getClubId()));
+  }
+
+  @Test
+  public void testCountPastByClubWithoutEvents() {
+      Club otherClub = new Club(
+              "No Events Club - Past",
+              "Location",
+              new BigDecimal("4.5"),
+              0,
+              null,
+              "desc",
+              user,
+              null,
+              OffsetDateTime.now(),
+              null,
+              Boolean.FALSE,
+              null
+      );
+      em.persist(otherClub);
+      em.flush();
+
+      assertEquals(0, eventDao.countPastByClub(otherClub.getClubId()));
+  }
+    // ----------------------------------------------------------------
+    // Helpers
+    // ----------------------------------------------------------------
+
+    private User persistUser(String username, String name, String surname, String email, String cell) {
         User u = new User(
                 UUID.randomUUID(),
-                "user",
-                "Name",
-                "Last",
-                "email",
+                username,
+                name,
+                surname,
+                email,
                 "{noop}hash",
-                "cell",
+                cell,
                 Role.USER,
                 OffsetDateTime.now(),
                 null
@@ -394,34 +605,32 @@ public class EventJpaDaoTest {
         return u;
     }
 
-    private Club persistClub(User contact, String clubName) {
+    private Club persistClub(User contact) {
         Club c = new Club(
-                clubName,
+                "Club Test",
                 "Location",
                 new BigDecimal("5.0"),
                 1,
-                null,          // priceRange
+                null,
                 "desc",
                 contact,
-                null,          // musicGenre
+                null,
                 OffsetDateTime.now(),
-                null,          // zone
+                null,
                 Boolean.FALSE,
-                null           // cbu
+                null
         );
         em.persist(c);
         return c;
     }
 
-
-    private Event persistEvent(Club club, String name, LocalDate date) {
-        Event e = new Event();
-        e.setEventId(UUID.randomUUID());
-        e.setClubId(club.getClubId());
-        e.setEventName(name);
-        e.setDescription("desc");
-        e.setDate(date);
-        e.setPhotoId(null);
+    private Event persistEvent(UUID eventId,
+                               UUID clubId,
+                               String name,
+                               String description,
+                               LocalDate date,
+                               UUID photoId) {
+        Event e = new Event(eventId, clubId, name, description, date, photoId);
         em.persist(e);
         return e;
     }
@@ -431,4 +640,18 @@ public class EventJpaDaoTest {
                 .getSingleResult();
     }
 
+    private void insertPhoto(UUID photoId, UUID clubId, UUID postedBy) {
+        em.createNativeQuery("""
+                INSERT INTO photos (photo_id, club_id, url, posted_by, created_at, data, filename, content_type)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                """)
+                .setParameter(1, photoId)
+                .setParameter(2, clubId)
+                .setParameter(3, "http://example.com/photo")
+                .setParameter(4, postedBy)
+                .setParameter(5, new byte[]{1, 2, 3})
+                .setParameter(6, "photo.jpg")
+                .setParameter(7, "image/jpeg")
+                .executeUpdate();
+    }
 }

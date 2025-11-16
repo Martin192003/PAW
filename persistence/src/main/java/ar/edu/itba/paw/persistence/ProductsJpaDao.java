@@ -87,15 +87,12 @@ public class ProductsJpaDao implements ProductsDao {
         Objects.requireNonNull(club.getClubId(), "clubId is required");
 
         // 1) IDs del club
-        final String idSql = """
-        SELECT CAST(p.product_id AS TEXT) AS id_text
-        FROM products p
-        WHERE p.club_id = :clubId
-        ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
-    """;
-
-        @SuppressWarnings("unchecked")
-        final List<String> idTexts = em.createNativeQuery(idSql)
+        @SuppressWarnings("unchecked") final List<String> idTexts = em.createNativeQuery("""
+                            SELECT CAST(p.product_id AS TEXT) AS id_text
+                            FROM products p
+                            WHERE p.club_id = :clubId
+                            ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
+                        """)
                 .unwrap(org.hibernate.query.NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", club.getClubId())
@@ -120,15 +117,13 @@ public class ProductsJpaDao implements ProductsDao {
     @Override
     public List<Product> findByClubID(final UUID clubId) {
         Objects.requireNonNull(clubId, "clubId is required");
-        final String idSql = """
-        SELECT CAST(p.product_id AS TEXT) AS id_text
-        FROM products p
-        WHERE p.club_id = :clubId
-        ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
-    """;
 
-        @SuppressWarnings("unchecked")
-        final List<String> idTexts = em.createNativeQuery(idSql)
+        @SuppressWarnings("unchecked") final List<String> idTexts = em.createNativeQuery("""
+                            SELECT CAST(p.product_id AS TEXT) AS id_text
+                            FROM products p
+                            WHERE p.club_id = :clubId
+                            ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
+                        """)
                 .unwrap(org.hibernate.query.NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)

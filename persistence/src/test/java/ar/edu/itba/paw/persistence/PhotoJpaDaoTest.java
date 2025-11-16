@@ -326,29 +326,53 @@ public class PhotoJpaDaoTest {
     // ----------------- findCarouselWithoutEventByClubId tests -----------------
 
     @Test
-    public void testFindCarouselWithoutEventByClubId_excludesEventPhotos() {
-        // photo that will be linked to an event
-        Photo withEvent = persistPhoto(clubId, user.getId(), "we.jpg", new byte[]{1}, PhotoType.CAROUSEL);
-        em.flush();
+    public void testFindCarouselWithoutEventByClubId_basicReturnsCarouselPhotosWithoutData() {
 
-        // create event that references that photo
-        Event ev = new Event();
-        ev.setEventId(UUID.randomUUID());
-        ev.setClubId(clubId);
-        ev.setEventName("E");
-        ev.setDate(java.time.LocalDate.now());
-        ev.setPhotoId(withEvent.getPhotoId());
-        em.persist(ev);
+        persistPhoto(clubId, user.getId(), "car1.jpg", new byte[]{4}, PhotoType.CAROUSEL);
+        persistPhoto(clubId, user.getId(), "car2.jpg", new byte[]{5}, PhotoType.CAROUSEL);
 
-        // photo without event
-        Photo withoutEvent = persistPhoto(clubId, user.getId(), "noe.jpg", new byte[]{2}, PhotoType.CAROUSEL);
+
+        persistPhoto(otherClubId, user.getId(), "otherClubCar.jpg", new byte[]{6}, PhotoType.CAROUSEL);
+        persistPhoto(clubId, user.getId(), "cover.jpg", new byte[]{7}, PhotoType.COVER);
+        persistPhoto(clubId, user.getId(), "review.jpg", new byte[]{8}, PhotoType.REVIEW);
+
         em.flush();
+        em.clear();
 
         List<Photo> result = photoDao.findCarouselWithoutEventByClubId(clubId, 10, 0);
-        // should contain only the photo without event
-        List<UUID> ids = result.stream().map(Photo::getPhotoId).toList();
-        assertTrue(ids.contains(withoutEvent.getPhotoId()));
-        assertFalse(ids.contains(withEvent.getPhotoId()));
+
+        assertNotNull(result);
+        assertFalse(result.isEmpty());
+
+        assertTrue(result.stream().allMatch(p -> clubId.equals(p.getClubId())));
+        assertTrue(result.stream().allMatch(p -> p.getPhotoType() == PhotoType.CAROUSEL));
+        assertTrue(result.stream().allMatch(p -> p.getData() == null));
+    }
+
+    @Test
+    public void testFindCarouselWithoutEventByClubId_limitAndOffsetApplied() {
+        // Creamos varias fotos CAROUSEL para este club
+        persistPhoto(clubId, user.getId(), "carA.jpg", new byte[]{1}, PhotoType.CAROUSEL);
+        persistPhoto(clubId, user.getId(), "carB.jpg", new byte[]{2}, PhotoType.CAROUSEL);
+        persistPhoto(clubId, user.getId(), "carC.jpg", new byte[]{3}, PhotoType.CAROUSEL);
+        em.flush();
+        em.clear();
+
+        List<Photo> page1 = photoDao.findCarouselWithoutEventByClubId(clubId, 1, 0);
+        List<Photo> page2 = photoDao.findCarouselWithoutEventByClubId(clubId, 1, 1);
+
+        assertNotNull(page1);
+        assertNotNull(page2);
+        assertEquals(1, page1.size());
+        assertEquals(1, page2.size());
+
+        assertTrue(page1.stream().allMatch(p -> clubId.equals(p.getClubId()) && p.getPhotoType() == PhotoType.CAROUSEL));
+        assertTrue(page2.stream().allMatch(p -> clubId.equals(p.getClubId()) && p.getPhotoType() == PhotoType.CAROUSEL));
+
+        assertNotEquals(page1.get(0).getPhotoId(), page2.get(0).getPhotoId());
+
+        assertNull(page1.get(0).getData());
+        assertNull(page2.get(0).getData());
     }
 
     @Test

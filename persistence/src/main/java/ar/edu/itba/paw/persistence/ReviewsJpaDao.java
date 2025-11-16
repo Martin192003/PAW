@@ -110,41 +110,66 @@ public class ReviewsJpaDao implements ReviewsDao {
 
     @Override
     public List<Review> searchPaginated(UUID userId, UUID clubId, String sort, int limit, int offset) {
-        // Query 1
-        String orderBy = resolveOrderBy(sort);
-        StringBuilder jpqlIds = new StringBuilder("""
-        SELECT r.reviewId
-        FROM Review r
-        WHERE 1=1
-    """);
-        if (userId != null) jpqlIds.append(" AND r.user.id = :uid");
-        if (clubId != null) jpqlIds.append(" AND r.club.clubId = :cid");
-        jpqlIds.append(" ").append(orderBy);
 
-        TypedQuery<UUID> qIds = em.createQuery(jpqlIds.toString(), UUID.class);
-        if (userId != null) qIds.setParameter("uid", userId);
-        if (clubId != null) qIds.setParameter("cid", clubId);
-        qIds.setFirstResult(offset);
-        qIds.setMaxResults(limit);
 
-        List<UUID> ids = qIds.getResultList();
-        if (ids.isEmpty()) return Collections.emptyList();
+        String orderBy = switch (sort) {
+            case "rating" -> "ORDER BY r.rating DESC";
+            case "date" -> "ORDER BY r.created_at DESC";
+            default -> "ORDER BY r.created_at DESC"; // fallback
+        };
 
-        // Query 2
+
+        StringBuilder sql = new StringBuilder("""
+                    SELECT CAST(r.review_id AS TEXT) AS id_text
+                    FROM reviews r
+                    WHERE 1=1
+                """);
+
+        if (userId != null) sql.append(" AND r.user_id = :uid");
+        if (clubId != null) sql.append(" AND r.club_id = :cid");
+
+        sql.append(" ").append(orderBy);
+        sql.append(" LIMIT :limit OFFSET :offset");
+
+        var nativeQuery = em.createNativeQuery(sql.toString())
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .setParameter("limit", limit)
+                .setParameter("offset", offset);
+
+        if (userId != null) {
+            nativeQuery.setParameter("uid", userId);
+        }
+        if (clubId != null) {
+            nativeQuery.setParameter("cid", clubId);
+        }
+
+        @SuppressWarnings("unchecked")
+        List<String> idTexts = nativeQuery.getResultList();
+
+        if (idTexts.isEmpty()) return List.of();
+
+        List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+
         List<Review> batch = em.createQuery("""
-            SELECT r
-            FROM Review r
-            JOIN FETCH r.user u
-            JOIN FETCH r.club c
-            WHERE r.reviewId IN :ids
-        """, Review.class)
+                            SELECT r
+                            FROM Review r
+                            JOIN FETCH r.user u
+                            JOIN FETCH r.club c
+                            WHERE r.reviewId IN :ids
+                        """, Review.class)
                 .setParameter("ids", ids)
                 .getResultList();
 
-        // SORT
-        Map<UUID, Integer> pos = new HashMap<>();
-        for (int i = 0; i < ids.size(); i++) pos.put(ids.get(i), i);
-        batch.sort(Comparator.comparingInt(r -> pos.get(r.getReviewId())));
+
+
+        Map<UUID, Integer> orderMap = new HashMap<>();
+        for (int i = 0; i < ids.size(); i++) {
+            orderMap.put(ids.get(i), i);
+        }
+
+        batch.sort(Comparator.comparingInt(r -> orderMap.get(r.getReviewId())));
 
         return batch;
     }

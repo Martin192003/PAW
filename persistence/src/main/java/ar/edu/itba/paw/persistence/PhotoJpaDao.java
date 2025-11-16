@@ -37,16 +37,14 @@ public class PhotoJpaDao implements PhotoDao {
         final int off = Math.max(0, offset);
 
         // 1) Página de IDs
-        final String idSql = """
-        SELECT CAST(p.photo_id AS TEXT) AS id_text
-        FROM photos p
-        WHERE p.club_id = :clubId
-        ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
-        LIMIT :limit OFFSET :offset
-        """;
-
         @SuppressWarnings("unchecked")
-        final List<String> idTexts = em.createNativeQuery(idSql)
+        final List<String> idTexts = em.createNativeQuery("""
+                        SELECT CAST(p.photo_id AS TEXT) AS id_text
+                        FROM photos p
+                        WHERE p.club_id = :clubId
+                        ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
+                        LIMIT :limit OFFSET :offset
+                        """)
                 .unwrap(org.hibernate.query.NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
@@ -184,15 +182,13 @@ public class PhotoJpaDao implements PhotoDao {
         final int off = Math.max(0, offset);
 
         // 1) Página de IDs
-        final String idSql = """
+        @SuppressWarnings("unchecked") final List<String> idTexts = em.createNativeQuery("""
                 SELECT CAST(p.photo_id AS TEXT) AS id_text
                 FROM photos p
                 WHERE p.club_id = :clubId AND p.photo_type = 'REVIEW'
                 ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
                 LIMIT :limit OFFSET :offset
-            """;
-
-        @SuppressWarnings("unchecked") final List<String> idTexts = em.createNativeQuery(idSql)
+            """)
                 .unwrap(org.hibernate.query.NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
@@ -225,20 +221,24 @@ public class PhotoJpaDao implements PhotoDao {
 
     @Override
     public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset) {
-        final List<UUID> ids = em.createQuery("""
-                            SELECT p.photoId
-                            FROM Photo p
-                            LEFT JOIN Event e ON e.photoId = p.photoId
-                            WHERE p.clubId = :clubId
-                              AND p.photoType = :type
-                              AND e.photoId IS NULL
-                            ORDER BY p.createdAt DESC, p.photoId DESC
-                        """, UUID.class)
+        final List<String> idTexts = em.createNativeQuery("""
+            SELECT CAST(p.photo_id AS TEXT) AS id_text
+            FROM photos p
+            LEFT JOIN event e ON e.photoid = p.photo_id
+            WHERE p.club_id = :clubId
+              AND p.photo_type = 'CAROUSEL'
+              AND e.photoid IS NULL
+            ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
+            LIMIT :limit OFFSET :offset
+        """)
+                .unwrap(org.hibernate.query.NativeQuery.class)
+                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
-                .setParameter("type", PhotoType.CAROUSEL)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
+                .setParameter("limit", Math.max(0, limit))
+                .setParameter("offset", Math.max(0, offset))
                 .getResultList();
+
+        final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
 
         if (ids.isEmpty()) return List.of();
         List<Photo> photos = em.createQuery("""
@@ -257,7 +257,8 @@ public class PhotoJpaDao implements PhotoDao {
     }
 
 
-    // TODO: Fijarse si esta bien habria que paginar y hacer QUERY 1+1
+
+    // Los IDs ya los buscaron, solo traer los covers
     @Override
     public Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds) {
         List<Object[]> rows = em.createQuery("""
@@ -271,13 +272,12 @@ public class PhotoJpaDao implements PhotoDao {
                 .setParameter("clubIds", clubIds)
                 .getResultList();
 
-        // TODO: VER QUE SI ESTO ESTA BIEN, sin esto no anda tira Duplicate key
         Map<UUID, String> covers = rows.stream()
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
                         row -> (String) row[1],
-                        (existing, replacement) -> existing,         // keep first if duplicate
-                        LinkedHashMap::new                           // preserve order (optional)
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
                 ));
         return covers;
     }
