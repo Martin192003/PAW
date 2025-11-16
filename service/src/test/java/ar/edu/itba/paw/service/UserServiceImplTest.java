@@ -176,8 +176,13 @@ public class UserServiceImplTest {
         when(userDao.findByResetPasswordToken("tok")).thenReturn(Optional.of(user));
         when(passwordEncoder.encode("newpw")).thenReturn("ENC");
 
-        assertTrue(userService.resetPassword("tok","newpw"));
+        Optional<User> result = userService.resetPassword("tok", "newpw");
+
+        assertTrue(result.isPresent());
+        assertEquals("ENC", result.get().getPassword());
+        assertNull(result.get().getResetPasswordToken());
     }
+
 
     @Test
     public void testChangePasswordForAuthenticatedUser() {

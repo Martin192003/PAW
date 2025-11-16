@@ -177,8 +177,11 @@ public class ReviewServiceImplTest {
 
     @Test
     public void testGetCorrectedOffset() {
-        Assert.assertEquals(20, reviewService.getCorrectedOffset(25, 10, 30));
+
+        Mockito.when(reviewsDao.countSearch(null, CLUB_ID)).thenReturn(25);
+        Assert.assertEquals(20, reviewService.getCorrectedOffset(CLUB_ID, 10, 30));
     }
+
 
     @Test
     public void testFindByClubPaginated() {
