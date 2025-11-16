@@ -117,6 +117,13 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Review> listByClubPaginated(UUID clubId, String sort,int limit, int offset){
+        getCorrectedOffset(clubId, offset, limit);
+        return listByClub(clubId, sort, limit, getCorrectedOffset(clubId, offset, limit));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public int countByClub(UUID clubId) {
         return reviewsDao.countSearch(null, clubId);
     }
@@ -189,7 +196,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public int getCorrectedOffset(UUID clubId,int limit, int offset) {
+    public int getCorrectedOffset(UUID clubId, int limit, int offset) {
         int totalCount = countByClub(clubId);
         if (offset >= totalCount && totalCount > 0) {
             int lastPage = (int) Math.floor((totalCount - 1) / (double) limit);

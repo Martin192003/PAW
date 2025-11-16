@@ -42,5 +42,11 @@ public interface EventService {
 
     int countPastByClub(UUID clubId);
 
+    int totalEventPagesPast(UUID clubId,int size);
+
+    int totalEventPagesUpcoming(UUID clubId ,int size);
+
+    int totalEventPages(UUID clubId, int size);
+
 
 }

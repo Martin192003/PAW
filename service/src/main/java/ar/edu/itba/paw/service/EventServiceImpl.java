@@ -2,7 +2,6 @@ package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.Photo;
-import ar.edu.itba.paw.model.PhotoType;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.InvalidClubException;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
@@ -12,7 +11,6 @@ import ar.edu.itba.paw.persistence.EventDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -195,5 +193,33 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public int countPastByClub(UUID clubId) {
         return eventDao.countPastByClub(clubId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int totalEventPagesPast(UUID clubId, int size) {
+        if (size <= 0) return 0;
+        int totalPastEvents = countPastByClub(clubId);
+
+        return (int) Math.ceil((double) totalPastEvents / size);
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int totalEventPagesUpcoming(UUID clubId, int size) {
+        if (size <= 0) return 0;
+        int totalUpcomigEvents = countUpcomingByClub(clubId);
+
+        return (int) Math.ceil((double) totalUpcomigEvents / size);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int totalEventPages(UUID clubId, int size) {
+        if (size <= 0) return 0;
+        int totalEvents = countByClub(clubId);
+
+        return (int) Math.ceil((double) totalEvents / size);
     }
 }

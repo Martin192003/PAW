@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Receipt;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
@@ -13,10 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ReceiptServiceImpl implements ReceiptService {
@@ -53,15 +51,21 @@ public class ReceiptServiceImpl implements ReceiptService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Receipt> findByBooking(UUID bookingId) { return receiptDao.findByBooking(bookingId); }
+    public Optional<Receipt> findByBooking(UUID bookingId) {
+        return receiptDao.findByBooking(bookingId);
+    }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Receipt> getWithId(UUID receiptId) { return receiptDao.findByIdWithData(receiptId); }
+    public Optional<Receipt> getWithId(UUID receiptId) {
+        return receiptDao.findByIdWithData(receiptId);
+    }
 
     @Override
     @Transactional
-    public boolean deleteByBooking(UUID bookingId) { return receiptDao.deleteByBooking(bookingId); }
+    public boolean deleteByBooking(UUID bookingId) {
+        return receiptDao.deleteByBooking(bookingId);
+    }
 
     @Override
     @Transactional
@@ -183,13 +187,21 @@ public class ReceiptServiceImpl implements ReceiptService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Optional<Receipt> getReceiptForBooking(UUID bookingId) {
         return findByBooking(bookingId)
                 .flatMap(meta -> getWithId(meta.getReceiptId())
                         .or(() -> Optional.of(meta)));
     }
 
-
-
+    @Override
+    @Transactional(readOnly = true)
+    public Map<UUID, Boolean> buildHasReceiptMap(List<Booking> bookings) {
+        Map<UUID, Boolean> map = new HashMap<>();
+        for (Booking b : bookings) {
+            map.put(b.getBookingId(), findByBooking(b.getBookingId()).isPresent());
+        }
+        return map;
+    }
 }
+

@@ -71,7 +71,7 @@
 
             OffsetDateTime start = null;
             OffsetDateTime end = null;
-            List<ar.edu.itba.paw.model.ClubTable> available = List.of();
+            List<ClubTable> available = List.of();
             try {
                 if (tableService.isPastDate(ld, clock, zone)) {
                     model.addAttribute("error", "tables.pastdate");
@@ -122,7 +122,7 @@
             }
             int total = reviewService.countByClub(clubId);
             int correctedOffset = reviewService.getCorrectedOffset(clubId,limit, offset);
-            List<Review> reviews = reviewService.listByClub(clubId, sort, limit, correctedOffset);
+            List<Review> reviews = reviewService.listByClubPaginated(clubId, sort, limit, offset);
             model.addAttribute("reviews", reviews);
             model.addAttribute("totalReviews", total);
             model.addAttribute("limit", limit);

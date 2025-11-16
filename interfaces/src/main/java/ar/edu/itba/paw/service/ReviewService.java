@@ -27,4 +27,5 @@ public interface ReviewService {
     int calculateOffset(int offset, int limit, int total);
     List<Review> obtainPaginatedReviews(UUID userId, String sort, int limit, int offset);
     int gettotalReviewsPages(UUID clubId, int size);
+    List<Review> listByClubPaginated(UUID clubId, String sort,int limit, int offset);
 }
