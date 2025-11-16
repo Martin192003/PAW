@@ -48,7 +48,6 @@ public class TableServiceImpl implements TableService {
     @Override
     @Transactional(readOnly = true)
     public List<ClubTable> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to) {
-        // valida club y normaliza rango
         var club = clubDao.findById(clubId).orElseThrow(IllegalArgumentException::new);
         if (!from.isBefore(to)) throw new IllegalArgumentException("Rango inválido");
         return clubTablesDao.findAvailableByClubAndRange(club.getClubId(), from, to);
@@ -131,7 +130,6 @@ public class TableServiceImpl implements TableService {
         for (int i = 0; i < numberOfDays; i++) {
             LocalDate d = startDate.plusDays(i);
             DayOfWeek day = d.getDayOfWeek();
-            // Acá va tu lógica de Jue/Vie/Sab
             if ((day == DayOfWeek.THURSDAY || day == DayOfWeek.FRIDAY || day == DayOfWeek.SATURDAY) && !isPastDate(d, clock, zone)) {
                 allowedDates.add(d);
             }

@@ -30,7 +30,7 @@ public class TableServiceImplTest {
     private TableServiceImpl tableService;
 
     private final ZoneId testZone = ZoneId.of("America/Argentina/Buenos_Aires");
-    private final LocalDate fixedLocalDate = LocalDate.of(2025, 11, 14); // Friday
+    private final LocalDate fixedLocalDate = LocalDate.of(2025, 11, 14);
     private final Instant fixedInstant = fixedLocalDate.atStartOfDay(testZone).toInstant();
 
     @Before
@@ -92,7 +92,7 @@ public class TableServiceImplTest {
         List<ClubTable> tables = Arrays.asList(Mockito.mock(ClubTable.class));
 
         Mockito.when(clubDao.findById(clubId)).thenReturn(Optional.of(club));
-        Mockito.when(club.getClubId()).thenReturn(clubId); // <-- Fix here
+        Mockito.when(club.getClubId()).thenReturn(clubId);
         Mockito.when(clubTablesDao.findAvailableByClubAndRange(clubId, from, to)).thenReturn(tables);
 
         List<ClubTable> result = tableService.findAvailableByClubAndRange(clubId, from, to);
@@ -322,7 +322,7 @@ public class TableServiceImplTest {
 
         Assert.assertTrue(allowed.contains(LocalDate.of(2025, 11, 14)));
         Assert.assertTrue(allowed.contains(LocalDate.of(2025, 11, 15)));
-        Assert.assertFalse(allowed.contains(LocalDate.of(2025, 11, 16))); // Sunday shouldn't be included
+        Assert.assertFalse(allowed.contains(LocalDate.of(2025, 11, 16)));
     }
 
     @Test

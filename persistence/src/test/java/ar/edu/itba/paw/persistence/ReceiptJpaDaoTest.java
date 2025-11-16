@@ -64,8 +64,8 @@ public class ReceiptJpaDaoTest {
         assertEquals(uploadedBy, r.getUploadedBy());
         assertEquals("file.jpg", r.getFilename());
         assertEquals("image/jpeg", r.getContentType());
-        assertNotNull(r.getUrl());              // generado en prePersist
-        assertNotNull(r.getCreatedAt());        // generado en prePersist
+        assertNotNull(r.getUrl());
+        assertNotNull(r.getCreatedAt());
         assertEquals(3, r.getSizeBytes().longValue());
         assertArrayEquals(data, r.getData());
     }
@@ -141,7 +141,7 @@ public class ReceiptJpaDaoTest {
     }
 
     // -------------------------------------------------------------------
-    // FIND BY ID (without data)
+    // FIND BY ID
     // -------------------------------------------------------------------
 
     @Test
@@ -155,7 +155,7 @@ public class ReceiptJpaDaoTest {
         assertEquals(id, r.get().getReceiptId());
         assertEquals("test.jpg", r.get().getFilename());
         assertEquals("image/jpeg", r.get().getContentType());
-        assertNotNull(r.get().getData()); // findById NO limpia data
+        assertNotNull(r.get().getData());
     }
 
     @Test

@@ -35,7 +35,6 @@ public class MenuServiceImplTest {
 
     @Test
     public void testGetMenuByClub_Success() {
-        // 1. Setup
         Club club = new Club();
         club.setClubId(CLUB_ID);
 
@@ -50,10 +49,8 @@ public class MenuServiceImplTest {
         Mockito.when(productsDao.findByClub(Mockito.eq(club)))
                 .thenReturn(Arrays.asList(product1, product2));
 
-        // 2. Exercise
         List<Product> menu = menuService.getMenuByClub(CLUB_ID);
 
-        // 3. Assert
         Assert.assertNotNull(menu);
         Assert.assertEquals(2, menu.size());
         Assert.assertEquals("Pizza", menu.get(0).getProductName());
@@ -62,11 +59,9 @@ public class MenuServiceImplTest {
 
     @Test
     public void testGetMenuByClub_ClubNotFound() {
-        // 1. Setup
         Mockito.when(clubDao.findById(Mockito.eq(CLUB_ID)))
                 .thenReturn(Optional.empty());
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(IllegalArgumentException.class, () -> {
             menuService.getMenuByClub(CLUB_ID);
         });

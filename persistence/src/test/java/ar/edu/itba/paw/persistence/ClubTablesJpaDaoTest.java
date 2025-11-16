@@ -382,14 +382,14 @@ public class ClubTablesJpaDaoTest {
                 "Location",
                 new BigDecimal("5.0"),
                 1,
-                null,          // priceRange
+                null,
                 "desc",
                 contact,
-                null,          // musicGenre
+                null,
                 OffsetDateTime.now(),
-                null,          // zone
+                null,
                 Boolean.FALSE,
-                null           // cbu
+                null
         );
         em.persist(c);
         return c;

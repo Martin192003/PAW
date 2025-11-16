@@ -449,7 +449,6 @@ public class PhotoJpaDaoTest {
     @Test
     public void testSave_missingRequiredFields_throws() {
         Photo p = new Photo();
-        // no clubId, no postedBy, no filename, no contentType, no data
         assertThrows(PersistenceException.class, () -> {
             photoDao.save(p);
             em.flush();
@@ -463,7 +462,7 @@ public class PhotoJpaDaoTest {
         p.setPostedBy(user.getId());
         p.setFilename("ok.jpg");
         p.setContentType("image/jpeg");
-        p.setData(null);     // <- inválido
+        p.setData(null);
         p.setPhotoType(PhotoType.COVER);
 
         assertThrows(PersistenceException.class, () -> {

@@ -108,7 +108,6 @@ public class ReceiptServiceImpl implements ReceiptService {
 
         LOGGER.info("Receipt created successfully with ID: {}", newReceiptId);
 
-        // Obtener información adicional para el email
         try {
             var tableOpt = tableService.findById(booking.getTableId());
             if (tableOpt.isPresent()) {
@@ -162,8 +161,6 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Override
     @Transactional
     public boolean deleteByBookingForUser(UUID bookingId, UUID userId) {
-
-        // 1. Verificar existencia de la reserva
         var bookingOpt = bookingService.findById(bookingId);
         if (bookingOpt.isEmpty()) {
             throw new BookingNotFoundException("booking.notfound");
