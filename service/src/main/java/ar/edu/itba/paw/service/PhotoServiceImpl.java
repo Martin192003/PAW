@@ -228,4 +228,13 @@ public class PhotoServiceImpl implements PhotoService {
         return photoDao.findReviewPhotosByClub(clubId, limit, offset);
     }
 
+    @Override
+    public Photo createPhoto(String filename, String contentType, byte[] data) {
+        Photo photo = new Photo();
+        photo.setFilename(filename);
+        photo.setContentType(contentType);
+        photo.setData(data);
+        return photo;
+    }
+
 }
