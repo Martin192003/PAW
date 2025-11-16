@@ -2,6 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -231,7 +232,7 @@ public class ClubJpaDao implements ClubDao {
 
         final var nq = em.createNativeQuery(idSql)
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setFirstResult(offset)
                 .setMaxResults(limit);
 
@@ -381,7 +382,7 @@ public class ClubJpaDao implements ClubDao {
 
         final var nq = em.createNativeQuery(idSql)
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("blocking", blocking.stream().map(Status::db).map(String::toLowerCase).toList())
                 .setParameter("dayStart", Timestamp.from(dayStart.toInstant()))
                 .setParameter("dayEnd", Timestamp.from(dayEnd.toInstant()))
@@ -475,7 +476,7 @@ public class ClubJpaDao implements ClubDao {
         if (isBar != null)
             predicates.add(cb.equal(root.get("isBar"), isBar));
 
-        return predicates.toArray(new javax.persistence.criteria.Predicate[0]);
+        return predicates.toArray(new Predicate[0]);
     }
 
 }

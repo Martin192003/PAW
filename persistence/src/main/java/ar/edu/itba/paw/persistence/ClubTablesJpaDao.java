@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.TableState;
 import ar.edu.itba.paw.model.Status;
 import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,7 +93,7 @@ public class ClubTablesJpaDao implements ClubTablesDao {
 
         final NativeQuery<String> nq = em.createNativeQuery(idSql)
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING);
+                .addScalar("id_text", StandardBasicTypes.STRING);
 
         nq.setParameter("clubId", clubId);
         nq.setParameterList("blocking", blocking);
@@ -140,8 +141,8 @@ public class ClubTablesJpaDao implements ClubTablesDao {
         final List<String> blocking =
                 List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
 
-        final org.hibernate.query.NativeQuery<?> nq = em.createNativeQuery(countSql)
-                .unwrap(org.hibernate.query.NativeQuery.class);
+        final NativeQuery<?> nq = em.createNativeQuery(countSql)
+                .unwrap(NativeQuery.class);
 
         nq.setParameter("clubId", clubId);
         nq.setParameterList("blocking", blocking);

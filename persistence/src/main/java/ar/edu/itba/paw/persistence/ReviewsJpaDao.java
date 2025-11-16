@@ -2,15 +2,12 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.*;
 
 @Repository
@@ -111,11 +108,12 @@ public class ReviewsJpaDao implements ReviewsDao {
     @Override
     public List<Review> searchPaginated(UUID userId, UUID clubId, String sort, int limit, int offset) {
 
-
         String orderBy = switch (sort) {
-            case "rating" -> "ORDER BY r.rating DESC";
-            case "date" -> "ORDER BY r.created_at DESC";
-            default -> "ORDER BY r.created_at DESC"; // fallback
+            case "created_desc" -> "ORDER BY r.created_at DESC";
+            case "created_asc"  -> "ORDER BY r.created_at ASC";
+            case "rating_desc"  -> "ORDER BY r.rating DESC";
+            case "rating_asc"   -> "ORDER BY r.rating ASC";
+            default -> "ORDER BY r.created_at DESC";
         };
 
 
@@ -133,7 +131,7 @@ public class ReviewsJpaDao implements ReviewsDao {
 
         var nativeQuery = em.createNativeQuery(sql.toString())
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("limit", limit)
                 .setParameter("offset", offset);
 
@@ -256,7 +254,7 @@ public class ReviewsJpaDao implements ReviewsDao {
 
         List<String> idTexts = em.createNativeQuery(idSql)
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .setParameter("limit", limit)
                 .setParameter("offset", offset)

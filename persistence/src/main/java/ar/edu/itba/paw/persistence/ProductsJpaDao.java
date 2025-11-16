@@ -4,8 +4,8 @@ import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
 import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -94,7 +94,7 @@ public class ProductsJpaDao implements ProductsDao {
                             ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
                         """)
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("clubId", club.getClubId())
                 .getResultList();
 
@@ -125,7 +125,7 @@ public class ProductsJpaDao implements ProductsDao {
                             ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
                         """)
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .getResultList();
 

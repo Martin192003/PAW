@@ -16,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -124,16 +121,6 @@ public class ReviewServiceImpl implements ReviewService {
         return reviewsDao.countSearch(null, clubId);
     }
 
-    //TODO: no se usa sacar (?)
-    private boolean hasFromTableGuestField(Review review) {
-        try {
-            review.getClass().getDeclaredField("fromTableGuest");
-            return true;
-        } catch (NoSuchFieldException e) {
-            return false;
-        }
-    }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -209,6 +196,38 @@ public class ReviewServiceImpl implements ReviewService {
             return lastPage * limit;
         }
         return offset;
+    }
+
+    @Override
+    public int calculateOffset(int offset, int limit, int total) {
+
+        if (total <= 0) {
+            return 0;
+        }
+
+        if (offset >= total) {
+            int lastPage = (int) Math.floor((total - 1) / (double) limit);
+
+            return lastPage * limit;
+        }
+
+        return offset;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Review> obtainPaginatedReviews(UUID userId, String sort, int limit, int offset) {
+
+        final int total = countByUser(userId);
+
+        final int offsetCorregido = calculateOffset(offset, limit, total);
+
+        if (total == 0) {
+            return Collections.emptyList();
+        }
+
+
+        return listByUser(userId, sort, limit, offsetCorregido);
     }
 
     @Override
