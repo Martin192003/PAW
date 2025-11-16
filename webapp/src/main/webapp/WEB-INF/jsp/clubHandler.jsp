@@ -54,14 +54,23 @@
 
     <div class="club-info">
         <div><strong><spring:message code="form.name"/>:&nbsp;</strong> <c:out value="${club.clubName}"/>
-            <button type="button" class="btn btn-success btn-edit-small"
-                    onclick="openEditModal('clubName', '<c:out value="${club.clubName}"/>')"><i
-                    class="fa-solid fa-pen"></i></button>
+            <button type="button"
+                    class="btn btn-success btn-edit-small"
+                    data-field="clubName"
+                    data-value="${fn:escapeXml(club.clubName)}"
+                    onclick="openEditModal(this.dataset.field, this.dataset.value)">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+
         </div>
         <div><strong><spring:message code="form.location"/>:&nbsp;</strong> <c:out value="${club.location}"/>
-            <button type="button" class="btn btn-success btn-edit-small"
-                    onclick="openEditModal('location', '<c:out value="${club.location}"/>')"><i
-                    class="fa-solid fa-pen"></i></button>
+            <button type="button"
+                    class="btn btn-success btn-edit-small"
+                    data-field="location"
+                    data-value="${fn:escapeXml(club.location)}"
+                    onclick="openEditModal(this.dataset.field, this.dataset.value)">
+                <i class="fa-solid fa-pen"></i>
+            </button>
         </div>
         <div><strong><spring:message code="label.zone"/>:&nbsp;</strong> <spring:message code="zone.${club.zone}"/>
             <button type="button" class="btn btn-success btn-edit-small"
@@ -89,17 +98,26 @@
                     <c:out value="${club.description}"/>
                 </c:otherwise>
             </c:choose>
-            <button type="button" class="btn btn-success btn-edit-small"
-                    onclick="openEditModal('description', '<c:out value="${club.description}"/>')"><i
-                    class="fa-solid fa-pen"></i></button>
+            <button type="button"
+                    class="btn btn-success btn-edit-small"
+                    data-field="description"
+                    data-value="${fn:escapeXml(club.description)}"
+                    onclick="openEditModal(this.dataset.field, this.dataset.value)">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+
         </div>
         <div>
             <strong><spring:message code="placeholder.cbu"/>:&nbsp;</strong>
             <c:out value="${club.cbu}"/>
-            <button type="button" class="btn btn-success btn-edit-small"
-                    onclick="openEditModal('cbu', '<c:out value="${club.cbu}"/>')">
+            <button type="button"
+                    class="btn btn-success btn-edit-small"
+                    data-field="cbu"
+                    data-value="${fn:escapeXml(club.cbu)}"
+                    onclick="openEditModal(this.dataset.field, this.dataset.value)">
                 <i class="fa-solid fa-pen"></i>
             </button>
+
         </div>
     </div>
 
