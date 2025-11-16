@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.TextStyle;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -118,16 +119,13 @@ public class BookingServiceImpl implements BookingService {
 
         validateDateRange(bookingStart, bookingEnd);
 
-        final ClubTable table = ensureTableExists(tableId);
 
-        // Chequear solapamiento sólo si va a quedar 'activa'
         if (status == Status.PENDIENTE || status == Status.CONFIRMADA) {
             ensureNoOverlap(tableId, bookingStart, bookingEnd, bookingId);
         }
 
         validateStatusTransition(existing.getStatus(), status);
 
-        // Si tenés relación @ManyToOne, preferí pasar la entidad 'table'
         return bookingDao.update(bookingId, user, tableId, status, totalAmount, bookingStart, bookingEnd)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
     }
@@ -140,8 +138,6 @@ public class BookingServiceImpl implements BookingService {
 
         validateStatusTransition(current.getStatus(), newStatus);
 
-        // Si pasa a activa (PENDIENTE/CONFIRMADA) no cambiamos fechas ni mesa,
-        // por lo que no hay chequeo de overlap adicional aquí.
         final Booking updated = bookingDao.update(
                         bookingId,
                         current.getUser(),
@@ -154,7 +150,6 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
 
         if (newStatus == Status.CANCELADA) {
-            // Liberar mesa en caso de quedar sin reservas activas
             try {
                 final ClubTable table = ensureTableExists(updated.getTableId());
                 maybeFreeTable(table);
@@ -354,7 +349,6 @@ public class BookingServiceImpl implements BookingService {
 
         if (clubId != null) {
             if (!adminClubIds.contains(clubId)) {
-                // También podrías lanzar AccessDenied/Unauthorized si preferís
                 return List.of();
             }
             adminClubIds = List.of(clubId);
@@ -409,12 +403,26 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public String getDateStart(Booking booking) {
+    public String getBookingDateStart(Booking booking) {
         return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
     }
 
     @Override
-    public String getDateEnd(Booking booking) {
+    public String getBookingDateEnd(Booking booking) {
+        return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
+    }
+
+    @Override
+    @Transactional
+    public String getDateStart(UUID bookingId, UUID userId) {
+        Booking booking = getForUser(bookingId, userId);
+        return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
+    }
+
+    @Override
+    @Transactional
+    public String getDateEnd(UUID bookingId, UUID userId) {
+        Booking booking = getForUser(bookingId, userId);
         return formatDateEsEn(booking.getBookingEnd().atZoneSameInstant(ZoneId.systemDefault()));
     }
 
@@ -498,28 +506,74 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
-    public User getBookingUser(Booking booking) {
+    @Transactional
+    public int getTotalPages(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt, int size) {
+        int totalBookings = countSearch(userId, clubId, bookingId, status, bookingDate, hasReceipt);
+        return (int) Math.ceil((double) totalBookings / size);
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User getBookingUser(UUID bookingId, UUID userId) {
+        Booking booking = getForUser(bookingId, userId);
         return userService.findById(booking.getUser().getId()).orElse(null);
     }
 
     @Override
-    public ClubTable getBookingTable(Booking booking) {
+    @Transactional(readOnly = true)
+    public ClubTable getBookingTable(UUID bookingId, UUID userId) {
+        Booking booking = getForUser(bookingId, userId);
         return tableService.findById(booking.getTableId()).orElse(null);
     }
 
     @Override
-    public Club getBookingClub(Booking booking) {
-        ClubTable table = getBookingTable(booking);
+    @Transactional(readOnly = true)
+    public Club getBookingClub(UUID bookingId, UUID userId) {
+        ClubTable table = getBookingTable(bookingId, userId);
         if (table == null) {
             return null;
         }
         return clubService.getClubById(table.getClubId()).orElse(null);
     }
 
+    public UUID parseBookingId(String bookingId) {
+        if (bookingId == null || bookingId.isBlank()) return null;
+        try {
+            return UUID.fromString(bookingId.trim());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    public LocalDate parseBookingDate(String bookingDate) {
+        if (bookingDate == null || bookingDate.isBlank()) return null;
+        try {
+            return LocalDate.parse(bookingDate);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String buildQueryParams(Map<String, String> filters) {
+        return filters.entrySet().stream()
+                .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
+                .collect(Collectors.joining("&"));
+    }
+
+    public Map<UUID, Date> mapBookingStartDates(List<Booking> bookings) {
+        Map<UUID, Date> bookingStartDates = new HashMap<>();
+        for (Booking booking : bookings) {
+            if (booking.getBookingStart() != null) {
+                bookingStartDates.put(booking.getBookingId(), Date.from(booking.getBookingStart().toInstant()));
+            }
+        }
+        return bookingStartDates;
+    }
+
     private void validateStatusTransition(Status from, Status to) {
         if (from == to) return;
 
-        // Máquina de estados sólo para Booking (PENDIENTE/CONFIRMADA/CANCELADA)
         switch (from) {
             case PENDIENTE -> {
                 if (!(to == Status.CONFIRMADA || to == Status.CANCELADA)) {
@@ -576,7 +630,7 @@ public class BookingServiceImpl implements BookingService {
         Month m = date.getMonth();
         String monthName = m.getDisplayName(TextStyle.FULL, locale);
         if (isEs) {
-            monthName = capitalize(monthName, locale); // Java devuelve "noviembre"; se capitaliza -> "Noviembre"
+            monthName = capitalize(monthName, locale);
         }
 
         String connector = isEs ? " de " : " of ";
@@ -586,5 +640,14 @@ public class BookingServiceImpl implements BookingService {
     private static String capitalize(String s, Locale locale) {
         if (s == null || s.isEmpty()) return s;
         return s.substring(0, 1).toUpperCase(locale) + s.substring(1);
+    }
+
+    @Override
+    public UUID clubId(UUID bookingId) {
+        Booking booking = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+        ClubTable table = tableService.findById(booking.getTableId())
+                .orElseThrow(() -> new TableNotFoundException(booking.getTableId()));
+        return table.getClubId();
     }
 }

@@ -23,5 +23,9 @@ public interface ReviewService {
     void deleteReview(UUID reviewId);
     List<Review> findByClubPaginated(UUID clubId, int page, int size);
     int countByClubPaginated(UUID clubId);
-    int getCorrectedOffset(int totalCount, int limit, int offset);
+    int getCorrectedOffset(UUID clubId,int limit, int offset);
+    int calculateOffset(int offset, int limit, int total);
+    List<Review> obtainPaginatedReviews(UUID userId, String sort, int limit, int offset);
+    int gettotalReviewsPages(UUID clubId, int size);
+    List<Review> listByClubPaginated(UUID clubId, String sort,int limit, int offset);
 }

@@ -1,4 +1,4 @@
-/*package ar.edu.itba.paw.persistence;
+package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
 import org.junit.Before;
@@ -12,9 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -23,164 +21,371 @@ import static org.junit.Assert.*;
 @Transactional
 public class ProductsJpaDaoTest {
 
-    private static final String NAME = "Producto";
-    private static final String DESCRIPTION = "Descripción";
-    private static final BigDecimal BASE_PRICE = BigDecimal.valueOf(100);
-    private static final ProductType TYPE = ProductType.ALCOHOLICA;
-    private static final boolean IS_AVAILABLE = true;
+    @Autowired
+    private ProductsJpaDao productsDao;
 
-    @Autowired private ProductsJpaDao productsDao;
-    @Autowired private ClubDao clubDao;
-    @Autowired private UserDao userDao;
+    @PersistenceContext
+    private EntityManager em;
 
-    @PersistenceContext private EntityManager em;
+    private Club club;
+    private Product product;
 
-    /*@Before
+    @Before
     public void setUp() {
-        // Limpiar con JPQL para no depender de schema.sql ni JdbcTemplate
-        // Orden: hijos -> padres (por FKs)
-        safeDelete("DELETE FROM Booking b");
-        safeDelete("DELETE FROM Product p"); // tabla products mapeada por entidad Product
-        safeDelete("DELETE FROM ClubTable t");
-        // si existe tabla intermedia de M:N admins
-        safeDelete("DELETE FROM Club c");
-        safeDelete("DELETE FROM User u");
+        em.createQuery("DELETE FROM Product p").executeUpdate();
+        em.createQuery("DELETE FROM Club c").executeUpdate();
+        em.flush();
+
+        club = persistClub("Club Test");
+        product = persistProduct(club);
+
         em.flush();
     }
 
-    private void safeDelete(String jpql) {
-        try { em.createQuery(jpql).executeUpdate(); } catch (Exception ignored) { }
+    // ========================================================================
+    // CREATE
+    // ========================================================================
+
+    @Test
+    public void testCreate() {
+        Product p = productsDao.create(
+                club,
+                "NewProduct",
+                "Description",
+                new BigDecimal("50.00"),
+                ProductType.TRAGOS,
+                true
+        );
+        em.flush();
+
+        assertNotNull(p);
+        assertNotNull(p.getProductId());
+        assertEquals("NewProduct", p.getProductName());
+        assertEquals(club.getClubId(), p.getClub().getClubId());
+        assertEquals(0, new BigDecimal("50.00").compareTo(p.getBasePrice()));
+        assertEquals(ProductType.TRAGOS, p.getProductType());
+        assertTrue(p.getIsAvailable());
+        assertEquals(2L, countProducts());
     }
 
     @Test
-    public void testCreateProduct() {
-        User contact = userDao.create("admin", "name","pass", "last", "email@email.com", "123456", Role.USER);
-        Club club = clubDao.create("Club", "Desc", "Loc", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
-
-        Product product = productsDao.create(club, NAME, DESCRIPTION, BASE_PRICE, TYPE, IS_AVAILABLE);
-
-        assertNotNull(product);
-        assertEquals(NAME, product.getProductName());
-        assertEquals(DESCRIPTION, product.getDescription());
-        assertEquals(0, BASE_PRICE.compareTo(product.getBasePrice()));
-        assertEquals(TYPE, product.getProductType());
-        assertEquals(IS_AVAILABLE, product.getIsAvailable());
-        assertEquals(club.getClubId(), product.getClub().getClubId());
-
-        long count = em.createQuery("select count(p) from Product p", Long.class).getSingleResult();
-        assertEquals(1L, count);
+    public void testCreateNullClubThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.create(null, "Name", "desc", BigDecimal.ONE, ProductType.TRAGOS, true)
+        );
     }
 
     @Test
-    public void testFindByIdReturnsEmpty() {
-        Optional<Product> result = productsDao.findById(UUID.randomUUID());
-        assertTrue(result.isEmpty());
+    public void testCreateNullClubIdThrows() {
+        Club c2 = new Club(); // sin ID
+        assertThrows(NullPointerException.class, () ->
+                productsDao.create(c2, "Name", "desc", BigDecimal.ONE, ProductType.TRAGOS, true)
+        );
     }
 
     @Test
-    public void testFindByNameReturnsEmpty() {
-        Optional<Product> result = productsDao.findByName("NoExiste");
-        assertTrue(result.isEmpty());
-    }
-
-
-    @Test
-    public void testUpdateReturnsNullIfNotFound() {
-        Product result = productsDao.update(UUID.randomUUID(), UUID.randomUUID(), "Nuevo", "Nueva desc", BigDecimal.valueOf(200), ProductType.NO_ALCOHOLICA, false);
-        assertNull(result);
+    public void testCreateNullNameThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.create(club, null, "desc", BigDecimal.ONE, ProductType.TRAGOS, true)
+        );
     }
 
     @Test
-    public void testDeleteReturnsFalseIfNotFound() {
-        boolean deleted = productsDao.delete(UUID.randomUUID());
-        assertFalse(deleted);
+    public void testCreateNullBasePriceThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.create(club, "Prod", "desc", null, ProductType.TRAGOS, true)
+        );
     }
 
     @Test
-    public void testFindByClubReturnsEmptyList() {
-        Club club = new Club();
-        club.setClubId(UUID.randomUUID());
-        List<Product> result = productsDao.findByClub(club);
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+    public void testCreateNegativeBasePriceThrows() {
+        assertThrows(IllegalArgumentException.class, () ->
+                productsDao.create(club, "Prod", "desc", new BigDecimal("-1.00"), ProductType.TRAGOS, true)
+        );
     }
 
     @Test
-    public void testFindByClubIDReturnsEmptyList() {
-        List<Product> result = productsDao.findByClubID(UUID.randomUUID());
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+    public void testCreateNullTypeThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.create(club, "Prod", "desc", BigDecimal.ONE, null, true)
+        );
+    }
+
+    // ========================================================================
+    // UPDATE
+    // ========================================================================
+
+    @Test
+    public void testUpdate() {
+        UUID id = product.getProductId();
+
+        Product p = productsDao.update(
+                id,
+                club.getClubId(),
+                "UpdatedName",
+                "NewDesc",
+                new BigDecimal("99.99"),
+                ProductType.TRAGOS,
+                false
+        );
+        em.flush();
+
+        assertNotNull(p);
+        assertEquals("UpdatedName", p.getProductName());
+        assertEquals(0, new BigDecimal("99.99").compareTo(p.getBasePrice()));
+        assertEquals(ProductType.TRAGOS, p.getProductType());
+        assertFalse(p.getIsAvailable());
     }
 
     @Test
-    public void testUpdateSuccess() {
-        User contact = userDao.create("admin2", "name2","pass2", "last2", "email2@email.com", "654321", Role.USER);
-        Club club = clubDao.create("Club2", "Desc2", "Loc2", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
-        Product product = productsDao.create(club, "Prod", "Desc", BigDecimal.valueOf(50), ProductType.NO_ALCOHOLICA, true);
-
-        Product updated = productsDao.update(product.getProductId(), club.getClubId(), "ProdUp", "DescUp", BigDecimal.valueOf(60), ProductType.ALCOHOLICA, false);
-
-        assertNotNull(updated);
-        assertEquals("ProdUp", updated.getProductName());
-        assertEquals("DescUp", updated.getDescription());
-        assertEquals(0, BigDecimal.valueOf(60).compareTo(updated.getBasePrice()));
-        assertEquals(ProductType.ALCOHOLICA, updated.getProductType());
-        assertFalse(updated.getIsAvailable());
+    public void testUpdateNotFoundReturnsNull() {
+        Product p = productsDao.update(
+                UUID.randomUUID(),
+                club.getClubId(),
+                "Name",
+                "desc",
+                BigDecimal.ONE,
+                ProductType.TRAGOS,
+                true
+        );
+        assertNull(p);
     }
 
     @Test
-    public void testDeleteSuccess() {
-        User contact = userDao.create("admin3", "name3","pass3", "last3", "email3@email.com", "987654", Role.USER);
-        Club club = clubDao.create("Club3", "Desc3", "Loc3", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
-        Product product = productsDao.create(club, "ProdDel", "DescDel", BigDecimal.valueOf(70), ProductType.ALCOHOLICA, true);
-
-        boolean deleted = productsDao.delete(product.getProductId());
-        assertTrue(deleted);
-        assertTrue(productsDao.findById(product.getProductId()).isEmpty());
+    public void testUpdateNullProductIdThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.update(
+                        null,
+                        club.getClubId(),
+                        "Name",
+                        "desc",
+                        BigDecimal.ONE,
+                        ProductType.TRAGOS,
+                        true
+                )
+        );
     }
 
     @Test
-    public void testFindByIdSuccess() {
-        User contact = userDao.create("admin4", "name4","pass4", "last4", "email4@email.com", "111111", Role.USER);
-        Club club = clubDao.create("Club4", "Desc4", "Loc4", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
-        Product product = productsDao.create(club, "ProdFindId", "DescFindId", BigDecimal.valueOf(80), ProductType.ALCOHOLICA, true);
+    public void testUpdateNullClubIdThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.update(
+                        product.getProductId(),
+                        null,
+                        "Name",
+                        "desc",
+                        BigDecimal.ONE,
+                        ProductType.TRAGOS,
+                        true
+                )
+        );
+    }
 
+    @Test
+    public void testUpdateNullNameThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.update(
+                        product.getProductId(),
+                        club.getClubId(),
+                        null,
+                        "desc",
+                        BigDecimal.ONE,
+                        ProductType.TRAGOS,
+                        true
+                )
+        );
+    }
+
+    @Test
+    public void testUpdateNullBasePriceThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.update(
+                        product.getProductId(),
+                        club.getClubId(),
+                        "Name",
+                        "desc",
+                        null,
+                        ProductType.TRAGOS,
+                        true
+                )
+        );
+    }
+
+    @Test
+    public void testUpdateNegativePriceThrows() {
+        assertThrows(IllegalArgumentException.class, () ->
+                productsDao.update(
+                        product.getProductId(),
+                        club.getClubId(),
+                        "Name",
+                        "desc",
+                        new BigDecimal("-5"),
+                        ProductType.TRAGOS,
+                        true
+                )
+        );
+    }
+
+    @Test
+    public void testUpdateNullTypeThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.update(
+                        product.getProductId(),
+                        club.getClubId(),
+                        "Name",
+                        "desc",
+                        BigDecimal.ONE,
+                        null,
+                        true
+                )
+        );
+    }
+
+    @Test
+    public void testUpdateNullIsAvailableThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.update(
+                        product.getProductId(),
+                        club.getClubId(),
+                        "Name",
+                        "desc",
+                        BigDecimal.ONE,
+                        ProductType.TRAGOS,
+                        null
+                )
+        );
+    }
+
+    // ========================================================================
+    // DELETE
+    // ========================================================================
+
+    @Test
+    public void testDelete() {
+        boolean result = productsDao.delete(product.getProductId());
+        em.flush();
+
+        assertTrue(result);
+        assertEquals(0L, countProducts());
+    }
+
+    @Test
+    public void testDeleteNotFoundReturnsFalse() {
+        assertFalse(productsDao.delete(UUID.randomUUID()));
+        assertEquals(1L, countProducts());
+    }
+
+    // ========================================================================
+    // FIND BY ID
+    // ========================================================================
+
+    @Test
+    public void testFindById() {
         Optional<Product> found = productsDao.findById(product.getProductId());
-        assertTrue(found.isPresent());
-        assertEquals("ProdFindId", found.get().getProductName());
-    }
 
-    @Test
-    public void testFindByNameSuccess() {
-        User contact = userDao.create("admin5", "name5","pass5", "last5", "email5@email.com", "222222", Role.USER);
-        Club club = clubDao.create("Club5", "Desc5", "Loc5", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
-        Product product = productsDao.create(club, "ProdFindName", "DescFindName", BigDecimal.valueOf(90), ProductType.ALCOHOLICA, true);
-
-        Optional<Product> found = productsDao.findByName("ProdFindName");
         assertTrue(found.isPresent());
         assertEquals(product.getProductId(), found.get().getProductId());
     }
 
     @Test
-    public void testFindByClubWithProducts() {
-        User contact = userDao.create("admin7", "name7","pass7", "last7", "email7@email.com", "444444", Role.USER);
-        Club club = clubDao.create("Club7", "Desc7", "Loc7", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
-        productsDao.create(club, "ProdA", "DescA", BigDecimal.valueOf(30), ProductType.ALCOHOLICA, true);
-        productsDao.create(club, "ProdB", "DescB", BigDecimal.valueOf(40), ProductType.NO_ALCOHOLICA, true);
+    public void testFindByIdNotFound() {
+        Optional<Product> found = productsDao.findById(UUID.randomUUID());
+        assertFalse(found.isPresent());
+    }
 
-        List<Product> products = productsDao.findByClub(club);
-        assertEquals(2, products.size());
+    // ========================================================================
+    // FIND BY CLUB
+    // ========================================================================
+
+    @Test
+    public void testFindByClub() {
+        List<Product> list = productsDao.findByClub(club);
+        assertEquals(1, list.size());
+        assertEquals(product.getProductId(), list.getFirst().getProductId());
     }
 
     @Test
-    public void testFindByClubIDWithProducts() {
-        User contact = userDao.create("admin8", "name8","pass8", "last8", "email8@email.com", "555555", Role.USER);
-        Club club = clubDao.create("Club8", "Desc8", "Loc8", Price.MEDIO, contact, MusicalGenre.ROCK, Zone.ZONA_CABA, null, null);
-        productsDao.create(club, "ProdX", "DescX", BigDecimal.valueOf(50), ProductType.ALCOHOLICA, true);
-        productsDao.create(club, "ProdY", "DescY", BigDecimal.valueOf(60), ProductType.NO_ALCOHOLICA, true);
+    public void testFindByClubReturnsEmpty() {
+        Club c2 = persistClub("Other");
+        em.flush();
 
-        List<Product> products = productsDao.findByClubID(club.getClubId());
-        assertEquals(2, products.size());
+        assertTrue(productsDao.findByClub(c2).isEmpty());
+    }
+
+    @Test
+    public void testFindByClubNullClubThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.findByClub(null)
+        );
+    }
+
+    @Test
+    public void testFindByClubNullClubIdThrows() {
+        Club c = new Club();
+        assertThrows(NullPointerException.class, () ->
+                productsDao.findByClub(c)
+        );
+    }
+
+    // ========================================================================
+    // FIND BY CLUB ID
+    // ========================================================================
+
+    @Test
+    public void testFindByClubId() {
+        List<Product> list = productsDao.findByClubID(club.getClubId());
+        assertEquals(1, list.size());
+    }
+
+    @Test
+    public void testFindByClubIdEmpty() {
+        assertTrue(productsDao.findByClubID(UUID.randomUUID()).isEmpty());
+    }
+
+    @Test
+    public void testFindByClubIdNullThrows() {
+        assertThrows(NullPointerException.class, () ->
+                productsDao.findByClubID(null)
+        );
+    }
+
+    // ========================================================================
+    // HELPERS
+    // ========================================================================
+
+    private Club persistClub(String name) {
+        Club c = new Club(
+                name,
+                "Location",
+                BigDecimal.ONE,
+                1,
+                null,
+                "desc",
+                null,
+                null,
+                null,
+                null,
+                false,
+                null
+        );
+        em.persist(c);
+        return c;
+    }
+
+    private Product persistProduct(Club club) {
+        Product p = new Product();
+        p.setProductId(UUID.randomUUID());
+        p.setClub(club);
+        p.setProductName("Prod1");
+        p.setDescription("Desc1");
+        p.setBasePrice(BigDecimal.TEN);
+        p.setProductType(ProductType.ALCOHOLICA);
+        p.setIsAvailable(true);
+        em.persist(p);
+        return p;
+    }
+
+    private long countProducts() {
+        return em.createQuery("SELECT COUNT(p) FROM Product p", Long.class).getSingleResult();
     }
 }
-*/

@@ -67,11 +67,12 @@ public class SecurityServiceImpl implements SecurityService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean isClubAdmin(UUID clubId) {
         User user = getVerifiedLoggedUser();
         if (user == null) return false;
 
-        if (user.getRole() == Role.ADMIN) return true;
+        if (user.getRole() != Role.ADMIN) return false;
 
         return clubService.getAdminsByClub(clubId)
                 .stream()
@@ -79,6 +80,7 @@ public class SecurityServiceImpl implements SecurityService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean canAccessUser(UUID id) {
         var logged = getLoggedUser();
         if (logged.isEmpty()) return false;

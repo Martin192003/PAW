@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 
 import java.util.Optional;
@@ -22,7 +23,7 @@ public interface UserService {
     boolean resendVerificationToken(String usernameOrEmail);
 
     boolean requestPasswordReset(String email);
-    boolean resetPassword(String token, String newPassword);
+    Optional<User> resetPassword(String token, String newPassword);
 
     User updateUserField(UUID userId, String field, String value);
     User authenticateAndGetUser(String usernameOrEmail, String password);
@@ -30,5 +31,5 @@ public interface UserService {
     boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword);
     void updateUserLocale(UUID userId, String locale);
     void sendReviewRequestsForPastBookings(User user);
-
+    void updateRole(UUID userId, Role newRole);
 }

@@ -11,9 +11,11 @@ public class ClubHandlerForm {
     private String image;
 
     @NotEmpty(message = "{clubHandlerForm.name.notEmpty}")
+    @Size(max = 100, message = "{error.name}")
     private String name;
 
     @NotEmpty(message = "{clubHandlerForm.location.notEmpty}")
+    @Size(max = 255, message = "{error.location}")
     private String location;
 
     @NotEmpty(message = "{clubHandlerForm.zone.notEmpty}")

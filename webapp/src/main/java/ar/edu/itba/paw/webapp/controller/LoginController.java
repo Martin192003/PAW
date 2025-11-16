@@ -2,29 +2,30 @@ package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.webapp.form.UserForm;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
-import ar.edu.itba.paw.webapp.form.VerificationForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.ui.Model;
-
 import ar.edu.itba.paw.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import ar.edu.itba.paw.service.UserService;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
 import javax.validation.Valid;
-import java.util.Collections;
-import java.util.UUID;
+import java.io.IOException;
 
 @Controller
 public class LoginController {
@@ -32,10 +33,12 @@ public class LoginController {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
 
     private final UserService userService;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
-    public LoginController(UserService userService) {
+    public LoginController(UserService userService, UserDetailsService userDetailsService) {
         this.userService = userService;
+        this.userDetailsService = userDetailsService;
     }
 
     @GetMapping({"", "/"})
@@ -95,7 +98,8 @@ public class LoginController {
 
     @GetMapping("/verify-account")
     public String verifyAccountFromEmail(@RequestParam(value = "token", required = false) String token,
-                                         Model model) {
+                                         Model model,
+                                         HttpServletRequest request) throws ServletException, IOException {
         if (token == null || token.trim().isEmpty()) {
             return "redirect:/unverified";
         }
@@ -104,23 +108,37 @@ public class LoginController {
         if (userToVerify != null && !userToVerify.isVerified()) {
             boolean isValid = userService.verifyUser(token);
             if (isValid) {
+
+                UserDetails userDetails = userDetailsService.loadUserByUsername(userToVerify.getUsername());
+
                 Authentication auth = new UsernamePasswordAuthenticationToken(
-                        userToVerify.getUsername(),
+                        userDetails,
                         null,
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                        userDetails.getAuthorities()
                 );
+
                 SecurityContextHolder.getContext().setAuthentication(auth);
+
+                HttpSession session = request.getSession(true);
+                session.setAttribute(
+                        HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                        SecurityContextHolder.getContext()
+                );
+
+                String detectedLocale = request.getLocale().toLanguageTag();
+                userService.updateUserLocale(userToVerify.getId(),detectedLocale);
 
                 model.addAttribute("success", "register.valid.token");
                 model.addAttribute("userAuthenticated", true);
+
                 return "verifyResult";
             }
         }
 
-        // Token inválido - redirigir a unverified
         return "redirect:/unverified";
     }
-    
+
+
     @GetMapping("/unverified")
     public String showUnverifiedPage(@RequestParam(required = false) String username, Model model) {
         if (username != null) {
@@ -144,43 +162,7 @@ public class LoginController {
     }
 
     @RequestMapping("/login")
-    public ModelAndView login(@RequestParam(value = "success", required = false) final boolean success,
-                              @RequestParam(value = "usernameOrEmail", required = false) final String usernameOrEmail,
-                              @RequestParam(value = "password", required = false) final String password,
-                              final HttpServletRequest request) {
-        ModelAndView mav = new ModelAndView("login");
-        mav.addObject("success", success);
-        mav.addObject("usernameOrEmail", usernameOrEmail);
-
-        if (usernameOrEmail != null && password != null) {
-            try {
-                User user = userService.authenticateAndGetUser(usernameOrEmail, password);
-                if (user != null) {
-                    String detectedLocale = request.getLocale().toLanguageTag();
-                    userService.updateUserLocale(user.getId(), detectedLocale);
-                    userService.sendReviewRequestsForPastBookings(user);
-
-                    mav.setViewName("redirect:/clubs");
-                } else {
-                    mav.addObject("error", "error.invalidCredentials");
-                }
-            } catch (IllegalStateException e) {
-                if (e.getMessage().contains("not verified")) {
-                    mav.addObject("error", "notification.verifyAccount");
-                    mav.addObject("showResendLink", true);
-                } else {
-                    mav.addObject("error", "error.authentication");
-                }
-            }
-        }
-        return mav;
-    }
-
-    @RequestMapping("/user")
-    @PreAuthorize("@securityServiceImpl.canAccessUser(#id)")
-    public ModelAndView index(@RequestParam("id") UUID id) {
-        final ModelAndView mav = new ModelAndView("user");
-        mav.addObject("user", userService.findById(id));
-        return mav;
+    public ModelAndView login() {
+        return new ModelAndView("login");
     }
 }

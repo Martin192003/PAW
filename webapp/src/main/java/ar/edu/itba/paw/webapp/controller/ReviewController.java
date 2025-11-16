@@ -5,33 +5,28 @@ import ar.edu.itba.paw.model.exceptions.UserNotFoundException;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.form.ReviewForm;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
 import java.io.IOException;
-import java.security.Principal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Controller
 public class ReviewController {
 
     private final ReviewService reviewService;
     private final UserService userService;
+    private final PhotoService photoService;
 
-    public ReviewController(ReviewService reviewService, UserService userService) {
+    public ReviewController(ReviewService reviewService, UserService userService, PhotoService photoService) {
+        this.photoService = photoService;
         this.reviewService = reviewService;
         this.userService = userService;
     }
@@ -62,11 +57,14 @@ public class ReviewController {
             return "redirect:/clubs/" + clubId + "#reviews";
         }
 
-        //TODO: FIJARSE SI ESTA BIEN ESTO --> creo q si
-        Photo image = new Photo();
-        image.setFilename(photo.getOriginalFilename());
-        image.setContentType(photo.getContentType());
-        image.setData(photo.getBytes());
+        Photo image = null;
+        if (photo != null && !photo.isEmpty()) {
+            image = photoService.createPhoto(
+                    photo.getOriginalFilename(),
+                    photo.getContentType(),
+                    photo.getBytes()
+            );
+        }
 
         reviewService.createReview(userDetails.getId(), clubId, form.getRating(), form.getDescription(), image);
         return "redirect:/clubs/" + clubId + "#reviews";
@@ -80,44 +78,27 @@ public class ReviewController {
                                   Model model) {
 
 
-        // Normalizar parámetros
-        limit = Math.max(1, Math.min(limit, 50));
-        offset = Math.max(0, offset);
-
-
-        // Traer el usuario solo para mostrar nombre/validar existencia
         final User user = userService.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("error.user.notfound"));
 
-
-        // Datos paginados
-        final List<Review> reviews = reviewService.listByUser(userId, sort, limit, offset);
         final int total = reviewService.countByUser(userId);
 
+        limit = Math.max(1, Math.min(limit, 50));
+        offset = Math.max(0, Math.min(offset, limit));
 
-        // Ajuste si el offset quedó fuera de rango (p. ej., se borraron reviews)
-        if (offset >= total && total > 0) {
-            int lastPage = (int) Math.floor((total - 1) / (double) limit);
-            offset = lastPage * limit;
-        }
-
-
-        // Si recalculamos offset, recargar la página
-        final List<Review> pageReviews = (offset == 0 || offset <= total)
-                ? reviewService.listByUser(userId, sort, limit, offset)
-                : reviews;
+        int calculateOffset = reviewService.calculateOffset(offset, limit, total);
+        final List<Review> pageReviews = reviewService.obtainPaginatedReviews(userId, sort, limit, offset);
 
 
         model.addAttribute("user", user);
         model.addAttribute("reviews", pageReviews);
         model.addAttribute("total", total);
         model.addAttribute("limit", limit);
-        model.addAttribute("offset", offset);
+        model.addAttribute("offset", calculateOffset);
         model.addAttribute("sort", sort);
 
 
-        // Para UI (paginación)
-        model.addAttribute("currentPage", (offset / limit) + 1);
+        model.addAttribute("currentPage", (calculateOffset / limit) + 1);
         model.addAttribute("totalPages", (int) Math.ceil(total / (double) limit));
 
 

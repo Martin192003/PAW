@@ -1,8 +1,6 @@
 package ar.edu.itba.paw.webapp.form;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
+import javax.validation.constraints.*;
 import java.util.UUID;
 
 public class ClubForm {
@@ -10,6 +8,7 @@ public class ClubForm {
 
     @NotBlank(message = "{contact.name.notblank}")
     @Pattern(regexp = "^$|^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$", message = "{contact.name.pattern}")
+    @Size(max = 100, message = "{error.name}")
     private String name;
 
     @NotBlank(message = "{contact.email.notblank}")

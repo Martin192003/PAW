@@ -2,7 +2,6 @@ package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.Photo;
-import ar.edu.itba.paw.model.PhotoType;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.InvalidClubException;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
@@ -12,7 +11,6 @@ import ar.edu.itba.paw.persistence.EventDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -41,7 +39,7 @@ public class EventServiceImpl implements EventService {
 
         Event ev = eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, null);
 
-        if (image.getPhotoId() != null) {
+        if (image != null && image.getData() != null && image.getData().length > 0) {
             try {
                 User loggedUser = securityService.getVerifiedLoggedUser();
                 UUID photoId = photoService.uploadEventPhoto(
@@ -53,7 +51,7 @@ public class EventServiceImpl implements EventService {
                 eventDao.attachPhoto(ev.getEventId(), photoId);
                 ev.setPhotoId(photoId);
             } catch (IOException e) {
-                throw new RuntimeException("Error al leer la imagen subida del evento", e);
+                throw new RuntimeException("Error collecting event image", e);
             }
         }
 
@@ -67,7 +65,6 @@ public class EventServiceImpl implements EventService {
         validateName(eventName);
         validateDate(date);
 
-
         final Event current = eventDao.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
 
@@ -75,15 +72,19 @@ public class EventServiceImpl implements EventService {
             throw new InvalidClubException("Event does not belong to the provided club");
 
         UUID photoId = current.getPhotoId();
-        if (image.getPhotoId() != null) {
+
+        if (image != null && image.getData() != null && image.getData().length > 0) {
+            try {
                 User loggedUser = securityService.getVerifiedLoggedUser();
-                photoId = photoService.upload(
+                photoId = photoService.uploadEventPhoto(
                         clubId,
+                        current.getEventId(),
                         loggedUser.getId(),
-                        image.getFilename(),
-                        image.getContentType(),
-                        image.getData()
+                        image
                 );
+            } catch (IOException e) {
+                throw new RuntimeException("Error collecting event image", e);
+            }
         }
 
         final Event updated = eventDao.update(eventId, clubId, eventName.trim(), trimOrNull(description), date, photoId);
@@ -92,6 +93,7 @@ public class EventServiceImpl implements EventService {
 
         return updated;
     }
+
 
     @Override
     @Transactional
@@ -126,24 +128,6 @@ public class EventServiceImpl implements EventService {
         return eventDao.countByClub(clubId);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Event> searchByDate(LocalDate start, LocalDate end, int page, int size) {
-        validatePaging(page, size);
-        Objects.requireNonNull(start, "start");
-        Objects.requireNonNull(end, "end");
-        if (end.isBefore(start)) throw new InvalidDateRangeException("end date cannot be before start date");
-        return eventDao.searchByDateRangePaginated(start, end, page, size);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public int countByDate(LocalDate start, LocalDate end) {
-        Objects.requireNonNull(start, "start");
-        Objects.requireNonNull(end, "end");
-        if (end.isBefore(start)) throw new InvalidDateRangeException("end date cannot be before start date");
-        return eventDao.countByDateRange(start, end);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -209,5 +193,33 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public int countPastByClub(UUID clubId) {
         return eventDao.countPastByClub(clubId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int totalEventPagesPast(UUID clubId, int size) {
+        if (size <= 0) return 0;
+        int totalPastEvents = countPastByClub(clubId);
+
+        return (int) Math.ceil((double) totalPastEvents / size);
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int totalEventPagesUpcoming(UUID clubId, int size) {
+        if (size <= 0) return 0;
+        int totalUpcomigEvents = countUpcomingByClub(clubId);
+
+        return (int) Math.ceil((double) totalUpcomigEvents / size);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int totalEventPages(UUID clubId, int size) {
+        if (size <= 0) return 0;
+        int totalEvents = countByClub(clubId);
+
+        return (int) Math.ceil((double) totalEvents / size);
     }
 }

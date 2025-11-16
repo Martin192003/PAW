@@ -56,7 +56,7 @@ public class BookingAdminController {
 
         List<Club> clubs = clubService.getClubsByUserPaginated(userDetails.getId(), size, offset);
         int totalClubs = clubService.countClubsByUser(userDetails.getId());
-        int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
+        int totalPages = clubService.countPagesForUser(userDetails.getId(), size);
 
         Map<UUID,String> photoUrlByClub = photoService.getCoverUrls(
                 clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
@@ -113,19 +113,12 @@ public class BookingAdminController {
         final int offset = (page - 1) * size;
 
 
-        UUID bookingUuid = null;
-        if (form.getBookingId() != null && !form.getBookingId().isBlank()) {
-            try {
-                bookingUuid = UUID.fromString(form.getBookingId().trim());
-            } catch (IllegalArgumentException e) {
-                br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
-            }
+        UUID bookingUuid = bookingService.parseBookingId(form.getBookingId());
+        if (form.getBookingId() != null && !form.getBookingId().isBlank() && bookingUuid == null) {
+            br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
         }
 
-        LocalDate bookingDate = null;
-        if (form.getBookingDate() != null && !form.getBookingDate().isBlank()) {
-            bookingDate = LocalDate.parse(form.getBookingDate());
-        }
+        LocalDate bookingDate = bookingService.parseBookingDate(form.getBookingDate());
 
         List<Booking> result = List.of();
         int totalBookings = 0;
@@ -161,26 +154,12 @@ public class BookingAdminController {
         if (form.getSort() != null && !form.getSort().isBlank()) filters.put("sort", form.getSort());
 
 
-        String queryParams = filters.entrySet().stream()
-                .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
-                .collect(java.util.stream.Collectors.joining("&"));
+        String queryParams = bookingService.buildQueryParams(filters);
 
-        Map<UUID, Date> bookingStartDates = new HashMap<>();
-        for (Booking booking : result) {
-            if (booking.getBookingStart() != null) {
-                bookingStartDates.put(
-                        booking.getBookingId(),
-                        Date.from(booking.getBookingStart().toInstant())
-                );
-            }
-        }
+        Map<UUID, Date> bookingStartDates = bookingService.mapBookingStartDates(result);
         model.addAttribute("bookingStartDates", bookingStartDates);
 
-        // Result esta paginado de esa manera no es tan ineficiente ya que iteramos sobre un maximo de 10
-        Map<UUID, Boolean> hasReceiptMap = new HashMap<>();
-        for (Booking b : result) {
-            hasReceiptMap.put(b.getBookingId(), receiptService.findByBooking(b.getBookingId()).isPresent());
-        }
+        Map<UUID, Boolean> hasReceiptMap = receiptService.buildHasReceiptMap(result);
         model.addAttribute("hasReceiptMap", hasReceiptMap);
 
         model.addAttribute("bookings", result);
@@ -206,6 +185,7 @@ public class BookingAdminController {
 
 
     @GetMapping("/booking")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(@bookingServiceImpl.clubId(#bookingId))")
     public String bookingAdminHandler(@RequestParam UUID bookingId, Model model, @ModelAttribute("error") String error, @ModelAttribute("success") String success) {
         Optional<Booking> bookingOpt = bookingService.findById(bookingId);
         if (bookingOpt.isEmpty()) {
@@ -240,8 +220,8 @@ public class BookingAdminController {
         model.addAttribute("clubName", clubName);
         model.addAttribute("clubCbu", clubCbu);
 
-        model.addAttribute("bookingStartLocal", bookingService.getDateStart(booking));
-        model.addAttribute("bookingEndLocal", bookingService.getDateEnd(booking));
+        model.addAttribute("bookingStartLocal", bookingService.getBookingDateStart(booking));
+        model.addAttribute("bookingEndLocal", bookingService.getBookingDateEnd(booking));
 
         if (error != null && !error.isEmpty()) {
             model.addAttribute("errorKey", error);

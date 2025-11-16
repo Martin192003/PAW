@@ -100,7 +100,7 @@
     <c:choose>
         <c:when test="${empty bookings}">
             <div style="color:#ffffff; font-size:1.1rem; margin-top:24px;">
-                <spring:message code="bookings.empty" text="No hay reservas."/>
+                <spring:message code="bookings.empty.user" text="No hay reservas."/>
             </div>
         </c:when>
         <c:otherwise>

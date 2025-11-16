@@ -40,10 +40,11 @@ public class PhotoController {
                          Principal principal,
                          RedirectAttributes redirectAttributes) throws IOException {
         String userEmail = principal != null ? principal.getName() : null;
-        Photo photo = new Photo();
-        photo.setFilename(file.getOriginalFilename());
-        photo.setContentType(file.getContentType());
-        photo.setData(file.getBytes());
+        Photo photo = photoService.createPhoto(
+                file.getOriginalFilename(),
+                file.getContentType(),
+                file.getBytes()
+        );
         photoService.uploadPhotoForClub(clubId, userEmail, photo);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }

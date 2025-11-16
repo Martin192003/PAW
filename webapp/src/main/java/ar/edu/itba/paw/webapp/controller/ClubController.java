@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
+import ar.edu.itba.paw.webapp.auth.WebSecurity;
 import ar.edu.itba.paw.webapp.form.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,9 +45,10 @@ public class ClubController {
     private final ClubLayoutService clubLayoutService;
     private final ProductService productService;
     private final ReviewService reviewService;
+    private final WebSecurity webSecurity;
 
     @Autowired
-    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService, ReviewService reviewService) {
+    public ClubController(ClubService clubService, PhotoService photoService, UserService userService, MenuService menuService, TableService tableService, ClubLayoutService clubLayoutService, EventService eventService, ProductService productService, ReviewService reviewService, WebSecurity webSecurity) {
         this.photoService = photoService;
         this.clubService = clubService;
         this.userService = userService;
@@ -56,6 +58,7 @@ public class ClubController {
         this.eventService = eventService;
         this.clubLayoutService = clubLayoutService;
         this.productService = productService;
+        this.webSecurity = webSecurity;
     }
 
     @GetMapping({"", "/"})
@@ -87,18 +90,17 @@ public class ClubController {
         if (availabilityMode) {
             selectedDay = (dayOffset != null)
                     ? LocalDate.now(zoneBA).plusDays(dayOffset)
-                    : LocalDate.now(zoneBA); // fallback: hoy
+                    : LocalDate.now(zoneBA);
         }
 
-        // Valido día permitido
         boolean invalidDay = availabilityMode && !tableService.isAllowedDay(selectedDay);
         model.addAttribute("invalidDay", invalidDay);
         model.addAttribute("selectedAvailabilityDate", selectedDay);
 
-        //Sección de paginación
         int totalClubs = 0;
-        int offset = (page - 1) * size;
+        int offset;
         List<Club> clubs = Collections.emptyList();
+        int totalPages;
 
         if (availabilityMode) {
             if (!invalidDay) {
@@ -106,27 +108,33 @@ public class ClubController {
                         nameLike, zone, musicGenre, normalizedPriceRange, isBar, selectedDay
                 );
 
-                int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
-                if (page > totalPages) page = totalPages;
-                offset = (page - 1) * size;
-
+                if (userDetails != null) {
+                    totalPages = clubService.countPagesForUser(userDetails.getUser().getId(), size);
+                    offset = clubService.calculateOffset(page, userDetails.getUser().getId(), size);
+                } else {
+                    totalPages = clubService.pagesForCount(size, nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+                    offset = clubService.offsetForPage(page, size, nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+                }
                 clubs = clubService.searchAvailablePaginated(
                         nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, selectedDay, size, offset
                 );
 
-                model.addAttribute("totalPages", Math.max(1, (int) Math.ceil((double) totalClubs / size)));
+                model.addAttribute("totalPages", totalPages);
             } else {
                 model.addAttribute("totalPages", 1);
             }
         } else {
             totalClubs = clubService.countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
-            int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
-            if (page > totalPages) page = totalPages;
-            offset = (page - 1) * size;
+            if (userDetails != null) {
+                totalPages = clubService.countPagesForUser(userDetails.getUser().getId(), size);
+                offset = clubService.calculateOffset(page, userDetails.getUser().getId(), size);
+            } else {
+                totalPages = clubService.pagesForCount(size,nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+                offset = clubService.offsetForPage(page, size, nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+            }
             clubs = clubService.searchPaginated(
                     nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, size, offset
             );
-
             model.addAttribute("totalPages", totalPages);
         }
 
@@ -137,7 +145,6 @@ public class ClubController {
             model.addAttribute("user", userDetails.getUser());
         }
 
-        //Seccion de filtrado
         Map<String, String> filters = new LinkedHashMap<>();
         if (nameLike != null && !nameLike.isBlank()) filters.put("name", nameLike);
         if (zone != null) filters.put("zone", zone.name());
@@ -151,9 +158,11 @@ public class ClubController {
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
-
-        // Modelo
-        int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
+        if (userDetails != null){
+            totalPages = clubService.countPagesForUser(userDetails.getUser().getId(), size);
+        }else{
+            totalPages = clubService.pagesForCount(size,nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+        }
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("currentPage", page);
@@ -206,10 +215,11 @@ public class ClubController {
 
         Photo photo = null;
         if (f.getImage() != null && !f.getImage().isEmpty()) {
-            photo = new Photo();
-            photo.setFilename(f.getImage().getOriginalFilename());
-            photo.setContentType(f.getImage().getContentType());
-            photo.setData(f.getImage().getBytes());
+            photo = photoService.createPhoto(
+                    f.getImage().getOriginalFilename(),
+                    f.getImage().getContentType(),
+                    f.getImage().getBytes()
+            );
         }
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),
@@ -218,6 +228,7 @@ public class ClubController {
 
         if (roleAntes == Role.USER) {
             User updatedUser = userService.findById(userDetails.getId()).orElseThrow(UserNotFoundException::new);
+            webSecurity.refreshAuthentication(updatedUser);
         }
 
         return "redirect:/clubs/handle?clubId=" + newClub.getClubId();
@@ -242,24 +253,25 @@ public class ClubController {
         var layoutOpt = clubLayoutService.getLayoutByClub(clubId);
         String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
 
+
         int pageIndex = page - 1;
         List<Event> events;
-        int totalEvents = switch (filter) {
+        int totalPages = switch (filter) {
             case "past" -> {
                 events = eventService.findPastByClub(clubId, pageIndex, size);
-                yield eventService.countPastByClub(clubId);
+                yield eventService.totalEventPagesPast(clubId, size);
             }
             case "future" -> {
                 events = eventService.findUpcomingByClub(clubId, pageIndex, size);
-                yield eventService.countUpcomingByClub(clubId);
+                yield eventService.totalEventPagesUpcoming(clubId, size);
             }
             default -> {
                 events = eventService.listByClub(clubId, pageIndex, size);
-                yield eventService.countByClub(clubId);
+                yield eventService.totalEventPagesUpcoming(clubId, size);
             }
         };
 
-        int totalPages = (int) Math.ceil((double) totalEvents / size);
+
 
         model.addAttribute("filter", filter);
         model.addAttribute("club", club);
@@ -291,11 +303,8 @@ public class ClubController {
         model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
 
         int reviewPageIndex = reviewPage - 1;
-
         List<Review> reviews = reviewService.findByClubPaginated(clubId, reviewPageIndex, size);
-        int totalReviews = reviewService.countByClubPaginated(clubId);
-
-        int totalReviewsPages = (int) Math.ceil((double) totalReviews / size);
+        int totalReviewsPages = reviewService.gettotalReviewsPages(clubId, size);
 
         model.addAttribute("reviews", reviews);
         model.addAttribute("reviewPage", reviewPage);
@@ -370,7 +379,8 @@ public class ClubController {
         String tableLayoutUrl = layoutOpt.map(ar.edu.itba.paw.model.ClubLayout::getUrl).orElse(null);
 
         model.addAttribute("tables", tableService.findByClubId(clubId));
-        model.addAttribute("club", clubService.getClubById(clubId));
+        Club club = clubService.getClubByIdOrThrow(clubId);
+        model.addAttribute("club", club);
         model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
         model.addAttribute("tableLayoutUrl", tableLayoutUrl);
         model.addAttribute("zones", Zone.values());

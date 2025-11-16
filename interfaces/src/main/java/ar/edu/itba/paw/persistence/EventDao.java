@@ -18,9 +18,6 @@ public interface EventDao {
 
     List<Event> findByClub(UUID clubId, int page, int size);
 
-    List<Event> searchByDateRangePaginated(LocalDate startDate, LocalDate endDate, int page, int size);
-
-    int countByDateRange(LocalDate startDate, LocalDate endDate);
 
     int countByClub(UUID clubId);
 

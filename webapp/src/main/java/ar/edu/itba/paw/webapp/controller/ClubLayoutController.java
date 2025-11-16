@@ -36,12 +36,13 @@ public class ClubLayoutController {
     public String uploadLayout(@PathVariable UUID clubId,
                                @RequestParam("file") MultipartFile file,
                                RedirectAttributes ra, @AuthenticationPrincipal PawUserDetails userDetails) throws IOException {
-        //TODO: FIJARSE SI ESTO ESTA BIEN
-        Photo photo = new Photo();
-        photo.setFilename(file.getOriginalFilename());
-        photo.setContentType(file.getContentType());
-        photo.setData(file.getBytes());
-        clubLayoutService.uploadLayout(clubId, userDetails.getUser().getEmail() ,photo);
+        clubLayoutService.uploadLayout(
+                clubId,
+                userDetails.getUser().getEmail(),
+                file.getOriginalFilename(),
+                file.getContentType(),
+                file.getBytes()
+        );
         ra.addFlashAttribute("layoutUploaded", true);
         return "redirect:/clubs/handle?clubId=" + clubId;
     }

@@ -313,7 +313,7 @@
                         <span><spring:message code="reviews.title" text="Reseñas"/></span>
                     </h3>
 
-                    <c:if test="${isLoggedIn}">
+                    <c:if test="${isLoggedIn && !hasReviewed}">
                         <button type="button" class="btn btn-primary" onclick="openReviewModal()" style="margin-bottom: 15px">
                             <i class="fa-solid fa-star"></i> <spring:message code="reviews.add" text="Dejar una reseña"/>
                         </button>
@@ -843,12 +843,19 @@
             textEl.textContent = message;
             modal.classList.add('show');
             modal.setAttribute('aria-hidden','false');
+
+            const scrollbarComp = window.innerWidth - document.documentElement.clientWidth;
+            document.body.style.overflow = 'hidden';
+            if (scrollbarComp > 0) document.body.style.paddingRight = scrollbarComp + 'px';
         }
         window.closeEventAvailabilityModal = function(){
             var modal = document.getElementById('eventAvailabilityModal');
             if(!modal) return;
             modal.classList.remove('show');
             modal.setAttribute('aria-hidden','true');
+
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
         };
 
         document.addEventListener('DOMContentLoaded', function(){

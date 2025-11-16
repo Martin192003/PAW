@@ -147,7 +147,6 @@ public class PhotoServiceImpl implements PhotoService {
     @Override
     @Transactional(readOnly = true)
     public Optional<String> getCoverUrl(UUID clubId) {
-        // 1) Preferir foto explícita de tipo COVER si existe y no está asociada a un evento
         Optional<Photo> coverOpt = photoDao.findCoverByClubId(clubId);
         if (coverOpt.isPresent()) {
             Photo cover = coverOpt.get();
@@ -156,7 +155,6 @@ public class PhotoServiceImpl implements PhotoService {
             }
         }
 
-        // 2) Fallback: buscar entre CAROUSEL la más reciente no asociada a eventos
         List<Photo> carousel = photoDao.findCarouselWithoutEventByClubId(clubId, 50, 0);
         return carousel.stream()
                 .sorted((p1, p2) -> {
@@ -226,6 +224,15 @@ public class PhotoServiceImpl implements PhotoService {
     @Transactional(readOnly = true)
     public List<Photo> getReviewPhotosByClub(UUID clubId, int limit, int offset) {
         return photoDao.findReviewPhotosByClub(clubId, limit, offset);
+    }
+
+    @Override
+    public Photo createPhoto(String filename, String contentType, byte[] data) {
+        Photo photo = new Photo();
+        photo.setFilename(filename);
+        photo.setContentType(contentType);
+        photo.setData(data);
+        return photo;
     }
 
 }

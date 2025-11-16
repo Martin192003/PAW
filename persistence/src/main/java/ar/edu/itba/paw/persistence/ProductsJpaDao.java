@@ -3,8 +3,9 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
+import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -35,7 +36,6 @@ public class ProductsJpaDao implements ProductsDao {
         p.setBasePrice(basePrice);
         p.setProductType(type);
         p.setIsAvailable(isAvailable);
-        // createdAt se setea en @PrePersist si viene nulo
         em.persist(p);
         return p;
     }
@@ -64,7 +64,7 @@ public class ProductsJpaDao implements ProductsDao {
         p.setProductType(type);
         p.setIsAvailable(isAvailable);
 
-        return p; // entidad administrada ya quedó actualizada
+        return p;
     }
 
     @Override
@@ -87,17 +87,14 @@ public class ProductsJpaDao implements ProductsDao {
         Objects.requireNonNull(club.getClubId(), "clubId is required");
 
         // 1) IDs del club
-        final String idSql = """
-        SELECT CAST(p.product_id AS TEXT) AS id_text
-        FROM products p
-        WHERE p.club_id = :clubId
-        ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
-    """;
-
-        @SuppressWarnings("unchecked")
-        final List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+        @SuppressWarnings("unchecked") final List<String> idTexts = em.createNativeQuery("""
+                            SELECT CAST(p.product_id AS TEXT) AS id_text
+                            FROM products p
+                            WHERE p.club_id = :clubId
+                            ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
+                        """)
+                .unwrap(NativeQuery.class)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("clubId", club.getClubId())
                 .getResultList();
 
@@ -121,18 +118,14 @@ public class ProductsJpaDao implements ProductsDao {
     public List<Product> findByClubID(final UUID clubId) {
         Objects.requireNonNull(clubId, "clubId is required");
 
-        // 1) IDs del club
-        final String idSql = """
-        SELECT CAST(p.product_id AS TEXT) AS id_text
-        FROM products p
-        WHERE p.club_id = :clubId
-        ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
-    """;
-
-        @SuppressWarnings("unchecked")
-        final List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+        @SuppressWarnings("unchecked") final List<String> idTexts = em.createNativeQuery("""
+                            SELECT CAST(p.product_id AS TEXT) AS id_text
+                            FROM products p
+                            WHERE p.club_id = :clubId
+                            ORDER BY p.product_name ASC NULLS LAST, p.product_id ASC
+                        """)
+                .unwrap(NativeQuery.class)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .getResultList();
 

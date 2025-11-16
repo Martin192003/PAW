@@ -2,8 +2,9 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.PhotoType;
+import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.*;
@@ -37,18 +38,16 @@ public class PhotoJpaDao implements PhotoDao {
         final int off = Math.max(0, offset);
 
         // 1) Página de IDs
-        final String idSql = """
-        SELECT CAST(p.photo_id AS TEXT) AS id_text
-        FROM photos p
-        WHERE p.club_id = :clubId
-        ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
-        LIMIT :limit OFFSET :offset
-    """;
-
         @SuppressWarnings("unchecked")
-        final List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+        final List<String> idTexts = em.createNativeQuery("""
+                        SELECT CAST(p.photo_id AS TEXT) AS id_text
+                        FROM photos p
+                        WHERE p.club_id = :clubId
+                        ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
+                        LIMIT :limit OFFSET :offset
+                        """)
+                .unwrap(NativeQuery.class)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .setParameter("limit", lim)
                 .setParameter("offset", off)
@@ -58,7 +57,6 @@ public class PhotoJpaDao implements PhotoDao {
 
         final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
 
-        // 2) Entidades por IDs (JPQL) con el mismo orden lógico
         final List<Photo> photos = em.createQuery("""
             SELECT p
             FROM Photo p
@@ -185,17 +183,15 @@ public class PhotoJpaDao implements PhotoDao {
         final int off = Math.max(0, offset);
 
         // 1) Página de IDs
-        final String idSql = """
+        @SuppressWarnings("unchecked") final List<String> idTexts = em.createNativeQuery("""
                 SELECT CAST(p.photo_id AS TEXT) AS id_text
                 FROM photos p
                 WHERE p.club_id = :clubId AND p.photo_type = 'REVIEW'
                 ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
                 LIMIT :limit OFFSET :offset
-            """;
-
-        @SuppressWarnings("unchecked") final List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+            """)
+                .unwrap(NativeQuery.class)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .setParameter("limit", lim)
                 .setParameter("offset", off)
@@ -226,24 +222,44 @@ public class PhotoJpaDao implements PhotoDao {
 
     @Override
     public List<Photo> findCarouselWithoutEventByClubId(UUID clubId, int limit, int offset) {
-        return em.createQuery("""
-        SELECT p
-        FROM Photo p
-        LEFT JOIN Event e ON e.photoId = p.photoId
-        WHERE p.clubId = :clubId
-          AND p.photoType = :type
-          AND e.photoId IS NULL
-        ORDER BY p.createdAt DESC, p.photoId DESC
-    """, Photo.class)
+        final List<String> idTexts = em.createNativeQuery("""
+            SELECT CAST(p.photo_id AS TEXT) AS id_text
+            FROM photos p
+            LEFT JOIN event e ON e.photoid = p.photo_id
+            WHERE p.club_id = :clubId
+              AND p.photo_type = 'CAROUSEL'
+              AND e.photoid IS NULL
+            ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
+            LIMIT :limit OFFSET :offset
+        """)
+                .unwrap(NativeQuery.class)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
-                .setParameter("type", PhotoType.CAROUSEL)
-                .setFirstResult(offset)
-                .setMaxResults(limit)
+                .setParameter("limit", Math.max(0, limit))
+                .setParameter("offset", Math.max(0, offset))
                 .getResultList();
+
+        final List<UUID> ids = idTexts.stream().map(UUID::fromString).toList();
+
+        if (ids.isEmpty()) return List.of();
+        List<Photo> photos = em.createQuery("""
+                            SELECT p
+                            FROM Photo p
+                            WHERE p.photoId IN :ids
+                            ORDER BY p.createdAt DESC, p.photoId DESC
+                        """, Photo.class)
+                .setParameter("ids", ids)
+                .getResultList();
+        photos.forEach(p -> {
+            em.detach(p);
+            p.setData(null);
+        });
+        return photos;
     }
 
 
-    // TODO: Fijarse si esta bien habria que paginar y hacer QUERY 1+1
+
+    // Los IDs ya los buscaron, solo traer los covers
     @Override
     public Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds) {
         List<Object[]> rows = em.createQuery("""
@@ -257,13 +273,12 @@ public class PhotoJpaDao implements PhotoDao {
                 .setParameter("clubIds", clubIds)
                 .getResultList();
 
-        // TODO: VER QUE SI ESTO ESTA BIEN, sin esto no anda tira Duplicate key
         Map<UUID, String> covers = rows.stream()
                 .collect(Collectors.toMap(
                         row -> (UUID) row[0],
                         row -> (String) row[1],
-                        (existing, replacement) -> existing,         // keep first if duplicate
-                        LinkedHashMap::new                           // preserve order (optional)
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
                 ));
         return covers;
     }

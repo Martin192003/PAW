@@ -2,7 +2,6 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Receipt;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.*;
@@ -21,7 +20,6 @@ public class ReceiptJpaDao implements ReceiptDao {
         r.setFilename(filename);
         r.setContentType(contentType);
         r.setData(data);
-        // url / createdAt / sizeBytes / receiptId se setean en @PrePersist del entity
         em.persist(r);
         return r.getReceiptId();
     }

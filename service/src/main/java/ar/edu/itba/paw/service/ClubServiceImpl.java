@@ -1,17 +1,17 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
-import ar.edu.itba.paw.persistence.ClubTablesDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.text.Normalizer;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -24,7 +24,7 @@ public class ClubServiceImpl implements ClubService{
     private final BookingDao bookingDao;
 
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, ClubTablesDao tablesDao, PhotoService photoService, UserService userService, BookingDao bookingDao) {
+    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, PhotoService photoService, UserService userService, BookingDao bookingDao) {
         this.mailService = mailService;
         this.clubDao = clubDao;
         this.photoService = photoService;
@@ -40,6 +40,7 @@ public class ClubServiceImpl implements ClubService{
         User managedContact = userService.findById(contactInfo.getId()).orElseThrow();
         if (managedContact.getRole() != Role.ADMIN) {
             managedContact.setRole(Role.ADMIN);
+            userService.updateRole(managedContact.getId(), Role.ADMIN);
         }
 
         Club newClub = clubDao.create(name, description, location, priceRange, managedContact, musicGenre, zone, isBar, cbu);
@@ -183,26 +184,11 @@ public class ClubServiceImpl implements ClubService{
         return "paw2025b06@gmail.com";
     }
 
-    private Zone parseZoneFlexible(String raw) {
-        if (raw == null) throw new IllegalArgumentException("Zona vacía");
-        String normalized = normalizeEnumToken(raw);
-        try {
-            return Zone.valueOf(normalized);
-        } catch (IllegalArgumentException ignore) {
-            for (Zone z : Zone.values()) {
-                String db = z.getDbValue();
-                if (db != null && db.equalsIgnoreCase(raw)) {
-                    return z;
-                }
-            }
-            throw new IllegalArgumentException("Zona inválida: " + raw);
-        }
-    }
-
-    private String normalizeEnumToken(String v) {
-        String s = v.trim().replace('-', '_').replace(' ', '_');
-        s = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        return s.toUpperCase(Locale.ROOT);
+    @Override
+    @Transactional(readOnly = true)
+    public Club getClubByIdOrThrow(UUID clubId) {
+        return clubDao.findById(clubId)
+                .orElseThrow(() -> new NotFoundException("error.club.notfound"));
     }
 
     @Override
@@ -223,6 +209,17 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     @Transactional(readOnly = true)
+    public int countPagesForUser(UUID userId, int size) {
+        if (size <= 0) {
+            return 1;
+        }
+
+        int totalClubs = countClubsByUser(userId);
+        return Math.max(1, (int) Math.ceil((double) totalClubs / size));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public int countSearchAvailable(String nameLike, Zone location, String musicGenre,
                                     String priceRange, Boolean isBar, LocalDate day) {
         return clubDao.countSearchAvailable(nameLike, location, musicGenre, priceRange, isBar, day);
@@ -232,11 +229,45 @@ public class ClubServiceImpl implements ClubService{
         if (user == null) {
             return false;
         }
-        if (user.getRole().equals(Role.ADMIN)) {
-            return true;
+        if (!user.getRole().equals(Role.ADMIN)) {
+            return false;
         }
         return getAdminsByClub(clubId)
                 .stream()
                 .anyMatch(u -> u.getId().equals(user.getId()));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int normalizePage(int page, UUID userId, int size) {
+        int totalPages=countPagesForUser(userId, size);
+        if ( page <= totalPages)
+            return 1;
+        return totalPages;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int calculateOffset(int page, UUID userId,  int size) {
+        page= normalizePage(page, userId, size);
+        return (page - 1) * size;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int pagesForCount(int size,String nameLike,Zone zone,String musicGenre,String normalizedPriceRange,Boolean isBar) {
+        int totalClubs = countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+        if (size <= 0) throw new IllegalArgumentException("size must be > 0");
+        return Math.max(1, (int) Math.ceil((double) totalClubs / size));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int offsetForPage(int page, int size, String nameLike,Zone zone,String musicGenre,String normalizedPriceRange,Boolean isBar) {
+        if (size <= 0) throw new IllegalArgumentException("size must be > 0");
+        int totalPages = pagesForCount(size, nameLike,zone,musicGenre,normalizedPriceRange,isBar);
+        int p = Math.max(1, Math.min(page, totalPages));
+        return (p - 1) * size;
+    }
+
 }

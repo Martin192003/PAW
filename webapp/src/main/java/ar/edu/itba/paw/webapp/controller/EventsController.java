@@ -64,6 +64,7 @@ public class EventsController {
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editProductForm", new EditProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
+
             ClubHandlerForm clubHandlerForm = new ClubHandlerForm();
             clubHandlerForm.setClubId(club.getClubId());
             clubHandlerForm.setName(club.getClubName());
@@ -78,11 +79,14 @@ public class EventsController {
             return "clubHandler";
         }
 
-        // TODO: FIJARSE SI ES LOGICA DE NEGOCIO
-        Photo photo = new Photo();
-        photo.setFilename(form.getPhotoId() != null ? form.getPhotoId().getOriginalFilename() : null);
-        photo.setContentType(form.getPhotoId() != null ? form.getPhotoId().getContentType() : null);
-        photo.setData(form.getPhotoId() != null ? form.getPhotoId().getBytes() : null);
+        Photo photo = null;
+        if (form.getPhotoId() != null && !form.getPhotoId().isEmpty()) {
+            photo = photoService.createPhoto(
+                    form.getPhotoId().getOriginalFilename(),
+                    form.getPhotoId().getContentType(),
+                    form.getPhotoId().getBytes()
+            );
+        }
 
         eventService.create(
                 clubId,
@@ -94,6 +98,7 @@ public class EventsController {
         return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }
 
+
     @PostMapping("/{eventId}/edit")
     @PreAuthorize("@securityServiceImpl.isClubAdmin(#form.clubId)")
     public String editEvent(
@@ -102,7 +107,7 @@ public class EventsController {
             BindingResult errors,
             @RequestParam(value = "photo", required = false) MultipartFile photo,
             Model model
-    ) {
+    ) throws IOException {
         UUID clubId = form.getClubId();
         if (errors.hasErrors()) {
             preloadClubHandler(model, clubId);
@@ -131,14 +136,12 @@ public class EventsController {
         }
 
         Photo photoData = null;
-
         if (photo != null && !photo.isEmpty()) {
-
-            //TODO: FIJARSE SI ESTA BIEN
-            photoData = new Photo();
-            photoData.setFilename(photo.getOriginalFilename());
-            photoData.setContentType(photo.getContentType());
-            photoData.setData(photoData.getData());
+            photoData = photoService.createPhoto(
+                    photo.getOriginalFilename(),
+                    photo.getContentType(),
+                    photo.getBytes()
+            );
         }
 
         eventService.update(

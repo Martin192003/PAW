@@ -3,9 +3,9 @@ package ar.edu.itba.paw.persistence;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 @Repository
@@ -29,7 +29,7 @@ public class UserJpaDao implements UserDao {
         u.setRole(role);
         u.setVerified(false);
         u.setVerificationToken(UUID.randomUUID().toString());
-        u.setCreatedAt(java.time.OffsetDateTime.now());
+        u.setCreatedAt(OffsetDateTime.now());
         u.setLocale(locale);
 
         em.persist(u);

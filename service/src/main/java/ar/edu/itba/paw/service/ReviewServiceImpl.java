@@ -16,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -77,7 +74,6 @@ public class ReviewServiceImpl implements ReviewService {
         Club club = clubDao.findById(clubId)
                 .orElseThrow(() -> new IllegalArgumentException("Club not found"));
 
-
         boolean hadTable = bookingDao.existsPastConfirmedByUserAndClub(userId, clubId, OffsetDateTime.now());
         if (rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
@@ -120,18 +116,15 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public int countByClub(UUID clubId) {
-        return reviewsDao.countSearch(null, clubId);
+    public List<Review> listByClubPaginated(UUID clubId, String sort,int limit, int offset){
+        getCorrectedOffset(clubId, offset, limit);
+        return listByClub(clubId, sort, limit, getCorrectedOffset(clubId, offset, limit));
     }
 
-    //TODO: no se usa sacar (?)
-    private boolean hasFromTableGuestField(Review review) {
-        try {
-            review.getClass().getDeclaredField("fromTableGuest");
-            return true;
-        } catch (NoSuchFieldException e) {
-            return false;
-        }
+    @Override
+    @Transactional(readOnly = true)
+    public int countByClub(UUID clubId) {
+        return reviewsDao.countSearch(null, clubId);
     }
 
 
@@ -201,11 +194,56 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public int getCorrectedOffset(int totalCount, int limit, int offset) {
+    @Transactional(readOnly = true)
+    public int getCorrectedOffset(UUID clubId, int limit, int offset) {
+        int totalCount = countByClub(clubId);
         if (offset >= totalCount && totalCount > 0) {
             int lastPage = (int) Math.floor((totalCount - 1) / (double) limit);
             return lastPage * limit;
         }
         return offset;
+    }
+
+    @Override
+    public int calculateOffset(int offset, int limit, int total) {
+
+        if (total <= 0) {
+            return 0;
+        }
+
+        if (offset >= total) {
+            int lastPage = (int) Math.floor((total - 1) / (double) limit);
+
+            return lastPage * limit;
+        }
+
+        return offset;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Review> obtainPaginatedReviews(UUID userId, String sort, int limit, int offset) {
+
+        final int total = countByUser(userId);
+
+        final int offsetCorregido = calculateOffset(offset, limit, total);
+
+        if (total == 0) {
+            return Collections.emptyList();
+        }
+
+
+        return listByUser(userId, sort, limit, offsetCorregido);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int gettotalReviewsPages(UUID clubId, int size) {
+        if (size <= 0) {
+            return 1;
+        }
+
+        int totalReviews = countByClubPaginated(clubId);
+        return (int) Math.ceil((double) totalReviews / size);
     }
 }

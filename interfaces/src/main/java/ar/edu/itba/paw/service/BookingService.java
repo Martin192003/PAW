@@ -5,9 +5,7 @@ import ar.edu.itba.paw.model.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public interface BookingService {
 
@@ -51,15 +49,29 @@ public interface BookingService {
 
     int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
 
-    String getDateStart(Booking booking);
+    String getBookingDateStart(Booking booking);
 
-    String getDateEnd(Booking booking);
+    String getBookingDateEnd(Booking booking);
 
-    User getBookingUser(Booking booking);
+    String getDateStart(UUID bookingId, UUID userId);
 
-    ClubTable getBookingTable(Booking booking);
+    String getDateEnd(UUID bookingId, UUID userId);
 
-    Club getBookingClub(Booking booking);
+    User getBookingUser(UUID bookingId, UUID userId);
 
+    ClubTable getBookingTable(UUID bookingId, UUID userId);
 
+    Club getBookingClub(UUID bookingId, UUID userId);
+
+    UUID parseBookingId(String bookingId);
+
+    LocalDate parseBookingDate(String bookingDate);
+
+    String buildQueryParams(Map<String, String> filters);
+
+    Map<UUID, Date> mapBookingStartDates(List<Booking> bookings);
+
+    int getTotalPages(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt, int size);
+
+    UUID clubId(UUID bookingId);
 }

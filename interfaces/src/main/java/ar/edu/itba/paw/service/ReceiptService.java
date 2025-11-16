@@ -1,7 +1,10 @@
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Receipt;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,5 +16,6 @@ public interface ReceiptService {
     void uploadForBooking(UUID bookingId, UUID userId, String filename, String contentType, byte[] data);
     boolean deleteByBookingForUser(UUID bookingId, UUID userId);
     Optional<Receipt> getReceiptForBooking(UUID bookingId);
+    Map<UUID, Boolean> buildHasReceiptMap(List<Booking> bookings);
 
 }

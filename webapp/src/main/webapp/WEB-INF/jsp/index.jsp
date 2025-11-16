@@ -59,7 +59,7 @@
                                             <c:choose>
                                                 <c:when test="${not empty e.photoId}">
                                                     <div class="event-card-image">
-                                                        <img style="object-fit: contain; background-color: black" src="${pageContext.request.contextPath}/photos/${e.photoId}" alt="Imagen del evento" />
+                                                        <img style="object-fit: contain; background-color: black" src="${pageContext.request.contextPath}/photos/${e.photoId}" alt="<spring:message code="form.eventImage" text="Imagen del evento"/>" />
                                                     </div>
                                                 </c:when>
                                                 <c:otherwise>
