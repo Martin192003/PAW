@@ -142,7 +142,7 @@ public class UserBookingController {
         int totalPages = bookingService.getTotalPages(form.getUserId(), form.getClubId(), bookingUuid, form.getStatus(), bookingDate, form.getHasReceipt(), size)  ;
 
         Map<String, String> filters = new LinkedHashMap<>();
-        filters.put("userId", form.getUserId().toString()); // obligatorio
+        filters.put("userId", form.getUserId().toString());
         if (form.getClubId() != null) filters.put("clubId", form.getClubId().toString());
         if (form.getBookingId() != null && !form.getBookingId().isBlank()) filters.put("bookingId", form.getBookingId());
         if (form.getStatus() != null) filters.put("status", form.getStatus().name());
@@ -205,17 +205,17 @@ public class UserBookingController {
 
             model.addAttribute("booking", booking);
 
-            model.addAttribute("user", bookingService.getBookingUser(booking));
+            model.addAttribute("user", bookingService.getBookingUser(bookingId, userDetails.getId()));
 
-            ClubTable table = bookingService.getBookingTable(booking);
+            ClubTable table = bookingService.getBookingTable(bookingId, userDetails.getId());
             model.addAttribute("table", table);
 
-            Club club = bookingService.getBookingClub(booking);
+            Club club = bookingService.getBookingClub(bookingId, userDetails.getId());
             model.addAttribute("clubName", club != null ? club.getClubName() : "");
             model.addAttribute("clubCbu",  club != null ? club.getCbu() : null);
 
-            model.addAttribute("bookingStartLocal", bookingService.getDateStart(booking));
-            model.addAttribute("bookingEndLocal",   bookingService.getDateEnd(booking));
+            model.addAttribute("bookingStartLocal", bookingService.getDateStart(bookingId, userDetails.getId()));
+            model.addAttribute("bookingEndLocal",   bookingService.getDateEnd(bookingId, userDetails.getId()));
 
             var rOpt = receiptService.getReceiptForBooking(bookingId);
             model.addAttribute("hasReceipt", rOpt.isPresent());
@@ -284,18 +284,18 @@ public class UserBookingController {
 
         model.addAttribute("booking", booking);
 
-        User bookingUser = bookingService.getBookingUser(booking);
+        User bookingUser = bookingService.getBookingUser(bookingId, userDetails.getId());
         model.addAttribute("user", bookingUser);
 
-        ClubTable table = bookingService.getBookingTable(booking);
+        ClubTable table = bookingService.getBookingTable(bookingId, userDetails.getId());
         model.addAttribute("table", table);
 
-        Club club = bookingService.getBookingClub(booking);
+        Club club = bookingService.getBookingClub(bookingId, userDetails.getId());
         model.addAttribute("clubName", club != null ? club.getClubName() : "");
         model.addAttribute("clubCbu",  club != null ? club.getCbu() : null);
 
-        model.addAttribute("bookingStartLocal", bookingService.getDateStart(booking));
-        model.addAttribute("bookingEndLocal",   bookingService.getDateEnd(booking));
+        model.addAttribute("bookingStartLocal", bookingService.getDateStart(bookingId, userDetails.getId()));
+        model.addAttribute("bookingEndLocal",   bookingService.getDateEnd(bookingId, userDetails.getId()));
 
         var receiptOpt = receiptService.getReceiptForBooking(bookingId);
         model.addAttribute("hasReceipt", receiptOpt.isPresent());

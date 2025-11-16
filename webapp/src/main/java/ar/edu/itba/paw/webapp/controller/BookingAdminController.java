@@ -188,6 +188,7 @@ public class BookingAdminController {
 
 
     @GetMapping("/booking")
+    @PreAuthorize("@securityServiceImpl.isClubAdmin(@bookingServiceImpl.clubId(#bookingId))")
     public String bookingAdminHandler(@RequestParam UUID bookingId, Model model, @ModelAttribute("error") String error, @ModelAttribute("success") String success) {
         Optional<Booking> bookingOpt = bookingService.findById(bookingId);
         if (bookingOpt.isEmpty()) {
@@ -222,8 +223,8 @@ public class BookingAdminController {
         model.addAttribute("clubName", clubName);
         model.addAttribute("clubCbu", clubCbu);
 
-        model.addAttribute("bookingStartLocal", bookingService.getDateStart(booking));
-        model.addAttribute("bookingEndLocal", bookingService.getDateEnd(booking));
+        model.addAttribute("bookingStartLocal", bookingService.getBookingDateStart(booking));
+        model.addAttribute("bookingEndLocal", bookingService.getBookingDateEnd(booking));
 
         if (error != null && !error.isEmpty()) {
             model.addAttribute("errorKey", error);
