@@ -492,6 +492,14 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
+    @Transactional
+    public int getTotalPages(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt, int size) {
+        int totalBookings = countSearch(userId, clubId, bookingId, status, bookingDate, hasReceipt);
+        return (int) Math.ceil((double) totalBookings / size);
+
+    }
+
+    @Override
     public User getBookingUser(Booking booking) {
         return userService.findById(booking.getUser().getId()).orElse(null);
     }

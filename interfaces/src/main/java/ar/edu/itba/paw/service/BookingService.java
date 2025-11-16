@@ -67,4 +67,6 @@ public interface BookingService {
 
     Map<UUID, Date> mapBookingStartDates(List<Booking> bookings);
 
+    int getTotalPages(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt, int size);
+
 }

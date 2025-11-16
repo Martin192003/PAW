@@ -139,8 +139,7 @@ public class UserBookingController {
                     form.getHasReceipt()
             );
         }
-
-        int totalPages = (int) Math.ceil((double) totalBookings / size);
+        int totalPages = bookingService.getTotalPages(form.getUserId(), form.getClubId(), bookingUuid, form.getStatus(), bookingDate, form.getHasReceipt(), size)  ;
 
         Map<String, String> filters = new LinkedHashMap<>();
         filters.put("userId", form.getUserId().toString()); // obligatorio
