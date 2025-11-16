@@ -116,7 +116,7 @@
             model.addAttribute("coverPhotoUrl", coverPhotoUrl);
             model.addAttribute("clubId", clubId);
             model.addAttribute("reviewForm", new ReviewForm());
-            model.addAttribute("hasReviewed", reviewService.getUserReviewForClub(userDetails.getId(), clubId).isPresent());
+            if(userDetails != null) model.addAttribute("hasReviewed", reviewService.getUserReviewForClub(userDetails.getId(), clubId).isPresent());
 
             if (start != null && end != null) {
                 model.addAttribute("dayStart", start);
