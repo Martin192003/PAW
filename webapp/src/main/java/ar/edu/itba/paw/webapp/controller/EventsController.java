@@ -81,10 +81,11 @@ public class EventsController {
 
         Photo photo = null;
         if (form.getPhotoId() != null && !form.getPhotoId().isEmpty()) {
-            photo = new Photo();
-            photo.setFilename(form.getPhotoId().getOriginalFilename());
-            photo.setContentType(form.getPhotoId().getContentType());
-            photo.setData(form.getPhotoId().getBytes());
+            photo = photoService.createPhoto(
+                    form.getPhotoId().getOriginalFilename(),
+                    form.getPhotoId().getContentType(),
+                    form.getPhotoId().getBytes()
+            );
         }
 
         eventService.create(
@@ -136,10 +137,11 @@ public class EventsController {
 
         Photo photoData = null;
         if (photo != null && !photo.isEmpty()) {
-            photoData = new Photo();
-            photoData.setFilename(photo.getOriginalFilename());
-            photoData.setContentType(photo.getContentType());
-            photoData.setData(photo.getBytes());
+            photoData = photoService.createPhoto(
+                    photo.getOriginalFilename(),
+                    photo.getContentType(),
+                    photo.getBytes()
+            );
         }
 
         eventService.update(

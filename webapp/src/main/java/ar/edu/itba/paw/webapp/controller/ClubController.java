@@ -209,10 +209,11 @@ public class ClubController {
 
         Photo photo = null;
         if (f.getImage() != null && !f.getImage().isEmpty()) {
-            photo = new Photo();
-            photo.setFilename(f.getImage().getOriginalFilename());
-            photo.setContentType(f.getImage().getContentType());
-            photo.setData(f.getImage().getBytes());
+            photo = photoService.createPhoto(
+                    f.getImage().getOriginalFilename(),
+                    f.getImage().getContentType(),
+                    f.getImage().getBytes()
+            );
         }
         Club newClub = clubService.create(
                 f.getName(), f.getDescription(), f.getLocation(), f.getPriceRange(),

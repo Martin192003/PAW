@@ -36,7 +36,6 @@ public class ClubLayoutController {
     public String uploadLayout(@PathVariable UUID clubId,
                                @RequestParam("file") MultipartFile file,
                                RedirectAttributes ra, @AuthenticationPrincipal PawUserDetails userDetails) throws IOException {
-        //TODO: FIJARSE SI ESTO ESTA BIEN
         clubLayoutService.uploadLayout(
                 clubId,
                 userDetails.getUser().getEmail(),
