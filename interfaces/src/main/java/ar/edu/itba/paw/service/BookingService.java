@@ -49,15 +49,19 @@ public interface BookingService {
 
     int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
 
-    String getDateStart(Booking booking);
+    String getBookingDateStart(Booking booking);
 
-    String getDateEnd(Booking booking);
+    String getBookingDateEnd(Booking booking);
 
-    User getBookingUser(Booking booking);
+    String getDateStart(UUID bookingId, UUID userId);
 
-    ClubTable getBookingTable(Booking booking);
+    String getDateEnd(UUID bookingId, UUID userId);
 
-    Club getBookingClub(Booking booking);
+    User getBookingUser(UUID bookingId, UUID userId);
+
+    ClubTable getBookingTable(UUID bookingId, UUID userId);
+
+    Club getBookingClub(UUID bookingId, UUID userId);
 
     UUID parseBookingId(String bookingId);
 
@@ -69,4 +73,5 @@ public interface BookingService {
 
     int getTotalPages(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt, int size);
 
+    UUID clubId(UUID bookingId);
 }

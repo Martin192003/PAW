@@ -403,12 +403,26 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public String getDateStart(Booking booking) {
+    public String getBookingDateStart(Booking booking) {
         return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
     }
 
     @Override
-    public String getDateEnd(Booking booking) {
+    public String getBookingDateEnd(Booking booking) {
+        return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
+    }
+
+    @Override
+    @Transactional
+    public String getDateStart(UUID bookingId, UUID userId) {
+        Booking booking = getForUser(bookingId, userId);
+        return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
+    }
+
+    @Override
+    @Transactional
+    public String getDateEnd(UUID bookingId, UUID userId) {
+        Booking booking = getForUser(bookingId, userId);
         return formatDateEsEn(booking.getBookingEnd().atZoneSameInstant(ZoneId.systemDefault()));
     }
 
@@ -500,18 +514,23 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public User getBookingUser(Booking booking) {
+    @Transactional(readOnly = true)
+    public User getBookingUser(UUID bookingId, UUID userId) {
+        Booking booking = getForUser(bookingId, userId);
         return userService.findById(booking.getUser().getId()).orElse(null);
     }
 
     @Override
-    public ClubTable getBookingTable(Booking booking) {
+    @Transactional(readOnly = true)
+    public ClubTable getBookingTable(UUID bookingId, UUID userId) {
+        Booking booking = getForUser(bookingId, userId);
         return tableService.findById(booking.getTableId()).orElse(null);
     }
 
     @Override
-    public Club getBookingClub(Booking booking) {
-        ClubTable table = getBookingTable(booking);
+    @Transactional(readOnly = true)
+    public Club getBookingClub(UUID bookingId, UUID userId) {
+        ClubTable table = getBookingTable(bookingId, userId);
         if (table == null) {
             return null;
         }
@@ -621,5 +640,14 @@ public class BookingServiceImpl implements BookingService {
     private static String capitalize(String s, Locale locale) {
         if (s == null || s.isEmpty()) return s;
         return s.substring(0, 1).toUpperCase(locale) + s.substring(1);
+    }
+
+    @Override
+    public UUID clubId(UUID bookingId) {
+        Booking booking = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+        ClubTable table = tableService.findById(booking.getTableId())
+                .orElseThrow(() -> new TableNotFoundException(booking.getTableId()));
+        return table.getClubId();
     }
 }
