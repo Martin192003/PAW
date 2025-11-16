@@ -56,7 +56,7 @@ public class BookingAdminController {
 
         List<Club> clubs = clubService.getClubsByUserPaginated(userDetails.getId(), size, offset);
         int totalClubs = clubService.countClubsByUser(userDetails.getId());
-        int totalPages = Math.max(1, (int) Math.ceil((double) totalClubs / size));
+        int totalPages = clubService.countPagesForUser(userDetails.getId(), size);
 
         Map<UUID,String> photoUrlByClub = photoService.getCoverUrls(
                 clubs.stream().map(Club::getClubId).collect(Collectors.toSet())
@@ -159,7 +159,6 @@ public class BookingAdminController {
         Map<UUID, Date> bookingStartDates = bookingService.mapBookingStartDates(result);
         model.addAttribute("bookingStartDates", bookingStartDates);
 
-        // Result esta paginado de esa manera no es tan ineficiente ya que iteramos sobre un maximo de 10
         Map<UUID, Boolean> hasReceiptMap = new HashMap<>();
         for (Booking b : result) {
             hasReceiptMap.put(b.getBookingId(), receiptService.findByBooking(b.getBookingId()).isPresent());

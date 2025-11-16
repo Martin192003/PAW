@@ -208,6 +208,17 @@ public class ClubServiceImpl implements ClubService{
 
     @Override
     @Transactional(readOnly = true)
+    public int countPagesForUser(UUID userId, int size) {
+        if (size <= 0) {
+            return 1; // fallback defensivo
+        }
+
+        int totalClubs = countClubsByUser(userId);
+        return Math.max(1, (int) Math.ceil((double) totalClubs / size));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public int countSearchAvailable(String nameLike, Zone location, String musicGenre,
                                     String priceRange, Boolean isBar, LocalDate day) {
         return clubDao.countSearchAvailable(nameLike, location, musicGenre, priceRange, isBar, day);
