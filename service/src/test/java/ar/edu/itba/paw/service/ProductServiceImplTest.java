@@ -55,17 +55,13 @@ public class ProductServiceImplTest {
         mockProduct.setIsAvailable(IS_AVAILABLE);
     }
 
-    // ========================
-    // CREATE - HAPPY PATH
-    // ========================
-
     @Test
     public void testCreate_Success() {
         // 1. Setup
         Mockito.when(clubService.getClubById(Mockito.eq(CLUB_ID)))
                 .thenReturn(Optional.of(mockClub));
         Mockito.when(productsDao.findByClub(Mockito.eq(mockClub)))
-                .thenReturn(List.of()); // 0 productos
+                .thenReturn(List.of());
         Mockito.when(productsDao.create(
                 Mockito.eq(mockClub),
                 Mockito.eq(NAME),
@@ -75,10 +71,8 @@ public class ProductServiceImplTest {
                 Mockito.eq(IS_AVAILABLE)
         )).thenReturn(mockProduct);
 
-        // 2. Exercise
         Product result = productService.create(CLUB_ID, NAME, DESCRIPTION, BASE_PRICE, TYPE, IS_AVAILABLE);
 
-        // 3. Assert
         Assert.assertNotNull(result);
         Assert.assertEquals(PRODUCT_ID, result.getProductId());
         Assert.assertEquals(NAME, result.getProductName());
@@ -90,11 +84,9 @@ public class ProductServiceImplTest {
 
     @Test
     public void testCreate_ClubNotFound() {
-        // 1. Setup
         Mockito.when(clubService.getClubById(Mockito.eq(CLUB_ID)))
                 .thenReturn(Optional.empty());
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(ClubNotFoundException.class, () -> {
             productService.create(CLUB_ID, NAME, DESCRIPTION, BASE_PRICE, TYPE, IS_AVAILABLE);
         });
@@ -102,11 +94,9 @@ public class ProductServiceImplTest {
 
     @Test
     public void testCreate_PriceTooHigh() {
-        // 1. Setup
         Mockito.when(clubService.getClubById(Mockito.eq(CLUB_ID)))
                 .thenReturn(Optional.of(mockClub));
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(ValidationException.class, () -> {
             productService.create(CLUB_ID, NAME, DESCRIPTION, BigDecimal.valueOf(100000000), TYPE, IS_AVAILABLE);
         });
@@ -114,13 +104,11 @@ public class ProductServiceImplTest {
 
     @Test
     public void testCreate_NameTooLong() {
-        // 1. Setup
         Mockito.when(clubService.getClubById(Mockito.eq(CLUB_ID)))
                 .thenReturn(Optional.of(mockClub));
 
         String longName = "a".repeat(101);
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(IllegalArgumentException.class, () -> {
             productService.create(CLUB_ID, longName, DESCRIPTION, BASE_PRICE, TYPE, IS_AVAILABLE);
         });
@@ -128,7 +116,6 @@ public class ProductServiceImplTest {
 
     @Test
     public void testCreate_MaxProductsReached() {
-        // 1. Setup
         List<Product> fiftyProducts = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             Product p = new Product();
@@ -141,19 +128,13 @@ public class ProductServiceImplTest {
         Mockito.when(productsDao.findByClub(Mockito.eq(mockClub)))
                 .thenReturn(fiftyProducts);
 
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(ValidationException.class, () -> {
             productService.create(CLUB_ID, NAME, DESCRIPTION, BASE_PRICE, TYPE, IS_AVAILABLE);
         });
     }
 
-    // ========================
-    // UPDATE - HAPPY PATH
-    // ========================
-
     @Test
     public void testUpdate_Success() {
-        // 1. Setup: Producto actualizado con nombre nuevo
         Product updatedProduct = new Product();
         updatedProduct.setProductId(PRODUCT_ID);
         updatedProduct.setProductName("Cerveza IPA Premium");
@@ -162,7 +143,6 @@ public class ProductServiceImplTest {
         updatedProduct.setProductType(TYPE);
         updatedProduct.setIsAvailable(IS_AVAILABLE);
 
-        // 2. Mock: DAO devuelve el producto actualizado
         Mockito.when(productsDao.update(
                 Mockito.eq(PRODUCT_ID),
                 Mockito.eq(CLUB_ID),
@@ -173,7 +153,6 @@ public class ProductServiceImplTest {
                 Mockito.eq(IS_AVAILABLE)
         )).thenReturn(updatedProduct);
 
-        // 3. Exercise
         Product result = productService.update(
                 PRODUCT_ID,
                 CLUB_ID,
@@ -184,7 +163,6 @@ public class ProductServiceImplTest {
                 IS_AVAILABLE
         );
 
-        // 4. Asserts
         Assert.assertNotNull(result);
         Assert.assertEquals(PRODUCT_ID, result.getProductId());
         Assert.assertEquals("Cerveza IPA Premium", result.getProductName());
@@ -196,34 +174,21 @@ public class ProductServiceImplTest {
 
     @Test
     public void testUpdate_PriceTooHigh() {
-
-        // 2. Exercise + 3. Assert
         Assert.assertThrows(ValidationException.class, () -> {
             productService.update(PRODUCT_ID, CLUB_ID, NAME, DESCRIPTION,
                     BigDecimal.valueOf(100000000), TYPE, IS_AVAILABLE);
         });
     }
 
-    // ========================
-    // DELETE
-    // ========================
-
     @Test
     public void testDelete_Success() {
-        // 1. Setup
         Mockito.when(productsDao.delete(Mockito.eq(PRODUCT_ID)))
                 .thenReturn(true);
 
-        // 2. Exercise
         boolean result = productService.delete(PRODUCT_ID);
 
-        // 3. Assert
         Assert.assertTrue(result);
     }
-
-    // ========================
-    // FIND BY ID
-    // ========================
 
     @Test
     public void testFindById_Exists() {
@@ -246,13 +211,8 @@ public class ProductServiceImplTest {
         Assert.assertFalse(result.isPresent());
     }
 
-    // ========================
-    // FIND BY CLUB
-    // ========================
-
     @Test
     public void testFindByClub() {
-        // 1. Setup: Dos productos reales
         Product p1 = new Product();
         p1.setProductId(UUID.randomUUID());
         p1.setProductName("Cerveza IPA");
@@ -263,14 +223,11 @@ public class ProductServiceImplTest {
         p2.setProductName("Fernet");
         p2.setIsAvailable(true);
 
-        // 2. Mock: DAO devuelve la lista
         Mockito.when(productsDao.findByClub(Mockito.eq(mockClub)))
                 .thenReturn(Arrays.asList(p1, p2));
 
-        // 3. Exercise
         List<Product> result = productService.findByClub(mockClub);
 
-        // 4. Assert
         Assert.assertNotNull(result);
         Assert.assertEquals(2, result.size());
         Assert.assertTrue(result.contains(p1));
@@ -290,14 +247,10 @@ public class ProductServiceImplTest {
         Assert.assertEquals(2, result.size());
     }
 
-    // ========================
-    // CAN ADD PRODUCT
-    // ========================
-
     @Test
     public void testCanAddProduct_True() {
         Mockito.when(productsDao.findByClub(Mockito.eq(mockClub)))
-               .thenReturn(List.of()); // 0 productos
+               .thenReturn(List.of());
 
         boolean result = productService.canAddProduct(mockClub);
 
@@ -324,10 +277,6 @@ public class ProductServiceImplTest {
         boolean result = productService.canAddProduct(null);
         Assert.assertFalse(result);
     }
-
-    // ========================
-    // CLASSIFY CATEGORY
-    // ========================
 
     @Test
     public void testClassifyCategory_Cerveza() {
@@ -372,10 +321,6 @@ public class ProductServiceImplTest {
 
         Assert.assertEquals("TRAGOS", category);
     }
-
-    // ========================
-    // GET VISIBLE PRODUCTS BY CATEGORY
-    // ========================
 
     @Test
     public void testGetVisibleProductsByCategory() {

@@ -103,11 +103,11 @@ public class ClubJpaDaoTest {
                 newLoc,
                 newRating,
                 newQty,
-                null,       // priceRange
+                null,
                 newDesc,
                 otherUser.getId(),
-                null,       // musicGenre
-                null,       // zone
+                null,
+                null,
                 true,
                 newCbu
         );
@@ -340,16 +340,16 @@ public class ClubJpaDaoTest {
         Club c = new Club(
                 name,
                 "Location",
-                null,          // rating
-                null,          // quantityRatings
-                null,          // priceRange
+                null,
+                null,
+                null,
                 description,
                 contact,
-                null,          // musicGenre
+                null,
                 OffsetDateTime.now(),
-                null,          // zone
+                null,
                 Boolean.FALSE,
-                null //CBU
+                null
         );
         em.persist(c);
         return c;

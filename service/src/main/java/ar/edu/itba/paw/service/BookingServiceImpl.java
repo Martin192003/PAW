@@ -120,14 +120,12 @@ public class BookingServiceImpl implements BookingService {
         validateDateRange(bookingStart, bookingEnd);
 
 
-        // Chequear solapamiento sólo si va a quedar 'activa'
         if (status == Status.PENDIENTE || status == Status.CONFIRMADA) {
             ensureNoOverlap(tableId, bookingStart, bookingEnd, bookingId);
         }
 
         validateStatusTransition(existing.getStatus(), status);
 
-        // Si tenés relación @ManyToOne, preferí pasar la entidad 'table'
         return bookingDao.update(bookingId, user, tableId, status, totalAmount, bookingStart, bookingEnd)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
     }
@@ -140,8 +138,6 @@ public class BookingServiceImpl implements BookingService {
 
         validateStatusTransition(current.getStatus(), newStatus);
 
-        // Si pasa a activa (PENDIENTE/CONFIRMADA) no cambiamos fechas ni mesa,
-        // por lo que no hay chequeo de overlap adicional aquí.
         final Booking updated = bookingDao.update(
                         bookingId,
                         current.getUser(),
@@ -154,7 +150,6 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
 
         if (newStatus == Status.CANCELADA) {
-            // Liberar mesa en caso de quedar sin reservas activas
             try {
                 final ClubTable table = ensureTableExists(updated.getTableId());
                 maybeFreeTable(table);
@@ -354,7 +349,6 @@ public class BookingServiceImpl implements BookingService {
 
         if (clubId != null) {
             if (!adminClubIds.contains(clubId)) {
-                // También podrías lanzar AccessDenied/Unauthorized si preferís
                 return List.of();
             }
             adminClubIds = List.of(clubId);
@@ -553,7 +547,6 @@ public class BookingServiceImpl implements BookingService {
     private void validateStatusTransition(Status from, Status to) {
         if (from == to) return;
 
-        // Máquina de estados sólo para Booking (PENDIENTE/CONFIRMADA/CANCELADA)
         switch (from) {
             case PENDIENTE -> {
                 if (!(to == Status.CONFIRMADA || to == Status.CANCELADA)) {
@@ -610,7 +603,7 @@ public class BookingServiceImpl implements BookingService {
         Month m = date.getMonth();
         String monthName = m.getDisplayName(TextStyle.FULL, locale);
         if (isEs) {
-            monthName = capitalize(monthName, locale); // Java devuelve "noviembre"; se capitaliza -> "Noviembre"
+            monthName = capitalize(monthName, locale);
         }
 
         String connector = isEs ? " de " : " of ";

@@ -20,6 +20,21 @@
     <link rel="stylesheet" href="<c:url value='/resources/css/userReviews.css' />">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta charset="UTF-8">
+
+    <style>
+        body.modal-open {
+        overflow: hidden;
+        height: 100vh;
+        position: fixed;
+        width: 100%;
+        }
+
+    .modal {
+        overflow-y: auto;
+    }
+    </style>
+
+
 </head>
 <body>
 <div class="top-bar">
@@ -986,22 +1001,48 @@
 </div>
 
 <script>
+    // ==== Manejo de scroll cuando hay modales abiertos ====
+    let openModalCount = 0;
+
+    function lockBodyScroll() {
+        if (openModalCount === 0) {
+            document.body.classList.add('modal-open');
+        }
+        openModalCount++;
+    }
+
+    function unlockBodyScroll() {
+        openModalCount = Math.max(0, openModalCount - 1);
+        if (openModalCount === 0) {
+            document.body.classList.remove('modal-open');
+        }
+    }
+
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
-        if (modal) modal.style.display = 'flex';
+        if (modal) {
+            modal.style.display = 'flex';
+            lockBodyScroll();
+        }
     }
+
     function openDeleteModal(productId) {
         document.getElementById('deleteProductId').value = productId;
         document.getElementById('deleteModal').style.display = 'flex';
+        lockBodyScroll();
     }
+
     function closeDeleteModal() {
         document.getElementById('deleteProductId').value = '';
         document.getElementById('deleteModal').style.display = 'none';
+        unlockBodyScroll();
     }
+
     function openEditModal(field, value) {
         const modal = document.getElementById('editModal');
         if (!modal) return;
         modal.style.display = 'flex';
+        lockBodyScroll();
 
         // Set the hidden editedField input
         const editedFieldInput = document.getElementById('editedField');
@@ -1037,25 +1078,25 @@
 
         // Handle value setting based on element type
         if (inputElement.tagName === 'SELECT') {
-            // For <select> elements, ensure the value matches an option
             const validValue = (value === undefined || value === null || value === '') ? '' : value;
             inputElement.value = validValue;
-            // If no valid option is selected, reset to the first option
             if (validValue && !inputElement.querySelector(`option[value="${validValue}"]`)) {
                 inputElement.value = '';
             }
         } else {
-            // For <input> and <textarea>, set the value directly
             inputElement.value = (value === undefined || value === null) ? '' : value;
         }
     }
+
     function closeEditModal() {
         const modal = document.getElementById('editModal');
         if (modal) {
             modal.style.display = 'none';
             clearFormErrors('editModal');
+            unlockBodyScroll();
         }
     }
+
     function openTableEditModal(tableId, tableNumber, capacity, price, discount) {
         document.getElementById('tableEditModal').style.display = 'flex';
         document.getElementById('editTableNumber').value = tableNumber;
@@ -1063,16 +1104,28 @@
         document.getElementById('editTablePrice').value = price;
         document.getElementById('editTableDiscount').value = discount;
         document.getElementById('tableEditForm').action = '${pageContext.request.contextPath}/clubs/tables/' + tableId + '/edit';
+        lockBodyScroll();
     }
+
     function closeTableEditModal() {
-        document.getElementById('tableEditModal').style.display = 'none';
-        clearFormErrors('tableEditModal');
+        const modal = document.getElementById('tableEditModal');
+        if (modal) {
+            modal.style.display = 'none';
+            clearFormErrors('tableEditModal');
+            unlockBodyScroll();
+        }
     }
+
     function openTableDeleteModal(tableId) {
         document.getElementById('tableDeleteModal').style.display = 'flex';
         document.getElementById('tableDeleteForm').action = '${pageContext.request.contextPath}/clubs/tables/' + tableId + '/delete';
+        lockBodyScroll();
     }
-    function closeTableDeleteModal() { document.getElementById('tableDeleteModal').style.display = 'none'; }
+
+    function closeTableDeleteModal() {
+        document.getElementById('tableDeleteModal').style.display = 'none';
+        unlockBodyScroll();
+    }
 
     function openProductEditModal(btn) {
         const d = btn.dataset;
@@ -1082,11 +1135,18 @@
         document.getElementById('editProductDescription').value = d.productDescription;
         document.getElementById('editProductPrice').value = d.productPrice;
         document.getElementById('editProductType').value = d.productType;
+        lockBodyScroll();
     }
+
     function closeProductEditModal() {
-        document.getElementById('productEditModal').style.display = 'none';
-        clearFormErrors('productEditModal');
+        const modal = document.getElementById('productEditModal');
+        if (modal) {
+            modal.style.display = 'none';
+            clearFormErrors('productEditModal');
+            unlockBodyScroll();
+        }
     }
+
     function clearFormErrors(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -1106,27 +1166,47 @@
         document.getElementById('editEventDescription').value = eventDesc || '';
         document.getElementById('eventEditForm').action = '${pageContext.request.contextPath}/clubs/events/' + eventId + '/edit';
         const fileInfo = document.getElementById('editEventFileInfo');
-        fileInfo.textContent = photoId ? ('Current image: event_' + photoId + '.jpg') : 'No image';
+        lockBodyScroll();
     }
+
     function closeEventEditModal() {
-        document.getElementById('eventEditModal').style.display = 'none';
-        clearFormErrors('eventEditModal');
-        document.getElementById('editEventId').value = '';
-        document.getElementById('editEventName').value = '';
-        document.getElementById('editEventDate').value = '';
-        document.getElementById('editEventDescription').value = '';
-        document.getElementById('editEventFileInfo').textContent = '';
+        const modal = document.getElementById('eventEditModal');
+        if (modal) {
+            modal.style.display = 'none';
+            clearFormErrors('eventEditModal');
+            document.getElementById('editEventId').value = '';
+            document.getElementById('editEventName').value = '';
+            document.getElementById('editEventDate').value = '';
+            document.getElementById('editEventDescription').value = '';
+            unlockBodyScroll();
+        }
     }
+
     function openEventDeleteModal(eventId) {
         document.getElementById('eventDeleteModal').style.display = 'flex';
         document.getElementById('eventDeleteForm').action = '${pageContext.request.contextPath}/clubs/events/' + eventId + '/delete';
+        lockBodyScroll();
     }
-    function closeEventDeleteModal() { document.getElementById('eventDeleteModal').style.display = 'none'; }
+
+    function closeEventDeleteModal() {
+        document.getElementById('eventDeleteModal').style.display = 'none';
+        unlockBodyScroll();
+    }
 
     document.getElementById('editEventPhoto')?.addEventListener('change', function() {
         const info = document.getElementById('editEventFileInfo');
-        if (this.files && this.files[0]) info.textContent = this.files[0].name; else info.textContent = '';
+        if (info) {
+            if (this.files && this.files[0]) info.textContent = this.files[0].name;
+            else info.textContent = '';
+        }
     });
+
+    function openLayoutModal() {
+        const modal = document.getElementById('editLayoutModal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        lockBodyScroll();
+    }
 
     function closeLayoutModal() {
         const modal = document.getElementById('editLayoutModal');
@@ -1135,18 +1215,27 @@
         const fileInput = modal.querySelector('input[type="file"]');
         if (fileInput) fileInput.value = '';
         try { clearFormErrors('editLayoutModal'); } catch(e){}
+        unlockBodyScroll();
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('input[type="number"]').forEach(function(input) {
-            input.addEventListener('keydown', function(e) { if (e.key === '-' || e.key === 'Subtract') e.preventDefault(); });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === '-' || e.key === 'Subtract') e.preventDefault();
+            });
             input.addEventListener('input', function() { this.value = this.value.replace(/-/g, ''); });
         });
-
     });
 
-    function openAddPhotosModal() { document.getElementById('addPhotosModal').style.display = 'flex'; }
-    function closeAddPhotosModal() { document.getElementById('addPhotosModal').style.display = 'none'; }
+    function openAddPhotosModal() {
+        document.getElementById('addPhotosModal').style.display = 'flex';
+        lockBodyScroll();
+    }
+
+    function closeAddPhotosModal() {
+        document.getElementById('addPhotosModal').style.display = 'none';
+        unlockBodyScroll();
+    }
 
     // Validación múltiple de gallery
     document.addEventListener('DOMContentLoaded', function() {
@@ -1239,6 +1328,8 @@
 
         requestAnimationFrame(paint);
     });
+
+    // Reabrir modales con errores de validación
     document.addEventListener('DOMContentLoaded', function() {
         <c:if test="${not empty editEventForm and not empty errors and editField == 'event'}">
         openEventEditModal(
@@ -1250,115 +1341,113 @@
         );
         </c:if>
     });
+
     document.addEventListener('DOMContentLoaded', function() {
         <c:if test="${not empty editProductForm and not empty errors and editField == 'product'}">
-            document.getElementById('productEditModal').style.display = 'flex';
-            document.getElementById('editProductId').value = '<c:out value="${editProductForm.productId}"/>';
-            document.getElementById('editProductName').value = '<c:out value="${fn:escapeXml(editProductForm.productName)}"/>';
-            document.getElementById('editProductDescription').value = '<c:out value="${fn:escapeXml(editProductForm.description)}"/>';
-            document.getElementById('editProductPrice').value = '<c:out value="${editProductForm.basePrice}"/>';
-            document.getElementById('editProductType').value = '<c:out value="${editProductForm.productType}"/>';
+        document.getElementById('productEditModal').style.display = 'flex';
+        document.getElementById('editProductId').value = '<c:out value="${editProductForm.productId}"/>';
+        document.getElementById('editProductName').value = '<c:out value="${fn:escapeXml(editProductForm.productName)}"/>';
+        document.getElementById('editProductDescription').value = '<c:out value="${fn:escapeXml(editProductForm.description)}"/>';
+        document.getElementById('editProductPrice').value = '<c:out value="${editProductForm.basePrice}"/>';
+        document.getElementById('editProductType').value = '<c:out value="${editProductForm.productType}"/>';
+        lockBodyScroll();
         </c:if>
     });
+
     document.addEventListener('DOMContentLoaded', function() {
         <c:if test="${not empty editTableForm and not empty errors and editField == 'table'}">
-            document.getElementById('tableEditModal').style.display = 'flex';
-            document.getElementById('editTableNumber').value = '<c:out value="${editTableForm.tableNumber}"/>';
-            document.getElementById('editTableCapacity').value = '<c:out value="${editTableForm.capacity}"/>';
-            document.getElementById('editTablePrice').value = '<c:out value="${editTableForm.price}"/>';
-            document.getElementById('editTableDiscount').value = '<c:out value="${editTableForm.discount}"/>';
-            document.getElementById('tableEditForm').action = '${pageContext.request.contextPath}/clubs/tables/<c:out value="${editTableForm.tableId}"/>/edit';
+        document.getElementById('tableEditModal').style.display = 'flex';
+        document.getElementById('editTableNumber').value = '<c:out value="${editTableForm.tableNumber}"/>';
+        document.getElementById('editTableCapacity').value = '<c:out value="${editTableForm.capacity}"/>';
+        document.getElementById('editTablePrice').value = '<c:out value="${editTableForm.price}"/>';
+        document.getElementById('editTableDiscount').value = '<c:out value="${editTableForm.discount}"/>';
+        document.getElementById('tableEditForm').action = '${pageContext.request.contextPath}/clubs/tables/<c:out value="${editTableForm.tableId}"/>/edit';
+        lockBodyScroll();
         </c:if>
     });
+
     document.addEventListener('DOMContentLoaded', function() {
         <c:if test="${not empty clubHandlerForm and not empty errors and not empty editField}">
-            <c:if test="${editField == 'clubName' or editField == 'location' or editField == 'zone' or editField == 'musicGenre' or editField == 'priceRange' or editField == 'description' or editField == 'cbu'}">
-            openEditModal(
-                '<c:out value="${editField}"/>',
-                <c:choose>
-                <c:when test="${editField == 'clubName'}">'<c:out value="${fn:escapeXml(clubHandlerForm.name)}"/>'</c:when>
-            <c:when test="${editField == 'location'}">'<c:out value="${fn:escapeXml(clubHandlerForm.location)}"/>'</c:when>
-            <c:when test="${editField == 'zone'}">'<c:out value="${clubHandlerForm.zone}"/>'</c:when>
-            <c:when test="${editField == 'musicGenre'}">'<c:out value="${clubHandlerForm.musicGenre}"/>'</c:when>
-            <c:when test="${editField == 'priceRange'}">'<c:out value="${clubHandlerForm.priceRange}"/>'</c:when>
-            <c:when test="${editField == 'description'}">'<c:out value="${fn:escapeXml(clubHandlerForm.description)}"/>'</c:when>
-            <c:when test="${editField == 'cbu'}">'<c:out value="${fn:escapeXml(clubHandlerForm.cbu)}"/>'</c:when>
-            <c:otherwise>''</c:otherwise>
-            </c:choose>
-            )
+        <c:if test="${editField == 'clubName' or editField == 'location' or editField == 'zone' or editField == 'musicGenre' or editField == 'priceRange' or editField == 'description' or editField == 'cbu'}">
+        openEditModal(
+            '<c:out value="${editField}"/>',
+            <c:choose>
+            <c:when test="${editField == 'clubName'}">'<c:out value="${fn:escapeXml(clubHandlerForm.name)}"/>'</c:when>
+        <c:when test="${editField == 'location'}">'<c:out value="${fn:escapeXml(clubHandlerForm.location)}"/>'</c:when>
+        <c:when test="${editField == 'zone'}">'<c:out value="${clubHandlerForm.zone}"/>'</c:when>
+        <c:when test="${editField == 'musicGenre'}">'<c:out value="${clubHandlerForm.musicGenre}"/>'</c:when>
+        <c:when test="${editField == 'priceRange'}">'<c:out value="${clubHandlerForm.priceRange}"/>'</c:when>
+        <c:when test="${editField == 'description'}">'<c:out value="${fn:escapeXml(clubHandlerForm.description)}"/>'</c:when>
+        <c:when test="${editField == 'cbu'}">'<c:out value="${fn:escapeXml(clubHandlerForm.cbu)}"/>'</c:when>
+        <c:otherwise>''</c:otherwise>
+        </c:choose>
+    )
         </c:if>
-
         </c:if>
     });
+
     document.querySelectorAll('.tab-button').forEach(button => {
         button.addEventListener('click', () => {
             const tabId = button.getAttribute('data-tab');
 
-            // desactivar todo
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
 
-            // activar el seleccionado
             button.classList.add('active');
             document.getElementById(tabId).classList.add('active');
         });
     });
+
     document.addEventListener("DOMContentLoaded", function () {
         const tabs = document.querySelectorAll(".tab-button");
         const contents = document.querySelectorAll(".tab-content");
 
-        // Leer tab guardada, sino usar menu-tab
         let savedTab = localStorage.getItem("activeTab");
         if (!savedTab) {
             savedTab = "menu-tab";
         }
 
-        // Limpiar actives
         tabs.forEach(t => t.classList.remove("active"));
         contents.forEach(c => c.classList.remove("active"));
 
-        // Activar la guardada
         const savedButton = document.querySelector('.tab-button[data-tab="' + savedTab + '"]');
         const savedContent = document.getElementById(savedTab);
 
         if (savedButton) savedButton.classList.add("active");
         if (savedContent) savedContent.classList.add("active");
 
-        // Cuando se hace click en una tab
         tabs.forEach(button => {
             button.addEventListener("click", function () {
                 const tabId = this.getAttribute("data-tab");
-
-                // Guardar tab
                 localStorage.setItem("activeTab", tabId);
 
-                // Reset
                 tabs.forEach(t => t.classList.remove("active"));
                 contents.forEach(c => c.classList.remove("active"));
 
-                // Activar
                 this.classList.add("active");
                 document.getElementById(tabId).classList.add("active");
             });
         });
     });
+
     const ctx = '${pageContext.request.contextPath}';
     const clubId = '${club.clubId}';
+
     function openDeletePhotoModal(photoId) {
         const form = document.getElementById("deletePhotoForm");
         document.getElementById("deletePhotoId").value = photoId;
-
-        // Igual que los otros openXYZDeleteModal
         form.action = ctx + "/clubs/" + clubId + "/photos/" + photoId + "/delete";
-
-        document.getElementById("deletePhotoModal").style.display = "flex"; // mantenés estilo igual al resto
+        document.getElementById("deletePhotoModal").style.display = "flex";
+        lockBodyScroll();
     }
 
     function closeDeletePhotoModal() {
         document.getElementById("deletePhotoForm").action = "";
         document.getElementById("deletePhotoId").value = "";
         document.getElementById("deletePhotoModal").style.display = "none";
+        unlockBodyScroll();
     }
 </script>
+
 </body>
 </html>
