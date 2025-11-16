@@ -2,15 +2,12 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Review;
-import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.*;
 
 @Repository
@@ -133,7 +130,7 @@ public class ReviewsJpaDao implements ReviewsDao {
 
         var nativeQuery = em.createNativeQuery(sql.toString())
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("limit", limit)
                 .setParameter("offset", offset);
 
@@ -256,7 +253,7 @@ public class ReviewsJpaDao implements ReviewsDao {
 
         List<String> idTexts = em.createNativeQuery(idSql)
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .setParameter("limit", limit)
                 .setParameter("offset", offset)

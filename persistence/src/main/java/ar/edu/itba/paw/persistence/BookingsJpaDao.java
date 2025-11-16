@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Repository;
 
 
@@ -149,7 +150,7 @@ public class BookingsJpaDao implements BookingDao {
 
         final var nq = em.createNativeQuery(idSql)
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setFirstResult(offset)
                 .setMaxResults(limit);
 
@@ -215,7 +216,7 @@ public class BookingsJpaDao implements BookingDao {
 
         final var nq = em.createNativeQuery(idSql)
                 .unwrap(NativeQuery.class)
-                .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
+                .addScalar("id_text", StandardBasicTypes.STRING)
                 .setFirstResult(offset)
                 .setMaxResults(limit);
 
