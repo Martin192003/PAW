@@ -98,9 +98,9 @@ public class ClubController {
         model.addAttribute("selectedAvailabilityDate", selectedDay);
 
         int totalClubs = 0;
-        int offset = (page - 1) * size;
+        int offset;
         List<Club> clubs = Collections.emptyList();
-        int totalPages = 1;
+        int totalPages;
 
         if (availabilityMode) {
             if (!invalidDay) {
@@ -256,22 +256,22 @@ public class ClubController {
 
         int pageIndex = page - 1;
         List<Event> events;
-        int totalEvents = switch (filter) {
+        int totalPages = switch (filter) {
             case "past" -> {
                 events = eventService.findPastByClub(clubId, pageIndex, size);
-                yield eventService.countPastByClub(clubId);
+                yield eventService.totalEventPagesPast(clubId, size);
             }
             case "future" -> {
                 events = eventService.findUpcomingByClub(clubId, pageIndex, size);
-                yield eventService.countUpcomingByClub(clubId);
+                yield eventService.totalEventPagesUpcoming(clubId, size);
             }
             default -> {
                 events = eventService.listByClub(clubId, pageIndex, size);
-                yield eventService.countByClub(clubId);
+                yield eventService.totalEventPagesUpcoming(clubId, size);
             }
         };
 
-        int totalPages = (int) Math.ceil((double) totalEvents / size);
+
 
         model.addAttribute("filter", filter);
         model.addAttribute("club", club);

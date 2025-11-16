@@ -159,10 +159,7 @@ public class BookingAdminController {
         Map<UUID, Date> bookingStartDates = bookingService.mapBookingStartDates(result);
         model.addAttribute("bookingStartDates", bookingStartDates);
 
-        Map<UUID, Boolean> hasReceiptMap = new HashMap<>();
-        for (Booking b : result) {
-            hasReceiptMap.put(b.getBookingId(), receiptService.findByBooking(b.getBookingId()).isPresent());
-        }
+        Map<UUID, Boolean> hasReceiptMap = receiptService.buildHasReceiptMap(result);
         model.addAttribute("hasReceiptMap", hasReceiptMap);
 
         model.addAttribute("bookings", result);
