@@ -8,18 +8,25 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.ui.Model;
-
 import ar.edu.itba.paw.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import ar.edu.itba.paw.service.UserService;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.Collections;
 
 @Controller
@@ -28,10 +35,12 @@ public class LoginController {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class);
 
     private final UserService userService;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
-    public LoginController(UserService userService) {
+    public LoginController(UserService userService, UserDetailsService userDetailsService) {
         this.userService = userService;
+        this.userDetailsService = userDetailsService;
     }
 
     @GetMapping({"", "/"})
@@ -91,7 +100,8 @@ public class LoginController {
 
     @GetMapping("/verify-account")
     public String verifyAccountFromEmail(@RequestParam(value = "token", required = false) String token,
-                                         Model model) {
+                                         Model model,
+                                         HttpServletRequest request) throws ServletException, IOException {
         if (token == null || token.trim().isEmpty()) {
             return "redirect:/unverified";
         }
@@ -100,22 +110,37 @@ public class LoginController {
         if (userToVerify != null && !userToVerify.isVerified()) {
             boolean isValid = userService.verifyUser(token);
             if (isValid) {
+
+                UserDetails userDetails = userDetailsService.loadUserByUsername(userToVerify.getUsername());
+
                 Authentication auth = new UsernamePasswordAuthenticationToken(
-                        userToVerify.getUsername(),
+                        userDetails,
                         null,
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                        userDetails.getAuthorities()
                 );
+
                 SecurityContextHolder.getContext().setAuthentication(auth);
+
+                HttpSession session = request.getSession(true);
+                session.setAttribute(
+                        HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                        SecurityContextHolder.getContext()
+                );
+
+                String detectedLocale = request.getLocale().toLanguageTag();
+                userService.updateUserLocale(userToVerify.getId(),detectedLocale);
 
                 model.addAttribute("success", "register.valid.token");
                 model.addAttribute("userAuthenticated", true);
+
                 return "verifyResult";
             }
         }
 
         return "redirect:/unverified";
     }
-    
+
+
     @GetMapping("/unverified")
     public String showUnverifiedPage(@RequestParam(required = false) String username, Model model) {
         if (username != null) {

@@ -148,7 +148,7 @@ public class BookingsJpaDao implements BookingDao {
                 """.formatted(inner, nativeSortForAlias("x", sort));
 
         final var nq = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setFirstResult(offset)
                 .setMaxResults(limit);
@@ -192,7 +192,6 @@ public class BookingsJpaDao implements BookingDao {
         if (clubId != null) {
             inner.append("LEFT JOIN club_tables t ON t.table_id = b.table_id\n");
         }
-        // join receipts only when filtering on hasReceipt to avoid extra work otherwise
         if (hasReceipt != null) {
             inner.append("LEFT JOIN receipts r ON r.booking_id = b.booking_id\n");
         }
@@ -215,7 +214,7 @@ public class BookingsJpaDao implements BookingDao {
                 """.formatted(inner, nativeSortForAlias("x", sort));
 
         final var nq = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setFirstResult(offset)
                 .setMaxResults(limit);

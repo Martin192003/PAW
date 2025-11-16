@@ -2,6 +2,7 @@ package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.PhotoType;
+import org.hibernate.query.NativeQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,7 +46,7 @@ public class PhotoJpaDao implements PhotoDao {
                         ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
                         LIMIT :limit OFFSET :offset
                         """)
-                .unwrap(org.hibernate.query.NativeQuery.class)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .setParameter("limit", lim)
@@ -189,7 +190,7 @@ public class PhotoJpaDao implements PhotoDao {
                 ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
                 LIMIT :limit OFFSET :offset
             """)
-                .unwrap(org.hibernate.query.NativeQuery.class)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .setParameter("limit", lim)
@@ -231,7 +232,7 @@ public class PhotoJpaDao implements PhotoDao {
             ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
             LIMIT :limit OFFSET :offset
         """)
-                .unwrap(org.hibernate.query.NativeQuery.class)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .setParameter("limit", Math.max(0, limit))

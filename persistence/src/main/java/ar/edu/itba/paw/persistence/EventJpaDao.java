@@ -106,7 +106,6 @@ public class EventJpaDao implements EventDao {
                                     final int page,
                                     final int size) {
 
-        // Si no me dan fecha de referencia, no tiene sentido buscar
         if (fromInclusive == null) {
             return List.of();
         }
@@ -119,7 +118,7 @@ public class EventJpaDao implements EventDao {
         final int safePage = Math.max(0, page);
         final int offset   = safePage * limit;
 
-        // 1) IDs futuros desde fromInclusive (NATIVE)
+        // 1) IDs futuros desde fromInclusive
         @SuppressWarnings("unchecked")
         List<Object> rawIds = em.createNativeQuery("""
             SELECT CAST(eventid AS TEXT)
@@ -141,7 +140,7 @@ public class EventJpaDao implements EventDao {
                 .map(o -> UUID.fromString(o.toString()))
                 .toList();
 
-        // 2) Entidades por IDs (JPQL, mismo orden)
+        // 2) Entidades por IDs
         return em.createQuery("""
             SELECT e
             FROM Event e
@@ -183,7 +182,6 @@ public class EventJpaDao implements EventDao {
     @Override
     public List<Event> findUpcomingByClub(UUID clubId, int page, int size) {
 
-        // Si no hay clubId, no tiene sentido buscar
         if (clubId == null) {
             return List.of();
         }

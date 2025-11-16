@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
+import org.hibernate.query.NativeQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +22,7 @@ public class ReviewsJpaDao implements ReviewsDao {
     @Override
     public Review create(User user, Club club, int rating, String description) {
         Review r = new Review();
-        r.setUser(user);               // Deben ser entidades administradas (o con ID válido)
+        r.setUser(user);
         r.setClub(club);
         r.setRating(rating);
         r.setDescription(description);
@@ -36,7 +37,6 @@ public class ReviewsJpaDao implements ReviewsDao {
         if (r == null) return null;
         r.setRating(rating);
         r.setDescription(description);
-        // created_at lo maneja la DB / se actualiza en upsert nativo si corresponde
         return r;
     }
 
@@ -132,7 +132,7 @@ public class ReviewsJpaDao implements ReviewsDao {
         sql.append(" LIMIT :limit OFFSET :offset");
 
         var nativeQuery = em.createNativeQuery(sql.toString())
-                .unwrap(org.hibernate.query.NativeQuery.class)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("limit", limit)
                 .setParameter("offset", offset);
@@ -255,7 +255,7 @@ public class ReviewsJpaDao implements ReviewsDao {
     """;
 
         List<String> idTexts = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("clubId", clubId)
                 .setParameter("limit", limit)

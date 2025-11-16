@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.TableState;
 import ar.edu.itba.paw.model.Status;
+import org.hibernate.query.NativeQuery;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,8 +90,8 @@ public class ClubTablesJpaDao implements ClubTablesDao {
         final List<String> blocking =
                 List.of(Status.PENDIENTE.db().toLowerCase(), Status.CONFIRMADA.db().toLowerCase());
 
-        final org.hibernate.query.NativeQuery<String> nq = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
+        final NativeQuery<String> nq = em.createNativeQuery(idSql)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING);
 
         nq.setParameter("clubId", clubId);

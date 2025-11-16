@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.persistence;
 
 import ar.edu.itba.paw.model.*;
+import org.hibernate.query.NativeQuery;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -98,6 +99,7 @@ public class ClubJpaDao implements ClubDao {
     @Override
     public List<User> findAdminsByClubId(UUID clubId) {
 
+        //Hay solo uno
         List<User> admins = em.createQuery("""
                         select distinct u
                         from Club c
@@ -107,6 +109,7 @@ public class ClubJpaDao implements ClubDao {
                 .setParameter("cid", clubId)
                 .getResultList();
 
+        //Hay solo uno
         User contact = em.createQuery("""
                         select c.contactInfo
                         from Club c
@@ -227,7 +230,7 @@ public class ClubJpaDao implements ClubDao {
                 """.formatted(inner, nativeClubSort("x", sort));
 
         final var nq = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setFirstResult(offset)
                 .setMaxResults(limit);
@@ -236,7 +239,7 @@ public class ClubJpaDao implements ClubDao {
         if (location != null) nq.setParameter("zone", location.name()); // enum->texto
         if (musicGenre != null && !musicGenre.isBlank()) nq.setParameter("musicGenre", musicGenre.toUpperCase());
         if (priceRange != null && !priceRange.isBlank())
-            nq.setParameter("priceRange", Price.valueOf(priceRange).getLabel().toLowerCase()); // <- minúsculas DB
+            nq.setParameter("priceRange", Price.valueOf(priceRange).getLabel().toLowerCase());
         if (isBar != null) nq.setParameter("isBar", isBar);
 
         @SuppressWarnings("unchecked") final List<String> idTexts = nq.getResultList();
@@ -377,7 +380,7 @@ public class ClubJpaDao implements ClubDao {
             """.formatted(inner, orderNative);
 
         final var nq = em.createNativeQuery(idSql)
-                .unwrap(org.hibernate.query.NativeQuery.class)
+                .unwrap(NativeQuery.class)
                 .addScalar("id_text", org.hibernate.type.StandardBasicTypes.STRING)
                 .setParameter("blocking", blocking.stream().map(Status::db).map(String::toLowerCase).toList())
                 .setParameter("dayStart", Timestamp.from(dayStart.toInstant()))

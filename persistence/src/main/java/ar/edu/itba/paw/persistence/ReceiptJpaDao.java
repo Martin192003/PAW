@@ -21,7 +21,6 @@ public class ReceiptJpaDao implements ReceiptDao {
         r.setFilename(filename);
         r.setContentType(contentType);
         r.setData(data);
-        // url / createdAt / sizeBytes / receiptId se setean en @PrePersist del entity
         em.persist(r);
         return r.getReceiptId();
     }
