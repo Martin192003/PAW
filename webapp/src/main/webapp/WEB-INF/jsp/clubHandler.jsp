@@ -52,7 +52,7 @@
     <div class="club-image-container" style="position:relative;">
         <c:choose>
             <c:when test="${not empty coverPhotoUrl}">
-                <img src="<c:url value='${coverPhotoUrl}' />" alt="Foto del club" class="card-image" style="object-fit: contain;"/>
+                <img src="<c:url value='${coverPhotoUrl}' />" alt=<spring:message code="club.photo"/> class="card-image" style="object-fit: contain;"/>
             </c:when>
             <c:otherwise>
                 <div class="card-no-image">

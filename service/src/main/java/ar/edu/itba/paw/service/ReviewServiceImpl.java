@@ -74,7 +74,6 @@ public class ReviewServiceImpl implements ReviewService {
         Club club = clubDao.findById(clubId)
                 .orElseThrow(() -> new IllegalArgumentException("Club not found"));
 
-
         boolean hadTable = bookingDao.existsPastConfirmedByUserAndClub(userId, clubId, OffsetDateTime.now());
         if (rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
