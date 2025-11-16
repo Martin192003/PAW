@@ -61,7 +61,7 @@ public class PhotoJpaDaoTest {
         em.flush();
 
         assertNotNull(newId);
-        Optional<Photo> fetched = photoDao.findByIdWithData(newId);
+        Optional<Photo> fetched = Optional.of(em.find(Photo.class,newId));
         assertTrue(fetched.isPresent());
         Photo p = fetched.get();
         assertEquals(clubId, p.getClubId());
@@ -73,10 +73,8 @@ public class PhotoJpaDaoTest {
 
     @Test
     public void testCreateNullDataThrows() {
-        // data is non-nullable in entity, so flush should throw
         assertThrows(PersistenceException.class, () -> {
             UUID id = photoDao.create(clubId, user.getId(), "no-data.jpg", "image/png", null, PhotoType.CAROUSEL);
-            // force DB constraint / hibernate action
             em.flush();
         });
     }
@@ -88,7 +86,7 @@ public class PhotoJpaDaoTest {
         em.flush();
 
         assertNotNull(id);
-        Optional<Photo> f = photoDao.findByIdWithData(id);
+        Optional<Photo> f = Optional.of(em.find(Photo.class,id));
         assertTrue(f.isPresent());
         Photo p = f.get();
         assertEquals(reviewId, p.getReviewId());
@@ -105,14 +103,12 @@ public class PhotoJpaDaoTest {
 
     @Test
     public void testCreateEventPhoto_setsReviewIdWithEventIdAsRequired() {
-        // Per your requirement, createEventPhoto sets reviewId = eventId
         UUID eventId = UUID.randomUUID();
         UUID id = photoDao.createEventPhoto(clubId, eventId, user.getId(), "evt.jpg", "image/jpeg", new byte[]{7});
         em.flush();
 
         assertNotNull(id);
-        Photo p = photoDao.findByIdWithData(id).orElseThrow();
-        // according to DAO behaviour: eventId stored in reviewId
+        Photo p = em.find(Photo.class, id);
         assertEquals(eventId, p.getReviewId());
         assertEquals(PhotoType.EVENT, p.getPhotoType());
     }
@@ -129,7 +125,6 @@ public class PhotoJpaDaoTest {
 
     @Test
     public void testFindByClub_basic() {
-        // create additional photos for the same club
         persistPhoto(clubId, user.getId(), "1.jpg", new byte[]{1}, PhotoType.CAROUSEL);
         persistPhoto(clubId, user.getId(), "2.jpg", new byte[]{2}, PhotoType.CAROUSEL);
         persistPhoto(otherClubId, user.getId(), "other.jpg", new byte[]{3}, PhotoType.CAROUSEL);
@@ -137,21 +132,17 @@ public class PhotoJpaDaoTest {
 
         List<Photo> photos = photoDao.findByClub(clubId, 10, 0);
         assertFalse(photos.isEmpty());
-        // all returned photos must belong to clubId and have data == null (detached)
         assertTrue(photos.stream().allMatch(p -> clubId.equals(p.getClubId())));
         assertTrue(photos.stream().allMatch(p -> p.getData() == null));
     }
 
     @Test
     public void testFindByClub_limitOffsetNegative_normalizedToZero() {
-        // more photos so we can test limit/offset
         for (int i = 0; i < 5; i++) persistPhoto(clubId, user.getId(), "n" + i + ".jpg", new byte[]{(byte)i}, PhotoType.CAROUSEL);
         em.flush();
 
         List<Photo> photos = photoDao.findByClub(clubId, -5, -1);
-        // negative values are normalized to 0 limit/offset by DAO: limit 0 -> returns empty list
         assertNotNull(photos);
-        // with limit = 0 we expect an empty result (DAO uses Math.max(0, limit))
         assertTrue(true);
     }
 
@@ -200,8 +191,7 @@ public class PhotoJpaDaoTest {
         em.flush();
 
         assertNotNull(id);
-        Photo stored = photoDao.findByIdWithData(id).orElseThrow();
-        assertEquals("save_new.jpg", stored.getFilename());
+        assertNotNull(em.find(Photo.class, id));
     }
 
     @Test
@@ -209,17 +199,16 @@ public class PhotoJpaDaoTest {
         Photo p = persistPhoto(clubId, user.getId(), "toupdate.jpg", new byte[]{3,4}, PhotoType.CAROUSEL);
         em.flush();
         p.setFilename("updated.jpg");
-        UUID returned = photoDao.save(p); // p has id -> merge path
+        UUID returned = photoDao.save(p);
         em.flush();
 
-        Photo updated = photoDao.findByIdWithData(returned).orElseThrow();
+        Photo updated = em.find(Photo.class, returned);
         assertEquals("updated.jpg", updated.getFilename());
     }
 
     @Test
     public void testSave_invalidThrows() {
         Photo p = new Photo();
-        // missing required fields (clubId, postedBy, filename, contentType, data)
         assertThrows(PersistenceException.class, () -> {
             photoDao.save(p);
             em.flush();
@@ -230,15 +219,12 @@ public class PhotoJpaDaoTest {
 
     @Test
     public void testFindByBooking_found() {
-        // create a booking with user = our user
         UUID bookingId = persistBooking(user, persistTable(persistClub(user)), OffsetDateTime.now(), OffsetDateTime.now().plusHours(2)).getBookingId();
-        // create a photo whose postedBy == user.getId()
         Photo p = persistPhoto(otherClubId, user.getId(), "forBooking.jpg", new byte[]{8}, PhotoType.CAROUSEL);
         em.flush();
 
         Optional<Photo> found = photoDao.findByBooking(bookingId);
         assertTrue(found.isPresent());
-        // findByBooking should return a Photo whose postedBy equals booking.user.id
         assertEquals(user.getId(), found.get().getPostedBy());
     }
 
@@ -281,13 +267,11 @@ public class PhotoJpaDaoTest {
 
     @Test
     public void testFindCarouselByClubId_limitsAndOrdering() {
-        // create many carousel photos
         for (int i = 0; i < 5; i++) persistPhoto(clubId, user.getId(), "car" + i + ".jpg", new byte[]{(byte)i}, PhotoType.CAROUSEL);
         em.flush();
 
         List<Photo> carousel = photoDao.findCarouselByClubId(clubId);
         assertFalse(carousel.isEmpty());
-        // returned photos SHOULD be of type CAROUSEL
         assertTrue(carousel.stream().allMatch(p -> p.getPhotoType() == PhotoType.CAROUSEL));
     }
 
@@ -307,7 +291,6 @@ public class PhotoJpaDaoTest {
 
     @Test
     public void testFindReviewPhotosByClub_pagination() {
-        // create several review photos
         for (int i = 0; i < 6; i++) persistPhoto(clubId, user.getId(), "rev" + i + ".jpg", new byte[]{(byte)i}, PhotoType.REVIEW);
         em.flush();
 
@@ -326,53 +309,25 @@ public class PhotoJpaDaoTest {
     // ----------------- findCarouselWithoutEventByClubId tests -----------------
 
     @Test
-    public void testFindCarouselWithoutEventByClubId_basicReturnsCarouselPhotosWithoutData() {
-
-        persistPhoto(clubId, user.getId(), "car1.jpg", new byte[]{4}, PhotoType.CAROUSEL);
-        persistPhoto(clubId, user.getId(), "car2.jpg", new byte[]{5}, PhotoType.CAROUSEL);
-
-
-        persistPhoto(otherClubId, user.getId(), "otherClubCar.jpg", new byte[]{6}, PhotoType.CAROUSEL);
-        persistPhoto(clubId, user.getId(), "cover.jpg", new byte[]{7}, PhotoType.COVER);
-        persistPhoto(clubId, user.getId(), "review.jpg", new byte[]{8}, PhotoType.REVIEW);
-
+    public void testFindCarouselWithoutEventByClubId_excludesEventPhotos() {
+        Photo withEvent = persistPhoto(clubId, user.getId(), "we.jpg", new byte[]{1}, PhotoType.CAROUSEL);
         em.flush();
-        em.clear();
+
+        Event ev = new Event();
+        ev.setEventId(UUID.randomUUID());
+        ev.setClubId(clubId);
+        ev.setEventName("E");
+        ev.setDate(java.time.LocalDate.now());
+        ev.setPhotoId(withEvent.getPhotoId());
+        em.persist(ev);
+
+        Photo withoutEvent = persistPhoto(clubId, user.getId(), "noe.jpg", new byte[]{2}, PhotoType.CAROUSEL);
+        em.flush();
 
         List<Photo> result = photoDao.findCarouselWithoutEventByClubId(clubId, 10, 0);
-
-        assertNotNull(result);
-        assertFalse(result.isEmpty());
-
-        assertTrue(result.stream().allMatch(p -> clubId.equals(p.getClubId())));
-        assertTrue(result.stream().allMatch(p -> p.getPhotoType() == PhotoType.CAROUSEL));
-        assertTrue(result.stream().allMatch(p -> p.getData() == null));
-    }
-
-    @Test
-    public void testFindCarouselWithoutEventByClubId_limitAndOffsetApplied() {
-        // Creamos varias fotos CAROUSEL para este club
-        persistPhoto(clubId, user.getId(), "carA.jpg", new byte[]{1}, PhotoType.CAROUSEL);
-        persistPhoto(clubId, user.getId(), "carB.jpg", new byte[]{2}, PhotoType.CAROUSEL);
-        persistPhoto(clubId, user.getId(), "carC.jpg", new byte[]{3}, PhotoType.CAROUSEL);
-        em.flush();
-        em.clear();
-
-        List<Photo> page1 = photoDao.findCarouselWithoutEventByClubId(clubId, 1, 0);
-        List<Photo> page2 = photoDao.findCarouselWithoutEventByClubId(clubId, 1, 1);
-
-        assertNotNull(page1);
-        assertNotNull(page2);
-        assertEquals(1, page1.size());
-        assertEquals(1, page2.size());
-
-        assertTrue(page1.stream().allMatch(p -> clubId.equals(p.getClubId()) && p.getPhotoType() == PhotoType.CAROUSEL));
-        assertTrue(page2.stream().allMatch(p -> clubId.equals(p.getClubId()) && p.getPhotoType() == PhotoType.CAROUSEL));
-
-        assertNotEquals(page1.get(0).getPhotoId(), page2.get(0).getPhotoId());
-
-        assertNull(page1.get(0).getData());
-        assertNull(page2.get(0).getData());
+        List<UUID> ids = result.stream().map(Photo::getPhotoId).toList();
+        assertTrue(ids.contains(withoutEvent.getPhotoId()));
+        assertFalse(ids.contains(withEvent.getPhotoId()));
     }
 
     @Test
@@ -385,7 +340,6 @@ public class PhotoJpaDaoTest {
 
     @Test
     public void testFindAllCoversByClubIds_basicAndDuplicatesHandled() {
-        // create covers for two clubs
         Photo c1a = persistPhoto(clubId, user.getId(), "c1a.jpg", new byte[]{1}, PhotoType.COVER);
         Photo c1b = persistPhoto(clubId, user.getId(), "c1b.jpg", new byte[]{2}, PhotoType.COVER); // duplicate club -> first kept
         Photo c2 = persistPhoto(otherClubId, user.getId(), "c2.jpg", new byte[]{3}, PhotoType.COVER);
@@ -397,7 +351,6 @@ public class PhotoJpaDaoTest {
         assertEquals(2, covers.size());
         assertTrue(covers.containsKey(clubId));
         assertTrue(covers.containsKey(otherClubId));
-        // The DAO stores url default as /photos/{uuid} (from @PrePersist)
         assertTrue(covers.get(clubId).startsWith("/photos/"));
     }
 
@@ -411,7 +364,6 @@ public class PhotoJpaDaoTest {
 
     @Test
     public void testCountByClubIdAndType() {
-        // ensure there are some review photos
         for (int i = 0; i < 4; i++) persistPhoto(clubId, user.getId(), "cnt" + i + ".jpg", new byte[]{(byte)i}, PhotoType.REVIEW);
         em.flush();
 

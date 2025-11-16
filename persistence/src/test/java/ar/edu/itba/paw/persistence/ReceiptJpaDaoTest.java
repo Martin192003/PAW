@@ -198,15 +198,13 @@ public class ReceiptJpaDaoTest {
 
         assertTrue(r.isPresent());
         assertEquals(id, r.get().getReceiptId());
-        assertNull(r.get().getData()); // findByBooking detacha y pone data = null
+        assertNull(r.get().getData());
     }
 
     @Test
     public void testFindByBookingReturnsLatest() {
-        // Insert older receipt
         insertReceiptWithCreatedAt(OffsetDateTime.now().minusDays(1));
 
-        // Insert latest receipt
         UUID newestId = insertReceiptWithCreatedAt(OffsetDateTime.now());
 
         em.flush();
