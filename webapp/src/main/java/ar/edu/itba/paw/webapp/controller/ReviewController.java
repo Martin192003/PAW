@@ -78,39 +78,27 @@ public class ReviewController {
                                   Model model) {
 
 
-        // Normalizar parámetros
-        limit = Math.max(1, Math.min(limit, 50));
-        offset = Math.max(0, offset);
-
-
         final User user = userService.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("error.user.notfound"));
 
-
-        final List<Review> reviews = reviewService.listByUser(userId, sort, limit, offset);
         final int total = reviewService.countByUser(userId);
 
+        limit = Math.max(1, Math.min(limit, 50));
+        offset = Math.max(0, Math.min(offset, limit));
 
-        if (offset >= total && total > 0) {
-            int lastPage = (int) Math.floor((total - 1) / (double) limit);
-            offset = lastPage * limit;
-        }
-
-
-        final List<Review> pageReviews = (offset == 0 || offset <= total)
-                ? reviewService.listByUser(userId, sort, limit, offset)
-                : reviews;
+        int calculateOffset = reviewService.calculateOffset(offset, limit, total);
+        final List<Review> pageReviews = reviewService.obtainPaginatedReviews(userId, sort, limit, offset);
 
 
         model.addAttribute("user", user);
         model.addAttribute("reviews", pageReviews);
         model.addAttribute("total", total);
         model.addAttribute("limit", limit);
-        model.addAttribute("offset", offset);
+        model.addAttribute("offset", calculateOffset);
         model.addAttribute("sort", sort);
 
 
-        model.addAttribute("currentPage", (offset / limit) + 1);
+        model.addAttribute("currentPage", (calculateOffset / limit) + 1);
         model.addAttribute("totalPages", (int) Math.ceil(total / (double) limit));
 
 
