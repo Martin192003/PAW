@@ -23,8 +23,10 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final UserService userService;
+    private final PhotoService photoService;
 
-    public ReviewController(ReviewService reviewService, UserService userService) {
+    public ReviewController(ReviewService reviewService, UserService userService, PhotoService photoService) {
+        this.photoService = photoService;
         this.reviewService = reviewService;
         this.userService = userService;
     }
@@ -55,10 +57,14 @@ public class ReviewController {
             return "redirect:/clubs/" + clubId + "#reviews";
         }
 
-        Photo image = new Photo();
-        image.setFilename(photo.getOriginalFilename());
-        image.setContentType(photo.getContentType());
-        image.setData(photo.getBytes());
+        Photo image = null;
+        if (photo != null && !photo.isEmpty()) {
+            image = photoService.createPhoto(
+                    photo.getOriginalFilename(),
+                    photo.getContentType(),
+                    photo.getBytes()
+            );
+        }
 
         reviewService.createReview(userDetails.getId(), clubId, form.getRating(), form.getDescription(), image);
         return "redirect:/clubs/" + clubId + "#reviews";
