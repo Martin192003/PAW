@@ -24,4 +24,5 @@ public interface ReviewService {
     List<Review> findByClubPaginated(UUID clubId, int page, int size);
     int countByClubPaginated(UUID clubId);
     int getCorrectedOffset(UUID clubId,int limit, int offset);
+    int gettotalReviewsPages(UUID clubId, int size);
 }

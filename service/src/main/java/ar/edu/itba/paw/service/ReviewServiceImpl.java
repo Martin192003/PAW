@@ -210,4 +210,15 @@ public class ReviewServiceImpl implements ReviewService {
         }
         return offset;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int gettotalReviewsPages(UUID clubId, int size) {
+        if (size <= 0) {
+            return 1;
+        }
+
+        int totalReviews = countByClubPaginated(clubId);
+        return (int) Math.ceil((double) totalReviews / size);
+    }
 }

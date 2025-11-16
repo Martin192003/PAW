@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -210,7 +211,7 @@ public class ClubServiceImpl implements ClubService{
     @Transactional(readOnly = true)
     public int countPagesForUser(UUID userId, int size) {
         if (size <= 0) {
-            return 1; // fallback defensivo
+            return 1;
         }
 
         int totalClubs = countClubsByUser(userId);
@@ -235,4 +236,38 @@ public class ClubServiceImpl implements ClubService{
                 .stream()
                 .anyMatch(u -> u.getId().equals(user.getId()));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int normalizePage(int page, UUID userId, int size) {
+        int totalPages=countPagesForUser(userId, size);
+        if ( page <= totalPages)
+            return 1;
+        return totalPages;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int calculateOffset(int page, UUID userId,  int size) {
+        page= normalizePage(page, userId, size);
+        return (page - 1) * size;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int pagesForCount(int size,String nameLike,Zone zone,String musicGenre,String normalizedPriceRange,Boolean isBar) {
+        int totalClubs = countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+        if (size <= 0) throw new IllegalArgumentException("size must be > 0");
+        return Math.max(1, (int) Math.ceil((double) totalClubs / size));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int offsetForPage(int page, int size, String nameLike,Zone zone,String musicGenre,String normalizedPriceRange,Boolean isBar) {
+        if (size <= 0) throw new IllegalArgumentException("size must be > 0");
+        int totalPages = pagesForCount(size, nameLike,zone,musicGenre,normalizedPriceRange,isBar);
+        int p = Math.max(1, Math.min(page, totalPages));
+        return (p - 1) * size;
+    }
+
 }

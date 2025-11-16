@@ -52,4 +52,14 @@ public interface ClubService {
     Club getClubByIdOrThrow(UUID clubId) throws NotFoundException;
 
     int countPagesForUser(UUID userId, int size);
+
+    int calculateOffset(int page,UUID userId,  int size);
+
+    int normalizePage(int page, UUID userId, int size);
+
+    int pagesForCount(int size,String nameLike,Zone zone,String musicGenre,String normalizedPriceRange,Boolean isBar);
+
+    int offsetForPage(int page, int size, String nameLike,Zone zone,String musicGenre,String normalizedPriceRange,Boolean isBar);
+
+
 }
