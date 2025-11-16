@@ -493,7 +493,7 @@
                             <c:choose>
                                 <c:when test="${not empty e.photoId}">
                                     <img src="<c:url value='/photos/${e.photoId}'/>"
-                                         alt="Imagen del evento"
+                                         alt="<spring:message code="form.eventImage" text="Imagen del evento"/>"
                                          class="event-thumbnail"/>
                                 </c:when>
                                 <c:otherwise>
