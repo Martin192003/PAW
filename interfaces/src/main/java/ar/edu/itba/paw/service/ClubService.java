@@ -50,4 +50,6 @@ public interface ClubService {
     boolean isUserOwner(UUID clubId, User user);
 
     Club getClubByIdOrThrow(UUID clubId) throws NotFoundException;
+
+    int countPagesForUser(UUID userId, int size);
 }

@@ -122,7 +122,7 @@ public class ReviewServiceImplTest {
 
         reviewService.deleteReview(REVIEW_ID);
 
-        Assert.assertTrue(true); // éxito sin excepción
+        Assert.assertTrue(true);
     }
 
     @Test

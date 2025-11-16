@@ -62,7 +62,7 @@ public class UserJpaDaoTest {
         assertNotNull(created);
         assertNotNull(created.getId());
         assertEquals("user2", created.getUsername());
-        assertEquals("name2", created.getName().toLowerCase()); // según tu normalización
+        assertEquals("name2", created.getName().toLowerCase());
         assertEquals("email2@test.com", created.getEmail());
         assertEquals(Role.ADMIN, created.getRole());
         assertFalse(created.isVerified());
@@ -81,7 +81,7 @@ public class UserJpaDaoTest {
                     Role.USER,
                     "es"
             );
-            em.flush(); // fuerza la constraint
+            em.flush();
         });
     }
 
@@ -93,7 +93,7 @@ public class UserJpaDaoTest {
                     "Name",
                     "hash",
                     "Last",
-                    user.getEmail(),  // email duplicado
+                    user.getEmail(),
                     "123",
                     Role.USER,
                     "es"
@@ -341,7 +341,7 @@ public class UserJpaDaoTest {
         em.flush();
 
         User u = em.find(User.class, user.getId());
-        assertEquals("es", u.getLocale()); // unchanged
+        assertEquals("es", u.getLocale());
     }
 
     // ---------------------------------------------------------

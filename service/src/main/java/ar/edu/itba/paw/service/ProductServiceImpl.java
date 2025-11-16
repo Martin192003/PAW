@@ -104,9 +104,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<String, List<Product>> getVisibleProductsByCategory(UUID clubId) { // <-- Recibe UUID
-
-        // Usa findByClubID en lugar de findByClub
+    public Map<String, List<Product>> getVisibleProductsByCategory(UUID clubId) {
         var products = this.findByClubID(clubId).stream()
                 .filter(p -> Boolean.TRUE.equals(p.getIsAvailable()))
                 .sorted(Comparator.comparing(Product::getProductName, String.CASE_INSENSITIVE_ORDER))

@@ -248,7 +248,6 @@ public class EventJpaDaoTest {
     @Test
     public void testFindByClubWithoutEventsReturnsEmpty() {
         UUID otherClubId = UUID.randomUUID();
-        // Insertamos club sin eventos
         Club otherClub = new Club(
                 "Other Club",
                 "Other Location",

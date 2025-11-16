@@ -300,7 +300,6 @@ public class EmailServiceImpl implements EmailService {
         Objects.requireNonNull(club, "club es null");
         Objects.requireNonNull(table, "table es null");
 
-        // Campos que suelen ser nulos en datos incompletos:
         final String clubName   = Objects.requireNonNullElse(club.getClubName(), "Club");
         final String tableNum   = String.valueOf(table.getTableNumber());
         final Integer capacity  = table.getCapacity();

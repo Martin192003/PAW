@@ -253,7 +253,7 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             user = userDao.findByEmail(usernameOrEmail).orElse(null);
             if (user == null) {
-                return null; // Usuario no encontrado
+                return null;
             }
         }
 
@@ -262,7 +262,7 @@ public class UserServiceImpl implements UserService {
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            return null; // Contraseña incorrecta
+            return null;
         }
 
         return user;
