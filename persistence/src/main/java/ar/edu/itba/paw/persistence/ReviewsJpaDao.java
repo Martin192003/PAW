@@ -108,11 +108,12 @@ public class ReviewsJpaDao implements ReviewsDao {
     @Override
     public List<Review> searchPaginated(UUID userId, UUID clubId, String sort, int limit, int offset) {
 
-
         String orderBy = switch (sort) {
-            case "rating" -> "ORDER BY r.rating DESC";
-            case "date" -> "ORDER BY r.created_at DESC";
-            default -> "ORDER BY r.created_at DESC"; // fallback
+            case "created_desc" -> "ORDER BY r.created_at DESC";
+            case "created_asc"  -> "ORDER BY r.created_at ASC";
+            case "rating_desc"  -> "ORDER BY r.rating DESC";
+            case "rating_asc"   -> "ORDER BY r.rating ASC";
+            default -> "ORDER BY r.created_at DESC";
         };
 
 

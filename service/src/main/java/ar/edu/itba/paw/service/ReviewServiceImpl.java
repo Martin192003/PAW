@@ -215,7 +215,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Review> obtainPaginatedReviews(UUID userId, String sort, int limit, int offset) {
 
         final int total = countByUser(userId);
