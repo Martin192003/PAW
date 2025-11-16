@@ -47,14 +47,12 @@ public class EventJpaDaoTest {
 
     @Before
     public void setUp() {
-        // Limpieza básica (en orden para respetar FKs)
         em.createQuery("DELETE FROM Event e").executeUpdate();
         em.createQuery("DELETE FROM Club c").executeUpdate();
         em.createQuery("DELETE FROM User u").executeUpdate();
         em.createNativeQuery("DELETE FROM photos").executeUpdate();
         em.flush();
 
-        // Datos base
         user = persistUser("user", "name", "last", "email", "cell");
         club = persistClub(user);
         clubId = club.getClubId();
@@ -500,7 +498,6 @@ public void testFindUpcomingByClubPaginatesPage2Empty() {
 
   @Test
   public void testFindPastByClubPage0ReturnsPastEvent() {
-      // Sólo 1 evento pasado en page 0
       List<Event> page0 = eventDao.findPastByClub(clubId, 0, 1);
       assertEquals(1, page0.size());
       assertEquals(pastEvent.getEventId(), page0.get(0).getEventId());
@@ -508,7 +505,6 @@ public void testFindUpcomingByClubPaginatesPage2Empty() {
 
   @Test
   public void testFindPastByClubPage1IsEmpty() {
-      // Cualquier página >0 debe dar vacío
       List<Event> page1 = eventDao.findPastByClub(clubId, 1, 1);
       assertTrue(page1.isEmpty());
   }
@@ -532,13 +528,13 @@ public void testFindUpcomingByClubPaginatesPage2Empty() {
     @Test
     public void testCountUpcomingByClub() {
         int count = eventDao.countUpcomingByClub(clubId);
-        assertEquals(2, count); // today + future
+        assertEquals(2, count);
     }
 
     @Test
     public void testCountPastByClub() {
         int count = eventDao.countPastByClub(clubId);
-        assertEquals(1, count); // sólo past
+        assertEquals(1, count);
     }
 
   @Test

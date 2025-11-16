@@ -589,7 +589,7 @@ public class BookingsJpaDaoTest {
                 cell,
                 Role.USER,
                 OffsetDateTime.now(),
-                null // locale: not needed for tests, pass null
+                null
         );
         em.persist(u);
         return u;

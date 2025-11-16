@@ -207,7 +207,6 @@ public class ClubTablesJpaDaoTest {
         assertEquals(2, tables.get(1).getTableNumber());
         assertEquals(3, tables.get(2).getTableNumber());
 
-        // Ninguna mesa de otherClub
         tables.forEach(t -> assertEquals(club.getClubId(), t.getClubId()));
     }
 
@@ -401,7 +400,7 @@ public class ClubTablesJpaDaoTest {
                                    TableState state,
                                    BigDecimal price) {
         ClubTable t = new ClubTable(
-                null,                       // que JPA genere el ID
+                null,
                 club.getClubId(),
                 tableNumber,
                 4,
