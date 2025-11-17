@@ -10,7 +10,7 @@ public class PriceConverter implements AttributeConverter<Price, String> {
 
     @Override
     public String convertToDatabaseColumn(Price attr) {
-        return attr == null ? null : attr.name().toLowerCase(); // store lowercase
+        return attr == null ? null : attr.name().toLowerCase();
     }
 
     @Override
