@@ -151,7 +151,6 @@
                     <option value=""><spring:message code="filter.genre"/></option>
 
                     <c:forEach var="g" items="${genres}">
-                        <!-- si g es enum: usar name(); si ya es String código, esto mismo funciona -->
                         <c:set var="code" value="${g.name() != null ? g.name() : g}" />
                         <option value="${code}"
                             ${ (genre == code || param.genre == code) ? 'selected' : '' }>
@@ -391,7 +390,6 @@
             el.addEventListener('change', toggleReset);
         });
 
-        // sincronizar estado inicial (por si el servidor marcó valores en el DOM)
         toggleReset();
     });
 </script>
