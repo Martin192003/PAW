@@ -193,7 +193,6 @@
 
         updateResetButton();
 
-        // Listen changes (include hasReceiptSelect)
         [clubSelect, bookingIdInput, statusSelect, sortSelect, hasReceiptSelect].forEach(field => {
             if (field) {
                 field.addEventListener('change', updateResetButton);
