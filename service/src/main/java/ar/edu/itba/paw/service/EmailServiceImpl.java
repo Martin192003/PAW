@@ -16,15 +16,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-import ar.edu.itba.paw.persistence.BookingDao;
-import java.lang.reflect.Method;
-
 import javax.mail.internet.MimeMessage;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 
 @Service

@@ -1,8 +1,5 @@
 package ar.edu.itba.paw.model;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.User;
-
 import javax.persistence.*;
 
 
