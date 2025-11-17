@@ -73,7 +73,6 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- estética del título (sin cambios de rutas) ---
         function breakEveryN(str, n) {
             if (!str) return '';
             const s = String(str).trim();

@@ -323,12 +323,18 @@
                             <form:errors path="basePrice" cssClass="formError"/>
                         </div>
                         <div class="form-group">
+
+                            <spring:message code="label.alcoholicDrink" var="alcoholLabel"/>
+                            <spring:message code="label.nonAlcoholicDrink" var="nonAlcoholLabel"/>
+
                             <form:select path="productType" cssClass="input-text">
-                                <form:option value="ALCOHOLICA" label="Alcohólica"/>
-                                <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+                                <form:option value="ALCOHOLICA" label="${alcoholLabel}" />
+                                <form:option value="NO_ALCOHOLICA" label="${nonAlcoholLabel}" />
                             </form:select>
+
                             <form:errors path="productType" cssClass="formError"/>
                         </div>
+
                         <button type="submit" class="btn btn-success btn-edit-small">
                             <i class="fa-solid fa-plus"></i>
                         </button>
@@ -784,10 +790,15 @@
             </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <label for="editProductType"><spring:message code="label.type"/>:</label>
-                <form:select path="productType" id="editProductType">
-                    <form:option value="ALCOHOLICA" label="Alcohólica"/>
-                    <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+
+                <spring:message code="label.alcoholicDrink" var="alcoholLabel"/>
+                <spring:message code="label.nonAlcoholicDrink" var="nonAlcoholLabel"/>
+
+                <form:select path="productType" cssClass="input-text">
+                    <form:option value="ALCOHOLICA" label="${alcoholLabel}" />
+                    <form:option value="NO_ALCOHOLICA" label="${nonAlcoholLabel}" />
                 </form:select>
+
                 <form:errors path="productType" cssClass="formError"/>
             </div>
             <div class="modal-actions">
@@ -920,7 +931,7 @@
     </div>
 </div>
 
-<!-- Modal eliminar producto (duplicado resuelto arriba) -->
+<!-- Modal editar evento -->
 <div id="eventEditModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEventEditModal()" style="color:#fff;">&times;</span>
@@ -1044,22 +1055,18 @@
         modal.style.display = 'flex';
         lockBodyScroll();
 
-        // Set the hidden editedField input
         const editedFieldInput = document.getElementById('editedField');
         if (editedFieldInput) editedFieldInput.value = field;
 
-        // Hide all field containers
         const fields = ['clubName', 'location', 'zone', 'musicGenre', 'priceRange', 'description', 'cbu'];
         fields.forEach(f => {
             const el = document.getElementById('editField_' + f);
             if (el) el.style.display = 'none';
         });
 
-        // Show the relevant field container
         const visibleField = document.getElementById('editField_' + field);
         if (visibleField) visibleField.style.display = 'block';
 
-        // Map fields to their input/select IDs
         const inputIds = {
             'clubName': 'editFieldValue_clubName',
             'location': 'editFieldValue_location',
@@ -1076,7 +1083,6 @@
         const inputElement = document.getElementById(inputId);
         if (!inputElement) return;
 
-        // Handle value setting based on element type
         if (inputElement.tagName === 'SELECT') {
             const validValue = (value === undefined || value === null || value === '') ? '' : value;
             inputElement.value = validValue;

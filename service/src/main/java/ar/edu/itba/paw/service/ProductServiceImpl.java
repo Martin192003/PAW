@@ -7,7 +7,6 @@ import ar.edu.itba.paw.model.exceptions.ClubNotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.persistence.ProductsDao;
 import org.springframework.stereotype.Service;
-import ar.edu.itba.paw.service.ProductService;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;

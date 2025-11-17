@@ -22,7 +22,6 @@ public class MailConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MailConfig.class);
 
-    // === Leído tal cual de tu application.properties ===
     @Value("${SMTP_HOST:smtp.gmail.com}")
     private String host;
 

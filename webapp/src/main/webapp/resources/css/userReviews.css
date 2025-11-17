@@ -283,7 +283,7 @@ body {
     }
 }
 
-/* ==================== PAGINACIÓN Y MODAL (sin cambios) ==================== */
+/* ==================== PAGINACIÓN Y MODAL  ==================== */
 .pagination {
     display: flex;
     justify-content: center;
@@ -398,7 +398,7 @@ body {
 /* --- Contenido: reservar 180px (no 240px) para el sidebar --- */
 .app-reviews{
     width: 100%;
-    padding-left: 0;      /* quitamos padding que sumaba ancho */
+    padding-left: 0;
     margin-left: 180px;   /* coincide con el ancho real del sidebar */
     box-sizing: border-box;
 }
@@ -415,7 +415,6 @@ body {
     left: 200px;   /* 180 + margen visual */
 }
 
-/* Si tuvieras reglas previas que forzaban 240px, neutralizalas */
 .reviews-header,
 .reviews-list{
     width: 100% !important;  /* en caso de que persista calc(100% - 240px) */
@@ -437,7 +436,7 @@ body {
 .app-reviews .reviews-header,
 .app-reviews .reviews-list{
     width: 100% !important;
-    max-width: 980px;                   /* << ancho como “antes” */
+    max-width: 980px;
     margin-left: auto;
     margin-right: auto;                 /* centra la columna */
 }

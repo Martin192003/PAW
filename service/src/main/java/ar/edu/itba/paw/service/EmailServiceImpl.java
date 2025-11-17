@@ -16,15 +16,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-import ar.edu.itba.paw.persistence.BookingDao;
-import java.lang.reflect.Method;
-
 import javax.mail.internet.MimeMessage;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 
 @Service
@@ -97,7 +93,6 @@ public class EmailServiceImpl implements EmailService {
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
-            // Agregar adjunto si está presente
             if (attachmentName != null && attachmentData != null && attachmentData.length > 0) {
                 String mimeType = attachmentContentType != null ? attachmentContentType : "application/octet-stream";
                 helper.addAttachment(attachmentName, new org.springframework.core.io.ByteArrayResource(attachmentData), mimeType);

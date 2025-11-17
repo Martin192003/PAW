@@ -66,7 +66,6 @@ public class BookingServiceImpl implements BookingService {
 
         validateDateRange(bookingStart, bookingEnd);
 
-        // FIX: faltaba el parámetro
         final ClubTable table = ensureTableExists(tableId);
 
         if (table.getTableState() != null && table.getTableState() != TableState.DISPONIBLE) {

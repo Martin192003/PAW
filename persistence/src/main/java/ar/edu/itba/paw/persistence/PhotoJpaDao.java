@@ -259,7 +259,6 @@ public class PhotoJpaDao implements PhotoDao {
 
 
 
-    // Los IDs ya los buscaron, solo traer los covers
     @Override
     public Map<UUID, String> findAllCoversByClubIds(Set<UUID> clubIds) {
         List<Object[]> rows = em.createQuery("""

@@ -392,10 +392,10 @@ body {
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.6);
-    z-index: 9999 !important; /* aseguramos que quede arriba de todo */
+    z-index: 9999 !important;
     justify-content: center;
     align-items: center;
-    opacity: 1; /* sin transiciones complicadas */
+    opacity: 1;
     visibility: visible;
     transition: opacity 0.2s ease-in-out;
 }
@@ -550,9 +550,9 @@ body {
 }
 
 .cbu-missing {
-    border-left: 4px solid #ff6b6b;      /* accent color */
+    border-left: 4px solid #ff6b6b;
     padding-left: 10px;
-    color: #ffd7de;                      /* warmer color to attract attention */
+    color: #ffd7de;
     background: linear-gradient(90deg, rgba(255,107,107,0.03), transparent);
     box-shadow: 0 0 0 rgba(255,107,107,0);
     animation: cbuPulse 1.8s infinite;
@@ -560,7 +560,7 @@ body {
 }
 
 .cbu-value {
-    color: #ffffff;           /* bright, clear */
+    color: #ffffff;
     opacity: 0.95;
     font-weight: 700;
     font-size: 1.02rem;

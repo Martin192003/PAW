@@ -327,7 +327,6 @@ textarea.form-control {
     background: #333 !important;
 }
 
-/* Mobile adjustments */
 @media (max-width: 768px) {
     #locationMap {
         width: 90%;

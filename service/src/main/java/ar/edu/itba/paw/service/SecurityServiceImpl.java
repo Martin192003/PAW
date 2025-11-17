@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.UserDao;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

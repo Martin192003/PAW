@@ -12,7 +12,7 @@ import java.util.UUID;
 public class Event {
 
     @Id
-    @Column(name = "eventid", nullable = false, updatable = false) // <- sin underscore
+    @Column(name = "eventid", nullable = false, updatable = false)
     private UUID eventId;
 
     @Column(name = "clubid", nullable = false)

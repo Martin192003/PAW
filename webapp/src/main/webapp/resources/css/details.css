@@ -359,11 +359,8 @@
     height: 350px; /* Un poco más alto para mejor visualización */
     width: 100%;
     border-radius: 8px; /* Bordes redondeados dentro del contenedor */
-    /* El mapa de Leaflet necesita estilos específicos para su integración */
 }
 
-/* Ajustes para el tema oscuro de Leaflet */
-/* Hacen que los tiles se vean mejor en el tema general */
 .leaflet-container {
     background-color: #2c2c2c; /* Fondo oscuro si los tiles no cargan */
     border-radius: 8px; /* Aplicar bordes al contenedor interno del mapa */

@@ -2,7 +2,6 @@ package ar.edu.itba.paw.model;
 
 import javax.persistence.*;
 import javax.persistence.Table;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.UUID;
@@ -29,7 +28,7 @@ public class Review {
     private Club club;
 
     @Column(name = "rating", nullable = false)
-    private Integer rating; // 1..5 (validado por DB)
+    private Integer rating;
 
     @Column(name = "description")
     private String description;
