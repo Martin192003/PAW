@@ -73,8 +73,8 @@ public class ProductController {
             EventEditForm editEventForm = new EventEditForm();
             editEventForm.setClubId(club.getClubId());
             model.addAttribute("editEventForm", editEventForm);
-            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
-            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(clubId));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(clubId));
             return "clubHandler";
         }
         try{
@@ -134,8 +134,8 @@ public class ProductController {
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(clubId).orElse(null));
             model.addAttribute("carouselPhotos", carouselPhotos);
             model.addAttribute("tableLayoutUrl", tableLayoutUrl);
-            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
-            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(clubId));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(clubId));
             return "clubHandler";
         }
         try {

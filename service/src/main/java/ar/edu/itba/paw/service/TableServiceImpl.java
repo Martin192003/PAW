@@ -1,9 +1,11 @@
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.TableState;
 import ar.edu.itba.paw.model.exceptions.*;
+import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import org.springframework.stereotype.Service;
@@ -25,10 +27,12 @@ public class TableServiceImpl implements TableService {
 
     private final ClubDao clubDao;
     private final ClubTablesDao clubTablesDao;
+    private final BookingDao bookingDao;
 
-    public TableServiceImpl(ClubTablesDao clubTablesDao, ClubDao clubDao) {
+    public TableServiceImpl(ClubTablesDao clubTablesDao, ClubDao clubDao, BookingDao bookingDao) {
         this.clubTablesDao = clubTablesDao;
         this.clubDao = clubDao;
+        this.bookingDao = bookingDao;
     }
 
     @Override
@@ -67,14 +71,12 @@ public class TableServiceImpl implements TableService {
     @Override
     @Transactional
     public ClubTable update(UUID tableId, UUID clubId, BigDecimal tableNumber, BigDecimal capacity, TableState state, BigDecimal price, BigDecimal discount) {
-        var club = clubDao.findById(clubId)
-                .orElseThrow(() -> new NotFoundException("Club no existente"));
         if (clubDao.findById(clubId).isEmpty()) throw new NotFoundException("Club no existente");
         if ( tableNumber == null || tableNumber.compareTo(BigDecimal.ZERO) < 0 || tableNumber.compareTo(BigDecimal.valueOf(1_000_000)) >=  0) throw new InvalidTableNumberException("Número de mesa inválido");
         if ( capacity == null || capacity.compareTo(BigDecimal.ZERO) <= 0 || capacity.compareTo(BigDecimal.valueOf(10_000)) >= 0) throw new InvalidCapacityException("Capacidad inválida");
         if (price.compareTo(BigDecimal.ZERO) < 0 || price.compareTo(new BigDecimal("99999999.99")) >= 0) throw new InvalidPriceException("Precio inválido");
         if (discount.compareTo(BigDecimal.ZERO) < 0 || discount.compareTo(new BigDecimal("100")) > 0) throw new ValidationException("Descuento inválido");
-        if (!canAddTable(club)) throw new IllegalStateException("Numero maximo de mesas alcanzado");
+        if (!canAddTable(clubId)) throw new IllegalStateException("Numero maximo de mesas alcanzado");
         return clubTablesDao.update(tableId, clubId, tableNumber.intValueExact(), capacity.intValueExact(), state, price, discount);
     }
 
@@ -119,12 +121,14 @@ public class TableServiceImpl implements TableService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean canAddTable(Club club) {
+    public boolean canAddTable(UUID clubId) {
+        Club club = clubDao.findById(clubId).orElseThrow(IllegalArgumentException::new);
         Objects.requireNonNull(club, "club is required");
         int count = clubTablesDao.findByClub(club).size();
         return count < MAX_TABLES_PER_CLUB;
     }
 
+    @Override
     public List<LocalDate> getAllowedBookingDates(LocalDate startDate, int numberOfDays) {
         List<LocalDate> allowedDates = new ArrayList<>();
         for (int i = 0; i < numberOfDays; i++) {
@@ -137,6 +141,7 @@ public class TableServiceImpl implements TableService {
         return allowedDates;
     }
 
+    @Override
     public LocalDate getNextAllowedDate(LocalDate from) {
         LocalDate d = from;
         int guard = 0;
@@ -164,6 +169,13 @@ public class TableServiceImpl implements TableService {
         return allowedDates.stream()
                 .map(d -> d.format(formatter))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ClubTable> findByBookingId(UUID bookingId){
+        Booking booking = bookingDao.findById(bookingId).orElseThrow(InvalidBookingStateException::new);
+        return findById(booking.getTableId());
     }
 
 

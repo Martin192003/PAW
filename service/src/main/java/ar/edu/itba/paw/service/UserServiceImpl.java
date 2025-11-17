@@ -325,4 +325,15 @@ public class UserServiceImpl implements UserService {
                 user.getLocale()
         );
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<User> findByBookingId(UUID bookingId){
+        Booking booking = bookingDao.findById(bookingId).orElse(null);
+        if(booking == null){
+            return Optional.empty();
+        }
+        return userDao.findById(booking.getUser().getId());
+    }
+
 }

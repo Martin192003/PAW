@@ -300,18 +300,22 @@ public class TableServiceImplTest {
 
     @Test
     public void testCanAddTableWhenBelowLimit() {
+        UUID clubId = UUID.randomUUID();
         Club club = Mockito.mock(Club.class);
+        Mockito.when(clubDao.findById(clubId)).thenReturn(Optional.of(club));
         Mockito.when(clubTablesDao.findByClub(club)).thenReturn(Collections.nCopies(10, Mockito.mock(ClubTable.class)));
-        Assert.assertTrue(tableService.canAddTable(club));
+        Assert.assertTrue(tableService.canAddTable(clubId));
     }
 
     @Test
     public void testCanAddTableWhenAtLimit() {
+        UUID clubId = UUID.randomUUID();
         Club club = Mockito.mock(Club.class);
+        Mockito.when(clubDao.findById(clubId)).thenReturn(Optional.of(club));
         List<ClubTable> fifty = new ArrayList<>();
         for (int i = 0; i < 50; i++) fifty.add(Mockito.mock(ClubTable.class));
         Mockito.when(clubTablesDao.findByClub(club)).thenReturn(fifty);
-        Assert.assertFalse(tableService.canAddTable(club));
+        Assert.assertFalse(tableService.canAddTable(clubId));
     }
 
 

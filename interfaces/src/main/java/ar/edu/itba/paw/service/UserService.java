@@ -24,7 +24,7 @@ public interface UserService {
 
     boolean requestPasswordReset(String email);
     Optional<User> resetPassword(String token, String newPassword);
-
+    Optional<User> findByBookingId(UUID bookingId);
     User updateUserField(UUID userId, String field, String value);
     User authenticateAndGetUser(String usernameOrEmail, String password);
     User findByResetPasswordToken(String token);

@@ -249,10 +249,12 @@ public class ProductServiceImplTest {
 
     @Test
     public void testCanAddProduct_True() {
+        Mockito.when(clubService.getClubById(Mockito.eq(CLUB_ID)))
+                .thenReturn(Optional.of(mockClub));
         Mockito.when(productsDao.findByClub(Mockito.eq(mockClub)))
-               .thenReturn(List.of());
+                .thenReturn(List.of());
 
-        boolean result = productService.canAddProduct(mockClub);
+        boolean result = productService.canAddProduct(CLUB_ID);
 
         Assert.assertTrue(result);
     }
@@ -264,10 +266,7 @@ public class ProductServiceImplTest {
             fifty.add(new Product());
         }
 
-        Mockito.when(productsDao.findByClub(Mockito.eq(mockClub)))
-               .thenReturn(fifty);
-
-        boolean result = productService.canAddProduct(mockClub);
+        boolean result = productService.canAddProduct(CLUB_ID);
 
         Assert.assertFalse(result);
     }
