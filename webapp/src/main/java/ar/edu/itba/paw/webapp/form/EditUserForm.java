@@ -30,7 +30,7 @@ public class EditUserForm {
     private String cellphone;
 
     @NotEmpty(message = "{register.password.notempty}")
-    @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
+    @Size(min = 6, max = 100, message = "{register.password.size}")
     private String password;
 
     @NotEmpty(message = "{register.confirmpassword.notempty}")
