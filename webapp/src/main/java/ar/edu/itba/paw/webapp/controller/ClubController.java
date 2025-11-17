@@ -261,7 +261,7 @@ public class ClubController {
             }
             default -> {
                 events = eventService.listByClub(clubId, pageIndex, size);
-                yield eventService.totalEventPagesUpcoming(clubId, size);
+                yield eventService.totalEventPages(clubId, size);
             }
         };
 
