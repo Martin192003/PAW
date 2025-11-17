@@ -196,7 +196,7 @@
                     <artifactId>maven-war-plugin</artifactId>
                     <version>${maven-war-plugin.version}</version>
                     <configuration>
-<!--                        <packagingExcludes>**/logback-test.xml</packagingExcludes>-->
+                        <packagingExcludes>**/logback-test.xml</packagingExcludes>
                     </configuration>
                 </plugin>
             </plugins>
