@@ -41,17 +41,17 @@ public interface BookingService {
 
     Booking getForUser(UUID bookingId, UUID userId);
 
-    List<Booking> searchForAdminPaginated(UUID adminUserId, UUID clubId, UUID bookingId, Status status, String sort, LocalDate bookingDate, Boolean hasReceipt,int limit, int offset);
+    List<Booking> searchForAdminPaginated(UUID adminUserId, UUID clubId, String oldBookingId, Status status, String sort, String oldBookingDate, Boolean hasReceipt,int limit, int offset);
 
-    int countSearch(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
+    int countSearch(UUID userId, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt);
 
-    List<Booking> searchPaginated(UUID userId, UUID clubId, UUID bookingId, Status status, String sort, LocalDate bookingDate, Boolean hasReceipt, int limit, int offset);
+    List<Booking> searchPaginated(UUID userId, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset);
 
-    int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
+    int countSearchForAdmin(UUID adminUserId, UUID clubId, String oldBookingId, Status status, String oldBookingDate, Boolean hasReceipt);
 
-    String getBookingDateStart(Booking booking);
+    String getBookingDateStart(UUID booking);
 
-    String getBookingDateEnd(Booking booking);
+    String getBookingDateEnd(UUID booking);
 
     String getDateStart(UUID bookingId, UUID userId);
 
@@ -71,7 +71,7 @@ public interface BookingService {
 
     Map<UUID, Date> mapBookingStartDates(List<Booking> bookings);
 
-    int getTotalPages(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt, int size);
+    int getTotalPages(UUID userId, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt, int size);
 
     UUID clubId(UUID bookingId);
 }

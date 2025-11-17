@@ -92,8 +92,8 @@ public class TablesController {
             model.addAttribute("coverPhotoUrl", photoService.getCoverUrl(form.getClubId()).orElse(null));
             model.addAttribute("carouselPhotos", carouselPhotos);
             model.addAttribute("tableLayoutUrl", tableLayoutUrl);
-            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
-            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(form.getClubId()));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(form.getClubId()));
             return "clubHandler";
         }
 
@@ -182,8 +182,8 @@ public class TablesController {
             model.addAttribute("productForm", new AddProductForm());
             model.addAttribute("editProductForm", new EditProductForm());
             model.addAttribute("editTableForm", new EditTableForm());
-            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
-            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(clubId));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(clubId));
             return "clubHandler";
         }
 

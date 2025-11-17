@@ -125,6 +125,7 @@ public class ClubController {
             }
         } else {
             totalClubs = clubService.countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+
             totalPages = clubService.pagesForCount(size,nameLike, zone, musicGenre, normalizedPriceRange, isBar);
             offset = clubService.offsetForPage(page, size, nameLike, zone, musicGenre, normalizedPriceRange, isBar);
 
@@ -260,7 +261,7 @@ public class ClubController {
             }
             default -> {
                 events = eventService.listByClub(clubId, pageIndex, size);
-                yield eventService.totalEventPagesUpcoming(clubId, size);
+                yield eventService.totalEventPages(clubId, size);
             }
         };
 
@@ -292,8 +293,8 @@ public class ClubController {
         model.addAttribute("editTableForm", new EditTableForm());
         model.addAttribute("editProductForm", new EditProductForm());
         model.addAttribute("editField", "Event");
-        model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
-        model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
+        model.addAttribute("maxProductsReached", !productService.canAddProduct(clubId));
+        model.addAttribute("maxTablesReached", !tableService.canAddTable(clubId));
 
         int reviewPageIndex = reviewPage - 1;
         List<Review> reviews = reviewService.findByClubPaginated(clubId, reviewPageIndex, size);

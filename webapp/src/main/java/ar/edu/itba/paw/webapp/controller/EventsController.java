@@ -74,8 +74,8 @@ public class EventsController {
             clubHandlerForm.setZone(club.getZone() != null ? club.getZone().name() : null);
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
-            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
-            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(clubId));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(clubId));
             return "clubHandler";
         }
 
@@ -130,8 +130,8 @@ public class EventsController {
             clubHandlerForm.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().name() : null);
             model.addAttribute("clubHandlerForm", clubHandlerForm);
             model.addAttribute("errors", errors);
-            model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
-            model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
+            model.addAttribute("maxProductsReached", !productService.canAddProduct(clubId));
+            model.addAttribute("maxTablesReached", !tableService.canAddTable(clubId));
             return "clubHandler";
         }
 

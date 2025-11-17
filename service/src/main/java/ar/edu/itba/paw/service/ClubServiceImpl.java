@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
+import ar.edu.itba.paw.persistence.ClubTablesDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,13 +18,15 @@ import java.util.*;
 public class ClubServiceImpl implements ClubService{
 
     private final ClubDao clubDao;
+    private final ClubTablesDao clubTablesDao;
     private final EmailService mailService;
     private final PhotoService photoService;
     private final UserService userService;
     private final BookingDao bookingDao;
 
     @Autowired
-    public ClubServiceImpl(ClubDao clubDao, EmailService mailService, PhotoService photoService, UserService userService, BookingDao bookingDao) {
+    public ClubServiceImpl(ClubDao clubDao, ClubTablesDao clubTablesDao, EmailService mailService, PhotoService photoService, UserService userService, BookingDao bookingDao) {
+        this.clubTablesDao = clubTablesDao;
         this.mailService = mailService;
         this.clubDao = clubDao;
         this.photoService = photoService;
@@ -268,5 +271,14 @@ public class ClubServiceImpl implements ClubService{
         int p = Math.max(1, Math.min(page, totalPages));
         return (p - 1) * size;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Club> getClubByBookingId(UUID bookingId){
+        Booking booking = bookingDao.findById(bookingId).orElseThrow(NotFoundException::new);
+        ClubTable table = clubTablesDao.findById(booking.getTableId()).orElseThrow(NotFoundException::new);
+        return clubDao.findById(table.getClubId());
+    }
+
 
 }
