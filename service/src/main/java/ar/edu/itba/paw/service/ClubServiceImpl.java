@@ -276,7 +276,7 @@ public class ClubServiceImpl implements ClubService{
     @Transactional(readOnly = true)
     public Optional<Club> getClubByBookingId(UUID bookingId){
         Booking booking = bookingDao.findById(bookingId).orElseThrow(NotFoundException::new);
-        ClubTable table = clubTablesDao.findById(booking.getBookingId()).orElseThrow(NotFoundException::new);
+        ClubTable table = clubTablesDao.findById(booking.getTableId()).orElseThrow(NotFoundException::new);
         return clubDao.findById(table.getClubId());
     }
 
