@@ -323,12 +323,18 @@
                             <form:errors path="basePrice" cssClass="formError"/>
                         </div>
                         <div class="form-group">
+
+                            <spring:message code="label.alcoholicDrink" var="alcoholLabel"/>
+                            <spring:message code="label.nonAlcoholicDrink" var="nonAlcoholLabel"/>
+
                             <form:select path="productType" cssClass="input-text">
-                                <form:option value="ALCOHOLICA" label="Alcohólica"/>
-                                <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+                                <form:option value="ALCOHOLICA" label="${alcoholLabel}" />
+                                <form:option value="NO_ALCOHOLICA" label="${nonAlcoholLabel}" />
                             </form:select>
+
                             <form:errors path="productType" cssClass="formError"/>
                         </div>
+
                         <button type="submit" class="btn btn-success btn-edit-small">
                             <i class="fa-solid fa-plus"></i>
                         </button>
@@ -784,10 +790,15 @@
             </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <label for="editProductType"><spring:message code="label.type"/>:</label>
-                <form:select path="productType" id="editProductType">
-                    <form:option value="ALCOHOLICA" label="Alcohólica"/>
-                    <form:option value="NO_ALCOHOLICA" label="No alcohólica"/>
+
+                <spring:message code="label.alcoholicDrink" var="alcoholLabel"/>
+                <spring:message code="label.nonAlcoholicDrink" var="nonAlcoholLabel"/>
+
+                <form:select path="productType" cssClass="input-text">
+                    <form:option value="ALCOHOLICA" label="${alcoholLabel}" />
+                    <form:option value="NO_ALCOHOLICA" label="${nonAlcoholLabel}" />
                 </form:select>
+
                 <form:errors path="productType" cssClass="formError"/>
             </div>
             <div class="modal-actions">
