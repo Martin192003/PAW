@@ -374,7 +374,7 @@
                         <c:set var="pTotal"  value="${totalReviews != null ? totalReviews : 0}" />
 
                         <c:set var="currentPage" value="${(pOffset / pLimit) + 1}" />
-                        <c:set var="totalPages"  value="${(pTotal + pLimit - 1) / pLimit}" />
+                        <c:set var="totalPages" value="${(pTotal + pLimit - 1) div pLimit}" />
 
                         <c:if test="${pTotal > 0}">
                             <c:set var="fromIdx" value="${pOffset + 1}" />

@@ -117,8 +117,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public List<Review> listByClubPaginated(UUID clubId, String sort,int limit, int offset){
-        getCorrectedOffset(clubId, offset, limit);
-        return listByClub(clubId, sort, limit, getCorrectedOffset(clubId, offset, limit));
+        return listByClub(clubId, sort, limit, getCorrectedOffset(clubId, limit, offset));
     }
 
     @Override

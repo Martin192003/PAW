@@ -125,13 +125,10 @@ public class ClubController {
             }
         } else {
             totalClubs = clubService.countSearch(nameLike, zone, musicGenre, normalizedPriceRange, isBar);
-            if (userDetails != null) {
-                totalPages = clubService.countPagesForUser(userDetails.getUser().getId(), size);
-                offset = clubService.calculateOffset(page, userDetails.getUser().getId(), size);
-            } else {
-                totalPages = clubService.pagesForCount(size,nameLike, zone, musicGenre, normalizedPriceRange, isBar);
-                offset = clubService.offsetForPage(page, size, nameLike, zone, musicGenre, normalizedPriceRange, isBar);
-            }
+
+            totalPages = clubService.pagesForCount(size,nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+            offset = clubService.offsetForPage(page, size, nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+
             clubs = clubService.searchPaginated(
                     nameLike, zone, musicGenre, normalizedPriceRange, isBar, sort, size, offset
             );
@@ -158,11 +155,8 @@ public class ClubController {
         String queryParams = filters.entrySet().stream()
                 .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
-        if (userDetails != null){
-            totalPages = clubService.countPagesForUser(userDetails.getUser().getId(), size);
-        }else{
-            totalPages = clubService.pagesForCount(size,nameLike, zone, musicGenre, normalizedPriceRange, isBar);
-        }
+        totalPages = clubService.pagesForCount(size,nameLike, zone, musicGenre, normalizedPriceRange, isBar);
+
         model.addAttribute("clubs", clubs);
         model.addAttribute("photoUrlByClub", photoUrlByClub);
         model.addAttribute("currentPage", page);
