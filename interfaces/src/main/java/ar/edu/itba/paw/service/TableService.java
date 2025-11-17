@@ -17,6 +17,7 @@ public interface TableService {
     Optional<ClubTable> findById(UUID id);
     List<ClubTable> findByClubId(UUID clubId);
     List<ClubTable> findAvailableByClubAndRange(UUID clubId, OffsetDateTime from, OffsetDateTime to);
+    Optional<ClubTable> findByBookingId(UUID bookingId);
 
     ClubTable create(BigDecimal number, BigDecimal capacity, UUID clubId, TableState tableState, BigDecimal price, BigDecimal discount);
     ClubTable update(UUID tableId, UUID clubId, BigDecimal tableNumber, BigDecimal capacity, TableState state, BigDecimal price, BigDecimal discount);
@@ -26,7 +27,7 @@ public interface TableService {
 
     boolean isAllowedDay(LocalDate date);
     boolean isPastDate(LocalDate date, Clock clock, ZoneId tz);
-    boolean canAddTable(Club club);
+    boolean canAddTable(UUID clubId);
 
     OffsetDateTime windowStart(LocalDate date, ZoneId tz);
     OffsetDateTime windowEnd(LocalDate date, ZoneId tz);

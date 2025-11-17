@@ -20,6 +20,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.validation.Valid;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.*;
@@ -100,20 +102,6 @@ public class UserBookingController {
             form.setUserId(userDetails.getId());
         }
 
-        LocalDate bookingDate = null;
-        if (form.getBookingDate() != null && !form.getBookingDate().isBlank()) {
-            bookingDate = LocalDate.parse(form.getBookingDate());
-        }
-
-        UUID bookingUuid = null;
-        if (form.getBookingId() != null && !form.getBookingId().isBlank()) {
-            try {
-                bookingUuid = UUID.fromString(form.getBookingId().trim());
-            } catch (IllegalArgumentException e) {
-                br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
-            }
-        }
-
         List<Booking> bookings = List.of();
         int totalBookings = 0;
 
@@ -121,10 +109,10 @@ public class UserBookingController {
             bookings = bookingService.searchPaginated(
                     form.getUserId(),
                     form.getClubId(),
-                    bookingUuid,
+                    form.getBookingId(),
                     form.getStatus(),
                     form.getSort(),
-                    bookingDate,
+                    form.getBookingDate(),
                     form.getHasReceipt(),
                     size,
                     offset
@@ -133,13 +121,13 @@ public class UserBookingController {
             totalBookings = bookingService.countSearch(
                     form.getUserId(),
                     form.getClubId(),
-                    bookingUuid,
+                    form.getBookingId(),
                     form.getStatus(),
-                    bookingDate,
+                    form.getBookingDate(),
                     form.getHasReceipt()
             );
         }
-        int totalPages = bookingService.getTotalPages(form.getUserId(), form.getClubId(), bookingUuid, form.getStatus(), bookingDate, form.getHasReceipt(), size)  ;
+        int totalPages = bookingService.getTotalPages(form.getUserId(), form.getClubId(), form.getBookingId(), form.getStatus(), form.getBookingDate(), form.getHasReceipt(), size)  ;
 
         Map<String, String> filters = new LinkedHashMap<>();
         filters.put("userId", form.getUserId().toString());
@@ -149,7 +137,7 @@ public class UserBookingController {
         if (form.getSort() != null && !form.getSort().isBlank()) filters.put("sort", form.getSort());
 
         String queryParams = filters.entrySet().stream()
-                .map(e -> e.getKey() + "=" + java.net.URLEncoder.encode(e.getValue(), java.nio.charset.StandardCharsets.UTF_8))
+                .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
 
         Map<UUID, Date> bookingStartDates = new HashMap<>();

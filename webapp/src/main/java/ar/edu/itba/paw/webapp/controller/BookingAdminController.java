@@ -18,10 +18,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.time.LocalDate;
 
 @Controller
 @RequestMapping("/admin")
@@ -113,12 +111,9 @@ public class BookingAdminController {
         final int offset = (page - 1) * size;
 
 
-        UUID bookingUuid = bookingService.parseBookingId(form.getBookingId());
-        if (form.getBookingId() != null && !form.getBookingId().isBlank() && bookingUuid == null) {
+        if (form.getBookingId() != null && !form.getBookingId().isBlank() && form.getBookingId() == null) {
             br.rejectValue("bookingId", "bookingId.invalid", "bookingId.invalid");
         }
-
-        LocalDate bookingDate = bookingService.parseBookingDate(form.getBookingDate());
 
         List<Booking> result = List.of();
         int totalBookings = 0;
@@ -127,19 +122,19 @@ public class BookingAdminController {
             result = bookingService.searchForAdminPaginated(
                     userDetails.getId(),
                     form.getClubId(),
-                    bookingUuid,
+                    form.getBookingId(),
                     form.getStatus(),
                     form.getSort(),
-                    bookingDate,
+                    form.getBookingDate(),
                     form.getHasReceipt(),
                     size, offset
             );
             totalBookings = bookingService.countSearchForAdmin(
                     userDetails.getId(),
                     form.getClubId(),
-                    bookingUuid,
+                    form.getBookingId(),
                     form.getStatus(),
-                    bookingDate,
+                    form.getBookingDate(),
                     form.getHasReceipt()
             );
         }
@@ -192,15 +187,15 @@ public class BookingAdminController {
             model.addAttribute("error", "error.no_reservation");
             return "error/error";
         }
-        Booking  booking = bookingOpt.get();
+        Booking booking = bookingOpt.get();
 
-        Optional<ClubTable> tableOpt = tableService.findById(booking.getTableId());
+        Optional<ClubTable> tableOpt = tableService.findByBookingId(bookingId);
         ClubTable table = tableOpt.orElse(null);
 
         String clubName = "";
         String clubCbu = "";
         if (table != null) {
-            Optional<Club> clubOpt = clubService.getClubById(table.getClubId());
+            Optional<Club> clubOpt = clubService.getClubByBookingId(bookingId);
             if (clubOpt.isPresent()) {
                 Club club = clubOpt.get();
                 clubName = club.getClubName();
@@ -212,7 +207,7 @@ public class BookingAdminController {
         model.addAttribute("hasReceipt", rOpt.isPresent());
         rOpt.ifPresent(r -> model.addAttribute("receipt", r));
 
-        Optional<User> u = userService.findById(booking.getUser().getId());
+        Optional<User> u = userService.findByBookingId(bookingId);
         model.addAttribute("user", u.orElse(null));
 
         model.addAttribute("booking", booking);
@@ -220,8 +215,8 @@ public class BookingAdminController {
         model.addAttribute("clubName", clubName);
         model.addAttribute("clubCbu", clubCbu);
 
-        model.addAttribute("bookingStartLocal", bookingService.getBookingDateStart(booking));
-        model.addAttribute("bookingEndLocal", bookingService.getBookingDateEnd(booking));
+        model.addAttribute("bookingStartLocal", bookingService.getBookingDateStart(bookingId));
+        model.addAttribute("bookingEndLocal", bookingService.getBookingDateEnd(bookingId));
 
         if (error != null && !error.isEmpty()) {
             model.addAttribute("errorKey", error);

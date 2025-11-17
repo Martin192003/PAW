@@ -96,7 +96,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean canAddProduct(Club club) {
+    public boolean canAddProduct(UUID clubId) {
+        Club club = clubService.getClubById(clubId).orElse(null);
         if (club == null) return false;
         List<Product> current = productsDao.findByClub(club);
         return current.size() < MAX_MENU_PRODUCTS;

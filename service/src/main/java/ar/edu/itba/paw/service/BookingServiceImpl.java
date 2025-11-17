@@ -334,14 +334,16 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public List<Booking> searchForAdminPaginated(UUID adminUserId,
                                                  UUID clubId,
-                                                 UUID bookingId,
+                                                 String oldBookingId,
                                                  Status status,
                                                  String sort,
-                                                 LocalDate bookingDate,
+                                                 String oldBookingDate,
                                                  Boolean hasReceipt,
                                                  int limit,
                                                  int offset) {
 
+        UUID bookingId = parseBookingId(oldBookingId);
+        LocalDate bookingDate = parseBookingDate(oldBookingDate);
         List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
         if (adminClubIds == null || adminClubIds.isEmpty()) {
             return List.of();
@@ -361,13 +363,15 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public List<Booking> searchPaginated(UUID userId,
                                          UUID clubId,
-                                         UUID bookingId,
+                                         String oldBookingId,
                                          Status status,
                                          String sort,
-                                         LocalDate bookingDate,
+                                         String oldBookingDate,
                                          Boolean hasReceipt,
                                          int limit,
                                          int offset) {
+        UUID bookingId = parseBookingId(oldBookingId);
+        LocalDate bookingDate = parseBookingDate(oldBookingDate);
         return bookingDao.searchPaginated(userId, clubId, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
     }
 
@@ -376,10 +380,12 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public int countSearch(UUID userId,
                            UUID clubId,
-                           UUID bookingId,
+                           String oldBookingId,
                            Status status,
-                           LocalDate bookingDate,
+                           String oldBookingDate,
                            Boolean hasReceipt) {
+        UUID bookingId = parseBookingId(oldBookingId);
+        LocalDate bookingDate = parseBookingDate(oldBookingDate);
         return bookingDao.countSearch(userId, clubId, bookingId, status, bookingDate, hasReceipt);
     }
 
@@ -387,8 +393,10 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public int countSearchForAdmin(UUID adminUserId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt) {
+    public int countSearchForAdmin(UUID adminUserId, UUID clubId, String oldBookingId, Status status, String oldBookingDate, Boolean hasReceipt) {
 
+        UUID bookingId = parseBookingId(oldBookingId);
+        LocalDate bookingDate = parseBookingDate(oldBookingDate);
         List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
         if (adminClubIds == null || adminClubIds.isEmpty()) {
             throw  new UnauthorizedException("booking.notAllowedToView");
@@ -403,12 +411,16 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public String getBookingDateStart(Booking booking) {
+    public String getBookingDateStart(UUID bookingId) {
+        Booking booking = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
         return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
     }
 
     @Override
-    public String getBookingDateEnd(Booking booking) {
+    public String getBookingDateEnd(UUID bookingId) {
+        Booking booking = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
         return formatDateEsEn(booking.getBookingStart().atZoneSameInstant(ZoneId.systemDefault()));
     }
 
@@ -506,8 +518,8 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
-    @Transactional
-    public int getTotalPages(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt, int size) {
+    @Transactional(readOnly = true)
+    public int getTotalPages(UUID userId, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt, int size) {
         int totalBookings = countSearch(userId, clubId, bookingId, status, bookingDate, hasReceipt);
         return (int) Math.ceil((double) totalBookings / size);
 

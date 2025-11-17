@@ -299,8 +299,8 @@ public class ClubController {
         model.addAttribute("editTableForm", new EditTableForm());
         model.addAttribute("editProductForm", new EditProductForm());
         model.addAttribute("editField", "Event");
-        model.addAttribute("maxProductsReached", !productService.canAddProduct(club));
-        model.addAttribute("maxTablesReached", !tableService.canAddTable(club));
+        model.addAttribute("maxProductsReached", !productService.canAddProduct(clubId));
+        model.addAttribute("maxTablesReached", !tableService.canAddTable(clubId));
 
         int reviewPageIndex = reviewPage - 1;
         List<Review> reviews = reviewService.findByClubPaginated(clubId, reviewPageIndex, size);
