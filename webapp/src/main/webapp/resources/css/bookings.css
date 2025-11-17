@@ -137,20 +137,18 @@ body {
 }
 
 .filter-bar {
-    /* start at container start; allow wrapping instead of horizontal scroll */
     margin-left: 0;
     display: flex;
     align-items: center;
     background: #3c3c3c;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    /* allow wrap so items don't force horizontal scroll */
     flex-wrap: wrap;
     padding: 0 6px;
     gap: 8px;
     width: 100%;
     max-width: calc(100% - 24px);
-    padding-right: 0; /* ensure button can reach edge */
+    padding-right: 0;
 }
 
 .filter-bar::-webkit-scrollbar { height: 8px; }
@@ -158,8 +156,7 @@ body {
 
 /* ---------- INPUTS ---------- */
 .filter-item {
-    /* make controls flexible so they can shrink and wrap rather than forcing a horizontal scroll */
-    flex: 1 1 140px; /* grow, shrink, base 180px */
+    flex: 1 1 140px;
     min-width: 80px;
     max-width: 420px;
     border: none;
@@ -173,23 +170,20 @@ body {
     position: relative;
 }
 .filter-item.filter-name { flex: 1 1 100px; max-width: 360px; }
-/* Make status select smaller than other controls */
 .filter-item.filter-status {
-    flex: 0 0 100px; /* compact status select */
+    flex: 0 0 100px;
     min-width: 80px;
     max-width: 140px;
 }
-/* Make sort select larger so options are clearer */
 .filter-item.filter-sort {
-    flex: 0 0 160px; /* larger sort select */
+    flex: 0 0 160px;
     min-width: 120px;
     max-width: 260px;
 }
 
-/* Make the hasReceipt select a bit narrower than the previous control */
 .filter-item.filter-hasReceipt,
 .filter-hasReceipt {
-    flex: 0 0 110px;    /* fixed-ish small width */
+    flex: 0 0 110px;
     min-width: 90px;
     max-width: 140px;
 }
@@ -236,7 +230,6 @@ input[type="date"].filter-item:valid::before {
 }
 
 
-/* ---- FIX visibilidad de fecha (WebKit/Blink) ---- */
 input[type="date"].filter-item { color: #fff; -webkit-text-fill-color: #fff; }
 input[type="date"].filter-item::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .85; }
 input[type="date"].filter-item::-webkit-datetime-edit-text { color: #fff; opacity: 0.9; }
@@ -318,16 +311,13 @@ input[type="date"].filter-item::-webkit-calendar-picker-indicator { filter: inve
 
 /* ====== Responsivo ====== */
 @media (max-width: 900px) {
-    /* stack fields vertically on small screens and make labels appear above inputs */
     .filter-bar { flex-wrap: wrap; width: calc(100vw - 24px); max-width: calc(100vw - 24px); padding: 8px; }
     .filter-item { flex: 1 1 90%; min-width: 0; max-width: 80%; margin: 6px 0; }
     .btn.btn-filter { flex: 1 1 100%; margin-left: 0; height: 44px; }
 
-    /* make ID label flow above the input on mobile to avoid consuming horizontal space */
     .filter-id::before { position: relative; left: 0; top: 0; transform: none; display: block; margin-bottom: 6px; color: #aaa; }
     .filter-id input { padding-left: 12px !important; }
 }
-/* En mobile (sidebar suele ocultarse) mantenemos fila única con scroll */
 @media (max-width: 900px) {
     .app-bookings { margin-left: 0; max-width: 100%; }
     .filter-bar {
