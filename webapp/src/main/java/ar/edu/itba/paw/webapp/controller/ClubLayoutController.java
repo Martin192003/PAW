@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.ClubLayout;
-import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
