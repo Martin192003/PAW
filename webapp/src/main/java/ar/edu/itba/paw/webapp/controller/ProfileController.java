@@ -93,7 +93,7 @@ public class ProfileController {
                                BindingResult errors, Model model, RedirectAttributes ra,
                                @AuthenticationPrincipal PawUserDetails userDetails) {
         if (!form.getPassword().equals(form.getConfirmPassword())) {
-            errors.rejectValue("confirmPassword", "password.mismatch", "reset.password.mismatch");
+            errors.rejectValue("confirmPassword", "reset.password.mismatch");
         }
 
         if (errors.hasFieldErrors("password") || errors.hasFieldErrors("confirmPassword")) {
