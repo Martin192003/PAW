@@ -1,7 +1,6 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.ClubLayout;
-import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.persistence.ClubLayoutDao;
 import org.springframework.beans.factory.annotation.Autowired;

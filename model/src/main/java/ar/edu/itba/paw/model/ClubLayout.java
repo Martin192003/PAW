@@ -64,7 +64,6 @@ public class ClubLayout {
         if (this.createdAt == null) {
             this.createdAt = OffsetDateTime.now();
         }
-        // Cuando se usa el UUIDGenerator de Hibernate, layoutId ya estará seteado antes de persist.
         if (this.url == null && this.layoutId != null && this.clubId != null) {
             this.url = "/clubs/club/" + this.clubId + "/layout/" + this.layoutId + "/image";
         }

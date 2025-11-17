@@ -29,7 +29,7 @@ public class Product {
     @Column(name = "base_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal basePrice;
 
-    @Convert(converter = ProductTypeConverter.class) //ACA HABRIA QUE HACER EL CONVERTER
+    @Convert(converter = ProductTypeConverter.class)
     @Column(name = "product_type", nullable = false)
     private ProductType productType;
 

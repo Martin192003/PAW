@@ -82,7 +82,6 @@ public class User {
         this.id = userId;
     }
 
-    // Getters y Setters
     public UUID getId() { return id; }
     public void setUserId(UUID userId) { this.id = userId; }
 
