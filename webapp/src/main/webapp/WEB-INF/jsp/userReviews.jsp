@@ -114,11 +114,11 @@
 
                 <div class="pagination">
                     <c:if test="${currentPage > 1}">
-                        <a href="?sort=${sort}&offset=${offset - limit}&limit=${limit}" class="page-btn">«</a>
+                        <a href="?sort=${sort}&offset=${offset - limit}&limit=${limit}" class="page-btn"><i class="fa-solid fa-chevron-left"></i></a>
                     </c:if>
                     <span class="page-info">${currentPage} <spring:message code="pagination.of.word" text="de"/> ${totalPages}</span>
                     <c:if test="${currentPage < totalPages}">
-                        <a href="?sort=${sort}&offset=${offset + limit}&limit=${limit}" class="page-btn">»</a>
+                        <a href="?sort=${sort}&offset=${offset + limit}&limit=${limit}" class="page-btn"><i class="fa-solid fa-chevron-right"></i></a>
                     </c:if>
                 </div>
             </c:when>
