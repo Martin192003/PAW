@@ -920,7 +920,7 @@
     </div>
 </div>
 
-<!-- Modal eliminar producto (duplicado resuelto arriba) -->
+<!-- Modal editar evento -->
 <div id="eventEditModal" class="modal">
     <div class="modal-content">
         <span class="modal-close" onclick="closeEventEditModal()" style="color:#fff;">&times;</span>
@@ -1044,22 +1044,18 @@
         modal.style.display = 'flex';
         lockBodyScroll();
 
-        // Set the hidden editedField input
         const editedFieldInput = document.getElementById('editedField');
         if (editedFieldInput) editedFieldInput.value = field;
 
-        // Hide all field containers
         const fields = ['clubName', 'location', 'zone', 'musicGenre', 'priceRange', 'description', 'cbu'];
         fields.forEach(f => {
             const el = document.getElementById('editField_' + f);
             if (el) el.style.display = 'none';
         });
 
-        // Show the relevant field container
         const visibleField = document.getElementById('editField_' + field);
         if (visibleField) visibleField.style.display = 'block';
 
-        // Map fields to their input/select IDs
         const inputIds = {
             'clubName': 'editFieldValue_clubName',
             'location': 'editFieldValue_location',
@@ -1076,7 +1072,6 @@
         const inputElement = document.getElementById(inputId);
         if (!inputElement) return;
 
-        // Handle value setting based on element type
         if (inputElement.tagName === 'SELECT') {
             const validValue = (value === undefined || value === null || value === '') ? '' : value;
             inputElement.value = validValue;
