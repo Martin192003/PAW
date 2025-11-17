@@ -93,7 +93,6 @@ public class EmailServiceImpl implements EmailService {
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
-            // Agregar adjunto si está presente
             if (attachmentName != null && attachmentData != null && attachmentData.length > 0) {
                 String mimeType = attachmentContentType != null ? attachmentContentType : "application/octet-stream";
                 helper.addAttachment(attachmentName, new org.springframework.core.io.ByteArrayResource(attachmentData), mimeType);

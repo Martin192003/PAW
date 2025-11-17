@@ -104,7 +104,7 @@ public class BookingsJpaDao implements BookingDao {
                         FROM Booking b
                         WHERE b.table.id = :tid
                         """, Booking.class)
-                .setParameter("tid", tableId) // ahora sí, UUID
+                .setParameter("tid", tableId)
                 .getResultList();
     }
 
@@ -115,7 +115,7 @@ public class BookingsJpaDao implements BookingDao {
                                                   final Status status,
                                                   final String sort,
                                                   final LocalDate bookingDate,
-                                                  final Boolean hasReceipt, // NEW
+                                                  final Boolean hasReceipt,
                                                   final int limit,
                                                   final int offset) {
         if (clubIds == null || clubIds.isEmpty()) return List.of();
