@@ -2,15 +2,20 @@ package ar.edu.itba.paw.model;
 
 import ar.edu.itba.paw.model.converter.RoleConverter;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
 import javax.persistence.*;
-import javax.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+//TODO: preguntar todo lo de XML
 @Entity
 @Table(name = "users")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class User {
 
     @Id
@@ -29,6 +34,8 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    // Ocultamos el hash de la contraseña en el JSON de salida por seguridad
+    @XmlTransient
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -45,15 +52,20 @@ public class User {
     @Column(name = "is_verified")
     private boolean verified;
 
+    // Ocultamos tokens internos
+    @XmlTransient
     @Column(name = "verification_token")
     private String verificationToken;
 
+    @XmlTransient
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
     @Column(name = "locale")
     private String locale;
 
+    // Ocultamos la relación inversa para evitar Bucle Infinito (User -> Club -> User...)
+    @XmlTransient
     @ManyToMany
     @JoinTable(
             name = "club_admins",
