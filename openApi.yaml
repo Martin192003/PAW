@@ -316,6 +316,60 @@ components:
       required: [code, message]
 
 paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      description: Autentica al usuario y devuelve sus datos básicos. Usa cookie de sesión (JSESSIONID).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login exitoso
+          headers:
+            Set-Cookie:
+              description: Cookie de sesión JSESSIONID
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Usuario no verificado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Obtener usuario autenticado
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Datos del usuario autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /register:
     post:
       tags: [Auth]
