@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: BlingBling Clubs API
+  version: 1.0.0
+  description: |
+    API BLingBling para autenticación, creación de usuarios y gestión básica de clubs.
+servers:
+  - url: http://localhost:8080
+    description: Entorno local
+  - url: https://pawserver.it.itba.edu.ar/paw-2025b-06/
+    description: Entorno de producción
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+
+    Price:
+      type: string
+      enum: [BAJO, MEDIO, ALTO]
+
+    Zone:
+      type: string
+      enum: [ZONA_NORTE, ZONA_OESTE, ZONA_SUR, ZONA_CABA]
+
+    MusicalGenre:
+      type: string
+      enum: [ROCK, POP, CACHENGUE, TECHNO, REGGAETON, CUMBIA, TRAP, JAZZ, ELECTRONICA, AFROBEAT, OTRO]
+
+    User:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        username: { type: string }
+        name: { type: string }
+        surname: { type: string }
+        email: { type: string, format: email }
+        cellphone: { type: string }
+        role: { type: string, enum: [USER, ADMIN] }
+        verified: { type: boolean }
+        locale: { type: string }
+      required: [id, username, email, role]
+
+    Club:
+      type: object
+      properties:
+        clubId: { $ref: '#/components/schemas/UUID' }
+        clubName: { type: string }
+        description: { type: string }
+        location: { type: string }
+        zone: { $ref: '#/components/schemas/Zone' }
+        musicGenre: { $ref: '#/components/schemas/MusicalGenre' }
+        priceRange: { $ref: '#/components/schemas/Price' }
+        isBar: { type: boolean }
+        cbu: { type: string }
+        rating: { type: number, format: float }
+        quantityRatings: { type: integer }
+      required: [clubId, clubName, location, zone, musicGenre, priceRange, isBar, cbu]
+
+    RegisterRequest:
+      type: object
+      required: [username, name, surname, email, password, passwordRepeat, cellphone]
+      properties:
+        username: { type: string }
+        name: { type: string }
+        surname: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        passwordRepeat: { type: string, format: password }
+        cellphone: { type: string }
+        locale: { type: string }
+
+    LoginRequest:
+      type: object
+      required: [usernameOrEmail, password]
+      properties:
+        usernameOrEmail: { type: string }
+        password: { type: string, format: password }
+        rememberMe: { type: boolean }
+
+    ClubCreateRequest:
+      type: object
+      required: [name, location, priceRange, description, musicGenre, zone, isBar, cbu]
+      properties:
+        name: { type: string }
+        location: { type: string }
+        priceRange: { $ref: '#/components/schemas/Price' }
+        description: { type: string }
+        musicGenre: { $ref: '#/components/schemas/MusicalGenre' }
+        zone: { $ref: '#/components/schemas/Zone' }
+        isBar: { type: boolean }
+        cbu: { type: string }
+        imageUrl:
+          type: string
+          format: uri
+          description: URL opcional de imagen de portada del club
+
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+      required: [code, message]
+
+paths:
+  /register:
+    post:
+      tags: [Auth]
+      summary: Crear usuario
+      description: Registra un nuevo usuario en el sistema.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuario creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Datos inválidos o usuario duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /clubs:
+    post:
+      tags: [Clubs]
+      summary: Crear un club
+      description: Crea un nuevo club asociado al usuario autenticado (admin del club).
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClubCreateRequest'
+      responses:
+        '201':
+          description: Club creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Club'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /clubs/{clubId}:
+    get:
+      tags: [Clubs]
+      summary: Obtener detalle de un club
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Datos del club
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Club'
+        '404':
+          description: Club no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
