@@ -62,7 +62,10 @@ components:
         cbu: { type: string }
         rating: { type: number, format: float }
         quantityRatings: { type: integer }
-      required: [clubId, clubName, location, zone, musicGenre, priceRange, isBar, cbu]
+        createdAt: { type: string, format: date-time }
+        contactInfo:
+          $ref: '#/components/schemas/User'
+      required: [clubId, clubName, location, zone, musicGenre, priceRange, isBar]
 
     RegisterRequest:
       type: object
@@ -85,11 +88,54 @@ components:
         password: { type: string, format: password }
         rememberMe: { type: boolean }
 
-    ClubCreateRequest:
+    ChangePasswordRequest:
       type: object
-      required: [name, location, priceRange, description, musicGenre, zone, isBar, cbu]
+      required: [newPassword, confirmPassword]
+      properties:
+        newPassword: { type: string, format: password, minLength: 6, maxLength: 100 }
+        confirmPassword: { type: string, format: password, minLength: 6, maxLength: 100 }
+
+    ResendVerificationRequest:
+      type: object
+      required: [usernameOrEmail]
+      properties:
+        usernameOrEmail: { type: string }
+
+    UsernameUpdateRequest:
+      type: object
+      required: [username]
+      properties:
+        username: { type: string }
+
+    NameUpdateRequest:
+      type: object
+      required: [name]
       properties:
         name: { type: string }
+
+    SurnameUpdateRequest:
+      type: object
+      required: [surname]
+      properties:
+        surname: { type: string }
+
+    CellphoneUpdateRequest:
+      type: object
+      required: [cellphone]
+      properties:
+        cellphone: { type: string }
+
+    EmailUpdateRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+
+    ClubCreateRequest:
+      type: object
+      required: [clubName, location, priceRange, description, musicGenre, zone, isBar, cbu]
+      properties:
+        clubName: { type: string }
         location: { type: string }
         priceRange: { $ref: '#/components/schemas/Price' }
         description: { type: string }
@@ -101,6 +147,166 @@ components:
           type: string
           format: uri
           description: URL opcional de imagen de portada del club
+
+    ProductCreateRequest:
+      type: object
+      required: [productName, description, basePrice, productType]
+      properties:
+        productName: { type: string, maxLength: 100 }
+        description: { type: string }
+        basePrice: { type: number, format: double, minimum: 0, maximum: 100000000 }
+        productType: { $ref: '#/components/schemas/ProductType' }
+        isAvailable: { type: boolean, default: true }
+
+    ProductUpdateRequest:
+      type: object
+      required: [productName, description, basePrice, productType, isAvailable]
+      properties:
+        productName: { type: string, maxLength: 100 }
+        description: { type: string }
+        basePrice: { type: number, format: double, minimum: 0, maximum: 100000000 }
+        productType: { $ref: '#/components/schemas/ProductType' }
+        isAvailable: { type: boolean }
+
+    TableCreateRequest:
+      type: object
+      required: [tableNumber, capacity, price]
+      properties:
+        tableNumber: { type: integer, minimum: 1, maximum: 9999 }
+        capacity: { type: integer, minimum: 1, maximum: 9999 }
+        price: { type: number, format: double, minimum: 0, maximum: 99999999.99 }
+        discount: { type: number, format: double, minimum: 0, maximum: 100, default: 0 }
+        tableState:
+          $ref: '#/components/schemas/TableState'
+          description: Estado inicial (default DISPONIBLE)
+
+    TableUpdateRequest:
+      type: object
+      required: [tableNumber, capacity, price]
+      properties:
+        tableNumber: { type: integer, minimum: 1, maximum: 9999 }
+        capacity: { type: integer, minimum: 1, maximum: 9999 }
+        price: { type: number, format: double, minimum: 0, maximum: 99999999.99 }
+        discount: { type: number, format: double, minimum: 0, maximum: 100, default: 0 }
+        tableState:
+          $ref: '#/components/schemas/TableState'
+          description: Estado de la mesa (default DISPONIBLE)
+
+    EventCreateRequest:
+      type: object
+      required: [eventName, description, date]
+      properties:
+        eventName: { type: string, maxLength: 120 }
+        description: { type: string, maxLength: 2000 }
+        date: { type: string, format: date, description: "Debe ser futura" }
+
+    EventUpdateRequest:
+      type: object
+      required: [eventName, description, date]
+      properties:
+        eventName: { type: string, maxLength: 120 }
+        description: { type: string, maxLength: 2000 }
+        date: { type: string, format: date, description: "Debe ser futura" }
+
+    ReviewCreateRequest:
+      type: object
+      required: [rating, description]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        description: { type: string, maxLength: 1000 }
+
+    Event:
+      type: object
+      properties:
+        eventId: { $ref: '#/components/schemas/UUID' }
+        clubId: { $ref: '#/components/schemas/UUID' }
+        eventName: { type: string }
+        description: { type: string }
+        date: { type: string, format: date }
+        photoId: { $ref: '#/components/schemas/UUID' }
+      required: [eventId, clubId, eventName, date]
+
+    Review:
+      type: object
+      properties:
+        reviewId: { $ref: '#/components/schemas/UUID' }
+        user: { $ref: '#/components/schemas/User' }
+        club: { $ref: '#/components/schemas/Club' }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        description: { type: string }
+        createdAt: { type: string, format: date-time }
+        fromTableGuest: { type: boolean }
+        photoId: { $ref: '#/components/schemas/UUID' }
+      required: [reviewId, user, club, rating, createdAt]
+
+    TableState:
+      type: string
+      enum: [DISPONIBLE, RESERVADA, PENDIENTE]
+
+    ClubTable:
+      type: object
+      properties:
+        tableId: { $ref: '#/components/schemas/UUID' }
+        clubId: { $ref: '#/components/schemas/UUID' }
+        tableNumber: { type: integer }
+        capacity: { type: integer }
+        tableState: { $ref: '#/components/schemas/TableState' }
+        price: { type: number, format: double }
+        discount: { type: number, format: double, description: "Porcentaje 0-100" }
+      required: [tableId, clubId, tableNumber, capacity, tableState, price, discount]
+
+    ProductType:
+      type: string
+      enum: [ALCOHOLICA, NO_ALCOHOLICA, TRAGOS]
+
+    Product:
+      type: object
+      properties:
+        productId: { $ref: '#/components/schemas/UUID' }
+        club: { $ref: '#/components/schemas/Club' }
+        productName: { type: string }
+        description: { type: string }
+        basePrice: { type: number, format: double }
+        productType: { $ref: '#/components/schemas/ProductType' }
+        isAvailable: { type: boolean }
+        createdAt: { type: string, format: date-time }
+      required: [productId, club, productName, basePrice, productType, isAvailable]
+
+    ClubLayout:
+      type: object
+      properties:
+        layoutId: { $ref: '#/components/schemas/UUID' }
+        clubId: { $ref: '#/components/schemas/UUID' }
+        uploadedBy: { $ref: '#/components/schemas/UUID' }
+        url: { type: string, format: uri }
+        filename: { type: string }
+        contentType: { type: string }
+        sizeBytes: { type: integer, format: int64 }
+        createdAt: { type: string, format: date-time }
+      required: [layoutId, clubId, uploadedBy, url, createdAt]
+
+    CoverUrl:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+      required: [url]
+
+    UpcomingEventsResponse:
+      type: object
+      properties:
+        eventsByClub:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/Event'
+          description: Map de clubId a lista de eventos
+        clubsForEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Club'
 
     Error:
       type: object
@@ -135,7 +341,240 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /profile:
+    get:
+      tags: [Users]
+      summary: Ver perfil (vista HTML)
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Página de perfil
+          content:
+            text/html:
+              schema:
+                type: string
+        '401':
+          description: No autenticado
+          content:
+            text/html:
+              schema: { type: string }
+  /profile/edit:
+    get:
+      tags: [Users]
+      summary: Ver página de edición de perfil (HTML)
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Página de edición
+          content:
+            text/html:
+              schema:
+                type: string
+        '401':
+          description: No autenticado
+          content:
+            text/html:
+              schema: { type: string }
+
+  /profile/edit/username:
+    post:
+      tags: [Users]
+      summary: Actualizar username
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UsernameUpdateRequest'
+      responses:
+        '302':
+          description: Redirige a /profile con mensaje de éxito o error
+        '401':
+          description: No autenticado
+          content:
+            text/html:
+              schema: { type: string }
+
+  /profile/edit/name:
+    post:
+      tags: [Users]
+      summary: Actualizar nombre
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NameUpdateRequest'
+      responses:
+        '302':
+          description: Redirige a /profile con mensaje de éxito o error
+        '401':
+          description: No autenticado
+          content:
+            text/html:
+              schema: { type: string }
+
+  /profile/edit/surname:
+    post:
+      tags: [Users]
+      summary: Actualizar apellido
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SurnameUpdateRequest'
+      responses:
+        '302':
+          description: Redirige a /profile con mensaje de éxito o error
+        '401':
+          description: No autenticado
+          content:
+            text/html:
+              schema: { type: string }
+
+  /profile/edit/cellphone:
+    post:
+      tags: [Users]
+      summary: Actualizar celular
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CellphoneUpdateRequest'
+      responses:
+        '302':
+          description: Redirige a /profile con mensaje de éxito o error
+        '401':
+          description: No autenticado
+          content:
+            text/html:
+              schema: { type: string }
+
+  /profile/edit/email:
+    post:
+      tags: [Users]
+      summary: Actualizar email
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmailUpdateRequest'
+      responses:
+        '302':
+          description: Redirige a /profile con mensaje de éxito o error
+        '401':
+          description: No autenticado
+          content:
+            text/html:
+              schema: { type: string }
+
+  /profile/edit/password:
+    post:
+      tags: [Users]
+      summary: Cambiar contraseña
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '302':
+          description: Redirige a /profile con mensaje de éxito o error
+        '401':
+          description: No autenticado
+          content:
+            text/html:
+              schema: { type: string }
+
+  /profile/resend-verification:
+    post:
+      tags: [Users]
+      summary: Reenviar mail de verificación
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationRequest'
+      responses:
+        '200':
+          description: Página con resultado del reenvío
+          content:
+            text/html:
+              schema: { type: string }
+        '401':
+          description: No autenticado
+          content:
+            text/html:
+              schema: { type: string }
+
   /clubs:
+    get:
+      tags: [Clubs]
+      summary: Listar clubs
+      description: |
+        Devuelve clubs filtrados y paginados. Envía metadatos de paginación y disponibilidad por headers.
+      parameters:
+        - in: query
+          name: name
+          schema: { type: string }
+          description: Coincidencia parcial por nombre.
+        - in: query
+          name: zone
+          schema: { $ref: '#/components/schemas/Zone' }
+        - in: query
+          name: genre
+          schema: { type: string }
+          description: Género musical (texto libre que coincide con `musicGenre`).
+        - in: query
+          name: price
+          schema: { $ref: '#/components/schemas/Price' }
+        - in: query
+          name: isBar
+          schema: { type: boolean }
+        - in: query
+          name: availableToday
+          schema: { type: boolean }
+          description: Si es true, usa el modo de disponibilidad y fecha actual.
+        - in: query
+          name: sort
+          schema: { type: string }
+          description: |
+            Campo de ordenamiento (incluye variantes availability_d{0|1|2}_{asc|desc} para fechas).
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, default: 10 }
+      responses:
+        '200':
+          description: Lista de clubs
+          headers:
+            X-Total-Results: { schema: { type: string } }
+            X-Total-Pages: { schema: { type: string } }
+            X-Page: { schema: { type: string } }
+            X-Size: { schema: { type: string } }
+            X-Available-Today: { schema: { type: string }, description: "true si se usó modo disponibilidad" }
+            X-Invalid-Day: { schema: { type: string }, description: "true si la fecha de disponibilidad es inválida" }
+            X-Selected-Availability-Date: { schema: { type: string }, description: "Fecha evaluada (yyyy-MM-dd) cuando corresponde" }
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Club'
     post:
       tags: [Clubs]
       summary: Crear un club
@@ -196,3 +635,505 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [Clubs]
+      summary: Actualizar club
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClubCreateRequest'
+      responses:
+        '200':
+          description: Club actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Club'
+        '404':
+          description: Club no encontrado
+
+  /clubs/{clubId}/cover:
+    get:
+      tags: [Clubs]
+      summary: Obtener portada del club
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: URL de la portada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoverUrl'
+        '404':
+          description: No hay portada cargada
+
+  /clubs/{clubId}/events:
+    get:
+      tags: [Events]
+      summary: Eventos de un club
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+        - in: query
+          name: filter
+          schema:
+            type: string
+            enum: [all, past, future]
+          default: all
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, default: 10 }
+      responses:
+        '200':
+          description: Lista de eventos del club
+          headers:
+            X-Page: { schema: { type: string } }
+            X-Size: { schema: { type: string } }
+            X-Total-Pages: { schema: { type: string } }
+            X-Filter: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+    post:
+      tags: [Events]
+      summary: Crear evento para un club
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreateRequest'
+      responses:
+        '201':
+          description: Evento creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Datos inválidos
+        '401':
+          description: No autenticado
+        '403':
+          description: No autorizado
+
+  /clubs/{clubId}/events/{eventId}:
+    put:
+      tags: [Events]
+      summary: Actualizar un evento de un club
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+        - in: path
+          name: eventId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventUpdateRequest'
+      responses:
+        '200':
+          description: Evento actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Evento o club no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /clubs/{clubId}/layout:
+    get:
+      tags: [Clubs]
+      summary: Obtener layout del club
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200':
+          description: Layout del club
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubLayout'
+        '404':
+          description: Layout no encontrado
+
+  /clubs/{clubId}/layout/image:
+    get:
+      tags: [Clubs]
+      summary: Descargar imagen del layout
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200':
+          description: Imagen binaria del layout
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Layout no encontrado
+
+  /clubs/{clubId}/tables:
+    get:
+      tags: [Tables]
+      summary: Listar mesas de un club
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200':
+          description: Mesas del club
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClubTable'
+    post:
+      tags: [Tables]
+      summary: Crear mesa
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableCreateRequest'
+      responses:
+        '201':
+          description: Mesa creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubTable'
+        '400':
+          description: Datos inválidos
+        '401':
+          description: No autenticado
+        '403':
+          description: No autorizado
+
+  /clubs/{clubId}/tables/{tableId}:
+    put:
+      tags: [Tables]
+      summary: Actualizar mesa de un club
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+        - in: path
+          name: tableId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableUpdateRequest'
+      responses:
+        '200':
+          description: Mesa actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubTable'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Mesa o club no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /clubs/{clubId}/menu:
+    get:
+      tags: [Products]
+      summary: Obtener menú del club
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200':
+          description: Menú disponible
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '404':
+          description: El club no tiene menú cargado
+    post:
+      tags: [Products]
+      summary: Agregar producto al menú
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateRequest'
+      responses:
+        '201':
+          description: Producto creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Datos inválidos o límite alcanzado
+        '401':
+          description: No autenticado
+        '403':
+          description: No autorizado
+
+  /clubs/{clubId}/menu/{productId}:
+    put:
+      tags: [Products]
+      summary: Actualizar producto del menú
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+        - in: path
+          name: productId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdateRequest'
+      responses:
+        '200':
+          description: Producto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Producto o club no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /clubs/{clubId}/limits:
+    get:
+      tags: [Clubs]
+      summary: Flags de límites de productos y mesas
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200':
+          description: Flags retornados vía headers
+          headers:
+            X-Max-Products-Reached: { schema: { type: string } }
+            X-Max-Tables-Reached: { schema: { type: string } }
+
+  /clubs/{clubId}/reviews:
+    get:
+      tags: [Reviews]
+      summary: Reseñas de un club
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, default: 10 }
+      responses:
+        '200':
+          description: Lista paginada de reseñas
+          headers:
+            X-Page: { schema: { type: string } }
+            X-Size: { schema: { type: string } }
+            X-Total-Pages: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+    post:
+      tags: [Reviews]
+      summary: Crear reseña
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                description: { type: string, maxLength: 1000 }
+                photo:
+                  type: string
+                  format: binary
+              required: [rating, description]
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreateRequest'
+      responses:
+        '201':
+          description: Reseña creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Datos inválidos
+        '401':
+          description: No autenticado
+        '403':
+          description: No autorizado
+
+  /clubs/events/upcoming:
+    get:
+      tags: [Events]
+      summary: Próximos eventos agrupados por club
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 0, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, minimum: 1, default: 30 }
+      responses:
+        '200':
+          description: Eventos agrupados por club
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpcomingEventsResponse'
