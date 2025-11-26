@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.webapp.controller;
+/*package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.webapp.form.UserForm;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
@@ -165,4 +165,4 @@ public class LoginController {
     public ModelAndView login() {
         return new ModelAndView("login");
     }
-}
+}*/

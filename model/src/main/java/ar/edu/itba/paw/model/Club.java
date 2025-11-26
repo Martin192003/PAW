@@ -4,17 +4,21 @@ import ar.edu.itba.paw.model.converter.MusicalGenreConverter;
 import ar.edu.itba.paw.model.converter.PriceConverter;
 import org.hibernate.annotations.GenericGenerator;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
 import javax.persistence.*;
-import javax.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.math.BigDecimal;
 
-
+//TODO: preguntar todo lo de xml
 @Entity
 @Table(name = "clubs")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Club {
 
     @Id
@@ -42,6 +46,8 @@ public class Club {
     @Column
     private String description;
 
+    // TODO: chequear el xmlTransient
+    @XmlTransient
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_info")
     private User contactInfo;
@@ -62,7 +68,8 @@ public class Club {
 
     @Column(name = "cbu", length = 50)
     private String cbu;
-    // Solo puede haber 1
+
+    @XmlTransient
     @ManyToMany(mappedBy = "adminOfClubs")
     private Set<User> admins = new HashSet<>();
 
@@ -94,8 +101,6 @@ public class Club {
         this.cbu = cbu;
     }
 
-
-    //ver de sacar el constructor de arriba ya que se genera sola la uuid
     public Club(String clubName, String location, java.math.BigDecimal rating,
                 Integer quantityRatings, Price priceRange, String description,
                 User contactInfo, MusicalGenre musicGenre, OffsetDateTime createdAt, Zone zone, Boolean isBar, String cbu) {

@@ -44,6 +44,12 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .invalidSessionUrl("/clubs")
                 .and().authorizeRequests()
 
+                //TODO: preguntar si ta bien
+                .antMatchers(HttpMethod.POST, "/users").permitAll()
+                .antMatchers(HttpMethod.POST, "/users/login").permitAll()
+                .antMatchers(HttpMethod.POST, "/users/resend-verification").permitAll()
+                .antMatchers(HttpMethod.GET, "/users/verify").permitAll()
+
                 // Authenticated routes
                 .antMatchers("/clubs/new", "/clubs/create", "/reservations/**", "/reviews/**").authenticated()
                 .antMatchers("/admin/**").hasRole("ADMIN")
