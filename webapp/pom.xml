@@ -173,6 +173,14 @@
         <plugin>
           <artifactId>maven-war-plugin</artifactId>
           <version>3.4.0</version>
+            <configuration>
+                <packagingExcludes>**/logback-test.xml</packagingExcludes>
+                <webResources>
+                    <resource>
+                        <directory>../frontend/dist/frontend/browser</directory>
+                    </resource>
+                </webResources>
+            </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
