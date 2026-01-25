@@ -40,9 +40,11 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(final HttpSecurity http) throws Exception {
         http.userDetailsService(userDetailsService)
-                .sessionManagement()
-                .invalidSessionUrl("/clubs")
-                .and().authorizeRequests()
+                // TODO : esto es solo para poder ir probando los gets, posts, etc de la api :)
+//                .sessionManagement()
+//                .invalidSessionUrl("/clubs")
+                .authorizeRequests()
+                .antMatchers("/api/**").permitAll()
 
                 //TODO: preguntar si ta bien
                 .antMatchers(HttpMethod.POST, "/users").permitAll()

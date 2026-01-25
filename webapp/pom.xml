@@ -147,6 +147,12 @@
           <groupId>org.glassfish.jersey.media</groupId>
           <artifactId>jersey-media-jaxb</artifactId>
       </dependency>
+      <dependency>
+          <groupId>ar.edu.itba.paw</groupId>
+          <artifactId>frontend</artifactId>
+          <version>${parent.version}</version>
+          <type>pom</type>
+      </dependency>
   </dependencies>
 
   <build>
