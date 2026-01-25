@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.webapp.rest.clubs;
 
+import ar.edu.itba.paw.model.dto.ClubCreateRequestDto;
 import ar.edu.itba.paw.model.dto.ClubDto;
 import org.springframework.stereotype.Component;
 
@@ -73,39 +74,38 @@ public class ClubRestController {
 //                .build();
 //    }
 
-//    @GET
-//    @Path("/{clubId}")
-//    public Response getClub(@PathParam("clubId") String clubId) {
-//        UUID id;
-//        try {
-//            id = UUID.fromString(clubId);
-//        } catch (IllegalArgumentException e) {
-//            return Response.status(Response.Status.BAD_REQUEST)
-//                    .entity(Map.of("message", "clubId inválido"))
-//                    .build();
-//        }
-//
-//        ClubDto club = CLUBS.get(id);
-//        if (club == null) {
-//            return Response.status(Response.Status.NOT_FOUND)
-//                    .entity(Map.of("message", "Club no encontrado"))
-//                    .build();
-//        }
-//
-//        return Response.ok(club).build();
-//    }
+    @GET
+    @Path("/{clubId}")
+    public Response getClub(@PathParam("clubId") String clubId) {
+        UUID id;
+        try {
+            id = UUID.fromString(clubId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", "clubId inválido"))
+                    .build();
+        }
+
+        ClubDto club = CLUBS.get(id);
+        if (club == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Club no encontrado"))
+                    .build();
+        }
+
+        return Response.ok(club).build();
+    }
 
     @POST
     public Response createClub(ClubCreateRequestDto body) {
         if (body == null ||
-                isBlank(body.clubName) ||
-                isBlank(body.location) ||
-                isBlank(body.description) ||
-                isBlank(body.zone) ||
-                isBlank(body.musicGenre) ||
-                isBlank(body.priceRange) ||
-                body.isBar == null ||
-                isBlank(body.cbu)
+                isBlank(body.getClubName()) ||
+                isBlank(body.getLocation()) ||
+                isBlank(body.getDescription()) ||
+                isBlank(body.getZone()) ||
+                isBlank(body.getMusicGenre()) ||
+                isBlank(body.getPriceRange()) ||
+                isBlank(body.getCbu())
         ) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("message", "Faltan campos requeridos"))
@@ -116,18 +116,18 @@ public class ClubRestController {
 
         ClubDto created = new ClubDto();
         created.setClubId(id);
-        created.setClubName(body.clubName);
-        created.setDescription(body.description);
-        created.setLocation(body.location);
-        created.setZone(body.zone);
-        created.setMusicGenre(body.musicGenre);
-        created.setPriceRange(body.priceRange);
-        created.setBar(body.isBar);
-        created.setCbu(body.cbu);
+        created.setClubName(body.getClubName());
+        created.setDescription(body.getDescription());
+        created.setLocation(body.getLocation());
+        created.setZone(body.getZone());
+        created.setMusicGenre(body.getMusicGenre());
+        created.setPriceRange(body.getPriceRange());
+        created.setBar(body.isBar());
+        created.setCbu(body.getCbu());
         created.setRating(0.0F);
         created.setQuantityRatings(0);
-        created.setCreatedAt(OffsetDateTime.parse(OffsetDateTime.now().toString()));
-//        created.imageUrl = body.imageUrl;
+        created.setCreatedAt(OffsetDateTime.now());
+        //        created.imageUrl = body.imageUrl;
 
         CLUBS.put(id, created);
 
@@ -203,17 +203,6 @@ public class ClubRestController {
         return s == null || s.trim().isEmpty();
     }
 
-    // DTOs mínimos para testear. Después se reemplazan por tus modelos reales.
-    public static class ClubCreateRequestDto {
-        public String clubName;
-        public String location;
-        public String priceRange;
-        public String description;
-        public String musicGenre;
-        public String zone;
-        public Boolean isBar;
-        public String cbu;
-//        public String imageUrl;
-    }
+
 
 }

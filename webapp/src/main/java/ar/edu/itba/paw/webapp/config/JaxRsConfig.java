@@ -13,5 +13,7 @@ public class JaxRsConfig extends ResourceConfig {
     public JaxRsConfig() {
         packages("ar.edu.itba.paw.webapp.rest");
         register(MoxyJsonFeature.class);
+
+        property("eclipselink.json.date-format", "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     }
 }
