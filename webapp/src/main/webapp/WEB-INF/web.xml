@@ -68,7 +68,10 @@
 
         <init-param>
             <param-name>jersey.config.server.provider.packages</param-name>
-            <param-value>ar.edu.itba.paw.webapp.rest</param-value>
+            <param-value>
+                ar.edu.itba.paw.webapp.rest,
+                ar.edu.itba.paw.webapp.controller
+            </param-value>
         </init-param>
 
         <init-param>

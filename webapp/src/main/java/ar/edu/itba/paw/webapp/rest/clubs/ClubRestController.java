@@ -24,11 +24,7 @@ public class ClubRestController {
     @Context
     private UriInfo uriInfo;
 
-    @GET
-    public Response getClub(){
-        return Response.ok().build();
-    }
-//
+
 //    @GET
 //    public Response listClubs(
 //            @QueryParam("name") String name,
@@ -43,22 +39,21 @@ public class ClubRestController {
 //
 //        if (name != null && !name.isBlank()) {
 //            String n = name.toLowerCase(Locale.ROOT);
-//            all.removeIf(c -> c.clubName == null || !c.clubName.toLowerCase(Locale.ROOT).contains(n));
+//            all.removeIf(c -> c.getClubName() == null || !c.getClubName().toLowerCase(Locale.ROOT).contains(n));
 //        }
 //        if (zone != null && !zone.isBlank()) {
-//            all.removeIf(c -> c.zone == null || !c.zone.equalsIgnoreCase(zone));
+//            all.removeIf(c -> c.getZone() == null || !c.getZone().equalsIgnoreCase(zone));
 //        }
 //        if (genre != null && !genre.isBlank()) {
-//            all.removeIf(c -> c.musicGenre == null || !c.musicGenre.equalsIgnoreCase(genre));
+//            all.removeIf(c -> c.getMusicGenre() == null || !c.getMusicGenre().equalsIgnoreCase(genre));
 //        }
 //        if (price != null && !price.isBlank()) {
-//            all.removeIf(c -> c.priceRange == null || !c.priceRange.equalsIgnoreCase(price));
+//            all.removeIf(c -> c.getPriceRange() == null || !c.getPriceRange().equalsIgnoreCase(price));
 //        }
 //        if (isBar != null) {
-//            all.removeIf(c -> c.isBar == null || !c.isBar.equals(isBar));
+//            all.removeIf(c -> !c.isBar());
 //        }
 //
-//        // Paginación simple 1-based como en tu OpenAPI
 //        int totalResults = all.size();
 //        int totalPages = (int) Math.ceil(totalResults / (double) size);
 //        int from = Math.max(0, (page - 1) * size);
@@ -137,45 +132,45 @@ public class ClubRestController {
         return Response.created(uri).entity(created).build();
     }
 
-//    @PUT
-//    @Path("/{clubId}")
-//    public Response updateClub(@PathParam("clubId") String clubId, ClubCreateRequestDto body) {
-//        UUID id;
-//        try {
-//            id = UUID.fromString(clubId);
-//        } catch (IllegalArgumentException e) {
-//            return Response.status(Response.Status.BAD_REQUEST)
-//                    .entity(Map.of("message", "clubId inválido"))
-//                    .build();
-//        }
-//
-//        ClubDto existing = CLUBS.get(id);
-//        if (existing == null) {
-//            return Response.status(Response.Status.NOT_FOUND)
-//                    .entity(Map.of("message", "Club no encontrado"))
-//                    .build();
-//        }
-//
-//        if (body == null) {
-//            return Response.status(Response.Status.BAD_REQUEST)
-//                    .entity(Map.of("message", "Body requerido"))
-//                    .build();
-//        }
-//
-//        // Update completo (como en tu OpenAPI usás ClubCreateRequest para PUT)
-//        if (!isBlank(body.clubName)) existing.clubName = body.clubName;
-//        if (!isBlank(body.description)) existing.description = body.description;
-//        if (!isBlank(body.location)) existing.location = body.location;
-//        if (!isBlank(body.zone)) existing.zone = body.zone;
-//        if (!isBlank(body.musicGenre)) existing.musicGenre = body.musicGenre;
-//        if (!isBlank(body.priceRange)) existing.priceRange = body.priceRange;
-//        if (body.isBar != null) existing.isBar = body.isBar;
-//        if (!isBlank(body.cbu)) existing.cbu = body.cbu;
+    @PUT
+    @Path("/{clubId}")
+    public Response updateClub(@PathParam("clubId") String clubId, ClubCreateRequestDto body) {
+        UUID id;
+        try {
+            id = UUID.fromString(clubId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", "clubId inválido"))
+                    .build();
+        }
+
+        ClubDto existing = CLUBS.get(id);
+        if (existing == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Club no encontrado"))
+                    .build();
+        }
+
+        if (body == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", "Body requerido"))
+                    .build();
+        }
+
+        // Update completo (como en tu OpenAPI usás ClubCreateRequest para PUT)
+        if (!isBlank(body.getClubName())) existing.setClubName(body.getClubName());
+        if (!isBlank(body.getDescription())) existing.setDescription(body.getDescription());
+        if (!isBlank(body.getLocation())) existing.setLocation(body.getLocation());
+        if (!isBlank(body.getZone())) existing.setZone(body.getZone());
+        if (!isBlank(body.getMusicGenre())) existing.setMusicGenre(body.getMusicGenre());
+        if (!isBlank(body.getPriceRange())) existing.setPriceRange(body.getPriceRange());
+        if (body.isBar()) existing.setBar(body.isBar());
+        if (!isBlank(body.getCbu())) existing.setCbu(body.getCbu());
 //        existing.imageUrl = body.imageUrl;
-//
-//        CLUBS.put(id, existing);
-//        return Response.ok(existing).build();
-//    }
+
+        CLUBS.put(id, existing);
+        return Response.ok(existing).build();
+    }
 
     @DELETE
     @Path("/{clubId}")
