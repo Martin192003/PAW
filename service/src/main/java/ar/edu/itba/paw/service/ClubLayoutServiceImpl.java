@@ -42,7 +42,7 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
         layout.setContentType(contentType != null ? contentType : "application/octet-stream");
         layout.setData(data);
         layout.setSizeBytes((long) data.length);
-        layout.setUrl("/clubs/club/" + clubId + "/layout/" + newId + "/image");
+        layout.setUrl("/api/clubs/" + clubId + "/layout/image");
 
         layoutDao.save(layout);
     }

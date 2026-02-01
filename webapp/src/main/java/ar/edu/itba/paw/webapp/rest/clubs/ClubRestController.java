@@ -8,6 +8,7 @@ import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.TableService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ar.edu.itba.paw.webapp.rest.clubs.ClubStore;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -32,7 +33,6 @@ public class ClubRestController {
     private final ClubService clubService;
     private final TableService tableService;
 
-    private static final Map<UUID, ClubDto> CLUBS = new ConcurrentHashMap<>();
 
     @Context
     private UriInfo uriInfo;
@@ -144,7 +144,7 @@ public class ClubRestController {
                     .build();
         }
 
-        ClubDto club = CLUBS.get(id);
+        ClubDto club = ClubStore.CLUBS.get(id);
         if (club == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(Map.of("message", "Club no encontrado"))
@@ -187,7 +187,7 @@ public class ClubRestController {
         created.setCreatedAt(OffsetDateTime.now());
         //        created.imageUrl = body.imageUrl;
 
-        CLUBS.put(id, created);
+        ClubStore.CLUBS.put(id, created);
 
         URI uri = uriInfo.getAbsolutePathBuilder()
                 .path(created.getClubId().toString())
@@ -207,7 +207,7 @@ public class ClubRestController {
                     .build();
         }
 
-        ClubDto existing = CLUBS.get(id);
+        ClubDto existing = ClubStore.CLUBS.get(id);
         if (existing == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(Map.of("message", "Club no encontrado"))
@@ -231,7 +231,7 @@ public class ClubRestController {
         if (!isBlank(body.getCbu())) existing.setCbu(body.getCbu());
 //        existing.imageUrl = body.imageUrl;
 
-        CLUBS.put(id, existing);
+        ClubStore.CLUBS.put(id, existing);
         return Response.ok(existing).build();
     }
 
@@ -247,7 +247,7 @@ public class ClubRestController {
                     .build();
         }
 
-        ClubDto removed = CLUBS.remove(id);
+        ClubDto removed = ClubStore.CLUBS.remove(id);
         if (removed == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(Map.of("message", "Club no encontrado"))
