@@ -1,0 +1,58 @@
+<header
+  class="fixed top-0 left-0 w-full h-[90px]
+         bg-black/90 backdrop-blur-md
+         flex items-center justify-between
+         px-8 z-50 shadow-md">
+
+  <!-- LOGO -->
+  <a routerLink="/clubs" class="relative">
+    <div
+      class="font-bold tracking-widest text-[1.7rem]
+         text-[#9c27b0] leading-tight
+         drop-shadow-[2px_2px_4px_rgba(216,0,183,0.3)]"
+      style="font-family: 'Darklinos', Arial, sans-serif;">
+      BLING <br> &nbsp;&nbsp;BLING
+    </div>
+  </a>
+
+  <!-- RIGHT BUTTONS -->
+  <div class="flex items-center gap-4">
+
+    <a
+      routerLink="/clubs/new"
+      class="uppercase font-bold tracking-wide px-6 py-3 rounded-xl
+             text-white transition-all duration-300
+             hover:bg-fuchsia-600/20 hover:scale-105"
+              style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;">
+      Add Club
+    </a>
+
+    <a
+      *ngIf="isLoggedIn"
+      routerLink="/profile"
+      class="w-12 h-12 rounded-full flex items-center justify-center
+             bg-gradient-to-br from-purple-600 to-fuchsia-500
+             text-white text-xl shadow-lg
+             hover:scale-110 transition">
+      <i class="fa-solid fa-user"></i>
+    </a>
+
+    <a
+      *ngIf="!isLoggedIn"
+      routerLink="/login"
+      class="inline-block uppercase font-bold tracking-[1px]
+         px-[22px] py-[12px] rounded-[10px]
+         text-white text-[1rem]
+         shadow-[0_0_12px_rgba(156,39,176,0.7)]
+         hover:shadow-[0_0_20px_rgba(213,0,249,0.9)]
+         hover:scale-105
+         transition-all duration-300
+         bg-[linear-gradient(135deg,#9c27b0,#d500f9)]
+         border-0 cursor-pointer"
+      style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;"
+    >
+      Login
+    </a>
+
+  </div>
+</header>

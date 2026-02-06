@@ -91,21 +91,13 @@ public class ClubSubresourcesRestController {
     @GET
     @Path("/limits")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getLimits(@PathParam("clubId") final String clubId) {
-        final UUID id = parseUuidOr400(clubId);
+    public Response getLimits(@PathParam("clubId") String clubId) {
+        UUID id = parseUuidOr400(clubId);
         if (id == null) return badRequest("clubId inválido");
 
-        final ClubDto club = ClubStore.CLUBS.get(id);
-        if (club == null) return notFound("Club no encontrado");
-
-        // Recurso: límites/constraints del club (valores ejemplo)
-        return Response.ok(Map.of(
-                "clubId", id.toString(),
-                "maxCapacity", 300,
-                "maxTables", 40,
-                "minReservationPeople", 1,
-                "maxReservationPeople", 10
-        )).build();
+        return clubService.getLimits(id)
+                .map(limits -> Response.ok(limits).build())
+                .orElse(notFound("Club no encontrado"));
     }
 
     private static UUID parseUuidOr400(final String raw) {

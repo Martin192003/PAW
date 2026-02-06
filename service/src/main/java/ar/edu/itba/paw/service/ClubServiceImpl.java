@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.dto.ClubLimitsDto;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.persistence.BookingDao;
@@ -278,6 +279,32 @@ public class ClubServiceImpl implements ClubService{
         Booking booking = bookingDao.findById(bookingId).orElseThrow(NotFoundException::new);
         ClubTable table = clubTablesDao.findById(booking.getTableId()).orElseThrow(NotFoundException::new);
         return clubDao.findById(table.getClubId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ClubLimitsDto> getLimits(UUID clubId) {
+        Optional<Club> clubOpt = clubDao.findById(clubId);
+        if (clubOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Club club = clubOpt.get();
+
+        List<ClubTable> tables = clubTablesDao.findByClub(club);
+
+        int maxTables = tables.size();
+        int maxCapacity = tables.stream()
+                .mapToInt(ClubTable::getCapacity)
+                .sum();
+
+        return Optional.of(new ClubLimitsDto(
+                clubId.toString(),
+                maxCapacity,
+                maxTables,
+                1,
+                10
+        ));
     }
 
 

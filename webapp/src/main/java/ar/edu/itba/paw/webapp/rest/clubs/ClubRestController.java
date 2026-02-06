@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Component
 @Path("/clubs")
 @Produces(MediaType.APPLICATION_JSON)
 //@Consumes(MediaType.APPLICATION_JSON) // TODO: Ojo con el 415 acá
