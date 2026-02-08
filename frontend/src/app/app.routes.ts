@@ -1,6 +1,14 @@
 import { Routes } from '@angular/router';
-import { ClubsPageComponent } from './pages/clubs-page.component';
+import { ClubsPage } from './pages/clubs.page';
 
 export const routes: Routes = [
-  { path: '', component: ClubsPageComponent }
+  {
+    path: '',
+    redirectTo: 'clubs',
+    pathMatch: 'full'
+  },
+  {
+    path: 'clubs',
+    component: ClubsPage
+  },
 ];

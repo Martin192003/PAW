@@ -11,4 +11,5 @@ export interface Club {
   rating: number;
   quantityRatings: number;
   createdAt: string;
+  photoId?: number;
 }
