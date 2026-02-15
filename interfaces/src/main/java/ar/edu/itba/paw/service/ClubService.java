@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.dto.ClubLimitsDto;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 
 import java.math.BigDecimal;
@@ -62,4 +63,7 @@ public interface ClubService {
     int offsetForPage(int page, int size, String nameLike,Zone zone,String musicGenre,String normalizedPriceRange,Boolean isBar);
 
     Optional<Club> getClubByBookingId(UUID bookingId);
+
+    Optional<ClubLimitsDto> getLimits(UUID clubId);
+
 }
