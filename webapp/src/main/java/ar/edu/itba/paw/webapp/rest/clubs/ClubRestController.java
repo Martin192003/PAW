@@ -1,14 +1,10 @@
 package ar.edu.itba.paw.webapp.rest.clubs;
 
-import ar.edu.itba.paw.model.Club;
-import ar.edu.itba.paw.model.Zone;
-import ar.edu.itba.paw.model.dto.ClubCreateRequestDto;
-import ar.edu.itba.paw.model.dto.ClubDto;
-import ar.edu.itba.paw.service.ClubService;
-import ar.edu.itba.paw.service.TableService;
+import ar.edu.itba.paw.model.*;
+import ar.edu.itba.paw.model.dto.*;
+import ar.edu.itba.paw.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ar.edu.itba.paw.webapp.rest.clubs.ClubStore;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -24,7 +20,6 @@ import java.util.regex.Pattern;
 @Component
 @Path("/clubs")
 @Produces(MediaType.APPLICATION_JSON)
-//@Consumes(MediaType.APPLICATION_JSON) // TODO: Ojo con el 415 acá
 public class ClubRestController {
 
     private static final int DEFAULT_PAGE = 1;
@@ -33,15 +28,21 @@ public class ClubRestController {
 
     private final ClubService clubService;
     private final TableService tableService;
+    private final UserService userService;
+    private final ClubLayoutService clubLayoutService;
+    private final PhotoService photoService;
 
 
     @Context
     private UriInfo uriInfo;
 
     @Autowired
-    public ClubRestController(final ClubService clubService, final TableService tableService) {
+    public ClubRestController(final ClubService clubService, final TableService tableService, UserService userService, ClubLayoutService clubLayoutService, PhotoService photoService) {
         this.clubService = clubService;
         this.tableService = tableService;
+        this.userService = userService;
+        this.clubLayoutService = clubLayoutService;
+        this.photoService = photoService;
     }
 
     @GET
@@ -87,8 +88,12 @@ public class ClubRestController {
 
         final int totalPages = (size == 0) ? 0 : (int) Math.ceil((double) totalClubs / size);
 
-        final GenericEntity<List<Club>> entity = new GenericEntity<>(clubs) {};
-        final Response.ResponseBuilder rb = Response.ok(entity);
+        List<ClubDto> dtos = clubs.stream()
+                .map(c -> toDtoWithLinks(c))
+                .toList();
+
+        GenericEntity<List<ClubDto>> entity = new GenericEntity<>(dtos) {};
+        Response.ResponseBuilder rb = Response.ok(entity);
 
         rb.header("X-Total-Results", totalClubs);
         rb.header("X-Total-Pages", totalPages);
@@ -131,8 +136,6 @@ public class ClubRestController {
         return null;
     }
 
-
-
     @GET
     @Path("/{clubId}")
     public Response getClub(@PathParam("clubId") String clubId) {
@@ -145,18 +148,21 @@ public class ClubRestController {
                     .build();
         }
 
-        ClubDto club = ClubStore.CLUBS.get(id);
+        Club club = clubService.getClubById(id).orElse(null);
         if (club == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(Map.of("message", "Club no encontrado"))
                     .build();
         }
 
-        return Response.ok(club).build();
+        return Response.ok(toDtoWithLinks(club)).build();
     }
 
     @POST
-    public Response createClub(ClubCreateRequestDto body) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response createClub(ClubCreateRequestDto body,
+                               @Context SecurityContext securityContext) {
+
         if (body == null ||
                 isBlank(body.getClubName()) ||
                 isBlank(body.getLocation()) ||
@@ -164,41 +170,46 @@ public class ClubRestController {
                 isBlank(body.getZone()) ||
                 isBlank(body.getMusicGenre()) ||
                 isBlank(body.getPriceRange()) ||
-                isBlank(body.getCbu())
-        ) {
+                isBlank(body.getCbu())) {
+
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("message", "Faltan campos requeridos"))
                     .build();
         }
 
-        UUID id = UUID.randomUUID();
+        String email = securityContext.getUserPrincipal().getName();
+        User user = userService.findByEmail(email);
 
-        ClubDto created = new ClubDto();
-        created.setClubId(id);
-        created.setClubName(body.getClubName());
-        created.setDescription(body.getDescription());
-        created.setLocation(body.getLocation());
-        created.setZone(body.getZone());
-        created.setMusicGenre(body.getMusicGenre());
-        created.setPriceRange(body.getPriceRange());
-        created.setBar(body.isBar());
-        created.setCbu(body.getCbu());
-        created.setRating(0.0F);
-        created.setQuantityRatings(0);
-        created.setCreatedAt(OffsetDateTime.now());
-        //        created.imageUrl = body.imageUrl;
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
 
-        ClubStore.CLUBS.put(id, created);
+        Club created = clubService.create(
+                body.getClubName(),
+                body.getDescription(),
+                body.getLocation(),
+                Price.valueOf(body.getPriceRange()),
+                user,
+                MusicalGenre.valueOf(body.getMusicGenre()),
+                Zone.valueOf(body.getZone()),
+                body.isBar(),
+                body.getCbu(),
+                null
+        );
 
         URI uri = uriInfo.getAbsolutePathBuilder()
                 .path(created.getClubId().toString())
                 .build();
-        return Response.created(uri).entity(created).build();
+
+        return Response.created(uri)
+                .entity(toDtoWithLinks(created))
+                .build();
     }
 
     @PUT
     @Path("/{clubId}")
-    public Response updateClub(@PathParam("clubId") String clubId, ClubCreateRequestDto body) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateClub(@PathParam("clubId") String clubId, ClubCreateRequestDto body, @Context SecurityContext securityContext) {
         UUID id;
         try {
             id = UUID.fromString(clubId);
@@ -208,8 +219,8 @@ public class ClubRestController {
                     .build();
         }
 
-        ClubDto existing = ClubStore.CLUBS.get(id);
-        if (existing == null) {
+        Optional<Club> existingOpt = clubService.getClubById(id);
+        if (existingOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(Map.of("message", "Club no encontrado"))
                     .build();
@@ -221,47 +232,256 @@ public class ClubRestController {
                     .build();
         }
 
-        // Update completo (como en tu OpenAPI usás ClubCreateRequest para PUT)
-        if (!isBlank(body.getClubName())) existing.setClubName(body.getClubName());
-        if (!isBlank(body.getDescription())) existing.setDescription(body.getDescription());
-        if (!isBlank(body.getLocation())) existing.setLocation(body.getLocation());
-        if (!isBlank(body.getZone())) existing.setZone(body.getZone());
-        if (!isBlank(body.getMusicGenre())) existing.setMusicGenre(body.getMusicGenre());
-        if (!isBlank(body.getPriceRange())) existing.setPriceRange(body.getPriceRange());
-        if (body.isBar()) existing.setBar(body.isBar());
-        if (!isBlank(body.getCbu())) existing.setCbu(body.getCbu());
-//        existing.imageUrl = body.imageUrl;
+        Club existing = existingOpt.get();
+        String email = securityContext.getUserPrincipal().getName();
+        User user = userService.findByEmail(email);
 
-        ClubStore.CLUBS.put(id, existing);
-        return Response.ok(existing).build();
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        Price price = body.getPriceRange() != null
+                ? Price.valueOf(body.getPriceRange())
+                : existing.getPriceRange();
+
+        MusicalGenre genre = body.getMusicGenre() != null
+                ? MusicalGenre.valueOf(body.getMusicGenre())
+                : existing.getMusicGenre();
+
+        Zone zone = body.getZone() != null
+                ? Zone.valueOf(body.getZone())
+                : existing.getZone();
+
+        String name = body.getClubName() != null ? body.getClubName() : existing.getClubName();
+        String description = body.getDescription() != null ? body.getDescription() : existing.getDescription();
+        String location = body.getLocation() != null ? body.getLocation() : existing.getLocation();
+        Boolean isBar = body.isBar();
+        String cbu = body.getCbu() != null ? body.getCbu() : existing.getCbu();
+
+        Club updated = clubService.update(
+                id,
+                name,
+                location,
+                existing.getRating(),
+                existing.getQuantityRatings(),
+                price,
+                description,
+                existing.getContactInfo() != null
+                        ? existing.getContactInfo().getId()
+                        : null,
+                genre,
+                zone,
+                isBar,
+                cbu
+        );
+
+        return Response.ok(toDtoWithLinks(updated)).build();
     }
 
-    @DELETE
-    @Path("/{clubId}")
-    public Response deleteClub(@PathParam("clubId") String clubId) {
-        UUID id;
-        try {
-            id = UUID.fromString(clubId);
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId inválido"))
-                    .build();
-        }
+    @GET
+    @Path("/{clubId}/layout")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLayout(@PathParam("clubId") String clubId) {
+        UUID id = parseUuidOr400(clubId);
+        if (id == null) return badRequest("clubId inválido");
 
-        ClubDto removed = ClubStore.CLUBS.remove(id);
-        if (removed == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Club no encontrado"))
-                    .build();
-        }
+        if (clubService.getClubById(id).isEmpty())
+            return notFound("Club no encontrado");
 
-        return Response.noContent().build();
+        return clubLayoutService.getLayoutByClub(id)
+                .map(layout -> Response.ok(
+                        new LayoutDto(
+                                id.toString(),
+                                layout.getUrl()
+                        )
+                ).build())
+                .orElse(Response.noContent().build());
+    }
+
+    @GET
+    @Path("/{clubId}/limits")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLimits(@PathParam("clubId") String clubId) {
+        UUID id = parseUuidOr400(clubId);
+        if (id == null) return badRequest("clubId inválido");
+
+        return clubService.getLimits(id)
+                .map(limits -> Response.ok(limits).build())
+                .orElse(notFound("Club no encontrado"));
+    }
+
+    @GET
+    @Path("/{clubId}/cover")
+    public Response getCover(@PathParam("clubId") String clubId, @Context Request request) {
+        UUID id = parseUuidOr400(clubId);
+        if (id == null) return badRequest("clubId inválido");
+
+        if (clubService.getClubById(id).isEmpty())
+            return notFound("Club no encontrado");
+
+        return photoService.getCoverPhoto(id)
+                .map(photo -> buildImageResponse(photo, request))
+                .orElse(Response.status(Response.Status.NOT_FOUND).build());
+    }
+
+
+
+    @GET
+    @Path("/{clubId}/layout/image")
+    public Response getLayoutImage(@PathParam("clubId") String clubId, @Context Request request) {
+        UUID id = parseUuidOr400(clubId);
+        if (id == null) return badRequest("clubId inválido");
+
+        return clubLayoutService.getLayoutByClub(id)
+                .map(layout -> {
+
+                    EntityTag etag = new EntityTag(
+                            Integer.toHexString(
+                                    Objects.hash(layout.getClubId(), layout.getSizeBytes())
+                            )
+                    );
+
+                    Response.ResponseBuilder preconditions =
+                            request.evaluatePreconditions(etag);
+
+                    CacheControl cacheControl = new CacheControl();
+                    cacheControl.setMaxAge(31536000);
+                    cacheControl.setPrivate(false);
+
+                    if (preconditions != null) {
+                        return preconditions
+                                .cacheControl(cacheControl)
+                                .tag(etag)
+                                .build();
+                    }
+
+                    return Response.ok(layout.getData(), layout.getContentType())
+                            .cacheControl(cacheControl)
+                            .tag(etag)
+                            .header("Content-Length", layout.getSizeBytes())
+                            .build();
+                })
+                .orElse(Response.noContent().build());
     }
 
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
     }
 
+    private ClubDto toDtoWithLinks(Club club) {
 
+        ClubDto dto = new ClubDto();
+
+        dto.setClubId(club.getClubId());
+        dto.setClubName(club.getClubName());
+        dto.setDescription(club.getDescription());
+        dto.setLocation(club.getLocation());
+        dto.setZone(club.getZone().name());
+        dto.setMusicGenre(club.getMusicGenre().toString());
+        dto.setPriceRange(club.getPriceRange().toString());
+        dto.setBar(club.getIsBar());
+        dto.setRating(
+                club.getRating() != null
+                        ? club.getRating().floatValue()
+                        : 0f
+        );
+        dto.setQuantityRatings(
+                club.getQuantityRatings() != null
+                        ? club.getQuantityRatings()
+                        : 0
+        );
+        dto.setCreatedAt(club.getCreatedAt());
+
+        ClubLinksDto links = new ClubLinksDto();
+
+        links.setSelf(
+                uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(club.getClubId().toString())
+                        .build()
+                        .toString()
+        );
+
+        links.setCover(
+                uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(club.getClubId().toString())
+                        .path("cover")
+                        .build()
+                        .toString()
+        );
+
+        links.setLayout(
+                uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(club.getClubId().toString())
+                        .path("layout")
+                        .build()
+                        .toString()
+        );
+
+        links.setLimits(
+                uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(club.getClubId().toString())
+                        .path("limits")
+                        .build()
+                        .toString()
+        );
+
+        dto.setLinks(links);
+
+        return dto;
+    }
+
+
+    private static UUID parseUuidOr400(final String raw) {
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static Response badRequest(final String msg) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(new ErrorDto(msg))
+                .build();
+    }
+
+    private static Response notFound(final String msg) {
+        return Response.status(Response.Status.NOT_FOUND)
+                .entity(new ErrorDto(msg))
+                .build();
+    }
+
+    private Response buildImageResponse(Photo photo, Request request) {
+
+        EntityTag etag = new EntityTag(
+                Integer.toHexString(
+                        Objects.hash(photo.getPhotoId(), photo.getSizeBytes())
+                )
+        );
+
+        Response.ResponseBuilder preconditions =
+                request.evaluatePreconditions(etag);
+
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setMaxAge(31536000);
+        cacheControl.setPrivate(false);
+
+        if (preconditions != null) {
+            return preconditions
+                    .cacheControl(cacheControl)
+                    .tag(etag)
+                    .build();
+        }
+
+        return Response.ok(photo.getData(), photo.getContentType())
+                .cacheControl(cacheControl)
+                .tag(etag)
+                .header("Content-Length", photo.getSizeBytes())
+                .build();
+    }
 
 }

@@ -37,4 +37,5 @@ public interface PhotoService {
     UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, Photo file) throws IOException;
     List<Photo> getReviewPhotosByClub(UUID clubId, int limit, int offset);
     Photo createPhoto(String filename, String contentType, byte[] data);
+    Optional<Photo> getCoverPhoto(UUID clubId);
 }

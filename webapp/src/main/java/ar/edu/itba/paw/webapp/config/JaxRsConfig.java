@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import javax.ws.rs.ApplicationPath;
 
 @Configuration
+@ApplicationPath("/api")
 @ComponentScan("ar.edu.itba.paw.webapp.rest")
 public class JaxRsConfig extends ResourceConfig {
     public JaxRsConfig() {

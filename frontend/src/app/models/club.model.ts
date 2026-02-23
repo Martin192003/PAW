@@ -11,5 +11,11 @@ export interface Club {
   rating: number;
   quantityRatings: number;
   createdAt: string;
-  photoId?: number;
+
+  links?: {
+    self: string;
+    cover: string;
+    layout: string;
+    limits: string;
+  };
 }

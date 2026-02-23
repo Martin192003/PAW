@@ -55,23 +55,26 @@
              transition cursor-pointer"
       [routerLink]="['/clubs', club.clubId]">
 
-      <!-- IMAGE -->
-      <div class="w-[150px] h-full flex-shrink-0 bg-black">
-        <img
-          *ngIf="club.photoId; else noImage"
-          [src]="'http://localhost:8080/webapp_war_exploded/photos/' + club.photoId"
-          alt="club image"
-          class="w-full h-full object-cover" />
+      <div class="w-[150px] h-full flex-shrink-0 bg-black relative">
 
-        <ng-template #noImage>
+        <img
+          *ngIf="!club._hasError"
+          [src]="club.links?.cover"
+          alt="Foto de {{club.clubName}}"
+          class="w-full h-full object-cover"
+          (error)="club._hasError = true"
+        >
+
+        <div *ngIf="club._hasError" class="w-full h-full">
           <div
             class="w-full h-full flex items-center justify-center
-                   text-[#9c27b0] text-lg font-bold text-center
-                   tracking-widest"
+             text-[#9c27b0] text-lg font-bold text-center
+             tracking-widest"
             style="font-family: 'Darklinos', Arial, sans-serif;">
             Bling <br>&nbsp;&nbsp;Bling
           </div>
-        </ng-template>
+        </div>
+
       </div>
 
       <!-- CONTENT -->

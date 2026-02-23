@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ClubService } from '../services/club.service';
-import { PhotoService } from '../services/photo.service';
 import { Club } from '../models/club.model';
 import { RouterModule } from '@angular/router';
+
+type ClubListItem = Club & { _hasError?: boolean };
 
 @Component({
   standalone: true,
@@ -11,13 +12,9 @@ import { RouterModule } from '@angular/router';
   templateUrl: './clubs.page.html',
 })
 export class ClubsPage implements OnInit {
+  clubs: ClubListItem[] = [];
 
-  clubs: Club[] = [];
-
-  constructor(
-    private clubService: ClubService,
-    public photoService: PhotoService
-  ) {}
+  constructor(private clubService: ClubService) {}
 
   ngOnInit() {
     this.clubService.getClubs().subscribe(clubs => {
