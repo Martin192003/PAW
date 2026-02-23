@@ -18,7 +18,7 @@ export class ClubsPage implements OnInit {
 
   ngOnInit() {
     this.clubService.getClubs().subscribe(clubs => {
-      this.clubs = clubs;
+       this.clubs = clubs;
     });
   }
 }
