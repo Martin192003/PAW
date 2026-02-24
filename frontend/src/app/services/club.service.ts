@@ -5,6 +5,7 @@ import { Club } from '../models/club.model';
 import { ClubLimits } from '../models/club-limits.model';
 import { Cover } from '../models/cover.model';
 import { Layout } from '../models/layout.model';
+import {PagedResponse} from '../models/paged-response.model';
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +16,10 @@ export class ClubService {
 
   constructor(private http: HttpClient) {}
 
-  getClubs(): Observable<Club[]> {
-    return this.http.get<Club[]>(`${this.apiUrl}/clubs`);
+  getClubs(page: number, size: number): Observable<PagedResponse<Club>> {
+    return this.http.get<PagedResponse<Club>>(
+      `${this.apiUrl}/clubs?page=${page}&size=${size}`
+    );
   }
 
   getClubById(id: string): Observable<Club> {

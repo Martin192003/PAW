@@ -46,6 +46,7 @@
   <div class="w-full max-w-[1200px] flex flex-col gap-6">
 
     <div
+
       *ngFor="let club of clubs"
       class="relative flex h-[180px] w-full bg-[#3c3c3c]
              rounded-lg overflow-hidden
@@ -58,14 +59,15 @@
       <div class="w-[150px] h-full flex-shrink-0 bg-black relative">
 
         <img
-          *ngIf="!club._hasError"
+          *ngIf="!club._hasError && club.links?.cover"
           [src]="club.links?.cover"
           alt="Foto de {{club.clubName}}"
           class="w-full h-full object-cover"
-          (error)="club._hasError = true"
+          (error)="onImageError($event, club)"
+          (load)="onImageLoad()"
         >
 
-        <div *ngIf="club._hasError" class="w-full h-full">
+        <div *ngIf="club._hasError || !club.links?.cover" class="w-full h-full">
           <div
             class="w-full h-full flex items-center justify-center
              text-[#9c27b0] text-lg font-bold text-center
@@ -118,6 +120,48 @@
           {{ club.bar ? 'Bar' : 'Nightclub' }}
         </div>
       </div>
+    </div>
+    <!-- PAGINATION -->
+    <div
+      *ngIf="totalPages > 1"
+      class="flex justify-center items-center gap-3 mt-8 mb-10">
+
+      <!-- PREV -->
+      <button
+        (click)="prevPage()"
+        [disabled]="currentPage === 1"
+        class="px-4 py-2 rounded-lg font-bold
+           bg-purple-700 text-white
+           disabled:opacity-40 disabled:cursor-not-allowed
+           hover:bg-purple-600 transition">
+        Prev
+      </button>
+
+      <!-- PAGE NUMBERS -->
+      <button
+        *ngFor="let p of pages"
+        (click)="goToPage(p)"
+        class="w-10 h-10 rounded-full font-bold
+           transition"
+        [ngClass]="
+      p === currentPage
+        ? 'bg-fuchsia-600 text-white shadow-[0_0_10px_rgba(213,0,249,0.7)]'
+        : 'bg-[#3c3c3c] text-white hover:bg-purple-700'
+    ">
+        {{ p }}
+      </button>
+
+      <!-- NEXT -->
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages"
+        class="px-4 py-2 rounded-lg font-bold
+           bg-purple-700 text-white
+           disabled:opacity-40 disabled:cursor-not-allowed
+           hover:bg-purple-600 transition">
+        Next
+      </button>
+
     </div>
 
   </div>

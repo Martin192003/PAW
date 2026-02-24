@@ -92,21 +92,23 @@ public class ClubRestController {
                 .map(c -> toDtoWithLinks(c))
                 .toList();
 
-        GenericEntity<List<ClubDto>> entity = new GenericEntity<>(dtos) {};
-        Response.ResponseBuilder rb = Response.ok(entity);
 
-        rb.header("X-Total-Results", totalClubs);
-        rb.header("X-Total-Pages", totalPages);
-        rb.header("X-Page", page);
-        rb.header("X-Size", size);
-        rb.header("X-Available-Today", availabilityMode);
-        rb.header("X-Invalid-Day", invalidDay);
+        PagedResponseDto response = new PagedResponseDto(
+                dtos,
+                page,
+                size,
+                totalClubs,
+                totalPages,
+                availabilityMode,
+                invalidDay,
+                selectedDay != null ? selectedDay.toString() : null
+        );
 
-        if (availabilityMode) {
-            rb.header("X-Selected-Availability-Date", selectedDay != null ? selectedDay.toString() : "");
-        }
-
-        return rb.build();
+        return Response.ok(response)
+                .header("Cache-Control", "no-cache, no-store, must-revalidate")
+                .header("Pragma", "no-cache")
+                .header("Expires", "0")
+                .build();
     }
 
     private boolean isAvailabilityMode(final Boolean availableToday, final String sort) {
@@ -391,6 +393,7 @@ public class ClubRestController {
                         : 0
         );
         dto.setCreatedAt(club.getCreatedAt());
+
 
         ClubLinksDto links = new ClubLinksDto();
 
