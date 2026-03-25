@@ -91,8 +91,7 @@ public class EventJpaDaoTest {
                 clubId,
                 "New Event",
                 "New description",
-                date,
-                newPhotoId
+                date
         );
         em.flush();
         em.clear();
@@ -103,7 +102,7 @@ public class EventJpaDaoTest {
         assertEquals("New Event", created.getEventName());
         assertEquals("New description", created.getDescription());
         assertEquals(date, created.getDate());
-        assertEquals(newPhotoId, created.getPhotoId());
+        assertNull(created.getPhotoId());
 
         assertEquals(4L, countEvents());
     }
@@ -117,8 +116,8 @@ public class EventJpaDaoTest {
                     UUID.randomUUID(),
                     "Invalid Event",
                     "Should fail",
-                    date,
-                    null
+                    date
+
             );
             em.flush();
         });

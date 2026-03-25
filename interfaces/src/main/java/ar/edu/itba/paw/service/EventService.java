@@ -2,14 +2,16 @@ package ar.edu.itba.paw.service;
 
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.Photo;
+import ar.edu.itba.paw.model.dto.EventDto;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
 public interface EventService {
-    Event create(UUID clubId, String eventName, String description, LocalDate date, Photo image);
+    Event create(UUID clubId, String eventName, String description, LocalDate date);
     Event update(UUID clubId, UUID eventId, String eventName, String description, LocalDate date, Photo image);
     void delete(UUID clubId, UUID eventId);
 

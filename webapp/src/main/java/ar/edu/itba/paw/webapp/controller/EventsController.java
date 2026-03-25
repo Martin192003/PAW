@@ -92,8 +92,7 @@ public class EventsController {
                 clubId,
                 form.getEventName(),
                 form.getDescription(),
-                form.getDate(),
-                photo
+                form.getDate()
         );
         return "redirect:/clubs/handle?clubId=" + clubId + "&page=1";
     }

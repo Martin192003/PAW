@@ -33,29 +33,11 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event create(UUID clubId, String eventName, String description, LocalDate date, Photo image) {
+    public Event create(UUID clubId, String eventName, String description, LocalDate date) {
         validateName(eventName);
         validateDate(date);
 
-        Event ev = eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, null);
-
-        if (image != null && image.getData() != null && image.getData().length > 0) {
-            try {
-                User loggedUser = securityService.getVerifiedLoggedUser();
-                UUID photoId = photoService.uploadEventPhoto(
-                        clubId,
-                        ev.getEventId(),
-                        loggedUser.getId(),
-                        image
-                );
-                eventDao.attachPhoto(ev.getEventId(), photoId);
-                ev.setPhotoId(photoId);
-            } catch (IOException e) {
-                throw new RuntimeException("Error collecting event image", e);
-            }
-        }
-
-        return ev;
+        return eventDao.create(clubId, eventName.trim(), trimOrNull(description), date);
     }
 
 
