@@ -10,9 +10,7 @@ import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -25,8 +23,11 @@ public class EventRestController {
     @Autowired
     private EventService eventService;
 
+    @Autowired
+    private EventDtoAssembler eventDtoAssembler;
     @Context
     private UriInfo uriInfo;
+
 
     @GET
     @Path("/{clubId}")
@@ -37,7 +38,7 @@ public class EventRestController {
         List<Event> events = eventService.listByClub(clubId, page, size);
 
         List<EventDto> body = events.stream()
-                .map(event -> toDto(clubId, event))
+                .map(event -> eventDtoAssembler.toDto(uriInfo,clubId, event))
                 .collect(Collectors.toList());
 
         GenericEntity<List<EventDto>> entity = new GenericEntity<>(body) {};
@@ -52,7 +53,7 @@ public class EventRestController {
                            @QueryParam("size") @DefaultValue("20") int size){
         List<Event> events = eventService.listUpcoming(page, size);
         List<EventDto> body = events.stream()
-                .map(this::toDto)
+                .map(event ->eventDtoAssembler.toDto(uriInfo,event))
                 .collect(Collectors.toList());
 
         GenericEntity<List<EventDto>> entity = new GenericEntity<>(body) {};
@@ -81,7 +82,7 @@ public class EventRestController {
                 .build();
 
         return Response.created(location)
-                .entity(toDto(clubId, created))
+                .entity(eventDtoAssembler.toDto(uriInfo,clubId, created))
                 .build();
     }
 
@@ -92,7 +93,7 @@ public class EventRestController {
 
         Event event = eventService.get(eventId);
 
-        return Response.ok(toDto(clubId, event)).build();
+        return Response.ok( eventDtoAssembler.toDto(uriInfo,clubId, event)).build();
     }
 
     @PUT
@@ -111,7 +112,7 @@ public class EventRestController {
                 null
         );
 
-        return Response.ok(toDto(clubId, updated)).build();
+        return Response.ok( eventDtoAssembler.toDto(uriInfo,clubId, updated)).build();
     }
 
     @DELETE
@@ -123,52 +124,7 @@ public class EventRestController {
         return Response.noContent().build();
     }
 
-    private EventDto toDto(UUID clubId, Event event) {
-        EventDto dto = new EventDto();
-        dto.setId(event.getEventId());
-        dto.setEventName(event.getEventName());
-        dto.setDescription(event.getDescription());
-        dto.setDate(event.getDate());
 
-        dto.setPhotoId(event.getPhotoId());
-
-        String self = uriInfo.getBaseUriBuilder()
-                .path("clubs")
-                .path(clubId.toString())
-                .path("events")
-                .path(event.getEventId().toString())
-                .build()
-                .toString();
-
-        String club = uriInfo.getBaseUriBuilder()
-                .path("clubs")
-                .path(clubId.toString())
-                .build()
-                .toString();
-
-
-        Map<String,String> links = new HashMap<>();
-        links.put("self", self);
-        links.put("club", club);
-
-        if (event.getPhotoId() != null) {
-            String photo = uriInfo.getBaseUriBuilder()
-                    .path("clubs")
-                    .path(clubId.toString())
-                    .path("events")
-                    .path(event.getEventId().toString())
-                    .path("photo")
-                    .build()
-                    .toString();
-            links.put("photo", photo);
-        }
-        dto.setLinks(links);
-        return dto;
-    }
-
-    private EventDto toDto(Event event) {
-        return toDto(event.getClubId(), event);
-    }
 
 
 }
