@@ -50,4 +50,11 @@ public interface EventService {
     int totalEventPages(UUID clubId, int size);
 
 
+    UUID setEventPhoto(UUID clubId, UUID eventId, Photo image);
+
+    Photo getEventPhoto(UUID clubId, UUID eventId);
+
+    void deleteEventPhoto(UUID clubId, UUID eventId);
+
+    Optional<UUID> getEventPhotoId(UUID clubId, UUID eventId);
 }

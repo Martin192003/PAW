@@ -32,7 +32,7 @@ public interface PhotoService {
     void uploadCarousel(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
     List<Photo> getCarouselPhotos(UUID clubId);
     List<Photo> getClubPhotos(UUID clubId, int limit, int offset);
-
+    Optional<Photo> getEventPhoto(UUID eventId);
     UUID uploadReviewPhoto(UUID clubId, UUID reviewId, UUID userId, Photo file) throws IOException;
     UUID uploadEventPhoto(UUID clubId, UUID eventId, UUID userId, Photo file) throws IOException;
     List<Photo> getReviewPhotosByClub(UUID clubId, int limit, int offset);
