@@ -1,10 +1,11 @@
 package ar.edu.itba.paw.webapp.rest.events;
 
+import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.Photo;
+import ar.edu.itba.paw.model.dto.EventDto;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
-import ar.edu.itba.paw.service.PhotoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,27 +22,32 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.util.UUID;
 
 @Component
-@Path("/clubs/{clubId}/events/{eventId}/photo")
+@Path("/clubs/events/{clubId}/{eventId}/photo")
 public class EventPhotoRestController {
 
     @Autowired
     private EventService eventService;
 
     @Autowired
-    private PhotoService photoService;
+    private ClubService clubService;
 
     @Autowired
-    private ClubService clubService;
+    private EventDtoAssembler eventDtoAssembler;
 
     @Context
     private HttpServletRequest request;
 
+    @Context
+    private UriInfo uriInfo;
+
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @javax.ws.rs.Produces(MediaType.APPLICATION_JSON)
     public Response putPhoto(@PathParam("clubId") UUID clubId,
                              @PathParam("eventId") UUID eventId)
             throws IOException, ServletException {
@@ -70,7 +76,10 @@ public class EventPhotoRestController {
 
         eventService.setEventPhoto(clubId, eventId, photo);
 
-        return Response.noContent().build();
+        Event updatedEvent = eventService.get(eventId);
+        EventDto dto = eventDtoAssembler.toDto(uriInfo, clubId, updatedEvent);
+
+        return Response.ok(dto).build();
     }
 
     @GET
@@ -87,11 +96,16 @@ public class EventPhotoRestController {
     }
 
     @DELETE
+    @javax.ws.rs.Produces(MediaType.APPLICATION_JSON)
     public Response deletePhoto(@PathParam("clubId") UUID clubId,
                                 @PathParam("eventId") UUID eventId) {
 
         eventService.deleteEventPhoto(clubId, eventId);
-        return Response.noContent().build();
+
+        Event updatedEvent = eventService.get(eventId);
+        EventDto dto = eventDtoAssembler.toDto(uriInfo, clubId, updatedEvent);
+
+        return Response.ok(dto).build();
     }
 
     private void validateImageContentType(String contentType) {

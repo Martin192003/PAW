@@ -65,6 +65,7 @@ public class EventRestController {
 
 
 
+
     @POST
     @Path("/{clubId}")
     public Response create(@PathParam("clubId") UUID clubId,
