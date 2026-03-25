@@ -168,7 +168,7 @@ public class PhotoJpaDao implements PhotoDao {
         Photo p = new Photo();
         p.setClubId(clubId);
 
-        p.setReviewId(eventId);
+        p.setReviewId(null);
 
         p.setPostedBy(postedBy);
         p.setFilename(filename);
