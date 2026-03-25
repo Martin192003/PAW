@@ -12,13 +12,7 @@ import org.springframework.stereotype.Component;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -47,7 +41,7 @@ public class EventPhotoRestController {
 
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @javax.ws.rs.Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response putPhoto(@PathParam("clubId") UUID clubId,
                              @PathParam("eventId") UUID eventId)
             throws IOException, ServletException {
@@ -96,7 +90,7 @@ public class EventPhotoRestController {
     }
 
     @DELETE
-    @javax.ws.rs.Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response deletePhoto(@PathParam("clubId") UUID clubId,
                                 @PathParam("eventId") UUID eventId) {
 
