@@ -14,7 +14,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Path("/clubs")
+//@Path("/clubs")
 @Produces(MediaType.APPLICATION_JSON)
 //@Consumes(MediaType.APPLICATION_JSON) // TODO: Ojo con el 415 acá
 public class ClubRestController {
