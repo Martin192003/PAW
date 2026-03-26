@@ -23,12 +23,14 @@ public class EventDtoAssembler {
         String self = uriInfo.getBaseUriBuilder()
                 .path(EventRestController.class)
                 .path(EventRestController.class, "getById")
-                .build(clubId, event.getEventId())
+                .resolveTemplate("clubId", clubId)
+                .resolveTemplate("eventId", event.getEventId())
+                .build()
                 .toString();
 
         String club = uriInfo.getBaseUriBuilder()
-                .path("clubs")
-                .path(clubId.toString())
+                .path("clubs/{clubId}")
+                .resolveTemplate("clubId", clubId)
                 .build()
                 .toString();
 
@@ -39,7 +41,9 @@ public class EventDtoAssembler {
         if (event.getPhotoId() != null) {
             String photo = uriInfo.getBaseUriBuilder()
                     .path(EventPhotoRestController.class)
-                    .build(clubId, event.getEventId())
+                    .resolveTemplate("clubId", clubId)
+                    .resolveTemplate("eventId", event.getEventId())
+                    .build()
                     .toString();
 
             links.put("photo", photo);

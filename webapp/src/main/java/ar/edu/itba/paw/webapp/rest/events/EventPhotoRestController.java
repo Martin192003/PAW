@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Component
-@Path("/clubs/events/{clubId}/{eventId}/photo")
+@Path("/clubs/{clubId}/events/{eventId}/photo")
 public class EventPhotoRestController {
 
     @Autowired
