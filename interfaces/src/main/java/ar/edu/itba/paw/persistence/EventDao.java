@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface EventDao {
-    Event create(UUID clubId, String eventName, String description, LocalDate date, UUID photoId);
+    Event create(UUID clubId, String eventName, String description, LocalDate date);
 
     Event update(UUID eventId, UUID clubId, String eventName, String description, LocalDate date, UUID photoId);
 

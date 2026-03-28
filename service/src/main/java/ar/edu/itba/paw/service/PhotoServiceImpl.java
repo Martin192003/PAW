@@ -1,25 +1,22 @@
 
 package ar.edu.itba.paw.service;
 
+import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.PhotoType;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.persistence.EventDao;
 import ar.edu.itba.paw.persistence.PhotoDao;
 import ar.edu.itba.paw.model.Photo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.Optional;
 import java.util.*;
 
 @Service
 public class PhotoServiceImpl implements PhotoService {
 
-    private static final long MAX_BYTES = 5L * 1024 * 1024; // 5 MB
-    private static final Set<String> ALLOWED_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/webp"
-    );
 
     private final PhotoDao photoDao;
     private final UserService userService;
@@ -122,7 +119,7 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public void uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException {
+    public void uploadPhotoForClub(UUID clubId, String userEmail, Photo file){
         if (file == null) {
             throw new IllegalArgumentException("File is empty");
         }
@@ -150,19 +147,17 @@ public class PhotoServiceImpl implements PhotoService {
         Optional<Photo> coverOpt = photoDao.findCoverByClubId(clubId);
         if (coverOpt.isPresent()) {
             Photo cover = coverOpt.get();
-            if (cover.getPhotoId() != null && !eventDao.findByPhotoIdAndClub(cover.getPhotoId(), clubId).isPresent()) {
+            if (cover.getPhotoId() != null && eventDao.findByPhotoIdAndClub(cover.getPhotoId(), clubId).isEmpty()) {
                 return Optional.ofNullable(cover.getUrl());
             }
         }
 
         List<Photo> carousel = photoDao.findCarouselWithoutEventByClubId(clubId, 50, 0);
-        return carousel.stream()
-                .sorted((p1, p2) -> {
+        return carousel.stream().min((p1, p2) -> {
                     if (p1.getCreatedAt() != null && p2.getCreatedAt() != null)
                         return p2.getCreatedAt().compareTo(p1.getCreatedAt());
                     return p2.getPhotoId().compareTo(p1.getPhotoId());
                 })
-                .findFirst()
                 .map(Photo::getUrl);
     }
 
@@ -200,6 +195,14 @@ public class PhotoServiceImpl implements PhotoService {
                 clubId, reviewId, userId,
                 file.getFilename(), ct, file.getData()
         );
+    }
+
+    @Override
+    @Transactional
+    public Optional<Photo> getEventPhoto(UUID eventId) {
+        Event event = eventDao.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found"));
+        return photoDao.findByIdWithData(event.getPhotoId());
     }
 
     @Override

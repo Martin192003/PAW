@@ -33,29 +33,11 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event create(UUID clubId, String eventName, String description, LocalDate date, Photo image) {
+    public Event create(UUID clubId, String eventName, String description, LocalDate date) {
         validateName(eventName);
         validateDate(date);
 
-        Event ev = eventDao.create(clubId, eventName.trim(), trimOrNull(description), date, null);
-
-        if (image != null && image.getData() != null && image.getData().length > 0) {
-            try {
-                User loggedUser = securityService.getVerifiedLoggedUser();
-                UUID photoId = photoService.uploadEventPhoto(
-                        clubId,
-                        ev.getEventId(),
-                        loggedUser.getId(),
-                        image
-                );
-                eventDao.attachPhoto(ev.getEventId(), photoId);
-                ev.setPhotoId(photoId);
-            } catch (IOException e) {
-                throw new RuntimeException("Error collecting event image", e);
-            }
-        }
-
-        return ev;
+        return eventDao.create(clubId, eventName.trim(), trimOrNull(description), date);
     }
 
 
@@ -167,9 +149,6 @@ public class EventServiceImpl implements EventService {
         final String t = s.trim();
         return t.isEmpty() ? null : t;
     }
-    public boolean isEventPhoto(UUID clubId, UUID photoId) {
-        return eventDao.findByPhotoIdAndClub(photoId, clubId).isPresent();
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -222,4 +201,86 @@ public class EventServiceImpl implements EventService {
 
         return (int) Math.ceil((double) totalEvents / size);
     }
+
+    @Override
+    @Transactional
+    public UUID setEventPhoto(UUID clubId, UUID eventId, Photo image) {
+        if (image == null || image.getData() == null || image.getData().length == 0) {
+            throw new ValidationException("image data is required");
+        }
+        if (image.getFilename() == null || image.getFilename().trim().isEmpty()) {
+            throw new ValidationException("filename is required");
+        }
+        if (image.getContentType() == null || image.getContentType().trim().isEmpty()) {
+            throw new ValidationException("contentType is required");
+        }
+
+        final Event current = eventDao.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found"));
+
+        if (!Objects.equals(current.getClubId(), clubId))
+            throw new InvalidClubException("Event does not belong to the provided club");
+
+        UUID oldPhotoId = current.getPhotoId();
+
+        try {
+           // User loggedUser = securityService.getVerifiedLoggedUser();
+
+            UUID newPhotoId = photoService.uploadEventPhoto(
+                    clubId,
+                    eventId,
+                    UUID.fromString("11111111-1111-1111-1111-111111111111"), // TODO: replace with loggedUser.getId() when auth is implemented
+                    image
+            );
+
+            eventDao.attachPhoto(eventId, newPhotoId);
+
+            if (oldPhotoId != null && !oldPhotoId.equals(newPhotoId)) {
+                photoService.delete(oldPhotoId);
+            }
+
+            return newPhotoId;
+        } catch (IOException e) {
+            throw new RuntimeException("Error uploading event image", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteEventPhoto(UUID clubId, UUID eventId) {
+        final Event current = eventDao.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found"));
+
+        if (!Objects.equals(current.getClubId(), clubId))
+            throw new InvalidClubException("Event does not belong to the provided club");
+
+        UUID oldPhotoId = current.getPhotoId();
+        if (oldPhotoId == null) return;
+
+        eventDao.attachPhoto(eventId, null);
+        current.setPhotoId(null);
+        photoService.delete(oldPhotoId);
+    }
+
+    @Override
+    @Transactional
+    public Optional<UUID> getEventPhotoId(UUID clubId, UUID eventId){
+        final Event current = eventDao.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found"));
+
+        if (!Objects.equals(current.getClubId(), clubId))
+            throw new InvalidClubException("Event does not belong to the provided club");
+
+        return Optional.ofNullable(current.getPhotoId());
+    }
+    @Override
+    @Transactional
+    public Photo getEventPhoto(UUID clubId, UUID eventId) {
+        getEventPhotoId(clubId, eventId)
+                .orElseThrow(() -> new NotFoundException("Event photo not found"));
+
+        return photoService.getEventPhoto(eventId)
+                .orElseThrow(() -> new NotFoundException("Event photo not found"));
+    }
+
 }
