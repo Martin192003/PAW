@@ -1,4 +1,4 @@
-package ar.edu.itba.paw.webapp.controller;
+/*package ar.edu.itba.paw.webapp.controller;
 
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
@@ -213,4 +213,4 @@ public class UserRestController {
         user.setResetPasswordToken(null);
         user.setAdminOfClubs(Collections.emptySet());
     }
-}
+}*/

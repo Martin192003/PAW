@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.model.dto;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 public class ClubDto {
@@ -12,9 +13,9 @@ public class ClubDto {
     private String musicGenre;
     private String priceRange;
     private boolean isBar;
-    private String cbu;
     private Float rating;
     private Integer quantityRatings;
+    private ClubLinksDto links;
     private OffsetDateTime createdAt;
 //    private UserDto contactInfo;
 
@@ -44,9 +45,6 @@ public class ClubDto {
     public boolean isBar() { return isBar; }
     public void setBar(boolean bar) { isBar = bar; }
 
-    public String getCbu() { return cbu; }
-    public void setCbu(String cbu) { this.cbu = cbu; }
-
     public Float getRating() { return rating; }
     public void setRating(Float rating) { this.rating = rating; }
 
@@ -55,6 +53,9 @@ public class ClubDto {
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+    public ClubLinksDto getLinks() { return links; }
+    public void setLinks(ClubLinksDto links) { this.links = links; }
 
 //    public UserDto getContactInfo() { return contactInfo; }
 //    public void setContactInfo(UserDto contactInfo) { this.contactInfo = contactInfo; }

@@ -237,5 +237,19 @@ public class PhotoServiceImpl implements PhotoService {
         photo.setData(data);
         return photo;
     }
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Photo> getCoverPhoto(UUID clubId) {
+        Optional<Photo> coverOpt = photoDao.findCoverByClubId(clubId);
+
+        if (coverOpt.isPresent()) {
+            return photoDao.findByIdWithData(coverOpt.get().getPhotoId());
+        }
+
+        return photoDao.findCarouselWithoutEventByClubId(clubId, 1, 0)
+                .stream()
+                .findFirst()
+                .flatMap(p -> photoDao.findByIdWithData(p.getPhotoId()));
+    }
 
 }
