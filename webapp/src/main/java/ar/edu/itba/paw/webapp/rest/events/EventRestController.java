@@ -15,7 +15,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
-@Path("/")
+@Path("/clubs")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class EventRestController {
@@ -30,7 +30,7 @@ public class EventRestController {
 
 
     @GET
-    @Path("/clubs/{clubId}/events")
+    @Path("/{clubId}/events")
     public Response listByClub(@PathParam("clubId") UUID clubId,
                                @QueryParam("page") @DefaultValue("0") int page,
                                @QueryParam("size") @DefaultValue("20") int size) {
@@ -49,9 +49,9 @@ public class EventRestController {
     }
 
     @GET
-    @Path("/clubs/events")
+    @Path("/events")
     public Response getUpcoming(@QueryParam("page") @DefaultValue("0") int page,
-                           @QueryParam("size") @DefaultValue("20") int size){
+                                @QueryParam("size") @DefaultValue("20") int size){
         List<Event> events = eventService.listUpcoming(page, size);
         List<EventDto> body = events.stream()
                 .map(event ->eventDtoAssembler.toDto(uriInfo,event))
@@ -65,7 +65,7 @@ public class EventRestController {
     }
 
     @POST
-    @Path("/clubs/{clubId}/events")
+    @Path("/{clubId}/events")
     public Response create(@PathParam("clubId") UUID clubId,
                            @Valid EventDto dto) {
 
@@ -86,7 +86,7 @@ public class EventRestController {
     }
 
     @GET
-    @Path("/clubs/{clubId}/events/{eventId}")
+    @Path("/{clubId}/events/{eventId}")
     public Response getById(@PathParam("clubId") UUID clubId,
                             @PathParam("eventId") UUID eventId) {
 
@@ -96,7 +96,7 @@ public class EventRestController {
     }
 
     @PUT
-    @Path("/clubs/{clubId}/events/{eventId}")
+    @Path("/{clubId}/events/{eventId}")
     public Response update(@PathParam("clubId") UUID clubId,
                            @PathParam("eventId") UUID eventId,
                            @Valid EventDto dto) {
@@ -115,7 +115,7 @@ public class EventRestController {
     }
 
     @DELETE
-    @Path("/clubs/{clubId}/events/{eventId}")
+    @Path("/{clubId}/events/{eventId}")
     public Response delete(@PathParam("clubId") UUID clubId,
                            @PathParam("eventId") UUID eventId) {
 
