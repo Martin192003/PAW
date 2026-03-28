@@ -30,7 +30,7 @@ public class EventRestController {
 
 
     @GET
-    @Path("/clubs/events/{clubId}")
+    @Path("/clubs/{clubId}/events")
     public Response listByClub(@PathParam("clubId") UUID clubId,
                                @QueryParam("page") @DefaultValue("0") int page,
                                @QueryParam("size") @DefaultValue("20") int size) {
@@ -63,9 +63,6 @@ public class EventRestController {
                 .header("X-Total-Count", eventService.countUpcoming())
                 .build();
     }
-
-
-
 
     @POST
     @Path("/clubs/{clubId}/events")
@@ -125,8 +122,5 @@ public class EventRestController {
         eventService.delete(clubId, eventId);
         return Response.noContent().build();
     }
-
-
-
 
 }
