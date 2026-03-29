@@ -2,11 +2,20 @@
 
 @font-face {
   font-family: 'Darklinos';
-  src: url('/assets/fonts/DARKLINOS.ttf') format('truetype');
+  src: url('../public/assets/fonts/DARKLINOS.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
+
+@font-face {
+  font-family: 'Good Times';
+  src: url('../public/assets/fonts/Good Times Rg.otf') format('opentype');
+  font-weight: bold ;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   @apply bg-[#1d1d1d] text-white;
 }

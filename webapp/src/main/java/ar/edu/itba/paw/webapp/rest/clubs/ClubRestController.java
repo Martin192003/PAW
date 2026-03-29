@@ -327,7 +327,6 @@ public class ClubRestController {
     }
 
 
-
     @GET
     @Path("/{clubId}/layout/image")
     public Response getLayoutImage(@PathParam("clubId") String clubId, @Context Request request) {
@@ -486,5 +485,6 @@ public class ClubRestController {
                 .header("Content-Length", photo.getSizeBytes())
                 .build();
     }
-
 }
+
+
