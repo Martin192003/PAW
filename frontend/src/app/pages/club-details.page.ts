@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { combineLatest } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
 import { Product } from '../models/product.model';
@@ -20,7 +22,7 @@ import { Event } from '../models/event.model';
 
 @Component({
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './club-details.page.html'
 })
 export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
@@ -35,6 +37,13 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   tables: ClubTable[] = [];
   reviews: Review[] = [];
   events: Event[] = [];
+  bookingDates: string[] = [];
+  selectedDate = '';
+  tablesError?: string;
+  fromEvent = false;
+  selectedTableId?: string;
+
+  private currentClubId?: string;
 
   private readonly defaultCoords = {
     lat: -34.5891429,
@@ -56,8 +65,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/clubs']);
   }
 
-  menuOpen = false;
-  tablesOpen = false;
+  menuOpen = true;
+  tablesOpen = true;
 
   toggleMenu() {
     this.menuOpen = !this.menuOpen;
@@ -82,11 +91,41 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.route.paramMap.subscribe(params => {
+    combineLatest([
+      this.route.paramMap,
+      this.route.queryParamMap,
+      this.route.fragment
+    ]).subscribe(([params, queryParams, fragment]) => {
       const id = params.get('id');
       if (!id) return;
 
-      this.loadClubData(id);
+      const rawDate = queryParams.get('date');
+      const queryDate = this.normalizeDate(rawDate);
+      this.fromEvent = queryParams.get('fromEvent') === 'true';
+
+      this.bookingDates = this.fromEvent && queryDate
+        ? [queryDate]
+        : this.buildAllowedBookingDates(15);
+
+      if (this.fromEvent) {
+        this.selectedDate = queryDate ?? this.bookingDates[0] ?? '';
+      } else {
+        const fallback = this.bookingDates[0] ?? '';
+        this.selectedDate = (queryDate && this.bookingDates.includes(queryDate)) ? queryDate : fallback;
+      }
+
+      if (fragment === 'dd-tables') {
+        this.tablesOpen = true;
+      }
+
+      const changedClub = this.currentClubId !== id;
+      this.currentClubId = id;
+
+      if (changedClub) {
+        this.loadClubData(id);
+      }
+
+      this.loadTables(id, this.selectedDate);
     });
   }
 
@@ -102,11 +141,11 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
     this.clubService.getLayout(id).subscribe({
       next: l => {
-        if (l?.url) {
-          this.layoutUrl = 'http://localhost:8080/webapp_war_exploded' + l.url;
-        } else {
-          this.layoutUrl = undefined;
-        }
+        this.layoutUrl = this.resolveLayoutUrl(id, l);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.layoutUrl = undefined;
         this.cdr.detectChanges();
       }
     });
@@ -114,13 +153,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.clubService.getMenu(id).subscribe({
       next: m => {
         this.menu = m;
-        this.cdr.detectChanges();
-      }
-    });
-
-    this.clubService.getTables(id).subscribe({
-      next: t => {
-        this.tables = t;
         this.cdr.detectChanges();
       }
     });
@@ -141,6 +173,107 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       error: err => console.warn('events no existe todavía', err)
     });
     */
+  }
+
+  onBookingDateChange(date: string): void {
+    const nextDate = this.normalizeDate(date);
+    if (!nextDate || !this.currentClubId || nextDate === this.selectedDate) {
+      return;
+    }
+
+    this.selectedDate = nextDate;
+    this.tablesOpen = true;
+    this.loadTables(this.currentClubId, nextDate);
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        date: nextDate,
+        fromEvent: this.fromEvent ? 'true' : null
+      },
+      queryParamsHandling: 'merge',
+      fragment: 'dd-tables'
+    }).catch(err => console.error('query update error', err));
+  }
+
+  formatBookingDate(date: string): string {
+    const parsed = new Date(`${date}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) {
+      return date;
+    }
+
+    return parsed.toLocaleDateString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    });
+  }
+
+  private loadTables(id: string, date: string): void {
+    this.tablesError = undefined;
+    this.clubService.getTables(id, date).subscribe({
+      next: t => {
+        this.tables = t;
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        this.tables = [];
+        this.tablesError = err?.error?.message || 'No se pudieron cargar las mesas disponibles.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private resolveLayoutUrl(clubId: string, layout?: { url?: string; image?: string } | null): string | undefined {
+    const raw = layout?.url || layout?.image;
+    if (!raw) {
+      return undefined;
+    }
+    if (/^https?:\/\//i.test(raw)) {
+      return raw;
+    }
+    return this.clubService.toAbsoluteUrl(raw, clubId);
+  }
+
+  private normalizeDate(raw: string | null): string | undefined {
+    if (!raw) {
+      return undefined;
+    }
+    return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : undefined;
+  }
+
+  private buildAllowedBookingDates(days: number): string[] {
+    const dates: string[] = [];
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < days; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      const day = d.getDay();
+      // 4=Thu, 5=Fri, 6=Sat (mismo criterio que JSP)
+      if (day === 4 || day === 5 || day === 6) {
+        dates.push(this.toIsoDate(d));
+      }
+    }
+
+    return dates;
+  }
+
+  private toIsoDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  onReserveClick(): void {
+    if (!this.selectedTableId) {
+      console.log('No table selected');
+      return;
+    }
+    console.log('Reserva de mesa:', this.selectedTableId, 'para fecha:', this.selectedDate);
+    // Acción placeholder - será implementada después
   }
 
 

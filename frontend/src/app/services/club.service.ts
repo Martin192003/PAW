@@ -43,6 +43,16 @@ export class ClubService {
     return this.http.get<Layout>(`${this.apiUrl}/clubs/${id}/layout`);
   }
 
+  toAbsoluteUrl(path: string, clubId?: string): string {
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+    if (!path && clubId) {
+      return `${this.apiUrl}/clubs/${clubId}/layout/image`;
+    }
+    return new URL(path, this.apiUrl).toString();
+  }
+
   getLimits(id: string): Observable<ClubLimits> {
     return this.http.get<ClubLimits>(`${this.apiUrl}/clubs/${id}/limits`);
   }
@@ -50,8 +60,9 @@ export class ClubService {
     return this.http.get<Product[]>(`${this.apiUrl}/clubs/${id}/menu`);
   }
 
-  getTables(id: string) {
-    return this.http.get<ClubTable[]>(`${this.apiUrl}/clubs/${id}/tables`);
+  getTables(id: string, date?: string) {
+    const query = date ? `?date=${encodeURIComponent(date)}` : '';
+    return this.http.get<ClubTable[]>(`${this.apiUrl}/clubs/${id}/tables${query}`);
   }
 
   getReviews(id: string, page = 1) {
