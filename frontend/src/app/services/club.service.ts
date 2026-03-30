@@ -5,19 +5,19 @@ import { Club } from '../models/club.model';
 import { ClubLimits } from '../models/club-limits.model';
 import { Cover } from '../models/cover.model';
 import { Layout } from '../models/layout.model';
-import {PagedResponse} from '../models/paged-response.model';
+import {AvailabilityPagedResponse} from '../models/availability-paged-response.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClubService {
 
-  private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
+  private readonly apiUrl = 'http://localhost:8080/webapp/api';
 
   constructor(private http: HttpClient) {}
 
-  getClubs(page: number, size: number): Observable<PagedResponse<Club>> {
-    return this.http.get<PagedResponse<Club>>(
+  getClubs(page: number, size: number): Observable<AvailabilityPagedResponse<Club>> {
+    return this.http.get<AvailabilityPagedResponse<Club>>(
       `${this.apiUrl}/clubs?page=${page}&size=${size}`
     );
   }
