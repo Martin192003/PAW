@@ -1,10 +1,6 @@
 export interface PagedResponse<T> {
   content: T[];
-  page: number;
-  size: number;
   totalElements: number;
   totalPages: number;
-  availableToday: boolean;
-  invalidDay: boolean;
-  selectedAvailabilityDate?: string | null;
+  number: number;
 }
