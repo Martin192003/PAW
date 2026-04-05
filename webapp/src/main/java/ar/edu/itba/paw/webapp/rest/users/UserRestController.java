@@ -56,13 +56,15 @@ public class UserRestController {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("userId inválido"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
         Optional<User> maybe = userService.findById(id);
         if (maybe.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(message("Usuario no encontrado"))
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("userId inválido"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
@@ -82,6 +84,7 @@ public class UserRestController {
         ) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("Missing required fields"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
@@ -100,6 +103,7 @@ public class UserRestController {
             if (user == null) {
                 return Response.serverError()
                         .entity(message("Unable to create user"))
+                        .type(MediaType.APPLICATION_JSON)
                         .build();
             }
 
@@ -115,11 +119,13 @@ public class UserRestController {
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (Exception e) {
             LOGGER.error("Error creating user", e);
             return Response.serverError()
                     .entity(message("Internal server error"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
     }
@@ -196,6 +202,7 @@ public class UserRestController {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("userId inválido"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
@@ -203,6 +210,7 @@ public class UserRestController {
         if (maybe.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(message("Usuario no encontrado"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
@@ -220,6 +228,7 @@ public class UserRestController {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("userId inválido"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
@@ -227,19 +236,23 @@ public class UserRestController {
         if (maybe.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(message("Usuario no encontrado"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
         if (body == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("Body requerido"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity(message("Unauthorized")).build();
-        }
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();        }
 
         String authName = auth.getName();
         User authUser = userService.findByUserName(authName);
@@ -248,8 +261,10 @@ public class UserRestController {
         }
 
         if (authUser == null || !authUser.getId().equals(id)) {
-            return Response.status(Response.Status.FORBIDDEN).entity(message("Forbidden")).build();
-        }
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(message("Forbidden"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();        }
 
         User existing = maybe.get();
 
@@ -262,16 +277,18 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            webSecurity.refreshAuthentication(updated);
+            //webSecurity.refreshAuthentication(updated);
             return Response.ok(UserMapper.toDto(updated)).build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (Exception e) {
             LOGGER.error("Error updating user " + userId, e);
             return Response.serverError()
                     .entity(message("Internal server error"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
     }
@@ -285,6 +302,7 @@ public class UserRestController {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("userId inválido"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
@@ -292,19 +310,23 @@ public class UserRestController {
         if (maybe.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(message("Usuario no encontrado"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
         if (body == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("Body requerido"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity(message("Unauthorized")).build();
-        }
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();        }
 
         String authName = auth.getName();
         User authUser = userService.findByUserName(authName);
@@ -313,30 +335,36 @@ public class UserRestController {
         }
 
         if (authUser == null || !authUser.getId().equals(id)) {
-            return Response.status(Response.Status.FORBIDDEN).entity(message("Forbidden")).build();
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(message("Forbidden"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
         }
 
         User existing = maybe.get();
 
-        if (!isBlank(body.getUsername())) existing.setUserName(body.getUsername());
-        if (!isBlank(body.getName())) existing.setName(body.getName());
-        if (!isBlank(body.getSurname())) existing.setSurname(body.getSurname());
-        if (!isBlank(body.getEmail())) existing.setEmail(body.getEmail());
-        if (!isBlank(body.getCellphone())) existing.setCellphone(body.getCellphone());
-        if (!isBlank(body.getLocale())) existing.setLocale(body.getLocale());
+        if (!isBlank(body.getUsername())) existing.setUserName(body.getUsername().trim());
+        if (!isBlank(body.getName())) existing.setName(body.getName().trim());
+        if (!isBlank(body.getSurname())) existing.setSurname(body.getSurname().trim());
+        if (!isBlank(body.getEmail())) existing.setEmail(body.getEmail().trim());
+        if (!isBlank(body.getCellphone())) existing.setCellphone(body.getCellphone().trim());
+        if (!isBlank(body.getLocale())) existing.setLocale(body.getLocale().trim());
+        //ignoro la contraseña
 
         try {
             User updated = userService.update(existing);
-            webSecurity.refreshAuthentication(updated);
+            //webSecurity.refreshAuthentication(updated);
             return Response.ok(UserMapper.toDto(updated)).build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (Exception e) {
             LOGGER.error("Error updating user profile " + userId, e);
             return Response.serverError()
                     .entity(message("Internal server error"))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
     }
@@ -345,9 +373,13 @@ public class UserRestController {
         return s == null || s.trim().isEmpty();
     }
 
-    private static Map<String, Object> message(String msg) {
-        Map<String, Object> m = new HashMap<>();
-        m.put("message", msg);
-        return m;
+    private static String message(String msg) {
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper()
+                    .writeValueAsString(java.util.Map.of("message", msg));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            return "{\"message\":\"" + msg.replace("\"", "\\\"") + "\"}";
+        }
     }
+
 }
