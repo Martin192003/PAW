@@ -1,0 +1,55 @@
+package ar.edu.itba.paw.webapp.config;
+
+import ar.edu.itba.paw.webapp.auth.JwtAuthenticationFilter;
+import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
+import ar.edu.itba.paw.webapp.auth.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@Order(1)
+public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    private PawUserDetailsService userDetailsService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.antMatcher("/api/**")
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .authorizeRequests()
+                .antMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
+                .antMatchers("/api/photos/**").permitAll()
+                .antMatchers("/api/clubs/**/cover").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/login").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/resend-verification").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/users/verify").permitAll()
+                .anyRequest().authenticated().and()
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+    }
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
+    }
+
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtUtil, userDetailsService);
+    }
+}

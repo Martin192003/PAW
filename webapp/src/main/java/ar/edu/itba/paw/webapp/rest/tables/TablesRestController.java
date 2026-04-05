@@ -194,8 +194,8 @@ public class TablesRestController {
         ClubTable updated = tableService.update(
                 tableUuid,
                 clubUuid,
-                current.getTableNumber(),
-                current.getCapacity(),
+                BigDecimal.valueOf(current.getTableNumber()),
+                BigDecimal.valueOf(current.getCapacity()),
                 body.getTableState(),
                 current.getPrice(),
                 current.getDiscount()
