@@ -14,6 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+
+
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
@@ -182,6 +187,29 @@ public class UserRestController {
         }
     }
 
+    @GET
+    @Path("/{userId}/profile")
+    public Response getUserProfile(@PathParam("userId") String userId) {
+        UUID id;
+        try {
+            id = UUID.fromString(userId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("userId inválido"))
+                    .build();
+        }
+
+        Optional<User> maybe = userService.findById(id);
+        if (maybe.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(message("Usuario no encontrado"))
+                    .build();
+        }
+
+        UserDto dto = UserMapper.toDto(maybe.get());
+        return Response.ok(dto).build();
+    }
+
     @PUT
     @Path("/{userId}")
     public Response updateUser(@PathParam("userId") String userId, UserCreateRequestDto body) {
@@ -208,6 +236,21 @@ public class UserRestController {
                     .build();
         }
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(message("Unauthorized")).build();
+        }
+
+        String authName = auth.getName();
+        User authUser = userService.findByUserName(authName);
+        if (authUser == null) {
+            authUser = userService.findByEmail(authName);
+        }
+
+        if (authUser == null || !authUser.getId().equals(id)) {
+            return Response.status(Response.Status.FORBIDDEN).entity(message("Forbidden")).build();
+        }
+
         User existing = maybe.get();
 
         if (!isBlank(body.getUsername())) existing.setUserName(body.getUsername());
@@ -219,6 +262,7 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
+            webSecurity.refreshAuthentication(updated);
             return Response.ok(UserMapper.toDto(updated)).build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
@@ -232,10 +276,9 @@ public class UserRestController {
         }
     }
 
-    @DELETE
-    @Path("/{userId}")
-    public Response deleteUser(@PathParam("userId") String userId) {
-
+    @PUT
+    @Path("/{userId}/profile")
+    public Response updateUserProfile(@PathParam("userId") String userId, UserCreateRequestDto body) {
         UUID id;
         try {
             id = UUID.fromString(userId);
@@ -245,14 +288,57 @@ public class UserRestController {
                     .build();
         }
 
-        boolean deleted = userService.delete(id);
-        if (!deleted) {
+        Optional<User> maybe = userService.findById(id);
+        if (maybe.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(message("Usuario no encontrado"))
                     .build();
         }
 
-        return Response.noContent().build();
+        if (body == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Body requerido"))
+                    .build();
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(message("Unauthorized")).build();
+        }
+
+        String authName = auth.getName();
+        User authUser = userService.findByUserName(authName);
+        if (authUser == null) {
+            authUser = userService.findByEmail(authName);
+        }
+
+        if (authUser == null || !authUser.getId().equals(id)) {
+            return Response.status(Response.Status.FORBIDDEN).entity(message("Forbidden")).build();
+        }
+
+        User existing = maybe.get();
+
+        if (!isBlank(body.getUsername())) existing.setUserName(body.getUsername());
+        if (!isBlank(body.getName())) existing.setName(body.getName());
+        if (!isBlank(body.getSurname())) existing.setSurname(body.getSurname());
+        if (!isBlank(body.getEmail())) existing.setEmail(body.getEmail());
+        if (!isBlank(body.getCellphone())) existing.setCellphone(body.getCellphone());
+        if (!isBlank(body.getLocale())) existing.setLocale(body.getLocale());
+
+        try {
+            User updated = userService.update(existing);
+            webSecurity.refreshAuthentication(updated);
+            return Response.ok(UserMapper.toDto(updated)).build();
+        } catch (DuplicateEntityException e) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(message("User with same username or email already exists"))
+                    .build();
+        } catch (Exception e) {
+            LOGGER.error("Error updating user profile " + userId, e);
+            return Response.serverError()
+                    .entity(message("Internal server error"))
+                    .build();
+        }
     }
 
     private static boolean isBlank(String s) {
