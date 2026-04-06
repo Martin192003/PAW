@@ -15,6 +15,7 @@ import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
+import { ClubPhoto } from '../models/club-photo.model';
 import { Product } from '../models/product.model';
 import { ClubTable } from '../models/club-table.model';
 import { Review } from '../models/review.model';
@@ -32,6 +33,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   club?: Club;
   coverUrl?: string;
   layoutUrl?: string;
+  carouselPhotos: ClubPhoto[] = [];
+  activeCarouselIndex = 0;
 
   menu: Product[] = [];
   tables: ClubTable[] = [];
@@ -40,6 +43,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   bookingDates: string[] = [];
   selectedDate = '';
   tablesError?: string;
+  reserveSuccess?: string;
   fromEvent = false;
   selectedTableId?: string;
 
@@ -130,13 +134,36 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadClubData(id: string) {
+    this.coverUrl = undefined;
+    this.carouselPhotos = [];
+    this.activeCarouselIndex = 0;
+
     this.clubService.getClubById(id).subscribe({
       next: c => {
         this.club = c;
+        this.coverUrl = this.resolveCoverUrl(id, c.links?.cover);
         this.cdr.detectChanges();
         queueMicrotask(() => this.tryInitMap());
       },
       error: err => console.error('club error', err)
+    });
+
+    this.clubService.getClubPhotos(id).subscribe({
+      next: photos => {
+        this.carouselPhotos = photos
+          .map(photo => ({
+            ...photo,
+            url: this.clubService.toAbsoluteUrl(photo.url, id)
+          }))
+          .filter(photo => !!photo.url);
+        this.activeCarouselIndex = 0;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.carouselPhotos = [];
+        this.activeCarouselIndex = 0;
+        this.cdr.detectChanges();
+      }
     });
 
     this.clubService.getLayout(id).subscribe({
@@ -182,6 +209,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.selectedDate = nextDate;
+    this.selectedTableId = undefined;
     this.tablesOpen = true;
     this.loadTables(this.currentClubId, nextDate);
 
@@ -211,13 +239,18 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
   private loadTables(id: string, date: string): void {
     this.tablesError = undefined;
+    this.reserveSuccess = undefined;
     this.clubService.getTables(id, date).subscribe({
       next: t => {
         this.tables = t;
+        if (!this.tables.some(table => table.tableId === this.selectedTableId)) {
+          this.selectedTableId = undefined;
+        }
         this.cdr.detectChanges();
       },
       error: err => {
         this.tables = [];
+        this.selectedTableId = undefined;
         this.tablesError = err?.error?.message || 'No se pudieron cargar las mesas disponibles.';
         this.cdr.detectChanges();
       }
@@ -233,6 +266,51 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       return raw;
     }
     return this.clubService.toAbsoluteUrl(raw, clubId);
+  }
+
+  setActiveCarouselIndex(index: number): void {
+    if (!this.carouselPhotos.length) {
+      return;
+    }
+
+    const nextIndex = ((index % this.carouselPhotos.length) + this.carouselPhotos.length) % this.carouselPhotos.length;
+    this.activeCarouselIndex = nextIndex;
+    this.cdr.detectChanges();
+  }
+
+  nextCarouselPhoto(): void {
+    this.setActiveCarouselIndex(this.activeCarouselIndex + 1);
+  }
+
+  prevCarouselPhoto(): void {
+    this.setActiveCarouselIndex(this.activeCarouselIndex - 1);
+  }
+
+  onCarouselPhotoError(index: number): void {
+    if (index < 0 || index >= this.carouselPhotos.length) {
+      return;
+    }
+
+    this.carouselPhotos = this.carouselPhotos.filter((_, i) => i !== index);
+    if (!this.carouselPhotos.length) {
+      this.activeCarouselIndex = 0;
+    } else if (this.activeCarouselIndex >= this.carouselPhotos.length) {
+      this.activeCarouselIndex = this.carouselPhotos.length - 1;
+    } else if (index <= this.activeCarouselIndex && this.activeCarouselIndex > 0) {
+      this.activeCarouselIndex--;
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  private resolveCoverUrl(clubId: string, coverPath?: string): string {
+    if (coverPath) {
+      return /^https?:\/\//i.test(coverPath)
+        ? coverPath
+        : this.clubService.toAbsoluteUrl(coverPath, clubId);
+    }
+
+    return this.clubService.getCoverUrl(clubId);
   }
 
   private normalizeDate(raw: string | null): string | undefined {
@@ -268,12 +346,45 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onReserveClick(): void {
-    if (!this.selectedTableId) {
-      console.log('No table selected');
+    if (!this.currentClubId || !this.selectedTableId || !this.selectedDate) {
+      this.tablesError = 'Seleccioná una mesa y una fecha antes de reservar.';
+      this.reserveSuccess = undefined;
+      this.cdr.detectChanges();
       return;
     }
-    console.log('Reserva de mesa:', this.selectedTableId, 'para fecha:', this.selectedDate);
-    // Acción placeholder - será implementada después
+
+    const tableExists = this.tables.some(table => table.tableId === this.selectedTableId);
+    if (!tableExists) {
+      this.tablesError = 'La mesa seleccionada ya no está disponible. Elegí otra opción.';
+      this.reserveSuccess = undefined;
+      this.selectedTableId = undefined;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.clubService.reserveTable(
+      this.currentClubId,
+      this.selectedTableId,
+      this.selectedDate,
+      this.fromEvent
+    ).subscribe({
+      next: () => {
+        this.tablesError = undefined;
+        this.reserveSuccess = 'Reserva realizada con exito. Revisa tus reservas en tu cuenta.';
+        this.selectedTableId = undefined;
+        this.loadTables(this.currentClubId!, this.selectedDate);
+      },
+      error: err => {
+        this.reserveSuccess = undefined;
+        if (err?.status === 401) {
+          this.tablesError = 'Tenes que iniciar sesion para reservar una mesa.';
+          this.cdr.detectChanges();
+          return;
+        }
+        this.tablesError = err?.error?.message || 'No se pudo completar la reserva. Intentalo de nuevo.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
 

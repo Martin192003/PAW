@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { Club } from '../models/club.model';
 import { ClubLimits } from '../models/club-limits.model';
 import { Layout } from '../models/layout.model';
@@ -9,6 +9,7 @@ import { Product } from '../models/product.model';
 import { ClubTable } from '../models/club-table.model';
 import { Review } from '../models/review.model';
 import { Event } from '../models/event.model';
+import { ClubPhoto } from '../models/club-photo.model';
 
 @Injectable({
   providedIn: 'root'
@@ -29,14 +30,16 @@ export class ClubService {
     return this.http.get<Club>(`${this.apiUrl}/clubs/${id}`);
   }
 
-  getCover(id: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/clubs/${id}/cover`, {
-      responseType: 'blob'
-    });
-  }
-
   getCoverUrl(id: string): string {
     return `${this.apiUrl}/clubs/${id}/cover`;
+  }
+
+  getClubPhotos(id: string): Observable<ClubPhoto[]> {
+    return this.http
+      .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(`${this.apiUrl}/clubs/${id}/photos`)
+      .pipe(
+        map(response => Array.isArray(response) ? response : (response?.photos ?? []))
+      );
   }
 
   getLayout(id: string): Observable<Layout> {
@@ -50,7 +53,8 @@ export class ClubService {
     if (!path && clubId) {
       return `${this.apiUrl}/clubs/${clubId}/layout/image`;
     }
-    return new URL(path, this.apiUrl).toString();
+    const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+    return new URL(normalizedPath, `${this.apiUrl}/`).toString();
   }
 
   getLimits(id: string): Observable<ClubLimits> {
@@ -63,6 +67,14 @@ export class ClubService {
   getTables(id: string, date?: string) {
     const query = date ? `?date=${encodeURIComponent(date)}` : '';
     return this.http.get<ClubTable[]>(`${this.apiUrl}/clubs/${id}/tables${query}`);
+  }
+
+  reserveTable(clubId: string, tableId: string, date: string, fromEvent: boolean) {
+    return this.http.post<{ bookingId: string; message: string }>(
+      `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/reserve`,
+      { tableId, date, fromEvent },
+      { withCredentials: true }
+    );
   }
 
   getReviews(id: string, page = 1) {

@@ -293,6 +293,29 @@ components:
           format: uri
       required: [url]
 
+    ClubPhoto:
+      type: object
+      properties:
+        photoId:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        photoType:
+          type: string
+          description: Tipo de foto (COVER, CAROUSEL, REVIEW, EVENT)
+      required: [url]
+
+    ClubPhotosResponse:
+      type: object
+      properties:
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClubPhoto'
+      required: [photos]
+
     UpcomingEventsResponse:
       type: object
       properties:
@@ -734,6 +757,26 @@ paths:
                 $ref: '#/components/schemas/CoverUrl'
         '404':
           description: No hay portada cargada
+
+  /clubs/{clubId}/photos:
+    get:
+      tags: [Clubs]
+      summary: Obtener fotos del club para el carrusel
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Lista de fotos del club
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubPhotosResponse'
+        '404':
+          description: Club no encontrado
 
   /clubs/{clubId}/events:
     get:

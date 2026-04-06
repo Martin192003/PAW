@@ -10,7 +10,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -30,11 +29,14 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.antMatcher("/api/**")
+                .cors().and()
                 .csrf().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .sessionManagement().sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED).and()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
                 .antMatchers("/api/photos/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/clubs").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/clubs/**").permitAll()
                 .antMatchers("/api/clubs/**/cover").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/login").permitAll()
