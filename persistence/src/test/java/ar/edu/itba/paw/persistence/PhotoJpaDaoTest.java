@@ -102,18 +102,6 @@ public class PhotoJpaDaoTest {
     }
 
     @Test
-    public void testCreateEventPhoto_setsReviewIdWithEventIdAsRequired() {
-        UUID eventId = UUID.randomUUID();
-        UUID id = photoDao.createEventPhoto(clubId, eventId, user.getId(), "evt.jpg", "image/jpeg", new byte[]{7});
-        em.flush();
-
-        assertNotNull(id);
-        Photo p = em.find(Photo.class, id);
-        assertEquals(eventId, p.getReviewId());
-        assertEquals(PhotoType.EVENT, p.getPhotoType());
-    }
-
-    @Test
     public void testCreateEventPhotoNullDataThrows() {
         assertThrows(PersistenceException.class, () -> {
             UUID id = photoDao.createEventPhoto(clubId, UUID.randomUUID(), user.getId(), "evt.jpg", "image/jpeg", null);

@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
 import { RouterModule } from '@angular/router';
+import { EventService } from '../services/event.service';
+import { ClubEvent } from '../models/ClubEvent.model';
+import { ViewChild, ElementRef } from '@angular/core';
+
 
 type ClubListItem = Club & { _hasError?: boolean };
 
@@ -17,13 +21,18 @@ export class ClubsPage implements OnInit {
   pageSize = 10;
   totalPages = 0;
 
+  upcomingEvents: ClubEvent[] = [];
+  currentEventIndex = 0;
+
   constructor(
     private clubService: ClubService,
+    private eventService: EventService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadClubs();
+    this.loadUpcomingEvents();
   }
 
   loadClubs() {
@@ -94,5 +103,35 @@ export class ClubsPage implements OnInit {
       this.currentPage,
       this.currentPage + 1
     ];
+  }
+
+  loadUpcomingEvents(): void {
+    this.eventService.getUpcomingEvents(0, 10).subscribe({
+      next: (res) => {
+        console.log('Backend response:', res);
+        console.log('Mapped events:', res.content);
+        this.upcomingEvents = res.content;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading events', err);
+      }
+    });
+  }
+
+  @ViewChild('carouselTrack') carouselTrack!: ElementRef<HTMLDivElement>;
+
+  nextEvent(): void {
+    this.carouselTrack.nativeElement.scrollBy({ left: 280, behavior: 'smooth' });
+  }
+
+  prevEvent(): void {
+    this.carouselTrack.nativeElement.scrollBy({ left: -280, behavior: 'smooth' });
+  }
+
+
+  onEventImageError(event: Event, clubEvent: ClubEvent): void {
+    (clubEvent as any)._photoError = true;
+    this.cdr.detectChanges();
   }
 }

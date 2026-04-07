@@ -17,8 +17,8 @@ public class EventJpaDao implements EventDao {
     private EntityManager em;
 
     @Override
-    public Event create(UUID clubId, String eventName, String description, LocalDate date, UUID photoId) {
-        final Event event = new Event(UUID.randomUUID(), clubId, eventName, description, date, photoId);
+    public Event create(UUID clubId, String eventName, String description, LocalDate date) {
+        final Event event = new Event(UUID.randomUUID(), clubId, eventName, description, date, null);
         em.persist(event);
         return event;
     }

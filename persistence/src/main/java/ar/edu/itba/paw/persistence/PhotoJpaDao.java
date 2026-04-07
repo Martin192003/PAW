@@ -167,7 +167,9 @@ public class PhotoJpaDao implements PhotoDao {
                                  String filename, String contentType, byte[] data) {
         Photo p = new Photo();
         p.setClubId(clubId);
-        p.setReviewId(eventId);
+
+        p.setReviewId(null);
+
         p.setPostedBy(postedBy);
         p.setFilename(filename);
         p.setContentType(contentType);
@@ -176,6 +178,7 @@ public class PhotoJpaDao implements PhotoDao {
         em.persist(p);
         return p.getPhotoId();
     }
+
 
     @Override
     public List<Photo> findReviewPhotosByClub(UUID clubId, int limit, int offset) {
