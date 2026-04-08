@@ -10,10 +10,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,10 +84,10 @@ public class ClubRestController {
             );
         }
 
-        final int totalPages = (size == 0) ? 0 : (int) Math.ceil((double) totalClubs / size);
+        final int totalPages = (int) Math.ceil((double) totalClubs / size);
 
         List<ClubDto> dtos = clubs.stream()
-                .map(c -> toDtoWithLinks(c))
+                .map(this::toDtoWithLinks)
                 .toList();
 
 
@@ -291,13 +289,23 @@ public class ClubRestController {
             return notFound("Club no encontrado");
 
         return clubLayoutService.getLayoutByClub(id)
-                .map(layout -> Response.ok(
-                        new LayoutDto(
-                                id.toString(),
-                                layout.getUrl()
-                        )
-                ).build())
-                .orElse(Response.noContent().build());
+                .map(layout -> {
+                    String imageUrl = uriInfo.getBaseUriBuilder()
+                            .path("clubs")
+                            .path(id.toString())
+                            .path("layout")
+                            .path("image")
+                            .build()
+                            .toString();
+
+                    return Response.ok(
+                            new LayoutDto(
+                                    id.toString(),
+                                    imageUrl
+                            )
+                    ).build();
+                })
+                .orElse(notFound("Layout no encontrado"));
     }
 
     @GET
@@ -326,6 +334,40 @@ public class ClubRestController {
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
+    @GET
+    @Path("/{clubId}/photos")
+    public Response getClubPhotos(@PathParam("clubId") String clubId) {
+        UUID id = parseUuidOr400(clubId);
+        if (id == null) return badRequest("clubId inválido");
+
+        try {
+            if (clubService.getClubById(id).isEmpty()) {
+                return notFound("Club no encontrado");
+            }
+
+            List<Photo> rawPhotos = photoService.getClubPhotos(id, 50, 0);
+            List<ClubPhotoDto> photos = new ArrayList<>();
+            if (rawPhotos == null || rawPhotos.isEmpty()) {
+                return Response.ok(new ClubPhotosResponseDto(photos)).build();
+            }
+
+            for (Photo photo : rawPhotos) {
+                if (photo == null || photo.getUrl() == null || photo.getUrl().trim().isEmpty()) {
+                    continue;
+                }
+
+                photos.add(new ClubPhotoDto(
+                        photo.getPhotoId() != null ? photo.getPhotoId().toString() : null,
+                        photo.getUrl(),
+                        photo.getPhotoType() != null ? photo.getPhotoType().name() : null
+                ));
+            }
+
+            return Response.ok(new ClubPhotosResponseDto(photos)).build();
+        } catch (RuntimeException ex) {
+            return Response.ok(new ClubPhotosResponseDto(new ArrayList<>())).build();
+        }
+    }
 
 
     @GET
@@ -486,5 +528,6 @@ public class ClubRestController {
                 .header("Content-Length", photo.getSizeBytes())
                 .build();
     }
-
 }
+
+

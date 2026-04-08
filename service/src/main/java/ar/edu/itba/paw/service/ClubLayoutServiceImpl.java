@@ -30,9 +30,7 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
     public void uploadLayout(UUID clubId, String userEmail, String filename, String contentType, byte[] data) {
         User uploader = userService.findByEmail(userEmail);
         clubService.assertAdmin(clubId, uploader.getId());
-
         layoutDao.deleteByClubId(clubId);
-
         ClubLayout layout = new ClubLayout();
         UUID newId = UUID.randomUUID();
         layout.setLayoutId(newId);
@@ -42,7 +40,7 @@ public class ClubLayoutServiceImpl implements ClubLayoutService {
         layout.setContentType(contentType != null ? contentType : "application/octet-stream");
         layout.setData(data);
         layout.setSizeBytes((long) data.length);
-        layout.setUrl("/api/clubs/" + clubId + "/layout/image");
+//        layout.setUrl("/api/clubs/" + clubId + "/layout/image");
 
         layoutDao.save(layout);
     }

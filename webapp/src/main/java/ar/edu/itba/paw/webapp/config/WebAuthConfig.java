@@ -26,9 +26,10 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 @EnableWebSecurity
-@ComponentScan("ar.edu.itba.paw.webapp.auth")
 @EnableGlobalMethodSecurity(prePostEnabled = true)
+@ComponentScan(basePackages = "ar.edu.itba.paw.webapp")
 public class WebAuthConfig extends WebSecurityConfigurerAdapter {
+
     @Autowired
     private PawUserDetailsService userDetailsService;
 
@@ -43,18 +44,24 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(final HttpSecurity http) throws Exception {
-        http.userDetailsService(userDetailsService)
-                // TODO : esto es solo para poder ir probando los gets, posts, etc de la api :)
-//                .sessionManagement()
-//                .invalidSessionUrl("/clubs")
-                .cors().and()
+        // Web UI security: session-based, form login
+        http.cors().and()
+                .sessionManagement()
+                .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
+                .invalidSessionUrl("/clubs")
+                .sessionFixation().migrateSession()
+                .and()
                 .authorizeRequests()
+                // keep CORS preflight allowed
                 .antMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
-                .antMatchers("/api/**").permitAll()
+                // web UI specific public endpoints
                 .antMatchers("/api/photos/**").permitAll()
-                .antMatchers("/api/clubs/**/cover").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/clubs").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/clubs/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/login").permitAll()
 
-                //TODO: preguntar si ta bien
+                // legacy (non-/api) user endpoints used by server-side forms
                 .antMatchers(HttpMethod.POST, "/users").permitAll()
                 .antMatchers(HttpMethod.POST, "/users/login").permitAll()
                 .antMatchers(HttpMethod.POST, "/users/resend-verification").permitAll()
@@ -65,8 +72,8 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/admin/**").hasRole("ADMIN")
 
                 // Public routes
-                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify", "/unverified", "/resend-verification", "/forgot-password", "/reset-password","/verifyMailNotice", "/verify-account").permitAll()                .antMatchers(HttpMethod.GET, "/clubs").permitAll()
-                //.antMatchers(HttpMethod.GET, "/clubs").permitAll()
+                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify", "/unverified", "/resend-verification", "/forgot-password", "/reset-password","/verifyMailNotice", "/verify-account").permitAll()
+                .antMatchers(HttpMethod.GET, "/clubs").permitAll()
                 .antMatchers(HttpMethod.GET, "/clubs/{id}").permitAll()
                 .antMatchers(HttpMethod.GET, "/clubs/**/layout/**").permitAll()
 
@@ -94,6 +101,7 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 )
                 .and().csrf().disable();
     }
+
     @Override
     public void configure(final WebSecurity web) throws Exception {
         web.ignoring()

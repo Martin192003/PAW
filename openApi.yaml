@@ -1,8 +1,9 @@
 openapi: 3.0.3
 info:
-  title: PAW Webapp API
-  version: 3.0.0
-
+  title: BlingBling Clubs API
+  version: 1.0.0
+  description: |
+    API BLingBling para autenticación, creación de usuarios y gestión básica de clubs.
 servers:
   - url: http://localhost:8080/webapp/api
 
@@ -333,6 +334,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventPagedResponseDto'
+
+  /clubs/{clubId}/photos:
+    get:
+      tags: [Clubs]
+      summary: Obtener fotos del club para el carrusel
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          description: Lista de fotos del club
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubPhotosResponse'
+        '404':
+          description: Club no encontrado
 
   /clubs/{clubId}/events:
     parameters:
@@ -901,6 +922,217 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LinkDto'
+
+    UUID:
+      type: string
+      format: uuid
+
+    UserCreateRequestDto:
+      type: object
+      required: [username, name, surname, email]
+      properties:
+        username:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        email:
+          type: string
+          format: email
+        cellphone:
+          type: string
+        locale:
+          type: string
+        password:
+          type: string
+          format: password
+
+    UserUpdateRequestDto:
+      type: object
+      properties:
+        username:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        email:
+          type: string
+          format: email
+        cellphone:
+          type: string
+        locale:
+          type: string
+        password:
+          type: string
+          format: password
+
+    ClubCreateRequestDto:
+      type: object
+      required: [clubName, location, zone, musicGenre, priceRange]
+      properties:
+        clubName:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        zone:
+          $ref: '#/components/schemas/Zone'
+        musicGenre:
+          $ref: '#/components/schemas/MusicalGenre'
+        priceRange:
+          $ref: '#/components/schemas/Price'
+        isBar:
+          type: boolean
+
+    ClubUpdateRequestDto:
+      type: object
+      properties:
+        clubName:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        zone:
+          $ref: '#/components/schemas/Zone'
+        musicGenre:
+          $ref: '#/components/schemas/MusicalGenre'
+        priceRange:
+          $ref: '#/components/schemas/Price'
+        isBar:
+          type: boolean
+
+    LayoutDto:
+      type: object
+      properties:
+        layoutId:
+          $ref: '#/components/schemas/UUID'
+        imageUrl:
+          type: string
+          format: uri
+        width:
+          type: integer
+        height:
+          type: integer
+
+    ClubLimitsDto:
+      type: object
+      properties:
+        maxCapacity:
+          type: integer
+        maxTables:
+          type: integer
+        reservedTables:
+          type: integer
+
+    ClubPhotoDto:
+      type: object
+      properties:
+        photoId:
+          $ref: '#/components/schemas/UUID'
+        url:
+          type: string
+          format: uri
+
+    ClubPhotosResponse:
+      type: object
+      properties:
+        clubId:
+          $ref: '#/components/schemas/UUID'
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClubPhotoDto'
+
+    EventCreateRequestDto:
+      type: object
+      required: [eventName, date]
+      properties:
+        eventName:
+          type: string
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+
+    EventUpdateRequestDto:
+      type: object
+      properties:
+        eventName:
+          type: string
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+
+    ProductCreateRequestDto:
+      type: object
+      required: [productName, basePrice, productType]
+      properties:
+        productName:
+          type: string
+        description:
+          type: string
+        basePrice:
+          type: number
+          format: double
+        productType:
+          $ref: '#/components/schemas/ProductType'
+        isAvailable:
+          type: boolean
+
+    ProductUpdateRequestDto:
+      type: object
+      properties:
+        productName:
+          type: string
+        description:
+          type: string
+        basePrice:
+          type: number
+          format: double
+        productType:
+          $ref: '#/components/schemas/ProductType'
+        isAvailable:
+          type: boolean
+
+    TableCreateRequestDto:
+      type: object
+      required: [tableNumber, capacity, tableState, price]
+      properties:
+        tableNumber:
+          type: integer
+        capacity:
+          type: integer
+        tableState:
+          $ref: '#/components/schemas/TableState'
+        price:
+          type: number
+          format: double
+        discount:
+          type: number
+          format: double
+
+    TableUpdateRequestDto:
+      type: object
+      properties:
+        tableNumber:
+          type: integer
+        capacity:
+          type: integer
+        tableState:
+          $ref: '#/components/schemas/TableState'
+        price:
+          type: number
+          format: double
+        discount:
+          type: number
+          format: double
 
     Zone:
       type: string

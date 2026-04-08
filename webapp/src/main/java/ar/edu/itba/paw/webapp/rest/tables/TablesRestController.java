@@ -1,9 +1,10 @@
 package ar.edu.itba.paw.webapp.rest.tables;
 
 import ar.edu.itba.paw.model.ClubTable;
-import ar.edu.itba.paw.model.TableState;
 import ar.edu.itba.paw.model.dto.TableCreateRequestDto;
 import ar.edu.itba.paw.model.dto.TableUpdateRequestDto;
+import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
+import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.TableService;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -11,6 +12,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,6 +23,9 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class TablesRestController {
+
+    private static final ZoneId BUENOS_AIRES_ZONE = ZoneId.of("America/Argentina/Buenos_Aires");
+    private static final Clock CLOCK = Clock.system(BUENOS_AIRES_ZONE);
 
     private final TableService tableService;
 
@@ -31,7 +38,8 @@ public class TablesRestController {
     }
 
     @GET
-    public Response listTables(@PathParam("clubId") String clubId) {
+    public Response listTables(@PathParam("clubId") String clubId,
+                               @QueryParam("date") String date) {
         UUID clubUuid;
         try {
             clubUuid = UUID.fromString(clubId);
@@ -41,8 +49,32 @@ public class TablesRestController {
                     .build();
         }
 
-        List<ClubTable> tables = tableService.findByClubId(clubUuid);
-        return Response.ok(new GenericEntity<List<ClubTable>>(tables) {}).build();
+        try {
+            final List<ClubTable> tables;
+            if (date != null && !date.isBlank()) {
+                LocalDate selectedDate;
+                try {
+                    selectedDate = LocalDate.parse(date);
+                } catch (Exception e) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity(Map.of("message", "date inválida, formato esperado yyyy-MM-dd"))
+                            .build();
+                }
+                tables = tableService.findAvailableOnDate(clubUuid, selectedDate, BUENOS_AIRES_ZONE, CLOCK);
+            } else {
+                tables = tableService.findByClubId(clubUuid);
+            }
+
+            return Response.ok(new GenericEntity<>(tables) {}).build();
+        } catch (ValidationException | InvalidDateRangeException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", e.getMessage()))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Club no encontrado"))
+                    .build();
+        }
     }
 
     @POST
@@ -117,6 +149,58 @@ public class TablesRestController {
                 body.getPrice(),
                 body.getDiscount()
         );
+        if (updated == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Mesa o club no encontrado"))
+                    .build();
+        }
+
+        return Response.ok(updated).build();
+    }
+
+    @PUT
+    @Path("/{tableId}/state")
+    public Response updateTableState(@PathParam("clubId") String clubId,
+                                     @PathParam("tableId") String tableId,
+                                     TableUpdateRequestDto body) {
+        UUID clubUuid, tableUuid;
+        try {
+            clubUuid = UUID.fromString(clubId);
+            tableUuid = UUID.fromString(tableId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", "clubId o tableId inválido"))
+                    .build();
+        }
+
+        if (body == null || body.getTableState() == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", "Missing required fields"))
+                    .build();
+        }
+
+        List<ClubTable> tables = tableService.findByClubId(clubUuid);
+        ClubTable current = tables.stream()
+                .filter(t -> t.getTableId().equals(tableUuid))
+                .findFirst()
+                .orElse(null);
+
+        if (current == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Mesa o club no encontrado"))
+                    .build();
+        }
+
+        ClubTable updated = tableService.update(
+                tableUuid,
+                clubUuid,
+                BigDecimal.valueOf(current.getTableNumber()),
+                BigDecimal.valueOf(current.getCapacity()),
+                body.getTableState(),
+                current.getPrice(),
+                current.getDiscount()
+        );
+
         if (updated == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(Map.of("message", "Mesa o club no encontrado"))
