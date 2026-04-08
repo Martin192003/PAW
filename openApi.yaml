@@ -5,7 +5,7 @@ info:
   description: |
     API BLingBling para autenticación, creación de usuarios y gestión básica de clubs.
 servers:
-  - url: http://localhost:8080/webapp/api
+  - url: http://localhost:8080/webapp_war_exploded/api
 
 tags:
   - name: API
@@ -677,22 +677,22 @@ paths:
         '401':
           description: Unauthorized
 
-    /reviews/{reviewId}:
-      parameters:
-        - name: reviewId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      delete:
-        tags: [ Clubs ]
-        summary: Delete review
-        responses:
-          '204':
-            description: Review deleted
-          '404':
-            $ref: '#/components/responses/NotFound'
+  /reviews/{reviewId}:
+    parameters:
+      - name: reviewId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags: [ Clubs ]
+      summary: Delete review
+      responses:
+        '204':
+          description: Review deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 
   /tables/{tableId}:
@@ -1244,36 +1244,36 @@ components:
           items:
             $ref: '#/components/schemas/LinkDto'
 
-      ReviewCreateRequestDto:
-        type: object
-        required: [ rating ]
-        properties:
-          rating:
-            type: integer
-            minimum: 1
-            maximum: 5
-          description:
-            type: string
+    ReviewCreateRequestDto:
+      type: object
+      required: [ rating ]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description:
+          type: string
 
-      ReviewPagedResponseDto:
-        type: object
-        properties:
-          content:
-            type: array
-            items:
-              $ref: '#/components/schemas/ReviewDto'
-          page:
-            type: integer
-          size:
-            type: integer
-          totalElements:
-            type: integer
-          totalPages:
-            type: integer
-          links:
-            type: array
-            items:
-              $ref: '#/components/schemas/LinkDto'
+    ReviewPagedResponseDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewDto'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkDto'
 
     Zone:
       type: string

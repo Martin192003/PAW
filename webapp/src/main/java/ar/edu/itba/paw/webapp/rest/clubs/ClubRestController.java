@@ -369,6 +369,41 @@ public class ClubRestController {
         }
     }
 
+    @GET
+    @Path("/{clubId}/review-photos")
+    public Response getClubReviewPhotos(@PathParam("clubId") String clubId) {
+        UUID id = parseUuidOr400(clubId);
+        if (id == null) return badRequest("clubId inválido");
+
+        try {
+            if (clubService.getClubById(id).isEmpty()) {
+                return notFound("Club no encontrado");
+            }
+
+            List<Photo> rawPhotos = photoService.getReviewPhotosByClub(id, 50, 0);
+            List<ClubPhotoDto> photos = new ArrayList<>();
+            if (rawPhotos == null || rawPhotos.isEmpty()) {
+                return Response.ok(new ClubPhotosResponseDto(photos)).build();
+            }
+
+            for (Photo photo : rawPhotos) {
+                if (photo == null || photo.getUrl() == null || photo.getUrl().trim().isEmpty()) {
+                    continue;
+                }
+
+                photos.add(new ClubPhotoDto(
+                        photo.getPhotoId() != null ? photo.getPhotoId().toString() : null,
+                        photo.getUrl(),
+                        photo.getPhotoType() != null ? photo.getPhotoType().name() : null
+                ));
+            }
+
+            return Response.ok(new ClubPhotosResponseDto(photos)).build();
+        } catch (RuntimeException ex) {
+            return Response.ok(new ClubPhotosResponseDto(new ArrayList<>())).build();
+        }
+    }
+
 
     @GET
     @Path("/{clubId}/layout/image")

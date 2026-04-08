@@ -62,7 +62,7 @@ function toPagedResponse(raw: EventDto[] | RawResponse): PagedResponse<ClubEvent
 @Injectable({ providedIn: 'root' })
 export class EventService {
 
-  private readonly base = 'http://localhost:8080/webapp/api';
+  private readonly base = 'http://localhost:8080/webapp_war_exploded/api';
 
   constructor(private http: HttpClient) {}
 
