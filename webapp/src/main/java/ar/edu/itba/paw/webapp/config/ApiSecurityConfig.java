@@ -40,8 +40,9 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/clubs/**/cover").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/login").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/users/resend-verification").permitAll()
-                .antMatchers(HttpMethod.GET, "/api/users/verify").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/verification-requests").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/users/verifications").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/verifications").permitAll()
                 .anyRequest().authenticated().and()
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }

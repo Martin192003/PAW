@@ -1,6 +1,5 @@
-<app-topbar></app-topbar>
+<app-topbar *ngIf="showTopbar"></app-topbar>
 
-
-<main class="pt-[90px]">
+<main [ngClass]="showTopbar ? 'pt-[90px]' : ''">
   <router-outlet></router-outlet>
 </main>

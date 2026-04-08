@@ -1,0 +1,45 @@
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { User } from '../models/user.model';
+
+@Injectable({ providedIn: 'root' })
+export class AuthStateService {
+  private readonly tokenKey = 'auth_token';
+  private readonly userKey = 'auth_user';
+  private readonly browserStorageAvailable = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+  private readonly loggedInSubject = new BehaviorSubject<boolean>(this.hasStoredSession());
+
+  readonly isLoggedIn$: Observable<boolean> = this.loggedInSubject.asObservable(); //ver esto despues
+
+  setSession(token: string, user: User, rememberMe: boolean): void {
+    if (!this.browserStorageAvailable) {
+      this.loggedInSubject.next(false);
+      return;
+    }
+
+    const storage = rememberMe ? localStorage : sessionStorage; //dependiendo de si se
+    const otherStorage = rememberMe ? sessionStorage : localStorage; // hace click en recordar
+
+    otherStorage.removeItem(this.tokenKey);
+    otherStorage.removeItem(this.userKey);
+
+    storage.setItem(this.tokenKey, token);
+    storage.setItem(this.userKey, JSON.stringify(user));
+
+    this.loggedInSubject.next(true);
+  }
+
+  getToken(): string | null {
+    if (!this.browserStorageAvailable) {
+      return null;
+    }
+
+    return localStorage.getItem(this.tokenKey) ?? sessionStorage.getItem(this.tokenKey);
+  }
+
+  private hasStoredSession(): boolean {
+    return !!this.getToken();
+  }
+}
+
+
