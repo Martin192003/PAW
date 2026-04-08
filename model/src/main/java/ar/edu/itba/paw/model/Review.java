@@ -83,4 +83,6 @@ public class Review {
 
     public UUID getPhotoId() { return photoId; }
     public void setPhotoId(UUID photoId) { this.photoId = photoId; }
+
+    public OffsetDateTime getCreatedAtOffset() {return createdAt;}
 }

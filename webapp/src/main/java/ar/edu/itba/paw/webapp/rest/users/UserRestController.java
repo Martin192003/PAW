@@ -19,6 +19,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import ar.edu.itba.paw.service.ReviewService;
+import ar.edu.itba.paw.webapp.rest.reviews.ReviewMapper;
+import ar.edu.itba.paw.model.dto.ReviewDto;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.GenericEntity;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 import javax.ws.rs.*;
@@ -46,6 +54,9 @@ public class UserRestController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private ReviewService reviewService;
 
     @GET
     @Path("/{userId}")
@@ -427,6 +438,48 @@ public class UserRestController {
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
+    }
+
+    @GET
+    @Path("/{userId}/reviews")
+    public Response getUserReviews(@PathParam("userId") String userIdStr,
+                                   @QueryParam("page") @DefaultValue("0") int page,
+                                   @QueryParam("size") @DefaultValue("20") int size) {
+        UUID id;
+        try {
+            id = UUID.fromString(userIdStr);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("userId inválido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        Optional<User> maybe = userService.findById(id);
+        if (maybe.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(message("Usuario no encontrado"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (page < 0 || size <= 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Invalid pagination parameters"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        int offset = page * size;
+        List<ar.edu.itba.paw.model.Review> reviews = reviewService.obtainPaginatedReviews(id, null, size, offset);
+        List<ReviewDto> dtos = reviews.stream()
+                .map(ReviewMapper::toDto)
+                .collect(Collectors.toList());
+
+        GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(dtos) {};
+        return Response.ok(entity)
+                .header("X-Total-Count", reviewService.countByUser(id))
+                .build();
     }
 
     private Response buildVerificationLoginResponse(String tokenOrCode) {

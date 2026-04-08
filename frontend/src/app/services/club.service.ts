@@ -5,7 +5,6 @@ import { Club } from '../models/club.model';
 import { ClubLimits } from '../models/club-limits.model';
 import { Layout } from '../models/layout.model';
 import {AvailabilityPagedResponse} from '../models/availability-paged-response.model';
-import {PagedResponse} from '../models/paged-response.model';
 import { Product } from '../models/product.model';
 import { ClubTable } from '../models/club-table.model';
 import { Review } from '../models/review.model';
@@ -17,7 +16,7 @@ import { ClubPhoto } from '../models/club-photo.model';
 })
 export class ClubService {
 
-  private readonly apiUrl = 'http://localhost:8080/webapp/api';
+  private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
 
   constructor(private http: HttpClient) {}
 
@@ -40,6 +39,21 @@ export class ClubService {
       .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(`${this.apiUrl}/clubs/${id}/photos`)
       .pipe(
         map(response => Array.isArray(response) ? response : (response?.photos ?? []))
+      );
+  }
+
+  getReviewPhotosByClub(id: string): Observable<ClubPhoto[]> {
+    return this.http
+      .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(`${this.apiUrl}/clubs/${id}/review-photos`)
+      .pipe(
+        map(response => Array.isArray(response) ? response : (response?.photos ?? [])),
+        map(photos => photos
+          .map(photo => ({
+            ...photo,
+            url: this.toAbsoluteUrl(photo.url, id)
+          }))
+          .filter(photo => !!photo.url)
+        )
       );
   }
 
@@ -78,9 +92,17 @@ export class ClubService {
     );
   }
 
-  getReviews(id: string, page = 1) {
-    return this.http.get<Review[]>(
-      `${this.apiUrl}/clubs/${id}/reviews?page=${page}`
+  getReviews(id: string, page = 0, size = 10): Observable<Review[]> {
+    return this.http.get<any>(
+      `${this.apiUrl}/clubs/${id}/reviews?page=${page}&size=${size}`
+    ).pipe(
+      map(response => Array.isArray(response) ? response : (response?.content ?? []))
+    );
+  }
+
+  getReviewsPaginated(id: string, page = 0, size = 10): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/clubs/${id}/reviews?page=${page}&size=${size}`
     );
   }
 
