@@ -613,6 +613,88 @@ paths:
               schema:
                 $ref: '#/components/schemas/TableDto'
 
+  /clubs/{clubId}/reviews:
+    parameters:
+      - $ref: '#/components/parameters/ClubIdParam'
+    get:
+      tags: [ Clubs ]
+      summary: List reviews by club
+      parameters:
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [ created_desc, created_asc, rating_desc, rating_asc ]
+            default: created_desc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paginated reviews for club
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewPagedResponseDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [ Clubs ]
+      summary: Create or update review for club by current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreateRequestDto'
+      responses:
+        '201':
+          description: Review created
+          headers:
+            Location:
+              $ref: '#/components/headers/LocationHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDto'
+        '200':
+          description: Review updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+
+    /reviews/{reviewId}:
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      delete:
+        tags: [ Clubs ]
+        summary: Delete review
+        responses:
+          '204':
+            description: Review deleted
+          '404':
+            $ref: '#/components/responses/NotFound'
+
+
   /tables/{tableId}:
     parameters:
       - $ref: '#/components/parameters/TableIdParam'
@@ -1133,6 +1215,65 @@ components:
         discount:
           type: number
           format: double
+
+    ReviewDto:
+      type: object
+      properties:
+        reviewId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        clubId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description:
+          type: string
+        fromTableGuest:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkDto'
+
+      ReviewCreateRequestDto:
+        type: object
+        required: [ rating ]
+        properties:
+          rating:
+            type: integer
+            minimum: 1
+            maximum: 5
+          description:
+            type: string
+
+      ReviewPagedResponseDto:
+        type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/ReviewDto'
+          page:
+            type: integer
+          size:
+            type: integer
+          totalElements:
+            type: integer
+          totalPages:
+            type: integer
+          links:
+            type: array
+            items:
+              $ref: '#/components/schemas/LinkDto'
 
     Zone:
       type: string
