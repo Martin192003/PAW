@@ -111,7 +111,8 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public List<Review> listByClub(UUID clubId, String sort, int limit, int offset) {
-        return reviewsDao.searchPaginated(null, clubId, sort, limit, offset);
+        final String safeSort = (sort == null) ? "" : sort;
+        return reviewsDao.searchPaginated(null, clubId, safeSort, limit, offset);
     }
 
     @Override
@@ -130,7 +131,8 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public List<Review> listByUser(UUID userId, String sort, int limit, int offset) {
-        return reviewsDao.searchPaginated(userId, null, sort, limit, offset);
+        final String safeSort = (sort == null) ? "" : sort;
+        return reviewsDao.searchPaginated(userId, null, safeSort, limit, offset);
     }
 
     @Override
@@ -231,8 +233,8 @@ public class ReviewServiceImpl implements ReviewService {
             return Collections.emptyList();
         }
 
-
-        return listByUser(userId, sort, limit, offsetCorregido);
+        final String safeSort = (sort == null) ? "" : sort;
+        return listByUser(userId, safeSort, limit, offsetCorregido);
     }
 
     @Override

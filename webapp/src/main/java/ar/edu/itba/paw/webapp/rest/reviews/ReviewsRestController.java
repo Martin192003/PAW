@@ -126,8 +126,11 @@ public class ReviewsRestController {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
-        String email = securityContext.getUserPrincipal().getName();
-        User user = userService.findByEmail(email);
+        String principalName = securityContext.getUserPrincipal().getName();
+        User user = userService.findByEmail(principalName);
+        if (user == null) {
+            user = userService.findByUserName(principalName);
+        }
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
 
         Optional<Review> existingOpt = reviewService.getUserReviewForClub(user.getId(), clubId);
@@ -170,8 +173,11 @@ public class ReviewsRestController {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
-        String email = securityContext.getUserPrincipal().getName();
-        User user = userService.findByEmail(email);
+        String principalName = securityContext.getUserPrincipal().getName();
+        User user = userService.findByEmail(principalName);
+        if (user == null) {
+            user = userService.findByUserName(principalName);
+        }
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
 
         Optional<Review> existingOpt = reviewService.getUserReviewForClub(user.getId(), clubId);
@@ -186,7 +192,6 @@ public class ReviewsRestController {
                     .build();
         }
     }
-
 
 
     private static UUID parseUuidOr400(final String raw) {
@@ -207,5 +212,14 @@ public class ReviewsRestController {
         return Response.status(Response.Status.NOT_FOUND)
                 .entity(Map.of("message", msg))
                 .build();
+    }
+
+    private static String message(String msg) {
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper()
+                    .writeValueAsString(java.util.Map.of("message", msg));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            return "{\"message\":\"" + msg.replace("\"", "\\\"") + "\"}";
+        }
     }
 }
