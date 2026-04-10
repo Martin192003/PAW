@@ -13,7 +13,6 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TopbarComponent } from '../components/topbar/topbar.component';
 // TODO: reemplazar con tu servicio real cuando tengas el RestController
 // import { ClubService } from '../../services/club.service';
 
@@ -22,7 +21,7 @@ declare const L: any; // Leaflet (cargado vía CDN o instalado como paquete)
 @Component({
   selector: 'app-add-club',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, TopbarComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './club-new.page.html',
   styleUrl: './club-new.page.css',
 })

@@ -11,7 +11,7 @@
   </div>
 
   <div class="flex items-center justify-between border-b border-white/10 px-5 py-5">
-    <h1 class="m-0 text-[6rem] font-bold tracking-[0.04em] md:text-[2.5rem]" style="font-family: 'Good Times', Arial, sans-serif;">{{ club.clubName }}</h1>
+    <h1 class="m-0 text-[6rem] font-bold tracking-[0.04em] md:text-[2.5rem]" style="font-family: 'Good Times', Arial, sans-serif;">{{ club!.clubName }}</h1>
   </div>
 
   <div class="min-h-[60vh] p-5">
@@ -24,7 +24,7 @@
           <img
             class="block h-full w-full object-cover transition-opacity duration-300"
             [src]="carouselPhotos[activeCarouselIndex]?.url"
-            [alt]="club.clubName + ' - foto ' + (activeCarouselIndex + 1)"
+            [alt]="(club!.clubName || 'Club') + ' - foto ' + (activeCarouselIndex + 1)"
             loading="lazy"
             (error)="onCarouselPhotoError(activeCarouselIndex)"
           />
@@ -74,7 +74,7 @@
           <img
             class="block h-full w-full object-cover"
             [src]="coverUrl"
-            [alt]="club.clubName + ' - portada'"
+            [alt]="(club!.clubName || 'Club') + ' - portada'"
             loading="lazy"
             (error)="coverUrl = undefined"
           />
@@ -92,20 +92,20 @@
     <div class="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
       <div class="leading-7 text-[#bab8b8]">
         <span class="inline-block">
-          <i class="fa-solid fa-location-dot mr-2.5 inline-block w-4 text-center"></i>{{ club.location }}
+          <i class="fa-solid fa-location-dot mr-2.5 inline-block w-4 text-center"></i>{{ club!.location }}
         </span>
         <br />
         <span class="inline-block">
-          <i class="fa-solid fa-music mr-2.5 inline-block w-4 text-center"></i>{{ club.musicGenre }}
+          <i class="fa-solid fa-music mr-2.5 inline-block w-4 text-center"></i>{{ club!.musicGenre }}
         </span>
         <br />
         <span class="inline-block">
-          <i class="fa-solid fa-dollar-sign mr-2.5 inline-block w-4 text-center"></i>{{ club.priceRange }}
+          <i class="fa-solid fa-dollar-sign mr-2.5 inline-block w-4 text-center"></i>{{ club!.priceRange }}
         </span>
         <div>
           <i class="fa-solid fa-star mr-2.5 inline-block w-4 text-center text-[#ffd700]"></i>
-          <span *ngIf="club.rating; else noRating">
-            {{ club.rating | number:'1.1-1' }} ({{ club.quantityRatings }} reviews)
+          <span *ngIf="club!.rating; else noRating">
+            {{ club!.rating | number:'1.1-1' }} ({{ club!.quantityRatings }} reviews)
           </span>
           <ng-template #noRating>
             <span>Sin calificaciones</span>

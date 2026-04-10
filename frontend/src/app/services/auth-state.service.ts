@@ -37,6 +37,23 @@ export class AuthStateService {
     return localStorage.getItem(this.tokenKey) ?? sessionStorage.getItem(this.tokenKey);
   }
 
+  getUser(): User | null {
+    if (!this.browserStorageAvailable) {
+      return null;
+    }
+
+    const rawUser = localStorage.getItem(this.userKey) ?? sessionStorage.getItem(this.userKey);
+    if (!rawUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawUser) as User;
+    } catch {
+      return null;
+    }
+  }
+
   private hasStoredSession(): boolean {
     return !!this.getToken();
   }

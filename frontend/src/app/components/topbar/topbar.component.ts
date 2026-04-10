@@ -16,7 +16,14 @@ export class TopbarComponent {
     return !!this.authState.getToken();
   }
 
-  isAdmin = false;
+  get manageClubsHref(): string {
+    return '/admin/activity';
+  }
+
+  get profileHref(): string {
+    const userId = this.authState.getUser()?.userId;
+    return userId ? `/profile?userId=${encodeURIComponent(userId)}` : '/profile';
+  }
 
   constructor(private readonly authState: AuthStateService) {}
 }

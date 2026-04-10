@@ -10,7 +10,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser, DatePipe, DecimalPipe } from '@angular/common';
 import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from '../services/club.service';
@@ -23,7 +23,7 @@ import { Event } from '../models/event.model';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
   templateUrl: './club-details.page.html'
 })
 export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
