@@ -10,11 +10,9 @@ import java.util.UUID;
 
 public class PawUserDetails implements UserDetails {
     private final User user;
-    private final String loginIdentifier;
 
-    public PawUserDetails(User user, String loginIdentifier) {
+    public PawUserDetails(User user) {
         this.user = user;
-        this.loginIdentifier = loginIdentifier;
     }
 
     public User getUser() {
@@ -39,7 +37,7 @@ public class PawUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return loginIdentifier;
+        return user.getUsername();
     }
 
     @Override

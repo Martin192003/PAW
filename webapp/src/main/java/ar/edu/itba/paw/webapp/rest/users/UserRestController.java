@@ -170,7 +170,7 @@ public class UserRestController {
             }
 
             UserDto dto = UserMapper.toDto(user);
-            String token = jwtUtil.generateToken(user.getUsername());
+            String token = jwtUtil.generateToken(user.getId().toString());
 
             LoginResponseDto response = new LoginResponseDto(token, dto);
 
@@ -347,8 +347,11 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            //webSecurity.refreshAuthentication(updated);
-            return Response.ok(UserMapper.toDto(updated)).build();
+            String refreshedToken = jwtUtil.generateToken(updated.getId().toString());
+            return Response.ok(UserMapper.toDto(updated))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + refreshedToken)
+                    .header("X-Auth-Token", refreshedToken)
+                    .build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
@@ -424,8 +427,11 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            //webSecurity.refreshAuthentication(updated);
-            return Response.ok(UserMapper.toDto(updated)).build();
+            String refreshedToken = jwtUtil.generateToken(updated.getId().toString());
+            return Response.ok(UserMapper.toDto(updated))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + refreshedToken)
+                    .header("X-Auth-Token", refreshedToken)
+                    .build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
@@ -502,7 +508,7 @@ public class UserRestController {
         }
 
         UserDto dto = UserMapper.toDto(user);
-        String jwt = jwtUtil.generateToken(user.getUsername());
+        String jwt = jwtUtil.generateToken(user.getId().toString());
         LoginResponseDto response = new LoginResponseDto(jwt, dto);
         return Response.ok(response).build();
     }

@@ -1,18 +1,18 @@
-<div class="min-h-[calc(100vh-90px)] bg-[#1b1a1a] flex flex-col lg:flex-row">
-  <aside class="w-full lg:w-[140px] xl:w-[180px] bg-[#222] text-white flex flex-col shrink-0 pt-0 lg:pt-10">
-    <button type="button" class="bg-[#9c27b0] px-6 py-4 text-left font-bold text-lg leading-tight cursor-default">
+<div class="min-h-[calc(100vh-90px)] bg-[#1b1a1a] flex flex-col lg:flex-row text-white">
+  <aside class="w-full lg:w-[140px] xl:w-[180px] bg-[#222] flex flex-col shrink-0">
+    <button type="button" class="bg-[#9c27b0] px-6 py-4 text-left font-bold text-lg leading-tight">
       My Profile
     </button>
-    <button type="button" class="px-6 py-6 text-left text-lg leading-tight cursor-default hover:bg-[#333] transition-colors">
+    <button type="button" class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors">
       My Clubs
     </button>
-    <button type="button" class="px-6 py-6 text-left text-lg leading-tight cursor-default hover:bg-[#333] transition-colors">
+    <button type="button" class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors">
       Clubs Reservations
     </button>
-    <button type="button" class="px-6 py-6 text-left text-lg leading-tight cursor-default hover:bg-[#333] transition-colors">
+    <button type="button" class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors">
       My Reservations
     </button>
-    <button type="button" class="px-6 py-6 text-left text-lg leading-tight cursor-default hover:bg-[#333] transition-colors">
+    <button type="button" class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors">
       Reviews
     </button>
 
@@ -36,15 +36,12 @@
       USER PROFILE
     </h1>
 
-    <div
-      *ngIf="user as currentUser; else emptyUserState"
-      class="w-full max-w-[560px] rounded-[22px] bg-[#3c3c3c] px-5 sm:px-8 lg:px-10 py-6 lg:py-8 shadow-[0_4px_24px_rgba(156,39,176,0.2)]"
-    >
+    <div *ngIf="user as currentUser; else emptyUserState" class="w-full max-w-[560px] rounded-[22px] bg-[#3c3c3c] px-5 sm:px-8 lg:px-10 py-6 lg:py-8 shadow-[0_4px_24px_rgba(156,39,176,0.2)]">
       <div class="grid gap-5">
         <div class="grid grid-cols-[92px_minmax(0,1fr)_42px] sm:grid-cols-[140px_minmax(0,1fr)_44px] items-center gap-3 sm:gap-4">
           <span class="text-white font-bold text-[1.05rem] sm:text-[1.15rem] lg:text-[1.25rem]">Username:</span>
           <span class="text-white text-[1rem] sm:text-[1.1rem] lg:text-[1.15rem] break-words">{{ currentUser.username }}</span>
-          <button type="button" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg" aria-label="Edit username">
+          <button type="button" (click)="openEditor('username')" aria-label="Edit username" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg hover:scale-105 transition-transform">
             <i class="fa-solid fa-pen"></i>
           </button>
         </div>
@@ -52,7 +49,7 @@
         <div class="grid grid-cols-[92px_minmax(0,1fr)_42px] sm:grid-cols-[140px_minmax(0,1fr)_44px] items-center gap-3 sm:gap-4">
           <span class="text-white font-bold text-[1.05rem] sm:text-[1.15rem] lg:text-[1.25rem]">First Name:</span>
           <span class="text-white text-[1rem] sm:text-[1.1rem] lg:text-[1.15rem] break-words">{{ currentUser.name }}</span>
-          <button type="button" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg" aria-label="Edit first name">
+          <button type="button" (click)="openEditor('name')" aria-label="Edit first name" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg hover:scale-105 transition-transform">
             <i class="fa-solid fa-pen"></i>
           </button>
         </div>
@@ -60,7 +57,7 @@
         <div class="grid grid-cols-[92px_minmax(0,1fr)_42px] sm:grid-cols-[140px_minmax(0,1fr)_44px] items-center gap-3 sm:gap-4">
           <span class="text-white font-bold text-[1.05rem] sm:text-[1.15rem] lg:text-[1.25rem]">Last Name:</span>
           <span class="text-white text-[1rem] sm:text-[1.1rem] lg:text-[1.15rem] break-words">{{ currentUser.surname }}</span>
-          <button type="button" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg" aria-label="Edit last name">
+          <button type="button" (click)="openEditor('surname')" aria-label="Edit last name" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg hover:scale-105 transition-transform">
             <i class="fa-solid fa-pen"></i>
           </button>
         </div>
@@ -68,7 +65,7 @@
         <div class="grid grid-cols-[92px_minmax(0,1fr)_42px] sm:grid-cols-[140px_minmax(0,1fr)_44px] items-center gap-3 sm:gap-4">
           <span class="text-white font-bold text-[1.05rem] sm:text-[1.15rem] lg:text-[1.25rem]">Email:</span>
           <span class="text-white text-[1rem] sm:text-[1.1rem] lg:text-[1.15rem] break-words">{{ currentUser.email }}</span>
-          <button type="button" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg" aria-label="Edit email">
+          <button type="button" (click)="openEditor('email')" aria-label="Edit email" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg hover:scale-105 transition-transform">
             <i class="fa-solid fa-pen"></i>
           </button>
         </div>
@@ -76,7 +73,7 @@
         <div class="grid grid-cols-[92px_minmax(0,1fr)_42px] sm:grid-cols-[140px_minmax(0,1fr)_44px] items-center gap-3 sm:gap-4">
           <span class="text-white font-bold text-[1.05rem] sm:text-[1.15rem] lg:text-[1.25rem]">Phone:</span>
           <span class="text-white text-[1rem] sm:text-[1.1rem] lg:text-[1.15rem] break-words">{{ currentUser.cellphone }}</span>
-          <button type="button" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg" aria-label="Edit phone">
+          <button type="button" (click)="openEditor('cellphone')" aria-label="Edit phone" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg hover:scale-105 transition-transform">
             <i class="fa-solid fa-pen"></i>
           </button>
         </div>
@@ -84,7 +81,7 @@
         <div class="grid grid-cols-[92px_minmax(0,1fr)_42px] sm:grid-cols-[140px_minmax(0,1fr)_44px] items-center gap-3 sm:gap-4">
           <span class="text-white font-bold text-[1.05rem] sm:text-[1.15rem] lg:text-[1.25rem]">Password:</span>
           <span class="text-white text-[1rem] sm:text-[1.1rem] lg:text-[1.15rem] tracking-[0.18em]">********</span>
-          <button type="button" class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center text-base sm:text-lg" aria-label="Edit password">
+          <button type="button" aria-label="Edit password" disabled class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white/60 shadow-[0_0_12px_rgba(156,39,176,0.35)] flex items-center justify-center text-base sm:text-lg cursor-not-allowed opacity-60">
             <i class="fa-solid fa-key"></i>
           </button>
         </div>
@@ -97,6 +94,49 @@
       </div>
     </ng-template>
   </section>
+</div>
+
+<div *ngIf="activeField as field" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-[2px]" (click)="closeEditor()">
+  <div class="w-full max-w-[420px] rounded-[24px] bg-[#262626] px-6 py-6 sm:px-8 sm:py-7 shadow-[0_18px_60px_rgba(0,0,0,0.6),0_0_24px_rgba(156,39,176,0.24)] border border-white/5" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <div class="flex items-start justify-between gap-4 mb-5">
+      <div>
+        <p class="text-sm uppercase tracking-[0.3em] text-[#c77cff]">Edit profile</p>
+        <h2 class="mt-2 text-2xl font-bold text-white">{{ activeFieldLabel }}</h2>
+      </div>
+
+      <button type="button" (click)="closeEditor()" aria-label="Close modal" class="text-white/80 hover:text-white text-2xl leading-none transition-colors">
+        &times;
+      </button>
+    </div>
+
+    <form (ngSubmit)="saveEditor()" class="space-y-4">
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-white/90" [for]="field + '-input'">{{ activeFieldLabel }}</label>
+        <input
+          [id]="field + '-input'"
+          name="draftValue"
+          [(ngModel)]="draftValue"
+          [type]="activeFieldType"
+          class="w-full rounded-[12px] border border-white/10 bg-transparent px-4 py-3 text-white placeholder:text-white/40 outline-none transition-colors focus:border-[#d500f9] focus:shadow-[0_0_0_3px_rgba(213,0,249,0.15)]"
+          [placeholder]="'Enter ' + activeFieldLabel.toLowerCase()"
+          autocomplete="off"
+        />
+      </div>
+
+      <p *ngIf="errorMessage" class="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        {{ errorMessage }}
+      </p>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button type="button" (click)="closeEditor()" class="rounded-xl bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15 transition-colors">
+          Cancel
+        </button>
+        <button type="submit" class="rounded-xl bg-[#9c27b0] px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(156,39,176,0.35)] hover:bg-[#7d1f8b] transition-colors">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 

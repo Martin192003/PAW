@@ -8,6 +8,16 @@ export interface UserCreateRequest {
   locale: string;
 }
 
+export interface UserUpdateRequest {
+  username: string;
+  name: string;
+  surname: string;
+  email: string;
+  cellphone: string;
+  locale: string;
+  password?: string;
+}
+
 export interface UserLoginRequest {
   usernameOrEmail: string;
   password: string;

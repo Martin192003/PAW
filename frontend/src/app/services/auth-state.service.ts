@@ -9,7 +9,9 @@ export class AuthStateService {
   private readonly browserStorageAvailable = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
   private readonly loggedInSubject = new BehaviorSubject<boolean>(this.hasStoredSession());
 
-  readonly isLoggedIn$: Observable<boolean> = this.loggedInSubject.asObservable(); //ver esto despues
+  get isLoggedIn$(): Observable<boolean> {
+    return this.loggedInSubject.asObservable();
+  }
 
   setSession(token: string, user: User, rememberMe: boolean): void {
     if (!this.browserStorageAvailable) {
@@ -52,6 +54,46 @@ export class AuthStateService {
     } catch {
       return null;
     }
+  }
+
+  updateUser(user: User): void {
+    if (!this.browserStorageAvailable) {
+      return;
+    }
+
+    const storage = this.getActiveStorage();
+    if (!storage) {
+      return;
+    }
+
+    storage.setItem(this.userKey, JSON.stringify(user));
+  }
+
+  updateToken(token: string): void {
+    if (!this.browserStorageAvailable || !token) {
+      return;
+    }
+
+    const storage = this.getActiveStorage();
+    if (!storage) {
+      return;
+    }
+
+    storage.setItem(this.tokenKey, token);
+  }
+
+  private getActiveStorage(): Storage | null {
+    const localHasSession = localStorage.getItem(this.tokenKey) || localStorage.getItem(this.userKey);
+    if (localHasSession) {
+      return localStorage;
+    }
+
+    const sessionHasSession = sessionStorage.getItem(this.tokenKey) || sessionStorage.getItem(this.userKey);
+    if (sessionHasSession) {
+      return sessionStorage;
+    }
+
+    return null;
   }
 
   private hasStoredSession(): boolean {

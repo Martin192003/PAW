@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import {
   ApiMessageResponse,
   LoginResponse,
@@ -8,7 +9,23 @@ import {
   UserCreateRequest,
   UserLoginRequest,
   UserVerificationRequest,
+  User,
 } from '../models/user.model';
+
+type UserUpdatePayload = {
+  username: string;
+  name: string;
+  surname: string;
+  email: string;
+  cellphone: string;
+  locale: string;
+  password?: string;
+};
+
+export type UserUpdateResult = {
+  user: User;
+  token: string | null;
+};
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -18,6 +35,24 @@ export class UserService {
 
   register(payload: UserCreateRequest): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/users`, payload);
+  }
+
+  updateUser(userId: string, payload: UserUpdatePayload): Observable<UserUpdateResult> {
+    return this.http.put<User>(`${this.apiUrl}/users/${userId}`, payload, { observe: 'response' }).pipe(
+      map((response: HttpResponse<User>) => ({
+        user: response.body as User,
+        token: this.extractTokenFromHeaders(response)
+      }))
+    );
+  }
+
+  private extractTokenFromHeaders(response: HttpResponse<unknown>): string | null {
+    const authHeader = response.headers.get('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7);
+    }
+
+    return response.headers.get('X-Auth-Token');
   }
 
   login(payload: UserLoginRequest): Observable<LoginResponse> {

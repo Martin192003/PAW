@@ -18,7 +18,7 @@ public class WebSecurity {
     }
 
     public void refreshAuthentication(User updatedUser) {
-        PawUserDetails newDetails = new PawUserDetails(updatedUser, updatedUser.getUsername());
+        PawUserDetails newDetails = new PawUserDetails(updatedUser);
         UsernamePasswordAuthenticationToken newAuth = new UsernamePasswordAuthenticationToken(
                 newDetails, null, newDetails.getAuthorities()
         );
