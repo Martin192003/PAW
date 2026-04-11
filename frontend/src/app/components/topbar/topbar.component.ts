@@ -20,9 +20,9 @@ export class TopbarComponent {
     return '/admin/activity';
   }
 
-  get profileHref(): string {
+  get profileQueryParams(): { userId: string } | undefined {
     const userId = this.authState.getUser()?.userId;
-    return userId ? `/profile?userId=${encodeURIComponent(userId)}` : '/profile';
+    return userId ? { userId } : undefined;
   }
 
   constructor(private readonly authState: AuthStateService) {}
