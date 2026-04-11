@@ -45,7 +45,23 @@ export class ProfilePage implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.user = this.authState.getUser();
+    const cachedUser = this.authState.getUser();
+    this.user = cachedUser;
+
+    const userId = cachedUser?.userId;
+    if (!userId) {
+      return;
+    }
+
+    this.userService.getUserById(userId).subscribe({
+      next: (freshUser) => {
+        this.user = freshUser;
+        this.authState.updateUser(freshUser);
+      },
+      error: () => {
+        // Mantengo el cache local si el backend no responde; el profile sigue usable.
+      }
+    });
   }
 
   get activeFieldLabel(): string {

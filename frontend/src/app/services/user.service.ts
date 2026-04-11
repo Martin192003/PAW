@@ -33,6 +33,10 @@ export class UserService {
 
   constructor(private readonly http: HttpClient) {}
 
+  getUserById(userId: string): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/users/${userId}`);
+  }
+
   register(payload: UserCreateRequest): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/users`, payload);
   }
