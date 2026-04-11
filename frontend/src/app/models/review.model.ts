@@ -1,9 +1,15 @@
 export interface Review {
   reviewId: string;
+  userId?: string;
+  clubId?: string;
   rating: number;
-  description: string;
+  description?: string;
   createdAt: string;
-  user: {
+  fromTableGuest?: boolean;
+  photoId?: string;
+  photoUrl?: string;
+  user?: {
     username: string;
   };
+  username?: string;
 }

@@ -98,6 +98,10 @@
         </a>
     </p>
 
+    <p th:text="#{email.registration.alternative}"></p>
+    <p th:text="#{email.registration.token.label}"></p>
+    <div class="token-box" th:text="${token}"></div>
+
     <p th:text="#{email.registration.expiry}"></p>
     <p th:text="#{email.registration.date(${#temporals.format(createdAt, 'dd/MM/yyyy HH:mm')})}"></p>
 

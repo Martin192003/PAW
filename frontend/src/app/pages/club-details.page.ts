@@ -10,7 +10,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser, DatePipe, DecimalPipe } from '@angular/common';
 import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from '../services/club.service';
@@ -23,7 +23,7 @@ import { Event } from '../models/event.model';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
   templateUrl: './club-details.page.html'
 })
 export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
@@ -35,6 +35,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   layoutUrl?: string;
   carouselPhotos: ClubPhoto[] = [];
   activeCarouselIndex = 0;
+  reviewPhotos: ClubPhoto[] = [];
+  activeReviewPhotoIndex = 0;
 
   menu: Product[] = [];
   tables: ClubTable[] = [];
@@ -46,6 +48,10 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   reserveSuccess?: string;
   fromEvent = false;
   selectedTableId?: string;
+
+  reviewsCurrentPage = 1;
+  reviewsTotalPages = 1;
+  private reviewsPageSize = 3;
 
   private currentClubId?: string;
 
@@ -137,6 +143,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.coverUrl = undefined;
     this.carouselPhotos = [];
     this.activeCarouselIndex = 0;
+    this.reviewPhotos = [];
+    this.activeReviewPhotoIndex = 0;
 
     this.clubService.getClubById(id).subscribe({
       next: c => {
@@ -177,6 +185,19 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
+    this.clubService.getReviewPhotosByClub(id).subscribe({
+      next: photos => {
+        this.reviewPhotos = photos;
+        this.activeReviewPhotoIndex = 0;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.reviewPhotos = [];
+        this.activeReviewPhotoIndex = 0;
+        this.cdr.detectChanges();
+      }
+    });
+
     this.clubService.getMenu(id).subscribe({
       next: m => {
         this.menu = m;
@@ -184,22 +205,17 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-        /*
-    this.clubService.getReviews(id).subscribe({
-      next: r => this.reviews = r,
-      error: err => console.warn('reviews no existe todavía', err)
-    });
-
-    this.clubService.getCover(id).subscribe({
-      next: c => this.coverUrl = c.url,
-      error: err => console.error('cover error', err)
-    });
+    this.reviewsCurrentPage = 1;
+    this.reviewsTotalPages = 1;
+    this.loadReviews();
 
     this.clubService.getEvents(id).subscribe({
-      next: e => this.events = e,
-      error: err => console.warn('events no existe todavía', err)
+      next: e => {
+        this.events = e;
+        this.cdr.detectChanges();
+      },
+      error: err => console.warn('events error', err)
     });
-    */
   }
 
   onBookingDateChange(date: string): void {
@@ -303,6 +319,39 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  setActiveReviewPhotoIndex(index: number): void {
+    if (!this.reviewPhotos.length) {
+      return;
+    }
+    this.activeReviewPhotoIndex = ((index % this.reviewPhotos.length) + this.reviewPhotos.length) % this.reviewPhotos.length;
+    this.cdr.detectChanges();
+  }
+
+  nextReviewPhoto(): void {
+    this.setActiveReviewPhotoIndex(this.activeReviewPhotoIndex + 1);
+  }
+
+  prevReviewPhoto(): void {
+    this.setActiveReviewPhotoIndex(this.activeReviewPhotoIndex - 1);
+  }
+
+  onReviewCarouselPhotoError(index: number): void {
+    if (index < 0 || index >= this.reviewPhotos.length) {
+      return;
+    }
+
+    this.reviewPhotos = this.reviewPhotos.filter((_, i) => i !== index);
+    if (!this.reviewPhotos.length) {
+      this.activeReviewPhotoIndex = 0;
+    } else if (this.activeReviewPhotoIndex >= this.reviewPhotos.length) {
+      this.activeReviewPhotoIndex = this.reviewPhotos.length - 1;
+    } else if (index <= this.activeReviewPhotoIndex && this.activeReviewPhotoIndex > 0) {
+      this.activeReviewPhotoIndex--;
+    }
+
+    this.cdr.detectChanges();
+  }
+
   private resolveCoverUrl(clubId: string, coverPath?: string): string {
     if (coverPath) {
       return /^https?:\/\//i.test(coverPath)
@@ -382,6 +431,45 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
           return;
         }
         this.tablesError = err?.error?.message || 'No se pudo completar la reserva. Intentalo de nuevo.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  previousReviewsPage(): void {
+    if (this.reviewsCurrentPage > 1) {
+      this.reviewsCurrentPage--;
+      this.loadReviews();
+    }
+  }
+
+  nextReviewsPage(): void {
+    if (this.reviewsCurrentPage < this.reviewsTotalPages) {
+      this.reviewsCurrentPage++;
+      this.loadReviews();
+    }
+  }
+
+  onReviewPhotoError(event: any): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.style.display = 'none';
+    }
+  }
+
+  private loadReviews(): void {
+    if (!this.currentClubId) return;
+
+    this.clubService.getReviewsPaginated(this.currentClubId, this.reviewsCurrentPage - 1, this.reviewsPageSize).subscribe({
+      next: (response: any) => {
+        this.reviews = Array.isArray(response) ? response : (response?.content ?? []);
+        this.reviewsTotalPages = response?.totalPages ?? 1;
+        this.cdr.detectChanges();
+      },
+      error: err => {
+        console.warn('reviews error', err);
+        this.reviews = [];
+        this.reviewsTotalPages = 1;
         this.cdr.detectChanges();
       }
     });

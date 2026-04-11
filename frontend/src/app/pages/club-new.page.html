@@ -1,0 +1,278 @@
+<div class="flex justify-center items-start min-h-[105vh] w-full pt-5 pb-8 box-border bg-[#1b1a1a]">
+
+  <!-- Botón volver (fijo) -->
+  <div class="fixed top-[100px] left-5 z-[100]">
+    <button
+      type="button"
+      [routerLink]="['/clubs']"
+      class="h-10 min-w-[40px] px-4 flex items-center justify-center
+             text-white bg-[#9c27b0] border-none rounded cursor-pointer
+             shadow-[0_2px_10px_rgba(156,39,176,0.4)]
+             hover:bg-[#540761] transition-colors"
+    >
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+  </div>
+
+  <!-- Card formulario -->
+  <div class="w-[600px] mt-14 px-9 py-9 rounded-[8px] bg-[#3c3c3c]
+              shadow-[0_4px_24px_rgba(0,0,0,0.6),0_1.5px_12px_rgba(140,0,183,0.35)]">
+
+    <!-- Título -->
+    <div class="text-center mb-6 text-2xl font-bold text-white flex items-center justify-center gap-2">
+      <span>Agregar Club</span>
+      <span class="inline-flex items-center justify-center w-[50px] h-[50px] bg-[#9c27b0] rounded-full text-white">
+        <i class="fa-solid fa-martini-glass-citrus"></i>
+      </span>
+    </div>
+
+    <!-- Mensaje de error global (API) -->
+    <div
+      *ngIf="errorMessage"
+      class="mb-4 px-4 py-3 rounded bg-[#d32f2f] border-2 border-[#b71c1c] text-white font-bold text-sm shadow"
+    >
+      {{ errorMessage }}
+    </div>
+
+    <!-- Formulario -->
+    <form [formGroup]="clubForm" (ngSubmit)="onSubmit()" novalidate>
+
+      <p class="text-[#c1bfbf] text-[15px] text-right font-sans mb-2">* Campos requeridos</p>
+
+      <!-- Nombre -->
+      <div class="flex flex-col mb-3">
+        <input
+          formControlName="name"
+          type="text"
+          placeholder="Nombre *"
+          class="w-full px-4 py-4 border rounded-[8px] bg-transparent text-white text-base
+                 placeholder-[#aaa] box-border transition-colors
+                 focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
+          [ngClass]="fieldClass('name')"
+        />
+        <span *ngIf="showError('name')" class="text-[#ff0000] text-xs mt-1">
+          {{ getError('name') }}
+        </span>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="flex flex-col mb-3">
+        <input
+          formControlName="location"
+          type="text"
+          placeholder="Ubicación *"
+          id="locationInput"
+          class="w-full px-4 py-4 border rounded-[8px] bg-transparent text-white text-base
+                 placeholder-[#aaa] box-border transition-colors
+                 focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
+          [ngClass]="fieldClass('location')"
+        />
+        <span *ngIf="showError('location')" class="text-[#ff0000] text-xs mt-1">
+          {{ getError('location') }}
+        </span>
+      </div>
+
+      <!-- Mapa de previsualización -->
+      <div
+        class="w-full flex justify-center items-center overflow-hidden transition-all duration-[600ms] ease-in-out"
+        [style.max-height]="mapVisible ? '300px' : '0'"
+        [style.opacity]="mapVisible ? '1' : '0'"
+        [style.margin-bottom]="mapVisible ? '18px' : '0'"
+      >
+        <div
+          id="locationMap"
+          class="w-full h-[260px] min-h-[260px] rounded-[10px] overflow-hidden
+                 shadow-[0_0_12px_rgba(0,0,0,0.4),0_0_6px_rgba(140,0,183,0.25)]
+                 border border-white/10"
+        ></div>
+      </div>
+
+      <!-- Rango de precio con tooltip -->
+      <div class="flex flex-col mb-3">
+        <div class="relative w-full">
+          <select
+            formControlName="priceRange"
+            class="w-full px-4 pr-10 py-4 border rounded-[8px] bg-[#3c3c3c] text-white text-base
+                   box-border appearance-none transition-colors
+                   focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
+            [ngClass]="fieldClass('priceRange')"
+          >
+            <option value="" disabled selected>Rango de precio</option>
+            <option value="BAJO">Bajo ($)</option>
+            <option value="MEDIO">Medio ($$)</option>
+            <option value="ALTO">Alto ($$$)</option>
+          </select>
+
+          <!-- Botón info -->
+          <button
+            type="button"
+            (click)="toggleTooltip($event)"
+            class="absolute top-1/2 right-3 -translate-y-1/2 border-0 bg-transparent
+                   p-0 cursor-pointer flex items-center justify-center"
+            aria-label="Información rango de precio"
+          >
+            <i class="fa-solid fa-circle-info text-[#ccc] text-base opacity-80 mr-2"></i>
+          </button>
+
+          <!-- Tooltip -->
+          <div
+            *ngIf="tooltipVisible"
+            class="absolute right-0 top-[calc(100%+8px)] max-w-[320px] w-max
+                   bg-[#151a24] text-[#f2f4f8] border border-[#232b36]
+                   rounded-[10px] px-3 py-3 text-[0.9rem] leading-snug
+                   shadow-[0_8px_24px_rgba(0,0,0,0.35)] z-20"
+            role="tooltip"
+          >
+            <div class="absolute -top-[6px] right-[18px] w-[10px] h-[10px]
+                        bg-[#151a24] border-l border-t border-[#232b36] rotate-45"></div>
+            <strong>Rango de precio</strong><br/>
+            <span>
+              Bajo ($) – Bebidas económicas.<br/>
+              Medio ($$) – Precio moderado.<br/>
+              Alto ($$$) – Bebidas premium.
+            </span>
+          </div>
+        </div>
+        <span *ngIf="showError('priceRange')" class="text-[#ff0000] text-xs mt-1">
+          {{ getError('priceRange') }}
+        </span>
+      </div>
+
+      <!-- Descripción -->
+      <div class="flex flex-col mb-3">
+        <textarea
+          formControlName="description"
+          placeholder="Descripción"
+          class="w-full px-4 py-4 border rounded-[8px] bg-transparent text-white text-base
+                 placeholder-[#aaa] box-border resize-none min-h-[160px] transition-colors
+                 focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
+          [ngClass]="fieldClass('description')"
+        ></textarea>
+        <span *ngIf="showError('description')" class="text-[#ff0000] text-xs mt-1">
+          {{ getError('description') }}
+        </span>
+      </div>
+
+      <!-- Género musical -->
+      <div class="flex flex-col mb-3">
+        <select
+          formControlName="musicGenre"
+          class="w-full px-4 py-4 border rounded-[8px] bg-[#3c3c3c] text-white text-base
+                 box-border appearance-none transition-colors
+                 focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
+          [ngClass]="fieldClass('musicGenre')"
+        >
+          <option value="" disabled selected>Género musical</option>
+          <option value="ROCK">Rock</option>
+          <option value="POP">Pop</option>
+          <option value="CACHENGUE">Cachengue</option>
+          <option value="TECHNO">Techno</option>
+          <option value="REGGAETON">Reggaeton</option>
+          <option value="CUMBIA">Cumbia</option>
+          <option value="TRAP">Trap</option>
+          <option value="JAZZ">Jazz</option>
+          <option value="ELECTRONICA">Electrónica</option>
+          <option value="AFROBEAT">Afrobeat</option>
+          <option value="OTRO">Otro</option>
+        </select>
+        <span *ngIf="showError('musicGenre')" class="text-[#ff0000] text-xs mt-1">
+          {{ getError('musicGenre') }}
+        </span>
+      </div>
+
+      <!-- Zona -->
+      <div class="flex flex-col mb-3">
+        <select
+          formControlName="zone"
+          class="w-full px-4 py-4 border rounded-[8px] bg-[#3c3c3c] text-white text-base
+                 box-border appearance-none transition-colors
+                 focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
+          [ngClass]="fieldClass('zone')"
+        >
+          <option value="" disabled selected>Zona</option>
+          <option value="ZONA_NORTE">Zona Norte</option>
+          <option value="ZONA_OESTE">Zona Oeste</option>
+          <option value="ZONA_SUR">Zona Sur</option>
+          <option value="ZONA_CABA">CABA</option>
+        </select>
+        <span *ngIf="showError('zone')" class="text-[#ff0000] text-xs mt-1">
+          {{ getError('zone') }}
+        </span>
+      </div>
+
+      <!-- Tipo de local -->
+      <div class="flex flex-col mb-3">
+        <select
+          formControlName="isBar"
+          class="w-full px-4 py-4 border rounded-[8px] bg-[#3c3c3c] text-white text-base
+                 box-border appearance-none transition-colors
+                 focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
+          [ngClass]="fieldClass('isBar')"
+        >
+          <option value="" disabled selected>Tipo de local</option>
+          <option value="true">Bar</option>
+          <option value="false">Club / Boliche</option>
+        </select>
+        <span *ngIf="showError('isBar')" class="text-[#ff0000] text-xs mt-1">
+          {{ getError('isBar') }}
+        </span>
+      </div>
+
+      <!-- CBU -->
+      <div class="flex flex-col mb-3">
+        <input
+          formControlName="cbu"
+          type="text"
+          placeholder="CBU"
+          class="w-full px-4 py-4 border rounded-[8px] bg-transparent text-white text-base
+                 placeholder-[#aaa] box-border transition-colors
+                 focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
+          [ngClass]="fieldClass('cbu')"
+        />
+        <span *ngIf="showError('cbu')" class="text-[#ff0000] text-xs mt-1">
+          {{ getError('cbu') }}
+        </span>
+      </div>
+
+      <!-- Imagen -->
+      <div class="flex flex-col mb-3">
+        <input
+          type="file"
+          accept="image/*"
+          (change)="onFileChange($event)"
+          class="w-full px-4 py-4 border border-[#ccc] rounded-[8px] bg-transparent text-white text-base
+                 box-border file:mr-4 file:py-1 file:px-3 file:rounded file:border-0
+                 file:bg-[#9c27b0] file:text-white file:cursor-pointer"
+        />
+        <span *ngIf="showError('image')" class="text-[#ff0000] text-xs mt-1">
+          {{ getError('image') }}
+        </span>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-between mt-5">
+        <a
+          [routerLink]="['/clubs']"
+          class="inline-block px-4 py-2 text-white bg-[#6c757d] border border-[#6c757d]
+                 rounded text-base no-underline
+                 shadow-[0_2px_10px_rgba(108,117,125,0.4)]
+                 hover:bg-[#5a6268] transition-colors"
+        >
+          Cancelar
+        </a>
+        <button
+          type="submit"
+          [disabled]="submitting"
+          class="inline-block px-4 py-2 text-white bg-[#9c27b0] border border-[#9c27b0]
+                 rounded text-base cursor-pointer
+                 shadow-[0_2px_10px_rgba(156,39,176,0.4)]
+                 hover:bg-[#540761] transition-colors
+                 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {{ submitting ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

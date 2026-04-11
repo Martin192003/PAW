@@ -2,9 +2,11 @@ package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.LoginResponseDto;
+import ar.edu.itba.paw.model.dto.ResendVerificationRequestDto;
 import ar.edu.itba.paw.model.dto.UserCreateRequestDto;
 import ar.edu.itba.paw.model.dto.UserDto;
 import ar.edu.itba.paw.model.dto.UserLoginRequestDto;
+import ar.edu.itba.paw.model.dto.UserVerificationRequestDto;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
@@ -17,13 +19,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import ar.edu.itba.paw.service.ReviewService;
+import ar.edu.itba.paw.webapp.rest.reviews.ReviewMapper;
+import ar.edu.itba.paw.model.dto.ReviewDto;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.GenericEntity;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,6 +55,9 @@ public class UserRestController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private ReviewService reviewService;
+
     @GET
     @Path("/{userId}")
     public Response getUser(@PathParam("userId") String userId) {
@@ -55,7 +66,7 @@ public class UserRestController {
             id = UUID.fromString(userId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId inválido"))
+                    .entity(message("userId invalido"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -63,7 +74,7 @@ public class UserRestController {
         Optional<User> maybe = userService.findById(id);
         if (maybe.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId inválido"))
+                    .entity(message("userId invalido"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -159,7 +170,7 @@ public class UserRestController {
             }
 
             UserDto dto = UserMapper.toDto(user);
-            String token = jwtUtil.generateToken(user.getUsername());
+            String token = jwtUtil.generateToken(user.getId().toString());
 
             LoginResponseDto response = new LoginResponseDto(token, dto);
 
@@ -193,6 +204,63 @@ public class UserRestController {
         }
     }
 
+    // Verificacion por enlace desde el mail: /api/users/verifications?token=...
+    @GET
+    @Path("/verifications")
+    public Response verifyFromLink(@QueryParam("token") String token) {
+        if (isBlank(token)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Token de verificacion requerido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        return buildVerificationLoginResponse(token.trim());
+    }
+
+    // Verificacion manual por codigo/token ingresado en frontend
+    @POST
+    @Path("/verifications")
+    public Response verifyFromCode(UserVerificationRequestDto body) {
+        if (body == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Body requerido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        String tokenOrCode = !isBlank(body.getToken()) ? body.getToken() : body.getCode();
+        if (isBlank(tokenOrCode)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Debes enviar token o codigo"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        return buildVerificationLoginResponse(tokenOrCode.trim());
+    }
+
+    @POST
+    @Path("/verification-requests")
+    public Response resendVerification(ResendVerificationRequestDto body) {
+        if (body == null || isBlank(body.getUsernameOrEmail())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("usernameOrEmail requerido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        boolean sent = userService.resendVerificationToken(body.getUsernameOrEmail().trim());
+        if (!sent) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("No se pudo reenviar el mail de verificacion"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        return Response.ok(message("Te enviamos un nuevo mail de verificacion")).build();
+    }
+
     @GET
     @Path("/{userId}/profile")
     public Response getUserProfile(@PathParam("userId") String userId) {
@@ -201,7 +269,7 @@ public class UserRestController {
             id = UUID.fromString(userId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId inválido"))
+                    .entity(message("userId invalido"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -227,7 +295,7 @@ public class UserRestController {
             id = UUID.fromString(userId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId inválido"))
+                    .entity(message("userId invalido"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -252,7 +320,8 @@ public class UserRestController {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(message("Unauthorized"))
                     .type(MediaType.APPLICATION_JSON)
-                    .build();        }
+                    .build();
+        }
 
         String authName = auth.getName();
         User authUser = userService.findByUserName(authName);
@@ -264,7 +333,8 @@ public class UserRestController {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(message("Forbidden"))
                     .type(MediaType.APPLICATION_JSON)
-                    .build();        }
+                    .build();
+        }
 
         User existing = maybe.get();
 
@@ -277,8 +347,11 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            //webSecurity.refreshAuthentication(updated);
-            return Response.ok(UserMapper.toDto(updated)).build();
+            String refreshedToken = jwtUtil.generateToken(updated.getId().toString());
+            return Response.ok(UserMapper.toDto(updated))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + refreshedToken)
+                    .header("X-Auth-Token", refreshedToken)
+                    .build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
@@ -301,7 +374,7 @@ public class UserRestController {
             id = UUID.fromString(userId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId inválido"))
+                    .entity(message("userId invalido"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -326,7 +399,8 @@ public class UserRestController {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(message("Unauthorized"))
                     .type(MediaType.APPLICATION_JSON)
-                    .build();        }
+                    .build();
+        }
 
         String authName = auth.getName();
         User authUser = userService.findByUserName(authName);
@@ -349,12 +423,15 @@ public class UserRestController {
         if (!isBlank(body.getEmail())) existing.setEmail(body.getEmail().trim());
         if (!isBlank(body.getCellphone())) existing.setCellphone(body.getCellphone().trim());
         if (!isBlank(body.getLocale())) existing.setLocale(body.getLocale().trim());
-        //ignoro la contraseña
+        //ignoro la contrasena
 
         try {
             User updated = userService.update(existing);
-            //webSecurity.refreshAuthentication(updated);
-            return Response.ok(UserMapper.toDto(updated)).build();
+            String refreshedToken = jwtUtil.generateToken(updated.getId().toString());
+            return Response.ok(UserMapper.toDto(updated))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + refreshedToken)
+                    .header("X-Auth-Token", refreshedToken)
+                    .build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
@@ -367,6 +444,73 @@ public class UserRestController {
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
+    }
+
+    @GET
+    @Path("/{userId}/reviews")
+    public Response getUserReviews(@PathParam("userId") String userIdStr,
+                                   @QueryParam("page") @DefaultValue("0") int page,
+                                   @QueryParam("size") @DefaultValue("20") int size) {
+        UUID id;
+        try {
+            id = UUID.fromString(userIdStr);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("userId inválido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        Optional<User> maybe = userService.findById(id);
+        if (maybe.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(message("Usuario no encontrado"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (page < 0 || size <= 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Invalid pagination parameters"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        int offset = page * size;
+        List<ar.edu.itba.paw.model.Review> reviews = reviewService.obtainPaginatedReviews(id, null, size, offset);
+        List<ReviewDto> dtos = reviews.stream()
+                .map(ReviewMapper::toDto)
+                .collect(Collectors.toList());
+
+        GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(dtos) {};
+        return Response.ok(entity)
+                .header("X-Total-Count", reviewService.countByUser(id))
+                .build();
+    }
+
+    private Response buildVerificationLoginResponse(String tokenOrCode) {
+        User user = userService.findByVerificationToken(tokenOrCode);
+        if (user == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Token o codigo de verificacion invalido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (!user.isVerified()) {
+            boolean verified = userService.verifyUser(tokenOrCode);
+            if (!verified) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(message("Token o codigo de verificacion invalido"))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+        }
+
+        UserDto dto = UserMapper.toDto(user);
+        String jwt = jwtUtil.generateToken(user.getId().toString());
+        LoginResponseDto response = new LoginResponseDto(jwt, dto);
+        return Response.ok(response).build();
     }
 
     private static boolean isBlank(String s) {
@@ -383,3 +527,4 @@ public class UserRestController {
     }
 
 }
+

@@ -181,7 +181,7 @@ public class ProfileController {
     }
 
     private void updateAuthenticationContext(User updatedUser) {
-        PawUserDetails newDetails = new PawUserDetails(updatedUser, updatedUser.getUsername());
+        PawUserDetails newDetails = new PawUserDetails(updatedUser);
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         newDetails,

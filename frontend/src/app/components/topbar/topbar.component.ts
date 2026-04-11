@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AuthStateService } from '../../services/auth-state.service';
 
 
 @Component({
@@ -11,6 +12,18 @@ import { CommonModule } from '@angular/common';
   styleUrl: './topbar.component.css'
 })
 export class TopbarComponent {
-  isLoggedIn = false;
-  isAdmin = false;
+  get isLoggedIn(): boolean {
+    return !!this.authState.getToken();
+  }
+
+  get manageClubsHref(): string {
+    return '/admin/activity';
+  }
+
+  get profileQueryParams(): { userId: string } | undefined {
+    const userId = this.authState.getUser()?.userId;
+    return userId ? { userId } : undefined;
+  }
+
+  constructor(private readonly authState: AuthStateService) {}
 }

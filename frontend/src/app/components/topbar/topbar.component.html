@@ -15,42 +15,55 @@
   </a>
 
   <div class="flex items-center gap-4">
+    <ng-container *ngIf="isLoggedIn; else loggedOutActions">
+      <a
+        [href]="manageClubsHref"
+        class="uppercase font-bold tracking-wide px-6 py-3 rounded-xl
+               text-white transition-all duration-300
+               hover:bg-fuchsia-600/20 hover:scale-105"
+        style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;"
+      >
+        Manage Clubs
+      </a>
 
-    <a
-      routerLink="/clubs/new"
-      class="uppercase font-bold tracking-wide px-6 py-3 rounded-xl
-             text-white transition-all duration-300
-             hover:bg-fuchsia-600/20 hover:scale-105"
-              style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;">
-      Add Club
-    </a>
+      <a
+        routerLink="/profile"
+        [queryParams]="profileQueryParams"
+        class="w-12 h-12 rounded-full flex items-center justify-center
+               bg-gradient-to-br from-purple-600 to-fuchsia-500
+               text-white text-xl shadow-lg
+               hover:scale-110 transition"
+      >
+        <i class="fa-solid fa-user"></i>
+      </a>
+    </ng-container>
 
-    <a
-      *ngIf="isLoggedIn"
-      routerLink="/profile"
-      class="w-12 h-12 rounded-full flex items-center justify-center
-             bg-gradient-to-br from-purple-600 to-fuchsia-500
-             text-white text-xl shadow-lg
-             hover:scale-110 transition">
-      <i class="fa-solid fa-user"></i>
-    </a>
+    <ng-template #loggedOutActions>
+      <a
+        routerLink="/clubs/new"
+        class="uppercase font-bold tracking-wide px-6 py-3 rounded-xl
+               text-white transition-all duration-300
+               hover:bg-fuchsia-600/20 hover:scale-105"
+        style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;"
+      >
+        Add Club
+      </a>
 
-    <a
-      *ngIf="!isLoggedIn"
-      routerLink="/login"
-      class="inline-block uppercase font-bold tracking-[1px]
-         px-[22px] py-[12px] rounded-[10px]
-         text-white text-[1rem]
-         shadow-[0_0_12px_rgba(156,39,176,0.7)]
-         hover:shadow-[0_0_20px_rgba(213,0,249,0.9)]
-         hover:scale-105
-         transition-all duration-300
-         bg-[linear-gradient(135deg,#9c27b0,#d500f9)]
-         border-0 cursor-pointer"
-      style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;"
-    >
-      Login
-    </a>
-
+      <a
+        routerLink="/login"
+        class="inline-block uppercase font-bold tracking-[1px]
+               px-[22px] py-[12px] rounded-[10px]
+               text-white text-[1rem]
+               shadow-[0_0_12px_rgba(156,39,176,0.7)]
+               hover:shadow-[0_0_20px_rgba(213,0,249,0.9)]
+               hover:scale-105
+               transition-all duration-300
+               bg-[linear-gradient(135deg,#9c27b0,#d500f9)]
+               border-0 cursor-pointer"
+        style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;"
+      >
+        Login
+      </a>
+    </ng-template>
   </div>
 </header>
