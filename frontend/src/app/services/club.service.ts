@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { Club } from '../models/club.model';
 import { ClubLimits } from '../models/club-limits.model';
@@ -18,12 +18,36 @@ export class ClubService {
 
   private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
 
+  private readonly emptyFilter = {
+    name: '',
+    zone: '',
+    genre: '',
+    price: '',
+    isBar: '',
+    sort: ''
+  };
+
   constructor(private http: HttpClient) {}
 
-  getClubs(page: number, size: number): Observable<AvailabilityPagedResponse<Club>> {
-    return this.http.get<AvailabilityPagedResponse<Club>>(
-      `${this.apiUrl}/clubs?page=${page}&size=${size}`
-    );
+  getClubs(
+    page: number,
+    size: number,
+    filters: Partial<{ name: string; zone: string; genre: string; price: string; isBar: string; sort: string }> = this.emptyFilter
+  ): Observable<AvailabilityPagedResponse<Club>> {
+    const normalized = { ...this.emptyFilter, ...filters };
+
+    let params = new HttpParams()
+      .set('page', page)
+      .set('size', size);
+
+    if (normalized.name) params = params.set('name', normalized.name);
+    if (normalized.zone) params = params.set('zone', normalized.zone);
+    if (normalized.genre) params = params.set('genre', normalized.genre);
+    if (normalized.price) params = params.set('price', normalized.price);
+    if (normalized.isBar) params = params.set('isBar', normalized.isBar);
+    if (normalized.sort) params = params.set('sort', normalized.sort);
+
+    return this.http.get<AvailabilityPagedResponse<Club>>(`${this.apiUrl}/clubs`, { params });
   }
 
   getClubById(id: string): Observable<Club> {
