@@ -40,7 +40,7 @@ public class EventDtoAssembler {
 
         if (event.getPhotoId() != null) {
             String photo = uriInfo.getBaseUriBuilder()
-                    .path(EventPhotoRestController.class)
+                    .path("clubs/{clubId}/events/{eventId}/photo")
                     .resolveTemplate("clubId", clubId)
                     .resolveTemplate("eventId", event.getEventId())
                     .build()
