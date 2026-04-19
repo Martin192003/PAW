@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { EventService } from '../services/event.service';
 import { ClubEvent } from '../models/ClubEvent.model';
 import { ViewChild, ElementRef } from '@angular/core';
@@ -12,7 +13,7 @@ type ClubListItem = Club & { _hasError?: boolean };
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './clubs.page.html',
 })
 export class ClubsPage implements OnInit {
@@ -23,6 +24,28 @@ export class ClubsPage implements OnInit {
 
   upcomingEvents: ClubEvent[] = [];
   currentEventIndex = 0;
+
+  readonly filterOptions = {
+    zones: ['ZONA_NORTE', 'ZONA_OESTE', 'ZONA_SUR', 'ZONA_CABA'],
+    genres: ['ROCK', 'POP', 'CACHENGUE', 'TECHNO', 'REGGAETON', 'CUMBIA', 'TRAP', 'JAZZ', 'ELECTRONICA', 'AFROBEAT', 'OTRO'],
+    prices: ['BAJO', 'MEDIO', 'ALTO'],
+    sorts: [
+      { value: 'availability_d0_desc', label: 'Available today' },
+      { value: 'availability_d1_desc', label: 'Available tomorrow' },
+      { value: 'availability_d2_desc', label: 'Available day after' },
+      { value: 'rating_desc', label: 'Rating (high to low)' },
+      { value: 'rating_asc', label: 'Rating (low to high)' }
+    ]
+  };
+
+  filters: { name: string; zone: string; genre: string; price: string; isBar: string; sort: string } = {
+    name: '',
+    zone: '',
+    genre: '',
+    price: '',
+    isBar: '',
+    sort: ''
+  };
 
   constructor(
     private clubService: ClubService,
@@ -36,7 +59,7 @@ export class ClubsPage implements OnInit {
   }
 
   loadClubs() {
-    this.clubService.getClubs(this.currentPage, this.pageSize)
+    this.clubService.getClubs(this.currentPage, this.pageSize, this.filters)
       .subscribe({
         next: (response) => {
           this.clubs = response.content.map(club => ({
@@ -50,6 +73,28 @@ export class ClubsPage implements OnInit {
           console.error('Error loading clubs:', err);
         }
       });
+  }
+
+  applyFilters(): void {
+    this.currentPage = 1;
+    this.loadClubs();
+  }
+
+  resetFilters(): void {
+    this.filters = {
+      name: '',
+      zone: '',
+      genre: '',
+      price: '',
+      isBar: '',
+      sort: ''
+    };
+    this.currentPage = 1;
+    this.loadClubs();
+  }
+
+  get hasActiveFilters(): boolean {
+    return Object.values(this.filters).some((value) => value.trim() !== '');
   }
 
   onImageError(event: Event, club: ClubListItem) {
