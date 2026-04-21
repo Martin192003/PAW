@@ -10,6 +10,40 @@ import { ClubTable } from '../models/club-table.model';
 import { Review } from '../models/review.model';
 import { Event } from '../models/event.model';
 import { ClubPhoto } from '../models/club-photo.model';
+import { PagedResponse } from '../models/paged-response.model';
+
+export interface ClubUpdatePayload {
+  clubName: string;
+  location: string;
+  priceRange: string;
+  description: string;
+  musicGenre: string;
+  zone: string;
+  isBar: boolean;
+  cbu: string;
+}
+
+export interface ProductPayload {
+  productName: string;
+  description: string;
+  basePrice: number;
+  productType: string;
+  isAvailable: boolean;
+}
+
+export interface TablePayload {
+  tableNumber: number;
+  capacity: number;
+  price: number;
+  discount: number;
+  tableState: string;
+}
+
+export interface EventPayload {
+  eventName: string;
+  description: string;
+  date: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +51,7 @@ import { ClubPhoto } from '../models/club-photo.model';
 export class ClubService {
 
   private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
+  private readonly webappUrl = 'http://localhost:8080/webapp_war_exploded';
 
   private readonly emptyFilter = {
     name: '',
@@ -28,6 +63,11 @@ export class ClubService {
   };
 
   constructor(private http: HttpClient) {}
+
+  private buildNoCacheParams(seed?: HttpParams): HttpParams {
+    const params = seed ?? new HttpParams();
+    return params.set('_ts', Date.now().toString());
+  }
 
   getClubs(
     page: number,
@@ -50,8 +90,21 @@ export class ClubService {
     return this.http.get<AvailabilityPagedResponse<Club>>(`${this.apiUrl}/clubs`, { params });
   }
 
+  getClubsByUser(userId: string, page: number, size: number): Observable<PagedResponse<Club>> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size);
+
+    return this.http.get<PagedResponse<Club>>(
+      `${this.apiUrl}/clubs/user/${encodeURIComponent(userId)}`,
+      { params }
+    );
+  }
+
   getClubById(id: string): Observable<Club> {
-    return this.http.get<Club>(`${this.apiUrl}/clubs/${id}`);
+    return this.http.get<Club>(`${this.apiUrl}/clubs/${id}`, {
+      params: this.buildNoCacheParams()
+    });
   }
 
   getCoverUrl(id: string): string {
@@ -85,6 +138,43 @@ export class ClubService {
     return this.http.get<Layout>(`${this.apiUrl}/clubs/${id}/layout`);
   }
 
+  uploadCover(clubId: string, file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post(`${this.webappUrl}/clubs/club/${clubId}/cover`, formData, {
+      withCredentials: true,
+      responseType: 'text'
+    });
+  }
+
+  uploadLayout(clubId: string, file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post(`${this.webappUrl}/clubs/club/${clubId}/layout`, formData, {
+      withCredentials: true,
+      responseType: 'text'
+    });
+  }
+
+  uploadGalleryPhotos(clubId: string, files: File[]): Observable<string> {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+
+    return this.http.post(`${this.webappUrl}/clubs/club/${clubId}/gallery`, formData, {
+      withCredentials: true,
+      responseType: 'text'
+    });
+  }
+
+  deleteGalleryPhoto(clubId: string, photoId: string): Observable<string> {
+    return this.http.post(`${this.webappUrl}/clubs/${clubId}/photos/${photoId}/delete`, null, {
+      withCredentials: true,
+      responseType: 'text'
+    });
+  }
+
   toAbsoluteUrl(path: string, clubId?: string): string {
     if (/^https?:\/\//i.test(path)) {
       return path;
@@ -100,12 +190,20 @@ export class ClubService {
     return this.http.get<ClubLimits>(`${this.apiUrl}/clubs/${id}/limits`);
   }
   getMenu(id: string) {
-    return this.http.get<Product[]>(`${this.apiUrl}/clubs/${id}/menu`);
+    return this.http.get<Product[]>(`${this.apiUrl}/clubs/${id}/menu`, {
+      params: this.buildNoCacheParams()
+    });
   }
 
   getTables(id: string, date?: string) {
-    const query = date ? `?date=${encodeURIComponent(date)}` : '';
-    return this.http.get<ClubTable[]>(`${this.apiUrl}/clubs/${id}/tables${query}`);
+    let params = new HttpParams();
+    if (date) {
+      params = params.set('date', date);
+    }
+
+    return this.http.get<ClubTable[]>(`${this.apiUrl}/clubs/${id}/tables`, {
+      params: this.buildNoCacheParams(params)
+    });
   }
 
   reserveTable(clubId: string, tableId: string, date: string, fromEvent: boolean) {
@@ -131,8 +229,67 @@ export class ClubService {
   }
 
   getEvents(id: string) {
-    return this.http.get<Event[]>(
-      `${this.apiUrl}/clubs/${id}/events`
+    return this.http.get<Array<Event & { id?: string }>>(
+      `${this.apiUrl}/clubs/${id}/events`,
+      {
+        params: this.buildNoCacheParams()
+      }
+    ).pipe(
+      map((events) =>
+        (events ?? []).map((event) => ({
+          ...event,
+          eventId: event.eventId || event.id || ''
+        }))
+      )
     );
+  }
+
+  updateClub(clubId: string, payload: ClubUpdatePayload): Observable<Club> {
+    return this.http.put<Club>(`${this.apiUrl}/clubs/${clubId}`, payload, { withCredentials: true });
+  }
+
+  createProduct(clubId: string, payload: ProductPayload): Observable<Product> {
+    return this.http.post<Product>(`${this.apiUrl}/clubs/${clubId}/menu`, payload, { withCredentials: true });
+  }
+
+  updateProduct(clubId: string, productId: string, payload: ProductPayload): Observable<Product> {
+    return this.http.put<Product>(`${this.apiUrl}/clubs/${clubId}/menu/${productId}`, payload, { withCredentials: true });
+  }
+
+  createTable(clubId: string, payload: TablePayload): Observable<ClubTable> {
+    return this.http.post<ClubTable>(`${this.apiUrl}/clubs/${clubId}/tables`, payload, { withCredentials: true });
+  }
+
+  updateTable(clubId: string, tableId: string, payload: TablePayload): Observable<ClubTable> {
+    return this.http.put<ClubTable>(`${this.apiUrl}/clubs/${clubId}/tables/${tableId}`, payload, { withCredentials: true });
+  }
+
+  deleteTable(clubId: string, tableId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/tables/${tableId}`, { withCredentials: true });
+  }
+
+  createEvent(clubId: string, payload: EventPayload): Observable<Event> {
+    return this.http.post<Event>(`${this.apiUrl}/clubs/${clubId}/events`, payload, { withCredentials: true });
+  }
+
+  updateEvent(clubId: string, eventId: string, payload: EventPayload): Observable<Event> {
+    return this.http.put<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}`, payload, { withCredentials: true });
+  }
+
+  deleteEvent(clubId: string, eventId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}`, { withCredentials: true });
+  }
+
+  uploadEventPhoto(clubId: string, eventId: string, file: File): Observable<Event> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.put<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`, formData, {
+      withCredentials: true
+    });
+  }
+
+  deleteEventPhoto(clubId: string, eventId: string): Observable<Event> {
+    return this.http.delete<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`, { withCredentials: true });
   }
 }
