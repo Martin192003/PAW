@@ -1,4 +1,4 @@
-<header
+l<header
   class="fixed top-0 left-0 w-full h-[90px]
          bg-black/90 backdrop-blur-md
          flex items-center justify-between
@@ -17,7 +17,7 @@
   <div class="flex items-center gap-4">
     <ng-container *ngIf="isLoggedIn; else loggedOutActions">
       <a
-        [href]="manageClubsHref"
+        [routerLink]="manageClubsRoute"
         class="uppercase font-bold tracking-wide px-6 py-3 rounded-xl
                text-white transition-all duration-300
                hover:bg-fuchsia-600/20 hover:scale-105"

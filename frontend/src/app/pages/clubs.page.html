@@ -141,7 +141,7 @@
         name="sort"
         class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none"
       >
-        <option value="" class="text-black">Other</option>
+        <option value="" class="text-black">Availability/Rating</option>
         <option *ngFor="let sortOpt of filterOptions.sorts" [value]="sortOpt.value" class="text-black">{{ sortOpt.label }}</option>
       </select>
 
