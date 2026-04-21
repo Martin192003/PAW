@@ -1,0 +1,107 @@
+<div class="h-[calc(100vh-90px)] overflow-hidden bg-[#1b1a1a] flex flex-col lg:flex-row lg:items-stretch text-white">
+  <app-side-bar [activeSection]="'clubs'"></app-side-bar>
+
+  <section class="flex-1 min-w-0 px-4 sm:px-6 lg:px-6 py-5 lg:py-4 overflow-hidden">
+    <main class="w-full max-w-[1200px] mx-auto pb-8">
+      <section class="activity-topbar mt-2 mb-4">
+        <button
+          type="button"
+          class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#9c27b0] text-white hover:bg-[#86229a] transition"
+          routerLink="/clubs"
+          aria-label="Back to clubs"
+        >
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+
+        <div>
+          <h1
+            class="text-[1.55rem] font-bold text-[#9c27b0] tracking-widest"
+            style="font-family: 'Darklinos', Arial, sans-serif;"
+          >
+            Club Activity
+          </h1>
+          <p class="text-[#b9b9b9] text-sm">Manage your clubs and open each handler quickly.</p>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-6">
+        <article
+          *ngFor="let club of clubs"
+          class="relative flex h-[180px] w-full bg-[#3c3c3c] rounded-lg overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.6),0_1.5px_12px_rgba(140,0,183,0.35)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.7),0_3px_18px_rgba(140,0,183,0.45)] hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+          (click)="goToClubHandler(club.clubId)"
+        >
+          <div class="w-[150px] h-full flex-shrink-0 bg-black relative">
+            <img
+              *ngIf="!club._hasError && club.links?.cover"
+              [src]="club.links?.cover"
+              [alt]="club.clubName"
+              class="w-full h-full object-cover"
+              (error)="onImageError(club)"
+            />
+
+            <div
+              *ngIf="club._hasError || !club.links?.cover"
+              class="w-full h-full flex items-center justify-center text-[#9c27b0] text-lg font-bold text-center tracking-widest"
+              style="font-family: 'Darklinos', Arial, sans-serif;"
+            >
+              Bling <br />&nbsp;&nbsp;Bling
+            </div>
+          </div>
+
+          <div class="flex-1 flex flex-col px-4 py-3 text-[#bab8b8]">
+            <h2
+              class="text-white text-[1.4rem] font-bold mb-1"
+              style="font-family: 'Good Times', Arial, sans-serif;"
+            >
+              {{ truncate(club.clubName, 30) }}
+            </h2>
+
+            <div class="text-sm leading-6 flex-1">
+              <div><i class="fa-solid fa-location-dot mr-1"></i>{{ club.location }}</div>
+              <div><i class="fa-solid fa-music mr-1"></i>{{ getGenreLabel(club.musicGenre) }}</div>
+              <div><i class="fa-solid fa-dollar-sign mr-1"></i>{{ getPriceLabel(club.priceRange) }}</div>
+
+              <div *ngIf="hasRating(club)" class="flex items-center gap-1 mt-1">
+                <ng-container *ngFor="let _ of getFullStars(club)">
+                  <i class="fa-solid fa-star" style="color:#FFD700;"></i>
+                </ng-container>
+                <i *ngIf="hasHalfStar(club)" class="fa-solid fa-star-half-stroke" style="color:#FFD700;"></i>
+                <ng-container *ngFor="let _ of getEmptyStars(club)">
+                  <i class="fa-regular fa-star" style="color:#bab8b8;"></i>
+                </ng-container>
+                <span class="ml-1">{{ club.rating }}</span>
+              </div>
+
+              <div class="mt-1">{{ truncate(club.description, 80) }}</div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <div *ngIf="totalPages > 1" class="flex justify-center items-center gap-4 mt-10">
+        <button
+          type="button"
+          class="w-10 h-10 flex items-center justify-center rounded-full text-white bg-[#2a2a2a] hover:bg-purple-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          [disabled]="currentPage === 1"
+          (click)="prevPage()"
+          aria-label="Previous page"
+        >
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <span class="text-[#bab8b8] text-sm">{{ currentPage }} de {{ totalPages }}</span>
+
+        <button
+          type="button"
+          class="w-10 h-10 flex items-center justify-center rounded-full text-white bg-[#2a2a2a] hover:bg-purple-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          [disabled]="currentPage === totalPages"
+          (click)="nextPage()"
+          aria-label="Next page"
+        >
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </main>
+  </section>
+</div>
+
