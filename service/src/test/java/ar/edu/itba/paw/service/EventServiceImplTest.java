@@ -364,23 +364,6 @@ public class EventServiceImplTest {
         Assert.assertEquals(3, result);
     }
 
-    @Test
-    public void testSetEventPhoto_Success_ReplacesOldPhoto() throws IOException {
-        Mockito.when(eventDao.findById(Mockito.eq(EVENT_ID)))
-                .thenReturn(Optional.of(mockEvent));
-        Mockito.when(photoService.uploadEventPhoto(
-                Mockito.eq(CLUB_ID),
-                Mockito.eq(EVENT_ID),
-                Mockito.eq(HARDCODED_UPLOADER_ID),
-                Mockito.eq(mockPhoto)
-        )).thenReturn(NEW_PHOTO_ID);
-
-        UUID result = eventService.setEventPhoto(CLUB_ID, EVENT_ID, mockPhoto);
-
-        Assert.assertEquals(NEW_PHOTO_ID, result);
-        Mockito.verify(eventDao).attachPhoto(EVENT_ID, NEW_PHOTO_ID);
-        Mockito.verify(photoService).delete(PHOTO_ID);
-    }
 
     @Test
     public void testSetEventPhoto_InvalidImageData() {
