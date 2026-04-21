@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { User } from '../models/user.model';
 import { AuthStateService } from '../services/auth-state.service';
 import { UserService } from '../services/user.service';
+import { SideBarComponent } from '../components/account-sidebar/account-sidebar.component';
 
 type EditableProfileField = 'username' | 'name' | 'surname' | 'email' | 'cellphone';
 
@@ -27,7 +28,7 @@ const FIELD_TYPES: Record<EditableProfileField, string> = {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SideBarComponent],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.css'
 })
@@ -188,4 +189,3 @@ export class ProfilePage implements OnInit {
     return fallback;
   }
 }
-
