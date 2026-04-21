@@ -1,0 +1,29 @@
+<aside class="w-full lg:w-[220px] xl:w-[260px] bg-[#222] flex flex-col shrink-0 self-stretch h-full min-h-full">
+  <ng-container *ngFor="let item of items">
+    <a
+      *ngIf="item.route; else staticItem"
+      [routerLink]="item.route"
+      class="block px-6 py-6 text-left text-lg leading-tight transition-colors"
+      [ngClass]="isActive(item.key)
+        ? 'bg-[#9c27b0] font-bold'
+        : 'hover:bg-[#333]'"
+    >
+      {{ item.label }}
+    </a>
+
+    <ng-template #staticItem>
+      <button
+        type="button"
+        class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors"
+        [ngClass]="isActive(item.key) ? 'bg-[#9c27b0] font-bold' : ''"
+      >
+        {{ item.label }}
+      </button>
+    </ng-template>
+  </ng-container>
+
+  <button type="button" class="mt-auto flex items-center gap-3 px-6 py-5 text-left text-lg hover:bg-[#333] transition-colors">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span>Logout</span>
+  </button>
+</aside>
