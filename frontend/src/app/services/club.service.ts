@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, forkJoin, map } from 'rxjs';
 import { Club } from '../models/club.model';
 import { ClubLimits } from '../models/club-limits.model';
 import { Layout } from '../models/layout.model';
@@ -51,7 +51,6 @@ export interface EventPayload {
 export class ClubService {
 
   private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
-  private readonly webappUrl = 'http://localhost:8080/webapp_war_exploded';
 
   private readonly emptyFilter = {
     name: '',
@@ -62,7 +61,7 @@ export class ClubService {
     sort: ''
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   private buildNoCacheParams(seed?: HttpParams): HttpParams {
     const params = seed ?? new HttpParams();
@@ -111,6 +110,10 @@ export class ClubService {
     return `${this.apiUrl}/clubs/${id}/cover`;
   }
 
+  getPhotoUrl(photoId: string): string {
+    return `${this.apiUrl}/photos/${photoId}`;
+  }
+
   getClubPhotos(id: string): Observable<ClubPhoto[]> {
     return this.http
       .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(`${this.apiUrl}/clubs/${id}/photos`)
@@ -138,41 +141,31 @@ export class ClubService {
     return this.http.get<Layout>(`${this.apiUrl}/clubs/${id}/layout`);
   }
 
-  uploadCover(clubId: string, file: File): Observable<string> {
+  uploadCover(clubId: string, file: File): Observable<unknown> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.put(`${this.apiUrl}/clubs/${clubId}/cover`, formData);
+  }
+
+  uploadLayout(clubId: string, file: File): Observable<unknown> {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.post(`${this.webappUrl}/clubs/club/${clubId}/cover`, formData, {
-      withCredentials: true,
-      responseType: 'text'
-    });
+    return this.http.put(`${this.apiUrl}/clubs/${clubId}/layout`, formData);
   }
 
-  uploadLayout(clubId: string, file: File): Observable<string> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    return this.http.post(`${this.webappUrl}/clubs/club/${clubId}/layout`, formData, {
-      withCredentials: true,
-      responseType: 'text'
+  uploadGalleryPhotos(clubId: string, files: File[]): Observable<unknown> {
+    const uploads = files.map((file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return this.http.post(`${this.apiUrl}/clubs/${clubId}/photos`, formData);
     });
+
+    return forkJoin(uploads);
   }
 
-  uploadGalleryPhotos(clubId: string, files: File[]): Observable<string> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
-
-    return this.http.post(`${this.webappUrl}/clubs/club/${clubId}/gallery`, formData, {
-      withCredentials: true,
-      responseType: 'text'
-    });
-  }
-
-  deleteGalleryPhoto(clubId: string, photoId: string): Observable<string> {
-    return this.http.post(`${this.webappUrl}/clubs/${clubId}/photos/${photoId}/delete`, null, {
-      withCredentials: true,
-      responseType: 'text'
-    });
+  deleteGalleryPhoto(clubId: string, photoId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/photos/${photoId}`);
   }
 
   toAbsoluteUrl(path: string, clubId?: string): string {
@@ -209,8 +202,7 @@ export class ClubService {
   reserveTable(clubId: string, tableId: string, date: string, fromEvent: boolean) {
     return this.http.post<{ bookingId: string; message: string }>(
       `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/reserve`,
-      { tableId, date, fromEvent },
-      { withCredentials: true }
+      { tableId, date, fromEvent }
     );
   }
 
@@ -245,51 +237,49 @@ export class ClubService {
   }
 
   updateClub(clubId: string, payload: ClubUpdatePayload): Observable<Club> {
-    return this.http.put<Club>(`${this.apiUrl}/clubs/${clubId}`, payload, { withCredentials: true });
+    return this.http.put<Club>(`${this.apiUrl}/clubs/${clubId}`, payload);
   }
 
   createProduct(clubId: string, payload: ProductPayload): Observable<Product> {
-    return this.http.post<Product>(`${this.apiUrl}/clubs/${clubId}/menu`, payload, { withCredentials: true });
+    return this.http.post<Product>(`${this.apiUrl}/clubs/${clubId}/menu`, payload);
   }
 
   updateProduct(clubId: string, productId: string, payload: ProductPayload): Observable<Product> {
-    return this.http.put<Product>(`${this.apiUrl}/clubs/${clubId}/menu/${productId}`, payload, { withCredentials: true });
+    return this.http.put<Product>(`${this.apiUrl}/clubs/${clubId}/menu/${productId}`, payload);
   }
 
   createTable(clubId: string, payload: TablePayload): Observable<ClubTable> {
-    return this.http.post<ClubTable>(`${this.apiUrl}/clubs/${clubId}/tables`, payload, { withCredentials: true });
+    return this.http.post<ClubTable>(`${this.apiUrl}/clubs/${clubId}/tables`, payload);
   }
 
   updateTable(clubId: string, tableId: string, payload: TablePayload): Observable<ClubTable> {
-    return this.http.put<ClubTable>(`${this.apiUrl}/clubs/${clubId}/tables/${tableId}`, payload, { withCredentials: true });
+    return this.http.put<ClubTable>(`${this.apiUrl}/clubs/${clubId}/tables/${tableId}`, payload);
   }
 
   deleteTable(clubId: string, tableId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/tables/${tableId}`, { withCredentials: true });
+    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/tables/${tableId}`);
   }
 
   createEvent(clubId: string, payload: EventPayload): Observable<Event> {
-    return this.http.post<Event>(`${this.apiUrl}/clubs/${clubId}/events`, payload, { withCredentials: true });
+    return this.http.post<Event>(`${this.apiUrl}/clubs/${clubId}/events`, payload);
   }
 
   updateEvent(clubId: string, eventId: string, payload: EventPayload): Observable<Event> {
-    return this.http.put<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}`, payload, { withCredentials: true });
+    return this.http.put<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}`, payload);
   }
 
   deleteEvent(clubId: string, eventId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}`, { withCredentials: true });
+    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}`);
   }
 
   uploadEventPhoto(clubId: string, eventId: string, file: File): Observable<Event> {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.put<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`, formData, {
-      withCredentials: true
-    });
+    return this.http.put<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`, formData);
   }
 
   deleteEventPhoto(clubId: string, eventId: string): Observable<Event> {
-    return this.http.delete<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`, { withCredentials: true });
+    return this.http.delete<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`);
   }
 }
