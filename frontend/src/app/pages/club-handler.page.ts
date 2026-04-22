@@ -205,11 +205,14 @@ export class ClubHandlerPage implements OnInit {
       })
     ).subscribe({
       next: () => {
-        this.loadLayout();
+        this.layoutUrl = this.withCacheBust(
+          this.clubService.toAbsoluteUrl(`/clubs/${this.clubId}/layout/image`, this.clubId)
+        );
         this.actionSuccessMessage = 'Layout actualizado.';
         this.actionErrorMessage = '';
       },
       error: () => {
+        this.loadLayout();
         this.actionErrorMessage = 'No se pudo actualizar el layout.';
         this.actionSuccessMessage = '';
       }
@@ -746,6 +749,9 @@ export class ClubHandlerPage implements OnInit {
   }
 
   getGalleryPhotoUrl(photo: ClubPhoto): string {
+    if (photo.photoId) {
+      return this.clubService.getPhotoUrl(photo.photoId);
+    }
     return this.clubService.toAbsoluteUrl(photo.url, this.clubId);
   }
 
@@ -894,7 +900,12 @@ export class ClubHandlerPage implements OnInit {
     if (!raw) {
       return '';
     }
-    return this.clubService.toAbsoluteUrl(raw, this.clubId);
+    return this.withCacheBust(this.clubService.toAbsoluteUrl(raw, this.clubId));
+  }
+
+  private withCacheBust(url: string): string {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${Date.now()}`;
   }
 
   private clearActionMessages(): void {
