@@ -3,6 +3,7 @@ package ar.edu.itba.paw.webapp.rest.clubs;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +35,7 @@ public class ClubRestController {
     private final UserService userService;
     private final ClubLayoutService clubLayoutService;
     private final PhotoService photoService;
+    private final JwtUtil jwtUtil;
 
 
     @Context
@@ -43,12 +45,18 @@ public class ClubRestController {
     private HttpServletRequest request;
 
     @Autowired
-    public ClubRestController(final ClubService clubService, final TableService tableService, UserService userService, ClubLayoutService clubLayoutService, PhotoService photoService) {
+    public ClubRestController(final ClubService clubService,
+                              final TableService tableService,
+                              UserService userService,
+                              ClubLayoutService clubLayoutService,
+                              PhotoService photoService,
+                              JwtUtil jwtUtil) {
         this.clubService = clubService;
         this.tableService = tableService;
         this.userService = userService;
         this.clubLayoutService = clubLayoutService;
         this.photoService = photoService;
+        this.jwtUtil = jwtUtil;
     }
 
     @GET
@@ -385,7 +393,9 @@ public class ClubRestController {
                     .build()
                     .toString();
 
-            return Response.ok(Map.of("coverUrl", coverUrl)).build();
+            return Response.noContent()
+                    .header("X-Cover-Url", coverUrl)
+                    .build();
         } catch (IOException | ServletException e) {
             return badRequest("Error procesando archivo de portada");
         }
@@ -593,7 +603,7 @@ public class ClubRestController {
 
                     EntityTag etag = new EntityTag(
                             Integer.toHexString(
-                                    Objects.hash(layout.getClubId(), layout.getSizeBytes())
+                                Objects.hash(layout.getLayoutId(), layout.getClubId(), layout.getSizeBytes())
                             )
                     );
 
@@ -637,6 +647,8 @@ public class ClubRestController {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
+        clubService.assertAdmin(id, user.getId());
+
         try {
             Part filePart = request.getPart("file");
             if (filePart == null || filePart.getSize() == 0) {
@@ -663,7 +675,9 @@ public class ClubRestController {
                     .build()
                     .toString();
 
-            return Response.ok(new LayoutDto(id.toString(), imageUrl)).build();
+            return Response.noContent()
+                .header("X-Layout-Url", imageUrl)
+                .build();
         } catch (IOException | ServletException e) {
             return badRequest("Error procesando archivo de layout");
         }
@@ -679,7 +693,6 @@ public class ClubRestController {
 
         dto.setClubId(club.getClubId());
         dto.setClubName(club.getClubName());
-        dto.setDescription(club.getDescription());
         dto.setLocation(club.getLocation());
         dto.setZone(club.getZone().name());
         dto.setMusicGenre(club.getMusicGenre().toString());
@@ -763,9 +776,61 @@ public class ClubRestController {
 
     private User resolveAuthenticatedUser(SecurityContext securityContext) {
         if (securityContext == null || securityContext.getUserPrincipal() == null) {
+            return resolveUserFromAuthorizationHeader();
+        }
+
+        String principal = securityContext.getUserPrincipal().getName();
+        User user = resolveUserFromPrincipal(principal);
+        if (user != null) {
+            return user;
+        }
+
+        return resolveUserFromAuthorizationHeader();
+    }
+
+    private User resolveUserFromAuthorizationHeader() {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) {
             return null;
         }
-        return userService.findByEmail(securityContext.getUserPrincipal().getName());
+
+        String token = header.substring(7).trim();
+        if (token.isEmpty()) {
+            return null;
+        }
+
+        try {
+            if (!jwtUtil.validateToken(token)) {
+                return null;
+            }
+
+            String principal = jwtUtil.getUsernameFromToken(token);
+            return resolveUserFromPrincipal(principal);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private User resolveUserFromPrincipal(String principal) {
+        if (principal == null || principal.trim().isEmpty()) {
+            return null;
+        }
+
+        User user = userService.findByEmail(principal);
+        if (user != null) {
+            return user;
+        }
+
+        user = userService.findByUserName(principal);
+        if (user != null) {
+            return user;
+        }
+
+        try {
+            return userService.findById(UUID.fromString(principal)).orElse(null);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     private void validateImageContentType(String contentType) {
