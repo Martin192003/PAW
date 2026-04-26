@@ -29,6 +29,9 @@ type TableForm = {
   discount: number | null;
   tableState: string;
 };
+type ProductForm = Omit<ProductPayload, 'basePrice'> & {
+  basePrice: number | null;
+};
 
 @Component({
   standalone: true,
@@ -101,10 +104,10 @@ export class ClubHandlerPage implements OnInit {
 
   savingProduct = false;
   editingProductId: string | null = null;
-  productForm: ProductPayload = {
+  productForm: ProductForm = {
     productName: '',
     description: '',
-    basePrice: 0,
+    basePrice: null,
     productType: 'ALCOHOLICA',
     isAvailable: true
   };
@@ -433,7 +436,7 @@ export class ClubHandlerPage implements OnInit {
     this.productForm = {
       productName: '',
       description: '',
-      basePrice: 0,
+      basePrice: null,
       productType: this.productTypes[0],
       isAvailable: true
     };
@@ -460,7 +463,13 @@ export class ClubHandlerPage implements OnInit {
       return;
     }
 
-    const payload = {
+    if (this.productForm.basePrice == null) {
+      this.actionErrorMessage = 'Completa el precio del producto.';
+      this.actionSuccessMessage = '';
+      return;
+    }
+
+    const payload: ProductPayload = {
       ...this.productForm,
       productName: this.productForm.productName.trim(),
       description: this.productForm.description.trim(),
@@ -513,11 +522,20 @@ export class ClubHandlerPage implements OnInit {
     };
 
     this.clubService.updateProduct(this.clubId, product.productId, payload).subscribe({
-      next: () => {
-        this.loadMenu();
+      next: (updatedProduct) => {
+        this.upsertProductInList({
+          ...product,
+          ...updatedProduct,
+          isAvailable: payload.isAvailable,
+          productType: payload.productType
+        });
+        this.actionSuccessMessage = payload.isAvailable ? 'Producto habilitado.' : 'Producto deshabilitado.';
+        this.actionErrorMessage = '';
       },
       error: () => {
         this.actionErrorMessage = 'No se pudo cambiar la disponibilidad del producto.';
+        this.actionSuccessMessage = '';
+        this.loadMenu();
       }
     });
   }
@@ -610,7 +628,8 @@ export class ClubHandlerPage implements OnInit {
 
     this.clubService.deleteTable(this.clubId, table.tableId).subscribe({
       next: () => {
-        this.loadTables();
+        this.tables = this.tables.filter((item) => item.tableId !== table.tableId);
+        this.cdr.detectChanges();
         this.actionSuccessMessage = 'Mesa eliminada.';
         this.actionErrorMessage = '';
       },
@@ -698,7 +717,12 @@ export class ClubHandlerPage implements OnInit {
 
     this.clubService.deleteEvent(this.clubId, event.eventId).subscribe({
       next: () => {
-        this.loadEvents();
+        this.events = this.events.filter((item) => item.eventId !== event.eventId);
+        this.eventPage = Math.min(this.eventPage, this.eventTotalPages);
+        if (this.pagedEvents.length === 0 && this.eventPage > 1) {
+          this.eventPage -= 1;
+        }
+        this.cdr.detectChanges();
         this.actionSuccessMessage = 'Evento eliminado.';
         this.actionErrorMessage = '';
       },
@@ -832,9 +856,11 @@ export class ClubHandlerPage implements OnInit {
           ...product,
           productType: this.normalizeProductType(product.productType)
         }));
+        this.cdr.detectChanges();
       },
       error: () => {
         this.menu = [];
+        this.cdr.detectChanges();
       }
     });
   }
@@ -879,9 +905,11 @@ export class ClubHandlerPage implements OnInit {
           ...table,
           tableState: this.normalizeTableState(table.tableState)
         }));
+        this.cdr.detectChanges();
       },
       error: () => {
         this.tables = [];
+        this.cdr.detectChanges();
       }
     });
   }
@@ -981,10 +1009,12 @@ export class ClubHandlerPage implements OnInit {
     const currentIndex = this.menu.findIndex((item) => item.productId === normalized.productId);
     if (currentIndex >= 0) {
       this.menu = this.menu.map((item, index) => (index === currentIndex ? normalized : item));
+      this.cdr.detectChanges();
       return;
     }
 
     this.menu = [normalized, ...this.menu];
+    this.cdr.detectChanges();
   }
 
   private upsertTableInList(table: ClubTable): void {
@@ -1001,10 +1031,12 @@ export class ClubHandlerPage implements OnInit {
     const currentIndex = this.tables.findIndex((item) => item.tableId === normalized.tableId);
     if (currentIndex >= 0) {
       this.tables = this.tables.map((item, index) => (index === currentIndex ? normalized : item));
+      this.cdr.detectChanges();
       return;
     }
 
     this.tables = [normalized, ...this.tables];
+    this.cdr.detectChanges();
   }
 
   private normalizeEvent(event: Event): Event {
