@@ -22,6 +22,13 @@ import { finalize, timeout } from 'rxjs';
 
 type ClubHandlerTab = 'menu' | 'tables' | 'events' | 'reviews';
 type EventFilter = 'all' | 'past' | 'future';
+type TableForm = {
+  tableNumber: number | null;
+  capacity: number | null;
+  price: number | null;
+  discount: number | null;
+  tableState: string;
+};
 
 @Component({
   standalone: true,
@@ -104,11 +111,11 @@ export class ClubHandlerPage implements OnInit {
 
   savingTable = false;
   editingTableId: string | null = null;
-  tableForm: TablePayload = {
-    tableNumber: 1,
-    capacity: 1,
-    price: 0,
-    discount: 0,
+  tableForm: TableForm = {
+    tableNumber: null,
+    capacity: null,
+    price: null,
+    discount: null,
     tableState: 'DISPONIBLE'
   };
 
@@ -518,10 +525,10 @@ export class ClubHandlerPage implements OnInit {
   startCreateTable(): void {
     this.editingTableId = null;
     this.tableForm = {
-      tableNumber: 1,
-      capacity: 1,
-      price: 0,
-      discount: 0,
+      tableNumber: null,
+      capacity: null,
+      price: null,
+      discount: null,
       tableState: this.tableStates[0]
     };
   }
@@ -547,11 +554,17 @@ export class ClubHandlerPage implements OnInit {
       return;
     }
 
+    if (this.tableForm.tableNumber == null || this.tableForm.capacity == null || this.tableForm.price == null) {
+      this.actionErrorMessage = 'Completa numero de mesa, capacidad y precio.';
+      this.actionSuccessMessage = '';
+      return;
+    }
+
     const payload: TablePayload = {
       tableNumber: Number(this.tableForm.tableNumber),
       capacity: Number(this.tableForm.capacity),
       price: Number(this.tableForm.price),
-      discount: Number(this.tableForm.discount),
+      discount: Number(this.tableForm.discount ?? 0),
       tableState: this.tableForm.tableState
     };
 

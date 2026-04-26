@@ -328,7 +328,7 @@
               <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 space-y-2" (ngSubmit)="saveTable()">
                 <h3 class="text-white text-sm font-semibold">{{ editingTableId ? 'Editar mesa' : 'Nueva mesa' }}</h3>
 
-                <input name="tableNumber" [(ngModel)]="tableForm.tableNumber" type="number" min="1" class="field-input" placeholder="Numero" />
+                <input name="tableNumber" [(ngModel)]="tableForm.tableNumber" type="number" min="1" class="field-input" placeholder="Numero de mesa" />
                 <input name="tableCapacity" [(ngModel)]="tableForm.capacity" type="number" min="1" class="field-input" placeholder="Capacidad" />
                 <input name="tablePrice" [(ngModel)]="tableForm.price" type="number" min="0" step="0.01" class="field-input" placeholder="Precio" />
                 <input name="tableDiscount" [(ngModel)]="tableForm.discount" type="number" min="0" step="0.01" class="field-input" placeholder="Descuento" />
