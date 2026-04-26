@@ -224,12 +224,12 @@ public class EventServiceImpl implements EventService {
         UUID oldPhotoId = current.getPhotoId();
 
         try {
-           // User loggedUser = securityService.getVerifiedLoggedUser();
+           User loggedUser = securityService.getVerifiedLoggedUser();
 
             UUID newPhotoId = photoService.uploadEventPhoto(
                     clubId,
                     eventId,
-                    UUID.fromString("11111111-1111-1111-1111-111111111111"), // TODO: replace with loggedUser.getId() when auth is implemented
+                    loggedUser.getId(),
                     image
             );
 

@@ -16,9 +16,7 @@ export class TopbarComponent {
     return !!this.authState.getToken();
   }
 
-  get manageClubsHref(): string {
-    return '/admin/activity';
-  }
+  readonly manageClubsRoute = '/admin/activity';
 
   get profileQueryParams(): { userId: string } | undefined {
     const userId = this.authState.getUser()?.userId;

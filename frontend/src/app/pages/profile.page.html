@@ -1,28 +1,7 @@
-<div class="min-h-[calc(100vh-90px)] bg-[#1b1a1a] flex flex-col lg:flex-row text-white">
-  <aside class="w-full lg:w-[140px] xl:w-[180px] bg-[#222] flex flex-col shrink-0">
-    <button type="button" class="bg-[#9c27b0] px-6 py-4 text-left font-bold text-lg leading-tight">
-      My Profile
-    </button>
-    <button type="button" class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors">
-      My Clubs
-    </button>
-    <button type="button" class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors">
-      Clubs Reservations
-    </button>
-    <button type="button" class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors">
-      My Reservations
-    </button>
-    <button type="button" class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors">
-      Reviews
-    </button>
+<div class="h-[calc(100vh-90px)] overflow-hidden bg-[#1b1a1a] flex flex-col lg:flex-row lg:items-stretch text-white">
+  <app-side-bar [activeSection]="'profile'"></app-side-bar>
 
-    <button type="button" class="mt-auto flex items-center gap-3 px-6 py-5 text-left text-lg hover:bg-[#333] transition-colors">
-      <i class="fa-solid fa-right-from-bracket"></i>
-      <span>Logout</span>
-    </button>
-  </aside>
-
-  <section class="flex-1 min-w-0 px-4 sm:px-6 lg:px-6 py-5 lg:py-4 flex flex-col items-center relative">
+  <section class="flex-1 min-w-0 px-4 sm:px-6 lg:px-6 py-5 lg:py-4 flex flex-col items-center relative overflow-hidden">
     <button
       type="button"
       (click)="goBack()"
@@ -138,5 +117,4 @@
     </form>
   </div>
 </div>
-
 

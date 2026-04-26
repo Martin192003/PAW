@@ -3,17 +3,23 @@ package ar.edu.itba.paw.webapp.rest.clubs;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Component
 @Path("/clubs")
@@ -29,18 +35,28 @@ public class ClubRestController {
     private final UserService userService;
     private final ClubLayoutService clubLayoutService;
     private final PhotoService photoService;
+    private final JwtUtil jwtUtil;
 
 
     @Context
     private UriInfo uriInfo;
 
+    @Context
+    private HttpServletRequest request;
+
     @Autowired
-    public ClubRestController(final ClubService clubService, final TableService tableService, UserService userService, ClubLayoutService clubLayoutService, PhotoService photoService) {
+    public ClubRestController(final ClubService clubService,
+                              final TableService tableService,
+                              UserService userService,
+                              ClubLayoutService clubLayoutService,
+                              PhotoService photoService,
+                              JwtUtil jwtUtil) {
         this.clubService = clubService;
         this.tableService = tableService;
         this.userService = userService;
         this.clubLayoutService = clubLayoutService;
         this.photoService = photoService;
+        this.jwtUtil = jwtUtil;
     }
 
     @GET
@@ -334,6 +350,57 @@ public class ClubRestController {
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
+    @PUT
+    @Path("/{clubId}/cover")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response putCover(@PathParam("clubId") String clubId,
+                             @Context SecurityContext securityContext) {
+        UUID id = parseUuidOr400(clubId);
+        if (id == null) return badRequest("clubId inválido");
+
+        Optional<Club> clubOpt = clubService.getClubById(id);
+        if (clubOpt.isEmpty()) return notFound("Club no encontrado");
+
+        User user = resolveAuthenticatedUser(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        clubService.assertAdmin(id, user.getId());
+
+        try {
+            Part filePart = request.getPart("file");
+            if (filePart == null || filePart.getSize() == 0) {
+                return badRequest("Missing multipart part 'file'");
+            }
+
+            String contentType = filePart.getContentType();
+            validateImageContentType(contentType);
+
+            byte[] data = filePart.getInputStream().readAllBytes();
+            photoService.uploadCover(
+                    id,
+                    user.getId(),
+                    extractFilename(filePart, "club-cover"),
+                    contentType,
+                    data
+            );
+
+            String coverUrl = uriInfo.getBaseUriBuilder()
+                    .path("clubs")
+                    .path(id.toString())
+                    .path("cover")
+                    .build()
+                    .toString();
+
+            return Response.noContent()
+                    .header("X-Cover-Url", coverUrl)
+                    .build();
+        } catch (IOException | ServletException e) {
+            return badRequest("Error procesando archivo de portada");
+        }
+    }
+
     @GET
     @Path("/{clubId}/photos")
     public Response getClubPhotos(@PathParam("clubId") String clubId) {
@@ -367,6 +434,92 @@ public class ClubRestController {
         } catch (RuntimeException ex) {
             return Response.ok(new ClubPhotosResponseDto(new ArrayList<>())).build();
         }
+    }
+
+    @POST
+    @Path("/{clubId}/photos")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response addClubPhoto(@PathParam("clubId") String clubId,
+                                 @Context SecurityContext securityContext) {
+        UUID id = parseUuidOr400(clubId);
+        if (id == null) return badRequest("clubId inválido");
+
+        Optional<Club> clubOpt = clubService.getClubById(id);
+        if (clubOpt.isEmpty()) return notFound("Club no encontrado");
+
+        User user = resolveAuthenticatedUser(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        clubService.assertAdmin(id, user.getId());
+
+        try {
+            Part filePart = request.getPart("file");
+            if (filePart == null || filePart.getSize() == 0) {
+                return badRequest("Missing multipart part 'file'");
+            }
+
+            String contentType = filePart.getContentType();
+            validateImageContentType(contentType);
+
+            byte[] data = filePart.getInputStream().readAllBytes();
+            photoService.uploadCarousel(
+                    id,
+                    user.getId(),
+                    extractFilename(filePart, "club-photo"),
+                    contentType,
+                    data
+            );
+
+            return Response.status(Response.Status.CREATED)
+                    .entity(Map.of("message", "Foto agregada"))
+                    .build();
+        } catch (IllegalStateException ex) {
+            return badRequest(ex.getMessage());
+        } catch (IOException | ServletException e) {
+            return badRequest("Error procesando archivo de galeria");
+        }
+    }
+
+    @DELETE
+    @Path("/{clubId}/photos/{photoId}")
+    public Response deleteClubPhoto(@PathParam("clubId") String clubId,
+                                    @PathParam("photoId") String photoId,
+                                    @Context SecurityContext securityContext) {
+        UUID clubUuid = parseUuidOr400(clubId);
+        if (clubUuid == null) return badRequest("clubId inválido");
+
+        UUID photoUuid = parseUuidOr400(photoId);
+        if (photoUuid == null) return badRequest("photoId inválido");
+
+        Optional<Club> clubOpt = clubService.getClubById(clubUuid);
+        if (clubOpt.isEmpty()) return notFound("Club no encontrado");
+
+        User user = resolveAuthenticatedUser(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        clubService.assertAdmin(clubUuid, user.getId());
+
+        Optional<Photo> photoOpt = photoService.getWithId(photoUuid);
+        if (photoOpt.isEmpty()) return notFound("Foto no encontrada");
+
+        Photo photo = photoOpt.get();
+        if (!clubUuid.equals(photo.getClubId())) {
+            return notFound("Foto no encontrada para este club");
+        }
+        if (photo.getPhotoType() != PhotoType.CAROUSEL) {
+            return badRequest("Solo se pueden eliminar fotos de galeria");
+        }
+
+        boolean deleted = photoService.delete(photoUuid);
+        if (!deleted) {
+            return notFound("Foto no encontrada");
+        }
+
+        return Response.noContent().build();
     }
 
     @GET
@@ -404,6 +557,40 @@ public class ClubRestController {
         }
     }
 
+    @GET
+    @Path("/user/{userID}")
+    public Response getClubByUser(@PathParam("userID") String userID,
+                                  @QueryParam("page") @DefaultValue("1") int page,
+                                  @QueryParam("size") @DefaultValue("10") int size) {
+        UUID id = parseUuidOr400(userID);
+        if (id == null) return badRequest("userId inválido");
+
+        page = (page < 1) ? DEFAULT_PAGE : page;
+        size = (size < 1) ? DEFAULT_SIZE : size;
+        final int offset = (page - 1) * size;
+
+        final int totalClubs = clubService.countClubsByUser(id);
+        final List<ClubDto> dtos = clubService.getClubsByUserPaginated(id, size, offset)
+                .stream()
+                .map(this::toDtoWithLinks)
+                .collect(Collectors.toList());
+
+        final int totalPages = (int) Math.ceil((double) totalClubs / size);
+
+        final PagedResponseDto response = new PagedResponseDto(
+                dtos,
+                page,
+                size,
+                totalClubs,
+                totalPages,
+                false,
+                false,
+                null
+        );
+
+        return Response.ok(response).build();
+    }
+
 
     @GET
     @Path("/{clubId}/layout/image")
@@ -416,7 +603,7 @@ public class ClubRestController {
 
                     EntityTag etag = new EntityTag(
                             Integer.toHexString(
-                                    Objects.hash(layout.getClubId(), layout.getSizeBytes())
+                                Objects.hash(layout.getLayoutId(), layout.getClubId(), layout.getSizeBytes())
                             )
                     );
 
@@ -443,6 +630,59 @@ public class ClubRestController {
                 .orElse(Response.noContent().build());
     }
 
+    @PUT
+    @Path("/{clubId}/layout")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response putLayout(@PathParam("clubId") String clubId,
+                              @Context SecurityContext securityContext) {
+        UUID id = parseUuidOr400(clubId);
+        if (id == null) return badRequest("clubId inválido");
+
+        Optional<Club> clubOpt = clubService.getClubById(id);
+        if (clubOpt.isEmpty()) return notFound("Club no encontrado");
+
+        User user = resolveAuthenticatedUser(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        clubService.assertAdmin(id, user.getId());
+
+        try {
+            Part filePart = request.getPart("file");
+            if (filePart == null || filePart.getSize() == 0) {
+                return badRequest("Missing multipart part 'file'");
+            }
+
+            String contentType = filePart.getContentType();
+            validateImageContentType(contentType);
+
+            byte[] data = filePart.getInputStream().readAllBytes();
+            clubLayoutService.uploadLayout(
+                    id,
+                    user.getEmail(),
+                    extractFilename(filePart, "club-layout"),
+                    contentType,
+                    data
+            );
+
+            String imageUrl = uriInfo.getBaseUriBuilder()
+                    .path("clubs")
+                    .path(id.toString())
+                    .path("layout")
+                    .path("image")
+                    .build()
+                    .toString();
+
+            return Response.noContent()
+                .header("X-Layout-Url", imageUrl)
+                .build();
+        } catch (IOException | ServletException e) {
+            return badRequest("Error procesando archivo de layout");
+        }
+    }
+
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
     }
@@ -453,7 +693,6 @@ public class ClubRestController {
 
         dto.setClubId(club.getClubId());
         dto.setClubName(club.getClubName());
-        dto.setDescription(club.getDescription());
         dto.setLocation(club.getLocation());
         dto.setZone(club.getZone().name());
         dto.setMusicGenre(club.getMusicGenre().toString());
@@ -533,6 +772,88 @@ public class ClubRestController {
         return Response.status(Response.Status.NOT_FOUND)
                 .entity(new ErrorDto(msg))
                 .build();
+    }
+
+    private User resolveAuthenticatedUser(SecurityContext securityContext) {
+        if (securityContext == null || securityContext.getUserPrincipal() == null) {
+            return resolveUserFromAuthorizationHeader();
+        }
+
+        String principal = securityContext.getUserPrincipal().getName();
+        User user = resolveUserFromPrincipal(principal);
+        if (user != null) {
+            return user;
+        }
+
+        return resolveUserFromAuthorizationHeader();
+    }
+
+    private User resolveUserFromAuthorizationHeader() {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) {
+            return null;
+        }
+
+        String token = header.substring(7).trim();
+        if (token.isEmpty()) {
+            return null;
+        }
+
+        try {
+            if (!jwtUtil.validateToken(token)) {
+                return null;
+            }
+
+            String principal = jwtUtil.getUsernameFromToken(token);
+            return resolveUserFromPrincipal(principal);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private User resolveUserFromPrincipal(String principal) {
+        if (principal == null || principal.trim().isEmpty()) {
+            return null;
+        }
+
+        User user = userService.findByEmail(principal);
+        if (user != null) {
+            return user;
+        }
+
+        user = userService.findByUserName(principal);
+        if (user != null) {
+            return user;
+        }
+
+        try {
+            return userService.findById(UUID.fromString(principal)).orElse(null);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private void validateImageContentType(String contentType) {
+        if (contentType == null) {
+            throw new BadRequestException("Missing content type");
+        }
+
+        switch (contentType) {
+            case "image/jpeg":
+            case "image/png":
+            case "image/webp":
+                return;
+            default:
+                throw new BadRequestException("Unsupported image content type");
+        }
+    }
+
+    private String extractFilename(Part part, String fallback) {
+        String filename = part.getSubmittedFileName();
+        if (filename == null || filename.trim().isEmpty()) {
+            return fallback;
+        }
+        return filename;
     }
 
     private Response buildImageResponse(Photo photo, Request request) {

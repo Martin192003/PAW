@@ -152,6 +152,7 @@ public class ClubServiceImpl implements ClubService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void assertAdmin(UUID clubId, UUID userId) {
         List<User> admins = clubDao.findAdminsByClubId(clubId);
         admins.stream().filter(a -> a.getId().equals(userId)).findAny().orElseThrow(UnauthorizedException::new);

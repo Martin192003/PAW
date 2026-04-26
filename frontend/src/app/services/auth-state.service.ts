@@ -25,7 +25,13 @@ export class AuthStateService {
     otherStorage.removeItem(this.tokenKey);
     otherStorage.removeItem(this.userKey);
 
-    storage.setItem(this.tokenKey, token);
+    const normalizedToken = this.normalizeToken(token);
+    if (!normalizedToken) {
+      this.loggedInSubject.next(false);
+      return;
+    }
+
+    storage.setItem(this.tokenKey, normalizedToken);
     storage.setItem(this.userKey, JSON.stringify(user));
 
     this.loggedInSubject.next(true);
@@ -36,7 +42,8 @@ export class AuthStateService {
       return null;
     }
 
-    return localStorage.getItem(this.tokenKey) ?? sessionStorage.getItem(this.tokenKey);
+    const rawToken = localStorage.getItem(this.tokenKey) ?? sessionStorage.getItem(this.tokenKey);
+    return this.normalizeToken(rawToken);
   }
 
   getUser(): User | null {
@@ -79,7 +86,37 @@ export class AuthStateService {
       return;
     }
 
-    storage.setItem(this.tokenKey, token);
+    const normalizedToken = this.normalizeToken(token);
+    if (!normalizedToken) {
+      return;
+    }
+
+    storage.setItem(this.tokenKey, normalizedToken);
+  }
+
+  private normalizeToken(token: string | null): string | null {
+    if (!token) {
+      return null;
+    }
+
+    let normalized = token.trim();
+    if (!normalized) {
+      return null;
+    }
+
+    if (normalized.startsWith('Bearer ')) {
+      normalized = normalized.substring(7).trim();
+    }
+
+    if (normalized.startsWith('"') && normalized.endsWith('"') && normalized.length > 1) {
+      normalized = normalized.slice(1, -1).trim();
+    }
+
+    if (!normalized || normalized === 'null' || normalized === 'undefined') {
+      return null;
+    }
+
+    return normalized;
   }
 
   private getActiveStorage(): Storage | null {

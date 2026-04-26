@@ -1,0 +1,140 @@
+.activity-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+table th,
+table td {
+  vertical-align: top;
+}
+
+.field-input {
+  width: 100%;
+  border: 1px solid #484848;
+  border-radius: 0.45rem;
+  background: #1f1f1f;
+  color: #f4f4f4;
+  padding: 0.48rem 0.62rem;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #9c27b0;
+  box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.22);
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  border: none;
+  border-radius: 0.45rem;
+  padding: 0.5rem 0.8rem;
+  transition: background-color 0.2s ease;
+  color: #fff;
+  font-size: 0.86rem;
+}
+
+.btn-primary {
+  background: #9c27b0;
+}
+
+.btn-primary:hover {
+  background: #86229a;
+}
+
+.btn-secondary {
+  background: #383838;
+}
+
+.btn-secondary:hover {
+  background: #4a4a4a;
+}
+
+.btn-danger {
+  background: #8e2323;
+}
+
+.btn-danger:hover {
+  background: #a82828;
+}
+
+.gallery-card {
+  border: 1px solid #3a3a3a;
+  border-radius: 0.5rem;
+  background: #1b1b1b;
+  padding: 0.55rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.gallery-image {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 0.45rem;
+  border: 1px solid #2f2f2f;
+}
+
+.error-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.error-modal {
+  width: min(100%, 28rem);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 0.75rem;
+  background: #242020;
+  padding: 1.25rem;
+  box-shadow: 0 18px 70px rgba(0, 0, 0, 0.65);
+}
+
+.error-modal-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.error-modal-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+.error-modal-copy {
+  min-width: 0;
+}
+
+.error-modal-copy h2 {
+  margin: 0 0 0.25rem;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.error-modal-copy p {
+  margin: 0;
+  color: #fee2e2;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.error-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

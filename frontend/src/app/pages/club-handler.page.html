@@ -1,0 +1,550 @@
+<div class="h-[calc(100vh-90px)] overflow-hidden bg-[#1b1a1a] flex flex-col lg:flex-row lg:items-stretch text-white">
+  <app-side-bar [activeSection]="'clubs'"></app-side-bar>
+
+  <section class="flex-1 min-w-0 px-4 sm:px-6 lg:px-6 py-5 lg:py-4 overflow-y-auto">
+    <main class="w-full max-w-[1200px] mx-auto pb-8">
+      <section class="activity-topbar mt-2 mb-4">
+        <button
+          type="button"
+          class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#9c27b0] text-white hover:bg-[#86229a] transition"
+          (click)="goBack()"
+          aria-label="Back to activity"
+        >
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+
+        <div>
+          <h1
+            class="text-[1.55rem] font-bold text-[#9c27b0] tracking-widest"
+            style="font-family: 'Darklinos', Arial, sans-serif;"
+          >
+            CLUB HANDLER
+          </h1>
+          <p class="text-[#b9b9b9] text-sm">Gestion del club seleccionado.</p>
+        </div>
+      </section>
+
+      <div *ngIf="actionSuccessMessage" class="mb-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200">
+        {{ actionSuccessMessage }}
+      </div>
+
+      <div *ngIf="loading && !club" class="text-[#bab8b8]">Cargando datos del club...</div>
+
+      <ng-container *ngIf="club as currentClub">
+        <section class="rounded-xl border border-[#3a3a3a] bg-[#222]/80 p-4 sm:p-5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.45)]">
+          <div class="flex flex-col lg:flex-row gap-4">
+            <div class="w-full lg:w-[280px] h-[170px] rounded-lg overflow-hidden bg-black border border-[#333]">
+              <img
+                *ngIf="coverUrl"
+                [src]="coverUrl"
+                [alt]="currentClub.clubName"
+                class="w-full h-full object-cover"
+                (error)="coverUrl = ''"
+              />
+
+              <div
+                *ngIf="!coverUrl"
+                class="w-full h-full flex items-center justify-center text-[#9c27b0] text-lg font-bold text-center tracking-widest"
+                style="font-family: 'Darklinos', Arial, sans-serif;"
+              >
+                Bling <br />&nbsp;&nbsp;Bling
+              </div>
+            </div>
+
+            <div class="lg:w-[160px]">
+              <label class="btn-secondary inline-flex items-center gap-2 cursor-pointer w-full justify-center">
+                <i class="fa-solid fa-image"></i>
+                {{ uploadingCover ? 'Subiendo...' : 'Cambiar portada' }}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  class="hidden"
+                  (change)="onCoverSelected($event)"
+                  [disabled]="uploadingCover"
+                />
+              </label>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <h2 class="text-3xl font-bold text-white mb-3" style="font-family: 'Good Times', Arial, sans-serif;">
+                {{ currentClub.clubName }}
+              </h2>
+
+              <div class="grid gap-1 text-[#d3d3d3] text-sm sm:text-base">
+                <div><strong>Location:</strong> {{ currentClub.location }}</div>
+                <div><strong>Zone:</strong> {{ currentClub.zone }}</div>
+                <div><strong>Genre:</strong> {{ currentClub.musicGenre }}</div>
+                <div><strong>Price:</strong> {{ currentClub.priceRange }}</div>
+                <div><strong>CBU:</strong> {{ currentClub.cbu }}</div>
+                <div><strong>Description:</strong> {{ currentClub.description }}</div>
+              </div>
+
+              <div class="mt-4">
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-md bg-[#9c27b0] text-white hover:bg-[#86229a] transition"
+                  (click)="startEditClub()"
+                  *ngIf="!editingClub"
+                >
+                  Editar club
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <form *ngIf="editingClub" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3" (ngSubmit)="saveClub()">
+            <label class="grid gap-1">
+              <span class="text-sm text-[#c8c8c8]">Nombre</span>
+              <input name="clubName" [(ngModel)]="clubForm.clubName" class="field-input" />
+            </label>
+
+            <label class="grid gap-1">
+              <span class="text-sm text-[#c8c8c8]">Location</span>
+              <input name="clubLocation" [(ngModel)]="clubForm.location" class="field-input" />
+            </label>
+
+            <label class="grid gap-1">
+              <span class="text-sm text-[#c8c8c8]">Price Range</span>
+              <select name="clubPriceRange" [(ngModel)]="clubForm.priceRange" class="field-input">
+                <option *ngFor="let price of priceRanges" [value]="price">{{ price }}</option>
+              </select>
+            </label>
+
+            <label class="grid gap-1">
+              <span class="text-sm text-[#c8c8c8]">Genre</span>
+              <select name="clubGenre" [(ngModel)]="clubForm.musicGenre" class="field-input">
+                <option *ngFor="let genre of musicGenres" [value]="genre">{{ genre }}</option>
+              </select>
+            </label>
+
+            <label class="grid gap-1">
+              <span class="text-sm text-[#c8c8c8]">Zone</span>
+              <select name="clubZone" [(ngModel)]="clubForm.zone" class="field-input">
+                <option *ngFor="let zone of zones" [value]="zone">{{ zone }}</option>
+              </select>
+            </label>
+
+            <label class="grid gap-1">
+              <span class="text-sm text-[#c8c8c8]">CBU</span>
+              <input name="clubCbu" [(ngModel)]="clubForm.cbu" class="field-input" />
+            </label>
+
+            <label class="md:col-span-2 flex items-center gap-2 text-sm text-[#d5d5d5] mt-1">
+              <input type="checkbox" name="clubIsBar" [(ngModel)]="clubForm.isBar" />
+              Es bar
+            </label>
+
+            <label class="md:col-span-2 grid gap-1">
+              <span class="text-sm text-[#c8c8c8]">Descripcion</span>
+              <textarea name="clubDescription" [(ngModel)]="clubForm.description" class="field-input min-h-[88px]"></textarea>
+            </label>
+
+            <div class="md:col-span-2 flex gap-2">
+              <button type="submit" class="btn-primary" [disabled]="savingClub">
+                {{ savingClub ? 'Guardando...' : 'Guardar cambios' }}
+              </button>
+              <button type="button" class="btn-secondary" (click)="cancelEditClub()">Cancelar</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="rounded-xl border border-[#3a3a3a] bg-[#222]/80 p-4 sm:p-5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.45)]">
+          <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+            <h3 class="text-lg font-semibold text-white">Layout de Mesas</h3>
+            <label class="btn-secondary inline-flex items-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-pen"></i>
+              {{ uploadingLayout ? 'Subiendo...' : 'Cambiar layout' }}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                class="hidden"
+                (change)="onLayoutSelected($event)"
+                [disabled]="uploadingLayout"
+              />
+            </label>
+          </div>
+
+          <div class="rounded-lg border border-[#3a3a3a] bg-[#171717] p-3 min-h-[180px] flex items-center justify-center">
+            <img
+              *ngIf="layoutUrl"
+              [src]="layoutUrl"
+              alt="Layout del club"
+              class="max-h-[340px] w-full object-contain rounded"
+            />
+            <div *ngIf="!layoutUrl" class="text-[#9a9a9a]">No hay layout cargado.</div>
+          </div>
+        </section>
+
+        <section class="rounded-xl border border-[#3a3a3a] bg-[#222]/80 p-4 sm:p-5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.45)]">
+          <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+            <h3 class="text-lg font-semibold text-white">Galeria del Club</h3>
+            <label class="btn-primary inline-flex items-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-plus"></i>
+              {{ uploadingGallery ? 'Subiendo...' : 'Agregar fotos' }}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                multiple
+                class="hidden"
+                (change)="onGallerySelected($event)"
+                [disabled]="uploadingGallery"
+              />
+            </label>
+          </div>
+
+          <div *ngIf="galleryPhotos.length === 0" class="text-[#b9b9b9]">No hay fotos de galeria cargadas.</div>
+
+          <div *ngIf="galleryPhotos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <article *ngFor="let photo of galleryPhotos" class="gallery-card">
+              <img
+                [src]="getGalleryPhotoUrl(photo)"
+                alt="Foto de galeria"
+                class="gallery-image"
+              />
+              <button type="button" class="btn-danger px-2 py-1 text-xs" (click)="deleteGalleryPhoto(photo)">
+                <i class="fa-solid fa-trash"></i> Eliminar
+              </button>
+            </article>
+          </div>
+        </section>
+
+        <section class="rounded-xl border border-[#3a3a3a] bg-[#222]/70 p-3 sm:p-4 shadow-[0_4px_20px_rgba(0,0,0,0.45)]">
+          <div class="flex flex-wrap gap-2 mb-4">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md transition"
+              [ngClass]="activeTab === 'menu' ? 'bg-[#9c27b0] text-white font-semibold' : 'bg-[#2d2d2d] text-[#d0d0d0] hover:bg-[#3a3a3a]'"
+              (click)="setTab('menu')"
+            >
+              Menu
+            </button>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md transition"
+              [ngClass]="activeTab === 'tables' ? 'bg-[#9c27b0] text-white font-semibold' : 'bg-[#2d2d2d] text-[#d0d0d0] hover:bg-[#3a3a3a]'"
+              (click)="setTab('tables')"
+            >
+              Tables
+            </button>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md transition"
+              [ngClass]="activeTab === 'events' ? 'bg-[#9c27b0] text-white font-semibold' : 'bg-[#2d2d2d] text-[#d0d0d0] hover:bg-[#3a3a3a]'"
+              (click)="setTab('events')"
+            >
+              Events
+            </button>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-md transition"
+              [ngClass]="activeTab === 'reviews' ? 'bg-[#9c27b0] text-white font-semibold' : 'bg-[#2d2d2d] text-[#d0d0d0] hover:bg-[#3a3a3a]'"
+              (click)="setTab('reviews')"
+            >
+              Reviews
+            </button>
+          </div>
+
+          <div *ngIf="activeTab === 'menu'">
+            <div class="grid grid-cols-1 xl:grid-cols-[300px,1fr] gap-4">
+              <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 space-y-2" (ngSubmit)="saveProduct()">
+                <h3 class="text-white text-sm font-semibold">{{ editingProductId ? 'Editar producto' : 'Nuevo producto' }}</h3>
+
+                <input name="productName" [(ngModel)]="productForm.productName" class="field-input" placeholder="Nombre" />
+                <textarea name="productDescription" [(ngModel)]="productForm.description" class="field-input min-h-[70px]" placeholder="Descripcion"></textarea>
+                <input name="productPrice" [(ngModel)]="productForm.basePrice" type="number" min="0" step="0.01" class="field-input" placeholder="Precio" />
+
+                <select name="productType" [(ngModel)]="productForm.productType" class="field-input">
+                  <option *ngFor="let type of productTypes" [value]="type">{{ type }}</option>
+                </select>
+
+                <label class="flex items-center gap-2 text-sm text-[#d8d8d8]">
+                  <input name="productAvailable" type="checkbox" [(ngModel)]="productForm.isAvailable" />
+                  Disponible
+                </label>
+
+                <div class="flex gap-2">
+                  <button type="submit" class="btn-primary flex-1" [disabled]="savingProduct">
+                    {{ savingProduct ? 'Guardando...' : (editingProductId ? 'Actualizar' : 'Crear') }}
+                  </button>
+                  <button *ngIf="editingProductId" type="button" class="btn-secondary" (click)="cancelEditProduct()">Cancelar</button>
+                </div>
+              </form>
+
+              <div>
+                <div *ngIf="menu.length === 0" class="text-[#b9b9b9]">No hay productos cargados.</div>
+
+                <div *ngIf="menu.length > 0" class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="text-[#d9d9d9] border-b border-[#444]">
+                      <th class="py-2 pr-3">Product</th>
+                      <th class="py-2 pr-3">Description</th>
+                      <th class="py-2 pr-3">Price</th>
+                      <th class="py-2 pr-3">Type</th>
+                      <th class="py-2 pr-3">State</th>
+                      <th class="py-2 pr-3">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr *ngFor="let p of menu" class="border-b border-[#353535] text-[#cfcfcf]">
+                      <td class="py-2 pr-3">{{ p.productName }}</td>
+                      <td class="py-2 pr-3">{{ p.description }}</td>
+                      <td class="py-2 pr-3">${{ p.basePrice | number:'1.0-0' }}</td>
+                      <td class="py-2 pr-3">{{ p.productType }}</td>
+                      <td class="py-2 pr-3">
+                        <span [class]="p.isAvailable ? 'text-emerald-300' : 'text-red-300'">
+                          {{ p.isAvailable ? 'Disponible' : 'No disponible' }}
+                        </span>
+                      </td>
+                      <td class="py-2 pr-3 flex gap-2">
+                        <button type="button" class="btn-secondary px-2 py-1" (click)="startEditProduct(p)">Editar</button>
+                        <button type="button" class="btn-danger px-2 py-1" (click)="toggleProductAvailability(p)">
+                          {{ p.isAvailable ? 'Deshabilitar' : 'Habilitar' }}
+                        </button>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="activeTab === 'tables'">
+            <div class="grid grid-cols-1 xl:grid-cols-[300px,1fr] gap-4">
+              <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 space-y-2" (ngSubmit)="saveTable()">
+                <h3 class="text-white text-sm font-semibold">{{ editingTableId ? 'Editar mesa' : 'Nueva mesa' }}</h3>
+
+                <input name="tableNumber" [(ngModel)]="tableForm.tableNumber" type="number" min="1" class="field-input" placeholder="Numero de mesa" />
+                <input name="tableCapacity" [(ngModel)]="tableForm.capacity" type="number" min="1" class="field-input" placeholder="Capacidad" />
+                <input name="tablePrice" [(ngModel)]="tableForm.price" type="number" min="0" step="0.01" class="field-input" placeholder="Precio" />
+                <input name="tableDiscount" [(ngModel)]="tableForm.discount" type="number" min="0" step="0.01" class="field-input" placeholder="Descuento" />
+
+                <select name="tableState" [(ngModel)]="tableForm.tableState" class="field-input">
+                  <option *ngFor="let state of tableStates" [value]="state">{{ state }}</option>
+                </select>
+
+                <div class="flex gap-2">
+                  <button type="submit" class="btn-primary flex-1" [disabled]="savingTable">
+                    {{ savingTable ? 'Guardando...' : (editingTableId ? 'Actualizar' : 'Crear') }}
+                  </button>
+                  <button *ngIf="editingTableId" type="button" class="btn-secondary" (click)="cancelEditTable()">Cancelar</button>
+                </div>
+              </form>
+
+              <div>
+                <div *ngIf="tables.length === 0" class="text-[#b9b9b9]">No hay mesas cargadas.</div>
+                <div *ngIf="tables.length > 0" class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="text-[#d9d9d9] border-b border-[#444]">
+                      <th class="py-2 pr-3">Number</th>
+                      <th class="py-2 pr-3">Capacity</th>
+                      <th class="py-2 pr-3">Price</th>
+                      <th class="py-2 pr-3">Discount</th>
+                      <th class="py-2 pr-3">State</th>
+                      <th class="py-2 pr-3">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr *ngFor="let t of tables" class="border-b border-[#353535] text-[#cfcfcf]">
+                      <td class="py-2 pr-3">{{ t.tableNumber }}</td>
+                      <td class="py-2 pr-3">{{ t.capacity }}</td>
+                      <td class="py-2 pr-3">${{ t.price | number:'1.0-0' }}</td>
+                      <td class="py-2 pr-3">{{ t.discount }}%</td>
+                      <td class="py-2 pr-3">{{ t.tableState }}</td>
+                      <td class="py-2 pr-3 flex gap-2">
+                        <button type="button" class="btn-secondary px-2 py-1" (click)="startEditTable(t)">Editar</button>
+                        <button type="button" class="btn-danger px-2 py-1" (click)="deleteTable(t)">Eliminar</button>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="activeTab === 'events'">
+            <div class="flex items-center justify-between mb-3 gap-3 flex-wrap">
+              <h3 class="text-lg font-semibold text-white">Eventos</h3>
+              <select
+                [value]="eventFilter"
+                (change)="setEventFilter($any($event.target).value)"
+                class="rounded-md border border-[#444] bg-[#2a2a2a] text-white px-3 py-2"
+              >
+                <option value="all">Todos</option>
+                <option value="past">Pasados</option>
+                <option value="future">Futuros</option>
+              </select>
+            </div>
+
+            <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 mb-4 grid grid-cols-1 md:grid-cols-4 gap-2" (ngSubmit)="saveEvent()">
+              <input name="eventName" [(ngModel)]="eventForm.eventName" class="field-input" placeholder="Nombre" />
+              <input name="eventDate" [(ngModel)]="eventForm.date" type="date" class="field-input" />
+              <input name="eventDescription" [(ngModel)]="eventForm.description" class="field-input md:col-span-2" placeholder="Descripcion" />
+
+              <div class="md:col-span-4 flex gap-2">
+                <button type="submit" class="btn-primary" [disabled]="savingEvent">
+                  {{ savingEvent ? 'Guardando...' : (editingEventId ? 'Actualizar evento' : 'Crear evento') }}
+                </button>
+                <button *ngIf="editingEventId" type="button" class="btn-secondary" (click)="cancelEditEvent()">Cancelar</button>
+              </div>
+            </form>
+
+            <div *ngIf="filteredEvents.length === 0" class="text-[#b9b9b9]">No hay eventos para este filtro.</div>
+
+            <div *ngIf="filteredEvents.length > 0" class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="text-[#d9d9d9] border-b border-[#444]">
+                  <th class="py-2 pr-3">Name</th>
+                  <th class="py-2 pr-3">Date</th>
+                  <th class="py-2 pr-3">Description</th>
+                  <th class="py-2 pr-3">Photo</th>
+                  <th class="py-2 pr-3">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let e of pagedEvents" class="border-b border-[#353535] text-[#cfcfcf]">
+                  <td class="py-2 pr-3">{{ e.eventName }}</td>
+                  <td class="py-2 pr-3">{{ e.date | date:'dd/MM/yyyy' }}</td>
+                  <td class="py-2 pr-3">{{ e.description }}</td>
+                  <td class="py-2 pr-3">
+                    <img
+                      *ngIf="getEventPhotoUrl(e)"
+                      [src]="getEventPhotoUrl(e)"
+                      [alt]="e.eventName"
+                      class="w-16 h-12 rounded object-cover border border-[#3b3b3b]"
+                    />
+                    <span *ngIf="!getEventPhotoUrl(e)" class="text-[#999] text-sm">Sin foto</span>
+                  </td>
+                  <td class="py-2 pr-3">
+                    <div class="flex flex-wrap gap-2">
+                      <button type="button" class="btn-secondary px-2 py-1" (click)="startEditEvent(e)">Editar</button>
+                      <button type="button" class="btn-danger px-2 py-1" (click)="deleteEvent(e)">Eliminar</button>
+
+                      <label class="btn-secondary px-2 py-1 cursor-pointer">
+                        {{ uploadingEventPhotoId === e.eventId ? 'Subiendo...' : 'Subir foto' }}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          class="hidden"
+                          (change)="onEventPhotoSelected(e.eventId, $event)"
+                        />
+                      </label>
+
+                      <button
+                        *ngIf="getEventPhotoUrl(e)"
+                        type="button"
+                        class="btn-danger px-2 py-1"
+                        (click)="removeEventPhoto(e)"
+                      >
+                        Quitar foto
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div *ngIf="filteredEvents.length > eventPageSize" class="flex items-center justify-center gap-3 mt-4">
+              <button
+                type="button"
+                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:opacity-35"
+                [disabled]="eventPage === 1"
+                (click)="prevEventPage()"
+              >
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+
+              <span class="text-[#bdbdbd] text-sm">{{ eventPage }} de {{ eventTotalPages }}</span>
+
+              <button
+                type="button"
+                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:opacity-35"
+                [disabled]="eventPage === eventTotalPages"
+                (click)="nextEventPage()"
+              >
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="activeTab === 'reviews'">
+            <div *ngIf="reviews.length === 0" class="text-[#b9b9b9]">No hay reseñas para mostrar.</div>
+
+            <div *ngIf="reviews.length > 0" class="space-y-3">
+              <article *ngFor="let r of reviews" class="rounded-lg border border-[#383838] bg-[#262626] px-4 py-3">
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <strong class="text-white">{{ getReviewUsername(r) }}</strong>
+                  <span class="text-[#ffd700] font-semibold">{{ r.rating }} <i class="fa-solid fa-star"></i></span>
+                </div>
+
+                <p class="text-[#d0d0d0] text-sm mb-1">{{ r.description || 'Sin descripcion.' }}</p>
+
+                <small class="text-[#a7a7a7]">{{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
+              </article>
+            </div>
+
+            <div *ngIf="reviewTotalPages > 1" class="flex items-center justify-center gap-3 mt-4">
+              <button
+                type="button"
+                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:opacity-35"
+                [disabled]="reviewPage === 1"
+                (click)="prevReviewPage()"
+              >
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+
+              <span class="text-[#bdbdbd] text-sm">{{ reviewPage }} de {{ reviewTotalPages }}</span>
+
+              <button
+                type="button"
+                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:opacity-35"
+                [disabled]="reviewPage === reviewTotalPages"
+                (click)="nextReviewPage()"
+              >
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+      </ng-container>
+    </main>
+  </section>
+
+  <div
+    *ngIf="actionErrorMessage || errorMessage || (!loading && !club && clubLoadAttempted)"
+    class="error-modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="club-handler-error-title"
+  >
+    <div class="error-modal">
+      <div class="error-modal-content">
+        <div class="error-modal-icon">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <div class="error-modal-copy">
+          <h2 id="club-handler-error-title">Error</h2>
+          <p>{{ actionErrorMessage || errorMessage || 'No se pudo obtener el club seleccionado.' }}</p>
+        </div>
+      </div>
+
+      <div class="error-modal-actions">
+        <button
+          *ngIf="!club && clubLoadAttempted"
+          type="button"
+          class="btn-primary"
+          (click)="retryLoad()"
+        >
+          Reintentar
+        </button>
+        <button type="button" class="btn-danger" (click)="dismissErrorModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
