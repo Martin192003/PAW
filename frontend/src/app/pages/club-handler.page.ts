@@ -759,6 +759,8 @@ export class ClubHandlerPage implements OnInit {
     this.loading = true;
     this.club = null;
     this.coverUrl = '';
+    this.layoutUrl = '';
+    this.galleryPhotos = [];
     this.clubLoadAttempted = false;
     this.errorMessage = '';
 
@@ -795,10 +797,12 @@ export class ClubHandlerPage implements OnInit {
         this.club = club;
         this.coverUrl = this.resolveCoverUrl(club);
         onComplete?.();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.errorMessage = 'No se pudo cargar la informacion del club (timeout o error de red).';
         onComplete?.();
+        this.cdr.detectChanges();
       }
     });
   }
@@ -821,9 +825,11 @@ export class ClubHandlerPage implements OnInit {
     this.clubService.getLayout(this.clubId).subscribe({
       next: (layout) => {
         this.layoutUrl = this.resolveLayoutUrl(layout);
+        this.cdr.detectChanges();
       },
       error: () => {
         this.layoutUrl = '';
+        this.cdr.detectChanges();
       }
     });
   }
@@ -831,10 +837,19 @@ export class ClubHandlerPage implements OnInit {
   private loadGalleryPhotos(): void {
     this.clubService.getClubPhotos(this.clubId).subscribe({
       next: (photos) => {
-        this.galleryPhotos = (photos ?? []).filter((photo) => photo.photoType === 'CAROUSEL');
+        this.galleryPhotos = (photos ?? [])
+          .filter((photo) => photo.photoType === 'CAROUSEL')
+          .map((photo) => ({
+            ...photo,
+            url: photo.photoId
+              ? this.clubService.getPhotoUrl(photo.photoId)
+              : this.clubService.toAbsoluteUrl(photo.url, this.clubId)
+          }));
+        this.cdr.detectChanges();
       },
       error: () => {
         this.galleryPhotos = [];
+        this.cdr.detectChanges();
       }
     });
   }
