@@ -270,10 +270,13 @@ export class ClubHandlerPage implements OnInit {
         this.galleryPhotos = this.galleryPhotos.filter((item) => item.photoId !== photo.photoId);
         this.actionSuccessMessage = 'Foto eliminada de la galeria.';
         this.actionErrorMessage = '';
+        this.cdr.detectChanges();
+        this.loadGalleryPhotos();
       },
       error: () => {
         this.actionErrorMessage = 'No se pudo eliminar la foto de galeria.';
         this.actionSuccessMessage = '';
+        this.loadGalleryPhotos();
       }
     });
   }
@@ -724,7 +727,8 @@ export class ClubHandlerPage implements OnInit {
     }
 
     this.clubService.deleteEventPhoto(this.clubId, event.eventId).subscribe({
-      next: () => {
+      next: (updatedEvent) => {
+        this.upsertEventInList(updatedEvent);
         this.loadEvents();
         this.actionSuccessMessage = 'Foto de evento eliminada.';
         this.actionErrorMessage = '';
