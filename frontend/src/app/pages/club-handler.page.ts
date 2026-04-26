@@ -657,11 +657,12 @@ export class ClubHandlerPage implements OnInit {
         this.cdr.markForCheck();
       })
     ).subscribe({
-      next: () => {
+      next: (savedEvent) => {
+        this.upsertEventInList(savedEvent);
         this.startCreateEvent();
-        this.loadEvents();
         this.actionSuccessMessage = 'Evento guardado correctamente.';
         this.actionErrorMessage = '';
+        this.loadEvents();
       },
       error: () => {
         this.loadEvents();
@@ -871,13 +872,12 @@ export class ClubHandlerPage implements OnInit {
   private loadEvents(): void {
     this.clubService.getEvents(this.clubId).subscribe({
       next: (events) => {
-        this.events = events.map((event) => ({
-          ...event,
-          eventId: event.eventId || event.id || ''
-        }));
+        this.events = events.map((event) => this.normalizeEvent(event));
+        this.cdr.detectChanges();
       },
       error: () => {
         this.events = [];
+        this.cdr.detectChanges();
       }
     });
   }
@@ -988,6 +988,31 @@ export class ClubHandlerPage implements OnInit {
     }
 
     this.tables = [normalized, ...this.tables];
+  }
+
+  private normalizeEvent(event: Event): Event {
+    return {
+      ...event,
+      eventId: event.eventId || event.id || ''
+    };
+  }
+
+  private upsertEventInList(event: Event): void {
+    const normalized = this.normalizeEvent(event);
+    if (!normalized.eventId) {
+      this.loadEvents();
+      return;
+    }
+
+    const currentIndex = this.events.findIndex((item) => item.eventId === normalized.eventId);
+    if (currentIndex >= 0) {
+      this.events = this.events.map((item, index) => (index === currentIndex ? normalized : item));
+    } else {
+      this.events = [normalized, ...this.events];
+    }
+
+    this.eventPage = 1;
+    this.cdr.detectChanges();
   }
 
 }
