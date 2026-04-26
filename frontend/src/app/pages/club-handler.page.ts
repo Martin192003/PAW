@@ -169,6 +169,11 @@ export class ClubHandlerPage implements OnInit {
     this.loadClubHandlerData();
   }
 
+  dismissErrorModal(): void {
+    this.errorMessage = '';
+    this.actionErrorMessage = '';
+  }
+
   onCoverSelected(uploadEvent: globalThis.Event): void {
     const input = uploadEvent.target as HTMLInputElement;
     const file = input.files?.[0];

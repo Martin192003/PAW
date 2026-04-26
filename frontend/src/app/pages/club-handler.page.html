@@ -24,24 +24,11 @@
         </div>
       </section>
 
-      <div *ngIf="errorMessage" class="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200">
-        {{ errorMessage }}
-      </div>
-
-      <div *ngIf="actionErrorMessage" class="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200">
-        {{ actionErrorMessage }}
-      </div>
-
       <div *ngIf="actionSuccessMessage" class="mb-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-200">
         {{ actionSuccessMessage }}
       </div>
 
       <div *ngIf="loading && !club" class="text-[#bab8b8]">Cargando datos del club...</div>
-
-      <div *ngIf="!loading && !club && clubLoadAttempted" class="rounded-md border border-[#4a4a4a] bg-[#252525] px-4 py-4 text-[#d5d5d5]">
-        <p class="mb-3">No se pudo obtener el club seleccionado.</p>
-        <button type="button" class="btn-primary" (click)="retryLoad()">Reintentar</button>
-      </div>
 
       <ng-container *ngIf="club as currentClub">
         <section class="rounded-xl border border-[#3a3a3a] bg-[#222]/80 p-4 sm:p-5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.45)]">
@@ -527,4 +514,37 @@
       </ng-container>
     </main>
   </section>
+
+  <div
+    *ngIf="actionErrorMessage || errorMessage || (!loading && !club && clubLoadAttempted)"
+    class="error-modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="club-handler-error-title"
+  >
+    <div class="error-modal">
+      <div class="error-modal-content">
+        <div class="error-modal-icon">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <div class="error-modal-copy">
+          <h2 id="club-handler-error-title">Error</h2>
+          <p>{{ actionErrorMessage || errorMessage || 'No se pudo obtener el club seleccionado.' }}</p>
+        </div>
+      </div>
+
+      <div class="error-modal-actions">
+        <button
+          *ngIf="!club && clubLoadAttempted"
+          type="button"
+          class="btn-primary"
+          (click)="retryLoad()"
+        >
+          Reintentar
+        </button>
+        <button type="button" class="btn-danger" (click)="dismissErrorModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
 </div>
