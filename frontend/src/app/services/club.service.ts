@@ -199,10 +199,17 @@ export class ClubService {
     });
   }
 
-  reserveTable(clubId: string, tableId: string, date: string, fromEvent: boolean) {
-    return this.http.post<{ bookingId: string; message: string }>(
-      `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/reserve`,
-      { tableId, date, fromEvent }
+  reserveTable(clubId: string, tableId: string, date: string) {
+    return this.http.post<{
+      id: string;
+      tableId: string;
+      bookingStart: string;
+      bookingEnd: string;
+      status: string;
+      links: Record<string, string>;
+    }>(
+      `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings`,
+      { tableId, date }
     );
   }
 

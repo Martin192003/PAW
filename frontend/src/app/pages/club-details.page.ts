@@ -414,8 +414,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.clubService.reserveTable(
       this.currentClubId,
       this.selectedTableId,
-      this.selectedDate,
-      this.fromEvent
+      this.selectedDate
     ).subscribe({
       next: () => {
         this.tablesError = undefined;
