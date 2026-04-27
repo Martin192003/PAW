@@ -318,6 +318,13 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
+    public void cancelForUserInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
+        final Booking booking = getForUserInClub(clubId, bookingId, loginIdentifier);
+        cancelByUser(bookingId, booking.getUser().getId());
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Booking getForUser(UUID bookingId, UUID userId) {
         final Booking b = bookingDao.findById(bookingId)
@@ -327,6 +334,21 @@ public class BookingServiceImpl implements BookingService {
             throw new UnauthorizedException("booking.notAllowedToView");
         }
         return b;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Booking getForUserInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
+        if (clubId == null) {
+            throw new BadRequestException("clubId es requerido");
+        }
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        final Booking booking = getForUser(bookingId, user.getId());
+        final ClubTable table = ensureTableExists(booking.getTableId());
+        if (!clubId.equals(table.getClubId())) {
+            throw new BookingNotFoundException(bookingId.toString());
+        }
+        return booking;
     }
 
     @Override
@@ -356,6 +378,62 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return bookingDao.searchByClubIdsPaginated(adminClubIds, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Booking> searchForUserPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        return searchPaginated(user.getId(), clubId, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countSearchForUser(String loginIdentifier, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        return countSearch(user.getId(), clubId, bookingId, status, bookingDate, hasReceipt);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Booking> searchManagedClubsPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        return searchForAdminPaginated(user.getId(), clubId, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countSearchManagedClubs(String loginIdentifier, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        return countSearchForAdmin(user.getId(), clubId, bookingId, status, bookingDate, hasReceipt);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Booking getManagedClubBooking(String loginIdentifier, UUID bookingId) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        final Booking booking = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+        final UUID clubId = clubId(bookingId);
+        final List<UUID> adminClubIds = clubDao.findIdsByAdmin(user.getId());
+        if (adminClubIds == null || !adminClubIds.contains(clubId)) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
+        return booking;
+    }
+
+    @Override
+    @Transactional
+    public void confirmManagedClubBooking(String loginIdentifier, UUID bookingId) {
+        getManagedClubBooking(loginIdentifier, bookingId);
+        confirm(bookingId);
+    }
+
+    @Override
+    @Transactional
+    public void cancelManagedClubBooking(String loginIdentifier, UUID bookingId) {
+        getManagedClubBooking(loginIdentifier, bookingId);
+        cancel(bookingId);
     }
 
     @Override
@@ -447,7 +525,20 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username, boolean fromEvent) {
+    public Booking createForClub(UUID clubId, UUID tableId, LocalDate date, String loginIdentifier) {
+        if (clubId == null) {
+            throw new BadRequestException("clubId es requerido");
+        }
+        if (tableId == null) {
+            throw new BadRequestException("tableId es requerido");
+        }
+        if (date == null) {
+            throw new BadRequestException("date es requerido");
+        }
+        if (loginIdentifier == null || loginIdentifier.isBlank()) {
+            throw new UnauthorizedException("booking.authenticationRequired");
+        }
+
         var tableOpt = tableService.findById(tableId);
         if (tableOpt.isEmpty()) throw new TableNotFoundException(tableId);
         var table = tableOpt.get();
@@ -465,11 +556,7 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("La mesa no está disponible en el rango indicado.");
         }
 
-        var user = Optional.ofNullable(userService.findByUserName(username))
-                .orElseGet(() -> userService.findByEmail(username));
-        if (user == null) {
-            throw new UserNotFoundException("No se encontró el usuario: " + username);
-        }
+        var user = findUserByLoginIdentifier(loginIdentifier);
         if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
             throw new BadRequestException("El usuario debe tener un email válido para recibir notificaciones");
         }
@@ -495,6 +582,21 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return booking;
+    }
+
+    private User findUserByLoginIdentifier(String loginIdentifier) {
+        if (loginIdentifier == null || loginIdentifier.isBlank()) {
+            throw new UnauthorizedException("booking.authenticationRequired");
+        }
+
+        User user = userService.findByUserName(loginIdentifier);
+        if (user == null) {
+            user = userService.findByEmail(loginIdentifier);
+        }
+        if (user == null) {
+            throw new UserNotFoundException("No se encontró el usuario: " + loginIdentifier);
+        }
+        return user;
     }
 
     private void maybeFreeTable(ClubTable table) {
