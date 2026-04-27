@@ -49,4 +49,20 @@ export const routes: Routes = [
     path: 'admin/activity',
     loadComponent: () => import('./pages/club-activity.page').then(m => m.ClubActivityPage)
   },
+  {
+    path: 'admin/bookings',
+    loadComponent: () => import('./pages/managed-club-bookings.page').then(m => m.ManagedClubBookingsPage)
+  },
+  {
+    path: 'admin/bookings/:bookingId',
+    loadComponent: () => import('./pages/booking-admin-handler.page').then(m => m.BookingAdminHandlerPage)
+  },
+  {
+    path: 'bookings',
+    loadComponent: () => import('./pages/user-bookings.page').then(m => m.UserBookingsPage)
+  },
+  {
+    path: 'bookings/:clubId/:bookingId',
+    loadComponent: () => import('./pages/booking-user-handler.page').then(m => m.BookingUserHandlerPage)
+  },
 ];
