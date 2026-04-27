@@ -35,7 +35,25 @@ public interface BookingService {
 
     void cancelByUser(UUID bookingId, UUID userId);
 
-    Booking reserveTableForClub(UUID clubId, UUID tableId, LocalDate date, String username, boolean fromEvent);
+    void cancelForUserInClub(UUID clubId, UUID bookingId, String loginIdentifier);
+
+    Booking createForClub(UUID clubId, UUID tableId, LocalDate date, String loginIdentifier);
+
+    Booking getForUserInClub(UUID clubId, UUID bookingId, String loginIdentifier);
+
+    List<Booking> searchForUserPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset);
+
+    int countSearchForUser(String loginIdentifier, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt);
+
+    List<Booking> searchManagedClubsPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset);
+
+    int countSearchManagedClubs(String loginIdentifier, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt);
+
+    Booking getManagedClubBooking(String loginIdentifier, UUID bookingId);
+
+    void confirmManagedClubBooking(String loginIdentifier, UUID bookingId);
+
+    void cancelManagedClubBooking(String loginIdentifier, UUID bookingId);
 
     void confirm(UUID bookingId);
 

@@ -14,6 +14,9 @@ public interface ReceiptService {
     Optional<Receipt> getWithId(UUID receiptId);
     boolean deleteByBooking(UUID bookingId);
     void uploadForBooking(UUID bookingId, UUID userId, String filename, String contentType, byte[] data);
+    Receipt putForBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier, String filename, String contentType, byte[] data);
+    Optional<Receipt> getForBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier);
+    boolean deleteByBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier);
     boolean deleteByBookingForUser(UUID bookingId, UUID userId);
     Optional<Receipt> getReceiptForBooking(UUID bookingId);
     Map<UUID, Boolean> buildHasReceiptMap(List<Booking> bookings);
