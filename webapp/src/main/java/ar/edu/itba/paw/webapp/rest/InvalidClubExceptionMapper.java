@@ -1,12 +1,12 @@
 package ar.edu.itba.paw.webapp.rest;
 
 import ar.edu.itba.paw.model.exceptions.InvalidClubException;
+import ar.edu.itba.paw.model.dto.ErrorDto;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-import java.util.Map;
 
 @Provider
 public class InvalidClubExceptionMapper implements ExceptionMapper<InvalidClubException> {
@@ -15,8 +15,7 @@ public class InvalidClubExceptionMapper implements ExceptionMapper<InvalidClubEx
         return Response
                 .status(Response.Status.CONFLICT)
                 .type(MediaType.APPLICATION_JSON)
-                .entity(Map.of("message", ex.getMessage()))
+                .entity(new ErrorDto(ex.getMessage()))
                 .build();
     }
 }
-
