@@ -18,6 +18,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client
   },
   {
+    path: 'bookings/**',
+    renderMode: RenderMode.Client
+  },
+  {
     path: 'admin/**',
     renderMode: RenderMode.Client  // ← no SSR para rutas autenticadas
   },
