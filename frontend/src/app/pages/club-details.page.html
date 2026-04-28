@@ -185,6 +185,10 @@
             </select>
           </div>
 
+          <p class="m-0 p-3 text-center text-base text-white" *ngIf="loadingBookingDates">
+            Buscando fechas disponibles...
+          </p>
+
           <div *ngIf="tablesError" class="mb-3 rounded bg-[#5a1a1a] px-3 py-2 text-sm text-white">
             {{ tablesError }}
           </div>
@@ -193,7 +197,7 @@
             {{ reserveSuccess }}
           </div>
 
-          <p class="m-0 p-3 text-center text-base text-white" *ngIf="tables.length === 0">No hay mesas disponibles</p>
+          <p class="m-0 p-3 text-center text-base text-white" *ngIf="!loadingBookingDates && tables.length === 0">No hay mesas disponibles</p>
 
           <form>
             <ul class="m-0 list-none p-0" *ngIf="tables.length > 0">

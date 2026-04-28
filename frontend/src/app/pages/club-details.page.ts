@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, isPlatformBrowser, DatePipe, DecimalPipe } from '@angular/common';
-import { combineLatest } from 'rxjs';
+import { catchError, combineLatest, forkJoin, map, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
@@ -43,9 +43,13 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   reviews: Review[] = [];
   events: Event[] = [];
   bookingDates: string[] = [];
+  loadingBookingDates = false;
   selectedDate = '';
   tablesError?: string;
   reserveSuccess?: string;
+  reservationModalOpen = false;
+  reservedBookingId?: string;
+  reservedBookingClubId?: string;
   fromEvent = false;
   selectedTableId?: string;
 
@@ -94,6 +98,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.setReservationModalOpen(false);
     if (this.mapInstance) {
       this.mapInstance.remove();
       this.mapInstance = undefined;
@@ -113,17 +118,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       const queryDate = this.normalizeDate(rawDate);
       this.fromEvent = queryParams.get('fromEvent') === 'true';
 
-      this.bookingDates = this.fromEvent && queryDate
-        ? [queryDate]
-        : this.buildAllowedBookingDates(15);
-
-      if (this.fromEvent) {
-        this.selectedDate = queryDate ?? this.bookingDates[0] ?? '';
-      } else {
-        const fallback = this.bookingDates[0] ?? '';
-        this.selectedDate = (queryDate && this.bookingDates.includes(queryDate)) ? queryDate : fallback;
-      }
-
       if (fragment === 'dd-tables') {
         this.tablesOpen = true;
       }
@@ -135,7 +129,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
         this.loadClubData(id);
       }
 
-      this.loadTables(id, this.selectedDate);
+      this.loadAvailableBookingDates(id, queryDate);
     });
   }
 
@@ -385,6 +379,56 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     }
 
     return dates;
+  }
+
+  private loadAvailableBookingDates(id: string, queryDate?: string, preserveReserveSuccess = false): void {
+    const requestId = ++this.availabilityRequestId;
+    const candidateDates = this.fromEvent && queryDate
+      ? [queryDate]
+      : this.buildAllowedBookingDates(15);
+
+    this.loadingBookingDates = true;
+    this.tablesError = undefined;
+    if (!preserveReserveSuccess) {
+      this.reserveSuccess = undefined;
+    }
+    this.bookingDates = [];
+    this.selectedDate = '';
+    this.tables = [];
+    this.selectedTableId = undefined;
+    this.cdr.detectChanges();
+
+    if (!candidateDates.length) {
+      this.loadingBookingDates = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    forkJoin(candidateDates.map(date =>
+      this.clubService.getTables(id, date).pipe(
+        map(tables => ({ date, tables })),
+        catchError(() => of({ date, tables: [] as ClubTable[] }))
+      )
+    )).subscribe(results => {
+      if (requestId !== this.availabilityRequestId || id !== this.currentClubId) {
+        return;
+      }
+
+      const availableByDate = new Map(
+        results
+          .filter(result => result.tables.length > 0)
+          .map(result => [result.date, result.tables] as const)
+      );
+
+      this.bookingDates = candidateDates.filter(date => availableByDate.has(date));
+      this.selectedDate = queryDate && this.bookingDates.includes(queryDate)
+        ? queryDate
+        : this.bookingDates[0] ?? '';
+      this.tables = this.selectedDate ? (availableByDate.get(this.selectedDate) ?? []) : [];
+      this.selectedTableId = undefined;
+      this.loadingBookingDates = false;
+      this.cdr.detectChanges();
+    });
   }
 
   private toIsoDate(date: Date): string {
