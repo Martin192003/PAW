@@ -15,8 +15,6 @@ public final class UserMapper {
         dto.setSurname(user.getSurname());
         dto.setEmail(user.getEmail());
         dto.setCellphone(user.getCellphone());
-        dto.setRole(user.getRole() != null ? user.getRole().name() : null);
-        dto.setVerified(user.isVerified());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setLocale(user.getLocale());
         return dto;
