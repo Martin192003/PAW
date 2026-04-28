@@ -80,23 +80,6 @@ export class UserService {
     return this.http.post<ApiMessageResponse>(`${this.apiUrl}/users/verification-requests`, payload);
   }
 
-  requestPasswordReset(email: string): Observable<void> {
-    return this.http.post(`${this.apiUrl}/users/password-reset-requests`, { email }).pipe(
-      map(() => undefined)
-    );
-  }
-
-  createPasswordResetToken(userId: string): Observable<PasswordResetTokenResult> {
-    return this.http.post<PasswordResetTokenResult>(`${this.apiUrl}/users/${userId}/password-reset-tokens`, {});
-  }
-
-  resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<void> {
-    const params = new HttpParams().set('token', token);
-    return this.http.post(`${this.apiUrl}/users/password-resets`, { newPassword, confirmationPassword }, { params }).pipe(
-      map(() => undefined)
-    );
-  }
-
   private userFromAuthHeaders(response: HttpResponse<unknown>): User {
     const href = response.headers.get('X-User-Href') ?? '';
     const userId = href.substring(href.lastIndexOf('/') + 1);
@@ -126,5 +109,23 @@ export class UserService {
   private basicCredentials(username: string, password: string): string {
     const raw = `${username.trim()}:${password}`;
     return btoa(unescape(encodeURIComponent(raw)));
+  }
+
+
+  requestPasswordReset(email: string): Observable<void> {
+    return this.http.post(`${this.apiUrl}/users/password-reset-requests`, { email }).pipe(
+      map(() => undefined)
+    );
+  }
+
+  createPasswordResetToken(userId: string): Observable<PasswordResetTokenResult> {
+    return this.http.post<PasswordResetTokenResult>(`${this.apiUrl}/users/${userId}/password-reset-tokens`, {});
+  }
+
+  resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<void> {
+    const params = new HttpParams().set('token', token);
+    return this.http.post(`${this.apiUrl}/users/password-resets`, { newPassword, confirmationPassword }, { params }).pipe(
+      map(() => undefined)
+    );
   }
 }
