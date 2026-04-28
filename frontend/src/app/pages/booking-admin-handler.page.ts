@@ -11,6 +11,7 @@ import { User } from '../models/user.model';
 import { BookingService } from '../services/booking.service';
 import { ClubService } from '../services/club.service';
 import { UserService } from '../services/user.service';
+import { argentinaDateCode, formatArgentinaDateTime } from '../utils/argentina-date.util';
 
 @Component({
   standalone: true,
@@ -143,25 +144,15 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   }
 
   formatDateTime(value?: string): string {
-    if (!value) return '-';
-    return new Intl.DateTimeFormat('es-AR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(value));
+    return formatArgentinaDateTime(value);
   }
 
   bookingCode(): string {
     if (!this.booking) return '-';
-    const date = new Date(this.booking.bookingStart);
-    if (Number.isNaN(date.getTime())) return this.table?.tableNumber ? `#${this.table.tableNumber}` : this.booking.tableId;
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+    const dateCode = argentinaDateCode(this.booking.bookingStart);
+    if (!dateCode) return this.table?.tableNumber ? `#${this.table.tableNumber}` : this.booking.tableId;
     const tableNumber = this.table?.tableNumber ?? this.booking.tableId;
-    return `${day}-${month}-${year}-#${tableNumber}`;
+    return `${dateCode}-#${tableNumber}`;
   }
 
   private loadReceipt(): void {
