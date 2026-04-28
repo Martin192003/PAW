@@ -5,8 +5,6 @@ import ar.edu.itba.paw.webapp.form.ForgotPasswordForm;
 import ar.edu.itba.paw.webapp.form.ResetPasswordForm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -14,17 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import ar.edu.itba.paw.model.User;
 import java.util.Optional;
-
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.core.context.SecurityContext;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import javax.validation.Valid;
 
@@ -32,12 +21,10 @@ import javax.validation.Valid;
 public class PasswordController {
 
     private final UserService userService;
-    private final UserDetailsService userDetailsService;
 
     @Autowired
-    public PasswordController(UserService userService, UserDetailsService userDetailsService) {
+    public PasswordController(UserService userService) {
         this.userService = userService;
-        this.userDetailsService = userDetailsService;
     }
 
     @PreAuthorize("isAnonymous()")
@@ -72,8 +59,7 @@ public class PasswordController {
     public String processResetPassword(@RequestParam("token") String token,
                                        @Valid @ModelAttribute("resetPasswordForm") ResetPasswordForm form,
                                        BindingResult bindingResult,
-                                       Model model,
-                                       HttpServletRequest request) {
+                                       Model model) {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("token", token);
@@ -86,28 +72,6 @@ public class PasswordController {
             model.addAttribute("token", token);
             return "resetPasswordResult";
         }
-        User user = optUser.get();
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
-
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-
-        HttpSession session = request.getSession(true);
-        session.setAttribute(
-                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                context
-        );
 
         model.addAttribute("success", "password.reset.success");
         return "passwordResetSuccess";
