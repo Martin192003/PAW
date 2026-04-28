@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, forkJoin, map } from 'rxjs';
-import { Club } from '../models/club.model';
+import { Club, ClubCreateRequest } from '../models/club.model';
 import { ClubLimits } from '../models/club-limits.model';
 import { Layout } from '../models/layout.model';
 import {AvailabilityPagedResponse} from '../models/availability-paged-response.model';
@@ -98,6 +98,10 @@ export class ClubService {
       `${this.apiUrl}/clubs/user/${encodeURIComponent(userId)}`,
       { params }
     );
+  }
+
+  createClub(payload: ClubCreateRequest): Observable<Club> {
+    return this.http.post<Club>(`${this.apiUrl}/clubs`, payload);
   }
 
   getClubById(id: string): Observable<Club> {

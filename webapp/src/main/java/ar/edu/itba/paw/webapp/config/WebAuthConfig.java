@@ -59,6 +59,7 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 // Otros endpoints públicos de la API
                 .antMatchers("/api/photos/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/clubs").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/login").permitAll()
