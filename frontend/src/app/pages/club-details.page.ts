@@ -58,6 +58,9 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   private reviewsPageSize = 3;
 
   private currentClubId?: string;
+  private availabilityRequestId = 0;
+  private previousBodyOverflow?: string;
+  private previousDocumentOverflow?: string;
 
   private readonly defaultCoords = {
     lat: -34.5891429,
@@ -248,8 +251,18 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadTables(id: string, date: string): void {
+    if (!date) {
+      this.tables = [];
+      this.selectedTableId = undefined;
+      this.cdr.detectChanges();
+      return;
+    }
+
     this.tablesError = undefined;
     this.reserveSuccess = undefined;
+    this.setReservationModalOpen(false);
+    this.reservedBookingId = undefined;
+    this.reservedBookingClubId = undefined;
     this.clubService.getTables(id, date).subscribe({
       next: t => {
         this.tables = t;
@@ -460,11 +473,14 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       this.selectedTableId,
       this.selectedDate
     ).subscribe({
-      next: () => {
+      next: booking => {
         this.tablesError = undefined;
         this.reserveSuccess = 'Reserva realizada con exito. Revisa tus reservas en tu cuenta.';
+        this.reservedBookingId = booking.id;
+        this.reservedBookingClubId = this.currentClubId;
+        this.setReservationModalOpen(true);
         this.selectedTableId = undefined;
-        this.loadTables(this.currentClubId!, this.selectedDate);
+        this.cdr.detectChanges();
       },
       error: err => {
         this.reserveSuccess = undefined;
@@ -477,6 +493,56 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  goToReservedBooking(): void {
+    if (!this.reservedBookingClubId || !this.reservedBookingId) {
+      return;
+    }
+
+    this.setReservationModalOpen(false);
+    this.router.navigate(['/bookings', this.reservedBookingClubId, this.reservedBookingId]);
+  }
+
+  refreshAfterReservation(): void {
+    this.setReservationModalOpen(false);
+    if (isPlatformBrowser(this.platformId)) {
+      window.location.reload();
+      return;
+    }
+
+    if (this.currentClubId) {
+      this.loadAvailableBookingDates(this.currentClubId, this.selectedDate, true);
+    }
+  }
+
+  private setReservationModalOpen(open: boolean): void {
+    this.reservationModalOpen = open;
+
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    if (open) {
+      if (this.previousBodyOverflow === undefined) {
+        this.previousBodyOverflow = document.body.style.overflow;
+      }
+      if (this.previousDocumentOverflow === undefined) {
+        this.previousDocumentOverflow = document.documentElement.style.overflow;
+      }
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      return;
+    }
+
+    if (this.previousBodyOverflow !== undefined) {
+      document.body.style.overflow = this.previousBodyOverflow;
+      this.previousBodyOverflow = undefined;
+    }
+    if (this.previousDocumentOverflow !== undefined) {
+      document.documentElement.style.overflow = this.previousDocumentOverflow;
+      this.previousDocumentOverflow = undefined;
+    }
   }
 
   previousReviewsPage(): void {

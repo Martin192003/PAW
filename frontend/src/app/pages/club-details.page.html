@@ -158,8 +158,8 @@
         </button>
 
         <div
-          class="mt-3 origin-top overflow-hidden rounded-[10px] border border-purple-500/30 bg-[#141414]/95 px-4 backdrop-blur transition-all duration-200"
-          [ngClass]="tablesOpen ? 'max-h-[60vh] opacity-100 p-6 scale-y-100' : 'max-h-0 opacity-0 py-0 scale-y-95'"
+          class="mt-3 origin-top rounded-[10px] border border-purple-500/30 bg-[#141414]/95 px-4 backdrop-blur transition-all duration-200"
+          [ngClass]="tablesOpen ? 'max-h-[70vh] overflow-y-auto opacity-100 p-6 scale-y-100' : 'max-h-0 overflow-hidden opacity-0 py-0 scale-y-95'"
         >
 
           <div *ngIf="layoutUrl" class="mb-4 flex justify-center">
@@ -227,7 +227,7 @@
               </li>
             </ul>
 
-            <div class="mt-4 mb-20 flex justify-center">
+            <div class="mt-4 flex justify-center">
               <button
                 type="button"
                 class="inline-flex items-center gap-2 rounded-lg bg-[#9c27b0] px-6 py-2 text-white transition hover:bg-[#7b1fa2] disabled:opacity-50"
@@ -353,6 +353,40 @@
         </div>
       </div>
     </section>
+  </div>
+
+  <div
+    *ngIf="reservationModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="reservationSuccessTitle"
+  >
+    <div class="w-full max-w-[420px] rounded-lg border border-purple-500/40 bg-[#181818] p-6 text-white shadow-[0_18px_50px_rgba(0,0,0,0.55)]">
+      <h2 id="reservationSuccessTitle" class="m-0 text-xl font-semibold text-white">
+        Reserva realizada
+      </h2>
+      <p class="mt-3 text-sm leading-6 text-white/75">
+        Tu mesa fue reservada correctamente. Queres ver el detalle de la reserva?
+      </p>
+
+      <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          class="rounded-md border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+          (click)="refreshAfterReservation()"
+        >
+          No, refrescar
+        </button>
+        <button
+          type="button"
+          class="rounded-md bg-[#9c27b0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7b1fa2]"
+          (click)="goToReservedBooking()"
+        >
+          Ver reserva
+        </button>
+      </div>
+    </div>
   </div>
 
 </div>
