@@ -1,15 +1,20 @@
 package ar.edu.itba.paw.webapp.config;
 
+import ar.edu.itba.paw.webapp.auth.BasicTokenResponseFilter;
 import ar.edu.itba.paw.webapp.auth.JwtAuthenticationFilter;
+import ar.edu.itba.paw.webapp.auth.ApiAccessDeniedHandler;
+import ar.edu.itba.paw.webapp.auth.ApiAuthenticationEntryPoint;
 import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -31,7 +36,16 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
         http.antMatcher("/api/**")
                 .cors().and()
                 .csrf().disable()
+                .formLogin().disable()
+                .httpBasic()
+                    .authenticationEntryPoint(new ApiAuthenticationEntryPoint())
+                    .and()
+                .logout().disable()
                 .sessionManagement().sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS).and()
+                .exceptionHandling()
+                    .authenticationEntryPoint(new ApiAuthenticationEntryPoint())
+                    .accessDeniedHandler(new ApiAccessDeniedHandler())
+                    .and()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
                 .antMatchers("/api/photos/**").permitAll()
@@ -61,5 +75,14 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtUtil, userDetailsService);
+    }
+
+    public BasicTokenResponseFilter basicTokenResponseFilter() {
+        return new BasicTokenResponseFilter(jwtUtil);
+    }
+
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
     }
 }
