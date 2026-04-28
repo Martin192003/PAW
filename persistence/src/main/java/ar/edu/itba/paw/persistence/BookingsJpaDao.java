@@ -35,6 +35,7 @@ public class BookingsJpaDao implements BookingDao {
 
         ClubTable ref = em.getReference(ClubTable.class, tableId);
         b.setTable(ref);
+        b.setTableId(tableId);
 
         b.setBookingStart(bookingStart);
         b.setBookingEnd(bookingEnd);
@@ -57,6 +58,7 @@ public class BookingsJpaDao implements BookingDao {
 
         ClubTable ref = em.getReference(ClubTable.class, tableId);
         b.setTable(ref);
+        b.setTableId(tableId);
 
         b.setStatus(status);
         b.setTotalAmount(totalAmount);

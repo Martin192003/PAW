@@ -13,11 +13,15 @@ import java.util.UUID;
 public class BookingDtoAssembler {
 
     public BookingDto toDto(UriInfo uriInfo, UUID clubId, Booking booking) {
+        final UUID tableId = booking.getTableId() != null
+                ? booking.getTableId()
+                : (booking.getTable() != null ? booking.getTable().getTableId() : null);
+
         BookingDto dto = new BookingDto();
         dto.setId(booking.getBookingId());
         dto.setClubId(clubId);
         dto.setUserId(booking.getUser() != null ? booking.getUser().getId() : null);
-        dto.setTableId(booking.getTableId());
+        dto.setTableId(tableId);
         dto.setBookingStart(booking.getBookingStart());
         dto.setBookingEnd(booking.getBookingEnd());
         dto.setStatus(booking.getStatus() != null ? booking.getStatus().name() : null);
@@ -40,7 +44,7 @@ public class BookingDtoAssembler {
         links.put("table", uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}/tables/{tableId}")
                 .resolveTemplate("clubId", clubId)
-                .resolveTemplate("tableId", booking.getTableId())
+                .resolveTemplate("tableId", tableId)
                 .build()
                 .toString());
         links.put("receipt", uriInfo.getBaseUriBuilder()
