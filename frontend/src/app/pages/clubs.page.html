@@ -23,10 +23,14 @@
            class="flex gap-4 overflow-x-auto scroll-smooth px-2 py-2
                 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
-        <a *ngFor="let event of upcomingEvents"
+        <button
+           *ngFor="let event of upcomingEvents"
+           type="button"
+           (click)="onEventClick(event)"
+           [disabled]="checkingEventId === event.eventId"
            class="flex-none w-[260px] bg-[#2d2d2d] border border-[#3b3b3b]
                 rounded-xl text-inherit cursor-pointer
-                hover:-translate-y-1 transition-transform duration-200 block">
+                hover:-translate-y-1 transition-transform duration-200 block text-left disabled:cursor-wait disabled:opacity-70">
 
           <!-- IMAGE -->
           <div class="w-full h-[140px] rounded-t-xl overflow-hidden bg-[#222]
@@ -59,7 +63,7 @@
             </p>
           </div>
 
-        </a>
+        </button>
 
       </div>
 
@@ -292,5 +296,32 @@
 
     </div>
 
+  </div>
+
+  <div
+    *ngIf="eventAvailabilityModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="eventSoldOutTitle"
+  >
+    <div class="w-full max-w-[420px] rounded-lg border border-purple-500/40 bg-[#181818] p-6 text-white shadow-[0_18px_50px_rgba(0,0,0,0.55)]">
+      <h2 id="eventSoldOutTitle" class="m-0 text-xl font-semibold text-white">
+        No hay mesas disponibles
+      </h2>
+      <p class="mt-3 text-sm leading-6 text-white/75">
+        Ya no quedan mesas para {{ unavailableEventName }}<ng-container *ngIf="unavailableClubName"> en {{ unavailableClubName }}</ng-container>.
+      </p>
+
+      <div class="mt-6 flex justify-end">
+        <button
+          type="button"
+          class="rounded-md bg-[#9c27b0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7b1fa2]"
+          (click)="closeEventAvailabilityModal()"
+        >
+          Entendido
+        </button>
+      </div>
+    </div>
   </div>
 </main>
