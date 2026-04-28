@@ -60,7 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if (isClubMediaMutation) {
                         LOGGER.debug("JWT token empty after normalization for {} {}", request.getMethod(), path);
                     }
-                    filterChain.doFilter(request, response);
+                    AuthErrorResponses.write(response, HttpServletResponse.SC_UNAUTHORIZED, "invalid_token");
                     return;
                 }
 
@@ -68,6 +68,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if (isClubMediaMutation) {
                         LOGGER.debug("JWT token validation failed for {} {}", request.getMethod(), path);
                     }
+                    AuthErrorResponses.write(response, HttpServletResponse.SC_UNAUTHORIZED, "invalid_token");
+                    return;
                 } else {
                     String username = jwtUtil.getUsernameFromToken(token);
                     UsernamePasswordAuthenticationToken auth;
@@ -101,6 +103,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } catch (Exception ex) {
                 SecurityContextHolder.clearContext();
                 LOGGER.debug("JWT invalido para {} {}", request.getMethod(), request.getRequestURI(), ex);
+                AuthErrorResponses.write(response, HttpServletResponse.SC_UNAUTHORIZED, "invalid_token");
+                return;
             }
         }
 
