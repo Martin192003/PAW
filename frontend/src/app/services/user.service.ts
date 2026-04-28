@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
@@ -45,22 +45,22 @@ export class UserService {
     return this.http.put<User>(`${this.apiUrl}/users/${userId}`, payload, { observe: 'response' }).pipe(
       map((response: HttpResponse<User>) => ({
         user: response.body as User,
-        token: this.extractTokenFromHeaders(response)
+        token: null
       }))
     );
   }
 
-  private extractTokenFromHeaders(response: HttpResponse<unknown>): string | null {
-    const authHeader = response.headers.get('Authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      return authHeader.substring(7);
-    }
-
-    return response.headers.get('X-Auth-Token');
-  }
-
   login(payload: UserLoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/users/login`, payload);
+    const headers = new HttpHeaders({
+      Authorization: `Basic ${this.basicCredentials(payload.usernameOrEmail, payload.password)}`,
+    });
+
+    return this.http.get<unknown>(`${this.apiUrl}/bookings`, { headers, observe: 'response' }).pipe(
+      map((response: HttpResponse<unknown>) => ({
+        token: this.requiredHeader(response, 'X-Access-Token'),
+        user: this.userFromAuthHeaders(response),
+      }))
+    );
   }
 
   verifyByToken(token: string): Observable<LoginResponse | ApiMessageResponse> {
@@ -74,5 +74,36 @@ export class UserService {
 
   resendVerification(payload: ResendVerificationRequest): Observable<ApiMessageResponse> {
     return this.http.post<ApiMessageResponse>(`${this.apiUrl}/users/verification-requests`, payload);
+  }
+
+  private userFromAuthHeaders(response: HttpResponse<unknown>): User {
+    const href = response.headers.get('X-User-Href') ?? '';
+    const userId = href.substring(href.lastIndexOf('/') + 1);
+
+    return {
+      userId,
+      username: '',
+      name: '',
+      surname: '',
+      email: '',
+      cellphone: '',
+      role: '',
+      verified: true,
+      createdAt: '',
+      locale: '',
+    };
+  }
+
+  private requiredHeader(response: HttpResponse<unknown>, header: string): string {
+    const value = response.headers.get(header);
+    if (!value) {
+      throw new Error(`Missing ${header} response header`);
+    }
+    return value;
+  }
+
+  private basicCredentials(username: string, password: string): string {
+    const raw = `${username.trim()}:${password}`;
+    return btoa(unescape(encodeURIComponent(raw)));
   }
 }

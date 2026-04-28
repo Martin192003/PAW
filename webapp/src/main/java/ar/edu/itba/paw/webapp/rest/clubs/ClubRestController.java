@@ -3,8 +3,11 @@ package ar.edu.itba.paw.webapp.rest.clubs;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.*;
-import ar.edu.itba.paw.webapp.auth.JwtUtil;
+import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletException;
@@ -35,7 +38,6 @@ public class ClubRestController {
     private final UserService userService;
     private final ClubLayoutService clubLayoutService;
     private final PhotoService photoService;
-    private final JwtUtil jwtUtil;
 
 
     @Context
@@ -49,14 +51,12 @@ public class ClubRestController {
                               final TableService tableService,
                               UserService userService,
                               ClubLayoutService clubLayoutService,
-                              PhotoService photoService,
-                              JwtUtil jwtUtil) {
+                              PhotoService photoService) {
         this.clubService = clubService;
         this.tableService = tableService;
         this.userService = userService;
         this.clubLayoutService = clubLayoutService;
         this.photoService = photoService;
-        this.jwtUtil = jwtUtil;
     }
 
     @GET
@@ -776,7 +776,7 @@ public class ClubRestController {
 
     private User resolveAuthenticatedUser(SecurityContext securityContext) {
         if (securityContext == null || securityContext.getUserPrincipal() == null) {
-            return resolveUserFromAuthorizationHeader();
+            return resolveUserFromSpringSecurityContext();
         }
 
         String principal = securityContext.getUserPrincipal().getName();
@@ -785,30 +785,21 @@ public class ClubRestController {
             return user;
         }
 
-        return resolveUserFromAuthorizationHeader();
+        return resolveUserFromSpringSecurityContext();
     }
 
-    private User resolveUserFromAuthorizationHeader() {
-        String header = request.getHeader("Authorization");
-        if (header == null || !header.startsWith("Bearer ")) {
+    private User resolveUserFromSpringSecurityContext() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
             return null;
         }
 
-        String token = header.substring(7).trim();
-        if (token.isEmpty()) {
-            return null;
+        Object principal = auth.getPrincipal();
+        if (principal instanceof PawUserDetails) {
+            return ((PawUserDetails) principal).getUser();
         }
 
-        try {
-            if (!jwtUtil.validateToken(token)) {
-                return null;
-            }
-
-            String principal = jwtUtil.getUsernameFromToken(token);
-            return resolveUserFromPrincipal(principal);
-        } catch (Exception ignored) {
-            return null;
-        }
+        return resolveUserFromPrincipal(auth.getName());
     }
 
     private User resolveUserFromPrincipal(String principal) {
@@ -885,5 +876,4 @@ public class ClubRestController {
                 .build();
     }
 }
-
 
