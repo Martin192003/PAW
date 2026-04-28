@@ -258,7 +258,6 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     //   },
     // });
 
-    console.log('FormData listo para enviar:', formData);
     this.submitting = false; // quitar cuando se conecte el servicio
   }
 
