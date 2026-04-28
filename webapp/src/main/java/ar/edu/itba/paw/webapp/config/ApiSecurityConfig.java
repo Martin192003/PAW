@@ -58,13 +58,13 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/clubs/**/photos").permitAll()
                 .antMatchers(HttpMethod.DELETE, "/api/clubs/**/photos/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/verification-requests").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/users/verifications").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/verifications").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/password-reset-requests").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/password-resets").permitAll()
                 .anyRequest().authenticated().and()
+                .addFilterAfter(basicTokenResponseFilter(), BasicAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter(), AnonymousAuthenticationFilter.class);
     }
 

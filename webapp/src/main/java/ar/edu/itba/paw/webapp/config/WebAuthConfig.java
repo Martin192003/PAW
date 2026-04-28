@@ -66,7 +66,6 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/users/**").permitAll()
                 // Endpoints legacy server-side
                 .antMatchers(HttpMethod.POST, "/users").permitAll()
-                .antMatchers(HttpMethod.POST, "/users/login").permitAll()
                 .antMatchers(HttpMethod.POST, "/users/resend-verification").permitAll()
                 .antMatchers(HttpMethod.GET, "/users/verify").permitAll()
                 // Rutas autenticadas
