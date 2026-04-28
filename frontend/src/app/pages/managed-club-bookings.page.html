@@ -20,48 +20,54 @@
         </div>
       </header>
 
-      <section class="mb-5 rounded-lg border border-white/10 bg-[#343232] p-4 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
-        <form class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6" (ngSubmit)="applyFilters()">
-          <select class="h-10 rounded-md border border-white/10 bg-[#242323] px-3 text-sm outline-none focus:border-[#9c27b0]" [(ngModel)]="filters.clubId" name="clubId">
-            <option value="">Club</option>
-            <option *ngFor="let club of clubs" [value]="club.clubId">{{ club.clubName }}</option>
-          </select>
+      <section class="mb-5">
+        <div class="flex w-full items-center justify-center gap-3">
+          <form
+            class="flex w-fit max-w-full flex-wrap items-stretch overflow-hidden rounded-lg bg-[#3c3c3c] shadow-[0_2px_6px_rgba(0,0,0,0.15)] xl:flex-nowrap"
+            (ngSubmit)="applyFilters()"
+          >
+            <select class="h-12 w-[160px] bg-transparent px-3 text-sm text-white outline-none" [(ngModel)]="filters.clubId" name="clubId">
+              <option value="" class="text-black">Club</option>
+              <option *ngFor="let club of clubs" [value]="club.clubId" class="text-black">{{ club.clubName }}</option>
+            </select>
 
-          <input class="h-10 rounded-md border border-white/10 bg-[#242323] px-3 text-sm outline-none focus:border-[#9c27b0]" type="date" [(ngModel)]="filters.bookingDate" name="bookingDate" />
+            <input class="h-12 w-[190px] bg-transparent px-3 text-sm text-white outline-none" type="date" [(ngModel)]="filters.bookingDate" name="bookingDate" />
 
-          <select class="h-10 rounded-md border border-white/10 bg-[#242323] px-3 text-sm outline-none focus:border-[#9c27b0]" [(ngModel)]="filters.status" name="status">
-            <option value="">Status</option>
-            <option value="PENDIENTE">Pendiente</option>
-            <option value="CONFIRMADA">Confirmada</option>
-            <option value="CANCELADA">Cancelada</option>
-          </select>
+            <select class="h-12 w-[150px] bg-transparent px-3 text-sm text-white outline-none" [(ngModel)]="filters.status" name="status">
+              <option value="" class="text-black">Status</option>
+              <option value="PENDIENTE" class="text-black">Pendiente</option>
+              <option value="CONFIRMADA" class="text-black">Confirmada</option>
+              <option value="CANCELADA" class="text-black">Cancelada</option>
+            </select>
 
-          <select class="h-10 rounded-md border border-white/10 bg-[#242323] px-3 text-sm outline-none focus:border-[#9c27b0]" [(ngModel)]="filters.sort" name="sort">
-            <option value="created_desc">Newest</option>
-            <option value="created_asc">Oldest</option>
-            <option value="start_desc">Date desc</option>
-            <option value="start_asc">Date asc</option>
-          </select>
+            <select class="h-12 w-[145px] bg-transparent px-3 text-sm text-white outline-none" [(ngModel)]="filters.sort" name="sort">
+              <option value="" class="text-black">Sort</option>
+              <option value="created_desc" class="text-black">Newest</option>
+              <option value="created_asc" class="text-black">Oldest</option>
+              <option value="start_desc" class="text-black">Date desc</option>
+              <option value="start_asc" class="text-black">Date asc</option>
+            </select>
 
-          <select class="h-10 rounded-md border border-white/10 bg-[#242323] px-3 text-sm outline-none focus:border-[#9c27b0]" [(ngModel)]="filters.hasReceipt" name="hasReceipt">
-            <option value="">Receipts</option>
-            <option value="true">With receipt</option>
-            <option value="false">Without receipt</option>
-          </select>
+            <select class="h-12 w-[160px] bg-transparent px-3 text-sm text-white outline-none" [(ngModel)]="filters.hasReceipt" name="hasReceipt">
+              <option value="" class="text-black">Receipts</option>
+              <option value="true" class="text-black">With receipt</option>
+              <option value="false" class="text-black">Without receipt</option>
+            </select>
 
-          <button class="h-10 rounded-md bg-[#9c27b0] px-4 text-sm font-semibold transition hover:bg-[#86229a]" type="submit">
-            <i class="fa-solid fa-filter mr-2"></i>Filter
+            <button class="h-12 shrink-0 bg-[#9c27b0] px-7 font-semibold text-white transition hover:bg-[#8a21a0]" type="submit">
+              <i class="fa-solid fa-filter mr-1"></i>Filter
+            </button>
+          </form>
+
+          <button
+            *ngIf="hasActiveFilters()"
+            type="button"
+            class="h-12 shrink-0 whitespace-nowrap border-0 bg-transparent px-1 text-sm text-[#9c27b0] transition hover:text-[#540761]"
+            (click)="resetFilters()"
+          >
+            <i class="fa-solid fa-rotate-right mr-1"></i>Reset
           </button>
-        </form>
-
-        <button
-          *ngIf="hasActiveFilters()"
-          type="button"
-          class="mt-3 h-10 rounded-md border border-white/10 bg-white/5 px-4 text-sm font-semibold transition hover:bg-white/10"
-          (click)="resetFilters()"
-        >
-          <i class="fa-solid fa-rotate-right mr-2"></i>Reset
-        </button>
+        </div>
       </section>
 
       <p *ngIf="error" class="mb-4 rounded-md border border-rose-500/30 bg-rose-950/50 px-4 py-3 text-rose-100">{{ error }}</p>
