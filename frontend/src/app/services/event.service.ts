@@ -35,6 +35,7 @@ function parseLinks(entry: LinkEntry[] = []): Record<string, string> {
 
 function toClubEvent(dto: EventDto): ClubEvent {
   const links = parseLinks(dto.links?.entry);
+  const clubId = links['club']?.split('/clubs/')[1];
   return {
     eventId:     dto.id,
     name:        dto.eventName,
@@ -42,6 +43,7 @@ function toClubEvent(dto: EventDto): ClubEvent {
     date:        dto.date,
     photoId:     dto.photoId ?? '',
     clubName:    '',
+    clubId,
     photoUrl:    links['photo'],
     links,
   };
@@ -92,6 +94,7 @@ export class EventService {
               content: events.map(({ dto, links }, i) => ({
                 ...toClubEvent(dto),
                 clubName: clubs[i].clubName,
+                clubId: events[i].clubId,
               })),
               totalElements: dtos.length,
               totalPages: 1,
