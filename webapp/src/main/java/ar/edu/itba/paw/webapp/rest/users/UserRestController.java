@@ -1,11 +1,16 @@
 package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.dto.LoginResponseDto;
+import ar.edu.itba.paw.model.dto.ResendVerificationRequestDto;
+import ar.edu.itba.paw.model.dto.UserCreateRequestDto;
+import ar.edu.itba.paw.model.dto.UserDto;
+import ar.edu.itba.paw.model.dto.UserLoginRequestDto;
+import ar.edu.itba.paw.model.dto.UserVerificationRequestDto;
 import ar.edu.itba.paw.model.dto.*;
+
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
-import ar.edu.itba.paw.webapp.auth.JwtUtil;
-import ar.edu.itba.paw.webapp.auth.WebSecurity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,12 +48,6 @@ public class UserRestController {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private WebSecurity webSecurity;
-
-    @Autowired
-    private JwtUtil jwtUtil;
 
     @Autowired
     private ReviewService reviewService;
@@ -133,69 +132,6 @@ public class UserRestController {
                     .entity(message("Internal server error"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
-        }
-    }
-
-    @POST
-    @Path("/login")
-    public Response login(UserLoginRequestDto body) {
-        if (body == null || isBlank(body.getUsernameOrEmail()) || isBlank(body.getPassword())) {
-            try {
-                String err = new com.fasterxml.jackson.databind.ObjectMapper()
-                        .writeValueAsString(java.util.Map.of("message", "Missing credentials"));
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(err)
-                        .type(MediaType.APPLICATION_JSON)
-                        .build();
-            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-                LOGGER.error("JSON error", e);
-                return Response.serverError().entity("{\"message\":\"Internal server error\"}").type(MediaType.APPLICATION_JSON).build();
-            }
-        }
-
-        try {
-            User user = userService.authenticateAndGetUser(body.getUsernameOrEmail().trim(), body.getPassword());
-            if (user == null) {
-                String err = new com.fasterxml.jackson.databind.ObjectMapper()
-                        .writeValueAsString(java.util.Map.of("message", "Invalid credentials"));
-                return Response.status(Response.Status.UNAUTHORIZED)
-                        .entity(err)
-                        .type(MediaType.APPLICATION_JSON)
-                        .build();
-            }
-
-            UserDto dto = UserMapper.toDto(user);
-            String token = jwtUtil.generateToken(user.getId().toString());
-
-            LoginResponseDto response = new LoginResponseDto(token, dto);
-
-            String json = new com.fasterxml.jackson.databind.ObjectMapper()
-                    .findAndRegisterModules()
-                    .writeValueAsString(response);
-
-            return Response.ok(json, MediaType.APPLICATION_JSON).build();
-        } catch (IllegalStateException e) {
-            try {
-                String err = new com.fasterxml.jackson.databind.ObjectMapper()
-                        .writeValueAsString(java.util.Map.of("message", "User not verified"));
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity(err)
-                        .type(MediaType.APPLICATION_JSON)
-                        .build();
-            } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
-                LOGGER.error("JSON error", ex);
-                return Response.serverError().entity("{\"message\":\"Internal server error\"}").type(MediaType.APPLICATION_JSON).build();
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error during login", e);
-            try {
-                String err = new com.fasterxml.jackson.databind.ObjectMapper()
-                        .writeValueAsString(java.util.Map.of("message", "Internal server error"));
-                return Response.serverError().entity(err).type(MediaType.APPLICATION_JSON).build();
-            } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
-                LOGGER.error("JSON error", ex);
-                return Response.serverError().entity("{\"message\":\"Internal server error\"}").type(MediaType.APPLICATION_JSON).build();
-            }
         }
     }
 
@@ -342,11 +278,7 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            String refreshedToken = jwtUtil.generateToken(updated.getId().toString());
-            return Response.ok(UserMapper.toDto(updated))
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + refreshedToken)
-                    .header("X-Auth-Token", refreshedToken)
-                    .build();
+            return Response.ok(UserMapper.toDto(updated)).build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
@@ -422,11 +354,7 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            String refreshedToken = jwtUtil.generateToken(updated.getId().toString());
-            return Response.ok(UserMapper.toDto(updated))
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + refreshedToken)
-                    .header("X-Auth-Token", refreshedToken)
-                    .build();
+            return Response.ok(UserMapper.toDto(updated)).build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
@@ -551,10 +479,7 @@ public class UserRestController {
             }
         }
 
-        UserDto dto = UserMapper.toDto(user);
-        String jwt = jwtUtil.generateToken(user.getId().toString());
-        LoginResponseDto response = new LoginResponseDto(jwt, dto);
-        return Response.ok(response).build();
+        return Response.ok(message("Cuenta verificada correctamente")).build();
     }
 
     private static boolean isBlank(String s) {
