@@ -26,7 +26,11 @@ export class ManagedClubBookingsPage implements OnInit {
   tableNumbers: Record<string, number> = {};
 
   filters: BookingFilters = {
-    sort: 'created_desc'
+    clubId: '',
+    bookingDate: '',
+    status: '',
+    sort: '',
+    hasReceipt: ''
   };
 
   currentPage = 1;
@@ -95,7 +99,13 @@ export class ManagedClubBookingsPage implements OnInit {
   }
 
   resetFilters(): void {
-    this.filters = { sort: 'created_desc' };
+    this.filters = {
+      clubId: '',
+      bookingDate: '',
+      status: '',
+      sort: '',
+      hasReceipt: ''
+    };
     this.currentPage = 1;
     this.loadBookings();
   }
@@ -122,7 +132,7 @@ export class ManagedClubBookingsPage implements OnInit {
       this.filters.status ||
       this.filters.bookingDate ||
       this.filters.hasReceipt ||
-      (this.filters.sort && this.filters.sort !== 'created_desc')
+      this.filters.sort
     );
   }
 

@@ -25,7 +25,10 @@ export class UserBookingsPage implements OnInit {
   clubs: Club[] = [];
 
   filters: BookingFilters = {
-    sort: 'created_desc'
+    bookingDate: '',
+    status: '',
+    sort: '',
+    hasReceipt: ''
   };
 
   currentPage = 1;
@@ -75,7 +78,12 @@ export class UserBookingsPage implements OnInit {
   }
 
   resetFilters(): void {
-    this.filters = { sort: 'created_desc' };
+    this.filters = {
+      bookingDate: '',
+      status: '',
+      sort: '',
+      hasReceipt: ''
+    };
     this.currentPage = 1;
     this.loadBookings();
   }
@@ -102,7 +110,7 @@ export class UserBookingsPage implements OnInit {
       this.filters.status ||
       this.filters.bookingDate ||
       this.filters.hasReceipt ||
-      (this.filters.sort && this.filters.sort !== 'created_desc')
+      this.filters.sort
     );
   }
 
