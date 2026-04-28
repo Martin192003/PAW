@@ -11,6 +11,7 @@ import { Club } from '../models/club.model';
 import { ClubTable } from '../models/club-table.model';
 import { BookingService } from '../services/booking.service';
 import { ClubService } from '../services/club.service';
+import { argentinaDateCode, formatArgentinaDate } from '../utils/argentina-date.util';
 
 @Component({
   standalone: true,
@@ -136,18 +137,13 @@ export class UserBookingsPage implements OnInit {
   }
 
   formatDate(value: string): string {
-    if (!value) return '-';
-    return new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
-      .format(new Date(value));
+    return formatArgentinaDate(value);
   }
 
   bookingCode(booking: Booking): string {
-    const date = new Date(booking.bookingStart);
-    const day = `${date.getDate()}`.padStart(2, '0');
-    const month = `${date.getMonth() + 1}`.padStart(2, '0');
-    const year = date.getFullYear();
+    const dateCode = argentinaDateCode(booking.bookingStart) ?? '-';
     const tableNumber = this.tableNumbers[booking.tableId] ?? booking.tableId;
-    return `${day}-${month}-${year}-#${tableNumber}`;
+    return `${dateCode}-#${tableNumber}`;
   }
 
   private ensureBookingMetadata(): void {
