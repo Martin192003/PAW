@@ -6,7 +6,10 @@ import { User } from '../models/user.model';
 export class AuthStateService {
   private readonly tokenKey = 'auth_token';
   private readonly userKey = 'auth_user';
-  private readonly browserStorageAvailable = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+  private readonly browserStorageAvailable =
+    typeof window !== 'undefined' &&
+    AuthStateService.isStorageAvailable(typeof localStorage === 'undefined' ? undefined : localStorage) &&
+    AuthStateService.isStorageAvailable(typeof sessionStorage === 'undefined' ? undefined : sessionStorage);
   private readonly loggedInSubject = new BehaviorSubject<boolean>(this.hasStoredSession());
 
   get isLoggedIn$(): Observable<boolean> {
@@ -136,6 +139,12 @@ export class AuthStateService {
   private hasStoredSession(): boolean {
     return !!this.getToken();
   }
-}
 
+  private static isStorageAvailable(storage: Storage | undefined): storage is Storage {
+    return !!storage &&
+      typeof storage.getItem === 'function' &&
+      typeof storage.setItem === 'function' &&
+      typeof storage.removeItem === 'function';
+  }
+}
 
