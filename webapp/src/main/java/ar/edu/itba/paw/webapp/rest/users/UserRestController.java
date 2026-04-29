@@ -1,7 +1,10 @@
 package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.dto.PasswordResetDto;
+import ar.edu.itba.paw.model.dto.PasswordResetRequestDto;
 import ar.edu.itba.paw.model.dto.ResendVerificationRequestDto;
+import ar.edu.itba.paw.model.dto.ReviewDto;
 import ar.edu.itba.paw.model.dto.UserCreateRequestDto;
 import ar.edu.itba.paw.model.dto.UserDto;
 import ar.edu.itba.paw.model.dto.UserVerificationRequestDto;
@@ -17,7 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import ar.edu.itba.paw.service.ReviewService;
 import ar.edu.itba.paw.webapp.rest.reviews.ReviewMapper;
-import ar.edu.itba.paw.model.dto.ReviewDto;
+
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.GenericEntity;
@@ -407,6 +410,55 @@ public class UserRestController {
                 .build();
     }
 
+    @POST
+    @Path("/password-reset-requests")
+    public Response requestPasswordReset(PasswordResetRequestDto body) {
+        if (body == null || isBlank(body.getEmail())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Email requerido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        userService.requestPasswordReset(body.getEmail().trim());
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/password-resets")
+    public Response resetPassword(@QueryParam("token") String token, PasswordResetDto body) {
+        if (isBlank(token)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Token requerido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (body == null || isBlank(body.getNewPassword()) || isBlank(body.getConfirmationPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Contrasena requerida"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (!body.getNewPassword().equals(body.getConfirmationPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("Las contrasenas no coinciden"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        Optional<User> updated = userService.resetPassword(token.trim(), body.getNewPassword());
+        if (updated.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(message("Token invalido o vencido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        return Response.noContent().build();
+    }
+
     private Response buildVerificationLoginResponse(String tokenOrCode) {
         User user = userService.findByVerificationToken(tokenOrCode);
         if (user == null) {
@@ -441,5 +493,4 @@ public class UserRestController {
             return "{\"message\":\"" + msg.replace("\"", "\\\"") + "\"}";
         }
     }
-
 }

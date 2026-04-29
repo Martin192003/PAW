@@ -13,8 +13,10 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-// TODO: reemplazar con tu servicio real cuando tengas el RestController
-// import { ClubService } from '../../services/club.service';
+import { ClubService } from '../services/club.service';
+import { ClubCreateRequest } from '../models/club.model';
+import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 
 declare const L: any; // Leaflet (cargado vía CDN o instalado como paquete)
 
@@ -55,7 +57,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     private fb: FormBuilder,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    // private clubService: ClubService,
+    private clubService: ClubService,
   ) {}
 
   // ----------------------------------------------------------------
@@ -228,37 +230,36 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     this.submitting    = true;
     this.errorMessage  = '';
 
-    const formData = new FormData();
-    const val      = this.clubForm.value;
+    const val = this.clubForm.value;
 
-    formData.append('name',        val.name);
-    formData.append('location',    val.location);
-    formData.append('priceRange',  val.priceRange);
-    formData.append('description', val.description ?? '');
-    formData.append('musicGenre',  val.musicGenre);
-    formData.append('zone',        val.zone);
-    formData.append('isBar',       val.isBar);
-    formData.append('cbu',         val.cbu ?? '');
-    if (this.selectedImage) {
-      formData.append('image', this.selectedImage, this.selectedImage.name);
-    }
+    const payload: ClubCreateRequest = {
+      clubName: val.name,
+      location: val.location,
+      priceRange: val.priceRange,
+      description: val.description ?? '',
+      musicGenre: val.musicGenre,
+      zone: val.zone,
+      bar: val.isBar === 'true',
+      cbu: val.cbu ?? '',
+    };
 
-    // TODO: reemplazar con tu ClubService cuando tengas el RestController
-    // Ejemplo de cómo quedará:
-    //
-    // this.clubService.createClub(formData).subscribe({
-    //   next: () => this.router.navigate(['/clubs']),
-    //   error: (err) => {
-    //     this.submitting = false;
-    //     if (err.status === 400 && err.error?.fieldErrors) {
-    //       this.applyServerErrors(err.error.fieldErrors);
-    //     } else {
-    //       this.errorMessage = err.error?.message ?? 'Ocurrió un error al guardar el club.';
-    //     }
-    //   },
-    // });
-
-    this.submitting = false; // quitar cuando se conecte el servicio
+    this.clubService.createClub(payload).pipe(
+      finalize(() => {
+        this.submitting = false;
+      })
+    ).subscribe({
+      next: () => {
+        this.router.navigate(['/clubs']);
+      },
+      error: (err: HttpErrorResponse) => {
+        const payload = err.error as { fieldErrors?: Record<string, string>; message?: string } | undefined;
+        if (payload?.fieldErrors) {
+          this.applyServerErrors(payload.fieldErrors);
+        } else {
+          this.errorMessage = payload?.message ?? 'Ocurrió un error al guardar el club.';
+        }
+      },
+    });
   }
 
   // Aplica errores de validación que vienen del servidor (campo → mensaje)

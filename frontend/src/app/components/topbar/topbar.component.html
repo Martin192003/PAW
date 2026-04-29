@@ -1,4 +1,4 @@
-l<header
+<header
   class="fixed top-0 left-0 w-full h-[90px]
          bg-black/90 backdrop-blur-md
          flex items-center justify-between
@@ -16,15 +16,29 @@ l<header
 
   <div class="flex items-center gap-4">
     <ng-container *ngIf="isLoggedIn; else loggedOutActions">
-      <a
-        [routerLink]="manageClubsRoute"
-        class="uppercase font-bold tracking-wide px-6 py-3 rounded-xl
-               text-white transition-all duration-300
-               hover:bg-fuchsia-600/20 hover:scale-105"
-        style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;"
-      >
-        Manage Clubs
-      </a>
+      <ng-container *ngIf="showManageClubs; else addClubLoggedIn">
+        <a
+          [routerLink]="manageClubsRoute"
+          class="uppercase font-bold tracking-wide px-6 py-3 rounded-xl
+                 text-white transition-all duration-300
+                 hover:bg-fuchsia-600/20 hover:scale-105"
+          style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;"
+        >
+          Manage Clubs
+        </a>
+      </ng-container>
+
+      <ng-template #addClubLoggedIn>
+        <a
+          [routerLink]="addClubRoute"
+          class="uppercase font-bold tracking-wide px-6 py-3 rounded-xl
+                 text-white transition-all duration-300
+                 hover:bg-fuchsia-600/20 hover:scale-105"
+          style="font-family: 'Darklinos', Arial, sans-serif; text-decoration: none;"
+        >
+          Add Club
+        </a>
+      </ng-template>
 
       <a
         routerLink="/profile"

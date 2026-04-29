@@ -19,3 +19,14 @@ export interface Club {
     limits: string;
   };
 }
+
+export interface ClubCreateRequest {
+  clubName: string;
+  location: string;
+  priceRange: string;
+  description: string;
+  musicGenre: string;
+  zone: string;
+  bar: boolean;
+  cbu: string;
+}

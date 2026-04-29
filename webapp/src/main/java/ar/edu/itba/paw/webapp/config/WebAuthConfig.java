@@ -44,7 +44,6 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(final HttpSecurity http) throws Exception {
-        // Web UI security: session-based, form login
         http.cors().and()
                 .sessionManagement()
                 .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
@@ -52,11 +51,15 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .sessionFixation().migrateSession()
                 .and()
                 .authorizeRequests()
-                // keep CORS preflight allowed
+                // CORS preflight
                 .antMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
-                // web UI specific public endpoints
+                // Password reset — debe ir ANTES de cualquier regla más genérica
+                .antMatchers(HttpMethod.POST, "/api/users/password-reset-requests").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/password-resets").permitAll()
+                // Otros endpoints públicos de la API
                 .antMatchers("/api/photos/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/clubs").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users").permitAll()
 
@@ -64,17 +67,14 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/users").permitAll()
                 .antMatchers(HttpMethod.POST, "/users/resend-verification").permitAll()
                 .antMatchers(HttpMethod.GET, "/users/verify").permitAll()
-
-                // Authenticated routes
+                // Rutas autenticadas
                 .antMatchers("/clubs/new", "/clubs/create", "/reservations/**", "/reviews/**").authenticated()
                 .antMatchers("/admin/**").hasRole("ADMIN")
-
-                // Public routes
-                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify", "/unverified", "/resend-verification", "/forgot-password", "/reset-password","/verifyMailNotice", "/verify-account").permitAll()
+                // Rutas públicas de la UI
+                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify", "/unverified", "/resend-verification", "/forgot-password", "/reset-password", "/verifyMailNotice", "/verify-account").permitAll()
                 .antMatchers(HttpMethod.GET, "/clubs").permitAll()
                 .antMatchers(HttpMethod.GET, "/clubs/{id}").permitAll()
                 .antMatchers(HttpMethod.GET, "/clubs/**/layout/**").permitAll()
-
                 .anyRequest().authenticated()
                 .and().formLogin()
                 .usernameParameter("usernameOrEmail")
