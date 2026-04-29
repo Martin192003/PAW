@@ -25,8 +25,8 @@ export class SideBarComponent {
   }> = [
     { key: 'profile', label: 'My Profile', route: '/profile' },
     { key: 'clubs', label: 'My Clubs', route: '/admin/activity' },
-    { key: 'clubsReservations', label: 'Clubs Reservations' },
-    { key: 'myReservations', label: 'My Reservations' },
+    { key: 'clubsReservations', label: 'Clubs Reservations', route: '/admin/bookings' },
+    { key: 'myReservations', label: 'My Reservations', route: '/bookings' },
     { key: 'reviews', label: 'Reviews' }
   ];
 

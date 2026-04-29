@@ -163,6 +163,33 @@ public class ReceiptServiceImpl implements ReceiptService {
 
     @Override
     @Transactional
+    public Receipt putForBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier,
+                                       String filename, String contentType, byte[] data) {
+        final Booking booking = bookingService.getForUserInClub(clubId, bookingId, loginIdentifier);
+        receiptDao.findByBooking(bookingId)
+                .ifPresent(receipt -> receiptDao.delete(receipt.getReceiptId()));
+
+        uploadForBooking(bookingId, booking.getUser().getId(), filename, contentType, data);
+        return getReceiptForBooking(bookingId)
+                .orElseThrow(() -> new InvalidReceiptException("receipt.notfound"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Receipt> getForBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
+        bookingService.getForUserInClub(clubId, bookingId, loginIdentifier);
+        return getReceiptForBooking(bookingId);
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteByBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
+        final Booking booking = bookingService.getForUserInClub(clubId, bookingId, loginIdentifier);
+        return deleteByBookingForUser(bookingId, booking.getUser().getId());
+    }
+
+    @Override
+    @Transactional
     public boolean deleteByBookingForUser(UUID bookingId, UUID userId) {
         var bookingOpt = bookingService.findById(bookingId);
         if (bookingOpt.isEmpty()) {
@@ -203,4 +230,3 @@ public class ReceiptServiceImpl implements ReceiptService {
         return map;
     }
 }
-

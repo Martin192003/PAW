@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, isPlatformBrowser, DatePipe, DecimalPipe } from '@angular/common';
-import { combineLatest } from 'rxjs';
+import { catchError, combineLatest, forkJoin, map, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
@@ -43,9 +43,13 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   reviews: Review[] = [];
   events: Event[] = [];
   bookingDates: string[] = [];
+  loadingBookingDates = false;
   selectedDate = '';
   tablesError?: string;
   reserveSuccess?: string;
+  reservationModalOpen = false;
+  reservedBookingId?: string;
+  reservedBookingClubId?: string;
   fromEvent = false;
   selectedTableId?: string;
 
@@ -54,6 +58,9 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   private reviewsPageSize = 3;
 
   private currentClubId?: string;
+  private availabilityRequestId = 0;
+  private previousBodyOverflow?: string;
+  private previousDocumentOverflow?: string;
 
   private readonly defaultCoords = {
     lat: -34.5891429,
@@ -94,6 +101,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.setReservationModalOpen(false);
     if (this.mapInstance) {
       this.mapInstance.remove();
       this.mapInstance = undefined;
@@ -113,17 +121,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       const queryDate = this.normalizeDate(rawDate);
       this.fromEvent = queryParams.get('fromEvent') === 'true';
 
-      this.bookingDates = this.fromEvent && queryDate
-        ? [queryDate]
-        : this.buildAllowedBookingDates(15);
-
-      if (this.fromEvent) {
-        this.selectedDate = queryDate ?? this.bookingDates[0] ?? '';
-      } else {
-        const fallback = this.bookingDates[0] ?? '';
-        this.selectedDate = (queryDate && this.bookingDates.includes(queryDate)) ? queryDate : fallback;
-      }
-
       if (fragment === 'dd-tables') {
         this.tablesOpen = true;
       }
@@ -135,7 +132,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
         this.loadClubData(id);
       }
 
-      this.loadTables(id, this.selectedDate);
+      this.loadAvailableBookingDates(id, queryDate);
     });
   }
 
@@ -254,8 +251,18 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private loadTables(id: string, date: string): void {
+    if (!date) {
+      this.tables = [];
+      this.selectedTableId = undefined;
+      this.cdr.detectChanges();
+      return;
+    }
+
     this.tablesError = undefined;
     this.reserveSuccess = undefined;
+    this.setReservationModalOpen(false);
+    this.reservedBookingId = undefined;
+    this.reservedBookingClubId = undefined;
     this.clubService.getTables(id, date).subscribe({
       next: t => {
         this.tables = t;
@@ -387,6 +394,56 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     return dates;
   }
 
+  private loadAvailableBookingDates(id: string, queryDate?: string, preserveReserveSuccess = false): void {
+    const requestId = ++this.availabilityRequestId;
+    const candidateDates = this.fromEvent && queryDate
+      ? [queryDate]
+      : this.buildAllowedBookingDates(15);
+
+    this.loadingBookingDates = true;
+    this.tablesError = undefined;
+    if (!preserveReserveSuccess) {
+      this.reserveSuccess = undefined;
+    }
+    this.bookingDates = [];
+    this.selectedDate = '';
+    this.tables = [];
+    this.selectedTableId = undefined;
+    this.cdr.detectChanges();
+
+    if (!candidateDates.length) {
+      this.loadingBookingDates = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    forkJoin(candidateDates.map(date =>
+      this.clubService.getTables(id, date).pipe(
+        map(tables => ({ date, tables })),
+        catchError(() => of({ date, tables: [] as ClubTable[] }))
+      )
+    )).subscribe(results => {
+      if (requestId !== this.availabilityRequestId || id !== this.currentClubId) {
+        return;
+      }
+
+      const availableByDate = new Map(
+        results
+          .filter(result => result.tables.length > 0)
+          .map(result => [result.date, result.tables] as const)
+      );
+
+      this.bookingDates = candidateDates.filter(date => availableByDate.has(date));
+      this.selectedDate = queryDate && this.bookingDates.includes(queryDate)
+        ? queryDate
+        : this.bookingDates[0] ?? '';
+      this.tables = this.selectedDate ? (availableByDate.get(this.selectedDate) ?? []) : [];
+      this.selectedTableId = undefined;
+      this.loadingBookingDates = false;
+      this.cdr.detectChanges();
+    });
+  }
+
   private toIsoDate(date: Date): string {
     const year = date.getFullYear();
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
@@ -414,14 +471,16 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.clubService.reserveTable(
       this.currentClubId,
       this.selectedTableId,
-      this.selectedDate,
-      this.fromEvent
+      this.selectedDate
     ).subscribe({
-      next: () => {
+      next: booking => {
         this.tablesError = undefined;
         this.reserveSuccess = 'Reserva realizada con exito. Revisa tus reservas en tu cuenta.';
+        this.reservedBookingId = booking.id;
+        this.reservedBookingClubId = this.currentClubId;
+        this.setReservationModalOpen(true);
         this.selectedTableId = undefined;
-        this.loadTables(this.currentClubId!, this.selectedDate);
+        this.cdr.detectChanges();
       },
       error: err => {
         this.reserveSuccess = undefined;
@@ -434,6 +493,56 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  goToReservedBooking(): void {
+    if (!this.reservedBookingClubId || !this.reservedBookingId) {
+      return;
+    }
+
+    this.setReservationModalOpen(false);
+    this.router.navigate(['/bookings', this.reservedBookingClubId, this.reservedBookingId]);
+  }
+
+  refreshAfterReservation(): void {
+    this.setReservationModalOpen(false);
+    if (isPlatformBrowser(this.platformId)) {
+      window.location.reload();
+      return;
+    }
+
+    if (this.currentClubId) {
+      this.loadAvailableBookingDates(this.currentClubId, this.selectedDate, true);
+    }
+  }
+
+  private setReservationModalOpen(open: boolean): void {
+    this.reservationModalOpen = open;
+
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    if (open) {
+      if (this.previousBodyOverflow === undefined) {
+        this.previousBodyOverflow = document.body.style.overflow;
+      }
+      if (this.previousDocumentOverflow === undefined) {
+        this.previousDocumentOverflow = document.documentElement.style.overflow;
+      }
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      return;
+    }
+
+    if (this.previousBodyOverflow !== undefined) {
+      document.body.style.overflow = this.previousBodyOverflow;
+      this.previousBodyOverflow = undefined;
+    }
+    if (this.previousDocumentOverflow !== undefined) {
+      document.documentElement.style.overflow = this.previousDocumentOverflow;
+      this.previousDocumentOverflow = undefined;
+    }
   }
 
   previousReviewsPage(): void {

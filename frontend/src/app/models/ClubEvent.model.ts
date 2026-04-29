@@ -5,6 +5,7 @@ export interface ClubEvent {
   date: string,
   photoId: string,
   clubName: string;
+  clubId?: string;
   photoUrl?: string;
 
   links?:  Record<string, string>

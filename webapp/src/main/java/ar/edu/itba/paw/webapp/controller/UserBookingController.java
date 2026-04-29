@@ -46,18 +46,15 @@ public class UserBookingController {
     public String reserve(@PathVariable UUID clubId,
                           @RequestParam UUID tableId,
                           @RequestParam String date,
-                          @RequestParam(value = "fromEvent", defaultValue = "false") String fromEventStr,
                           Principal principal,
                           RedirectAttributes ra) {
-
-        boolean fromEvent = "true".equals(fromEventStr);
 
         final String username = Optional.ofNullable(principal)
                 .map(Principal::getName)
                 .orElseThrow(() -> new IllegalArgumentException("error.user.notAuthenticated"));
 
         try {
-            Booking booking = bookingService.reserveTableForClub(clubId, tableId, LocalDate.parse(date), username, fromEvent);
+            Booking booking = bookingService.createForClub(clubId, tableId, LocalDate.parse(date), username);
             ra.addFlashAttribute("reservationSent", true);
             return "redirect:/booking?bookingId=" + booking.getBookingId();
         } catch (InvalidDateRangeException | ValidationException e) {

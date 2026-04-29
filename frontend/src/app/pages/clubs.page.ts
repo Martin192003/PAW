@@ -1,8 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EventService } from '../services/event.service';
 import { ClubEvent } from '../models/ClubEvent.model';
@@ -16,7 +16,7 @@ type ClubListItem = Club & { _hasError?: boolean };
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './clubs.page.html',
 })
-export class ClubsPage implements OnInit {
+export class ClubsPage implements OnInit, OnDestroy {
   clubs: ClubListItem[] = [];
   currentPage = 1;
   pageSize = 10;
@@ -24,6 +24,12 @@ export class ClubsPage implements OnInit {
 
   upcomingEvents: ClubEvent[] = [];
   currentEventIndex = 0;
+  eventAvailabilityModalOpen = false;
+  unavailableEventName = '';
+  unavailableClubName = '';
+  checkingEventId?: string;
+  private previousBodyOverflow?: string;
+  private previousDocumentOverflow?: string;
 
   readonly filterOptions = {
     zones: ['ZONA_NORTE', 'ZONA_OESTE', 'ZONA_SUR', 'ZONA_CABA'],
@@ -50,12 +56,17 @@ export class ClubsPage implements OnInit {
   constructor(
     private clubService: ClubService,
     private eventService: EventService,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadClubs();
     this.loadUpcomingEvents();
+  }
+
+  ngOnDestroy(): void {
+    this.setEventAvailabilityModalOpen(false);
   }
 
   loadClubs() {
@@ -162,6 +173,90 @@ export class ClubsPage implements OnInit {
         console.error('Error loading events', err);
       }
     });
+  }
+
+  onEventClick(event: ClubEvent): void {
+    const clubId = event.clubId ?? this.extractClubId(event);
+    const eventDate = this.normalizeEventDate(event.date);
+
+    if (!clubId || !eventDate) {
+      this.openNoTablesModal(event);
+      return;
+    }
+
+    this.checkingEventId = event.eventId;
+    this.clubService.getTables(clubId, eventDate).subscribe({
+      next: tables => {
+        this.checkingEventId = undefined;
+        if ((tables ?? []).length === 0) {
+          this.openNoTablesModal(event);
+          return;
+        }
+
+        this.router.navigate(['/clubs', clubId], {
+          queryParams: {
+            date: eventDate,
+            fromEvent: 'true'
+          },
+          fragment: 'dd-tables'
+        });
+      },
+      error: () => {
+        this.checkingEventId = undefined;
+        this.openNoTablesModal(event);
+      }
+    });
+  }
+
+  closeEventAvailabilityModal(): void {
+    this.setEventAvailabilityModalOpen(false);
+    this.unavailableEventName = '';
+    this.unavailableClubName = '';
+  }
+
+  private openNoTablesModal(event: ClubEvent): void {
+    this.unavailableEventName = event.name;
+    this.unavailableClubName = event.clubName;
+    this.setEventAvailabilityModalOpen(true);
+    this.cdr.detectChanges();
+  }
+
+  private extractClubId(event: ClubEvent): string | undefined {
+    return event.links?.['club']?.split('/clubs/')[1];
+  }
+
+  private normalizeEventDate(raw: string): string | undefined {
+    const date = (raw || '').slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined;
+  }
+
+  private setEventAvailabilityModalOpen(open: boolean): void {
+    this.eventAvailabilityModalOpen = open;
+
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    if (open) {
+      if (this.previousBodyOverflow === undefined) {
+        this.previousBodyOverflow = document.body.style.overflow;
+      }
+      if (this.previousDocumentOverflow === undefined) {
+        this.previousDocumentOverflow = document.documentElement.style.overflow;
+      }
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      return;
+    }
+
+    if (this.previousBodyOverflow !== undefined) {
+      document.body.style.overflow = this.previousBodyOverflow;
+      this.previousBodyOverflow = undefined;
+    }
+    if (this.previousDocumentOverflow !== undefined) {
+      document.documentElement.style.overflow = this.previousDocumentOverflow;
+      this.previousDocumentOverflow = undefined;
+    }
   }
 
   @ViewChild('carouselTrack') carouselTrack!: ElementRef<HTMLDivElement>;

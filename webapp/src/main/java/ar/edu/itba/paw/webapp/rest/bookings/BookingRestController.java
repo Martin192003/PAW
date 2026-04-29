@@ -1,213 +1,210 @@
 package ar.edu.itba.paw.webapp.rest.bookings;
 
 import ar.edu.itba.paw.model.Booking;
-import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.ErrorDto;
+import ar.edu.itba.paw.model.Receipt;
+import ar.edu.itba.paw.model.dto.BookingCreateRequestDto;
 import ar.edu.itba.paw.model.exceptions.BadRequestException;
-import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
-import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
-import ar.edu.itba.paw.model.exceptions.ValidationException;
+import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.service.BookingService;
-import ar.edu.itba.paw.service.UserService;
+import ar.edu.itba.paw.service.ReceiptService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.Context;
-import java.time.LocalDate;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.net.URI;
 import java.util.UUID;
 
-@Path("/clubs/{clubId}/reserve")
+@Path("/clubs/{clubId}/bookings")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class BookingRestController {
 
     private final BookingService bookingService;
-    private final UserService userService;
+    private final ReceiptService receiptService;
+    private final BookingDtoAssembler bookingDtoAssembler;
+    private final ReceiptDtoAssembler receiptDtoAssembler;
+
+    @Context
+    private UriInfo uriInfo;
+
+    @Context
+    private HttpServletRequest request;
 
     @Autowired
-    public BookingRestController(final BookingService bookingService, final UserService userService) {
+    public BookingRestController(final BookingService bookingService,
+                                 final ReceiptService receiptService,
+                                 final BookingDtoAssembler bookingDtoAssembler,
+                                 final ReceiptDtoAssembler receiptDtoAssembler) {
         this.bookingService = bookingService;
-        this.userService = userService;
+        this.receiptService = receiptService;
+        this.bookingDtoAssembler = bookingDtoAssembler;
+        this.receiptDtoAssembler = receiptDtoAssembler;
     }
 
     @POST
-    public Response reserve(@PathParam("clubId") String clubId,
-                           ReserveRequest body,
-                            @Context SecurityContext securityContext) {
-        UUID clubUuid;
-        try {
-            clubUuid = UUID.fromString(clubId);
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(error("clubId invalido"))
-                    .build();
-        }
-
-        final String loginIdentifier = resolveLoginIdentifier(securityContext);
-        if (loginIdentifier == null || loginIdentifier.isBlank()) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(error("Debes iniciar sesion para reservar"))
-                    .build();
-        }
-
+    public Response createBooking(@PathParam("clubId") UUID clubId,
+                                  BookingCreateRequestDto body,
+                                  @Context SecurityContext securityContext) {
         if (body == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(error("Body requerido"))
-                    .build();
+            throw new BadRequestException("Body requerido");
         }
 
-        final String tableId = body.getTableId();
-        final String date = body.getDate();
-        final boolean fromEvent = Boolean.TRUE.equals(body.getFromEvent());
+        final Booking booking = bookingService.createForClub(
+                clubId,
+                body.getTableId(),
+                body.getDate(),
+                authenticatedLoginIdentifier(securityContext)
+        );
 
-        if (tableId == null || tableId.isBlank() || date == null || date.isBlank()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(error("tableId y date son requeridos"))
-                    .build();
+        final URI location = uriInfo.getAbsolutePathBuilder()
+                .path(booking.getBookingId().toString())
+                .build();
+
+        return Response.created(location)
+                .entity(bookingDtoAssembler.toDto(uriInfo, clubId, booking))
+                .build();
+    }
+
+    @GET
+    @Path("/{bookingId}")
+    public Response getBooking(@PathParam("clubId") UUID clubId,
+                               @PathParam("bookingId") UUID bookingId,
+                               @Context SecurityContext securityContext) {
+        final Booking booking = bookingService.getForUserInClub(
+                clubId,
+                bookingId,
+                authenticatedLoginIdentifier(securityContext)
+        );
+
+        return Response.ok(bookingDtoAssembler.toDto(uriInfo, clubId, booking)).build();
+    }
+
+    @DELETE
+    @Path("/{bookingId}")
+    public Response cancelBooking(@PathParam("clubId") UUID clubId,
+                                  @PathParam("bookingId") UUID bookingId,
+                                  @Context SecurityContext securityContext) {
+        bookingService.cancelForUserInClub(
+                clubId,
+                bookingId,
+                authenticatedLoginIdentifier(securityContext)
+        );
+
+        return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("/{bookingId}/receipt")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response putReceipt(@PathParam("clubId") UUID clubId,
+                               @PathParam("bookingId") UUID bookingId,
+                               @Context SecurityContext securityContext) {
+        final String loginIdentifier = authenticatedLoginIdentifier(securityContext);
+        final boolean existed = receiptService.getForBookingInClub(clubId, bookingId, loginIdentifier).isPresent();
+        final Part filePart = filePart();
+
+        final Receipt receipt = receiptService.putForBookingInClub(
+                clubId,
+                bookingId,
+                loginIdentifier,
+                filename(filePart),
+                filePart.getContentType(),
+                bytes(filePart)
+        );
+
+        final URI location = uriInfo.getAbsolutePathBuilder().build();
+        final Response.ResponseBuilder response = existed ? Response.ok() : Response.created(location);
+
+        return response
+                .entity(receiptDtoAssembler.toDto(uriInfo, clubId, receipt))
+                .build();
+    }
+
+    @GET
+    @Path("/{bookingId}/receipt")
+    @Produces({"image/jpeg", "image/png", "image/webp"})
+    public Response getReceipt(@PathParam("clubId") UUID clubId,
+                               @PathParam("bookingId") UUID bookingId,
+                               @Context SecurityContext securityContext) {
+        final Receipt receipt = receiptService.getForBookingInClub(
+                        clubId,
+                        bookingId,
+                        authenticatedLoginIdentifier(securityContext)
+                )
+                .orElseThrow(() -> new NotFoundException("receipt.notfound"));
+
+        return Response.ok(receipt.getData())
+                .type(receipt.getContentType())
+                .header("Content-Disposition", "inline; filename=\"" + safeFilename(receipt.getFilename()) + "\"")
+                .build();
+    }
+
+    @DELETE
+    @Path("/{bookingId}/receipt")
+    public Response deleteReceipt(@PathParam("clubId") UUID clubId,
+                                  @PathParam("bookingId") UUID bookingId,
+                                  @Context SecurityContext securityContext) {
+        final boolean deleted = receiptService.deleteByBookingInClub(
+                clubId,
+                bookingId,
+                authenticatedLoginIdentifier(securityContext)
+        );
+
+        if (!deleted) {
+            throw new NotFoundException("receipt.notfound");
         }
+        return Response.noContent().build();
+    }
 
-        final UUID tableUuid;
+    private String authenticatedLoginIdentifier(SecurityContext securityContext) {
+        if (securityContext == null || securityContext.getUserPrincipal() == null) {
+            throw new NotAuthorizedException("Authentication required");
+        }
+        return securityContext.getUserPrincipal().getName();
+    }
+
+    private Part filePart() {
         try {
-            tableUuid = UUID.fromString(tableId);
-        } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(error("tableId invalido"))
-                    .build();
+            Part filePart = request.getPart("file");
+            if (filePart == null) {
+                throw new BadRequestException("Missing multipart part 'file'");
+            }
+            return filePart;
+        } catch (IOException | ServletException e) {
+            throw new BadRequestException("Invalid multipart request", e);
         }
+    }
 
-        final LocalDate bookingDate;
+    private byte[] bytes(Part part) {
         try {
-            bookingDate = LocalDate.parse(date);
-        } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(error("date invalida, formato esperado yyyy-MM-dd"))
-                    .build();
-        }
-
-        final User user = findAuthenticatedUser(loginIdentifier);
-        if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(error("Usuario no autenticado"))
-                    .build();
-        }
-
-        try {
-            final Booking booking = bookingService.reserveTableForClub(clubUuid, tableUuid, bookingDate, loginIdentifier, fromEvent);
-            return Response.status(Response.Status.CREATED)
-                    .entity(new ReserveResponse(booking.getBookingId().toString(), "Reserva creada correctamente"))
-                    .build();
-        } catch (InvalidDateRangeException | ValidationException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(error(errorMessageOrDefault(e, "Solicitud invalida")))
-                    .build();
-        } catch (BadRequestException e) {
-            return Response.status(Response.Status.CONFLICT)
-                    .entity(error(errorMessageOrDefault(e, "No se pudo completar la reserva")))
-                    .build();
-        } catch (UnauthorizedException e) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(error("No tienes permisos para reservar esta mesa"))
-                    .build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(error(errorMessageOrDefault(e, "No se pudo completar la reserva")))
-                    .build();
+            return part.getInputStream().readAllBytes();
+        } catch (IOException e) {
+            throw new BadRequestException("Unable to read uploaded file", e);
         }
     }
 
-    private static ErrorDto error(String text) {
-        return new ErrorDto(text);
+    private String filename(Part part) {
+        String filename = part.getSubmittedFileName();
+        return filename == null || filename.isBlank() ? "receipt" : filename;
     }
 
-    private static String errorMessageOrDefault(Exception e, String fallback) {
-        return e.getMessage() == null || e.getMessage().isBlank() ? fallback : e.getMessage();
-    }
-
-    private String resolveLoginIdentifier(SecurityContext securityContext) {
-        if (securityContext != null && securityContext.getUserPrincipal() != null) {
-            return securityContext.getUserPrincipal().getName();
-        }
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            return null;
-        }
-
-        Object principal = auth.getPrincipal();
-        if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername();
-        }
-
-        return principal != null ? principal.toString() : null;
-    }
-
-    private User findAuthenticatedUser(String loginIdentifier) {
-        User user = userService.findByUserName(loginIdentifier);
-        if (user == null) {
-            user = userService.findByEmail(loginIdentifier);
-        }
-        return user;
-    }
-
-    public static class ReserveRequest {
-        private String tableId;
-        private String date;
-        private Boolean fromEvent;
-
-        public String getTableId() {
-            return tableId;
-        }
-
-        public void setTableId(String tableId) {
-            this.tableId = tableId;
-        }
-
-        public String getDate() {
-            return date;
-        }
-
-        public void setDate(String date) {
-            this.date = date;
-        }
-
-        public Boolean getFromEvent() {
-            return fromEvent;
-        }
-
-        public void setFromEvent(Boolean fromEvent) {
-            this.fromEvent = fromEvent;
-        }
-    }
-
-    public static class ReserveResponse {
-        private String bookingId;
-        private String message;
-
-        public ReserveResponse() {
-        }
-
-        public ReserveResponse(String bookingId, String message) {
-            this.bookingId = bookingId;
-            this.message = message;
-        }
-
-        public String getBookingId() {
-            return bookingId;
-        }
-
-        public String getMessage() {
-            return message;
-        }
+    private String safeFilename(String filename) {
+        return filename == null || filename.isBlank() ? "receipt" : filename.replace("\"", "");
     }
 }
-
