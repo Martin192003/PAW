@@ -3,11 +3,13 @@ package ar.edu.itba.paw.webapp.rest.users;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.PasswordResetDto;
 import ar.edu.itba.paw.model.dto.PasswordResetRequestDto;
+import ar.edu.itba.paw.model.dto.PasswordResetTokenDto;
 import ar.edu.itba.paw.model.dto.ResendVerificationRequestDto;
 import ar.edu.itba.paw.model.dto.ReviewDto;
 import ar.edu.itba.paw.model.dto.UserCreateRequestDto;
 import ar.edu.itba.paw.model.dto.UserDto;
 import ar.edu.itba.paw.model.dto.UserVerificationRequestDto;
+import ar.edu.itba.paw.service.PasswordResetJobService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import org.slf4j.Logger;
@@ -47,6 +49,9 @@ public class UserRestController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PasswordResetJobService passwordResetJobService;
 
     @Autowired
     private ReviewService reviewService;
@@ -420,8 +425,54 @@ public class UserRestController {
                     .build();
         }
 
-        userService.requestPasswordReset(body.getEmail().trim());
+        passwordResetJobService.requestPasswordReset(body.getEmail().trim());
         return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/{userId}/password-reset-tokens")
+    public Response createPasswordResetToken(@PathParam("userId") String userId) {
+        UUID id;
+        try {
+            id = UUID.fromString(userId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("userId invalido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        Optional<User> maybe = userService.findById(id);
+        if (maybe.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(message("Usuario no encontrado"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        String authName = auth.getName();
+        User authUser = userService.findByUserName(authName);
+        if (authUser == null) {
+            authUser = userService.findByEmail(authName);
+        }
+
+        if (authUser == null || !authUser.getId().equals(id)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(message("Forbidden"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        String token = userService.createPasswordResetToken(id);
+        return Response.ok(new PasswordResetTokenDto(token)).build();
     }
 
     @POST
