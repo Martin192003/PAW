@@ -3,6 +3,7 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 import { User } from '../models/user.model';
 import { AuthStateService } from '../services/auth-state.service';
 import { UserService } from '../services/user.service';
@@ -37,7 +38,9 @@ export class ProfilePage implements OnInit {
   activeField: EditableProfileField | null = null;
   draftValue = '';
   errorMessage = '';
+  passwordResetError = '';
   saving = false;
+  creatingPasswordResetToken = false;
 
   constructor(
     private readonly authState: AuthStateService,
@@ -85,6 +88,28 @@ export class ProfilePage implements OnInit {
     this.activeField = field;
     this.draftValue = this.user[field] ?? '';
     this.errorMessage = '';
+  }
+
+  goToPasswordReset(): void {
+    if (!this.user || this.creatingPasswordResetToken) {
+      return;
+    }
+
+    this.creatingPasswordResetToken = true;
+    this.passwordResetError = '';
+
+    this.userService.createPasswordResetToken(this.user.userId).pipe(
+      finalize(() => {
+        this.creatingPasswordResetToken = false;
+      })
+    ).subscribe({
+      next: ({ token }) => {
+        this.router.navigate(['/reset-password'], { queryParams: { token } });
+      },
+      error: (error: HttpErrorResponse) => {
+        this.passwordResetError = this.extractPasswordResetError(error);
+      }
+    });
   }
 
   closeEditor(): void {
@@ -187,5 +212,21 @@ export class ProfilePage implements OnInit {
     }
 
     return fallback;
+  }
+
+  private extractPasswordResetError(error: HttpErrorResponse): string {
+    if (error.status === 0) {
+      return 'No pudimos conectar con el servidor.';
+    }
+
+    if (error.status === 401 || error.status === 403) {
+      return 'Tu sesion no es valida. Volve a iniciar sesion.';
+    }
+
+    if (error.status >= 500) {
+      return 'Error interno del servidor al preparar el reset de contrasena.';
+    }
+
+    return this.extractErrorMessage(error) || 'No pudimos preparar el reset de contrasena.';
   }
 }

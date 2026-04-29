@@ -60,10 +60,20 @@
         <div class="grid grid-cols-[92px_minmax(0,1fr)_42px] sm:grid-cols-[140px_minmax(0,1fr)_44px] items-center gap-3 sm:gap-4">
           <span class="text-white font-bold text-[1.05rem] sm:text-[1.15rem] lg:text-[1.25rem]">Password:</span>
           <span class="text-white text-[1rem] sm:text-[1.1rem] lg:text-[1.15rem] tracking-[0.18em]">********</span>
-          <button type="button" aria-label="Edit password" disabled class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white/60 shadow-[0_0_12px_rgba(156,39,176,0.35)] flex items-center justify-center cursor-pointer text-base sm:text-lg opacity-60">
-            <i class="fa-solid fa-key"></i>
+          <button
+            type="button"
+            (click)="goToPasswordReset()"
+            [disabled]="creatingPasswordResetToken"
+            aria-label="Reset password"
+            class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center cursor-pointer text-base sm:text-lg hover:scale-105 transition-transform disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
+          >
+            <i class="fa-solid" [ngClass]="creatingPasswordResetToken ? 'fa-spinner fa-spin' : 'fa-key'"></i>
           </button>
         </div>
+
+        <p *ngIf="passwordResetError" class="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {{ passwordResetError }}
+        </p>
       </div>
     </div>
 
@@ -117,4 +127,3 @@
     </form>
   </div>
 </div>
-

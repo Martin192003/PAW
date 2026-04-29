@@ -27,6 +27,10 @@ export type UserUpdateResult = {
   token: string | null;
 };
 
+export type PasswordResetTokenResult = {
+  token: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
@@ -80,6 +84,10 @@ export class UserService {
     return this.http.post(`${this.apiUrl}/users/password-reset-requests`, { email }).pipe(
       map(() => undefined)
     );
+  }
+
+  createPasswordResetToken(userId: string): Observable<PasswordResetTokenResult> {
+    return this.http.post<PasswordResetTokenResult>(`${this.apiUrl}/users/${userId}/password-reset-tokens`, {});
   }
 
   resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<void> {

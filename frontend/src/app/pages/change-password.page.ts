@@ -5,6 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { UserService } from '../services/user.service';
+import { AuthStateService } from '../services/auth-state.service';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -20,6 +21,7 @@ export class ChangePasswordPage implements OnInit {
   submittingReset = false;
   showForgotModal = false;
   showResetModal = false;
+  useLoggedUserEmail = false;
 
   forgotError = '';
   resetError = '';
@@ -35,6 +37,7 @@ export class ChangePasswordPage implements OnInit {
     private readonly router: Router,
     private readonly location: Location,
     private readonly userService: UserService,
+    private readonly authState: AuthStateService,
     private readonly cdr: ChangeDetectorRef,
     private readonly ngZone: NgZone,
   ) {
@@ -51,6 +54,11 @@ export class ChangePasswordPage implements OnInit {
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
       this.token = params.get('token');
+      const loggedUserEmail = this.authState.getUser()?.email ?? '';
+      this.useLoggedUserEmail = !this.token && params.get('source') === 'profile' && loggedUserEmail.trim().length > 0;
+      if (this.useLoggedUserEmail) {
+        this.forgotForm.patchValue({ email: loggedUserEmail });
+      }
       this.showResetModal = false;
       this.resetError = '';
       this.resetCompleted = false;
@@ -153,7 +161,7 @@ export class ChangePasswordPage implements OnInit {
   confirmForgotModal(): void {
     this.showForgotModal = false;
     this.forgotSuccess = '';
-    this.router.navigate(['/login']);
+    this.router.navigate([this.useLoggedUserEmail ? '/profile' : '/login']);
   }
 
   confirmResetModal(): void {

@@ -185,6 +185,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    public String createPasswordResetToken(UUID userId) {
+        User user = userDao.findById(userId).orElseThrow(() ->
+                new IllegalArgumentException("User not found")
+        );
+
+        String resetToken = UUID.randomUUID().toString();
+        userDao.updateResetPasswordToken(user.getId(), resetToken);
+        return resetToken;
+    }
+
+    @Override
+    @Transactional
     public Optional<User> resetPassword(String token, String newPassword) {
 
         Optional<User> maybeUser = userDao.findByResetPasswordToken(token);
