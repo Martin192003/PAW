@@ -32,7 +32,7 @@ public class ClubJpaDao implements ClubDao {
         final Club club = new Club(
                 name,
                 location,
-                null,
+                BigDecimal.ONE,
                 null,
                 priceRange,
                 description,

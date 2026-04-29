@@ -7,6 +7,7 @@ import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ReviewsDao;
 import ar.edu.itba.paw.persistence.UserDao;
 import ar.edu.itba.paw.model.Role;
+import ar.edu.itba.paw.model.exceptions.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -193,6 +194,10 @@ public class UserServiceImpl implements UserService {
 
         User user = maybeUser.get();
 
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new ValidationException("La contraseña no puede ser igual a la anterior");
+        }
+
         user.setPasswordHash(passwordEncoder.encode(newPassword));
 
         user.setResetPasswordToken(null);
@@ -273,6 +278,10 @@ public class UserServiceImpl implements UserService {
     public boolean changePasswordForAuthenticatedUser(UUID userId, String newPassword) {
         User user = userDao.findById(userId).orElse(null);
         if (user == null) {
+            return false;
+        }
+
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
             return false;
         }
 

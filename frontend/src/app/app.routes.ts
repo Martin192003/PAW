@@ -20,6 +20,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/register.page').then(m => m.RegisterPage)
   },
   {
+    path: 'forgot-password',
+    loadComponent: () => import('./pages/change-password.page').then(m => m.ChangePasswordPage)
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () => import('./pages/change-password.page').then(m => m.ChangePasswordPage)
+  },
+  {
     path: 'verify-mail',
     loadComponent: () => import('./pages/verify-mail.page').then(m => m.VerifyMailPage)
   },

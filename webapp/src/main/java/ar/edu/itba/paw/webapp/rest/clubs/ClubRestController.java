@@ -193,9 +193,7 @@ public class ClubRestController {
                     .build();
         }
 
-        String email = securityContext.getUserPrincipal().getName();
-        User user = userService.findByEmail(email);
-
+        User user = resolveAuthenticatedUser(securityContext);
         if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
@@ -885,5 +883,4 @@ public class ClubRestController {
                 .build();
     }
 }
-
 

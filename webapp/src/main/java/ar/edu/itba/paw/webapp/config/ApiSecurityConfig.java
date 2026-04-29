@@ -36,6 +36,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
                 .antMatchers("/api/photos/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/clubs").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs/**/cover").permitAll()
                 .antMatchers(HttpMethod.PUT, "/api/clubs/**/cover").permitAll()
@@ -47,6 +48,8 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/users/verification-requests").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/users/verifications").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/verifications").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/password-reset-requests").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/password-resets").permitAll()
                 .anyRequest().authenticated().and()
                 .addFilterBefore(jwtAuthenticationFilter(), AnonymousAuthenticationFilter.class);
     }

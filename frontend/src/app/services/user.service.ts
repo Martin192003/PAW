@@ -75,4 +75,17 @@ export class UserService {
   resendVerification(payload: ResendVerificationRequest): Observable<ApiMessageResponse> {
     return this.http.post<ApiMessageResponse>(`${this.apiUrl}/users/verification-requests`, payload);
   }
+
+  requestPasswordReset(email: string): Observable<void> {
+    return this.http.post(`${this.apiUrl}/users/password-reset-requests`, { email }).pipe(
+      map(() => undefined)
+    );
+  }
+
+  resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<void> {
+    const params = new HttpParams().set('token', token);
+    return this.http.post(`${this.apiUrl}/users/password-resets`, { newPassword, confirmationPassword }, { params }).pipe(
+      map(() => undefined)
+    );
+  }
 }
