@@ -13,6 +13,7 @@ public final class ReviewMapper {
         ReviewDto dto = new ReviewDto();
         dto.setReviewId(review.getReviewId());
         dto.setUserId(review.getUser() != null ? review.getUser().getId() : null);
+        dto.setUsername(review.getUser() != null ? review.getUser().getUsername() : null);
         dto.setClubId(review.getClub() != null ? review.getClub().getClubId() : null);
         dto.setRating(review.getRating());
         dto.setDescription(review.getDescription());
