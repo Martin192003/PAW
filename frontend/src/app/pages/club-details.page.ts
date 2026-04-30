@@ -14,12 +14,15 @@ import { CommonModule, isPlatformBrowser, DatePipe, DecimalPipe } from '@angular
 import { catchError, combineLatest, forkJoin, map, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ClubService } from '../services/club.service';
+import { ReviewService } from '../services/review.service';
+import { AuthStateService } from '../services/auth-state.service';
 import { Club } from '../models/club.model';
 import { ClubPhoto } from '../models/club-photo.model';
 import { Product } from '../models/product.model';
 import { ClubTable } from '../models/club-table.model';
 import { Review } from '../models/review.model';
 import { Event } from '../models/event.model';
+import { User } from '../models/user.model';
 
 @Component({
   standalone: true,
@@ -57,6 +60,21 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   reviewsTotalPages = 1;
   private reviewsPageSize = 3;
 
+  // Estado del usuario actual y de su review (si tiene una)
+  currentUser: User | null = null;
+  isLoggedIn = false;
+  myReview?: Review;
+
+  // Estado del formulario de review (crear / editar)
+  reviewFormOpen = false;
+  reviewFormMode: 'create' | 'edit' = 'create';
+  reviewFormRating = 0;
+  reviewFormDescription = '';
+  reviewFormSubmitting = false;
+  reviewFormError?: string;
+  reviewSuccessMessage?: string;
+  reviewDeleting = false;
+
   private currentClubId?: string;
   private availabilityRequestId = 0;
   private previousBodyOverflow?: string;
@@ -73,6 +91,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private clubService: ClubService,
+    private reviewService: ReviewService,
+    private authState: AuthStateService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: object
@@ -109,6 +129,20 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Estado del usuario logueado para condicionar UI de reviews
+    this.currentUser = this.authState.getUser();
+    this.authState.isLoggedIn$.subscribe(logged => {
+      this.isLoggedIn = logged;
+      this.currentUser = logged ? this.authState.getUser() : null;
+      if (!logged) {
+        this.myReview = undefined;
+        this.closeReviewForm();
+      } else if (this.currentClubId) {
+        this.refreshMyReview(this.currentClubId);
+      }
+      this.cdr.detectChanges();
+    });
+
     combineLatest([
       this.route.paramMap,
       this.route.queryParamMap,
@@ -569,16 +603,152 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   private loadReviews(): void {
     if (!this.currentClubId) return;
 
-    this.clubService.getReviewsPaginated(this.currentClubId, this.reviewsCurrentPage - 1, this.reviewsPageSize).subscribe({
-      next: (response: any) => {
-        this.reviews = Array.isArray(response) ? response : (response?.content ?? []);
-        this.reviewsTotalPages = response?.totalPages ?? 1;
+    const clubId = this.currentClubId;
+    this.reviewService.listByClub(clubId, this.reviewsCurrentPage - 1, this.reviewsPageSize).subscribe({
+      next: ({ reviews, total }) => {
+        this.reviews = reviews;
+        const pages = Math.max(1, Math.ceil(total / this.reviewsPageSize));
+        this.reviewsTotalPages = pages;
+        this.refreshMyReview(clubId);
         this.cdr.detectChanges();
       },
       error: err => {
         console.warn('reviews error', err);
         this.reviews = [];
         this.reviewsTotalPages = 1;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * Detecta si el usuario logueado ya tiene una review en este club.
+   * Como el endpoint REST de reviews devuelve userId, comparamos por id.
+   * Si no encontramos en la pagina actual, buscamos en todas las paginas.
+   */
+  private refreshMyReview(clubId: string): void {
+    const user = this.currentUser;
+    if (!user) {
+      this.myReview = undefined;
+      return;
+    }
+
+    // Primero buscamos en la pagina cargada
+    const inCurrentPage = this.reviews.find(r => r.userId === user.userId);
+    if (inCurrentPage) {
+      this.myReview = inCurrentPage;
+      return;
+    }
+
+    // Si no esta en la pagina actual, pedimos hasta encontrarla (sin spamear: hasta 5 paginas).
+    this.reviewService.listByClub(clubId, 0, 50).subscribe({
+      next: ({ reviews }) => {
+        this.myReview = reviews.find(r => r.userId === user.userId);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // mantenemos el valor previo
+      }
+    });
+  }
+
+  isMyReview(review: Review): boolean {
+    return !!this.currentUser && review.userId === this.currentUser.userId;
+  }
+
+  openCreateReviewForm(): void {
+    if (!this.isLoggedIn || this.myReview) return;
+    this.reviewFormMode = 'create';
+    this.reviewFormRating = 0;
+    this.reviewFormDescription = '';
+    this.reviewFormError = undefined;
+    this.reviewSuccessMessage = undefined;
+    this.reviewFormOpen = true;
+  }
+
+  openEditReviewForm(review: Review): void {
+    if (!this.isMyReview(review)) return;
+    this.reviewFormMode = 'edit';
+    this.reviewFormRating = review.rating ?? 0;
+    this.reviewFormDescription = review.description ?? '';
+    this.reviewFormError = undefined;
+    this.reviewSuccessMessage = undefined;
+    this.reviewFormOpen = true;
+  }
+
+  closeReviewForm(): void {
+    this.reviewFormOpen = false;
+    this.reviewFormError = undefined;
+  }
+
+  setReviewFormRating(rating: number): void {
+    if (rating < 1 || rating > 5) return;
+    this.reviewFormRating = rating;
+  }
+
+  submitReviewForm(): void {
+    if (!this.currentClubId || this.reviewFormSubmitting) return;
+
+    if (this.reviewFormRating < 1 || this.reviewFormRating > 5) {
+      this.reviewFormError = 'Tenes que elegir un puntaje entre 1 y 5.';
+      return;
+    }
+
+    const payload = {
+      rating: this.reviewFormRating,
+      description: this.reviewFormDescription?.trim() || undefined,
+      fromTableGuest: false
+    };
+
+    this.reviewFormSubmitting = true;
+    this.reviewFormError = undefined;
+
+    const request$ = this.reviewFormMode === 'create'
+      ? this.reviewService.create(this.currentClubId, payload)
+      : this.reviewService.update(this.currentClubId, payload);
+
+    request$.subscribe({
+      next: () => {
+        this.reviewFormSubmitting = false;
+        this.reviewSuccessMessage = this.reviewFormMode === 'create'
+          ? 'Tu reseña fue publicada.'
+          : 'Tu reseña fue actualizada.';
+        this.reviewFormOpen = false;
+        this.reviewsCurrentPage = 1;
+        this.loadReviews();
+      },
+      error: err => {
+        this.reviewFormSubmitting = false;
+        if (err?.status === 401) {
+          this.reviewFormError = 'Tenes que iniciar sesión para dejar una reseña.';
+        } else if (err?.status === 409) {
+          this.reviewFormError = 'Ya tenés una reseña para este club. Editala en lugar de crear una nueva.';
+        } else {
+          this.reviewFormError = err?.error?.message || 'No se pudo guardar la reseña.';
+        }
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  deleteMyReview(): void {
+    if (!this.currentClubId || !this.myReview || this.reviewDeleting) return;
+    if (isPlatformBrowser(this.platformId) && !window.confirm('¿Seguro que querés borrar tu reseña?')) {
+      return;
+    }
+
+    this.reviewDeleting = true;
+    this.reviewService.delete(this.currentClubId).subscribe({
+      next: () => {
+        this.reviewDeleting = false;
+        this.myReview = undefined;
+        this.reviewSuccessMessage = 'Tu reseña fue borrada.';
+        this.reviewsCurrentPage = 1;
+        this.loadReviews();
+      },
+      error: err => {
+        this.reviewDeleting = false;
+        this.reviewFormError = err?.error?.message || 'No se pudo borrar la reseña.';
         this.cdr.detectChanges();
       }
     });
