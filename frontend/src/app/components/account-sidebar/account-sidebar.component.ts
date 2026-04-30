@@ -27,7 +27,7 @@ export class SideBarComponent {
     { key: 'clubs', label: 'My Clubs', route: '/admin/activity' },
     { key: 'clubsReservations', label: 'Clubs Reservations', route: '/admin/bookings' },
     { key: 'myReservations', label: 'My Reservations', route: '/bookings' },
-    { key: 'reviews', label: 'Reviews' }
+    { key: 'reviews', label: 'Reviews', route: '/profile/reviews' }
   ];
 
   isActive(section: SideBarSection): boolean {

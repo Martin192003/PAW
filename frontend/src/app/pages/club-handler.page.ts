@@ -10,6 +10,7 @@ import {
   ProductPayload,
   TablePayload
 } from '../services/club.service';
+import { ReviewService } from '../services/review.service';
 import { SideBarComponent } from '../components/account-sidebar/account-sidebar.component';
 import { Club } from '../models/club.model';
 import { Product } from '../models/product.model';
@@ -139,6 +140,7 @@ export class ClubHandlerPage implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly clubService: ClubService,
+    private readonly reviewService: ReviewService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -933,16 +935,18 @@ export class ClubHandlerPage implements OnInit {
   }
 
   private loadReviews(onComplete?: () => void): void {
-    this.clubService.getReviewsPaginated(this.clubId, this.reviewPage - 1, this.reviewPageSize).subscribe({
-      next: (response) => {
-        this.reviews = response?.content ?? [];
-        this.reviewTotalPages = Math.max(response?.totalPages ?? 0, 1);
+    this.reviewService.listByClub(this.clubId, this.reviewPage - 1, this.reviewPageSize).subscribe({
+      next: ({ reviews, total }) => {
+        this.reviews = reviews;
+        this.reviewTotalPages = Math.max(1, Math.ceil(total / this.reviewPageSize));
         onComplete?.();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.reviews = [];
         this.reviewTotalPages = 1;
         onComplete?.();
+        this.cdr.detectChanges();
       }
     });
   }

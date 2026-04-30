@@ -622,6 +622,31 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Refresca el rating/quantityRatings del club tras una mutación de review.
+   * El backend recalcula el promedio en updateClubRating, así que basta con
+   * pedir el club fresco.
+   */
+  private refreshClubRating(): void {
+    if (!this.currentClubId) return;
+    const id = this.currentClubId;
+
+    this.clubService.getClubById(id).subscribe({
+      next: c => {
+        if (this.club && id === this.currentClubId) {
+          // Actualizo solo los campos relevantes para no romper otras refs
+          this.club = {
+            ...this.club,
+            rating: c.rating,
+            quantityRatings: c.quantityRatings
+          };
+          this.cdr.detectChanges();
+        }
+      },
+      error: err => console.warn('club rating refresh error', err)
+    });
+  }
+
+  /**
    * Detecta si el usuario logueado ya tiene una review en este club.
    * Como el endpoint REST de reviews devuelve userId, comparamos por id.
    * Si no encontramos en la pagina actual, buscamos en todas las paginas.
@@ -716,6 +741,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
         this.reviewFormOpen = false;
         this.reviewsCurrentPage = 1;
         this.loadReviews();
+        this.refreshClubRating();
       },
       error: err => {
         this.reviewFormSubmitting = false;
@@ -745,6 +771,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
         this.reviewSuccessMessage = 'Tu reseña fue borrada.';
         this.reviewsCurrentPage = 1;
         this.loadReviews();
+        this.refreshClubRating();
       },
       error: err => {
         this.reviewDeleting = false;

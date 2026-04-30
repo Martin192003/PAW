@@ -54,6 +54,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/profile.page').then(m => m.ProfilePage)
   },
   {
+    path: 'profile/reviews',
+    loadComponent: () => import('./pages/my-reviews.page').then(m => m.MyReviewsPage)
+  },
+  {
     path: 'admin/activity',
     loadComponent: () => import('./pages/club-activity.page').then(m => m.ClubActivityPage)
   },

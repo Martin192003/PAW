@@ -44,6 +44,27 @@ export class ReviewService {
   }
 
   /**
+   * GET /users/{userId}/reviews
+   * Lista paginada de las reviews que hizo el usuario.
+   */
+  listByUser(userId: string, page = 0, size = 10): Observable<ReviewListResult> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size);
+
+    return this.http
+      .get<Review[]>(`${this.apiUrl}/users/${userId}/reviews`, { params, observe: 'response' })
+      .pipe(
+        map((response: HttpResponse<Review[]>) => {
+          const reviews = Array.isArray(response.body) ? response.body : [];
+          const totalHeader = response.headers.get('X-Total-Count');
+          const total = totalHeader ? Number(totalHeader) : reviews.length;
+          return { reviews, total: Number.isFinite(total) ? total : reviews.length };
+        })
+      );
+  }
+
+  /**
    * POST /clubs/{clubId}/reviews
    * Crea una review nueva. Requiere estar autenticado.
    */
