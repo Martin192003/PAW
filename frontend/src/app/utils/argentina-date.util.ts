@@ -1,11 +1,19 @@
 const ARGENTINA_TIME_ZONE = 'America/Argentina/Buenos_Aires';
 
-export function formatArgentinaDate(value?: string): string {
+function resolveLocale(language?: string): string {
+  const normalized = (language || '').trim().toLowerCase();
+  if (normalized.startsWith('en')) {
+    return 'en-US';
+  }
+  return 'es-AR';
+}
+
+export function formatArgentinaDate(value?: string, language?: string): string {
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
 
-  return new Intl.DateTimeFormat('es-AR', {
+  return new Intl.DateTimeFormat(resolveLocale(language), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -13,12 +21,12 @@ export function formatArgentinaDate(value?: string): string {
   }).format(date);
 }
 
-export function formatArgentinaDateTime(value?: string): string {
+export function formatArgentinaDateTime(value?: string, language?: string): string {
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
 
-  return new Intl.DateTimeFormat('es-AR', {
+  return new Intl.DateTimeFormat(resolveLocale(language), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',

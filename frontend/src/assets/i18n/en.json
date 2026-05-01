@@ -1,0 +1,558 @@
+﻿{
+  "topbar": {
+    "manageClubs": "Manage Clubs",
+    "addClub": "Add Club",
+    "logout": "Logout"
+  },
+  "login": {
+    "title": "Sign in",
+    "usernameOrEmail": "Username or email",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "noAccount": "Don't have an account? Sign up",
+    "forgotPassword": "Forgot your password?"
+  },
+  "register": {
+    "title": "Sign up",
+    "username": "Username",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "password": "Password",
+    "passwordRepeat": "Repeat password",
+    "email": "Email",
+    "phone": "Phone",
+    "submit": "Sign up",
+    "submitting": "Signing up...",
+    "hasAccount": "Already have an account? Sign in"
+  },
+  "verifyMail": {
+    "title": "Verify your account",
+    "description": "You can verify your user through the email link or by entering the code manually.",
+    "associatedEmail": "Associated email:",
+    "linkVerification": {
+      "title": "1) Link verification",
+      "description": "If you opened this screen from the email link, verification runs automatically.",
+      "checking": "Verifying link..."
+    },
+    "codeVerification": {
+      "title": "2) Code verification",
+      "placeholder": "Enter the code/token received by email",
+      "required": "The code is required.",
+      "verifying": "Verifying...",
+      "verify": "Verify code"
+    },
+    "resendVerification": {
+      "title": "Didn't receive the email?",
+      "placeholder": "Username or email",
+      "required": "The username or email is required.",
+      "sending": "Sending...",
+      "send": "Resend verification email"
+    },
+    "links": {
+      "login": "Already verified your account? Sign in",
+      "backHome": "Back to home"
+    },
+    "messages": {
+      "verifiedSuccess": "Account verified successfully.",
+      "resendSuccess": "We sent you a new verification email."
+    },
+    "errors": {
+      "verifyCode": "Could not verify the code.",
+      "verifyLink": "Could not verify the link.",
+      "resend": "Could not resend the verification email."
+    }
+  },
+  "clubs": {
+    "upcomingEvents": "Upcoming Events",
+    "filter": "Filter",
+    "reset": "Reset",
+    "searchByName": "Search by name",
+    "selectZone": "Select a zone",
+    "selectGenre": "Select a genre",
+    "selectPrice": "Select a price",
+    "typeOfVenue": "Type of venue",
+    "bar": "Bar",
+    "nightclub": "Nightclub",
+    "availability": "Availability/Rating",
+    "filterOptions": {
+      "zones": {
+        "norte": "North Zone",
+        "oeste": "West Zone",
+        "sur": "South Zone",
+        "caba": "CABA Zone"
+      },
+      "genres": {
+        "rock": "Rock",
+        "pop": "Pop",
+        "cachengue": "Cachengue",
+        "techno": "Techno",
+        "reggaeton": "Reggaeton",
+        "cumbia": "Cumbia",
+        "trap": "Trap",
+        "jazz": "Jazz",
+        "electronica": "Electronic",
+        "afrobeat": "Afrobeat",
+        "other": "Other"
+      },
+      "prices": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "sorts": {
+        "availableToday": "Available today",
+        "availableTomorrow": "Available tomorrow",
+        "availableDayAfter": "Available the day after tomorrow",
+        "ratingHighToLow": "Rating (high to low)",
+        "ratingLowToHigh": "Rating (low to high)"
+      }
+    },
+    "noTablesAvailable": "No tables available",
+    "noTablesMessage": "There are no more tables for {{eventName}}<span *ngIf=\"clubName\"> at {{clubName}}</span>.",
+    "noTablesMessageWithClub": "There are no more tables for {{eventName}} at {{clubName}}.",
+    "noTablesMessageWithoutClub": "There are no more tables for {{eventName}}.",
+    "understood": "Understood"
+  },
+  "sidebar": {
+    "profile": "My profile",
+    "clubs": "My clubs",
+    "clubsReservations": "Club reservations",
+    "myReservations": "My reservations",
+    "reviews": "Reviews"
+  },
+  "profile": {
+    "title": "USER PROFILE",
+    "goBack": "Back to clubs",
+    "editProfile": "Edit profile",
+    "closeModal": "Close modal",
+    "editUsername": "Edit username",
+    "editName": "Edit first name",
+    "editSurname": "Edit last name",
+    "editEmail": "Edit email",
+    "editPhone": "Edit phone",
+    "resetPassword": "Reset password",
+    "fields": {
+      "username": "Username",
+      "name": "First name",
+      "surname": "Last name",
+      "email": "Email",
+      "cellphone": "Phone"
+    },
+    "placeholders": {
+      "username": "Enter your username",
+      "name": "Enter your first name",
+      "surname": "Enter your last name",
+      "email": "Enter your email",
+      "cellphone": "Enter your phone"
+    },
+    "username": "Username:",
+    "firstName": "First Name:",
+    "lastName": "Last Name:",
+    "email": "Email:",
+    "phone": "Phone:",
+    "password": "Password:",
+    "cancel": "Cancel",
+    "save": "Save",
+    "noFallback": "No profile data found. Please log in first.",
+    "errors": {
+      "emptyField": "This field cannot be empty",
+      "saveFailed": "Could not save the change",
+      "invalidSession": "Your session is invalid. Please sign in again.",
+      "serverUpdate": "Internal server error while updating the profile",
+      "connection": "Could not connect to the server.",
+      "resetPassword": "Could not prepare the password reset.",
+      "resetPasswordServer": "Internal server error while preparing the password reset."
+    }
+  },
+  "passwordReset": {
+    "goBack": "Back",
+    "forgotTitle": "Recover password",
+    "resetTitle": "Reset password",
+    "forgotDescription": "We will send you an email with the steps to reset your password.",
+    "forgotLoggedDescription": "We will send an email to the address associated with your account.",
+    "emailPlaceholder": "Email",
+    "emailInvalid": "Enter a valid email.",
+    "submitSend": "Send",
+    "submitSending": "Sending...",
+    "newPasswordPlaceholder": "New password",
+    "confirmPasswordPlaceholder": "Confirm password",
+    "minLength": "Minimum 8 characters.",
+    "submitReset": "Reset password",
+    "submitSaving": "Saving...",
+    "backToHome": "Back to home",
+    "modal": {
+      "sentTitle": "Check your inbox",
+      "sentBody": "We sent you an email with the steps to reset your password.",
+      "successTitle": "Password changed successfully",
+      "successBody": "Your password was updated successfully.",
+      "accept": "OK"
+    },
+    "errors": {
+      "network": "Could not connect to the server.",
+      "invalidEmail": "Check the email and try again.",
+      "emailSendFailed": "Could not send the email. Please try again later.",
+      "passwordsDontMatch": "Passwords do not match.",
+      "invalidToken": "Invalid or expired token.",
+      "invalidData": "The entered data is invalid.",
+      "passwordUnchanged": "The password must be different from the previous one.",
+      "updateFailed": "Could not update the password. Please try again later."
+    }
+  },
+  "clubDetails": {
+    "goBack": "Back to clubs",
+    "menu": "Menu",
+    "tables": "Tables",
+    "drinks": "Drinks",
+    "noProducts": "No products available",
+    "noPhotos": "No photos available for the gallery",
+    "reviewsCountLabel": "reviews",
+    "carouselPhotoAlt": "{{ clubName }} - photo {{ index }}",
+    "photoPrevious": "Previous photo",
+    "photoNext": "Next photo",
+    "goToPhoto": "Go to photo {{ index }}",
+    "coverAlt": "{{ clubName }} - cover",
+    "layoutAlt": "Table layout",
+    "reviewPhotoPrevious": "Previous review photo",
+    "reviewPhotoNext": "Next review photo",
+    "reviewPhotoAlt": "Review photo {{ index }}",
+    "reviewImageAlt": "Review by {{ username }}",
+    "anonymousUser": "Anonymous user",
+    "noAdditionalComments": "No additional comments",
+    "dateLabel": "Date:",
+    "selectTableAndDate": "Select a table and a date before booking.",
+    "tableUnavailable": "The selected table is no longer available. Choose another option.",
+    "reservationMadeSuccess": "Reservation made successfully. Check your bookings in your account.",
+    "reservationRequiresLogin": "You need to sign in to reserve a table.",
+    "reservationFailed": "Could not complete the reservation. Please try again.",
+    "tablesLoadFailed": "Could not load the available tables.",
+    "location": "Location",
+    "bookingDate": "Booking date",
+    "searchingDates": "Searching for available dates...",
+    "noTablesAvailable": "No tables available",
+    "tableNumber": "Table #",
+    "capacity": "Capacity",
+    "discount": "disc",
+    "reserveButton": "Reserve table",
+    "layout": "Table layout",
+    "map": "Location",
+    "clickMapHint": "Click on the map to enable zoom and drag.",
+    "reviewPhotos": "Review Photos",
+    "reviews": "Reviews",
+    "noReviews": "No reviews available yet",
+    "beFirstReview": "Be the first to leave a review",
+    "noRatings": "No ratings",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "of": "of",
+    "reservationSuccess": "Reservation made",
+    "reservationSuccessMsg": "Your table has been successfully reserved. Do you want to see the reservation details?",
+    "noRefresh": "No, refresh",
+    "seeReservation": "See reservation"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "clubHandler": {
+    "backToActivity": "Back to activity",
+    "title": "Club management",
+    "subtitle": "Edit the information, photos and content of the selected club.",
+    "loadingClub": "Loading club...",
+    "uploading": "Uploading...",
+    "changeCover": "Change cover",
+    "changeLayout": "Change layout",
+    "editClub": "Edit club",
+    "layoutTitle": "Club layout",
+    "layoutAlt": "Club layout",
+    "noLayout": "No layout has been uploaded yet.",
+    "galleryTitle": "Gallery",
+    "addPhotos": "Add photos",
+    "noGalleryPhotos": "There are no photos in the gallery.",
+    "galleryPhotoAlt": "Gallery photo",
+    "tabs": {
+      "menu": "Menu",
+      "tables": "Tables",
+      "events": "Events",
+      "reviews": "Reviews"
+    },
+    "labels": {
+      "location": "Location",
+      "zone": "Zone",
+      "genre": "Genre",
+      "price": "Price",
+      "cbu": "CBU",
+      "description": "Description"
+    },
+    "form": {
+      "clubName": "Club name",
+      "location": "Location",
+      "priceRange": "Price range",
+      "genre": "Music genre",
+      "zone": "Zone",
+      "cbu": "CBU",
+      "isBar": "Is a bar",
+      "description": "Description"
+    },
+    "saving": "Saving...",
+    "saveChanges": "Save changes",
+    "noProductsLoaded": "No products loaded.",
+    "noTablesLoaded": "No tables loaded.",
+    "eventsTitle": "Events",
+    "noEventsForFilter": "There are no events for this filter.",
+    "noReviews": "There are no reviews yet.",
+    "noPhoto": "No photo",
+    "uploadPhoto": "Upload photo",
+    "removePhoto": "Remove photo",
+    "available": "Available",
+    "notAvailable": "Not available",
+    "disable": "Disable",
+    "enable": "Enable",
+    "eventFilters": {
+      "all": "All",
+      "past": "Past",
+      "future": "Future"
+    },
+    "productForm": {
+      "newTitle": "New product",
+      "editTitle": "Edit product"
+    },
+    "tableForm": {
+      "newTitle": "New table",
+      "editTitle": "Edit table"
+    },
+    "placeholders": {
+      "productName": "Product name",
+      "productDescription": "Product description",
+      "productPrice": "Base price",
+      "tableNumber": "Table number",
+      "tableCapacity": "Capacity",
+      "tablePrice": "Price",
+      "tableDiscount": "Discount",
+      "eventName": "Event name",
+      "eventDescription": "Event description"
+    },
+    "headers": {
+      "name": "Name",
+      "description": "Description",
+      "price": "Price",
+      "type": "Type",
+      "state": "State",
+      "actions": "Actions",
+      "number": "Number",
+      "capacity": "Capacity",
+      "discount": "Discount",
+      "date": "Date",
+      "photo": "Photo"
+    },
+    "productTypes": {
+      "ALCOHOLICA": "Alcoholic",
+      "NO_ALCOHOLICA": "Non-alcoholic",
+      "TRAGOS": "Drinks"
+    },
+    "tableStates": {
+      "DISPONIBLE": "Available",
+      "RESERVADA": "Reserved",
+      "PENDIENTE": "Pending"
+    },
+    "priceRanges": {
+      "BAJO": "Low",
+      "MEDIO": "Medium",
+      "ALTO": "High"
+    },
+    "zones": {
+      "ZONA_NORTE": "North Zone",
+      "ZONA_OESTE": "West Zone",
+      "ZONA_SUR": "South Zone",
+      "ZONA_CABA": "CABA Zone"
+    },
+    "musicGenres": {
+      "ROCK": "Rock",
+      "POP": "Pop",
+      "CACHENGUE": "Cachengue",
+      "TECHNO": "Techno",
+      "REGGAETON": "Reggaeton",
+      "CUMBIA": "Cumbia",
+      "TRAP": "Trap",
+      "JAZZ": "Jazz",
+      "ELECTRONICA": "Electronic",
+      "AFROBEAT": "Afrobeat",
+      "OTRO": "Other"
+    },
+    "update": "Update",
+    "create": "Create",
+    "updateEvent": "Update event",
+    "createEvent": "Create event",
+    "errors": {
+      "loadSelectedClub": "Could not load the selected club."
+    }
+  },
+  "clubActivity": {
+    "title": "My Activity",
+    "subtitle": "Manage your clubs and open each one quickly.",
+    "backToClubs": "Back to clubs",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "de": "of"
+  },
+  "managedClubBookings": {
+    "title": "Clubs Reservations",
+    "subtitle": "Review reservations across your clubs.",
+    "back": "Back",
+    "filters": {
+      "club": "Club",
+      "status": "Status",
+      "sort": "Sort",
+      "receipts": "Receipts",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "dateDesc": "Date desc.",
+      "dateAsc": "Date asc.",
+      "withReceipt": "With receipt",
+      "withoutReceipt": "Without receipt"
+    },
+    "statuses": {
+      "PENDIENTE": "Pending",
+      "CONFIRMADA": "Confirmed",
+      "CANCELADA": "Cancelled"
+    },
+    "buttons": {
+      "filter": "Filter",
+      "reset": "Reset"
+    },
+    "bookingCard": {
+      "reserva": "Booking:",
+      "club": "Club:",
+      "date": "Date:",
+      "total": "Total:"
+    },
+    "noReservations": "No reservations found.",
+    "previousPage": "Previous page",
+    "nextPage": "Next page"
+  },
+  "userBookings": {
+    "title": "My Reservations",
+    "subtitle": "View and manage your bookings.",
+    "back": "Back",
+    "filters": {
+      "status": "Status",
+      "sort": "Sort",
+      "receipts": "Receipts",
+      "withReceipt": "With receipt",
+      "withoutReceipt": "Without receipt",
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "dateDesc": "Date desc.",
+      "dateAsc": "Date asc."
+    },
+    "statuses": {
+      "PENDIENTE": "Pending",
+      "CONFIRMADA": "Confirmed",
+      "CANCELADA": "Cancelled"
+    },
+    "buttons": {
+      "filter": "Filter",
+      "reset": "Reset"
+    },
+    "bookingCard": {
+      "reserva": "Booking:",
+      "club": "Club:",
+      "date": "Date:",
+      "total": "Total:"
+    },
+    "noReservations": "No reservations found."
+  },
+  "bookingAdminHandler": {
+    "title": "Booking",
+    "details": {
+      "title": "Booking Details",
+      "user": "User",
+      "email": "Email",
+      "surname": "Surname",
+      "table": "Table",
+      "club": "Club",
+      "start": "Start",
+      "end": "End",
+      "cbu": "CBU",
+      "total": "Total"
+    },
+    "receipt": {
+      "title": "Receipt",
+      "alt": "Receipt",
+      "noReceipt": "No receipt uploaded.",
+      "viewTab": "View in tab"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "modal": {
+      "cancelTitle": "Cancel booking?",
+      "confirm": "Confirm"
+    },
+    "statuses": {
+      "PENDIENTE": "Pending",
+      "CONFIRMADA": "Confirmed",
+      "CANCELADA": "Cancelled"
+    },
+    "errors": {
+      "invalidBooking": "Invalid booking.",
+      "loadFailed": "Could not load booking.",
+      "confirmFailed": "Could not confirm booking.",
+      "cancelFailed": "Could not cancel booking."
+    },
+    "success": {
+      "confirmed": "Booking confirmed successfully.",
+      "cancelled": "Booking cancelled successfully."
+    }
+  },
+  "bookingUserHandler": {
+    "back": "Back",
+    "title": "Booking",
+    "details": {
+      "title": "Booking Details",
+      "user": "User",
+      "email": "Email",
+      "surname": "Surname",
+      "table": "Table",
+      "club": "Club",
+      "start": "Start",
+      "end": "End",
+      "cbu": "CBU",
+      "total": "Total"
+    },
+    "receipt": {
+      "title": "Receipt",
+      "alt": "Receipt",
+      "noReceipt": "No receipt uploaded.",
+      "viewTab": "View in tab",
+      "upload": "Upload receipt",
+      "edit": "Edit receipt"
+    },
+    "modal": {
+      "cancelTitle": "Cancel booking?",
+      "confirm": "Confirm"
+    },
+    "statuses": {
+      "PENDIENTE": "Pending",
+      "CONFIRMADA": "Confirmed",
+      "CANCELADA": "Cancelled"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "logout": "Logout",
+    "of": "of",
+    "retry": "Retry",
+    "close": "Close"
+  }
+}
+
+

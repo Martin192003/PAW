@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 export type SideBarSection =
   | 'profile'
@@ -12,7 +13,7 @@ export type SideBarSection =
 @Component({
   selector: 'app-side-bar',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslateModule],
   templateUrl: './account-sidebar.component.html'
 })
 export class SideBarComponent {
@@ -20,14 +21,14 @@ export class SideBarComponent {
 
   readonly items: Array<{
     key: SideBarSection;
-    label: string;
+    labelKey: string;
     route?: string;
   }> = [
-    { key: 'profile', label: 'My Profile', route: '/profile' },
-    { key: 'clubs', label: 'My Clubs', route: '/admin/activity' },
-    { key: 'clubsReservations', label: 'Clubs Reservations', route: '/admin/bookings' },
-    { key: 'myReservations', label: 'My Reservations', route: '/bookings' },
-    { key: 'reviews', label: 'Reviews' }
+    { key: 'profile', labelKey: 'sidebar.profile', route: '/profile' },
+    { key: 'clubs', labelKey: 'sidebar.clubs', route: '/admin/activity' },
+    { key: 'clubsReservations', labelKey: 'sidebar.clubsReservations', route: '/admin/bookings' },
+    { key: 'myReservations', labelKey: 'sidebar.myReservations', route: '/bookings' },
+    { key: 'reviews', labelKey: 'sidebar.reviews' }
   ];
 
   isActive(section: SideBarSection): boolean {

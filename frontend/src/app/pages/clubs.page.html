@@ -5,7 +5,7 @@
 
     <h2 class="text-center text-[1.8rem] font-bold text-[#9c27b0] mb-4 tracking-widest"
         style="font-family: 'Darklinos', Arial, sans-serif;">
-      Upcoming Events
+      {{ 'clubs.upcomingEvents' | translate }}
     </h2>
 
     <div class="relative">
@@ -97,9 +97,9 @@
           [(ngModel)]="filters.name"
           name="name"
           type="text"
-          placeholder=""
+          [placeholder]="'clubs.searchByName' | translate"
           class="h-full w-full bg-transparent text-white pl-10 pr-3 text-sm outline-none"
-          aria-label="Search by name"
+          [attr.aria-label]="'clubs.searchByName' | translate"
         >
       </div>
 
@@ -108,8 +108,8 @@
         name="zone"
         class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none"
       >
-        <option value="" class="text-black">Select a zone</option>
-        <option *ngFor="let zone of filterOptions.zones" [value]="zone" class="text-black">{{ zone }}</option>
+        <option value="" class="text-black">{{ 'clubs.selectZone' | translate }}</option>
+        <option *ngFor="let zone of filterOptions.zones" [value]="zone.value" class="text-black">{{ zone.labelKey | translate }}</option>
       </select>
 
       <select
@@ -117,8 +117,8 @@
         name="genre"
         class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none"
       >
-        <option value="" class="text-black">Select a genre</option>
-        <option *ngFor="let genre of filterOptions.genres" [value]="genre" class="text-black">{{ genre }}</option>
+        <option value="" class="text-black">{{ 'clubs.selectGenre' | translate }}</option>
+        <option *ngFor="let genre of filterOptions.genres" [value]="genre.value" class="text-black">{{ genre.labelKey | translate }}</option>
       </select>
 
       <select
@@ -126,8 +126,8 @@
         name="price"
         class="h-12 min-w-[150px] bg-transparent text-white text-sm px-3 outline-none"
       >
-        <option value="" class="text-black">Select a price</option>
-        <option *ngFor="let price of filterOptions.prices" [value]="price.toLowerCase()" class="text-black">{{ price }}</option>
+        <option value="" class="text-black">{{ 'clubs.selectPrice' | translate }}</option>
+        <option *ngFor="let price of filterOptions.prices" [value]="price.value" class="text-black">{{ price.labelKey | translate }}</option>
       </select>
 
       <select
@@ -135,9 +135,9 @@
         name="isBar"
         class="h-12 min-w-[140px] bg-transparent text-white text-sm px-3 outline-none"
       >
-        <option value="" class="text-black">Type of venue</option>
-        <option value="true" class="text-black">Bar</option>
-        <option value="false" class="text-black">Nightclub</option>
+        <option value="" class="text-black">{{ 'clubs.typeOfVenue' | translate }}</option>
+        <option value="true" class="text-black">{{ 'clubs.bar' | translate }}</option>
+        <option value="false" class="text-black">{{ 'clubs.nightclub' | translate }}</option>
       </select>
 
       <select
@@ -145,15 +145,15 @@
         name="sort"
         class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none"
       >
-        <option value="" class="text-black">Availability/Rating</option>
-        <option *ngFor="let sortOpt of filterOptions.sorts" [value]="sortOpt.value" class="text-black">{{ sortOpt.label }}</option>
+        <option value="" class="text-black">{{ 'clubs.availability' | translate }}</option>
+        <option *ngFor="let sortOpt of filterOptions.sorts" [value]="sortOpt.value" class="text-black">{{ sortOpt.labelKey | translate }}</option>
       </select>
 
       <button
         type="submit"
         class="ml-auto h-12 px-7 bg-[#9c27b0] text-white font-semibold hover:bg-[#8a21a0] transition shrink-0"
       >
-        <i class="fa-solid fa-filter mr-1"></i>Filter
+        <i class="fa-solid fa-filter mr-1"></i>{{ 'clubs.filter' | translate }}
       </button>
 
       </form>
@@ -164,7 +164,7 @@
         (click)="resetFilters()"
         class="h-12 px-1 text-sm text-[#9c27b0] hover:text-[#540761] transition shrink-0 whitespace-nowrap bg-transparent border-0"
       >
-        <i class="fa-solid fa-rotate-right mr-1"></i>Reset
+        <i class="fa-solid fa-rotate-right mr-1"></i>{{ 'clubs.reset' | translate }}
       </button>
     </div>
   </section>
@@ -244,7 +244,7 @@
             class="fa-solid"
             [ngClass]="club.bar ? 'fa-beer-mug-empty' : 'fa-martini-glass'">
           </i>
-          {{ club.bar ? 'Bar' : 'Nightclub' }}
+              {{ club.bar ? ('clubs.bar' | translate) : ('clubs.nightclub' | translate) }}
         </div>
       </div>
     </div>
@@ -307,11 +307,16 @@
   >
     <div class="w-full max-w-[420px] rounded-lg border border-purple-500/40 bg-[#181818] p-6 text-white shadow-[0_18px_50px_rgba(0,0,0,0.55)]">
       <h2 id="eventSoldOutTitle" class="m-0 text-xl font-semibold text-white">
-        No hay mesas disponibles
+        {{ 'clubs.noTablesAvailable' | translate }}
       </h2>
-      <p class="mt-3 text-sm leading-6 text-white/75">
-        Ya no quedan mesas para {{ unavailableEventName }}<ng-container *ngIf="unavailableClubName"> en {{ unavailableClubName }}</ng-container>.
+      <p *ngIf="unavailableClubName; else noClubMessage" class="mt-3 text-sm leading-6 text-white/75">
+        {{ 'clubs.noTablesMessageWithClub' | translate:{ eventName: unavailableEventName, clubName: unavailableClubName } }}
       </p>
+      <ng-template #noClubMessage>
+        <p class="mt-3 text-sm leading-6 text-white/75">
+          {{ 'clubs.noTablesMessageWithoutClub' | translate:{ eventName: unavailableEventName } }}
+        </p>
+      </ng-template>
 
       <div class="mt-6 flex justify-end">
         <button
@@ -319,7 +324,7 @@
           class="rounded-md bg-[#9c27b0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7b1fa2]"
           (click)="closeEventAvailabilityModal()"
         >
-          Entendido
+          {{ 'clubs.understood' | translate }}
         </button>
       </div>
     </div>

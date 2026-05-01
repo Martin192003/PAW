@@ -1,4 +1,4 @@
-<div class="h-[calc(100vh-90px)] overflow-hidden bg-[#1b1a1a] flex flex-col lg:flex-row lg:items-stretch text-white">
+﻿<div class="h-[calc(100vh-90px)] overflow-hidden bg-[#1b1a1a] flex flex-col lg:flex-row lg:items-stretch text-white">
   <app-side-bar [activeSection]="'clubs'"></app-side-bar>
 
   <section class="flex-1 min-w-0 px-4 sm:px-6 lg:px-6 py-5 lg:py-4 overflow-y-auto">
@@ -8,7 +8,7 @@
           type="button"
           class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#9c27b0] text-white hover:bg-[#86229a] transition"
           (click)="goBack()"
-          aria-label="Back to activity"
+          [attr.aria-label]="'clubHandler.backToActivity' | translate"
         >
           <i class="fa-solid fa-arrow-left"></i>
         </button>
@@ -18,9 +18,9 @@
             class="text-[1.55rem] font-bold text-[#9c27b0] tracking-widest"
             style="font-family: 'Darklinos', Arial, sans-serif;"
           >
-            CLUB HANDLER
+            {{ 'clubHandler.title' | translate }}
           </h1>
-          <p class="text-[#b9b9b9] text-sm">Gestion del club seleccionado.</p>
+          <p class="text-[#b9b9b9] text-sm">{{ 'clubHandler.subtitle' | translate }}</p>
         </div>
       </section>
 
@@ -28,7 +28,7 @@
         {{ actionSuccessMessage }}
       </div>
 
-      <div *ngIf="loading && !club" class="text-[#bab8b8]">Cargando datos del club...</div>
+      <div *ngIf="loading && !club" class="text-[#bab8b8]">{{ 'clubHandler.loadingClub' | translate }}</div>
 
       <ng-container *ngIf="club as currentClub">
         <section class="rounded-xl border border-[#3a3a3a] bg-[#222]/80 p-4 sm:p-5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.45)]">
@@ -54,7 +54,7 @@
             <div class="lg:w-[160px]">
               <label class="btn-secondary inline-flex items-center gap-2 cursor-pointer w-full justify-center">
                 <i class="fa-solid fa-image"></i>
-                {{ uploadingCover ? 'Subiendo...' : 'Cambiar portada' }}
+                {{ uploadingCover ? ('clubHandler.uploading' | translate) : ('clubHandler.changeCover' | translate) }}
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
@@ -71,12 +71,12 @@
               </h2>
 
               <div class="grid gap-1 text-[#d3d3d3] text-sm sm:text-base">
-                <div><strong>Location:</strong> {{ currentClub.location }}</div>
-                <div><strong>Zone:</strong> {{ currentClub.zone }}</div>
-                <div><strong>Genre:</strong> {{ currentClub.musicGenre }}</div>
-                <div><strong>Price:</strong> {{ currentClub.priceRange }}</div>
-                <div><strong>CBU:</strong> {{ currentClub.cbu }}</div>
-                <div><strong>Description:</strong> {{ currentClub.description }}</div>
+                <div><strong>{{ 'clubHandler.labels.location' | translate }}:</strong> {{ currentClub.location }}</div>
+                <div><strong>{{ 'clubHandler.labels.zone' | translate }}:</strong> {{ ('clubHandler.zones.' + currentClub.zone) | translate }}</div>
+                <div><strong>{{ 'clubHandler.labels.genre' | translate }}:</strong> {{ ('clubHandler.musicGenres.' + currentClub.musicGenre) | translate }}</div>
+                <div><strong>{{ 'clubHandler.labels.price' | translate }}:</strong> {{ ('clubHandler.priceRanges.' + currentClub.priceRange) | translate }}</div>
+                <div><strong>{{ 'clubHandler.labels.cbu' | translate }}:</strong> {{ currentClub.cbu }}</div>
+                <div><strong>{{ 'clubHandler.labels.description' | translate }}:</strong> {{ currentClub.description }}</div>
               </div>
 
               <div class="mt-4">
@@ -86,7 +86,7 @@
                   (click)="startEditClub()"
                   *ngIf="!editingClub"
                 >
-                  Editar club
+                  {{ 'clubHandler.editClub' | translate }}
                 </button>
               </div>
             </div>
@@ -94,66 +94,66 @@
 
           <form *ngIf="editingClub" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3" (ngSubmit)="saveClub()">
             <label class="grid gap-1">
-              <span class="text-sm text-[#c8c8c8]">Nombre</span>
+              <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.clubName' | translate }}</span>
               <input name="clubName" [(ngModel)]="clubForm.clubName" class="field-input" />
             </label>
 
             <label class="grid gap-1">
-              <span class="text-sm text-[#c8c8c8]">Location</span>
+              <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.location' | translate }}</span>
               <input name="clubLocation" [(ngModel)]="clubForm.location" class="field-input" />
             </label>
 
             <label class="grid gap-1">
-              <span class="text-sm text-[#c8c8c8]">Price Range</span>
+              <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.priceRange' | translate }}</span>
               <select name="clubPriceRange" [(ngModel)]="clubForm.priceRange" class="field-input">
-                <option *ngFor="let price of priceRanges" [value]="price">{{ price }}</option>
+                <option *ngFor="let price of priceRanges" [value]="price">{{ ('clubHandler.priceRanges.' + price) | translate }}</option>
               </select>
             </label>
 
             <label class="grid gap-1">
-              <span class="text-sm text-[#c8c8c8]">Genre</span>
+              <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.genre' | translate }}</span>
               <select name="clubGenre" [(ngModel)]="clubForm.musicGenre" class="field-input">
-                <option *ngFor="let genre of musicGenres" [value]="genre">{{ genre }}</option>
+                <option *ngFor="let genre of musicGenres" [value]="genre">{{ ('clubHandler.musicGenres.' + genre) | translate }}</option>
               </select>
             </label>
 
             <label class="grid gap-1">
-              <span class="text-sm text-[#c8c8c8]">Zone</span>
+              <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.zone' | translate }}</span>
               <select name="clubZone" [(ngModel)]="clubForm.zone" class="field-input">
-                <option *ngFor="let zone of zones" [value]="zone">{{ zone }}</option>
+                <option *ngFor="let zone of zones" [value]="zone">{{ ('clubHandler.zones.' + zone) | translate }}</option>
               </select>
             </label>
 
             <label class="grid gap-1">
-              <span class="text-sm text-[#c8c8c8]">CBU</span>
+              <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.cbu' | translate }}</span>
               <input name="clubCbu" [(ngModel)]="clubForm.cbu" class="field-input" />
             </label>
 
             <label class="md:col-span-2 flex items-center gap-2 text-sm text-[#d5d5d5] mt-1">
               <input type="checkbox" name="clubIsBar" [(ngModel)]="clubForm.isBar" />
-              Es bar
+              {{ 'clubHandler.form.isBar' | translate }}
             </label>
 
             <label class="md:col-span-2 grid gap-1">
-              <span class="text-sm text-[#c8c8c8]">Descripcion</span>
+              <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.description' | translate }}</span>
               <textarea name="clubDescription" [(ngModel)]="clubForm.description" class="field-input min-h-[88px]"></textarea>
             </label>
 
             <div class="md:col-span-2 flex gap-2">
               <button type="submit" class="btn-primary" [disabled]="savingClub">
-                {{ savingClub ? 'Guardando...' : 'Guardar cambios' }}
+                {{ savingClub ? ('clubHandler.saving' | translate) : ('clubHandler.saveChanges' | translate) }}
               </button>
-              <button type="button" class="btn-secondary" (click)="cancelEditClub()">Cancelar</button>
+              <button type="button" class="btn-secondary" (click)="cancelEditClub()">{{ 'common.cancel' | translate }}</button>
             </div>
           </form>
         </section>
 
         <section class="rounded-xl border border-[#3a3a3a] bg-[#222]/80 p-4 sm:p-5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.45)]">
           <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
-            <h3 class="text-lg font-semibold text-white">Layout de Mesas</h3>
+            <h3 class="text-lg font-semibold text-white">{{ 'clubHandler.layoutTitle' | translate }}</h3>
             <label class="btn-secondary inline-flex items-center gap-2 cursor-pointer">
               <i class="fa-solid fa-pen"></i>
-              {{ uploadingLayout ? 'Subiendo...' : 'Cambiar layout' }}
+              {{ uploadingLayout ? ('clubHandler.uploading' | translate) : ('clubHandler.changeLayout' | translate) }}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
@@ -168,19 +168,19 @@
             <img
               *ngIf="layoutUrl"
               [src]="layoutUrl"
-              alt="Layout del club"
+              [alt]="'clubHandler.layoutAlt' | translate"
               class="max-h-[340px] w-full object-contain rounded"
             />
-            <div *ngIf="!layoutUrl" class="text-[#9a9a9a]">No hay layout cargado.</div>
+            <div *ngIf="!layoutUrl" class="text-[#9a9a9a]">{{ 'clubHandler.noLayout' | translate }}</div>
           </div>
         </section>
 
         <section class="rounded-xl border border-[#3a3a3a] bg-[#222]/80 p-4 sm:p-5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.45)]">
           <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
-            <h3 class="text-lg font-semibold text-white">Galeria del Club</h3>
+            <h3 class="text-lg font-semibold text-white">{{ 'clubHandler.galleryTitle' | translate }}</h3>
             <label class="btn-primary inline-flex items-center gap-2 cursor-pointer">
               <i class="fa-solid fa-plus"></i>
-              {{ uploadingGallery ? 'Subiendo...' : 'Agregar fotos' }}
+              {{ uploadingGallery ? ('clubHandler.uploading' | translate) : ('clubHandler.addPhotos' | translate) }}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
@@ -192,17 +192,17 @@
             </label>
           </div>
 
-          <div *ngIf="galleryPhotos.length === 0" class="text-[#b9b9b9]">No hay fotos de galeria cargadas.</div>
+          <div *ngIf="galleryPhotos.length === 0" class="text-[#b9b9b9]">{{ 'clubHandler.noGalleryPhotos' | translate }}</div>
 
           <div *ngIf="galleryPhotos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <article *ngFor="let photo of galleryPhotos" class="gallery-card">
               <img
                 [src]="getGalleryPhotoUrl(photo)"
-                alt="Foto de galeria"
+                [alt]="'clubHandler.galleryPhotoAlt' | translate"
                 class="gallery-image"
               />
               <button type="button" class="btn-danger px-2 py-1 text-xs" (click)="deleteGalleryPhoto(photo)">
-                <i class="fa-solid fa-trash"></i> Eliminar
+                <i class="fa-solid fa-trash"></i> {{ 'common.delete' | translate }}
               </button>
             </article>
           </div>
@@ -216,7 +216,7 @@
               [ngClass]="activeTab === 'menu' ? 'bg-[#9c27b0] text-white font-semibold' : 'bg-[#2d2d2d] text-[#d0d0d0] hover:bg-[#3a3a3a]'"
               (click)="setTab('menu')"
             >
-              Menu
+              {{ 'clubHandler.tabs.menu' | translate }}
             </button>
             <button
               type="button"
@@ -224,7 +224,7 @@
               [ngClass]="activeTab === 'tables' ? 'bg-[#9c27b0] text-white font-semibold' : 'bg-[#2d2d2d] text-[#d0d0d0] hover:bg-[#3a3a3a]'"
               (click)="setTab('tables')"
             >
-              Tables
+              {{ 'clubHandler.tabs.tables' | translate }}
             </button>
             <button
               type="button"
@@ -232,7 +232,7 @@
               [ngClass]="activeTab === 'events' ? 'bg-[#9c27b0] text-white font-semibold' : 'bg-[#2d2d2d] text-[#d0d0d0] hover:bg-[#3a3a3a]'"
               (click)="setTab('events')"
             >
-              Events
+              {{ 'clubHandler.tabs.events' | translate }}
             </button>
             <button
               type="button"
@@ -240,49 +240,49 @@
               [ngClass]="activeTab === 'reviews' ? 'bg-[#9c27b0] text-white font-semibold' : 'bg-[#2d2d2d] text-[#d0d0d0] hover:bg-[#3a3a3a]'"
               (click)="setTab('reviews')"
             >
-              Reviews
+              {{ 'clubHandler.tabs.reviews' | translate }}
             </button>
           </div>
 
           <div *ngIf="activeTab === 'menu'">
             <div class="grid grid-cols-1 xl:grid-cols-[300px,1fr] gap-4">
               <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 space-y-2" (ngSubmit)="saveProduct()">
-                <h3 class="text-white text-sm font-semibold">{{ editingProductId ? 'Editar producto' : 'Nuevo producto' }}</h3>
+                <h3 class="text-white text-sm font-semibold">{{ editingProductId ? ('clubHandler.productForm.editTitle' | translate) : ('clubHandler.productForm.newTitle' | translate) }}</h3>
 
-                <input name="productName" [(ngModel)]="productForm.productName" class="field-input" placeholder="Nombre" />
-                <textarea name="productDescription" [(ngModel)]="productForm.description" class="field-input min-h-[70px]" placeholder="Descripcion"></textarea>
-                <input name="productPrice" [(ngModel)]="productForm.basePrice" type="number" min="0" step="0.01" class="field-input" placeholder="Precio" />
+                <input name="productName" [(ngModel)]="productForm.productName" class="field-input" [placeholder]="'clubHandler.placeholders.productName' | translate" />
+                <textarea name="productDescription" [(ngModel)]="productForm.description" class="field-input min-h-[70px]" [placeholder]="'clubHandler.placeholders.productDescription' | translate"></textarea>
+                <input name="productBasePrice" [(ngModel)]="productForm.basePrice" type="number" min="0" step="0.01" class="field-input" [placeholder]="'clubHandler.placeholders.productPrice' | translate" />
 
                 <select name="productType" [(ngModel)]="productForm.productType" class="field-input">
-                  <option *ngFor="let type of productTypes" [value]="type">{{ type }}</option>
+                  <option *ngFor="let type of productTypes" [value]="type">{{ ('clubHandler.productTypes.' + type) | translate }}</option>
                 </select>
 
                 <label class="flex items-center gap-2 text-sm text-[#d8d8d8]">
                   <input name="productAvailable" type="checkbox" [(ngModel)]="productForm.isAvailable" />
-                  Disponible
+                  {{ 'clubHandler.available' | translate }}
                 </label>
 
                 <div class="flex gap-2">
                   <button type="submit" class="btn-primary flex-1" [disabled]="savingProduct">
-                    {{ savingProduct ? 'Guardando...' : (editingProductId ? 'Actualizar' : 'Crear') }}
+                    {{ savingProduct ? ('clubHandler.saving' | translate) : (editingProductId ? ('clubHandler.update' | translate) : ('clubHandler.create' | translate)) }}
                   </button>
-                  <button *ngIf="editingProductId" type="button" class="btn-secondary" (click)="cancelEditProduct()">Cancelar</button>
+                  <button *ngIf="editingProductId" type="button" class="btn-secondary" (click)="cancelEditProduct()">{{ 'common.cancel' | translate }}</button>
                 </div>
               </form>
 
               <div>
-                <div *ngIf="menu.length === 0" class="text-[#b9b9b9]">No hay productos cargados.</div>
+                <div *ngIf="menu.length === 0" class="text-[#b9b9b9]">{{ 'clubHandler.noProductsLoaded' | translate }}</div>
 
                 <div *ngIf="menu.length > 0" class="overflow-x-auto">
                   <table class="w-full text-left border-collapse">
                     <thead>
                     <tr class="text-[#d9d9d9] border-b border-[#444]">
-                      <th class="py-2 pr-3">Product</th>
-                      <th class="py-2 pr-3">Description</th>
-                      <th class="py-2 pr-3">Price</th>
-                      <th class="py-2 pr-3">Type</th>
-                      <th class="py-2 pr-3">State</th>
-                      <th class="py-2 pr-3">Actions</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.name' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.description' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.price' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.type' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.state' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.actions' | translate }}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -290,16 +290,16 @@
                       <td class="py-2 pr-3">{{ p.productName }}</td>
                       <td class="py-2 pr-3">{{ p.description }}</td>
                       <td class="py-2 pr-3">${{ p.basePrice | number:'1.0-0' }}</td>
-                      <td class="py-2 pr-3">{{ p.productType }}</td>
+                      <td class="py-2 pr-3">{{ ('clubHandler.productTypes.' + p.productType) | translate }}</td>
                       <td class="py-2 pr-3">
                         <span [class]="p.isAvailable ? 'text-emerald-300' : 'text-red-300'">
-                          {{ p.isAvailable ? 'Disponible' : 'No disponible' }}
+                          {{ p.isAvailable ? ('clubHandler.available' | translate) : ('clubHandler.notAvailable' | translate) }}
                         </span>
                       </td>
                       <td class="py-2 pr-3 flex gap-2">
-                        <button type="button" class="btn-secondary px-2 py-1" (click)="startEditProduct(p)">Editar</button>
+                        <button type="button" class="btn-secondary px-2 py-1" (click)="startEditProduct(p)"> {{ 'common.edit' | translate }}</button>
                         <button type="button" class="btn-danger px-2 py-1" (click)="toggleProductAvailability(p)">
-                          {{ p.isAvailable ? 'Deshabilitar' : 'Habilitar' }}
+                          {{ p.isAvailable ? ('clubHandler.disable' | translate) : ('clubHandler.enable' | translate) }}
                         </button>
                       </td>
                     </tr>
@@ -313,37 +313,37 @@
           <div *ngIf="activeTab === 'tables'">
             <div class="grid grid-cols-1 xl:grid-cols-[300px,1fr] gap-4">
               <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 space-y-2" (ngSubmit)="saveTable()">
-                <h3 class="text-white text-sm font-semibold">{{ editingTableId ? 'Editar mesa' : 'Nueva mesa' }}</h3>
+                <h3 class="text-white text-sm font-semibold">{{ editingTableId ? ('clubHandler.tableForm.editTitle' | translate) : ('clubHandler.tableForm.newTitle' | translate) }}</h3>
 
-                <input name="tableNumber" [(ngModel)]="tableForm.tableNumber" type="number" min="1" class="field-input" placeholder="Numero de mesa" />
-                <input name="tableCapacity" [(ngModel)]="tableForm.capacity" type="number" min="1" class="field-input" placeholder="Capacidad" />
-                <input name="tablePrice" [(ngModel)]="tableForm.price" type="number" min="0" step="0.01" class="field-input" placeholder="Precio" />
-                <input name="tableDiscount" [(ngModel)]="tableForm.discount" type="number" min="0" step="0.01" class="field-input" placeholder="Descuento" />
+                <input name="tableNumber" [(ngModel)]="tableForm.tableNumber" type="number" min="1" class="field-input" [placeholder]="'clubHandler.placeholders.tableNumber' | translate" />
+                <input name="tableCapacity" [(ngModel)]="tableForm.capacity" type="number" min="1" class="field-input" [placeholder]="'clubHandler.placeholders.tableCapacity' | translate" />
+                <input name="tablePrice" [(ngModel)]="tableForm.price" type="number" min="0" step="0.01" class="field-input" [placeholder]="'clubHandler.placeholders.tablePrice' | translate" />
+                <input name="tableDiscount" [(ngModel)]="tableForm.discount" type="number" min="0" step="0.01" class="field-input" [placeholder]="'clubHandler.placeholders.tableDiscount' | translate" />
 
                 <select name="tableState" [(ngModel)]="tableForm.tableState" class="field-input">
-                  <option *ngFor="let state of tableStates" [value]="state">{{ state }}</option>
+                  <option *ngFor="let state of tableStates" [value]="state">{{ ('clubHandler.tableStates.' + state) | translate }}</option>
                 </select>
 
                 <div class="flex gap-2">
                   <button type="submit" class="btn-primary flex-1" [disabled]="savingTable">
-                    {{ savingTable ? 'Guardando...' : (editingTableId ? 'Actualizar' : 'Crear') }}
+                    {{ savingTable ? ('clubHandler.saving' | translate) : (editingTableId ? ('clubHandler.update' | translate) : ('clubHandler.create' | translate)) }}
                   </button>
-                  <button *ngIf="editingTableId" type="button" class="btn-secondary" (click)="cancelEditTable()">Cancelar</button>
+                  <button *ngIf="editingTableId" type="button" class="btn-secondary" (click)="cancelEditTable()">{{ 'common.cancel' | translate }}</button>
                 </div>
               </form>
 
               <div>
-                <div *ngIf="tables.length === 0" class="text-[#b9b9b9]">No hay mesas cargadas.</div>
+                <div *ngIf="tables.length === 0" class="text-[#b9b9b9]">{{ 'clubHandler.noTablesLoaded' | translate }}</div>
                 <div *ngIf="tables.length > 0" class="overflow-x-auto">
                   <table class="w-full text-left border-collapse">
                     <thead>
                     <tr class="text-[#d9d9d9] border-b border-[#444]">
-                      <th class="py-2 pr-3">Number</th>
-                      <th class="py-2 pr-3">Capacity</th>
-                      <th class="py-2 pr-3">Price</th>
-                      <th class="py-2 pr-3">Discount</th>
-                      <th class="py-2 pr-3">State</th>
-                      <th class="py-2 pr-3">Actions</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.number' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.capacity' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.price' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.discount' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.state' | translate }}</th>
+                      <th class="py-2 pr-3">{{ 'clubHandler.headers.actions' | translate }}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -352,10 +352,10 @@
                       <td class="py-2 pr-3">{{ t.capacity }}</td>
                       <td class="py-2 pr-3">${{ t.price | number:'1.0-0' }}</td>
                       <td class="py-2 pr-3">{{ t.discount }}%</td>
-                      <td class="py-2 pr-3">{{ t.tableState }}</td>
+                      <td class="py-2 pr-3">{{ ('clubHandler.tableStates.' + t.tableState) | translate }}</td>
                       <td class="py-2 pr-3 flex gap-2">
-                        <button type="button" class="btn-secondary px-2 py-1" (click)="startEditTable(t)">Editar</button>
-                        <button type="button" class="btn-danger px-2 py-1" (click)="deleteTable(t)">Eliminar</button>
+                        <button type="button" class="btn-secondary px-2 py-1" (click)="startEditTable(t)"> {{ 'common.edit' | translate }}</button>
+                        <button type="button" class="btn-danger px-2 py-1" (click)="deleteTable(t)">{{ 'common.delete' | translate }}</button>
                       </td>
                     </tr>
                     </tbody>
@@ -367,42 +367,42 @@
 
           <div *ngIf="activeTab === 'events'">
             <div class="flex items-center justify-between mb-3 gap-3 flex-wrap">
-              <h3 class="text-lg font-semibold text-white">Eventos</h3>
+              <h3 class="text-lg font-semibold text-white">{{ 'clubHandler.eventsTitle' | translate }}</h3>
               <select
                 [value]="eventFilter"
                 (change)="setEventFilter($any($event.target).value)"
                 class="rounded-md border border-[#444] bg-[#2a2a2a] text-white px-3 py-2"
               >
-                <option value="all">Todos</option>
-                <option value="past">Pasados</option>
-                <option value="future">Futuros</option>
+                <option value="all">{{ 'clubHandler.eventFilters.all' | translate }}</option>
+                <option value="past">{{ 'clubHandler.eventFilters.past' | translate }}</option>
+                <option value="future">{{ 'clubHandler.eventFilters.future' | translate }}</option>
               </select>
             </div>
 
             <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 mb-4 grid grid-cols-1 md:grid-cols-4 gap-2" (ngSubmit)="saveEvent()">
-              <input name="eventName" [(ngModel)]="eventForm.eventName" class="field-input" placeholder="Nombre" />
+              <input name="eventName" [(ngModel)]="eventForm.eventName" class="field-input" [placeholder]="'clubHandler.placeholders.eventName' | translate" />
               <input name="eventDate" [(ngModel)]="eventForm.date" type="date" class="field-input" />
-              <input name="eventDescription" [(ngModel)]="eventForm.description" class="field-input md:col-span-2" placeholder="Descripcion" />
+              <input name="eventDescription" [(ngModel)]="eventForm.description" class="field-input md:col-span-2" [placeholder]="'clubHandler.placeholders.eventDescription' | translate" />
 
               <div class="md:col-span-4 flex gap-2">
                 <button type="submit" class="btn-primary" [disabled]="savingEvent">
-                  {{ savingEvent ? 'Guardando...' : (editingEventId ? 'Actualizar evento' : 'Crear evento') }}
+                  {{ savingEvent ? ('clubHandler.saving' | translate) : (editingEventId ? ('clubHandler.updateEvent' | translate) : ('clubHandler.createEvent' | translate)) }}
                 </button>
-                <button *ngIf="editingEventId" type="button" class="btn-secondary" (click)="cancelEditEvent()">Cancelar</button>
+                <button *ngIf="editingEventId" type="button" class="btn-secondary" (click)="cancelEditEvent()">{{ 'common.cancel' | translate }}</button>
               </div>
             </form>
 
-            <div *ngIf="filteredEvents.length === 0" class="text-[#b9b9b9]">No hay eventos para este filtro.</div>
+            <div *ngIf="filteredEvents.length === 0" class="text-[#b9b9b9]">{{ 'clubHandler.noEventsForFilter' | translate }}</div>
 
             <div *ngIf="filteredEvents.length > 0" class="overflow-x-auto">
               <table class="w-full text-left border-collapse">
                 <thead>
                 <tr class="text-[#d9d9d9] border-b border-[#444]">
-                  <th class="py-2 pr-3">Name</th>
-                  <th class="py-2 pr-3">Date</th>
-                  <th class="py-2 pr-3">Description</th>
-                  <th class="py-2 pr-3">Photo</th>
-                  <th class="py-2 pr-3">Actions</th>
+                  <th class="py-2 pr-3">{{ 'clubHandler.headers.name' | translate }}</th>
+                  <th class="py-2 pr-3">{{ 'clubHandler.headers.date' | translate }}</th>
+                  <th class="py-2 pr-3">{{ 'clubHandler.headers.description' | translate }}</th>
+                  <th class="py-2 pr-3">{{ 'clubHandler.headers.photo' | translate }}</th>
+                  <th class="py-2 pr-3">{{ 'clubHandler.headers.actions' | translate }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -417,15 +417,15 @@
                       [alt]="e.eventName"
                       class="w-16 h-12 rounded object-cover border border-[#3b3b3b]"
                     />
-                    <span *ngIf="!getEventPhotoUrl(e)" class="text-[#999] text-sm">Sin foto</span>
+                    <span *ngIf="!getEventPhotoUrl(e)" class="text-[#999] text-sm">{{ 'clubHandler.noPhoto' | translate }}</span>
                   </td>
                   <td class="py-2 pr-3">
                     <div class="flex flex-wrap gap-2">
-                      <button type="button" class="btn-secondary px-2 py-1" (click)="startEditEvent(e)">Editar</button>
-                      <button type="button" class="btn-danger px-2 py-1" (click)="deleteEvent(e)">Eliminar</button>
+                      <button type="button" class="btn-secondary px-2 py-1" (click)="startEditEvent(e)"> {{ 'common.edit' | translate }}</button>
+                      <button type="button" class="btn-danger px-2 py-1" (click)="deleteEvent(e)">{{ 'common.delete' | translate }}</button>
 
                       <label class="btn-secondary px-2 py-1 cursor-pointer">
-                        {{ uploadingEventPhotoId === e.eventId ? 'Subiendo...' : 'Subir foto' }}
+                        {{ uploadingEventPhotoId === e.eventId ? ('clubHandler.uploading' | translate) : ('clubHandler.uploadPhoto' | translate) }}
                         <input
                           type="file"
                           accept="image/png,image/jpeg,image/webp"
@@ -440,7 +440,7 @@
                         class="btn-danger px-2 py-1"
                         (click)="removeEventPhoto(e)"
                       >
-                        Quitar foto
+                        {{ 'clubHandler.removePhoto' | translate }}
                       </button>
                     </div>
                   </td>
@@ -459,7 +459,7 @@
                 <i class="fa-solid fa-chevron-left"></i>
               </button>
 
-              <span class="text-[#bdbdbd] text-sm">{{ eventPage }} de {{ eventTotalPages }}</span>
+              <span class="text-[#bdbdbd] text-sm">{{ eventPage }} {{ 'common.of' | translate }} {{ eventTotalPages }}</span>
 
               <button
                 type="button"
@@ -473,7 +473,7 @@
           </div>
 
           <div *ngIf="activeTab === 'reviews'">
-            <div *ngIf="reviews.length === 0" class="text-[#b9b9b9]">No hay reseñas para mostrar.</div>
+            <div *ngIf="reviews.length === 0" class="text-[#b9b9b9]">{{ 'clubHandler.noReviews' | translate }}</div>
 
             <div *ngIf="reviews.length > 0" class="space-y-3">
               <article *ngFor="let r of reviews" class="rounded-lg border border-[#383838] bg-[#262626] px-4 py-3">
@@ -482,7 +482,7 @@
                   <span class="text-[#ffd700] font-semibold">{{ r.rating }} <i class="fa-solid fa-star"></i></span>
                 </div>
 
-                <p class="text-[#d0d0d0] text-sm mb-1">{{ r.description || 'Sin descripcion.' }}</p>
+                <p class="text-[#d0d0d0] text-sm mb-1">{{ r.description || ('clubHandler.noDescription' | translate) }}</p>
 
                 <small class="text-[#a7a7a7]">{{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
               </article>
@@ -498,7 +498,7 @@
                 <i class="fa-solid fa-chevron-left"></i>
               </button>
 
-              <span class="text-[#bdbdbd] text-sm">{{ reviewPage }} de {{ reviewTotalPages }}</span>
+              <span class="text-[#bdbdbd] text-sm">{{ reviewPage }} {{ 'common.of' | translate }} {{ reviewTotalPages }}</span>
 
               <button
                 type="button"
@@ -529,8 +529,8 @@
         </div>
 
         <div class="error-modal-copy">
-          <h2 id="club-handler-error-title">Error</h2>
-          <p>{{ actionErrorMessage || errorMessage || 'No se pudo obtener el club seleccionado.' }}</p>
+          <h2 id="club-handler-error-title">{{ 'common.error' | translate }}</h2>
+          <p>{{ actionErrorMessage || errorMessage || ('clubHandler.errors.loadSelectedClub' | translate) }}</p>
         </div>
       </div>
 
@@ -541,10 +541,15 @@
           class="btn-primary"
           (click)="retryLoad()"
         >
-          Reintentar
+          {{ 'common.retry' | translate }}
         </button>
-        <button type="button" class="btn-danger" (click)="dismissErrorModal()">Cerrar</button>
+        <button type="button" class="btn-danger" (click)="dismissErrorModal()">{{ 'common.close' | translate }}</button>
       </div>
     </div>
   </div>
 </div>
+
+
+
+
+

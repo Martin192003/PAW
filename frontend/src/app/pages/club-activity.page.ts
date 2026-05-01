@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
@@ -12,7 +13,7 @@ type ClubActivityItem = Club & { _hasError?: boolean };
 @Component({
   standalone: true,
   selector: 'app-club-activity-page',
-  imports: [CommonModule, RouterLink, SideBarComponent],
+  imports: [CommonModule, RouterLink, SideBarComponent, TranslateModule],
   templateUrl: './club-activity.page.html',
   styleUrl: './club-activity.page.css'
 })

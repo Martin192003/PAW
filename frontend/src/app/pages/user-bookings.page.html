@@ -7,16 +7,16 @@
         <a
           routerLink="/clubs"
           class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[#9c27b0] text-white transition hover:bg-[#86229a]"
-          aria-label="Back"
+          [attr.aria-label]="'userBookings.back' | translate"
         >
           <i class="fa-solid fa-arrow-left"></i>
         </a>
 
         <div>
           <h1 class="text-[1.55rem] font-bold tracking-widest text-[#9c27b0]" style="font-family: 'Darklinos', Arial, sans-serif;">
-            My Reservations
+            {{ 'userBookings.title' | translate }}
           </h1>
-          <p class="text-sm text-[#b9b9b9]">View and manage your bookings.</p>
+          <p class="text-sm text-[#b9b9b9]">{{ 'userBookings.subtitle' | translate }}</p>
         </div>
       </header>
 
@@ -29,38 +29,38 @@
             <input class="h-12 w-[190px] bg-transparent px-3 text-sm text-white outline-none" type="date" [(ngModel)]="filters.bookingDate" name="bookingDate" />
 
             <select class="h-12 w-[150px] bg-transparent px-3 text-sm text-white outline-none" [(ngModel)]="filters.status" name="status">
-              <option value="" class="text-black">Status</option>
-              <option value="PENDIENTE" class="text-black">Pendiente</option>
-              <option value="CONFIRMADA" class="text-black">Confirmada</option>
-              <option value="CANCELADA" class="text-black">Cancelada</option>
+              <option value="" class="text-black">{{ 'userBookings.filters.status' | translate }}</option>
+              <option value="PENDIENTE" class="text-black">{{ 'userBookings.statuses.PENDIENTE' | translate }}</option>
+              <option value="CONFIRMADA" class="text-black">{{ 'userBookings.statuses.CONFIRMADA' | translate }}</option>
+              <option value="CANCELADA" class="text-black">{{ 'userBookings.statuses.CANCELADA' | translate }}</option>
             </select>
 
             <select class="h-12 w-[145px] bg-transparent px-3 text-sm text-white outline-none" [(ngModel)]="filters.sort" name="sort">
-              <option value="" class="text-black">Sort</option>
-              <option value="created_desc" class="text-black">Newest</option>
-              <option value="created_asc" class="text-black">Oldest</option>
-              <option value="start_desc" class="text-black">Date desc</option>
-              <option value="start_asc" class="text-black">Date asc</option>
+              <option value="" class="text-black">{{ 'userBookings.filters.sort' | translate }}</option>
+              <option value="created_desc" class="text-black">{{ 'userBookings.filters.newest' | translate }}</option>
+              <option value="created_asc" class="text-black">{{ 'userBookings.filters.oldest' | translate }}</option>
+              <option value="start_desc" class="text-black">{{ 'userBookings.filters.dateDesc' | translate }}</option>
+              <option value="start_asc" class="text-black">{{ 'userBookings.filters.dateAsc' | translate }}</option>
             </select>
 
             <select class="h-12 w-[160px] bg-transparent px-3 text-sm text-white outline-none" [(ngModel)]="filters.hasReceipt" name="hasReceipt">
-              <option value="" class="text-black">Receipts</option>
-              <option value="true" class="text-black">With receipt</option>
-              <option value="false" class="text-black">Without receipt</option>
+              <option value="" class="text-black">{{ 'userBookings.filters.receipts' | translate }}</option>
+              <option value="true" class="text-black">{{ 'userBookings.filters.withReceipt' | translate }}</option>
+              <option value="false" class="text-black">{{ 'userBookings.filters.withoutReceipt' | translate }}</option>
             </select>
 
             <button class="h-12 shrink-0 bg-[#9c27b0] px-7 font-semibold text-white transition hover:bg-[#8a21a0]" type="submit">
-              <i class="fa-solid fa-filter mr-1"></i>Filter
+              <i class="fa-solid fa-filter mr-1"></i>{{ 'userBookings.buttons.filter' | translate }}
             </button>
           </form>
 
-          <button
+            <button
             *ngIf="hasActiveFilters()"
             type="button"
             class="h-12 shrink-0 whitespace-nowrap border-0 bg-transparent px-1 text-sm text-[#9c27b0] transition hover:text-[#540761]"
             (click)="resetFilters()"
           >
-            <i class="fa-solid fa-rotate-right mr-1"></i>Reset
+              <i class="fa-solid fa-rotate-right mr-1"></i>{{ 'userBookings.buttons.reset' | translate }}
           </button>
         </div>
       </section>
@@ -75,33 +75,33 @@
           (click)="goToBooking(booking)"
         >
           <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div class="min-w-0 space-y-2">
-              <p class="break-all text-sm text-white/70"><span class="font-semibold text-white">Reserva:</span> {{ bookingCode(booking) }}</p>
-              <p class="text-sm text-white/70"><span class="font-semibold text-white">Club:</span> {{ clubNames[booking.clubId] || booking.clubId }}</p>
-              <p class="text-sm text-white/70"><span class="font-semibold text-white">Date:</span> {{ formatDate(booking.bookingStart) }}</p>
-              <p class="text-sm text-white/70"><span class="font-semibold text-white">Total:</span> $ {{ booking.totalAmount || 0 }}</p>
-            </div>
+              <div class="min-w-0 space-y-2">
+                <p class="break-all text-sm text-white/70"><span class="font-semibold text-white">{{ 'userBookings.bookingCard.reserva' | translate }}</span> {{ bookingCode(booking) }}</p>
+                <p class="text-sm text-white/70"><span class="font-semibold text-white">{{ 'userBookings.bookingCard.club' | translate }}</span> {{ clubNames[booking.clubId] || booking.clubId }}</p>
+                <p class="text-sm text-white/70"><span class="font-semibold text-white">{{ 'userBookings.bookingCard.date' | translate }}</span> {{ formatDate(booking.bookingStart) }}</p>
+                <p class="text-sm text-white/70"><span class="font-semibold text-white">{{ 'userBookings.bookingCard.total' | translate }}</span> $ {{ booking.totalAmount || 0 }}</p>
+              </div>
 
             <span class="shrink-0 rounded-full border px-3 py-1 text-sm font-semibold" [ngClass]="statusClasses(booking.status)">
-              {{ statusLabel(booking.status) }}
+              {{ ('userBookings.statuses.' + booking.status) | translate }}
             </span>
           </div>
         </button>
 
         <div *ngIf="!loading && bookings.length === 0" class="rounded-lg border border-white/10 bg-[#343232] p-8 text-center text-white/60">
-          No reservations found.
+          {{ 'userBookings.noReservations' | translate }}
         </div>
       </section>
 
-      <nav *ngIf="totalPages > 1" class="mt-8 flex items-center justify-center gap-4">
-        <button class="h-10 w-10 rounded-full bg-[#2a2a2a] transition hover:bg-purple-700 disabled:opacity-30" [disabled]="currentPage === 1" (click)="prevPage()">
-          <i class="fa-solid fa-chevron-left"></i>
-        </button>
-        <span class="text-sm text-[#bab8b8]">{{ currentPage }} de {{ totalPages }}</span>
-        <button class="h-10 w-10 rounded-full bg-[#2a2a2a] transition hover:bg-purple-700 disabled:opacity-30" [disabled]="currentPage === totalPages" (click)="nextPage()">
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
-      </nav>
+        <nav *ngIf="totalPages > 1" class="mt-8 flex items-center justify-center gap-4">
+          <button class="h-10 w-10 rounded-full bg-[#2a2a2a] transition hover:bg-purple-700 disabled:opacity-30" [disabled]="currentPage === 1" (click)="prevPage()">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <span class="text-sm text-[#bab8b8]">{{ currentPage }} {{ 'common.of' | translate }} {{ totalPages }}</span>
+          <button class="h-10 w-10 rounded-full bg-[#2a2a2a] transition hover:bg-purple-700 disabled:opacity-30" [disabled]="currentPage === totalPages" (click)="nextPage()">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </nav>
     </main>
   </section>
 </div>

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { Booking } from '../models/booking.model';
 import { Club } from '../models/club.model';
@@ -11,12 +12,13 @@ import { User } from '../models/user.model';
 import { BookingService } from '../services/booking.service';
 import { ClubService } from '../services/club.service';
 import { UserService } from '../services/user.service';
+import { I18nService } from '../services/i18n.service';
 import { argentinaDateCode, formatArgentinaDateTime } from '../utils/argentina-date.util';
 
 @Component({
   standalone: true,
   selector: 'app-booking-admin-handler-page',
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './booking-admin-handler.page.html'
 })
 export class BookingAdminHandlerPage implements OnInit, OnDestroy {
@@ -38,7 +40,8 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     private readonly bookingService: BookingService,
     private readonly clubService: ClubService,
     private readonly userService: UserService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -52,7 +55,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   load(): void {
     const bookingId = this.route.snapshot.paramMap.get('bookingId');
     if (!bookingId) {
-      this.error = 'Reserva inválida.';
+      this.error = this.i18n.instant('bookingAdminHandler.errors.invalidBooking');
       return;
     }
 
@@ -74,7 +77,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: () => {
-        this.error = 'No se pudo cargar la reserva.';
+        this.error = this.i18n.instant('bookingAdminHandler.errors.loadFailed');
         this.cdr.detectChanges();
       }
     });
@@ -84,11 +87,11 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     if (!this.booking) return;
     this.bookingService.confirmManagedClubBooking(this.booking.id).subscribe({
       next: () => {
-        this.success = 'Reserva confirmada correctamente.';
+        this.success = this.i18n.instant('bookingAdminHandler.success.confirmed');
         this.load();
       },
       error: () => {
-        this.error = 'No se pudo confirmar la reserva.';
+        this.error = this.i18n.instant('bookingAdminHandler.errors.confirmFailed');
         this.cdr.detectChanges();
       }
     });
@@ -99,12 +102,12 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     this.bookingService.cancelManagedClubBooking(this.booking.id).subscribe({
       next: () => {
         this.showCancelModal = false;
-        this.success = 'Reserva cancelada correctamente.';
+        this.success = this.i18n.instant('bookingAdminHandler.success.cancelled');
         this.load();
       },
       error: () => {
         this.showCancelModal = false;
-        this.error = 'No se pudo cancelar la reserva.';
+        this.error = this.i18n.instant('bookingAdminHandler.errors.cancelFailed');
         this.cdr.detectChanges();
       }
     });
@@ -144,7 +147,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   }
 
   formatDateTime(value?: string): string {
-    return formatArgentinaDateTime(value);
+    return formatArgentinaDateTime(value, this.i18n.getLanguage());
   }
 
   bookingCode(): string {
