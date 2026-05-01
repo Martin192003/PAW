@@ -7,13 +7,14 @@ import { FormsModule } from '@angular/forms';
 import { EventService } from '../services/event.service';
 import { ClubEvent } from '../models/ClubEvent.model';
 import { ViewChild, ElementRef } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 
 
 type ClubListItem = Club & { _hasError?: boolean };
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, TranslateModule],
   templateUrl: './clubs.page.html',
 })
 export class ClubsPage implements OnInit, OnDestroy {
@@ -32,15 +33,36 @@ export class ClubsPage implements OnInit, OnDestroy {
   private previousDocumentOverflow?: string;
 
   readonly filterOptions = {
-    zones: ['ZONA_NORTE', 'ZONA_OESTE', 'ZONA_SUR', 'ZONA_CABA'],
-    genres: ['ROCK', 'POP', 'CACHENGUE', 'TECHNO', 'REGGAETON', 'CUMBIA', 'TRAP', 'JAZZ', 'ELECTRONICA', 'AFROBEAT', 'OTRO'],
-    prices: ['BAJO', 'MEDIO', 'ALTO'],
+    zones: [
+      { value: 'ZONA_NORTE', labelKey: 'clubs.filterOptions.zones.norte' },
+      { value: 'ZONA_OESTE', labelKey: 'clubs.filterOptions.zones.oeste' },
+      { value: 'ZONA_SUR', labelKey: 'clubs.filterOptions.zones.sur' },
+      { value: 'ZONA_CABA', labelKey: 'clubs.filterOptions.zones.caba' }
+    ],
+    genres: [
+      { value: 'ROCK', labelKey: 'clubs.filterOptions.genres.rock' },
+      { value: 'POP', labelKey: 'clubs.filterOptions.genres.pop' },
+      { value: 'CACHENGUE', labelKey: 'clubs.filterOptions.genres.cachengue' },
+      { value: 'TECHNO', labelKey: 'clubs.filterOptions.genres.techno' },
+      { value: 'REGGAETON', labelKey: 'clubs.filterOptions.genres.reggaeton' },
+      { value: 'CUMBIA', labelKey: 'clubs.filterOptions.genres.cumbia' },
+      { value: 'TRAP', labelKey: 'clubs.filterOptions.genres.trap' },
+      { value: 'JAZZ', labelKey: 'clubs.filterOptions.genres.jazz' },
+      { value: 'ELECTRONICA', labelKey: 'clubs.filterOptions.genres.electronica' },
+      { value: 'AFROBEAT', labelKey: 'clubs.filterOptions.genres.afrobeat' },
+      { value: 'OTRO', labelKey: 'clubs.filterOptions.genres.other' }
+    ],
+    prices: [
+      { value: 'bajo', labelKey: 'clubs.filterOptions.prices.low' },
+      { value: 'medio', labelKey: 'clubs.filterOptions.prices.medium' },
+      { value: 'alto', labelKey: 'clubs.filterOptions.prices.high' }
+    ],
     sorts: [
-      { value: 'availability_d0_desc', label: 'Available today' },
-      { value: 'availability_d1_desc', label: 'Available tomorrow' },
-      { value: 'availability_d2_desc', label: 'Available day after' },
-      { value: 'rating_desc', label: 'Rating (high to low)' },
-      { value: 'rating_asc', label: 'Rating (low to high)' }
+      { value: 'availability_d0_desc', labelKey: 'clubs.filterOptions.sorts.availableToday' },
+      { value: 'availability_d1_desc', labelKey: 'clubs.filterOptions.sorts.availableTomorrow' },
+      { value: 'availability_d2_desc', labelKey: 'clubs.filterOptions.sorts.availableDayAfter' },
+      { value: 'rating_desc', labelKey: 'clubs.filterOptions.sorts.ratingHighToLow' },
+      { value: 'rating_asc', labelKey: 'clubs.filterOptions.sorts.ratingLowToHigh' }
     ]
   };
 

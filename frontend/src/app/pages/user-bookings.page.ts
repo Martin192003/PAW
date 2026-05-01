@@ -6,17 +6,19 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { SideBarComponent } from '../components/account-sidebar/account-sidebar.component';
+import { TranslateModule } from '@ngx-translate/core';
 import { Booking, BookingFilters } from '../models/booking.model';
 import { Club } from '../models/club.model';
 import { ClubTable } from '../models/club-table.model';
 import { BookingService } from '../services/booking.service';
 import { ClubService } from '../services/club.service';
+import { I18nService } from '../services/i18n.service';
 import { argentinaDateCode, formatArgentinaDate } from '../utils/argentina-date.util';
 
 @Component({
   standalone: true,
   selector: 'app-user-bookings-page',
-  imports: [CommonModule, FormsModule, RouterLink, SideBarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, SideBarComponent, TranslateModule],
   templateUrl: './user-bookings.page.html'
 })
 export class UserBookingsPage implements OnInit {
@@ -43,7 +45,8 @@ export class UserBookingsPage implements OnInit {
     private readonly bookingService: BookingService,
     private readonly clubService: ClubService,
     private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -137,7 +140,7 @@ export class UserBookingsPage implements OnInit {
   }
 
   formatDate(value: string): string {
-    return formatArgentinaDate(value);
+    return formatArgentinaDate(value, this.i18n.getLanguage());
   }
 
   bookingCode(booking: Booking): string {

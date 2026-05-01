@@ -17,13 +17,14 @@ import { ClubService } from '../services/club.service';
 import { ClubCreateRequest } from '../models/club.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
+import { TranslateModule } from '@ngx-translate/core';
 
 declare const L: any; // Leaflet (cargado vía CDN o instalado como paquete)
 
 @Component({
   selector: 'app-add-club',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslateModule],
   templateUrl: './club-new.page.html',
   styleUrl: './club-new.page.css',
 })

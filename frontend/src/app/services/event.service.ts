@@ -6,7 +6,6 @@ import { ClubEvent, EventPayload } from '../models/ClubEvent.model';
 import { PagedResponse } from '../models/paged-response.model';
 import { switchMap, forkJoin } from 'rxjs';
 
-// ── Tipos que devuelve el backend ──────────────────────────────────────────────
 
 interface LinkEntry {
   key: string;
@@ -27,7 +26,6 @@ interface RawResponse {
   [key: string]: unknown;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function parseLinks(entry: LinkEntry[] = []): Record<string, string> {
   return entry.reduce((acc, { key, value }) => ({ ...acc, [key]: value }), {});
@@ -59,7 +57,6 @@ function toPagedResponse(raw: EventDto[] | RawResponse): PagedResponse<ClubEvent
   };
 }
 
-// ── Service ────────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class EventService {
@@ -68,7 +65,6 @@ export class EventService {
 
   constructor(private http: HttpClient) {}
 
-  // ── Queries ──────────────────────────────────────────────────────────────────
 
   getUpcomingEvents(page = 0, size = 20): Observable<PagedResponse<ClubEvent>> {
     return this.http
@@ -117,7 +113,6 @@ export class EventService {
       .pipe(map(toClubEvent));
   }
 
-  // ── Commands ─────────────────────────────────────────────────────────────────
 
   createEvent(clubId: string, payload: EventPayload): Observable<ClubEvent> {
     return this.http
@@ -135,7 +130,6 @@ export class EventService {
     return this.http.delete<void>(`${this.base}/clubs/${clubId}/events/${eventId}`);
   }
 
-  // ── Photo ────────────────────────────────────────────────────────────────────
 
   getEventPhoto(clubId: string, eventId: string): Observable<Blob> {
     return this.http.get(`${this.base}/clubs/${clubId}/events/${eventId}/photo`, {
@@ -143,7 +137,6 @@ export class EventService {
     });
   }
 
-  // ── Private ──────────────────────────────────────────────────────────────────
 
   private pageParams(page: number, size: number): HttpParams {
     return new HttpParams().set('page', page).set('size', size);

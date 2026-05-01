@@ -8,7 +8,7 @@
           type="button"
           class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-[#9c27b0] text-white hover:bg-[#86229a] transition"
           routerLink="/clubs"
-          aria-label="Back to clubs"
+          [attr.aria-label]="'clubActivity.backToClubs' | translate"
         >
           <i class="fa-solid fa-arrow-left"></i>
         </button>
@@ -18,9 +18,9 @@
             class="text-[1.55rem] font-bold text-[#9c27b0] tracking-widest"
             style="font-family: 'Darklinos', Arial, sans-serif;"
           >
-            Club Activity
+            {{ 'clubActivity.title' | translate }}
           </h1>
-          <p class="text-[#b9b9b9] text-sm">Manage your clubs and open each handler quickly.</p>
+          <p class="text-[#b9b9b9] text-sm">{{ 'clubActivity.subtitle' | translate }}</p>
         </div>
       </section>
 
@@ -78,29 +78,29 @@
         </article>
       </section>
 
-      <div *ngIf="totalPages > 1" class="flex justify-center items-center gap-4 mt-10">
-        <button
-          type="button"
-          class="w-10 h-10 flex items-center justify-center rounded-full text-white bg-[#2a2a2a] hover:bg-purple-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
-          [disabled]="currentPage === 1"
-          (click)="prevPage()"
-          aria-label="Previous page"
-        >
-          <i class="fa-solid fa-chevron-left"></i>
-        </button>
+       <div *ngIf="totalPages > 1" class="flex justify-center items-center gap-4 mt-10">
+         <button
+           type="button"
+           class="w-10 h-10 flex items-center justify-center rounded-full text-white bg-[#2a2a2a] hover:bg-purple-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+           [disabled]="currentPage === 1"
+           (click)="prevPage()"
+           [attr.aria-label]="'clubActivity.previousPage' | translate"
+         >
+           <i class="fa-solid fa-chevron-left"></i>
+         </button>
 
-        <span class="text-[#bab8b8] text-sm">{{ currentPage }} de {{ totalPages }}</span>
+         <span class="text-[#bab8b8] text-sm">{{ currentPage }} {{ 'clubActivity.de' | translate }} {{ totalPages }}</span>
 
-        <button
-          type="button"
-          class="w-10 h-10 flex items-center justify-center rounded-full text-white bg-[#2a2a2a] hover:bg-purple-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
-          [disabled]="currentPage === totalPages"
-          (click)="nextPage()"
-          aria-label="Next page"
-        >
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
-      </div>
+         <button
+           type="button"
+           class="w-10 h-10 flex items-center justify-center rounded-full text-white bg-[#2a2a2a] hover:bg-purple-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+           [disabled]="currentPage === totalPages"
+           (click)="nextPage()"
+           [attr.aria-label]="'clubActivity.nextPage' | translate"
+         >
+           <i class="fa-solid fa-chevron-right"></i>
+         </button>
+       </div>
     </main>
   </section>
 </div>

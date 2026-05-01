@@ -1,7 +1,8 @@
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 import {
   ClubService,
@@ -36,7 +37,7 @@ type ProductForm = Omit<ProductPayload, 'basePrice'> & {
 @Component({
   standalone: true,
   selector: 'app-club-handler-page',
-  imports: [CommonModule, DatePipe, DecimalPipe, FormsModule, SideBarComponent],
+  imports: [CommonModule, FormsModule, SideBarComponent, TranslateModule],
   templateUrl: './club-handler.page.html',
   styleUrl: './club-handler.page.css'
 })

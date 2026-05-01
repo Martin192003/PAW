@@ -8,7 +8,7 @@
         ? 'bg-[#9c27b0] font-bold'
         : 'hover:bg-[#333]'"
     >
-      {{ item.label }}
+      {{ item.labelKey | translate }}
     </a>
 
     <ng-template #staticItem>
@@ -17,13 +17,13 @@
         class="px-6 py-6 text-left text-lg leading-tight hover:bg-[#333] transition-colors"
         [ngClass]="isActive(item.key) ? 'bg-[#9c27b0] font-bold' : ''"
       >
-        {{ item.label }}
+            {{ item.labelKey | translate }}
       </button>
     </ng-template>
   </ng-container>
 
   <button type="button" class="mt-auto flex items-center gap-3 px-6 py-5 text-left text-lg hover:bg-[#333] transition-colors">
     <i class="fa-solid fa-right-from-bracket"></i>
-    <span>Logout</span>
+        <span>{{ 'common.logout' | translate }}</span>
   </button>
 </aside>

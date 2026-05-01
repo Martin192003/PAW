@@ -1,15 +1,17 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass, NgIf } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { ApiMessageResponse, LoginResponse } from '../models/user.model';
 import { AuthStateService } from '../services/auth-state.service';
+import { I18nService } from '../services/i18n.service';
 import { UserService } from '../services/user.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [NgIf, NgClass, ReactiveFormsModule, TranslateModule],
   templateUrl: './verify-mail.page.html',
 })
 export class VerifyMailPage {
@@ -37,6 +39,7 @@ export class VerifyMailPage {
     private readonly router: Router,
     private readonly fb: FormBuilder,
     private readonly authState: AuthStateService,
+    private readonly i18n: I18nService,
     private readonly userService: UserService,
   ) {
     this.codeForm = this.fb.group({
@@ -86,7 +89,7 @@ export class VerifyMailPage {
       },
       error: (error: HttpErrorResponse) => {
         this.codeSubmitting = false;
-        this.codeErrorMessage = this.resolveErrorMessage(error, 'No se pudo verificar el codigo.');
+        this.codeErrorMessage = this.resolveErrorMessage(error, this.i18n.instant('verifyMail.errors.verifyCode'));
       },
     });
   }
@@ -103,11 +106,11 @@ export class VerifyMailPage {
     this.userService.resendVerification({ usernameOrEmail }).subscribe({
       next: (response) => {
         this.resendSubmitting = false;
-        this.resendSuccessMessage = response.message || 'Te enviamos un nuevo mail de verificacion.';
+        this.resendSuccessMessage = response.message || this.i18n.instant('verifyMail.messages.resendSuccess');
       },
       error: (error: HttpErrorResponse) => {
         this.resendSubmitting = false;
-        this.resendErrorMessage = this.resolveErrorMessage(error, 'No se pudo reenviar el mail de verificacion.');
+        this.resendErrorMessage = this.resolveErrorMessage(error, this.i18n.instant('verifyMail.errors.resend'));
       },
     });
   }
@@ -134,7 +137,7 @@ export class VerifyMailPage {
       },
       error: (error: HttpErrorResponse) => {
         this.tokenChecking = false;
-        this.tokenErrorMessage = this.resolveErrorMessage(error, 'No se pudo verificar el enlace.');
+        this.tokenErrorMessage = this.resolveErrorMessage(error, this.i18n.instant('verifyMail.errors.verifyLink'));
       },
     });
   }
@@ -164,7 +167,7 @@ export class VerifyMailPage {
       return;
     }
 
-    const message = response.message || 'Cuenta verificada correctamente.';
+    const message = response.message || this.i18n.instant('verifyMail.messages.verifiedSuccess');
     if (source === 'token') {
       this.tokenSuccessMessage = message;
     } else {

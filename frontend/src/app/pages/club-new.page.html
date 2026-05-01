@@ -20,7 +20,7 @@
 
     <!-- Título -->
     <div class="text-center mb-6 text-2xl font-bold text-white flex items-center justify-center gap-2">
-      <span>Agregar Club</span>
+      <span>{{ 'clubNew.title' | translate }}</span>
       <span class="inline-flex items-center justify-center w-[50px] h-[50px] bg-[#9c27b0] rounded-full text-white">
         <i class="fa-solid fa-martini-glass-citrus"></i>
       </span>
@@ -37,14 +37,14 @@
     <!-- Formulario -->
     <form [formGroup]="clubForm" (ngSubmit)="onSubmit()" novalidate>
 
-      <p class="text-[#c1bfbf] text-[15px] text-right font-sans mb-2">* Campos requeridos</p>
+      <p class="text-[#c1bfbf] text-[15px] text-right font-sans mb-2">{{ 'clubNew.requiredFields' | translate }}</p>
 
       <!-- Nombre -->
       <div class="flex flex-col mb-3">
         <input
           formControlName="name"
           type="text"
-          placeholder="Nombre *"
+          [placeholder]="'clubNew.fields.name' | translate"
           class="w-full px-4 py-4 border rounded-[8px] bg-transparent text-white text-base
                  placeholder-[#aaa] box-border transition-colors
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
@@ -60,7 +60,7 @@
         <input
           formControlName="location"
           type="text"
-          placeholder="Ubicación *"
+          [placeholder]="'clubNew.fields.location' | translate"
           id="locationInput"
           class="w-full px-4 py-4 border rounded-[8px] bg-transparent text-white text-base
                  placeholder-[#aaa] box-border transition-colors
@@ -97,10 +97,10 @@
                    focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
             [ngClass]="fieldClass('priceRange')"
           >
-            <option value="" disabled selected>Rango de precio</option>
-            <option value="BAJO">Bajo ($)</option>
-            <option value="MEDIO">Medio ($$)</option>
-            <option value="ALTO">Alto ($$$)</option>
+            <option value="" disabled selected>{{ 'clubNew.fields.priceRange' | translate }}</option>
+            <option value="BAJO">{{ 'clubNew.priceRanges.low' | translate }}</option>
+            <option value="MEDIO">{{ 'clubNew.priceRanges.medium' | translate }}</option>
+            <option value="ALTO">{{ 'clubNew.priceRanges.high' | translate }}</option>
           </select>
 
           <!-- Botón info -->
@@ -109,7 +109,7 @@
             (click)="toggleTooltip($event)"
             class="absolute top-1/2 right-3 -translate-y-1/2 border-0 bg-transparent
                    p-0 cursor-pointer flex items-center justify-center"
-            aria-label="Información rango de precio"
+            [attr.aria-label]="'clubNew.priceTooltipLabel' | translate"
           >
             <i class="fa-solid fa-circle-info text-[#ccc] text-base opacity-80 mr-2"></i>
           </button>
@@ -125,11 +125,9 @@
           >
             <div class="absolute -top-[6px] right-[18px] w-[10px] h-[10px]
                         bg-[#151a24] border-l border-t border-[#232b36] rotate-45"></div>
-            <strong>Rango de precio</strong><br/>
+            <strong>{{ 'clubNew.priceTooltipTitle' | translate }}</strong><br/>
             <span>
-              Bajo ($) – Bebidas económicas.<br/>
-              Medio ($$) – Precio moderado.<br/>
-              Alto ($$$) – Bebidas premium.
+              {{ 'clubNew.priceTooltipContent' | translate }}
             </span>
           </div>
         </div>
@@ -142,7 +140,7 @@
       <div class="flex flex-col mb-3">
         <textarea
           formControlName="description"
-          placeholder="Descripción"
+          [placeholder]="'clubNew.fields.description' | translate"
           class="w-full px-4 py-4 border rounded-[8px] bg-transparent text-white text-base
                  placeholder-[#aaa] box-border resize-none min-h-[160px] transition-colors
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
@@ -162,18 +160,18 @@
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
           [ngClass]="fieldClass('musicGenre')"
         >
-          <option value="" disabled selected>Género musical</option>
-          <option value="ROCK">Rock</option>
-          <option value="POP">Pop</option>
-          <option value="CACHENGUE">Cachengue</option>
-          <option value="TECHNO">Techno</option>
-          <option value="REGGAETON">Reggaeton</option>
-          <option value="CUMBIA">Cumbia</option>
-          <option value="TRAP">Trap</option>
-          <option value="JAZZ">Jazz</option>
-          <option value="ELECTRONICA">Electrónica</option>
-          <option value="AFROBEAT">Afrobeat</option>
-          <option value="OTRO">Otro</option>
+          <option value="" disabled selected>{{ 'clubNew.fields.musicGenre' | translate }}</option>
+          <option value="ROCK">{{ 'clubNew.genres.rock' | translate }}</option>
+          <option value="POP">{{ 'clubNew.genres.pop' | translate }}</option>
+          <option value="CACHENGUE">{{ 'clubNew.genres.cachengue' | translate }}</option>
+          <option value="TECHNO">{{ 'clubNew.genres.techno' | translate }}</option>
+          <option value="REGGAETON">{{ 'clubNew.genres.reggaeton' | translate }}</option>
+          <option value="CUMBIA">{{ 'clubNew.genres.cumbia' | translate }}</option>
+          <option value="TRAP">{{ 'clubNew.genres.trap' | translate }}</option>
+          <option value="JAZZ">{{ 'clubNew.genres.jazz' | translate }}</option>
+          <option value="ELECTRONICA">{{ 'clubNew.genres.electronica' | translate }}</option>
+          <option value="AFROBEAT">{{ 'clubNew.genres.afrobeat' | translate }}</option>
+          <option value="OTRO">{{ 'clubNew.genres.other' | translate }}</option>
         </select>
         <span *ngIf="showError('musicGenre')" class="text-[#ff0000] text-xs mt-1">
           {{ getError('musicGenre') }}
@@ -189,11 +187,11 @@
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
           [ngClass]="fieldClass('zone')"
         >
-          <option value="" disabled selected>Zona</option>
-          <option value="ZONA_NORTE">Zona Norte</option>
-          <option value="ZONA_OESTE">Zona Oeste</option>
-          <option value="ZONA_SUR">Zona Sur</option>
-          <option value="ZONA_CABA">CABA</option>
+          <option value="" disabled selected>{{ 'clubNew.fields.zone' | translate }}</option>
+          <option value="ZONA_NORTE">{{ 'clubNew.zones.norte' | translate }}</option>
+          <option value="ZONA_OESTE">{{ 'clubNew.zones.oeste' | translate }}</option>
+          <option value="ZONA_SUR">{{ 'clubNew.zones.sur' | translate }}</option>
+          <option value="ZONA_CABA">{{ 'clubNew.zones.caba' | translate }}</option>
         </select>
         <span *ngIf="showError('zone')" class="text-[#ff0000] text-xs mt-1">
           {{ getError('zone') }}
@@ -209,9 +207,9 @@
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
           [ngClass]="fieldClass('isBar')"
         >
-          <option value="" disabled selected>Tipo de local</option>
-          <option value="true">Bar</option>
-          <option value="false">Club / Boliche</option>
+          <option value="" disabled selected>{{ 'clubNew.fields.venueType' | translate }}</option>
+          <option value="true">{{ 'clubNew.venueTypes.bar' | translate }}</option>
+          <option value="false">{{ 'clubNew.venueTypes.nightclub' | translate }}</option>
         </select>
         <span *ngIf="showError('isBar')" class="text-[#ff0000] text-xs mt-1">
           {{ getError('isBar') }}
@@ -223,7 +221,7 @@
         <input
           formControlName="cbu"
           type="text"
-          placeholder="CBU"
+          [placeholder]="'clubNew.fields.cbu' | translate"
           class="w-full px-4 py-4 border rounded-[8px] bg-transparent text-white text-base
                  placeholder-[#aaa] box-border transition-colors
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
@@ -258,7 +256,7 @@
                  shadow-[0_2px_10px_rgba(108,117,125,0.4)]
                  hover:bg-[#5a6268] transition-colors"
         >
-          Cancelar
+          {{ 'clubNew.cancel' | translate }}
         </a>
         <button
           type="submit"
@@ -269,7 +267,7 @@
                  hover:bg-[#540761] transition-colors
                  disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {{ submitting ? 'Guardando...' : 'Guardar' }}
+          {{ submitting ? ('clubNew.saving' | translate) : ('clubNew.save' | translate) }}
         </button>
       </div>
 
