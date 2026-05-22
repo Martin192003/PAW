@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
 import { Router, RouterModule } from '@angular/router';
@@ -57,10 +57,15 @@ export class ClubsPage implements OnInit, OnDestroy {
     private clubService: ClubService,
     private eventService: EventService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     this.loadClubs();
     this.loadUpcomingEvents();
   }
@@ -164,8 +169,6 @@ export class ClubsPage implements OnInit, OnDestroy {
   loadUpcomingEvents(): void {
     this.eventService.getUpcomingEvents(0, 10).subscribe({
       next: (res) => {
-        console.log('Backend response:', res);
-        console.log('Mapped events:', res.content);
         this.upcomingEvents = res.content;
         this.cdr.detectChanges();
       },
