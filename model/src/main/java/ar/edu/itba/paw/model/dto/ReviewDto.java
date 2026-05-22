@@ -7,6 +7,7 @@ public class ReviewDto {
 
     private UUID reviewId;
     private UUID userId;
+    private String username;
     private UUID clubId;
     private Integer rating;
     private String description;
@@ -30,6 +31,14 @@ public class ReviewDto {
 
     public void setUserId(UUID userId) {
         this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public UUID getClubId() {
