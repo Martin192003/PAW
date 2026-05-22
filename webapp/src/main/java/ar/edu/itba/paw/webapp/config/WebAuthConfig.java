@@ -62,9 +62,8 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/clubs").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/users/login").permitAll()
-                .antMatchers("/api/users/**").permitAll()
-                // Endpoints legacy server-side
+
+                // legacy (non-/api) user endpoints used by server-side forms
                 .antMatchers(HttpMethod.POST, "/users").permitAll()
                 .antMatchers(HttpMethod.POST, "/users/resend-verification").permitAll()
                 .antMatchers(HttpMethod.GET, "/users/verify").permitAll()
