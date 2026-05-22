@@ -250,10 +250,35 @@
     "reservationSuccessMsg": "Tu mesa fue reservada correctamente. ¿Quieres ver el detalle de la reserva?",
     "noRefresh": "No, refrescar",
     "seeReservation": "Ver reserva"
+    ,
+    "leaveReview": "Dejar reseña",
+    "editMyReview": "Editar mi reseña",
+    "newReview": "Nueva reseña",
+    "editReview": "Editar reseña",
+    "score": "Puntaje",
+    "rateStar": "Calificar con {{star}} estrella(s)",
+    "chooseScore": "Elegí un puntaje",
+    "commentLabel": "Comentario (opcional)",
+    "commentPlaceholder": "Contanos cómo te fue en este club...",
+    "publishReview": "Publicar reseña",
+    "saveChanges": "Guardar cambios",
+    "deleteReview": "Borrar reseña",
+    "loginToReview": "Iniciá sesión para dejar una reseña.",
+    "yourReviewBadge": "Tu reseña",
+    "viewClub": "Ver club"
   },
   "pagination": {
     "previous": "Anterior",
     "next": "Siguiente"
+  },
+  "myReviews": {
+    "title": "Mis reseñas",
+    "subtitle": "Las reseñas que dejaste en los clubs.",
+    "loading": "Cargando tus reseñas...",
+    "emptyTitle": "Todavía no dejaste ninguna reseña.",
+    "emptySubtitle": "Visitá un club y dejá tu primera reseña.",
+    "clubFallback": "Club",
+    "viewClub": "Ver club"
   },
   "clubHandler": {
     "backToActivity": "Volver a la actividad",

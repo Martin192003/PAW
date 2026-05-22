@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 
 import { ReviewService } from '../services/review.service';
@@ -17,7 +18,7 @@ type ReviewItem = Review & {
 @Component({
   standalone: true,
   selector: 'app-my-reviews-page',
-  imports: [CommonModule, DatePipe, SideBarComponent],
+  imports: [CommonModule, SideBarComponent, TranslateModule],
   templateUrl: './my-reviews.page.html'
 })
 export class MyReviewsPage implements OnInit {

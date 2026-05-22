@@ -288,23 +288,23 @@
           <h3 class="mb-0 mt-0 text-[22px] font-bold">{{ 'clubDetails.reviews' | translate }}</h3>
 
           <button
-            *ngIf="isLoggedIn && !myReview && !reviewFormOpen"
+              *ngIf="isLoggedIn && !myReview && !reviewFormOpen"
             type="button"
             class="inline-flex items-center gap-2 rounded-md bg-[#9c27b0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7b1fa2]"
             (click)="openCreateReviewForm()"
           >
             <i class="fa-solid fa-pen-to-square"></i>
-            Dejar reseña
+                {{ 'clubDetails.leaveReview' | translate }}
           </button>
 
           <button
-            *ngIf="isLoggedIn && myReview && !reviewFormOpen"
+              *ngIf="isLoggedIn && myReview && !reviewFormOpen"
             type="button"
             class="inline-flex items-center gap-2 rounded-md border border-purple-500/40 bg-transparent px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-500/20"
             (click)="openEditReviewForm(myReview)"
           >
             <i class="fa-solid fa-pen"></i>
-            Editar mi reseña
+                {{ 'clubDetails.editMyReview' | translate }}
           </button>
         </div>
 
@@ -324,31 +324,31 @@
           #reviewForm="ngForm"
         >
           <h4 class="mb-4 mt-0 text-lg font-semibold text-white">
-            {{ reviewFormMode === 'create' ? 'Nueva reseña' : 'Editar reseña' }}
+            {{ reviewFormMode === 'create' ? ('clubDetails.newReview' | translate) : ('clubDetails.editReview' | translate) }}
           </h4>
 
           <div class="mb-4">
-            <label class="mb-2 block text-sm font-medium text-[#bab8b8]">Puntaje</label>
+            <label class="mb-2 block text-sm font-medium text-[#bab8b8]">{{ 'clubDetails.score' | translate }}</label>
             <div class="flex items-center gap-1">
-              <button
+                <button
                 *ngFor="let star of [1,2,3,4,5]"
                 type="button"
                 class="text-2xl transition hover:scale-110"
                 [ngClass]="star <= reviewFormRating ? 'text-[#ffd54f]' : 'text-white/30'"
-                [attr.aria-label]="'Calificar con ' + star + ' estrella' + (star > 1 ? 's' : '')"
+                  [attr.aria-label]="'clubDetails.rateStar' | translate:{star:star}"
                 (click)="setReviewFormRating(star)"
               >
                 <i class="fa-solid fa-star"></i>
               </button>
               <span class="ml-3 text-sm text-[#bab8b8]">
-                {{ reviewFormRating > 0 ? reviewFormRating + '/5' : 'Elegí un puntaje' }}
+                {{ reviewFormRating > 0 ? reviewFormRating + '/5' : ('clubDetails.chooseScore' | translate) }}
               </span>
             </div>
           </div>
 
           <div class="mb-4">
             <label for="reviewDescription" class="mb-2 block text-sm font-medium text-[#bab8b8]">
-              Comentario (opcional)
+              {{ 'clubDetails.commentLabel' | translate }}
             </label>
             <textarea
               id="reviewDescription"
@@ -356,7 +356,7 @@
               rows="4"
               maxlength="1000"
               class="w-full rounded border border-purple-500/30 bg-[#1f1f1f] px-3 py-2 text-white placeholder-[#666] focus:border-purple-500 focus:outline-none"
-              placeholder="Contanos cómo te fue en este club..."
+               placeholder="{{ 'clubDetails.commentPlaceholder' | translate }}"
               [(ngModel)]="reviewFormDescription"
             ></textarea>
           </div>
@@ -366,22 +366,22 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
-            <button
+             <button
               type="submit"
               class="inline-flex items-center gap-2 rounded-md bg-[#9c27b0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7b1fa2] disabled:opacity-50"
               [disabled]="reviewFormSubmitting || reviewFormRating < 1"
             >
               <i class="fa-solid" [ngClass]="reviewFormSubmitting ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
-              {{ reviewFormMode === 'create' ? 'Publicar reseña' : 'Guardar cambios' }}
+               {{ reviewFormMode === 'create' ? ('clubDetails.publishReview' | translate) : ('clubDetails.saveChanges' | translate) }}
             </button>
 
-            <button
+             <button
               type="button"
               class="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
               (click)="closeReviewForm()"
               [disabled]="reviewFormSubmitting"
             >
-              Cancelar
+              {{ 'common.cancel' | translate }}
             </button>
 
             <button
@@ -391,8 +391,8 @@
               [disabled]="reviewDeleting"
               (click)="deleteMyReview()"
             >
-              <i class="fa-solid" [ngClass]="reviewDeleting ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
-              Borrar reseña
+               <i class="fa-solid" [ngClass]="reviewDeleting ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+               {{ 'clubDetails.deleteReview' | translate }}
             </button>
           </div>
         </form>
@@ -403,7 +403,7 @@
           class="mb-6 rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-sm text-[#bab8b8]"
         >
           <i class="fa-solid fa-circle-info mr-2 text-[#9c27b0]"></i>
-          Iniciá sesión para dejar una reseña.
+          {{ 'clubDetails.loginToReview' | translate }}
         </div>
 
         <div *ngIf="reviews.length > 0; else noReviews" class="mb-6">
@@ -416,9 +416,9 @@
                   <div>
                     <strong class="block text-white">
                       {{ r.user?.username || r.username || ('clubDetails.anonymousUser' | translate) }}
-                      <span *ngIf="isMyReview(r)" class="ml-2 rounded bg-[#9c27b0] px-2 py-0.5 text-[10px] uppercase tracking-wide text-white">
-                        Tu reseña
-                      </span>
+                        <span *ngIf="isMyReview(r)" class="ml-2 rounded bg-[#9c27b0] px-2 py-0.5 text-[10px] uppercase tracking-wide text-white">
+                            {{ 'clubDetails.yourReviewBadge' | translate }}
+                          </span>
                     </strong>
                   </div>
                   <div class="flex items-center gap-1.5 text-[#ffd54f]">
@@ -439,7 +439,7 @@
                     class="inline-flex items-center gap-2 rounded border border-purple-500/40 px-3 py-1 text-xs text-white transition hover:bg-purple-500/20"
                     (click)="openEditReviewForm(r)"
                   >
-                    <i class="fa-solid fa-pen"></i> Editar
+                    <i class="fa-solid fa-pen"></i> {{ 'common.edit' | translate }}
                   </button>
                   <button
                     type="button"
@@ -447,8 +447,8 @@
                     [disabled]="reviewDeleting"
                     (click)="deleteMyReview()"
                   >
-                    <i class="fa-solid" [ngClass]="reviewDeleting ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
-                    Borrar
+                     <i class="fa-solid" [ngClass]="reviewDeleting ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+                     {{ 'common.delete' | translate }}
                   </button>
                 </div>
               </div>

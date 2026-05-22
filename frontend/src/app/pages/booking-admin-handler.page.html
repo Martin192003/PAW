@@ -11,8 +11,8 @@
         </h1>
       </div>
 
-      <span *ngIf="booking" class="rounded-full border px-3 py-1 text-sm font-semibold" [ngClass]="statusClasses(booking.status)">
-        {{ ('bookingAdminHandler.statuses.' + booking?.status) | translate }}
+      <span *ngIf="booking" class="rounded-full border px-3 py-1 text-sm font-semibold" [class]="statusClasses(booking.status)">
+        {{ ('bookingAdminHandler.statuses.' + booking.status) | translate }}
       </span>
     </header>
 
@@ -27,10 +27,10 @@
           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.user' | translate }}</dt><dd class="break-words text-white/80">{{ user?.username }}</dd></div>
           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.email' | translate }}</dt><dd class="break-words text-white/80">{{ user?.email }}</dd></div>
           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.surname' | translate }}</dt><dd class="break-words text-white/80">{{ user?.surname }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.table' | translate }}</dt><dd class="break-words text-white/80">{{ table?.tableNumber || booking.tableId }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.club' | translate }}</dt><dd class="truncate text-white/80">{{ club?.clubName || booking.clubId }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.start' | translate }}</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingStart) }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.end' | translate }}</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingEnd) }}</dd></div>
+           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.table' | translate }}</dt><dd class="break-words text-white/80">{{ table?.tableNumber || booking.tableId }}</dd></div>
+           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.club' | translate }}</dt><dd class="truncate text-white/80">{{ club?.clubName || booking.clubId }}</dd></div>
+           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.start' | translate }}</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingStart) }}</dd></div>
+           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.end' | translate }}</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingEnd) }}</dd></div>
           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.cbu' | translate }}</dt><dd class="break-all text-white/80">{{ club?.cbu }}</dd></div>
           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingAdminHandler.details.total' | translate }}</dt><dd class="text-lg font-semibold">$ {{ priceToPay() | number:'1.0-0' }}</dd></div>
         </dl>
@@ -42,7 +42,7 @@
 
           <button
             class="inline-flex h-10 items-center gap-2 rounded-md px-4 text-sm font-semibold transition"
-            [ngClass]="isConfirmed() ? 'cursor-not-allowed bg-green-800 text-white/70' : 'bg-green-700 hover:bg-green-600'"
+            [class]="isConfirmed() ? 'cursor-not-allowed bg-green-800 text-white/70' : 'bg-green-700 hover:bg-green-600'"
             [disabled]="isConfirmed()"
             (click)="confirmBooking()"
           >
