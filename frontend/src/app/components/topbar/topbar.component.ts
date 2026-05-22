@@ -3,6 +3,8 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthStateService } from '../../services/auth-state.service';
 import { ClubService } from '../../services/club.service';
+import { I18nService } from '../../services/i18n.service';
+import { TranslateModule } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -10,7 +12,7 @@ import { filter } from 'rxjs/operators';
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, TranslateModule],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.css'
 })

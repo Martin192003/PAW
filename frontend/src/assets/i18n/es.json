@@ -1,0 +1,558 @@
+﻿{
+  "topbar": {
+    "manageClubs": "Administrar Clubes",
+    "addClub": "Añadir Club",
+    "logout": "Cerrar Sesión"
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "usernameOrEmail": "Usuario o email",
+    "password": "Contraseña",
+    "rememberMe": "Recordarme",
+    "submit": "Iniciar sesión",
+    "submitting": "Ingresando...",
+    "noAccount": "¿No tenés cuenta? Regístrate",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
+  },
+  "register": {
+    "title": "Registrarse",
+    "username": "Usuario",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "password": "Contraseña",
+    "passwordRepeat": "Repetir contraseña",
+    "email": "Email",
+    "phone": "Celular",
+    "submit": "Registrarse",
+    "submitting": "Registrando...",
+    "hasAccount": "¿Ya tenés cuenta? Inicia sesión"
+  },
+  "verifyMail": {
+    "title": "Verificá tu cuenta",
+    "description": "Podés verificar tu usuario con el enlace del mail o ingresando manualmente el código.",
+    "associatedEmail": "Correo asociado:",
+    "linkVerification": {
+      "title": "1) Verificación por enlace",
+      "description": "Si abriste esta pantalla desde el link del mail, la verificación se ejecuta automáticamente.",
+      "checking": "Verificando enlace..."
+    },
+    "codeVerification": {
+      "title": "2) Verificación por código",
+      "placeholder": "Ingresá el código/token recibido por mail",
+      "required": "El código es obligatorio.",
+      "verifying": "Verificando...",
+      "verify": "Verificar código"
+    },
+    "resendVerification": {
+      "title": "¿No recibiste el mail?",
+      "placeholder": "Usuario o email",
+      "required": "El usuario o email es obligatorio.",
+      "sending": "Enviando...",
+      "send": "Reenviar mail de verificación"
+    },
+    "links": {
+      "login": "¿Ya verificaste tu cuenta? Iniciá sesión",
+      "backHome": "Volver al inicio"
+    },
+    "messages": {
+      "verifiedSuccess": "Cuenta verificada correctamente.",
+      "resendSuccess": "Te enviamos un nuevo mail de verificación."
+    },
+    "errors": {
+      "verifyCode": "No se pudo verificar el código.",
+      "verifyLink": "No se pudo verificar el enlace.",
+      "resend": "No se pudo reenviar el mail de verificación."
+    }
+  },
+  "clubs": {
+    "upcomingEvents": "Próximos Eventos",
+    "filter": "Filtrar",
+    "reset": "Resetear",
+    "searchByName": "Buscar por nombre",
+    "selectZone": "Seleccionar zona",
+    "selectGenre": "Seleccionar género",
+    "selectPrice": "Seleccionar precio",
+    "typeOfVenue": "Tipo de lugar",
+    "bar": "Bar",
+    "nightclub": "Discoteca",
+    "availability": "Disponibilidad/Calificación",
+    "filterOptions": {
+      "zones": {
+        "norte": "Zona Norte",
+        "oeste": "Zona Oeste",
+        "sur": "Zona Sur",
+        "caba": "Zona CABA"
+      },
+      "genres": {
+        "rock": "Rock",
+        "pop": "Pop",
+        "cachengue": "Cachengue",
+        "techno": "Techno",
+        "reggaeton": "Reggaetón",
+        "cumbia": "Cumbia",
+        "trap": "Trap",
+        "jazz": "Jazz",
+        "electronica": "Electrónica",
+        "afrobeat": "Afrobeat",
+        "other": "Otro"
+      },
+      "prices": {
+        "low": "Bajo",
+        "medium": "Medio",
+        "high": "Alto"
+      },
+      "sorts": {
+        "availableToday": "Disponible hoy",
+        "availableTomorrow": "Disponible mañana",
+        "availableDayAfter": "Disponible pasado mañana",
+        "ratingHighToLow": "Calificación (mayor a menor)",
+        "ratingLowToHigh": "Calificación (menor a mayor)"
+      }
+    },
+    "noTablesAvailable": "No hay mesas disponibles",
+    "noTablesMessage": "Ya no quedan mesas para {{eventName}}<span *ngIf=\"clubName\"> en {{clubName}}</span>.",
+    "noTablesMessageWithClub": "Ya no quedan mesas para {{eventName}} en {{clubName}}.",
+    "noTablesMessageWithoutClub": "Ya no quedan mesas para {{eventName}}.",
+    "understood": "Entendido"
+  },
+  "sidebar": {
+    "profile": "Mi perfil",
+    "clubs": "Mis clubes",
+    "clubsReservations": "Reservas de clubes",
+    "myReservations": "Mis reservas",
+    "reviews": "Reseñas"
+  },
+  "profile": {
+    "title": "PERFIL DE USUARIO",
+    "goBack": "Volver a clubes",
+    "editProfile": "Editar perfil",
+    "closeModal": "Cerrar modal",
+    "editUsername": "Editar usuario",
+    "editName": "Editar nombre",
+    "editSurname": "Editar apellido",
+    "editEmail": "Editar email",
+    "editPhone": "Editar teléfono",
+    "resetPassword": "Restablecer contraseña",
+    "fields": {
+      "username": "Usuario",
+      "name": "Nombre",
+      "surname": "Apellido",
+      "email": "Email",
+      "cellphone": "Celular"
+    },
+    "placeholders": {
+      "username": "Ingresá tu usuario",
+      "name": "Ingresá tu nombre",
+      "surname": "Ingresá tu apellido",
+      "email": "Ingresá tu email",
+      "cellphone": "Ingresá tu celular"
+    },
+    "username": "Usuario:",
+    "firstName": "Nombre:",
+    "lastName": "Apellido:",
+    "email": "Email:",
+    "phone": "Teléfono:",
+    "password": "Contraseña:",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "noFallback": "No se encontraron datos de perfil. Por favor, iniciá sesión primero.",
+    "errors": {
+      "emptyField": "El campo no puede quedar vacío",
+      "saveFailed": "No se pudo guardar el cambio",
+      "invalidSession": "Tu sesión no es válida. Volvé a iniciar sesión.",
+      "serverUpdate": "Error interno del servidor al actualizar el perfil",
+      "connection": "No pudimos conectar con el servidor.",
+      "resetPassword": "No pudimos preparar el restablecimiento de contraseña.",
+      "resetPasswordServer": "Error interno del servidor al preparar el restablecimiento de contraseña."
+    }
+  },
+  "passwordReset": {
+    "goBack": "Volver",
+    "forgotTitle": "Recuperar contraseña",
+    "resetTitle": "Restablecer contraseña",
+    "forgotDescription": "Te enviaremos un correo con los pasos para restablecer tu contraseña.",
+    "forgotLoggedDescription": "Te enviaremos un correo a la dirección asociada a tu cuenta.",
+    "emailPlaceholder": "Email",
+    "emailInvalid": "Ingresá un email válido.",
+    "submitSend": "Enviar",
+    "submitSending": "Enviando...",
+    "newPasswordPlaceholder": "Nueva contraseña",
+    "confirmPasswordPlaceholder": "Confirmar contraseña",
+    "minLength": "Mínimo 8 caracteres.",
+    "submitReset": "Restablecer contraseña",
+    "submitSaving": "Guardando...",
+    "backToHome": "Volver al inicio",
+    "modal": {
+      "sentTitle": "Verificá tu casilla de mail",
+      "sentBody": "Te enviamos un correo con los pasos para restablecer tu contraseña.",
+      "successTitle": "Contraseña modificada con éxito",
+      "successBody": "Tu contraseña se actualizó correctamente.",
+      "accept": "Aceptar"
+    },
+    "errors": {
+      "network": "No pudimos conectar con el servidor.",
+      "invalidEmail": "Revisá el email e intentá de nuevo.",
+      "emailSendFailed": "No pudimos enviar el email. Intentálo más tarde.",
+      "passwordsDontMatch": "Las contraseñas no coinciden.",
+      "invalidToken": "Token inválido o vencido.",
+      "invalidData": "Los datos ingresados no son válidos.",
+      "passwordUnchanged": "La contraseña debe ser distinta a la anterior.",
+      "updateFailed": "No pudimos actualizar la contraseña. Intentálo más tarde."
+    }
+  },
+  "clubDetails": {
+    "goBack": "Volver a clubes",
+    "menu": "Menú",
+    "tables": "Mesas",
+    "drinks": "Bebidas",
+    "noProducts": "No hay productos disponibles",
+    "noPhotos": "No hay fotos disponibles para la galería",
+    "reviewsCountLabel": "reseñas",
+    "carouselPhotoAlt": "{{ clubName }} - foto {{ index }}",
+    "photoPrevious": "Foto anterior",
+    "photoNext": "Foto siguiente",
+    "goToPhoto": "Ir a la foto {{ index }}",
+    "coverAlt": "{{ clubName }} - portada",
+    "layoutAlt": "Layout de mesas",
+    "reviewPhotoPrevious": "Foto de reseña anterior",
+    "reviewPhotoNext": "Foto de reseña siguiente",
+    "reviewPhotoAlt": "Foto de reseña {{ index }}",
+    "reviewImageAlt": "Reseña de {{ username }}",
+    "anonymousUser": "Usuario anónimo",
+    "noAdditionalComments": "Sin comentarios adicionales",
+    "dateLabel": "Fecha:",
+    "selectTableAndDate": "Seleccioná una mesa y una fecha antes de reservar.",
+    "tableUnavailable": "La mesa seleccionada ya no está disponible. Elegí otra opción.",
+    "reservationMadeSuccess": "Reserva realizada con éxito. Revisa tus reservas en tu cuenta.",
+    "reservationRequiresLogin": "Tenés que iniciar sesión para reservar una mesa.",
+    "reservationFailed": "No se pudo completar la reserva. Intentalo de nuevo.",
+    "tablesLoadFailed": "No se pudieron cargar las mesas disponibles.",
+    "location": "Ubicación",
+    "bookingDate": "Fecha de reserva",
+    "searchingDates": "Buscando fechas disponibles...",
+    "noTablesAvailable": "No hay mesas disponibles",
+    "tableNumber": "Mesa #",
+    "capacity": "Capacidad",
+    "discount": "desc",
+    "reserveButton": "Reservar mesa",
+    "layout": "Layout de mesas",
+    "map": "Ubicación",
+    "clickMapHint": "Haz clic en el mapa para habilitar zoom y arrastre.",
+    "reviewPhotos": "Fotos de Reseñas",
+    "reviews": "Reseñas",
+    "noReviews": "No hay reseñas disponibles aún",
+    "beFirstReview": "Sé el primero en dejar una reseña",
+    "noRatings": "Sin calificaciones",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "of": "de",
+    "reservationSuccess": "Reserva realizada",
+    "reservationSuccessMsg": "Tu mesa fue reservada correctamente. ¿Quieres ver el detalle de la reserva?",
+    "noRefresh": "No, refrescar",
+    "seeReservation": "Ver reserva"
+  },
+  "pagination": {
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "clubHandler": {
+    "backToActivity": "Volver a la actividad",
+    "title": "Administración del club",
+    "subtitle": "Editá la información, fotos y contenido del club seleccionado.",
+    "loadingClub": "Cargando club...",
+    "uploading": "Subiendo...",
+    "changeCover": "Cambiar portada",
+    "changeLayout": "Cambiar layout",
+    "editClub": "Editar club",
+    "layoutTitle": "Layout del club",
+    "layoutAlt": "Layout del club",
+    "noLayout": "Todavía no hay layout cargado.",
+    "galleryTitle": "Galería",
+    "addPhotos": "Agregar fotos",
+    "noGalleryPhotos": "No hay fotos en la galería.",
+    "galleryPhotoAlt": "Foto de la galería",
+    "tabs": {
+      "menu": "Menú",
+      "tables": "Mesas",
+      "events": "Eventos",
+      "reviews": "Reseñas"
+    },
+    "labels": {
+      "location": "Ubicación",
+      "zone": "Zona",
+      "genre": "Género",
+      "price": "Precio",
+      "cbu": "CBU",
+      "description": "Descripción"
+    },
+    "form": {
+      "clubName": "Nombre del club",
+      "location": "Ubicación",
+      "priceRange": "Rango de precio",
+      "genre": "Género musical",
+      "zone": "Zona",
+      "cbu": "CBU",
+      "isBar": "Es bar",
+      "description": "Descripción"
+    },
+    "saving": "Guardando...",
+    "saveChanges": "Guardar cambios",
+    "noProductsLoaded": "No hay productos cargados.",
+    "noTablesLoaded": "No hay mesas cargadas.",
+    "eventsTitle": "Eventos",
+    "noEventsForFilter": "No hay eventos para este filtro.",
+    "noReviews": "No hay reseñas aún.",
+    "noPhoto": "Sin foto",
+    "uploadPhoto": "Subir foto",
+    "removePhoto": "Eliminar foto",
+    "available": "Disponible",
+    "notAvailable": "No disponible",
+    "disable": "Deshabilitar",
+    "enable": "Habilitar",
+    "eventFilters": {
+      "all": "Todos",
+      "past": "Pasados",
+      "future": "Futuros"
+    },
+    "productForm": {
+      "newTitle": "Nuevo producto",
+      "editTitle": "Editar producto"
+    },
+    "tableForm": {
+      "newTitle": "Nueva mesa",
+      "editTitle": "Editar mesa"
+    },
+    "placeholders": {
+      "productName": "Nombre del producto",
+      "productDescription": "Descripción del producto",
+      "productPrice": "Precio base",
+      "tableNumber": "Número de mesa",
+      "tableCapacity": "Capacidad",
+      "tablePrice": "Precio",
+      "tableDiscount": "Descuento",
+      "eventName": "Nombre del evento",
+      "eventDescription": "Descripción del evento"
+    },
+    "headers": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "price": "Precio",
+      "type": "Tipo",
+      "state": "Estado",
+      "actions": "Acciones",
+      "number": "Número",
+      "capacity": "Capacidad",
+      "discount": "Descuento",
+      "date": "Fecha",
+      "photo": "Foto"
+    },
+    "productTypes": {
+      "ALCOHOLICA": "Alcohólica",
+      "NO_ALCOHOLICA": "No alcohólica",
+      "TRAGOS": "Tragos"
+    },
+    "tableStates": {
+      "DISPONIBLE": "Disponible",
+      "RESERVADA": "Reservada",
+      "PENDIENTE": "Pendiente"
+    },
+    "priceRanges": {
+      "BAJO": "Bajo",
+      "MEDIO": "Medio",
+      "ALTO": "Alto"
+    },
+    "zones": {
+      "ZONA_NORTE": "Zona Norte",
+      "ZONA_OESTE": "Zona Oeste",
+      "ZONA_SUR": "Zona Sur",
+      "ZONA_CABA": "Zona CABA"
+    },
+    "musicGenres": {
+      "ROCK": "Rock",
+      "POP": "Pop",
+      "CACHENGUE": "Cachengue",
+      "TECHNO": "Techno",
+      "REGGAETON": "Reggaetón",
+      "CUMBIA": "Cumbia",
+      "TRAP": "Trap",
+      "JAZZ": "Jazz",
+      "ELECTRONICA": "Electrónica",
+      "AFROBEAT": "Afrobeat",
+      "OTRO": "Otro"
+    },
+    "update": "Actualizar",
+    "create": "Crear",
+    "updateEvent": "Actualizar evento",
+    "createEvent": "Crear evento",
+    "errors": {
+      "loadSelectedClub": "No se pudo obtener el club seleccionado."
+    }
+  },
+  "clubActivity": {
+    "title": "Mi Actividad",
+    "subtitle": "Administrá tus clubes y abrí cada uno rápidamente.",
+    "backToClubs": "Volver a clubes",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "de": "de"
+  },
+  "managedClubBookings": {
+    "title": "Reservas de Clubes",
+    "subtitle": "Revisá las reservas de todos tus clubes.",
+    "back": "Volver",
+    "filters": {
+      "club": "Club",
+      "status": "Estado",
+      "sort": "Ordenar",
+      "receipts": "Recibos",
+      "newest": "Más reciente",
+      "oldest": "Más antiguo",
+      "dateDesc": "Fecha desc.",
+      "dateAsc": "Fecha asc.",
+      "withReceipt": "Con recibo",
+      "withoutReceipt": "Sin recibo"
+    },
+    "statuses": {
+      "PENDIENTE": "Pendiente",
+      "CONFIRMADA": "Confirmada",
+      "CANCELADA": "Cancelada"
+    },
+    "buttons": {
+      "filter": "Filtrar",
+      "reset": "Reiniciar"
+    },
+    "bookingCard": {
+      "reserva": "Reserva:",
+      "club": "Club:",
+      "date": "Fecha:",
+      "total": "Total:"
+    },
+    "noReservations": "No se encontraron reservas.",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente"
+  },
+  "userBookings": {
+    "title": "Mis reservas",
+    "subtitle": "Ver y administrar tus reservas.",
+    "back": "Volver",
+    "filters": {
+      "status": "Estado",
+      "sort": "Ordenar",
+      "receipts": "Recibos",
+      "withReceipt": "Con recibo",
+      "withoutReceipt": "Sin recibo",
+      "newest": "Más reciente",
+      "oldest": "Más antiguo",
+      "dateDesc": "Fecha desc.",
+      "dateAsc": "Fecha asc."
+    },
+    "statuses": {
+      "PENDIENTE": "Pendiente",
+      "CONFIRMADA": "Confirmada",
+      "CANCELADA": "Cancelada"
+    },
+    "buttons": {
+      "filter": "Filtrar",
+      "reset": "Reiniciar"
+    },
+    "bookingCard": {
+      "reserva": "Reserva:",
+      "club": "Club:",
+      "date": "Fecha:",
+      "total": "Total:"
+    },
+    "noReservations": "No se encontraron reservas."
+  },
+  "bookingAdminHandler": {
+    "title": "Reserva",
+    "details": {
+      "title": "Detalles de la reserva",
+      "user": "Usuario",
+      "email": "Email",
+      "surname": "Apellido",
+      "table": "Mesa",
+      "club": "Boliche",
+      "start": "Inicio",
+      "end": "Fin",
+      "cbu": "CBU",
+      "total": "Total"
+    },
+    "receipt": {
+      "title": "Comprobante",
+      "alt": "Comprobante",
+      "noReceipt": "No hay comprobante cargado.",
+      "viewTab": "Ver en pestaña"
+    },
+    "buttons": {
+      "cancel": "Cancelar",
+      "confirm": "Confirmar"
+    },
+    "modal": {
+      "cancelTitle": "¿Cancelar reserva?",
+      "confirm": "Confirmar"
+    },
+    "statuses": {
+      "PENDIENTE": "Pendiente",
+      "CONFIRMADA": "Confirmada",
+      "CANCELADA": "Cancelada"
+    },
+    "errors": {
+      "invalidBooking": "Reserva inválida.",
+      "loadFailed": "No se pudo cargar la reserva.",
+      "confirmFailed": "No se pudo confirmar la reserva.",
+      "cancelFailed": "No se pudo cancelar la reserva."
+    },
+    "success": {
+      "confirmed": "Reserva confirmada correctamente.",
+      "cancelled": "Reserva cancelada correctamente."
+    }
+  },
+  "bookingUserHandler": {
+    "back": "Volver",
+    "title": "Reserva",
+    "details": {
+      "title": "Detalles de la reserva",
+      "user": "Usuario",
+      "email": "Email",
+      "surname": "Apellido",
+      "table": "Mesa",
+      "club": "Boliche",
+      "start": "Inicio",
+      "end": "Fin",
+      "cbu": "CBU",
+      "total": "Total"
+    },
+    "receipt": {
+      "title": "Comprobante",
+      "alt": "Comprobante",
+      "noReceipt": "No hay comprobante cargado.",
+      "viewTab": "Ver en pestaña",
+      "upload": "Subir comprobante",
+      "edit": "Editar comprobante"
+    },
+    "modal": {
+      "cancelTitle": "¿Cancelar reserva?",
+      "confirm": "Confirmar"
+    },
+    "statuses": {
+      "PENDIENTE": "Pendiente",
+      "CONFIRMADA": "Confirmada",
+      "CANCELADA": "Cancelada"
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "logout": "Cerrar sesión",
+    "of": "de",
+    "retry": "Reintentar",
+    "close": "Cerrar"
+  }
+}
+
+

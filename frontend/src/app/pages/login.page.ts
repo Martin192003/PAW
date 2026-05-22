@@ -6,10 +6,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UserLoginRequest } from '../models/user.model';
 import { AuthStateService } from '../services/auth-state.service';
 import { UserService } from '../services/user.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { I18nService } from '../services/i18n.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslateModule],
   templateUrl: './login.page.html',
 })
 export class LoginPage implements OnInit {
@@ -25,6 +27,7 @@ export class LoginPage implements OnInit {
     private router: Router,
     private authState: AuthStateService,
     private userService: UserService,
+    private i18n: I18nService,
   ) {
     this.loginForm = this.fb.group({
       usernameOrEmail: ['', [Validators.required]],

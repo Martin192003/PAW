@@ -1,4 +1,4 @@
-import {
+﻿import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
@@ -10,9 +10,10 @@ import {
   ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule, isPlatformBrowser, DatePipe, DecimalPipe } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { catchError, combineLatest, forkJoin, map, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { ClubService } from '../services/club.service';
 import { ReviewService } from '../services/review.service';
 import { AuthStateService } from '../services/auth-state.service';
@@ -23,10 +24,12 @@ import { ClubTable } from '../models/club-table.model';
 import { Review } from '../models/review.model';
 import { Event } from '../models/event.model';
 import { User } from '../models/user.model';
+import { I18nService } from '../services/i18n.service';
+
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './club-details.page.html'
 })
 export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
@@ -95,7 +98,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     private authState: AuthStateService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) private platformId: object
+    @Inject(PLATFORM_ID) private platformId: object,
+    private i18n: I18nService
   ) {}
 
   goToClubs() {
@@ -277,8 +281,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       return date;
     }
 
-    return parsed.toLocaleDateString('es-AR', {
-      weekday: 'long',
+    const locale = this.i18n.getLanguage() === 'en' ? 'en-US' : 'es-AR';
+    return parsed.toLocaleDateString(locale, {
       day: 'numeric',
       month: 'long'
     });
@@ -308,7 +312,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       error: err => {
         this.tables = [];
         this.selectedTableId = undefined;
-        this.tablesError = err?.error?.message || 'No se pudieron cargar las mesas disponibles.';
+        this.tablesError = err?.error?.message || this.i18n.instant('clubDetails.tablesLoadFailed');
         this.cdr.detectChanges();
       }
     });
@@ -330,8 +334,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const nextIndex = ((index % this.carouselPhotos.length) + this.carouselPhotos.length) % this.carouselPhotos.length;
-    this.activeCarouselIndex = nextIndex;
+    this.activeCarouselIndex = ((index % this.carouselPhotos.length) + this.carouselPhotos.length) % this.carouselPhotos.length;
     this.cdr.detectChanges();
   }
 
@@ -487,7 +490,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
   onReserveClick(): void {
     if (!this.currentClubId || !this.selectedTableId || !this.selectedDate) {
-      this.tablesError = 'Seleccioná una mesa y una fecha antes de reservar.';
+      this.tablesError = this.i18n.instant('clubDetails.selectTableAndDate');
       this.reserveSuccess = undefined;
       this.cdr.detectChanges();
       return;
@@ -495,7 +498,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
     const tableExists = this.tables.some(table => table.tableId === this.selectedTableId);
     if (!tableExists) {
-      this.tablesError = 'La mesa seleccionada ya no está disponible. Elegí otra opción.';
+      this.tablesError = this.i18n.instant('clubDetails.tableUnavailable');
       this.reserveSuccess = undefined;
       this.selectedTableId = undefined;
       this.cdr.detectChanges();
@@ -509,7 +512,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     ).subscribe({
       next: booking => {
         this.tablesError = undefined;
-        this.reserveSuccess = 'Reserva realizada con exito. Revisa tus reservas en tu cuenta.';
+        this.reserveSuccess = this.i18n.instant('clubDetails.reservationMadeSuccess');
         this.reservedBookingId = booking.id;
         this.reservedBookingClubId = this.currentClubId;
         this.setReservationModalOpen(true);
@@ -519,11 +522,11 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       error: err => {
         this.reserveSuccess = undefined;
         if (err?.status === 401) {
-          this.tablesError = 'Tenes que iniciar sesion para reservar una mesa.';
+          this.tablesError = this.i18n.instant('clubDetails.reservationRequiresLogin');
           this.cdr.detectChanges();
           return;
         }
-        this.tablesError = err?.error?.message || 'No se pudo completar la reserva. Intentalo de nuevo.';
+        this.tablesError = err?.error?.message || this.i18n.instant('clubDetails.reservationFailed');
         this.cdr.detectChanges();
       }
     });

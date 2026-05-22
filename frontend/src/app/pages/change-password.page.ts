@@ -7,11 +7,13 @@ import { Location } from '@angular/common';
 import { UserService } from '../services/user.service';
 import { AuthStateService } from '../services/auth-state.service';
 import { finalize } from 'rxjs/operators';
+import { TranslateModule } from '@ngx-translate/core';
+import { I18nService } from '../services/i18n.service';
 
 @Component({
   standalone: true,
   selector: 'app-change-password',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslateModule],
   templateUrl: './change-password.page.html',
   styleUrls: ['./change-password.page.css'],
 })
@@ -40,6 +42,7 @@ export class ChangePasswordPage implements OnInit {
     private readonly authState: AuthStateService,
     private readonly cdr: ChangeDetectorRef,
     private readonly ngZone: NgZone,
+    private readonly i18n: I18nService,
   ) {
     this.forgotForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -83,7 +86,7 @@ export class ChangePasswordPage implements OnInit {
     ).subscribe({
       next: () => {
         this.ngZone.run(() => {
-          this.forgotSuccess = 'Te enviamos un email con instrucciones.';
+          this.forgotSuccess = this.i18n.instant('passwordReset.modal.sentBody');
           this.showForgotModal = true;
           this.cdr.detectChanges();
         });
@@ -105,12 +108,12 @@ export class ChangePasswordPage implements OnInit {
     const confirmationPassword = this.resetForm.value.confirmationPassword;
 
     if (newPassword !== confirmationPassword) {
-      this.resetError = 'Las contrasenas no coinciden.';
+      this.resetError = this.i18n.instant('passwordReset.errors.passwordsDontMatch');
       return;
     }
 
     if (!this.token) {
-      this.resetError = 'Token invalido o vencido.';
+      this.resetError = this.i18n.instant('passwordReset.errors.invalidToken');
       return;
     }
 
@@ -171,30 +174,16 @@ export class ChangePasswordPage implements OnInit {
   }
 
   private resolveForgotError(error: HttpErrorResponse): string {
-    if (error.status === 0) return 'No pudimos conectar con el servidor.';
-    if (error.status === 400) return 'Revisa el email e intentalo de nuevo.';
-    return 'No pudimos enviar el email. Intentalo mas tarde.';
+    if (error.status === 0) return this.i18n.instant('passwordReset.errors.network');
+    if (error.status === 400) return this.i18n.instant('passwordReset.errors.invalidEmail');
+    return this.i18n.instant('passwordReset.errors.emailSendFailed');
   }
 
   private resolveResetError(error: HttpErrorResponse): string {
-    if (error.status === 0) return 'No pudimos conectar con el servidor.';
-    const apiMessage = this.extractApiMessage(error);
-    if (apiMessage) {
-      return 'La contrasena debe ser distinta a la anterior.';
-    }
-    if (error.status === 400) return 'Los datos ingresados no son validos.';
-    if (error.status === 404) return 'Token invalido o vencido.';
-    return 'No pudimos actualizar la contrasena. Intentalo mas tarde.';
-  }
-
-  private extractApiMessage(error: HttpErrorResponse): string | null {
-    const payload = error.error;
-    if (typeof payload === 'string' && payload.trim().length > 0) return payload.trim();
-    if (payload && typeof payload.message === 'string' && payload.message.trim().length > 0) {
-      return payload.message.trim();
-    }
-    const topMessage = (error as { message?: string }).message;
-    if (typeof topMessage === 'string' && topMessage.trim().length > 0) return topMessage.trim();
-    return null;
+    if (error.status === 0) return this.i18n.instant('passwordReset.errors.network');
+    if (error.status === 400) return this.i18n.instant('passwordReset.errors.invalidData');
+    if (error.status === 404) return this.i18n.instant('passwordReset.errors.invalidToken');
+    if (error.status === 409) return this.i18n.instant('passwordReset.errors.passwordUnchanged');
+    return this.i18n.instant('passwordReset.errors.updateFailed');
   }
 }

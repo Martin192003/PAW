@@ -1,18 +1,18 @@
 <section class="min-h-[calc(100vh-90px)] bg-[#1b1a1a] px-5 py-6 text-white">
   <main class="mx-auto flex w-full max-w-5xl flex-col gap-6">
     <header class="flex items-start gap-4">
-      <button class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#9c27b0] transition hover:bg-[#86229a]" (click)="goBack()">
+      <button class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#9c27b0] transition hover:bg-[#86229a]" (click)="goBack()" [attr.aria-label]="'bookingUserHandler.back' | translate">
         <i class="fa-solid fa-arrow-left"></i>
       </button>
 
       <div class="min-w-0 flex-1">
         <h1 class="text-[1.55rem] font-bold tracking-widest text-[#9c27b0]" style="font-family: 'Darklinos', Arial, sans-serif;">
-          Reserva <br><span class="break-all text-white">{{ bookingCode() }}</span>
+          {{ 'bookingUserHandler.title' | translate }} <br><span class="break-all text-white">{{ bookingCode() }}</span>
         </h1>
       </div>
 
       <span *ngIf="booking" class="rounded-full border px-3 py-1 text-sm font-semibold" [ngClass]="statusClasses(booking.status)">
-        {{ booking.status }}
+        {{ ('bookingUserHandler.statuses.' + booking.status) | translate }}
       </span>
     </header>
 
@@ -21,31 +21,31 @@
 
     <section class="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]" *ngIf="booking">
       <article class="rounded-lg border border-white/10 bg-[#343232] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
-        <h2 class="mb-5 text-xl font-bold text-[#9c27b0]" style="font-family: 'Darklinos', Arial, sans-serif;">Detalles de la reserva</h2>
+        <h2 class="mb-5 text-xl font-bold text-[#9c27b0]" style="font-family: 'Darklinos', Arial, sans-serif;">{{ 'bookingUserHandler.details.title' | translate }}</h2>
 
         <dl class="divide-y divide-white/10">
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">Usuario</dt><dd class="break-words text-white/80">{{ user?.username }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">Email</dt><dd class="break-words text-white/80">{{ user?.email }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">Apellido</dt><dd class="break-words text-white/80">{{ user?.surname }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">Mesa</dt><dd class="break-words text-white/80">{{ table?.tableNumber || booking.tableId }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">Boliche</dt><dd class="truncate text-white/80">{{ club?.clubName || booking.clubId }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">Inicio</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingStart) }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">Fin</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingEnd) }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">CBU</dt><dd class="break-all text-white/80">{{ club?.cbu }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">Total</dt><dd class="text-lg font-semibold">$ {{ priceToPay() | number:'1.0-0' }}</dd></div>
+          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.user' | translate }}</dt><dd class="break-words text-white/80">{{ user?.username }}</dd></div>
+          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.email' | translate }}</dt><dd class="break-words text-white/80">{{ user?.email }}</dd></div>
+          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.surname' | translate }}</dt><dd class="break-words text-white/80">{{ user?.surname }}</dd></div>
+          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.table' | translate }}</dt><dd class="break-words text-white/80">{{ table?.tableNumber || booking.tableId }}</dd></div>
+          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.club' | translate }}</dt><dd class="truncate text-white/80">{{ club?.clubName || booking.clubId }}</dd></div>
+          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.start' | translate }}</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingStart) }}</dd></div>
+          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.end' | translate }}</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingEnd) }}</dd></div>
+          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.cbu' | translate }}</dt><dd class="break-all text-white/80">{{ club?.cbu }}</dd></div>
+          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.total' | translate }}</dt><dd class="text-lg font-semibold">$ {{ priceToPay() | number:'1.0-0' }}</dd></div>
         </dl>
 
         <div class="mt-6 flex justify-end" *ngIf="!isCancelled()">
           <button class="inline-flex h-10 items-center gap-2 rounded-md bg-rose-700 px-4 text-sm font-semibold transition hover:bg-rose-600" (click)="showCancelModal = true">
-            <i class="fa-solid fa-trash"></i>Cancelar reserva
+            <i class="fa-solid fa-trash"></i>{{ 'bookingUserHandler.cancel.button' | translate }}
           </button>
         </div>
       </article>
 
       <aside class="rounded-lg border border-white/10 bg-[#343232] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.35)]">
-        <div class="mb-5 flex items-center justify-between">
-          <h2 class="text-xl font-bold text-[#9c27b0]" style="font-family: 'Darklinos', Arial, sans-serif;">Comprobante</h2>
-          <label *ngIf="hasReceipt && !isCancelled()" class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md bg-[#9c27b0] transition hover:bg-[#86229a]">
+          <div class="mb-5 flex items-center justify-between">
+          <h2 class="text-xl font-bold text-[#9c27b0]" style="font-family: 'Darklinos', Arial, sans-serif;">{{ 'bookingUserHandler.receipt.title' | translate }}</h2>
+          <label *ngIf="hasReceipt && !isCancelled()" class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md bg-[#9c27b0] transition hover:bg-[#86229a]" [attr.aria-label]="'bookingUserHandler.receipt.edit' | translate">
             <i class="fa-solid fa-pencil"></i>
             <input type="file" class="hidden" accept="image/*" (change)="uploadReceipt($event)">
           </label>
@@ -53,15 +53,15 @@
 
         <ng-container *ngIf="hasReceipt; else noReceipt">
           <div class="overflow-hidden rounded-lg border border-white/10 bg-black/30">
-            <img class="max-h-72 w-full object-contain" [src]="receiptUrl" alt="Receipt">
+            <img class="max-h-72 w-full object-contain" [src]="receiptUrl" [attr.alt]="'bookingUserHandler.receipt.alt' | translate">
           </div>
-          <button *ngIf="!isCancelled()" class="mt-4 h-10 w-full rounded-md bg-[#9c27b0] text-sm font-semibold transition hover:bg-[#86229a]" (click)="openReceipt()">Ver en pestaña</button>
+          <button *ngIf="!isCancelled()" class="mt-4 h-10 w-full rounded-md bg-[#9c27b0] text-sm font-semibold transition hover:bg-[#86229a]" (click)="openReceipt()">{{ 'bookingUserHandler.receipt.viewTab' | translate }}</button>
         </ng-container>
 
         <ng-template #noReceipt>
-          <p class="text-sm text-white/60">No hay comprobante cargado.</p>
+          <p class="text-sm text-white/60">{{ 'bookingUserHandler.receipt.noReceipt' | translate }}</p>
           <label *ngIf="!isCancelled()" class="mt-4 inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-md bg-[#9c27b0] text-sm font-semibold transition hover:bg-[#86229a]">
-            Subir comprobante
+            {{ 'bookingUserHandler.receipt.upload' | translate }}
             <input type="file" class="hidden" accept="image/*" (change)="uploadReceipt($event)">
           </label>
         </ng-template>
@@ -72,8 +72,8 @@
   <div *ngIf="showCancelModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
     <div class="w-full max-w-sm rounded-lg border border-white/10 bg-[#343232] p-6 text-center shadow-xl">
       <button class="float-right text-xl text-white/60 hover:text-white" (click)="showCancelModal = false">&times;</button>
-      <h3 class="mt-2 text-xl font-bold">¿Cancelar reserva?</h3>
-      <button class="mt-6 h-10 rounded-md bg-rose-700 px-5 text-sm font-semibold hover:bg-rose-600" (click)="cancelBooking()">Confirmar</button>
+      <h3 class="mt-2 text-xl font-bold">{{ 'bookingUserHandler.cancel.modal.title' | translate }}</h3>
+      <button class="mt-6 h-10 rounded-md bg-rose-700 px-5 text-sm font-semibold hover:bg-rose-600" (click)="cancelBooking()">{{ 'bookingUserHandler.cancel.modal.confirm' | translate }}</button>
     </div>
   </div>
 </section>

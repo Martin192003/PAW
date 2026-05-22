@@ -5,10 +5,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { UserCreateRequest } from '../models/user.model';
 import { UserService } from '../services/user.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { I18nService } from '../services/i18n.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslateModule],
   templateUrl: './register.page.html',
 })
 export class RegisterPage {
@@ -20,7 +22,7 @@ export class RegisterPage {
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
-    private router: Router
+    private router: Router,
   ) {
     this.registerForm = this.fb.group({
       username: ['', [Validators.required]],

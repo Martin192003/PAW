@@ -23,16 +23,22 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*.json",
+                "input": "src/assets/i18n",
+                "output": "assets/i18n"
               }
             ],
             "styles": [
               "src/styles.css"
             ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+             "server": "src/main.server.ts",
+             "outputMode": "server",
+             "prerender": true,
+             "ssr": {
+               "entry": "src/server.ts"
+             }
           },
           "configurations": {
             "production": {

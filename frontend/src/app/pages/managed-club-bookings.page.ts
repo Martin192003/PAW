@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { SideBarComponent } from '../components/account-sidebar/account-sidebar.component';
 import { Booking, BookingFilters } from '../models/booking.model';
@@ -12,12 +13,13 @@ import { ClubTable } from '../models/club-table.model';
 import { BookingService } from '../services/booking.service';
 import { ClubService } from '../services/club.service';
 import { AuthStateService } from '../services/auth-state.service';
+import { I18nService } from '../services/i18n.service';
 import { argentinaDateCode, formatArgentinaDate } from '../utils/argentina-date.util';
 
 @Component({
   standalone: true,
   selector: 'app-managed-club-bookings-page',
-  imports: [CommonModule, FormsModule, RouterLink, SideBarComponent],
+  imports: [CommonModule, FormsModule, SideBarComponent, TranslateModule],
   templateUrl: './managed-club-bookings.page.html'
 })
 export class ManagedClubBookingsPage implements OnInit {
@@ -46,7 +48,8 @@ export class ManagedClubBookingsPage implements OnInit {
     private readonly clubService: ClubService,
     private readonly authState: AuthStateService,
     private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -159,7 +162,7 @@ export class ManagedClubBookingsPage implements OnInit {
   }
 
   formatDate(value: string): string {
-    return formatArgentinaDate(value);
+    return formatArgentinaDate(value, this.i18n.getLanguage());
   }
 
   bookingCode(booking: Booking): string {

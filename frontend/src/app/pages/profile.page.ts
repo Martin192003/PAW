@@ -8,15 +8,37 @@ import { User } from '../models/user.model';
 import { AuthStateService } from '../services/auth-state.service';
 import { UserService } from '../services/user.service';
 import { SideBarComponent } from '../components/account-sidebar/account-sidebar.component';
+import { TranslateModule } from '@ngx-translate/core';
+import { I18nService } from '../services/i18n.service';
 
 type EditableProfileField = 'username' | 'name' | 'surname' | 'email' | 'cellphone';
 
-const FIELD_LABELS: Record<EditableProfileField, string> = {
-  username: 'Username',
-  name: 'Name',
-  surname: 'Surname',
-  email: 'Email',
-  cellphone: 'Cellphone'
+const FIELD_I18N: Record<EditableProfileField, { labelKey: string; placeholderKey: string; ariaLabelKey: string }> = {
+  username: {
+    labelKey: 'profile.fields.username',
+    placeholderKey: 'profile.placeholders.username',
+    ariaLabelKey: 'profile.editUsername'
+  },
+  name: {
+    labelKey: 'profile.fields.name',
+    placeholderKey: 'profile.placeholders.name',
+    ariaLabelKey: 'profile.editName'
+  },
+  surname: {
+    labelKey: 'profile.fields.surname',
+    placeholderKey: 'profile.placeholders.surname',
+    ariaLabelKey: 'profile.editSurname'
+  },
+  email: {
+    labelKey: 'profile.fields.email',
+    placeholderKey: 'profile.placeholders.email',
+    ariaLabelKey: 'profile.editEmail'
+  },
+  cellphone: {
+    labelKey: 'profile.fields.cellphone',
+    placeholderKey: 'profile.placeholders.cellphone',
+    ariaLabelKey: 'profile.editPhone'
+  }
 };
 
 const FIELD_TYPES: Record<EditableProfileField, string> = {
@@ -29,7 +51,7 @@ const FIELD_TYPES: Record<EditableProfileField, string> = {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, SideBarComponent],
+  imports: [CommonModule, FormsModule, SideBarComponent, TranslateModule],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.css'
 })
@@ -45,7 +67,8 @@ export class ProfilePage implements OnInit {
   constructor(
     private readonly authState: AuthStateService,
     private readonly userService: UserService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -68,8 +91,12 @@ export class ProfilePage implements OnInit {
     });
   }
 
-  get activeFieldLabel(): string {
-    return this.activeField ? FIELD_LABELS[this.activeField] : '';
+  get activeFieldLabelKey(): string {
+    return this.activeField ? FIELD_I18N[this.activeField].labelKey : '';
+  }
+
+  get activeFieldPlaceholderKey(): string {
+    return this.activeField ? FIELD_I18N[this.activeField].placeholderKey : '';
   }
 
   get activeFieldType(): string {
@@ -129,7 +156,7 @@ export class ProfilePage implements OnInit {
 
     const nextValue = this.draftValue.trim();
     if (!nextValue) {
-      this.errorMessage = 'El campo no puede quedar vacío';
+      this.errorMessage = this.i18n.instant('profile.errors.emptyField');
       return;
     }
 
@@ -172,43 +199,18 @@ export class ProfilePage implements OnInit {
   }
 
   private extractErrorMessage(error: HttpErrorResponse): string {
-    const fallback = 'No se pudo guardar el cambio';
+    const fallback = this.i18n.instant('profile.errors.saveFailed');
 
     if (error.status === 401 || error.status === 403) {
-      return 'Tu sesion no es valida. Volve a iniciar sesion.';
+      return this.i18n.instant('profile.errors.invalidSession');
     }
 
     if (error.status >= 500) {
-      return 'Error interno del servidor al actualizar el perfil';
+      return this.i18n.instant('profile.errors.serverUpdate');
     }
 
     if (!error?.error) {
       return fallback;
-    }
-
-    if (typeof error.error === 'string') {
-      const trimmed = error.error.trim();
-
-      if (trimmed.startsWith('{')) {
-        try {
-          const parsed = JSON.parse(trimmed) as { message?: string };
-          if (typeof parsed.message === 'string' && parsed.message.trim()) {
-            return parsed.message;
-          }
-        } catch {
-          return fallback;
-        }
-      }
-
-      if (trimmed.startsWith('<!DOCTYPE html') || trimmed.startsWith('<html')) {
-        return fallback;
-      }
-
-      return trimmed || fallback;
-    }
-
-    if (typeof error.error.message === 'string') {
-      return error.error.message;
     }
 
     return fallback;
@@ -216,17 +218,17 @@ export class ProfilePage implements OnInit {
 
   private extractPasswordResetError(error: HttpErrorResponse): string {
     if (error.status === 0) {
-      return 'No pudimos conectar con el servidor.';
+      return this.i18n.instant('profile.errors.connection');
     }
 
     if (error.status === 401 || error.status === 403) {
-      return 'Tu sesion no es valida. Volve a iniciar sesion.';
+      return this.i18n.instant('profile.errors.invalidSession');
     }
 
     if (error.status >= 500) {
-      return 'Error interno del servidor al preparar el reset de contrasena.';
+      return this.i18n.instant('profile.errors.resetPasswordServer');
     }
 
-    return this.extractErrorMessage(error) || 'No pudimos preparar el reset de contrasena.';
+    return this.extractErrorMessage(error) || this.i18n.instant('profile.errors.resetPassword');
   }
 }
