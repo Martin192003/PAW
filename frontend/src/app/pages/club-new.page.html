@@ -5,6 +5,7 @@
     <button
       type="button"
       [routerLink]="['/clubs']"
+      [attr.aria-label]="'common.back' | translate"
       class="h-10 min-w-[40px] px-4 flex items-center justify-center
              text-white bg-[#9c27b0] border-none rounded cursor-pointer
              shadow-[0_2px_10px_rgba(156,39,176,0.4)]
@@ -107,6 +108,7 @@
           <button
             type="button"
             (click)="toggleTooltip($event)"
+            data-price-tooltip-trigger
             class="absolute top-1/2 right-3 -translate-y-1/2 border-0 bg-transparent
                    p-0 cursor-pointer flex items-center justify-center"
             [attr.aria-label]="'clubNew.priceTooltipLabel' | translate"

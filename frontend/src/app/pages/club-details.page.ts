@@ -718,7 +718,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     if (!this.currentClubId || this.reviewFormSubmitting) return;
 
     if (this.reviewFormRating < 1 || this.reviewFormRating > 5) {
-      this.reviewFormError = 'Tenes que elegir un puntaje entre 1 y 5.';
+      this.reviewFormError = this.i18n.instant('clubDetails.reviewMessages.invalidRating');
       return;
     }
 
@@ -739,8 +739,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       next: () => {
         this.reviewFormSubmitting = false;
         this.reviewSuccessMessage = this.reviewFormMode === 'create'
-          ? 'Tu reseña fue publicada.'
-          : 'Tu reseña fue actualizada.';
+          ? this.i18n.instant('clubDetails.reviewMessages.created')
+          : this.i18n.instant('clubDetails.reviewMessages.updated');
         this.reviewFormOpen = false;
         this.reviewsCurrentPage = 1;
         this.loadReviews();
@@ -749,11 +749,11 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       error: err => {
         this.reviewFormSubmitting = false;
         if (err?.status === 401) {
-          this.reviewFormError = 'Tenes que iniciar sesión para dejar una reseña.';
+          this.reviewFormError = this.i18n.instant('clubDetails.reviewMessages.loginRequired');
         } else if (err?.status === 409) {
-          this.reviewFormError = 'Ya tenés una reseña para este club. Editala en lugar de crear una nueva.';
+          this.reviewFormError = this.i18n.instant('clubDetails.reviewMessages.alreadyExists');
         } else {
-          this.reviewFormError = err?.error?.message || 'No se pudo guardar la reseña.';
+          this.reviewFormError = err?.error?.message || this.i18n.instant('clubDetails.reviewMessages.saveFailed');
         }
         this.cdr.detectChanges();
       }
@@ -762,7 +762,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
   deleteMyReview(): void {
     if (!this.currentClubId || !this.myReview || this.reviewDeleting) return;
-    if (isPlatformBrowser(this.platformId) && !window.confirm('¿Seguro que querés borrar tu reseña?')) {
+    if (isPlatformBrowser(this.platformId) && !window.confirm(this.i18n.instant('clubDetails.reviewMessages.confirmDelete'))) {
       return;
     }
 
@@ -771,14 +771,14 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       next: () => {
         this.reviewDeleting = false;
         this.myReview = undefined;
-        this.reviewSuccessMessage = 'Tu reseña fue borrada.';
+        this.reviewSuccessMessage = this.i18n.instant('clubDetails.reviewMessages.deleted');
         this.reviewsCurrentPage = 1;
         this.loadReviews();
         this.refreshClubRating();
       },
       error: err => {
         this.reviewDeleting = false;
-        this.reviewFormError = err?.error?.message || 'No se pudo borrar la reseña.';
+        this.reviewFormError = err?.error?.message || this.i18n.instant('clubDetails.reviewMessages.deleteFailed');
         this.cdr.detectChanges();
       }
     });

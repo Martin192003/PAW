@@ -57,7 +57,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     const clubId = this.route.snapshot.paramMap.get('clubId');
     const bookingId = this.route.snapshot.paramMap.get('bookingId');
     if (!clubId || !bookingId) {
-      this.error = 'Reserva inválida.';
+      this.error = this.i18n.instant('bookingUserHandler.errors.invalidBooking');
       return;
     }
 
@@ -77,7 +77,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: () => {
-        this.error = 'No se pudo cargar la reserva.';
+        this.error = this.i18n.instant('bookingUserHandler.errors.loadFailed');
         this.cdr.detectChanges();
       }
     });
@@ -88,11 +88,11 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     this.bookingService.cancelBooking(this.booking.clubId, this.booking.id).subscribe({
       next: () => {
         this.showCancelModal = false;
-        this.success = 'Reserva cancelada correctamente.';
+        this.success = this.i18n.instant('bookingUserHandler.success.cancelled');
         this.load();
       },
       error: () => {
-        this.error = 'No se pudo cancelar la reserva.';
+        this.error = this.i18n.instant('bookingUserHandler.errors.cancelFailed');
         this.showCancelModal = false;
         this.cdr.detectChanges();
       }
@@ -106,11 +106,11 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
 
     this.bookingService.putReceipt(this.booking.clubId, this.booking.id, file).subscribe({
       next: () => {
-        this.success = 'Comprobante cargado correctamente.';
+        this.success = this.i18n.instant('bookingUserHandler.success.receiptUploaded');
         this.loadReceipt();
       },
       error: () => {
-        this.error = 'No se pudo cargar el comprobante.';
+        this.error = this.i18n.instant('bookingUserHandler.errors.receiptUploadFailed');
         this.cdr.detectChanges();
       }
     });

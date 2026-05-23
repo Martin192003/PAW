@@ -70,7 +70,7 @@ export class UserBookingsPage implements OnInit {
       error: () => {
         this.bookings = [];
         this.loading = false;
-        this.error = 'No se pudieron cargar tus reservas.';
+        this.error = this.i18n.instant('userBookings.errors.loadFailed');
         this.cdr.detectChanges();
       }
     });
@@ -133,9 +133,9 @@ export class UserBookingsPage implements OnInit {
 
   statusLabel(status: string): string {
     const normalized = (status || '').trim().toUpperCase();
-    if (normalized === 'PENDIENTE') return 'Pendiente';
-    if (normalized === 'CONFIRMADA') return 'Confirmada';
-    if (normalized === 'CANCELADA') return 'Cancelada';
+    if (normalized === 'PENDIENTE' || normalized === 'CONFIRMADA' || normalized === 'CANCELADA') {
+      return this.i18n.instant(`userBookings.statuses.${normalized}`);
+    }
     return status;
   }
 

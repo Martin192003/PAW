@@ -154,7 +154,7 @@ export class VerifyMailPage {
       },
       error: (error: HttpErrorResponse) => {
         this.resendSubmitting = false;
-        this.resendErrorMessage = this.resolveErrorMessage(error, 'No se pudo reenviar el mail de verificacion.');
+        this.resendErrorMessage = this.resolveErrorMessage(error, this.i18n.instant('verifyMail.errors.resend'));
       },
     });
   }

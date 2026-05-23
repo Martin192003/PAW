@@ -18,6 +18,7 @@ import { ClubCreateRequest } from '../models/club.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
+import { I18nService } from '../services/i18n.service';
 
 declare const L: any; // Leaflet (cargado vía CDN o instalado como paquete)
 
@@ -59,6 +60,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private clubService: ClubService,
+    private i18n: I18nService,
   ) {}
 
   // ----------------------------------------------------------------
@@ -114,10 +116,10 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
   getError(field: string): string {
     const ctrl = this.clubForm.get(field);
     if (!ctrl || !ctrl.errors) return '';
-    if (ctrl.errors['required'])   return 'Este campo es requerido.';
-    if (ctrl.errors['maxlength'])  return `Máximo ${ctrl.errors['maxlength'].requiredLength} caracteres.`;
+    if (ctrl.errors['required'])   return this.i18n.instant('clubNew.errors.required');
+    if (ctrl.errors['maxlength'])  return this.i18n.instant('clubNew.errors.maxlength', { max: ctrl.errors['maxlength'].requiredLength });
     if (ctrl.errors['serverError']) return ctrl.errors['serverError'];
-    return 'Campo inválido.';
+    return this.i18n.instant('clubNew.errors.invalid');
   }
 
   fieldClass(field: string): object {
@@ -146,7 +148,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private closeTooltip = (e: MouseEvent): void => {
-    const btn = document.querySelector('[aria-label="Información rango de precio"]');
+    const btn = document.querySelector('[data-price-tooltip-trigger]');
     if (btn && !btn.contains(e.target as Node)) {
       this.tooltipVisible = false;
       this.cdr.detectChanges();
@@ -257,7 +259,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
         if (payload?.fieldErrors) {
           this.applyServerErrors(payload.fieldErrors);
         } else {
-          this.errorMessage = payload?.message ?? 'Ocurrió un error al guardar el club.';
+          this.errorMessage = payload?.message ?? this.i18n.instant('clubNew.errors.saveFailed');
         }
       },
     });

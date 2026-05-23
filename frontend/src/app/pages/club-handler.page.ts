@@ -21,6 +21,7 @@ import { Review } from '../models/review.model';
 import { Layout } from '../models/layout.model';
 import { ClubPhoto } from '../models/club-photo.model';
 import { finalize, timeout } from 'rxjs';
+import { I18nService } from '../services/i18n.service';
 
 type ClubHandlerTab = 'menu' | 'tables' | 'events' | 'reviews';
 type EventFilter = 'all' | 'past' | 'future';
@@ -142,14 +143,15 @@ export class ClubHandlerPage implements OnInit {
     private readonly router: Router,
     private readonly clubService: ClubService,
     private readonly reviewService: ReviewService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
       const clubId = params.get('clubId');
       if (!clubId) {
-        this.errorMessage = 'No se encontro el club seleccionado.';
+        this.errorMessage = this.i18n.instant('clubHandler.errors.loadSelectedClub');
         this.loading = false;
         return;
       }
@@ -195,11 +197,11 @@ export class ClubHandlerPage implements OnInit {
       next: () => {
         this.coverUrl = `${this.clubService.getCoverUrl(this.clubId)}?t=${Date.now()}`;
         this.loadGalleryPhotos();
-        this.actionSuccessMessage = 'Portada actualizada.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.coverUpdated');
         this.actionErrorMessage = '';
       },
       error: () => {
-        this.actionErrorMessage = 'No se pudo actualizar la portada.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.coverUpdateFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -226,12 +228,12 @@ export class ClubHandlerPage implements OnInit {
         this.layoutUrl = this.withCacheBust(
           this.clubService.toAbsoluteUrl(`/clubs/${this.clubId}/layout/image`, this.clubId)
         );
-        this.actionSuccessMessage = 'Layout actualizado.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.layoutUpdated');
         this.actionErrorMessage = '';
       },
       error: () => {
         this.loadLayout();
-        this.actionErrorMessage = 'No se pudo actualizar el layout.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.layoutUpdateFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -259,12 +261,12 @@ export class ClubHandlerPage implements OnInit {
     ).subscribe({
       next: () => {
         this.loadGalleryPhotos();
-        this.actionSuccessMessage = 'Fotos de galeria actualizadas.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.galleryUpdated');
         this.actionErrorMessage = '';
       },
       error: () => {
         this.loadGalleryPhotos();
-        this.actionErrorMessage = 'No se pudieron subir las fotos de galeria.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.galleryUpdateFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -277,7 +279,7 @@ export class ClubHandlerPage implements OnInit {
       return;
     }
 
-    if (!window.confirm('Eliminar esta foto de la galeria?')) {
+    if (!window.confirm(this.i18n.instant('clubHandler.messages.confirmDeleteGalleryPhoto'))) {
       return;
     }
 
@@ -286,13 +288,13 @@ export class ClubHandlerPage implements OnInit {
     ).subscribe({
       next: () => {
         this.galleryPhotos = this.galleryPhotos.filter((item) => item.photoId !== photo.photoId);
-        this.actionSuccessMessage = 'Foto eliminada de la galeria.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.galleryPhotoDeleted');
         this.actionErrorMessage = '';
         this.cdr.detectChanges();
         this.loadGalleryPhotos();
       },
       error: () => {
-        this.actionErrorMessage = 'No se pudo eliminar la foto de galeria.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.galleryPhotoDeleteFailed');
         this.actionSuccessMessage = '';
         this.loadGalleryPhotos();
       }
@@ -372,7 +374,7 @@ export class ClubHandlerPage implements OnInit {
   }
 
   getReviewUsername(review: Review): string {
-    return review.user?.username || review.username || 'Usuario';
+    return review.user?.username || review.username || this.i18n.instant('clubHandler.userFallback');
   }
 
   startEditClub(): void {
@@ -412,7 +414,7 @@ export class ClubHandlerPage implements OnInit {
     };
 
     if (!payload.clubName || !payload.location || !payload.description || !payload.cbu) {
-      this.actionErrorMessage = 'Completa los campos requeridos del club.';
+      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.clubRequiredFields');
       this.actionSuccessMessage = '';
       return;
     }
@@ -428,12 +430,12 @@ export class ClubHandlerPage implements OnInit {
       next: (updatedClub) => {
         this.club = updatedClub;
         this.editingClub = false;
-        this.actionSuccessMessage = 'Datos del club actualizados.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.clubUpdated');
         this.actionErrorMessage = '';
       },
       error: () => {
         this.loadClub();
-        this.actionErrorMessage = 'No se pudo confirmar la actualizacion del club. Se recargaron los datos.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.clubUpdateFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -472,7 +474,7 @@ export class ClubHandlerPage implements OnInit {
     }
 
     if (this.productForm.basePrice == null) {
-      this.actionErrorMessage = 'Completa el precio del producto.';
+      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.productPriceRequired');
       this.actionSuccessMessage = '';
       return;
     }
@@ -485,7 +487,7 @@ export class ClubHandlerPage implements OnInit {
     };
 
     if (!payload.productName || !payload.description || payload.basePrice <= 0) {
-      this.actionErrorMessage = 'Completa los campos del producto con valores validos.';
+      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.productInvalid');
       this.actionSuccessMessage = '';
       return;
     }
@@ -505,12 +507,12 @@ export class ClubHandlerPage implements OnInit {
       next: (savedProduct) => {
         this.upsertProductInList(savedProduct);
         this.startCreateProduct();
-        this.actionSuccessMessage = 'Producto guardado correctamente.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.productSaved');
         this.actionErrorMessage = '';
       },
       error: () => {
         this.loadMenu();
-        this.actionErrorMessage = 'No se pudo confirmar el guardado del producto. Se recargo el menu.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.productSaveFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -537,11 +539,11 @@ export class ClubHandlerPage implements OnInit {
           isAvailable: payload.isAvailable,
           productType: payload.productType
         });
-        this.actionSuccessMessage = payload.isAvailable ? 'Producto habilitado.' : 'Producto deshabilitado.';
+        this.actionSuccessMessage = this.i18n.instant(payload.isAvailable ? 'clubHandler.messages.productEnabled' : 'clubHandler.messages.productDisabled');
         this.actionErrorMessage = '';
       },
       error: () => {
-        this.actionErrorMessage = 'No se pudo cambiar la disponibilidad del producto.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.productAvailabilityFailed');
         this.actionSuccessMessage = '';
         this.loadMenu();
       }
@@ -581,7 +583,7 @@ export class ClubHandlerPage implements OnInit {
     }
 
     if (this.tableForm.tableNumber == null || this.tableForm.capacity == null || this.tableForm.price == null) {
-      this.actionErrorMessage = 'Completa numero de mesa, capacidad y precio.';
+      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableRequiredFields');
       this.actionSuccessMessage = '';
       return;
     }
@@ -595,7 +597,7 @@ export class ClubHandlerPage implements OnInit {
     };
 
     if (payload.tableNumber <= 0 || payload.capacity <= 0 || payload.price < 0 || payload.discount < 0) {
-      this.actionErrorMessage = 'Revisa los valores de la mesa.';
+      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableInvalid');
       this.actionSuccessMessage = '';
       return;
     }
@@ -615,12 +617,12 @@ export class ClubHandlerPage implements OnInit {
       next: (savedTable) => {
         this.upsertTableInList(savedTable);
         this.startCreateTable();
-        this.actionSuccessMessage = 'Mesa guardada correctamente.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.tableSaved');
         this.actionErrorMessage = '';
       },
       error: () => {
         this.loadTables();
-        this.actionErrorMessage = 'No se pudo confirmar el guardado de la mesa. Se recargaron las mesas.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableSaveFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -630,7 +632,7 @@ export class ClubHandlerPage implements OnInit {
     if (!this.clubId) {
       return;
     }
-    if (!window.confirm(`Eliminar mesa ${table.tableNumber}?`)) {
+    if (!window.confirm(this.i18n.instant('clubHandler.messages.confirmDeleteTable', { number: table.tableNumber }))) {
       return;
     }
 
@@ -638,11 +640,11 @@ export class ClubHandlerPage implements OnInit {
       next: () => {
         this.tables = this.tables.filter((item) => item.tableId !== table.tableId);
         this.cdr.detectChanges();
-        this.actionSuccessMessage = 'Mesa eliminada.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.tableDeleted');
         this.actionErrorMessage = '';
       },
       error: () => {
-        this.actionErrorMessage = 'No se pudo eliminar la mesa.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableDeleteFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -683,7 +685,7 @@ export class ClubHandlerPage implements OnInit {
     };
 
     if (!payload.eventName || !payload.date) {
-      this.actionErrorMessage = 'Completa nombre y fecha del evento.';
+      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventRequiredFields');
       this.actionSuccessMessage = '';
       return;
     }
@@ -703,13 +705,13 @@ export class ClubHandlerPage implements OnInit {
       next: (savedEvent) => {
         this.upsertEventInList(savedEvent);
         this.startCreateEvent();
-        this.actionSuccessMessage = 'Evento guardado correctamente.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.eventSaved');
         this.actionErrorMessage = '';
         this.loadEvents();
       },
       error: () => {
         this.loadEvents();
-        this.actionErrorMessage = 'No se pudo confirmar el guardado del evento. Se recargaron los eventos.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventSaveFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -719,7 +721,7 @@ export class ClubHandlerPage implements OnInit {
     if (!this.clubId || !event.eventId) {
       return;
     }
-    if (!window.confirm(`Eliminar evento ${event.eventName}?`)) {
+    if (!window.confirm(this.i18n.instant('clubHandler.messages.confirmDeleteEvent', { name: event.eventName }))) {
       return;
     }
 
@@ -731,11 +733,11 @@ export class ClubHandlerPage implements OnInit {
           this.eventPage -= 1;
         }
         this.cdr.detectChanges();
-        this.actionSuccessMessage = 'Evento eliminado.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.eventDeleted');
         this.actionErrorMessage = '';
       },
       error: () => {
-        this.actionErrorMessage = 'No se pudo eliminar el evento.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventDeleteFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -753,12 +755,12 @@ export class ClubHandlerPage implements OnInit {
       next: () => {
         this.uploadingEventPhotoId = null;
         this.loadEvents();
-        this.actionSuccessMessage = 'Foto de evento actualizada.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.eventPhotoUpdated');
         this.actionErrorMessage = '';
       },
       error: () => {
         this.uploadingEventPhotoId = null;
-        this.actionErrorMessage = 'No se pudo subir la foto del evento.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventPhotoUpdateFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -775,11 +777,11 @@ export class ClubHandlerPage implements OnInit {
       next: (updatedEvent) => {
         this.upsertEventInList(updatedEvent);
         this.loadEvents();
-        this.actionSuccessMessage = 'Foto de evento eliminada.';
+        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.eventPhotoDeleted');
         this.actionErrorMessage = '';
       },
       error: () => {
-        this.actionErrorMessage = 'No se pudo eliminar la foto del evento.';
+        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventPhotoDeleteFailed');
         this.actionSuccessMessage = '';
       }
     });
@@ -850,7 +852,7 @@ export class ClubHandlerPage implements OnInit {
         this.cdr.detectChanges();
       },
       error: () => {
-        this.errorMessage = 'No se pudo cargar la informacion del club (timeout o error de red).';
+        this.errorMessage = this.i18n.instant('clubHandler.errors.loadFailed');
         onComplete?.();
         this.cdr.detectChanges();
       }

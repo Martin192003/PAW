@@ -9,6 +9,7 @@ import { AuthStateService } from '../services/auth-state.service';
 import { Review } from '../models/review.model';
 import { Club } from '../models/club.model';
 import { SideBarComponent } from '../components/account-sidebar/account-sidebar.component';
+import { I18nService } from '../services/i18n.service';
 
 type ReviewItem = Review & {
   clubName?: string;
@@ -39,7 +40,8 @@ export class MyReviewsPage implements OnInit {
     private readonly clubService: ClubService,
     private readonly authState: AuthStateService,
     private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -70,7 +72,7 @@ export class MyReviewsPage implements OnInit {
   loadReviews(): void {
     const userId = this.authState.getUser()?.userId;
     if (!userId) {
-      this.errorMessage = 'Tenés que iniciar sesión para ver tus reseñas.';
+      this.errorMessage = this.i18n.instant('myReviews.errors.loginRequired');
       this.reviews = [];
       this.totalPages = 1;
       return;
@@ -91,7 +93,7 @@ export class MyReviewsPage implements OnInit {
         console.warn('my-reviews load error', err);
         this.reviews = [];
         this.totalPages = 1;
-        this.errorMessage = err?.error?.message || 'No se pudieron cargar tus reseñas.';
+        this.errorMessage = err?.error?.message || this.i18n.instant('myReviews.errors.loadFailed');
         this.loading = false;
         this.cdr.detectChanges();
       }
@@ -100,7 +102,7 @@ export class MyReviewsPage implements OnInit {
 
   deleteReview(review: ReviewItem): void {
     if (!review.clubId || this.deletingReviewId) return;
-    if (!window.confirm('¿Seguro que querés borrar esta reseña?')) return;
+    if (!window.confirm(this.i18n.instant('myReviews.confirmDelete'))) return;
 
     this.deletingReviewId = review.reviewId;
     this.reviewService.delete(review.clubId).subscribe({
@@ -115,7 +117,7 @@ export class MyReviewsPage implements OnInit {
       },
       error: err => {
         this.deletingReviewId = null;
-        this.errorMessage = err?.error?.message || 'No se pudo borrar la reseña.';
+        this.errorMessage = err?.error?.message || this.i18n.instant('myReviews.errors.deleteFailed');
         this.cdr.detectChanges();
       }
     });

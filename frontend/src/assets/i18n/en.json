@@ -4,6 +4,60 @@
     "addClub": "Add Club",
     "logout": "Logout"
   },
+  "clubNew": {
+    "title": "Add club",
+    "requiredFields": "All marked fields are required.",
+    "fields": {
+      "name": "Club name",
+      "location": "Location",
+      "priceRange": "Price range",
+      "description": "Description",
+      "musicGenre": "Music genre",
+      "zone": "Zone",
+      "venueType": "Venue type",
+      "cbu": "CBU"
+    },
+    "priceRanges": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "priceTooltipLabel": "Price range information",
+    "priceTooltipTitle": "Price range",
+    "priceTooltipContent": "Indicate the usual price level of your venue.",
+    "genres": {
+      "rock": "Rock",
+      "pop": "Pop",
+      "cachengue": "Cachengue",
+      "techno": "Techno",
+      "reggaeton": "Reggaeton",
+      "cumbia": "Cumbia",
+      "trap": "Trap",
+      "jazz": "Jazz",
+      "electronica": "Electronic",
+      "afrobeat": "Afrobeat",
+      "other": "Other"
+    },
+    "zones": {
+      "norte": "North Zone",
+      "oeste": "West Zone",
+      "sur": "South Zone",
+      "caba": "CABA Zone"
+    },
+    "venueTypes": {
+      "bar": "Bar",
+      "nightclub": "Nightclub"
+    },
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "errors": {
+      "required": "This field is required.",
+      "maxlength": "Maximum {{max}} characters.",
+      "invalid": "Invalid field.",
+      "saveFailed": "An error occurred while saving the club."
+    }
+  },
   "login": {
     "title": "Sign in",
     "usernameOrEmail": "Username or email",
@@ -12,7 +66,13 @@
     "submit": "Sign in",
     "submitting": "Signing in...",
     "noAccount": "Don't have an account? Sign up",
-    "forgotPassword": "Forgot your password?"
+    "forgotPassword": "Forgot your password?",
+    "errors": {
+      "invalidCredentials": "Invalid username/email or password.",
+      "unverified": "Your user has not been verified.",
+      "required": "Complete username/email and password.",
+      "loginFailed": "Could not sign in. Please try again."
+    }
   },
   "register": {
     "title": "Sign up",
@@ -25,7 +85,13 @@
     "phone": "Phone",
     "submit": "Sign up",
     "submitting": "Signing up...",
-    "hasAccount": "Already have an account? Sign in"
+    "hasAccount": "Already have an account? Sign in",
+    "errors": {
+      "passwordMismatch": "Passwords do not match.",
+      "conflict": "A user with that username or email already exists.",
+      "invalidData": "Review the entered information.",
+      "registerFailed": "Could not create the user. Please try again."
+    }
   },
   "verifyMail": {
     "title": "Verify your account",
@@ -264,11 +330,37 @@
     "reservationSuccess": "Reservation made",
     "reservationSuccessMsg": "Your table has been successfully reserved. Do you want to see the reservation details?",
     "noRefresh": "No, refresh",
-    "seeReservation": "See reservation"
+    "seeReservation": "See reservation",
+    "reviewMessages": {
+      "invalidRating": "You must select a rating between 1 and 5.",
+      "created": "Your review was published.",
+      "updated": "Your review was updated.",
+      "loginRequired": "You must sign in to leave a review.",
+      "alreadyExists": "You already have a review for this club. Edit it instead of creating a new one.",
+      "saveFailed": "Could not save the review.",
+      "confirmDelete": "Are you sure you want to delete your review?",
+      "deleted": "Your review was deleted.",
+      "deleteFailed": "Could not delete the review."
+    }
   },
   "pagination": {
     "previous": "Previous",
     "next": "Next"
+  },
+  "myReviews": {
+    "title": "My reviews",
+    "subtitle": "The reviews you left at clubs.",
+    "loading": "Loading your reviews...",
+    "emptyTitle": "You have not left any reviews yet.",
+    "emptySubtitle": "Visit a club and leave your first review.",
+    "clubFallback": "Club",
+    "viewClub": "View club",
+    "confirmDelete": "Are you sure you want to delete this review?",
+    "errors": {
+      "loginRequired": "You must sign in to see your reviews.",
+      "loadFailed": "Could not load your reviews.",
+      "deleteFailed": "Could not delete the review."
+    }
   },
   "clubHandler": {
     "backToActivity": "Back to activity",
@@ -286,6 +378,8 @@
     "addPhotos": "Add photos",
     "noGalleryPhotos": "There are no photos in the gallery.",
     "galleryPhotoAlt": "Gallery photo",
+    "noDescription": "No description",
+    "userFallback": "User",
     "tabs": {
       "menu": "Menu",
       "tables": "Tables",
@@ -399,8 +493,47 @@
     "create": "Create",
     "updateEvent": "Update event",
     "createEvent": "Create event",
+    "messages": {
+      "coverUpdated": "Cover updated.",
+      "coverUpdateFailed": "Could not update the cover.",
+      "layoutUpdated": "Layout updated.",
+      "layoutUpdateFailed": "Could not update the layout.",
+      "galleryUpdated": "Gallery photos updated.",
+      "galleryUpdateFailed": "Could not upload gallery photos.",
+      "confirmDeleteGalleryPhoto": "Delete this gallery photo?",
+      "galleryPhotoDeleted": "Gallery photo deleted.",
+      "galleryPhotoDeleteFailed": "Could not delete the gallery photo.",
+      "clubRequiredFields": "Complete the required club fields.",
+      "clubUpdated": "Club information updated.",
+      "clubUpdateFailed": "Could not confirm the club update. The data was reloaded.",
+      "productPriceRequired": "Complete the product price.",
+      "productInvalid": "Complete the product fields with valid values.",
+      "productSaved": "Product saved successfully.",
+      "productSaveFailed": "Could not confirm the product save. The menu was reloaded.",
+      "productEnabled": "Product enabled.",
+      "productDisabled": "Product disabled.",
+      "productAvailabilityFailed": "Could not change product availability.",
+      "tableRequiredFields": "Complete table number, capacity and price.",
+      "tableInvalid": "Review the table values.",
+      "tableSaved": "Table saved successfully.",
+      "tableSaveFailed": "Could not confirm the table save. The tables were reloaded.",
+      "confirmDeleteTable": "Delete table {{number}}?",
+      "tableDeleted": "Table deleted.",
+      "tableDeleteFailed": "Could not delete the table.",
+      "eventRequiredFields": "Complete event name and date.",
+      "eventSaved": "Event saved successfully.",
+      "eventSaveFailed": "Could not confirm the event save. Events were reloaded.",
+      "confirmDeleteEvent": "Delete event {{name}}?",
+      "eventDeleted": "Event deleted.",
+      "eventDeleteFailed": "Could not delete the event.",
+      "eventPhotoUpdated": "Event photo updated.",
+      "eventPhotoUpdateFailed": "Could not upload the event photo.",
+      "eventPhotoDeleted": "Event photo deleted.",
+      "eventPhotoDeleteFailed": "Could not delete the event photo."
+    },
     "errors": {
-      "loadSelectedClub": "Could not load the selected club."
+      "loadSelectedClub": "Could not load the selected club.",
+      "loadFailed": "Could not load the club information (timeout or network error)."
     }
   },
   "clubActivity": {
@@ -444,7 +577,10 @@
     },
     "noReservations": "No reservations found.",
     "previousPage": "Previous page",
-    "nextPage": "Next page"
+    "nextPage": "Next page",
+    "errors": {
+      "loadFailed": "Could not load the reservations."
+    }
   },
   "userBookings": {
     "title": "My Reservations",
@@ -476,7 +612,10 @@
       "date": "Date:",
       "total": "Total:"
     },
-    "noReservations": "No reservations found."
+    "noReservations": "No reservations found.",
+    "errors": {
+      "loadFailed": "Could not load your reservations."
+    }
   },
   "bookingAdminHandler": {
     "title": "Booking",
@@ -549,10 +688,27 @@
       "cancelTitle": "Cancel booking?",
       "confirm": "Confirm"
     },
+    "cancel": {
+      "button": "Cancel",
+      "modal": {
+        "title": "Cancel booking?",
+        "confirm": "Confirm"
+      }
+    },
     "statuses": {
       "PENDIENTE": "Pending",
       "CONFIRMADA": "Confirmed",
       "CANCELADA": "Cancelled"
+    },
+    "errors": {
+      "invalidBooking": "Invalid booking.",
+      "loadFailed": "Could not load the booking.",
+      "cancelFailed": "Could not cancel the booking.",
+      "receiptUploadFailed": "Could not upload the receipt."
+    },
+    "success": {
+      "cancelled": "Booking cancelled successfully.",
+      "receiptUploaded": "Receipt uploaded successfully."
     }
   },
   "common": {
@@ -564,6 +720,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "logout": "Logout",
+    "back": "Back",
     "of": "of",
     "retry": "Retry",
     "close": "Close"

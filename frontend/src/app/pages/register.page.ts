@@ -23,6 +23,7 @@ export class RegisterPage {
     private fb: FormBuilder,
     private userService: UserService,
     private router: Router,
+    private i18n: I18nService,
   ) {
     this.registerForm = this.fb.group({
       username: ['', [Validators.required]],
@@ -40,7 +41,7 @@ export class RegisterPage {
     if (this.registerForm.invalid || this.submitting) return;
 
     if (this.registerForm.value.password !== this.registerForm.value.passwordRepeat) {
-      this.errorMessage = 'Las contrasenas no coinciden.';
+      this.errorMessage = this.i18n.instant('register.errors.passwordMismatch');
       return;
     }
 
@@ -80,12 +81,12 @@ export class RegisterPage {
 
   private resolveErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 409) {
-      return 'Ya existe un usuario con ese nombre o email.';
+      return this.i18n.instant('register.errors.conflict');
     }
     if (error.status === 400) {
-      return this.extractServerMessage(error.error) ?? 'Revisa los datos ingresados.';
+      return this.extractServerMessage(error.error) ?? this.i18n.instant('register.errors.invalidData');
     }
-    return this.extractServerMessage(error.error) ?? 'No se pudo crear el usuario. Intentalo de nuevo.';
+    return this.extractServerMessage(error.error) ?? this.i18n.instant('register.errors.registerFailed');
   }
 
   private extractServerMessage(errorBody: unknown): string | null {

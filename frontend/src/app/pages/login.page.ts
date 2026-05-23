@@ -40,7 +40,7 @@ export class LoginPage implements OnInit {
     this.route.queryParamMap.subscribe((params) => {
       this.invalidCredentials = params.has('error');
       if (this.invalidCredentials) {
-        this.errorMessage = 'Usuario/email o contrasena invalidos.';
+        this.errorMessage = this.i18n.instant('login.errors.invalidCredentials');
       }
     });
   }
@@ -97,15 +97,15 @@ export class LoginPage implements OnInit {
 
   private resolveErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 401) {
-      return 'Usuario/email o contrasena invalidos.';
+      return this.i18n.instant('login.errors.invalidCredentials');
     }
     if (error.status === 403) {
-      return this.extractServerMessage(error.error) ?? 'Tu usuario no esta verificado.';
+      return this.extractServerMessage(error.error) ?? this.i18n.instant('login.errors.unverified');
     }
     if (error.status === 400) {
-      return this.extractServerMessage(error.error) ?? 'Completa usuario/email y contrasena.';
+      return this.extractServerMessage(error.error) ?? this.i18n.instant('login.errors.required');
     }
-    return this.extractServerMessage(error.error) ?? 'No se pudo iniciar sesion. Intentalo de nuevo.';
+    return this.extractServerMessage(error.error) ?? this.i18n.instant('login.errors.loginFailed');
   }
 
   private extractServerMessage(errorBody: unknown): string | null {
