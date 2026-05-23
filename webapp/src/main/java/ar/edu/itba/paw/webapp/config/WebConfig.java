@@ -14,34 +14,24 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
-import org.springframework.web.multipart.commons.CommonsMultipartResolver;
-import org.springframework.web.servlet.LocaleResolver;
-import org.springframework.web.servlet.config.annotation.*;
-import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
-import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.validation.Validator;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
-import org.springframework.jdbc.datasource.init.DatabasePopulator;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-@EnableWebMvc
 @EnableTransactionManagement
 @EnableAsync
 @ComponentScan({
-        "ar.edu.itba.paw.webapp.controller",
         "ar.edu.itba.paw.service",
         "ar.edu.itba.paw.persistence",
         "ar.edu.itba.paw.service.config",
@@ -52,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 @PropertySource(value = {
         "classpath:application.properties",
 })
-public class WebConfig implements WebMvcConfigurer {
+public class WebConfig {
 
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
@@ -78,14 +68,6 @@ public class WebConfig implements WebMvcConfigurer {
     private boolean runSchema;
 
     @Bean
-    public InternalResourceViewResolver viewResolver() {
-        var r = new InternalResourceViewResolver();
-        r.setPrefix("/WEB-INF/jsp/");
-        r.setSuffix(".jsp");
-        return r;
-    }
-
-    @Bean
     public MessageSource messageSource() {
         final ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
 
@@ -95,12 +77,6 @@ public class WebConfig implements WebMvcConfigurer {
         messageSource.setDefaultLocale(new Locale("en"));
         messageSource.setFallbackToSystemLocale(false);
         return messageSource;
-    }
-
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/resources/**")
-                .addResourceLocations("/resources/");
     }
 
     @Bean
@@ -155,18 +131,6 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public CommonsMultipartResolver multipartResolver() {
-        var r = new CommonsMultipartResolver();
-        r.setMaxUploadSizePerFile(10 * 1024 * 1024); // 10MB
-        return r;
-    }
-
-    private DatabasePopulator databasePopulator() {
-        var pop = new ResourceDatabasePopulator();
-        pop.addScript(schemaSql);
-        return pop;
-    }
-    @Bean
     public DataSourceInitializer dataSourceInitializer(DataSource ds) {
         var dsi = new DataSourceInitializer();
         dsi.setDataSource(ds);
@@ -182,7 +146,6 @@ public class WebConfig implements WebMvcConfigurer {
 
 
     @Bean
-    @Override
     public Validator getValidator() {
         LocalValidatorFactoryBean factoryBean = new LocalValidatorFactoryBean();
         factoryBean.setValidationMessageSource(messageSource());
@@ -199,23 +162,4 @@ public class WebConfig implements WebMvcConfigurer {
         ex.initialize();
         return ex;
     }
-
-    @Bean
-    public LocaleResolver localeResolver() {
-        final AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
-        resolver.setSupportedLocales(Arrays.asList(new Locale("en"), new Locale("es")));
-        resolver.setDefaultLocale(new Locale("en"));
-        return resolver;
-    }
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:4200")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
-
-
 }

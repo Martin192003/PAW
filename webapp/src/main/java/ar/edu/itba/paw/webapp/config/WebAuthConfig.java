@@ -1,109 +1,64 @@
 package ar.edu.itba.paw.webapp.config;
 
-import ar.edu.itba.paw.webapp.auth.CustomAuthenticationFailureHandler;
-import ar.edu.itba.paw.webapp.auth.CustomAuthenticationSuccessHandler;
 import ar.edu.itba.paw.webapp.auth.PawUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-@ComponentScan(basePackages = "ar.edu.itba.paw.webapp")
+@ComponentScan(basePackages = "ar.edu.itba.paw.webapp.auth")
 public class WebAuthConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private PawUserDetailsService userDetailsService;
 
-    @Autowired
-    private CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
-
-    @Autowired
-    private CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
-
-    @Value("${security.rememberme.key}")
-    private String rememberMeKey;
-
     @Override
     protected void configure(final HttpSecurity http) throws Exception {
         http.cors().and()
+                .csrf().disable()
+                .formLogin().disable()
+                .httpBasic().disable()
+                .logout().disable()
                 .sessionManagement()
-                .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
-                .invalidSessionUrl("/clubs")
-                .sessionFixation().migrateSession()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                // CORS preflight
-                .antMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
-                // Password reset — debe ir ANTES de cualquier regla más genérica
-                .antMatchers(HttpMethod.POST, "/api/users/password-reset-requests").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/users/password-resets").permitAll()
-                // Otros endpoints públicos de la API
-                .antMatchers("/api/photos/**").permitAll()
-                .antMatchers(HttpMethod.GET, "/api/clubs").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/clubs").permitAll()
-                .antMatchers(HttpMethod.GET, "/api/clubs/**").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/users").permitAll()
-
-                // legacy (non-/api) user endpoints used by server-side forms
-                .antMatchers(HttpMethod.POST, "/users").permitAll()
-                .antMatchers(HttpMethod.POST, "/users/resend-verification").permitAll()
-                .antMatchers(HttpMethod.GET, "/users/verify").permitAll()
-                // Rutas autenticadas
-                .antMatchers("/clubs/new", "/clubs/create", "/reservations/**", "/reviews/**").authenticated()
-                .antMatchers("/admin/**").hasRole("ADMIN")
-                // Rutas públicas de la UI
-                .antMatchers("/", "/clubs", "/clubs/{id}", "/contact", "/login", "/register", "/photos/**", "/verify", "/unverified", "/resend-verification", "/forgot-password", "/reset-password", "/verifyMailNotice", "/verify-account").permitAll()
-                .antMatchers(HttpMethod.GET, "/clubs").permitAll()
-                .antMatchers(HttpMethod.GET, "/clubs/{id}").permitAll()
-                .antMatchers(HttpMethod.GET, "/clubs/**/layout/**").permitAll()
-                .anyRequest().authenticated()
-                .and().formLogin()
-                .usernameParameter("usernameOrEmail")
-                .passwordParameter("password")
-                .defaultSuccessUrl("/clubs", false)
-                .successHandler(customAuthenticationSuccessHandler)
-                .failureHandler(customAuthenticationFailureHandler)
-                .loginPage("/login")
-                .and().rememberMe()
-                .rememberMeParameter("j_rememberme")
-                .userDetailsService(userDetailsService)
-                .key(rememberMeKey)
-                .tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(30))
-                .and().logout()
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/clubs")
-                .and().exceptionHandling()
-                .accessDeniedPage("/403")
-                .defaultAuthenticationEntryPointFor(
-                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                        new AntPathRequestMatcher("/api/**")
-                )
-                .and().csrf().disable();
+                .anyRequest().permitAll();
     }
 
     @Override
     public void configure(final WebSecurity web) throws Exception {
         web.ignoring()
-                .antMatchers("/resources/**", "/js/**", "/img/**", "/favicon.ico", "/403");
+                .antMatchers(
+                        "/assets/**",
+                        "/resources/**",
+                        "/favicon.ico",
+                        "/*.css",
+                        "/*.js",
+                        "/*.ico",
+                        "/*.png",
+                        "/*.jpg",
+                        "/*.jpeg",
+                        "/*.svg",
+                        "/*.webp",
+                        "/*.woff",
+                        "/*.woff2",
+                        "/*.ttf"
+                );
     }
 
     @Override
