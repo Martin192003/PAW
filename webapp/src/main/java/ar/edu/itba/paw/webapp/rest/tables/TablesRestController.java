@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.rest.tables;
 
 import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.dto.TableCreateRequestDto;
+import ar.edu.itba.paw.model.dto.TableDto;
 import ar.edu.itba.paw.model.dto.TableUpdateRequestDto;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
@@ -18,6 +19,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Path("/clubs/{clubId}/tables")
 @Produces(MediaType.APPLICATION_JSON)
@@ -28,13 +30,16 @@ public class TablesRestController {
     private static final Clock CLOCK = Clock.system(BUENOS_AIRES_ZONE);
 
     private final TableService tableService;
+    private final TableDtoAssembler tableDtoAssembler;
 
     @Context
     private UriInfo uriInfo;
 
     @Autowired
-    public TablesRestController(final TableService tableService) {
+    public TablesRestController(final TableService tableService,
+                                final TableDtoAssembler tableDtoAssembler) {
         this.tableService = tableService;
+        this.tableDtoAssembler = tableDtoAssembler;
     }
 
     @GET
@@ -50,7 +55,7 @@ public class TablesRestController {
         }
 
         try {
-            final List<ClubTable> tables;
+            final List<TableDto> tables;
             if (date != null && !date.isBlank()) {
                 LocalDate selectedDate;
                 try {
@@ -60,12 +65,16 @@ public class TablesRestController {
                             .entity(Map.of("message", "date inválida, formato esperado yyyy-MM-dd"))
                             .build();
                 }
-                tables = tableService.findAvailableOnDate(clubUuid, selectedDate, BUENOS_AIRES_ZONE, CLOCK);
+                tables = tableService.findAvailableOnDate(clubUuid, selectedDate, BUENOS_AIRES_ZONE, CLOCK).stream()
+                        .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table))
+                        .collect(Collectors.toList());
             } else {
-                tables = tableService.findByClubId(clubUuid);
+                tables = tableService.findByClubId(clubUuid).stream()
+                        .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table))
+                        .collect(Collectors.toList());
             }
 
-            return Response.ok(new GenericEntity<>(tables) {}).build();
+            return Response.ok(new GenericEntity<List<TableDto>>(tables) {}).build();
         } catch (ValidationException | InvalidDateRangeException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("message", e.getMessage()))
@@ -110,7 +119,9 @@ public class TablesRestController {
         URI uri = uriInfo.getAbsolutePathBuilder()
                 .path(created.getTableId().toString())
                 .build();
-        return Response.created(uri).entity(created).build();
+        return Response.created(uri)
+                .entity(tableDtoAssembler.toDto(uriInfo, clubUuid, created))
+                .build();
     }
 
     @PUT
@@ -155,7 +166,8 @@ public class TablesRestController {
                     .build();
         }
 
-        return Response.ok(updated).build();
+        TableDto responseBody = tableDtoAssembler.toDto(uriInfo, clubUuid, updated);
+        return Response.ok(responseBody).build();
     }
 
     @PUT
@@ -179,8 +191,7 @@ public class TablesRestController {
                     .build();
         }
 
-        List<ClubTable> tables = tableService.findByClubId(clubUuid);
-        ClubTable current = tables.stream()
+        ClubTable current = tableService.findByClubId(clubUuid).stream()
                 .filter(t -> t.getTableId().equals(tableUuid))
                 .findFirst()
                 .orElse(null);
@@ -207,7 +218,8 @@ public class TablesRestController {
                     .build();
         }
 
-        return Response.ok(updated).build();
+        TableDto responseBody = tableDtoAssembler.toDto(uriInfo, clubUuid, updated);
+        return Response.ok(responseBody).build();
     }
 
     @DELETE

@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.rest.products;
 
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.dto.ProductCreateRequestDto;
+import ar.edu.itba.paw.model.dto.ProductDto;
 import ar.edu.itba.paw.model.dto.ProductUpdateRequestDto;
 import ar.edu.itba.paw.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Path("/clubs/{clubId}/menu")
 @Produces(MediaType.APPLICATION_JSON)
@@ -19,13 +21,16 @@ import java.util.UUID;
 public class ProductsRestController {
 
     private final ProductService productService;
+    private final ProductDtoAssembler productDtoAssembler;
 
     @Context
     private UriInfo uriInfo;
 
     @Autowired
-    public ProductsRestController(final ProductService productService) {
+    public ProductsRestController(final ProductService productService,
+                                  final ProductDtoAssembler productDtoAssembler) {
         this.productService = productService;
+        this.productDtoAssembler = productDtoAssembler;
     }
 
     @GET
@@ -39,14 +44,17 @@ public class ProductsRestController {
                     .build();
         }
 
-        List<Product> products = productService.findByClubID(clubUuid);
+        var products = productService.findByClubID(clubUuid);
         if (products == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(Map.of("message", "El club no tiene menú cargado"))
                     .build();
         }
 
-        return Response.ok(new GenericEntity<List<Product>>(products) {}).build();
+        List<ProductDto> body = products.stream()
+                .map(product -> productDtoAssembler.toDto(uriInfo, clubUuid, product))
+                .collect(Collectors.toList());
+        return Response.ok(new GenericEntity<List<ProductDto>>(body) {}).build();
     }
 
     @POST
@@ -83,7 +91,9 @@ public class ProductsRestController {
         URI uri = uriInfo.getAbsolutePathBuilder()
                 .path(created.getProductId().toString())
                 .build();
-        return Response.created(uri).entity(created).build();
+        return Response.created(uri)
+                .entity(productDtoAssembler.toDto(uriInfo, clubUuid, created))
+                .build();
     }
 
     @PUT
@@ -129,7 +139,8 @@ public class ProductsRestController {
                     .build();
         }
 
-        return Response.ok(updated).build();
+        ProductDto responseBody = productDtoAssembler.toDto(uriInfo, clubUuid, updated);
+        return Response.ok(responseBody).build();
     }
 
     private static boolean isBlank(String s) {
