@@ -18,6 +18,7 @@ public interface ReviewService {
     List<Review> listByClub(UUID clubId, String sort, int limit, int offset);
     int countByClub(UUID clubId);
     Optional<Review> getUserReviewForClub(UUID userId, UUID clubId);
+    Optional<Review> findById(UUID reviewId);
     List<Review> listByUser(UUID userId, String sort, int limit, int offset);
     int countByUser(UUID userId);
     void deleteReview(UUID reviewId);

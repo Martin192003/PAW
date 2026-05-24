@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.model.dto;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class ReviewDto {
@@ -13,6 +14,7 @@ public class ReviewDto {
     private String description;
     private OffsetDateTime createdAt;
     private boolean fromTableGuest;
+    private List<LinkDto> links;
 
     public ReviewDto() {
     }
@@ -79,5 +81,13 @@ public class ReviewDto {
 
     public void setFromTableGuest(boolean fromTableGuest) {
         this.fromTableGuest = fromTableGuest;
+    }
+
+    public List<LinkDto> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<LinkDto> links) {
+        this.links = links;
     }
 }

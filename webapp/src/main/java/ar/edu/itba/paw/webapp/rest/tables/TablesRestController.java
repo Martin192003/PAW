@@ -124,6 +124,29 @@ public class TablesRestController {
                 .build();
     }
 
+    @GET
+    @Path("/{tableId}")
+    public Response getTable(@PathParam("clubId") String clubId,
+                             @PathParam("tableId") String tableId) {
+        UUID clubUuid;
+        UUID tableUuid;
+        try {
+            clubUuid = UUID.fromString(clubId);
+            tableUuid = UUID.fromString(tableId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", "clubId o tableId invalido"))
+                    .build();
+        }
+
+        return tableService.findById(tableUuid)
+                .filter(table -> clubUuid.equals(table.getClubId()))
+                .map(table -> Response.ok(tableDtoAssembler.toDto(uriInfo, clubUuid, table)).build())
+                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
+                        .entity(Map.of("message", "Mesa no encontrada"))
+                        .build());
+    }
+
     @PUT
     @Path("/{tableId}")
     public Response updateTable(@PathParam("clubId") String clubId,

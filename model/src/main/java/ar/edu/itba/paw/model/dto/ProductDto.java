@@ -4,7 +4,7 @@ import ar.edu.itba.paw.model.ProductType;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 public class ProductDto {
@@ -16,7 +16,7 @@ public class ProductDto {
     private ProductType productType;
     private Boolean isAvailable;
     private OffsetDateTime createdAt;
-    private Map<String, String> links;
+    private List<LinkDto> links;
 
     public UUID getProductId() {
         return productId;
@@ -74,11 +74,11 @@ public class ProductDto {
         this.createdAt = createdAt;
     }
 
-    public Map<String, String> getLinks() {
+    public List<LinkDto> getLinks() {
         return links;
     }
 
-    public void setLinks(Map<String, String> links) {
+    public void setLinks(List<LinkDto> links) {
         this.links = links;
     }
 }

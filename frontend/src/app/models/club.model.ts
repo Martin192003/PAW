@@ -1,3 +1,26 @@
+export interface Link {
+  rel: string;
+  href: string;
+  method?: string;
+}
+
+export type LinkCollection = Record<string, string> | Link[] | { entry?: Link[] };
+
+export interface ClubLinks {
+  [rel: string]: string | undefined;
+  self?: string;
+  cover?: string;
+  layout?: string;
+  limits?: string;
+  events?: string;
+  bookings?: string;
+  reviews?: string;
+  photos?: string;
+  menu?: string;
+  tables?: string;
+  owner?: string;
+}
+
 export interface Club {
   clubId: string;
   clubName: string;
@@ -12,12 +35,7 @@ export interface Club {
   quantityRatings: number;
   createdAt: string;
 
-  links?: {
-    self: string;
-    cover: string;
-    layout: string;
-    limits: string;
-  };
+  links?: ClubLinks;
 }
 
 export interface ClubCreateRequest {

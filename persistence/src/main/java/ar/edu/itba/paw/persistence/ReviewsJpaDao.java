@@ -75,7 +75,16 @@ public class ReviewsJpaDao implements ReviewsDao {
 
     @Override
     public Optional<Review> findById(UUID id) {
-        return Optional.ofNullable(em.find(Review.class, id));
+        List<Review> results = em.createQuery("""
+            SELECT r
+            FROM Review r
+            JOIN FETCH r.user
+            JOIN FETCH r.club
+            WHERE r.reviewId = :id
+            """, Review.class)
+                .setParameter("id", id)
+                .getResultList();
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
     @Override

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, forkJoin, map } from 'rxjs';
-import { Club, ClubCreateRequest } from '../models/club.model';
+import { Club, ClubCreateRequest, ClubLinks, Link, LinkCollection } from '../models/club.model';
 import { ClubLimits } from '../models/club-limits.model';
 import { Layout } from '../models/layout.model';
 import {AvailabilityPagedResponse} from '../models/availability-paged-response.model';
@@ -86,7 +86,12 @@ export class ClubService {
     if (normalized.isBar) params = params.set('isBar', normalized.isBar);
     if (normalized.sort) params = params.set('sort', normalized.sort);
 
-    return this.http.get<AvailabilityPagedResponse<Club>>(`${this.apiUrl}/clubs`, { params });
+    return this.http.get<AvailabilityPagedResponse<Club>>(`${this.apiUrl}/clubs`, { params }).pipe(
+      map(response => ({
+        ...response,
+        content: (response.content ?? []).map(club => this.normalizeClub(club))
+      }))
+    );
   }
 
   getClubsByUser(userId: string, page: number, size: number): Observable<PagedResponse<Club>> {
@@ -97,17 +102,26 @@ export class ClubService {
     return this.http.get<PagedResponse<Club>>(
       `${this.apiUrl}/clubs/user/${encodeURIComponent(userId)}`,
       { params }
+    ).pipe(
+      map(response => ({
+        ...response,
+        content: (response.content ?? []).map(club => this.normalizeClub(club))
+      }))
     );
   }
 
   createClub(payload: ClubCreateRequest): Observable<Club> {
-    return this.http.post<Club>(`${this.apiUrl}/clubs`, payload);
+    return this.http.post<Club>(`${this.apiUrl}/clubs`, payload).pipe(
+      map(club => this.normalizeClub(club))
+    );
   }
 
   getClubById(id: string): Observable<Club> {
     return this.http.get<Club>(`${this.apiUrl}/clubs/${id}`, {
       params: this.buildNoCacheParams()
-    });
+    }).pipe(
+      map(club => this.normalizeClub(club))
+    );
   }
 
   getCoverUrl(id: string): string {
@@ -122,7 +136,11 @@ export class ClubService {
     return this.http
       .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(`${this.apiUrl}/clubs/${id}/photos`)
       .pipe(
-        map(response => Array.isArray(response) ? response : (response?.photos ?? []))
+        map(response => Array.isArray(response) ? response : (response?.photos ?? [])),
+        map(photos => photos
+          .map(photo => this.normalizePhoto(photo, id))
+          .filter(photo => !!photo.url)
+        )
       );
   }
 
@@ -132,10 +150,7 @@ export class ClubService {
       .pipe(
         map(response => Array.isArray(response) ? response : (response?.photos ?? [])),
         map(photos => photos
-          .map(photo => ({
-            ...photo,
-            url: this.toAbsoluteUrl(photo.url, id)
-          }))
+          .map(photo => this.normalizePhoto(photo, id))
           .filter(photo => !!photo.url)
         )
       );
@@ -248,7 +263,9 @@ export class ClubService {
   }
 
   updateClub(clubId: string, payload: ClubUpdatePayload): Observable<Club> {
-    return this.http.put<Club>(`${this.apiUrl}/clubs/${clubId}`, payload);
+    return this.http.put<Club>(`${this.apiUrl}/clubs/${clubId}`, payload).pipe(
+      map(club => this.normalizeClub(club))
+    );
   }
 
   createProduct(clubId: string, payload: ProductPayload): Observable<Product> {
@@ -292,5 +309,44 @@ export class ClubService {
 
   deleteEventPhoto(clubId: string, eventId: string): Observable<Event> {
     return this.http.delete<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`);
+  }
+
+  private normalizeClub(club: Club): Club {
+    return {
+      ...club,
+      links: this.normalizeLinks((club as Club & { links?: LinkCollection }).links)
+    };
+  }
+
+  private normalizePhoto(photo: ClubPhoto, clubId: string): ClubPhoto {
+    const links = this.normalizeLinks((photo as ClubPhoto & { links?: LinkCollection }).links);
+    const url = photo.url || links['self'] || (photo.photoId ? this.getPhotoUrl(photo.photoId) : '');
+
+    return {
+      ...photo,
+      url: url ? this.toAbsoluteUrl(url, clubId) : '',
+      links
+    };
+  }
+
+  private normalizeLinks(raw?: LinkCollection): ClubLinks {
+    if (!raw) {
+      return {};
+    }
+
+    if (Array.isArray(raw)) {
+      return raw.reduce<ClubLinks>((acc, link) => {
+        if (link?.rel && link?.href) {
+          acc[link.rel] = link.href;
+        }
+        return acc;
+      }, {});
+    }
+
+    if ('entry' in raw && Array.isArray(raw.entry)) {
+      return this.normalizeLinks(raw.entry);
+    }
+
+    return raw as Record<string, string>;
   }
 }

@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.model.dto;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class UserDto {
@@ -15,6 +16,7 @@ public class UserDto {
     private boolean verified;
     private OffsetDateTime createdAt;
     private String locale;
+    private List<LinkDto> links;
 
     public UserDto() {}
 
@@ -47,4 +49,7 @@ public class UserDto {
 
     public String getLocale() { return locale; }
     public void setLocale(String locale) { this.locale = locale; }
+
+    public List<LinkDto> getLinks() { return links; }
+    public void setLinks(List<LinkDto> links) { this.links = links; }
 }

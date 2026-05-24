@@ -96,6 +96,37 @@ public class ProductsRestController {
                 .build();
     }
 
+    @GET
+    @Path("/{productId}")
+    public Response getProduct(@PathParam("clubId") String clubId,
+                               @PathParam("productId") String productId) {
+        UUID clubUuid;
+        UUID productUuid;
+        try {
+            clubUuid = UUID.fromString(clubId);
+            productUuid = UUID.fromString(productId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", "clubId o productId invÃ¡lido"))
+                    .build();
+        }
+
+        List<Product> products = productService.findByClubID(clubUuid);
+        if (products == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Producto no encontrado"))
+                    .build();
+        }
+
+        return products.stream()
+                .filter(product -> productUuid.equals(product.getProductId()))
+                .findFirst()
+                .map(product -> Response.ok(productDtoAssembler.toDto(uriInfo, clubUuid, product)).build())
+                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
+                        .entity(Map.of("message", "Producto no encontrado"))
+                        .build());
+    }
+
     @PUT
     @Path("/{productId}")
     @Consumes(MediaType.APPLICATION_JSON)

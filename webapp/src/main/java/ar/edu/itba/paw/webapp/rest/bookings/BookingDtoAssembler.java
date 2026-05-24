@@ -2,11 +2,13 @@ package ar.edu.itba.paw.webapp.rest.bookings;
 
 import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.dto.BookingDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
+import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.UriInfo;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -28,32 +30,46 @@ public class BookingDtoAssembler {
         dto.setCreatedAt(booking.getCreatedAt());
         dto.setTotalAmount(booking.getTotalAmount());
 
-        Map<String, String> links = new HashMap<>();
-        links.put("self", uriInfo.getBaseUriBuilder()
+        List<LinkDto> links = new ArrayList<>();
+        links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
                 .path(BookingRestController.class)
                 .path(BookingRestController.class, "getBooking")
                 .resolveTemplate("clubId", clubId)
                 .resolveTemplate("bookingId", booking.getBookingId())
-                .build()
-                .toString());
-        links.put("club", uriInfo.getBaseUriBuilder()
+                .build(), "GET"));
+        links.add(LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}")
                 .resolveTemplate("clubId", clubId)
-                .build()
-                .toString());
-        links.put("table", uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/tables/{tableId}")
-                .resolveTemplate("clubId", clubId)
-                .resolveTemplate("tableId", tableId)
-                .build()
-                .toString());
-        links.put("receipt", uriInfo.getBaseUriBuilder()
+                .build(), "GET"));
+        if (dto.getUserId() != null) {
+            links.add(LinkBuilder.link("user", uriInfo.getBaseUriBuilder()
+                    .path("users/{userId}")
+                    .resolveTemplate("userId", dto.getUserId())
+                    .build(), "GET"));
+        }
+        if (tableId != null) {
+            links.add(LinkBuilder.link("table", uriInfo.getBaseUriBuilder()
+                    .path("clubs/{clubId}/tables/{tableId}")
+                    .resolveTemplate("clubId", clubId)
+                    .resolveTemplate("tableId", tableId)
+                    .build(), "GET"));
+        }
+        links.add(LinkBuilder.link("receipt", uriInfo.getBaseUriBuilder()
                 .path(BookingRestController.class)
                 .path(BookingRestController.class, "getReceipt")
                 .resolveTemplate("clubId", clubId)
                 .resolveTemplate("bookingId", booking.getBookingId())
-                .build()
-                .toString());
+                .build(), "GET"));
+        links.add(LinkBuilder.link("cancel", uriInfo.getBaseUriBuilder()
+                .path(BookingRestController.class)
+                .path(BookingRestController.class, "cancelBooking")
+                .resolveTemplate("clubId", clubId)
+                .resolveTemplate("bookingId", booking.getBookingId())
+                .build(), "DELETE"));
+        links.add(LinkBuilder.link("confirm", uriInfo.getBaseUriBuilder()
+                .path("managed-club-bookings/{bookingId}/confirmation")
+                .resolveTemplate("bookingId", booking.getBookingId())
+                .build(), "PUT"));
         dto.setLinks(links);
 
         return dto;

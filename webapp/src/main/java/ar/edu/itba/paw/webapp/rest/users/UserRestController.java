@@ -79,7 +79,7 @@ public class UserRestController {
                     .build();
         }
 
-        UserDto dto = UserMapper.toDto(maybe.get());
+        UserDto dto = UserMapper.toDto(maybe.get(), uriInfo);
         return Response.ok(dto).build();
     }
 
@@ -122,7 +122,7 @@ public class UserRestController {
                     .path(user.getId().toString())
                     .build();
 
-            UserDto dto = UserMapper.toDto(user);
+            UserDto dto = UserMapper.toDto(user, uriInfo);
 
             return Response.created(uri)
                     .entity(dto)
@@ -219,7 +219,7 @@ public class UserRestController {
                     .build();
         }
 
-        UserDto dto = UserMapper.toDto(maybe.get());
+        UserDto dto = UserMapper.toDto(maybe.get(), uriInfo);
         return Response.ok(dto).build();
     }
 
@@ -284,7 +284,7 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            return Response.ok(UserMapper.toDto(updated)).build();
+            return Response.ok(UserMapper.toDto(updated, uriInfo)).build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
@@ -360,7 +360,7 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            return Response.ok(UserMapper.toDto(updated)).build();
+            return Response.ok(UserMapper.toDto(updated, uriInfo)).build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
@@ -408,7 +408,7 @@ public class UserRestController {
         int offset = page * size;
         List<ar.edu.itba.paw.model.Review> reviews = reviewService.obtainPaginatedReviews(id, null, size, offset);
         List<ReviewDto> dtos = reviews.stream()
-                .map(ReviewMapper::toDto)
+                .map(review -> ReviewMapper.toDto(review, uriInfo))
                 .collect(Collectors.toList());
 
         GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(dtos) {};

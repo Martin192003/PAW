@@ -110,6 +110,12 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<Review> findById(UUID reviewId) {
+        return reviewsDao.findById(reviewId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Review> listByClub(UUID clubId, String sort, int limit, int offset) {
         final String safeSort = (sort == null) ? "" : sort;
         return reviewsDao.searchPaginated(null, clubId, safeSort, limit, offset);

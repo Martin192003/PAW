@@ -60,7 +60,7 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public void uploadCarousel(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
+    public UUID uploadCarousel(UUID clubId, UUID userId, String filename, String contentType, byte[] data) {
         long existingPhotos = photoDao.countByClubIdAndType(clubId, PhotoType.CAROUSEL);
 
         if (existingPhotos >= 20) {
@@ -74,7 +74,7 @@ public class PhotoServiceImpl implements PhotoService {
         photo.setData(data);
         photo.setPhotoType(PhotoType.CAROUSEL);
 
-        photoDao.save(photo);
+        return photoDao.save(photo);
     }
 
     @Override

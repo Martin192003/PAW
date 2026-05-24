@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.model.dto;
 
 import java.time.OffsetDateTime;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 public class ClubDto {
@@ -15,7 +15,7 @@ public class ClubDto {
     private boolean isBar;
     private Float rating;
     private Integer quantityRatings;
-    private ClubLinksDto links;
+    private List<LinkDto> links;
     private OffsetDateTime createdAt;
 //    private UserDto contactInfo;
 
@@ -54,8 +54,8 @@ public class ClubDto {
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 
-    public ClubLinksDto getLinks() { return links; }
-    public void setLinks(ClubLinksDto links) { this.links = links; }
+    public List<LinkDto> getLinks() { return links; }
+    public void setLinks(List<LinkDto> links) { this.links = links; }
 
 //    public UserDto getContactInfo() { return contactInfo; }
 //    public void setContactInfo(UserDto contactInfo) { this.contactInfo = contactInfo; }

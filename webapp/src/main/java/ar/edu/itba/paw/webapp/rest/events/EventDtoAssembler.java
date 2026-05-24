@@ -2,11 +2,13 @@ package ar.edu.itba.paw.webapp.rest.events;
 
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.dto.EventDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
+import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.UriInfo;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -34,20 +36,19 @@ public class EventDtoAssembler {
                 .build()
                 .toString();
 
-        Map<String, String> links = new HashMap<>();
-        links.put("self", self);
-        links.put("club", club);
+        List<LinkDto> links = new ArrayList<>();
+        links.add(LinkBuilder.link("self", self, "GET"));
+        links.add(LinkBuilder.link("club", club, "GET"));
 
-        if (event.getPhotoId() != null) {
-            String photo = uriInfo.getBaseUriBuilder()
-                    .path("clubs/{clubId}/events/{eventId}/photo")
-                    .resolveTemplate("clubId", clubId)
-                    .resolveTemplate("eventId", event.getEventId())
-                    .build()
-                    .toString();
-
-            links.put("photo", photo);
-        }
+        String photo = uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/events/{eventId}/photo")
+                .resolveTemplate("clubId", clubId)
+                .resolveTemplate("eventId", event.getEventId())
+                .build()
+                .toString();
+        links.add(LinkBuilder.link("photo", photo, "GET"));
+        links.add(LinkBuilder.link("update", self, "PUT"));
+        links.add(LinkBuilder.link("delete", self, "DELETE"));
 
         dto.setLinks(links);
         return dto;

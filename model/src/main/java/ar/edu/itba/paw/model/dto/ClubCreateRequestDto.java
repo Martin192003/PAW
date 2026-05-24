@@ -32,7 +32,9 @@ public class ClubCreateRequestDto {
     public void setZone(String zone) { this.zone = zone; }
 
     public boolean isBar() { return isBar; }
+    public boolean getIsBar() { return isBar; }
     public void setBar(boolean bar) { isBar = bar; }
+    public void setIsBar(boolean bar) { isBar = bar; }
 
     public String getCbu() { return cbu; }
     public void setCbu(String cbu) { this.cbu = cbu; }

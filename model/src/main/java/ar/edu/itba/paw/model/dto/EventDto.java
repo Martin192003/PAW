@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.model.dto;
 
 import java.time.LocalDate;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 public class EventDto {
@@ -12,7 +12,7 @@ public class EventDto {
     private LocalDate date; // JSON: "2026-02-01"
 
     private String description;
-    private Map<String,String> links;
+    private List<LinkDto> links;
 
     private UUID photoId;
 
@@ -36,10 +36,10 @@ public class EventDto {
         this.id = id;
     }
 
-    public Map<String, String> getLinks() {
+    public List<LinkDto> getLinks() {
         return links;
     }
-    public void setLinks(Map<String, String> links) {
+    public void setLinks(List<LinkDto> links) {
         this.links = links;
     }
 

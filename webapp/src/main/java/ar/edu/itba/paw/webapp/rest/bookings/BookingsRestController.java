@@ -23,6 +23,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 import java.util.UUID;
+import java.util.ArrayList;
 
 @Path("/")
 @Produces(MediaType.APPLICATION_JSON)
@@ -65,7 +66,10 @@ public class BookingsRestController {
         final int total = bookingService.countSearchForUser(
                 login, clubId, bookingId, status, bookingDate, hasReceipt);
 
-        return Response.ok(pageDto(bookings, page, size, total)).build();
+        final BookingPageDto pageDto = pageDto(bookings, page, size, total);
+        Response.ResponseBuilder response = Response.ok(pageDto);
+        addPaginationLinks(response, page, size, pageDto.getTotalPages());
+        return response.build();
     }
 
     @GET
@@ -89,7 +93,10 @@ public class BookingsRestController {
         final int total = bookingService.countSearchManagedClubs(
                 login, clubId, bookingId, status, bookingDate, hasReceipt);
 
-        return Response.ok(pageDto(bookings, page, size, total)).build();
+        final BookingPageDto pageDto = pageDto(bookings, page, size, total);
+        Response.ResponseBuilder response = Response.ok(pageDto);
+        addPaginationLinks(response, page, size, pageDto.getTotalPages());
+        return response.build();
     }
 
     @GET
@@ -138,5 +145,30 @@ public class BookingsRestController {
             throw new NotAuthorizedException("Authentication required");
         }
         return securityContext.getUserPrincipal().getName();
+    }
+
+    private void addPaginationLinks(Response.ResponseBuilder responseBuilder,
+                                    int page,
+                                    int size,
+                                    int totalPages) {
+        List<String> links = new ArrayList<>();
+        if (page > DEFAULT_PAGE) {
+            links.add(pageLink(DEFAULT_PAGE, size, "first"));
+            links.add(pageLink(page - 1, size, "prev"));
+        }
+        if (page < totalPages) {
+            links.add(pageLink(page + 1, size, "next"));
+            links.add(pageLink(totalPages, size, "last"));
+        }
+        if (!links.isEmpty()) {
+            responseBuilder.header("Link", String.join(", ", links));
+        }
+    }
+
+    private String pageLink(int page, int size, String rel) {
+        return "<" + uriInfo.getRequestUriBuilder()
+                .replaceQueryParam("page", page)
+                .replaceQueryParam("size", size)
+                .build() + ">; rel=\"" + rel + "\"";
     }
 }

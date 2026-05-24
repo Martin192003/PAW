@@ -1,12 +1,14 @@
 package ar.edu.itba.paw.webapp.rest.bookings;
 
 import ar.edu.itba.paw.model.Receipt;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.ReceiptDto;
+import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.UriInfo;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -22,21 +24,19 @@ public class ReceiptDtoAssembler {
         dto.setSizeBytes(receipt.getSizeBytes());
         dto.setCreatedAt(receipt.getCreatedAt());
 
-        Map<String, String> links = new HashMap<>();
-        links.put("self", uriInfo.getBaseUriBuilder()
+        List<LinkDto> links = new ArrayList<>();
+        links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
                 .path(BookingRestController.class)
                 .path(BookingRestController.class, "getReceipt")
                 .resolveTemplate("clubId", clubId)
                 .resolveTemplate("bookingId", receipt.getBookingId())
-                .build()
-                .toString());
-        links.put("booking", uriInfo.getBaseUriBuilder()
+                .build(), "GET"));
+        links.add(LinkBuilder.link("booking", uriInfo.getBaseUriBuilder()
                 .path(BookingRestController.class)
                 .path(BookingRestController.class, "getBooking")
                 .resolveTemplate("clubId", clubId)
                 .resolveTemplate("bookingId", receipt.getBookingId())
-                .build()
-                .toString());
+                .build(), "GET"));
         dto.setLinks(links);
 
         return dto;

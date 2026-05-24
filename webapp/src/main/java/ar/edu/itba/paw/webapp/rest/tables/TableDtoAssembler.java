@@ -1,12 +1,14 @@
 package ar.edu.itba.paw.webapp.rest.tables;
 
 import ar.edu.itba.paw.model.ClubTable;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.TableDto;
+import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.UriInfo;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -22,18 +24,20 @@ public class TableDtoAssembler {
         dto.setPrice(table.getPrice());
         dto.setDiscount(table.getDiscount());
 
-        Map<String, String> links = new HashMap<>();
-        links.put("self", uriInfo.getBaseUriBuilder()
+        List<LinkDto> links = new ArrayList<>();
+        links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}/tables/{tableId}")
                 .resolveTemplate("clubId", clubId)
                 .resolveTemplate("tableId", table.getTableId())
-                .build()
-                .toString());
-        links.put("club", uriInfo.getBaseUriBuilder()
+                .build(), "GET"));
+        links.add(LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}")
                 .resolveTemplate("clubId", clubId)
-                .build()
-                .toString());
+                .build(), "GET"));
+        links.add(LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/bookings")
+                .resolveTemplate("clubId", clubId)
+                .build(), "GET"));
         dto.setLinks(links);
 
         return dto;

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,13 +48,16 @@ public class ReviewsRestController {
         int offset = page * size;
         List<Review> reviews = reviewService.listByClub(clubId, null, size, offset);
         List<ReviewDto> body = reviews.stream()
-                .map(ReviewMapper::toDto)
+                .map(review -> ReviewMapper.toDto(review, uriInfo))
                 .collect(Collectors.toList());
 
+        int total = reviewService.countByClub(clubId);
+        int totalPages = (int) Math.ceil((double) total / size);
         GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(body) {};
-        return Response.ok(entity)
-                .header("X-Total-Count", reviewService.countByClub(clubId))
-                .build();
+        Response.ResponseBuilder response = Response.ok(entity)
+                .header("X-Total-Count", total);
+        addPaginationLinks(response, page, size, totalPages);
+        return response.build();
     }
 
     @POST
@@ -99,7 +103,7 @@ public class ReviewsRestController {
                     .build();
 
             return Response.created(location)
-                    .entity(ReviewMapper.toDto(created))
+                    .entity(ReviewMapper.toDto(created, uriInfo))
                     .build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
@@ -154,7 +158,7 @@ public class ReviewsRestController {
             if (updatedOpt.isEmpty()) {
                 return Response.serverError().entity(Map.of("message", "Unable to retrieve updated review")).build();
             }
-            return Response.ok(ReviewMapper.toDto(updatedOpt.get())).build();
+            return Response.ok(ReviewMapper.toDto(updatedOpt.get(), uriInfo)).build();
         } catch (Exception e) {
             return Response.serverError()
                     .entity(Map.of("message", "Internal server error"))
@@ -193,6 +197,22 @@ public class ReviewsRestController {
         }
     }
 
+    @GET
+    @Path("/{clubId}/reviews/{reviewId}")
+    public Response getById(@PathParam("clubId") String clubIdStr,
+                            @PathParam("reviewId") String reviewIdStr) {
+        UUID clubId = parseUuidOr400(clubIdStr);
+        if (clubId == null) return badRequest("clubId invÃ¡lido");
+
+        UUID reviewId = parseUuidOr400(reviewIdStr);
+        if (reviewId == null) return badRequest("reviewId invÃ¡lido");
+
+        return reviewService.findById(reviewId)
+                .filter(review -> review.getClub() != null && clubId.equals(review.getClub().getClubId()))
+                .map(review -> Response.ok(ReviewMapper.toDto(review, uriInfo)).build())
+                .orElseGet(() -> notFound("Review no encontrado"));
+    }
+
 
     private static UUID parseUuidOr400(final String raw) {
         try {
@@ -221,5 +241,30 @@ public class ReviewsRestController {
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             return "{\"message\":\"" + msg.replace("\"", "\\\"") + "\"}";
         }
+    }
+
+    private void addPaginationLinks(Response.ResponseBuilder responseBuilder,
+                                    int page,
+                                    int size,
+                                    int totalPages) {
+        List<String> links = new ArrayList<>();
+        if (page > 0) {
+            links.add(pageLink(0, size, "first"));
+            links.add(pageLink(page - 1, size, "prev"));
+        }
+        if (page + 1 < totalPages) {
+            links.add(pageLink(page + 1, size, "next"));
+            links.add(pageLink(totalPages - 1, size, "last"));
+        }
+        if (!links.isEmpty()) {
+            responseBuilder.header("Link", String.join(", ", links));
+        }
+    }
+
+    private String pageLink(int page, int size, String rel) {
+        return "<" + uriInfo.getRequestUriBuilder()
+                .replaceQueryParam("page", page)
+                .replaceQueryParam("size", size)
+                .build() + ">; rel=\"" + rel + "\"";
     }
 }

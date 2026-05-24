@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
+import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -38,6 +39,7 @@ public class ClubRestController {
     private final UserService userService;
     private final ClubLayoutService clubLayoutService;
     private final PhotoService photoService;
+    private final PhotoDtoAssembler photoDtoAssembler;
 
 
     @Context
@@ -51,12 +53,14 @@ public class ClubRestController {
                               final TableService tableService,
                               UserService userService,
                               ClubLayoutService clubLayoutService,
-                              PhotoService photoService) {
+                              PhotoService photoService,
+                              PhotoDtoAssembler photoDtoAssembler) {
         this.clubService = clubService;
         this.tableService = tableService;
         this.userService = userService;
         this.clubLayoutService = clubLayoutService;
         this.photoService = photoService;
+        this.photoDtoAssembler = photoDtoAssembler;
     }
 
     @GET
@@ -118,11 +122,12 @@ public class ClubRestController {
                 selectedDay != null ? selectedDay.toString() : null
         );
 
-        return Response.ok(response)
+        Response.ResponseBuilder responseBuilder = Response.ok(response)
                 .header("Cache-Control", "no-cache, no-store, must-revalidate")
                 .header("Pragma", "no-cache")
-                .header("Expires", "0")
-                .build();
+                .header("Expires", "0");
+        addPaginationLinks(responseBuilder, page, size, totalPages, 1);
+        return responseBuilder.build();
     }
 
     private boolean isAvailabilityMode(final Boolean availableToday, final String sort) {
@@ -247,12 +252,11 @@ public class ClubRestController {
         }
 
         Club existing = existingOpt.get();
-        String email = securityContext.getUserPrincipal().getName();
-        User user = userService.findByEmail(email);
-
+        User user = resolveAuthenticatedUser(securityContext);
         if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
+        clubService.assertAdmin(id, user.getId());
 
         Price price = body.getPriceRange() != null
                 ? Price.valueOf(body.getPriceRange())
@@ -411,21 +415,16 @@ public class ClubRestController {
             }
 
             List<Photo> rawPhotos = photoService.getClubPhotos(id, 50, 0);
-            List<ClubPhotoDto> photos = new ArrayList<>();
+            List<PhotoDto> photos = new ArrayList<>();
             if (rawPhotos == null || rawPhotos.isEmpty()) {
                 return Response.ok(new ClubPhotosResponseDto(photos)).build();
             }
 
             for (Photo photo : rawPhotos) {
-                if (photo == null || photo.getUrl() == null || photo.getUrl().trim().isEmpty()) {
+                if (photo == null || photo.getPhotoId() == null) {
                     continue;
                 }
-
-                photos.add(new ClubPhotoDto(
-                        photo.getPhotoId() != null ? photo.getPhotoId().toString() : null,
-                        photo.getUrl(),
-                        photo.getPhotoType() != null ? photo.getPhotoType().name() : null
-                ));
+                photos.add(photoDtoAssembler.toDto(uriInfo, photo));
             }
 
             return Response.ok(new ClubPhotosResponseDto(photos)).build();
@@ -462,7 +461,7 @@ public class ClubRestController {
             validateImageContentType(contentType);
 
             byte[] data = filePart.getInputStream().readAllBytes();
-            photoService.uploadCarousel(
+            UUID photoId = photoService.uploadCarousel(
                     id,
                     user.getId(),
                     extractFilename(filePart, "club-photo"),
@@ -470,8 +469,30 @@ public class ClubRestController {
                     data
             );
 
-            return Response.status(Response.Status.CREATED)
-                    .entity(Map.of("message", "Foto agregada"))
+            URI location = uriInfo.getBaseUriBuilder()
+                    .path("photos")
+                    .path(photoId.toString())
+                    .build();
+
+            PhotoDto dto = photoService.findById(photoId)
+                    .map(photo -> photoDtoAssembler.toDto(uriInfo, photo))
+                    .orElseGet(() -> {
+                        PhotoDto fallback = new PhotoDto();
+                        fallback.setPhotoId(photoId);
+                        fallback.setClubId(id);
+                        fallback.setContentType(contentType);
+                        fallback.setLinks(List.of(
+                                LinkBuilder.link("self", location, "GET"),
+                                LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
+                                        .path("clubs")
+                                        .path(id.toString())
+                                        .build(), "GET")
+                        ));
+                        return fallback;
+                    });
+
+            return Response.created(location)
+                    .entity(dto)
                     .build();
         } catch (IllegalStateException ex) {
             return badRequest(ex.getMessage());
@@ -532,21 +553,16 @@ public class ClubRestController {
             }
 
             List<Photo> rawPhotos = photoService.getReviewPhotosByClub(id, 50, 0);
-            List<ClubPhotoDto> photos = new ArrayList<>();
+            List<PhotoDto> photos = new ArrayList<>();
             if (rawPhotos == null || rawPhotos.isEmpty()) {
                 return Response.ok(new ClubPhotosResponseDto(photos)).build();
             }
 
             for (Photo photo : rawPhotos) {
-                if (photo == null || photo.getUrl() == null || photo.getUrl().trim().isEmpty()) {
+                if (photo == null || photo.getPhotoId() == null) {
                     continue;
                 }
-
-                photos.add(new ClubPhotoDto(
-                        photo.getPhotoId() != null ? photo.getPhotoId().toString() : null,
-                        photo.getUrl(),
-                        photo.getPhotoType() != null ? photo.getPhotoType().name() : null
-                ));
+                photos.add(photoDtoAssembler.toDto(uriInfo, photo));
             }
 
             return Response.ok(new ClubPhotosResponseDto(photos)).build();
@@ -586,7 +602,9 @@ public class ClubRestController {
                 null
         );
 
-        return Response.ok(response).build();
+        Response.ResponseBuilder responseBuilder = Response.ok(response);
+        addPaginationLinks(responseBuilder, page, size, totalPages, 1);
+        return responseBuilder.build();
     }
 
 
@@ -691,6 +709,7 @@ public class ClubRestController {
 
         dto.setClubId(club.getClubId());
         dto.setClubName(club.getClubName());
+        dto.setDescription(club.getDescription());
         dto.setLocation(club.getLocation());
         dto.setZone(club.getZone().name());
         dto.setMusicGenre(club.getMusicGenre().toString());
@@ -709,46 +728,93 @@ public class ClubRestController {
         dto.setCreatedAt(club.getCreatedAt());
 
 
-        ClubLinksDto links = new ClubLinksDto();
-
-        links.setSelf(
-                uriInfo.getBaseUriBuilder()
-                        .path("clubs")
-                        .path(club.getClubId().toString())
-                        .build()
-                        .toString()
-        );
-
-        links.setCover(
-                uriInfo.getBaseUriBuilder()
-                        .path("clubs")
-                        .path(club.getClubId().toString())
-                        .path("cover")
-                        .build()
-                        .toString()
-        );
-
-        links.setLayout(
-                uriInfo.getBaseUriBuilder()
-                        .path("clubs")
-                        .path(club.getClubId().toString())
-                        .path("layout")
-                        .build()
-                        .toString()
-        );
-
-        links.setLimits(
-                uriInfo.getBaseUriBuilder()
-                        .path("clubs")
-                        .path(club.getClubId().toString())
-                        .path("limits")
-                        .build()
-                        .toString()
-        );
+        UUID clubId = club.getClubId();
+        List<LinkDto> links = new ArrayList<>();
+        links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .build(), "GET"));
+        links.add(LinkBuilder.link("events", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("events")
+                .build(), "GET"));
+        links.add(LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("bookings")
+                .build(), "GET"));
+        links.add(LinkBuilder.link("reviews", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("reviews")
+                .build(), "GET"));
+        links.add(LinkBuilder.link("photos", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("photos")
+                .build(), "GET"));
+        links.add(LinkBuilder.link("cover", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("cover")
+                .build(), "GET"));
+        links.add(LinkBuilder.link("layout", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("layout")
+                .build(), "GET"));
+        links.add(LinkBuilder.link("menu", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("menu")
+                .build(), "GET"));
+        links.add(LinkBuilder.link("tables", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("tables")
+                .build(), "GET"));
+        if (club.getContactInfo() != null) {
+            links.add(LinkBuilder.link("owner", uriInfo.getBaseUriBuilder()
+                    .path("users")
+                    .path(club.getContactInfo().getId().toString())
+                    .build(), "GET"));
+        }
+        links.add(LinkBuilder.link("limits", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("limits")
+                .build(), "GET"));
 
         dto.setLinks(links);
 
         return dto;
+    }
+
+    private void addPaginationLinks(Response.ResponseBuilder responseBuilder,
+                                    int page,
+                                    int size,
+                                    int totalPages,
+                                    int firstPage) {
+        List<String> links = new ArrayList<>();
+        if (page > firstPage) {
+            links.add(pageLink(firstPage, size, "first"));
+            links.add(pageLink(page - 1, size, "prev"));
+        }
+        if (page < totalPages) {
+            links.add(pageLink(page + 1, size, "next"));
+            links.add(pageLink(totalPages, size, "last"));
+        }
+        if (!links.isEmpty()) {
+            responseBuilder.header("Link", String.join(", ", links));
+        }
+    }
+
+    private String pageLink(int page, int size, String rel) {
+        return "<" + uriInfo.getRequestUriBuilder()
+                .replaceQueryParam("page", page)
+                .replaceQueryParam("size", size)
+                .build() + ">; rel=\"" + rel + "\"";
     }
 
 
@@ -829,8 +895,11 @@ public class ClubRestController {
 
         switch (contentType) {
             case "image/jpeg":
+            case "image/jpg":
             case "image/png":
             case "image/webp":
+            case "image/gif":
+            case "image/avif":
                 return;
             default:
                 throw new BadRequestException("Unsupported image content type");

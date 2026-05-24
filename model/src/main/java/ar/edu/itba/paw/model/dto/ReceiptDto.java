@@ -1,7 +1,7 @@
 package ar.edu.itba.paw.model.dto;
 
 import java.time.OffsetDateTime;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 public class ReceiptDto {
@@ -12,7 +12,7 @@ public class ReceiptDto {
     private String contentType;
     private Long sizeBytes;
     private OffsetDateTime createdAt;
-    private Map<String, String> links;
+    private List<LinkDto> links;
 
     public UUID getId() {
         return id;
@@ -70,11 +70,11 @@ public class ReceiptDto {
         this.createdAt = createdAt;
     }
 
-    public Map<String, String> getLinks() {
+    public List<LinkDto> getLinks() {
         return links;
     }
 
-    public void setLinks(Map<String, String> links) {
+    public void setLinks(List<LinkDto> links) {
         this.links = links;
     }
 }

@@ -9,19 +9,19 @@ import java.util.List;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ClubPhotosResponseDto {
-    private List<ClubPhotoDto> photos = new ArrayList<>();
+    private List<PhotoDto> photos = new ArrayList<>();
 
     public ClubPhotosResponseDto() {}
 
-    public ClubPhotosResponseDto(List<ClubPhotoDto> photos) {
+    public ClubPhotosResponseDto(List<PhotoDto> photos) {
         this.photos = photos;
     }
 
-    public List<ClubPhotoDto> getPhotos() {
+    public List<PhotoDto> getPhotos() {
         return photos;
     }
 
-    public void setPhotos(List<ClubPhotoDto> photos) {
+    public void setPhotos(List<PhotoDto> photos) {
         this.photos = photos;
     }
 }

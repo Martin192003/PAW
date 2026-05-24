@@ -29,7 +29,7 @@ public interface PhotoService {
     void uploadPhotoForClub(UUID clubId, String userEmail, Photo file) throws IOException;
 
     void uploadCover(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
-    void uploadCarousel(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
+    UUID uploadCarousel(UUID clubId, UUID uploaderId, String filename, String contentType, byte[] data);
     List<Photo> getCarouselPhotos(UUID clubId);
     List<Photo> getClubPhotos(UUID clubId, int limit, int offset);
     Optional<Photo> getEventPhoto(UUID eventId);
