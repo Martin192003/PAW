@@ -1,184 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            color: #ffffff;
-            background-color: #0d0f15;
-            margin: 0;
-            padding: 0;
-        }
-
-        h2 {
-            color: #a64ca6;
-            text-align: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
-        p, li, small {
-            color: #e6e6e6;
-            margin: 10px 0;
-            font-size: 16px;
-        }
-
-        b {
-            color: #ffffff;
-            font-weight: 600;
-        }
-
-        .email-container {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            border: 1px solid #444;
-            border-radius: 10px;
-            background-color: #333333;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .header-img {
-            width:50%;
-            height:auto;
-            max-width:600px;
-            display:block;
-            margin-bottom:24px;
-            margin-left:auto;
-            margin-right:auto;
-        }
-
-        .meta {
-            background: #2c2c2c;
-            border: 1px solid #444;
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin: 12px 0 18px 0;
-        }
-
-        .badge {
-            display: inline-block;
-            background: #a64ca6;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 800;
-            padding: 5px 12px;
-            border-radius: 20px;
-            letter-spacing: .6px;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-        }
-
-        .rating {
-            display:inline-block;
-            background:#1f1f27;
-            border:1px solid #444;
-            border-radius:16px;
-            padding:6px 10px;
-            font-weight:700;
-            color:#ffd166;
-            margin-left:8px;
-            font-size: 14px;
-        }
-
-        .message-section {
-            background: #2c2c2c;
-            border: 1px solid #444;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 15px 0;
-            color: #ffffff;
-            white-space: pre-wrap;
-        }
-
-        .thumb {
-            display:block;
-            max-width: 120px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            margin: 10px 0 0 auto;
-        }
-
-        .cta {
-            text-align:center;
-            margin-top: 24px;
-        }
-
-        .cta a {
-            display:inline-block;
-            background:#a64ca6;
-            color:#fff !important;
-            text-decoration:none;
-            padding:10px 16px;
-            border-radius:8px;
-            font-weight:700;
-        }
-
-        .divider {
-            height: 1px;
-            background: #444;
-            margin: 24px 0;
-            border: none;
-        }
-
-        .footer {
-            text-align: center;
-            font-size: 12px;
-            color: #999999;
-            margin-top: 16px;
-            border-top: 1px solid #444;
-            padding-top: 16px;
-        }
-
-        .row {
-            display:flex;
-            gap:12px;
-            align-items:flex-start;
-        }
-
-        .col-left { flex: 1 1 auto; }
-        .col-right { flex: 0 0 auto; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{email.review.owner.title(${clubName})}">Nueva resena</title>
 </head>
-<body>
-<div class="email-container">
-    <img src="https://i.postimg.cc/G2fXVYJD/icon-PAW.png" alt="Header Image" class="header-img"/>
+<body style="margin:0;padding:0;background:#1a1a1f;font-family:'Helvetica Neue',Arial,sans-serif;color:#e6e6e6;line-height:1.6;">
+<div style="background:#1a1a1f;padding:32px 16px;">
+    <div style="max-width:560px;margin:0 auto;background:#262630;border:1px solid #3a3a45;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.35);padding:36px 32px;">
 
-    <h2 th:text="#{email.review.owner.title(${clubName})}">Nueva reseña</h2>
+        <img src="https://i.imgur.com/ajYTlyp.png"
+             alt="BlingBling"
+             style="display:block;margin:0 auto 24px;max-width:280px;width:60%;height:auto;"/>
 
-    <div class="meta">
-        <p>
-            <b th:text="#{email.review.owner.reviewer(${reviewer})}">Reseña de: John</b>
-            <span class="rating">
-                <span th:text="${rating}">5</span> ★
-            </span>
+        <h2 style="color:#c97cd3;text-align:center;font-size:22px;font-weight:600;margin:0 0 8px;"
+            th:text="#{email.review.owner.title(${clubName})}">Nueva resena</h2>
+        <p style="text-align:center;color:#9a9aa6;font-size:13px;margin:0 0 28px;">Tu club recibio un nuevo comentario</p>
+
+        <div style="background:#1f1f27;border:1px solid #3a3a45;border-radius:8px;padding:18px 20px;margin:0 0 16px;">
+            <p style="margin:0 0 8px;font-size:14px;">
+                <span style="color:#9a9aa6;">Por</span> &nbsp;
+                <span style="color:#ffffff;font-weight:600;" th:text="${reviewer}">Usuario</span>
+                <span style="display:inline-block;background:#1a1a1f;border:1px solid #3a3a45;border-radius:14px;padding:3px 10px;margin-left:8px;color:#ffd166;font-weight:600;font-size:13px;">
+                    <span th:text="${rating}">5</span> &#9733;
+                </span>
+            </p>
+            <p th:if="${fromTableGuest}" style="display:inline-block;margin:6px 0 0;background:#a64ca6;color:#ffffff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:14px;letter-spacing:0.6px;text-transform:uppercase;" th:text="#{email.review.owner.badge}">Reservo mesa</p>
+        </div>
+
+        <p style="margin:0 0 8px;font-size:13px;color:#9a9aa6;text-transform:uppercase;letter-spacing:0.5px;" th:text="#{email.review.owner.comment}">Comentario</p>
+        <div style="background:#1f1f27;border:1px solid #3a3a45;border-radius:8px;padding:18px 20px;margin:0 0 16px;color:#ffffff;white-space:pre-wrap;" th:text="${description}">Excelente musica y ambiente.</div>
+
+        <div th:if="${photoUrl}" style="text-align:center;margin:0 0 24px;">
+            <img th:src="${photoUrl}" alt="Foto de resena" style="max-width:200px;border-radius:8px;border:1px solid #3a3a45;"/>
+        </div>
+
+        <p style="text-align:center;margin:28px 0;">
+            <a th:href="${ctaUrl}"
+               style="display:inline-block;background:#a64ca6;color:#ffffff;padding:13px 28px;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;"
+               th:text="${ctaText}">Abrir resenas</a>
         </p>
-        <small th:text="#{email.review.owner.createdAt(${createdAt})}">Enviada el 01/11/2025 19:30</small>
-        <div th:if="${fromTableGuest}" class="badge" th:text="#{email.review.owner.badge}">Reservó mesa</div>
-    </div>
 
-    <div class="row">
-        <div class="col-left">
-            <p><b th:text="#{email.review.owner.comment}">Comentario</b></p>
-            <div class="message-section" th:text="${description}">Excelente música y ambiente.</div>
-        </div>
-        <div class="col-right" th:if="${photoUrl}">
-            <img class="thumb" th:src="${photoUrl}" alt="Foto de reseña"/>
-        </div>
-    </div>
+        <hr style="border:none;height:1px;background:#3a3a45;margin:28px 0 18px;"/>
 
-    <div class="cta">
-        <a th:href="${ctaUrl}" th:text="${ctaText}">Abrir reseñas</a>
-    </div>
-
-    <hr class="divider"/>
-
-    <div class="footer">
-        <p>
-            <span th:text="${brandName}">BlingBling</span> —
-            <span th:text="${brandFooter}">© 2025 BlingBling. Panel de administración.</span>
+        <p style="text-align:center;font-size:12px;color:#6f6f78;margin:0;">
+            <span th:text="${brandName}">BlingBling</span> &mdash;
+            <span th:text="${brandFooter}">&copy; 2025 BlingBling</span>
         </p>
     </div>
 </div>
