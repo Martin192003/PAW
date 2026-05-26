@@ -8,6 +8,7 @@ import { AuthStateService } from '../services/auth-state.service';
 import { UserService } from '../services/user.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   standalone: true,
@@ -37,6 +38,13 @@ export class LoginPage implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.authState.isLoggedIn()) {
+      void this.router.navigate(['/clubs'], { replaceUrl: true }).catch(() => {
+        this.errorMessage = this.i18n.instant('login.errors.loginFailed');
+      });
+      return;
+    }
+
     this.route.queryParamMap.subscribe((params) => {
       this.invalidCredentials = params.has('error');
       if (this.invalidCredentials) {
@@ -59,17 +67,26 @@ export class LoginPage implements OnInit {
       password: this.loginForm.value.password,
     };
 
-    this.userService.login(payload).subscribe({
+    this.userService.login(payload).pipe(
+      finalize(() => { this.submitting = false; })
+    ).subscribe({
       next: (response) => {
-        this.submitting = false;
-        this.authState.setSession(response.token, response.user, !!this.loginForm.value.rememberMe);
-        this.router.navigate(['/clubs']);
+        try {
+          this.authState.setSession(response.token, response.user, !!this.loginForm.value.rememberMe);
+          void this.router.navigate(['/clubs'], { replaceUrl: true }).catch(() => {
+            this.errorMessage = this.i18n.instant('login.errors.loginFailed');
+          });
+        } catch {
+          this.errorMessage = this.i18n.instant('login.errors.loginFailed');
+        }
       },
-      error: (error: HttpErrorResponse) => {
-        this.submitting = false;
+      error: (err: unknown) => {
+        const error = err instanceof HttpErrorResponse ? err : null;
+        const status = error?.status ?? 0;
 
-        if (error.status === 403) {
-          // Si no esta verificado, enviamos al flujo de verificacion y pedimos reenvio automatico.
+        if (status === 403) {
+          // Backend retorna 403 para cuentas no verificadas (DisabledException).
+          // Redirigir al flow de verificación y pedir reenvio automatico.
           this.router.navigate(['/verify-mail'], {
             queryParams: {
               usernameOrEmail,
@@ -79,14 +96,10 @@ export class LoginPage implements OnInit {
           return;
         }
 
-        this.invalidCredentials = error.status === 401;
-        this.errorMessage = this.resolveErrorMessage(error);
+        this.invalidCredentials = status === 401;
+        this.errorMessage = error ? this.resolveErrorMessage(error) : this.i18n.instant('login.errors.loginFailed');
       },
     });
-  }
-
-  goBack(): void {
-    this.router.navigate(['/clubs']);
   }
 
   showError(field: 'usernameOrEmail' | 'password'): boolean {
@@ -120,7 +133,7 @@ export class LoginPage implements OnInit {
       }
     }
 
-    if (typeof errorBody === 'object' && errorBody !== null && 'message' in errorBody) {
+    if (errorBody && typeof errorBody === 'object' && 'message' in errorBody) {
       const message = (errorBody as { message?: unknown }).message;
       return typeof message === 'string' ? message : null;
     }

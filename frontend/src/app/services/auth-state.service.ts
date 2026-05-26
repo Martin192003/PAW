@@ -6,95 +6,75 @@ import { User } from '../models/user.model';
 export class AuthStateService {
   private readonly tokenKey = 'auth_token';
   private readonly userKey = 'auth_user';
-  private readonly browserStorageAvailable =
-    typeof window !== 'undefined' &&
-    AuthStateService.isStorageAvailable(typeof localStorage === 'undefined' ? undefined : localStorage) &&
-    AuthStateService.isStorageAvailable(typeof sessionStorage === 'undefined' ? undefined : sessionStorage);
-  private readonly loggedInSubject = new BehaviorSubject<boolean>(this.hasStoredSession());
+  private memoryToken: string | null = null;
+  private memoryUser: User | null = null;
+  private readonly loggedInSubject = new BehaviorSubject<boolean>(false);
+
+  constructor() {
+    this.memoryToken = this.readStoredToken();
+    this.memoryUser = this.readStoredUser();
+    this.loggedInSubject.next(!!this.memoryToken);
+  }
 
   get isLoggedIn$(): Observable<boolean> {
     return this.loggedInSubject.asObservable();
   }
 
   setSession(token: string, user: User, rememberMe: boolean): void {
-    if (!this.browserStorageAvailable) {
-      this.loggedInSubject.next(false);
-      return;
-    }
-
-    const storage = rememberMe ? localStorage : sessionStorage; //dependiendo de si se
-    const otherStorage = rememberMe ? sessionStorage : localStorage; // hace click en recordar
-
-    otherStorage.removeItem(this.tokenKey);
-    otherStorage.removeItem(this.userKey);
-
     const normalizedToken = this.normalizeToken(token);
     if (!normalizedToken) {
+      this.clearMemorySession();
+      this.clearStoredSession();
       this.loggedInSubject.next(false);
       return;
     }
 
-    storage.setItem(this.tokenKey, normalizedToken);
-    storage.setItem(this.userKey, JSON.stringify(user));
-
+    this.memoryToken = normalizedToken;
+    this.memoryUser = user;
     this.loggedInSubject.next(true);
+
+    this.persistSession(normalizedToken, user, rememberMe);
   }
 
   getToken(): string | null {
-    if (!this.browserStorageAvailable) {
-      return null;
-    }
-
-    const rawToken = localStorage.getItem(this.tokenKey) ?? sessionStorage.getItem(this.tokenKey);
-    return this.normalizeToken(rawToken);
+    return this.normalizeToken(this.memoryToken ?? this.readStoredToken());
   }
 
   getUser(): User | null {
-    if (!this.browserStorageAvailable) {
-      return null;
+    if (this.memoryUser) {
+      return this.memoryUser;
     }
 
-    const rawUser = localStorage.getItem(this.userKey) ?? sessionStorage.getItem(this.userKey);
-    if (!rawUser) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(rawUser) as User;
-    } catch {
-      return null;
-    }
+    return this.readStoredUser();
   }
 
   updateUser(user: User): void {
-    if (!this.browserStorageAvailable) {
-      return;
-    }
-
-    const storage = this.getActiveStorage();
-    if (!storage) {
-      return;
-    }
-
-    storage.setItem(this.userKey, JSON.stringify(user));
+    this.memoryUser = user;
+    this.persistUser(user);
   }
 
   updateToken(token: string): void {
-    if (!this.browserStorageAvailable || !token) {
-      return;
-    }
-
-    const storage = this.getActiveStorage();
-    if (!storage) {
-      return;
-    }
-
     const normalizedToken = this.normalizeToken(token);
     if (!normalizedToken) {
       return;
     }
 
-    storage.setItem(this.tokenKey, normalizedToken);
+    this.memoryToken = normalizedToken;
+    this.persistToken(normalizedToken);
+  }
+
+  /**
+   * Cierra la sesión: limpia token y usuario de ambos storages y notifica a los suscriptores.
+   * Llamar desde el interceptor al recibir 401 con token expirado o inválido.
+   */
+  logout(): void {
+    this.clearMemorySession();
+    this.clearStoredSession();
+    this.loggedInSubject.next(false);
+  }
+
+  isLoggedIn(): boolean {
+    return this.loggedInSubject.getValue();
   }
 
   private normalizeToken(token: string | null): string | null {
@@ -122,22 +102,121 @@ export class AuthStateService {
     return normalized;
   }
 
-  private getActiveStorage(): Storage | null {
-    const localHasSession = localStorage.getItem(this.tokenKey) || localStorage.getItem(this.userKey);
-    if (localHasSession) {
-      return localStorage;
+  private persistSession(token: string, user: User, rememberMe: boolean): void {
+    const primary = rememberMe ? this.safeStorage(this.getLocalStorage()) : this.safeStorage(this.getSessionStorage());
+    const secondary = rememberMe ? this.safeStorage(this.getSessionStorage()) : this.safeStorage(this.getLocalStorage());
+
+    this.clearStorage(secondary);
+
+    if (!primary) {
+      return;
     }
 
-    const sessionHasSession = sessionStorage.getItem(this.tokenKey) || sessionStorage.getItem(this.userKey);
-    if (sessionHasSession) {
-      return sessionStorage;
+    try {
+      primary.setItem(this.tokenKey, token);
+      primary.setItem(this.userKey, JSON.stringify(user));
+    } catch {
+      // Si el storage del navegador falla, mantenemos la sesión en memoria.
     }
-
-    return null;
   }
 
-  private hasStoredSession(): boolean {
-    return !!this.getToken();
+  private persistUser(user: User): void {
+    const storage = this.getPreferredStorage();
+    if (!storage) {
+      return;
+    }
+
+    try {
+      storage.setItem(this.userKey, JSON.stringify(user));
+    } catch {
+      // fallback silencioso a memoria
+    }
+  }
+
+  private persistToken(token: string): void {
+    const storage = this.getPreferredStorage();
+    if (!storage) {
+      return;
+    }
+
+    try {
+      storage.setItem(this.tokenKey, token);
+    } catch {
+      // fallback silencioso a memoria
+    }
+  }
+
+  private readStoredToken(): string | null {
+    const local = this.safeStorage(this.getLocalStorage())?.getItem(this.tokenKey);
+    const session = this.safeStorage(this.getSessionStorage())?.getItem(this.tokenKey);
+    return this.normalizeToken((local ?? session) ?? null);
+  }
+
+  private readStoredUser(): User | null {
+    const rawUser = this.safeStorage(this.getLocalStorage())?.getItem(this.userKey) ?? this.safeStorage(this.getSessionStorage())?.getItem(this.userKey);
+    if (!rawUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawUser) as User;
+    } catch {
+      return null;
+    }
+  }
+
+  private getPreferredStorage(): Storage | null {
+    const local = this.safeStorage(this.getLocalStorage());
+    const session = this.safeStorage(this.getSessionStorage());
+
+    if (local?.getItem(this.tokenKey) || local?.getItem(this.userKey)) {
+      return local;
+    }
+
+    if (session?.getItem(this.tokenKey) || session?.getItem(this.userKey)) {
+      return session;
+    }
+
+    return local ?? session;
+  }
+
+  private clearStoredSession(): void {
+    this.clearStorage(this.safeStorage(this.getLocalStorage()));
+    this.clearStorage(this.safeStorage(this.getSessionStorage()));
+  }
+
+  private clearMemorySession(): void {
+    this.memoryToken = null;
+    this.memoryUser = null;
+  }
+
+  private clearStorage(storage: Storage | null): void {
+    if (!storage) {
+      return;
+    }
+
+    try {
+      storage.removeItem(this.tokenKey);
+      storage.removeItem(this.userKey);
+    } catch {
+      // ignore
+    }
+  }
+
+  private safeStorage(storage: Storage | null | undefined): Storage | null {
+    if (!AuthStateService.isStorageAvailable(storage ?? undefined)) {
+      return null;
+    }
+
+    return storage ?? null;
+  }
+
+  private getLocalStorage(): Storage | undefined {
+    return typeof window === 'undefined' ? undefined : window.localStorage;
+  }
+
+  private getSessionStorage(): Storage | undefined {
+    return typeof window === 'undefined' ? undefined : window.sessionStorage;
   }
 
   private static isStorageAvailable(storage: Storage | undefined): storage is Storage {

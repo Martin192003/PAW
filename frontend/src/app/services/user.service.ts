@@ -11,6 +11,7 @@ import {
   UserVerificationRequest,
   User,
 } from '../models/user.model';
+import { environment } from '../../environments/environment';
 
 type UserUpdatePayload = {
   username: string;
@@ -33,12 +34,20 @@ export type PasswordResetTokenResult = {
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-  private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
+  private readonly apiUrl = environment.apiBaseUrl;
 
   constructor(private readonly http: HttpClient) {}
 
   getUserById(userId: string): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/users/${userId}`);
+  }
+
+  /**
+   * Devuelve el usuario autenticado actual (GET /api/users/me).
+   * Requiere Bearer token en el header Authorization (lo agrega el interceptor).
+   */
+  getMe(): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/users/me`);
   }
 
   register(payload: UserCreateRequest): Observable<unknown> {
@@ -54,15 +63,22 @@ export class UserService {
     );
   }
 
+  /**
+   * Autenticación inicial: llama a GET /api/users/me con Basic Auth.
+   * El backend emite X-Access-Token en la respuesta (via BasicTokenResponseFilter).
+   * El body contiene el UserDto del usuario autenticado.
+   *
+   * Esto cumple con REST: se accede a un recurso protegido real, no a un endpoint /login.
+   */
   login(payload: UserLoginRequest): Observable<LoginResponse> {
     const headers = new HttpHeaders({
       Authorization: `Basic ${this.basicCredentials(payload.usernameOrEmail, payload.password)}`,
     });
 
-    return this.http.get<unknown>(`${this.apiUrl}/bookings`, { headers, observe: 'response' }).pipe(
-      map((response: HttpResponse<unknown>) => ({
+    return this.http.get<User>(`${this.apiUrl}/users/me`, { headers, observe: 'response' }).pipe(
+      map((response: HttpResponse<User>) => ({
         token: this.requiredHeader(response, 'X-Access-Token'),
-        user: this.userFromAuthHeaders(response),
+        user: this.userFromMeResponse(response),
       }))
     );
   }
@@ -80,10 +96,18 @@ export class UserService {
     return this.http.post<ApiMessageResponse>(`${this.apiUrl}/users/verification-requests`, payload);
   }
 
-  private userFromAuthHeaders(response: HttpResponse<unknown>): User {
+  /**
+   * Extrae el User del body de la respuesta de /api/users/me.
+   * Si el body tiene el userId, lo usa directamente; de lo contrario cae al header X-User-Href.
+   */
+  private userFromMeResponse(response: HttpResponse<User>): User {
+    const body = response.body;
+    if (body && body.userId) {
+      return body;
+    }
+    // Fallback por header (compatibilidad)
     const href = response.headers.get('X-User-Href') ?? '';
     const userId = href.substring(href.lastIndexOf('/') + 1);
-
     return {
       userId,
       username: '',
@@ -110,7 +134,6 @@ export class UserService {
     const raw = `${username.trim()}:${password}`;
     return btoa(unescape(encodeURIComponent(raw)));
   }
-
 
   requestPasswordReset(email: string): Observable<void> {
     return this.http.post(`${this.apiUrl}/users/password-reset-requests`, { email }).pipe(
