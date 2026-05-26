@@ -1,23 +1,15 @@
 package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.PasswordResetRequestDto;
-import ar.edu.itba.paw.model.dto.PasswordResetTokenDto;
-import ar.edu.itba.paw.model.dto.ResendVerificationRequestDto;
-import ar.edu.itba.paw.model.dto.UserCreateRequestDto;
-import ar.edu.itba.paw.model.dto.UserDto;
-import ar.edu.itba.paw.model.dto.PasswordResetDto;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.PasswordResetJobService;
-import ar.edu.itba.paw.model.dto.ReviewDto;
-import ar.edu.itba.paw.model.dto.UserVerificationRequestDto;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ar.edu.itba.paw.model.dto.*;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,6 +50,34 @@ public class UserRestController {
     @Autowired
     private ReviewService reviewService;
 
+    /**
+     * GET /api/users/me — recurso del usuario autenticado actual.
+     * Este es el endpoint que el frontend usa para autenticarse (con Basic Auth).
+     * El backend emite X-Access-Token en la respuesta mediante BasicTokenResponseFilter.
+     */
+    @GET
+    @Path("/me")
+    public Response getMe() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("No autenticado"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        User user = resolveAuthenticatedUser(auth);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(message("Usuario no encontrado"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        UserDto dto = UserMapper.toDto(user, uriInfo);
+        return Response.ok(dto).build();
+    }
+
     @GET
     @Path("/{userId}")
     public Response getUser(@PathParam("userId") String userId) {
@@ -73,14 +93,23 @@ public class UserRestController {
 
         Optional<User> maybe = userService.findById(id);
         if (maybe.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId invalido"))
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(message("Usuario no encontrado"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
-        UserDto dto = UserMapper.toDto(maybe.get(), uriInfo);
-        return Response.ok(dto).build();
+        // Verificar si el caller es el mismo usuario: si es así, devuelve PrivateUserDto (UserDto)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User caller = (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken))
+                ? resolveAuthenticatedUser(auth) : null;
+
+        if (caller != null && caller.getId().equals(id)) {
+            return Response.ok(UserMapper.toDto(maybe.get(), uriInfo)).build();
+        }
+
+        // Para cualquier otro caller: PublicUserDto (sin PII)
+        return Response.ok(UserMapper.toPublicDto(maybe.get(), uriInfo)).build();
     }
 
     @POST
@@ -532,6 +561,22 @@ public class UserRestController {
         }
 
         return Response.ok(message("Cuenta verificada correctamente")).build();
+    }
+
+    /**
+     * Resuelve el User de dominio a partir del Authentication de Spring Security.
+     * Soporta PawUserDetails (tiene el UUID) y fallback por username/email.
+     */
+    private User resolveAuthenticatedUser(Authentication auth) {
+        Object principal = auth.getPrincipal();
+        if (principal instanceof PawUserDetails) {
+            UUID id = ((PawUserDetails) principal).getId();
+            return userService.findById(id).orElse(null);
+        }
+        String name = auth.getName();
+        User u = userService.findByUserName(name);
+        if (u == null) u = userService.findByEmail(name);
+        return u;
     }
 
     private static boolean isBlank(String s) {

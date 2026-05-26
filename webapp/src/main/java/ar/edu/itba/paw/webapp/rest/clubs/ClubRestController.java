@@ -616,18 +616,16 @@ public class ClubRestController {
 
         return clubLayoutService.getLayoutByClub(id)
                 .map(layout -> {
+                    // ETag basado en layoutId + createdAt (cambia al reemplazar el layout)
+                    String etagValue = layout.getLayoutId().toString()
+                            + (layout.getCreatedAt() != null ? layout.getCreatedAt().toEpochSecond() : "0");
+                    EntityTag etag = new EntityTag(Integer.toHexString(etagValue.hashCode()));
 
-                    EntityTag etag = new EntityTag(
-                            Integer.toHexString(
-                                Objects.hash(layout.getLayoutId(), layout.getClubId(), layout.getSizeBytes())
-                            )
-                    );
+                    Response.ResponseBuilder preconditions = request.evaluatePreconditions(etag);
 
-                    Response.ResponseBuilder preconditions =
-                            request.evaluatePreconditions(etag);
-
+                    // Cache condicional: no-cache + ETag (recurso modificable)
                     CacheControl cacheControl = new CacheControl();
-                    cacheControl.setMaxAge(31536000);
+                    cacheControl.setNoCache(true);
                     cacheControl.setPrivate(false);
 
                     if (preconditions != null) {
@@ -914,19 +912,20 @@ public class ClubRestController {
         return filename;
     }
 
+    /**
+     * Respuesta para imágenes modificables (cover del club).
+     * Usa Cache-Control: no-cache + ETag basado en photoId + createdAt.
+     * El cliente puede cachear localmente pero debe revalidar antes de usar la copia.
+     */
     private Response buildImageResponse(Photo photo, Request request) {
+        String etagValue = photo.getPhotoId().toString()
+                + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0");
+        EntityTag etag = new EntityTag(Integer.toHexString(etagValue.hashCode()));
 
-        EntityTag etag = new EntityTag(
-                Integer.toHexString(
-                        Objects.hash(photo.getPhotoId(), photo.getSizeBytes())
-                )
-        );
-
-        Response.ResponseBuilder preconditions =
-                request.evaluatePreconditions(etag);
+        Response.ResponseBuilder preconditions = request.evaluatePreconditions(etag);
 
         CacheControl cacheControl = new CacheControl();
-        cacheControl.setMaxAge(31536000);
+        cacheControl.setNoCache(true);
         cacheControl.setPrivate(false);
 
         if (preconditions != null) {

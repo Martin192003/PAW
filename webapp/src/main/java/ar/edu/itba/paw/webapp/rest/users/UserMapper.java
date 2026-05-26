@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.LinkDto;
+import ar.edu.itba.paw.model.dto.PublicUserDto;
 import ar.edu.itba.paw.model.dto.UserDto;
 import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 
@@ -11,6 +12,8 @@ import java.util.List;
 
 public final class UserMapper {
     private UserMapper() {}
+
+    // --- DTO privado (propio usuario o admin) ---
 
     public static UserDto toDto(User user) {
         if (user == null) return null;
@@ -23,6 +26,8 @@ public final class UserMapper {
         dto.setCellphone(user.getCellphone());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setLocale(user.getLocale());
+        dto.setRole(user.getRole() != null ? user.getRole().name() : null);
+        dto.setVerified(user.isVerified());
         return dto;
     }
 
@@ -31,25 +36,44 @@ public final class UserMapper {
         if (dto == null || uriInfo == null) {
             return dto;
         }
+        dto.setLinks(buildPrivateLinks(dto.getUserId().toString(), uriInfo));
+        return dto;
+    }
 
+    // --- DTO público (otros usuarios) ---
+
+    public static PublicUserDto toPublicDto(User user, UriInfo uriInfo) {
+        if (user == null) return null;
+        PublicUserDto dto = new PublicUserDto();
+        dto.setUserId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setName(user.getName());
+        dto.setSurname(user.getSurname());
+
+        if (uriInfo != null) {
+            String uid = user.getId().toString();
+            List<LinkDto> links = new ArrayList<>();
+            links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
+                    .path("users/{id}").resolveTemplate("id", uid).build(), "GET"));
+            links.add(LinkBuilder.link("reviews", uriInfo.getBaseUriBuilder()
+                    .path("users/{id}/reviews").resolveTemplate("id", uid).build(), "GET"));
+            dto.setLinks(links);
+        }
+        return dto;
+    }
+
+    // --- Helpers ---
+
+    private static List<LinkDto> buildPrivateLinks(String userId, UriInfo uriInfo) {
         List<LinkDto> links = new ArrayList<>();
         links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
-                .path("users/{userId}")
-                .resolveTemplate("userId", dto.getUserId())
-                .build(), "GET"));
+                .path("users/{id}").resolveTemplate("id", userId).build(), "GET"));
         links.add(LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder()
-                .path("bookings")
-                .build(), "GET"));
+                .path("bookings").build(), "GET"));
         links.add(LinkBuilder.link("reviews", uriInfo.getBaseUriBuilder()
-                .path("users/{userId}/reviews")
-                .resolveTemplate("userId", dto.getUserId())
-                .build(), "GET"));
+                .path("users/{id}/reviews").resolveTemplate("id", userId).build(), "GET"));
         links.add(LinkBuilder.link("clubs", uriInfo.getBaseUriBuilder()
-                .path("clubs/user/{userId}")
-                .resolveTemplate("userId", dto.getUserId())
-                .build(), "GET"));
-        dto.setLinks(links);
-
-        return dto;
+                .path("clubs").queryParam("ownerId", userId).build(), "GET"));
+        return links;
     }
 }

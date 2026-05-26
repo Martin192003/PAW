@@ -30,6 +30,7 @@ public class UserServiceImpl implements UserService {
     private final BookingDao bookingDao;
     private final ReviewsDao reviewDao;
     private final ClubDao clubDao;
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(UserServiceImpl.class);
 
 
     @Autowired
@@ -266,22 +267,27 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public User authenticateAndGetUser(String usernameOrEmail, String password) throws IllegalStateException {
+        LOGGER.debug("UserServiceImpl.authenticateAndGetUser: attempt usernameOrEmail={}", usernameOrEmail);
         User user = userDao.findByUserName(usernameOrEmail).orElse(null);
         if (user == null) {
             user = userDao.findByEmail(usernameOrEmail).orElse(null);
             if (user == null) {
+                LOGGER.debug("UserServiceImpl.authenticateAndGetUser: user not found for={}", usernameOrEmail);
                 return null;
             }
         }
 
         if (!user.isVerified()) {
+            LOGGER.warn("UserServiceImpl.authenticateAndGetUser: user found but not verified usernameOrEmail={}", usernameOrEmail);
             throw new IllegalStateException("User not verified");
         }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
+            LOGGER.info("UserServiceImpl.authenticateAndGetUser: password mismatch for usernameOrEmail={}", usernameOrEmail);
             return null;
         }
 
+        LOGGER.info("UserServiceImpl.authenticateAndGetUser: authentication success for usernameOrEmail={}", usernameOrEmail);
         return user;
     }
 

@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.config;
 
-import ar.edu.itba.paw.webapp.auth.BasicTokenResponseFilter;
+import ar.edu.itba.paw.service.UserService;
+import ar.edu.itba.paw.webapp.auth.ApiBasicAuthenticationFilter;
 import ar.edu.itba.paw.webapp.auth.JwtAuthenticationFilter;
 import ar.edu.itba.paw.webapp.auth.ApiAccessDeniedHandler;
 import ar.edu.itba.paw.webapp.auth.ApiAuthenticationEntryPoint;
@@ -10,13 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @Order(1)
@@ -29,7 +26,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private UserService userService;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -37,9 +34,6 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .cors().and()
                 .csrf().disable()
                 .formLogin().disable()
-                .httpBasic()
-                    .authenticationEntryPoint(new ApiAuthenticationEntryPoint())
-                    .and()
                 .logout().disable()
                 .sessionManagement().sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS).and()
                 .exceptionHandling()
@@ -64,25 +58,15 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/users/password-reset-requests").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/password-resets").permitAll()
                 .anyRequest().authenticated().and()
-                .addFilterAfter(basicTokenResponseFilter(), BasicAuthenticationFilter.class)
+                .addFilterBefore(apiBasicAuthenticationFilter(), AnonymousAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter(), AnonymousAuthenticationFilter.class);
-    }
-
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
     }
 
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtUtil, userDetailsService);
     }
 
-    public BasicTokenResponseFilter basicTokenResponseFilter() {
-        return new BasicTokenResponseFilter(jwtUtil);
-    }
-
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
+    public ApiBasicAuthenticationFilter apiBasicAuthenticationFilter() {
+        return new ApiBasicAuthenticationFilter(userService, jwtUtil);
     }
 }

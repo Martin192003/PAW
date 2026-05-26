@@ -41,30 +41,33 @@ public class PhotoRestController {
                         .build());
     }
 
-    private CacheControl buildCacheControl() {
-        CacheControl cc = new CacheControl();
-        cc.setMaxAge(31536000);
-        cc.setPrivate(false);
-        cc.setNoTransform(false);
-        return cc;
-    }
-
+    /**
+     * Construye la respuesta de imagen con caching condicional correcto.
+     *
+     * Las fotos son recursos modificables (se pueden reemplazar o eliminar), por lo que NO
+     * se debe usar cache largo (max-age anual). Se usa:
+     *   Cache-Control: no-cache
+     *   ETag: basado en photoId + createdAt (estable, cambia al re-subir con distinto ID)
+     *
+     * El cliente puede cachear localmente pero DEBE revalidar con el servidor antes de usar
+     * la copia cacheada. Si el ETag coincide, el servidor responde 304 Not Modified (sin body).
+     */
     private Response buildImageResponse(Photo photo, Request request) {
+        // ETag basado en photoId + createdAt: es estable mientras la foto no cambie,
+        // y varía si la foto es reemplazada (nuevo UUID o nueva fecha de creación).
+        String etagValue = photo.getPhotoId().toString()
+                + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0");
+        EntityTag etag = new EntityTag(Integer.toHexString(etagValue.hashCode()));
 
-        EntityTag etag = new EntityTag(
-                Integer.toHexString(
-                        Objects.hash(photo.getPhotoId(), photo.getSizeBytes())
-                )
-        );
+        Response.ResponseBuilder preconditions = request.evaluatePreconditions(etag);
 
-        Response.ResponseBuilder preconditions =
-                request.evaluatePreconditions(etag);
-
+        // no-cache: el cliente debe revalidar antes de usar la copia cacheada
         CacheControl cacheControl = new CacheControl();
-        cacheControl.setMaxAge(31536000); // 1 año
+        cacheControl.setNoCache(true);
         cacheControl.setPrivate(false);
 
         if (preconditions != null) {
+            // 304 Not Modified
             return preconditions
                     .cacheControl(cacheControl)
                     .tag(etag)
