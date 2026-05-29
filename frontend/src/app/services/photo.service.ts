@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
+import { resolveApiUrl } from '../utils/api-url.util';
 
 @Injectable({ providedIn: 'root' })
 export class PhotoService {
 
-  private baseUrl = 'http://localhost:8080/webapp_war_exploded/api';
+  private baseUrl = environment.apiBaseUrl;
 
   getPhotoUrl(photoId: string): string {
-    return `${this.baseUrl}/photos/${photoId}`;
+    return resolveApiUrl(`${this.baseUrl}/photos/${photoId}`, this.baseUrl);
   }
 }

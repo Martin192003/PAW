@@ -1,17 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import {Observable, of} from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ClubEvent, EventPayload } from '../models/ClubEvent.model';
 import { PagedResponse } from '../models/paged-response.model';
 import { switchMap, forkJoin } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { requireLink, resolveApiUrl, normalizeLinks } from '../utils/api-url.util';
 
 // ── Tipos que devuelve el backend ──────────────────────────────────────────────
-
-interface LinkEntry {
-  key: string;
-  value: string;
-}
 
 interface EventDto {
   id: string;
@@ -19,7 +16,7 @@ interface EventDto {
   description: string;
   date: string;
   photoId: string | null;
-  links?: { entry: LinkEntry[] };
+  links?: Record<string, string>;
 }
 
 interface RawResponse {
@@ -29,13 +26,10 @@ interface RawResponse {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function parseLinks(entry: LinkEntry[] = []): Record<string, string> {
-  return entry.reduce((acc, { key, value }) => ({ ...acc, [key]: value }), {});
-}
-
 function toClubEvent(dto: EventDto): ClubEvent {
-  const links = parseLinks(dto.links?.entry);
-  const clubId = links['club']?.split('/clubs/')[1];
+  const links = normalizeLinks(dto.links);
+  const clubLink = links?.['club'];
+  const clubId = clubLink ? extractIdFromLink(clubLink, 'clubs') : undefined;
   return {
     eventId:     dto.id,
     name:        dto.eventName,
@@ -44,9 +38,22 @@ function toClubEvent(dto: EventDto): ClubEvent {
     photoId:     dto.photoId ?? '',
     clubName:    '',
     clubId,
-    photoUrl:    links['photo'],
+    photoUrl:    links?.['photo'],
     links,
   };
+}
+
+function extractIdFromLink(link: string, segment: string): string | undefined {
+  try {
+    const path = link.startsWith('http://') || link.startsWith('https://')
+      ? new URL(link).pathname
+      : link;
+    const parts = path.split('/').filter(Boolean);
+    const index = parts.indexOf(segment);
+    return index >= 0 ? parts[index + 1] : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function toPagedResponse(raw: EventDto[] | RawResponse): PagedResponse<ClubEvent> {
@@ -64,7 +71,7 @@ function toPagedResponse(raw: EventDto[] | RawResponse): PagedResponse<ClubEvent
 @Injectable({ providedIn: 'root' })
 export class EventService {
 
-  private readonly base = 'http://localhost:8080/webapp_war_exploded/api';
+  private readonly base = environment.apiBaseUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -77,24 +84,24 @@ export class EventService {
         switchMap(raw => {
           const dtos: EventDto[] = Array.isArray(raw) ? raw : (raw.content ?? []);
           const events = dtos.map(dto => {
-            const links = parseLinks(dto.links?.entry);
-            const clubId = links['club']?.split('/clubs/')[1];
-            return { dto, links, clubId };
+            const links = normalizeLinks(dto.links);
+            const clubLink = requireLink(links, 'club', 'event');
+            const clubId = extractIdFromLink(clubLink, 'clubs');
+            return { dto, links, clubId, clubLink };
           });
 
           // Llamar a cada club para obtener el nombre
-          const clubRequests = events.map(({ clubId }) =>
-            clubId
-              ? this.http.get<{ clubName: string }>(`${this.base}/clubs/${clubId}`)
-              : of({ clubName: '' })
+          const clubRequests = events.map(({ clubLink }) =>
+            this.http.get<{ clubName: string }>(resolveApiUrl(clubLink, this.base))
           );
 
           return forkJoin(clubRequests).pipe(
             map(clubs => ({
-              content: events.map(({ dto, links }, i) => ({
+              content: events.map(({ dto, links, clubId }, i) => ({
                 ...toClubEvent(dto),
                 clubName: clubs[i].clubName,
-                clubId: events[i].clubId,
+                clubId,
+                links,
               })),
               totalElements: dtos.length,
               totalPages: 1,

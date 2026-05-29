@@ -2,10 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Booking, BookingFilters, BookingPage, Receipt } from '../models/booking.model';
+import { environment } from '../../environments/environment';
+import { requireLink, resolveApiUrl } from '../utils/api-url.util';
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
-  private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
+  private readonly apiUrl = environment.apiBaseUrl;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -23,55 +25,68 @@ export class BookingService {
 
   getBooking(clubId: string, bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
-      `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`
+      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 
   cancelBooking(clubId: string, bookingId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`
+      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 
   getManagedClubBooking(bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
-      `${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`
+      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 
   confirmManagedClubBooking(bookingId: string): Observable<void> {
     return this.http.put<void>(
-      `${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}/confirmation`,
+      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}/confirmation`, this.apiUrl),
       {}
     );
   }
 
   cancelManagedClubBooking(bookingId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`
+      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 
-  putReceipt(clubId: string, bookingId: string, file: File): Observable<Receipt> {
+  putReceipt(clubId: string, bookingId: string, file: File, receiptLink?: string): Observable<Receipt> {
     const formData = new FormData();
     formData.append('file', file);
+    if (receiptLink) {
+      return this.http.put<Receipt>(resolveApiUrl(receiptLink, this.apiUrl), formData);
+    }
     return this.http.put<Receipt>(
-      `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`,
+      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
       formData
     );
   }
 
-  getReceiptBlob(clubId: string, bookingId: string): Observable<Blob> {
+  getReceiptBlob(clubId: string, bookingId: string, receiptLink?: string): Observable<Blob> {
+    if (receiptLink) {
+      return this.http.get(resolveApiUrl(receiptLink, this.apiUrl), { responseType: 'blob' });
+    }
     return this.http.get(
-      `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`,
+      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
       { responseType: 'blob' }
     );
   }
 
-  deleteReceipt(clubId: string, bookingId: string): Observable<void> {
+  deleteReceipt(clubId: string, bookingId: string, receiptLink?: string): Observable<void> {
+    if (receiptLink) {
+      return this.http.delete<void>(resolveApiUrl(receiptLink, this.apiUrl));
+    }
     return this.http.delete<void>(
-      `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`
+      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl)
     );
+  }
+
+  requireReceiptLink(booking: Booking): string {
+    return resolveApiUrl(requireLink(booking.links, 'receipt', 'booking receipt'), this.apiUrl);
   }
 
   private params(filters: BookingFilters, page: number, size: number): HttpParams {
