@@ -186,15 +186,15 @@
       <div class="w-[150px] h-full flex-shrink-0 bg-black relative">
 
         <img
-          *ngIf="!club._hasError && club.links?.cover"
-          [src]="club.links?.cover"
+          *ngIf="!club._hasError && club.links?.['cover']"
+          [src]="club.links?.['cover']"
           alt="Foto de {{club.clubName}}"
           class="w-full h-full object-cover"
           (error)="onImageError($event, club)"
           (load)="onImageLoad()"
         >
 
-        <div *ngIf="club._hasError || !club.links?.cover" class="w-full h-full">
+        <div *ngIf="club._hasError || !club.links?.['cover']" class="w-full h-full">
           <div
             class="w-full h-full flex items-center justify-center
              text-[#9c27b0] text-lg font-bold text-center

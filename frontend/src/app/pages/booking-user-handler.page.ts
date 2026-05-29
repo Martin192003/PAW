@@ -101,7 +101,17 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     const file = input.files?.[0];
     if (!file || !this.booking) return;
 
-    this.bookingService.putReceipt(this.booking.clubId, this.booking.id, file).subscribe({
+    let receiptLink = '';
+    try {
+      receiptLink = this.bookingService.requireReceiptLink(this.booking);
+    } catch (err) {
+      this.error = (err as Error).message;
+      this.cdr.detectChanges();
+      input.value = '';
+      return;
+    }
+
+    this.bookingService.putReceipt(this.booking.clubId, this.booking.id, file, receiptLink).subscribe({
       next: () => {
         this.success = 'Comprobante cargado correctamente.';
         this.loadReceipt();
@@ -157,7 +167,17 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
 
   private loadReceipt(): void {
     if (!this.booking) return;
-    this.bookingService.getReceiptBlob(this.booking.clubId, this.booking.id).subscribe({
+    let receiptLink = '';
+    try {
+      receiptLink = this.bookingService.requireReceiptLink(this.booking);
+    } catch (err) {
+      this.hasReceipt = false;
+      this.receiptUrl = '';
+      this.error = (err as Error).message;
+      this.cdr.detectChanges();
+      return;
+    }
+    this.bookingService.getReceiptBlob(this.booking.clubId, this.booking.id, receiptLink).subscribe({
       next: blob => {
         this.revokeReceiptUrl();
         this.receiptObjectUrl = URL.createObjectURL(blob);

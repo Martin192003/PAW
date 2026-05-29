@@ -783,7 +783,7 @@ export class ClubHandlerPage implements OnInit {
   }
 
   getEventPhotoUrl(event: Event): string {
-    const photoLink = event.links?.photo;
+    const photoLink = event.links?.['photo'];
     if (photoLink) {
       return this.clubService.toAbsoluteUrl(photoLink);
     }
@@ -948,13 +948,12 @@ export class ClubHandlerPage implements OnInit {
   }
 
   private resolveCoverUrl(club: Club): string {
-    const cover = club.links?.cover;
+    const cover = club.links?.['cover'];
     if (cover) {
       if (/^https?:\/\//i.test(cover)) {
         return cover;
       }
-      const normalized = cover.startsWith('/') ? cover.slice(1) : cover;
-      return new URL(normalized, 'http://localhost:8080/webapp_war_exploded/').toString();
+      return this.clubService.toAbsoluteUrl(cover, club.clubId);
     }
 
     return this.clubService.getCoverUrl(club.clubId);
