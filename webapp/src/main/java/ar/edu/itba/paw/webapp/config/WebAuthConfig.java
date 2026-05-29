@@ -63,7 +63,11 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET, "/api/clubs/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/login").permitAll()
-                .antMatchers("/api/users/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/verification-requests").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/users/verifications").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/verifications").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/password-reset-requests").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/users/password-resets").permitAll()
                 // Endpoints legacy server-side
                 .antMatchers(HttpMethod.POST, "/users").permitAll()
                 .antMatchers(HttpMethod.POST, "/users/login").permitAll()
