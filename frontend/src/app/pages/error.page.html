@@ -1,0 +1,17 @@
+<main class="min-h-[70vh] w-full flex items-center justify-center px-6">
+  <section class="max-w-[560px] text-center text-white">
+    <h1 class="text-3xl font-semibold mb-3">Ocurrio un problema</h1>
+    <p class="text-sm text-white/70 mb-4">
+      {{ error?.message || 'Ocurrio un error inesperado.' }}
+    </p>
+    <p class="text-xs text-white/50 mb-6" *ngIf="error?.status">
+      Codigo: {{ error?.status }}
+    </p>
+    <a
+      routerLink="/clubs"
+      class="inline-flex items-center justify-center px-4 py-2 text-white bg-[#9c27b0] rounded hover:bg-[#7b1fa2] transition"
+    >
+      Volver al inicio
+    </a>
+  </section>
+</main>
