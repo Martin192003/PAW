@@ -136,6 +136,17 @@ export class AuthStateService {
   private hasStoredSession(): boolean {
     return !!this.getToken();
   }
+
+  clearSession(): void {
+    if (!this.browserStorageAvailable) {
+      this.loggedInSubject.next(false);
+      return;
+    }
+
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.userKey);
+    sessionStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.userKey);
+    this.loggedInSubject.next(false);
+  }
 }
-
-

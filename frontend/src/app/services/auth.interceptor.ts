@@ -1,9 +1,17 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthStateService } from './auth-state.service';
+import { environment } from '../../environments/environment';
+import { isApiUrl } from '../utils/api-url.util';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authState = inject(AuthStateService);
+  const apiBaseUrl = environment.apiBaseUrl;
+
+  if (!isApiUrl(req.url, apiBaseUrl)) {
+    return next(req);
+  }
+
   const rawToken = authState.getToken();
   let token = rawToken?.trim() ?? '';
 
@@ -27,4 +35,3 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     })
   );
 };
-

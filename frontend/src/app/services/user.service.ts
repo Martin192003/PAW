@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 import {
   ApiMessageResponse,
   LoginResponse,
@@ -29,7 +30,7 @@ export type UserUpdateResult = {
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-  private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
+  private readonly apiUrl = environment.apiBaseUrl;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -87,5 +88,9 @@ export class UserService {
     return this.http.post(`${this.apiUrl}/users/password-resets`, { newPassword, confirmationPassword }, { params }).pipe(
       map(() => undefined)
     );
+  }
+
+  getMe(): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/users/me`);
   }
 }
