@@ -1,12 +1,13 @@
-import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EventService } from '../services/event.service';
 import { ClubEvent } from '../models/ClubEvent.model';
 import { ViewChild, ElementRef } from '@angular/core';
+import { requireLink, normalizeLinks } from '../utils/api-url.util';
 
 
 type ClubListItem = Club & { _hasError?: boolean };
@@ -57,11 +58,28 @@ export class ClubsPage implements OnInit, OnDestroy {
     private clubService: ClubService,
     private eventService: EventService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit() {
-    this.loadClubs();
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    this.route.queryParamMap.subscribe((params) => {
+      this.currentPage = Number(params.get('page') ?? '1') || 1;
+      this.pageSize = Number(params.get('size') ?? '10') || 10;
+      this.filters = {
+        name: params.get('name') ?? '',
+        zone: params.get('zone') ?? '',
+        genre: params.get('genre') ?? '',
+        price: params.get('price') ?? '',
+        isBar: params.get('isBar') ?? '',
+        sort: params.get('sort') ?? ''
+      };
+      this.loadClubs();
+    });
     this.loadUpcomingEvents();
   }
 
@@ -88,7 +106,7 @@ export class ClubsPage implements OnInit, OnDestroy {
 
   applyFilters(): void {
     this.currentPage = 1;
-    this.loadClubs();
+    this.updateQueryParams();
   }
 
   resetFilters(): void {
@@ -101,7 +119,7 @@ export class ClubsPage implements OnInit, OnDestroy {
       sort: ''
     };
     this.currentPage = 1;
-    this.loadClubs();
+    this.updateQueryParams();
   }
 
   get hasActiveFilters(): boolean {
@@ -120,21 +138,41 @@ export class ClubsPage implements OnInit, OnDestroy {
   nextPage() {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
-      this.loadClubs();
+      this.updateQueryParams();
     }
   }
 
   prevPage() {
     if (this.currentPage > 1) {
       this.currentPage--;
-      this.loadClubs();
+      this.updateQueryParams();
     }
   }
 
 
   goToPage(page: number) {
     this.currentPage = page;
-    this.loadClubs();
+    this.updateQueryParams();
+  }
+
+  private updateQueryParams(): void {
+    const queryParams: Record<string, string | number | null> = {
+      page: this.currentPage,
+      size: this.pageSize,
+      name: this.filters.name || null,
+      zone: this.filters.zone || null,
+      genre: this.filters.genre || null,
+      price: this.filters.price || null,
+      isBar: this.filters.isBar || null,
+      sort: this.filters.sort || null
+    };
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: '',
+      replaceUrl: true
+    });
   }
 
   get pages(): number[] {
@@ -222,7 +260,22 @@ export class ClubsPage implements OnInit, OnDestroy {
   }
 
   private extractClubId(event: ClubEvent): string | undefined {
-    return event.links?.['club']?.split('/clubs/')[1];
+    const links = normalizeLinks(event.links);
+    const clubLink = requireLink(links, 'club', 'event');
+    return this.extractIdFromLink(clubLink, 'clubs');
+  }
+
+  private extractIdFromLink(link: string, segment: string): string | undefined {
+    try {
+      const path = link.startsWith('http://') || link.startsWith('https://')
+        ? new URL(link).pathname
+        : link;
+      const parts = path.split('/').filter(Boolean);
+      const index = parts.indexOf(segment);
+      return index >= 0 ? parts[index + 1] : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   private normalizeEventDate(raw: string): string | undefined {
