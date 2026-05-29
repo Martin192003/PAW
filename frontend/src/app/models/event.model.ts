@@ -5,9 +5,5 @@ export interface Event {
   description: string;
   date: string;
   photoId?: string;
-  links?: {
-    self?: string;
-    club?: string;
-    photo?: string;
-  };
+  links?: Record<string, string>;
 }

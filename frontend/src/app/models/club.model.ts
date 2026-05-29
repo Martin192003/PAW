@@ -12,15 +12,10 @@ export interface Club {
   quantityRatings: number;
   createdAt: string;
 
-  links?: {
-    self: string;
-    cover: string;
-    layout: string;
-    limits: string;
-  };
+  links?: Record<string, string>;
 }
 
-export interface ClubCreateRequest {
+export interface ClubCreateRequestDto {
   clubName: string;
   location: string;
   priceRange: string;
