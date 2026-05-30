@@ -79,28 +79,6 @@ public class UserRestController {
     }
 
     @GET
-    @Path("/me")
-    public Response getMe(@Context SecurityContext securityContext) {
-        if (securityContext == null || securityContext.getUserPrincipal() == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(message("Unauthorized"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        final String principal = securityContext.getUserPrincipal().getName();
-        final User user = resolveUserFromPrincipal(principal);
-        if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(message("Unauthorized"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        return Response.ok(UserMapper.toDto(user)).build();
-    }
-
-    @GET
     @Path("/{userId}")
     public Response getUser(@PathParam("userId") String userId) {
         UUID id;

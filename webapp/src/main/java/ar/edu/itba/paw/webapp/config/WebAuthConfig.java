@@ -22,9 +22,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Configuration
-@EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @ComponentScan(basePackages = "ar.edu.itba.paw.webapp.auth")
+@EnableWebSecurity
 public class WebAuthConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
