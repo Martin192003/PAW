@@ -38,7 +38,7 @@ export interface Club {
   links?: ClubLinks;
 }
 
-export interface ClubCreateRequest {
+export interface ClubCreateRequestDto {
   clubName: string;
   location: string;
   priceRange: string;

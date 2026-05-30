@@ -32,15 +32,15 @@
         >
           <div class="w-[150px] h-full flex-shrink-0 bg-black relative">
             <img
-              *ngIf="!club._hasError && club.links?.cover"
-              [src]="club.links?.cover"
+              *ngIf="!club._hasError && club.links?.['cover']"
+              [src]="club.links?.['cover']"
               [alt]="club.clubName"
               class="w-full h-full object-cover"
               (error)="onImageError(club)"
             />
 
             <div
-              *ngIf="club._hasError || !club.links?.cover"
+              *ngIf="club._hasError || !club.links?.['cover']"
               class="w-full h-full flex items-center justify-center text-[#9c27b0] text-lg font-bold text-center tracking-widest"
               style="font-family: 'Darklinos', Arial, sans-serif;"
             >
@@ -104,4 +104,3 @@
     </main>
   </section>
 </div>
-

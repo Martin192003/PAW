@@ -79,6 +79,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   reviewDeleting = false;
 
   private currentClubId?: string;
+  private clubLinks?: unknown;
   private availabilityRequestId = 0;
   private previousBodyOverflow?: string;
   private previousDocumentOverflow?: string;
@@ -167,14 +168,15 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       this.currentClubId = id;
 
       if (changedClub) {
-        this.loadClubData(id);
+        this.loadClubData(id, queryDate);
+        return;
       }
 
-      this.loadAvailableBookingDates(id, queryDate);
+      this.loadAvailableBookingDates(id, queryDate, this.clubLinks);
     });
   }
 
-  private loadClubData(id: string) {
+  private loadClubData(id: string, queryDate?: string) {
     this.coverUrl = undefined;
     this.carouselPhotos = [];
     this.activeCarouselIndex = 0;
@@ -184,72 +186,75 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.clubService.getClubById(id).subscribe({
       next: c => {
         this.club = c;
-        this.coverUrl = this.resolveCoverUrl(id, c.links?.cover);
+        this.clubLinks = c.links;
+        this.coverUrl = this.resolveCoverUrl(id, c.links?.['cover'] as string | undefined);
         this.cdr.detectChanges();
         queueMicrotask(() => this.tryInitMap());
+
+        this.clubService.getClubPhotos(id, this.clubLinks).subscribe({
+          next: photos => {
+            this.carouselPhotos = photos
+              .map(photo => ({
+                ...photo,
+                url: this.clubService.toAbsoluteUrl(photo.url, id)
+              }))
+              .filter(photo => !!photo.url);
+            this.activeCarouselIndex = 0;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.carouselPhotos = [];
+            this.activeCarouselIndex = 0;
+            this.cdr.detectChanges();
+          }
+        });
+
+        this.clubService.getLayout(id, this.clubLinks).subscribe({
+          next: l => {
+            this.layoutUrl = this.resolveLayoutUrl(id, l);
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.layoutUrl = undefined;
+            this.cdr.detectChanges();
+          }
+        });
+
+        this.clubService.getReviewPhotosByClub(id, this.clubLinks).subscribe({
+          next: photos => {
+            this.reviewPhotos = photos;
+            this.activeReviewPhotoIndex = 0;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.reviewPhotos = [];
+            this.activeReviewPhotoIndex = 0;
+            this.cdr.detectChanges();
+          }
+        });
+
+        this.clubService.getMenu(id, this.clubLinks).subscribe({
+          next: m => {
+            this.menu = m;
+            this.cdr.detectChanges();
+          }
+        });
+
+        this.reviewsCurrentPage = 1;
+        this.reviewsTotalPages = 1;
+        this.loadReviews();
+
+        this.clubService.getEvents(id, this.clubLinks).subscribe({
+          next: e => {
+            this.events = e;
+            this.cdr.detectChanges();
+          },
+          error: err => console.warn('events error', err)
+        });
+
+        this.loadAvailableBookingDates(id, queryDate, this.clubLinks);
       },
       error: err => console.error('club error', err)
-    });
-
-    this.clubService.getClubPhotos(id).subscribe({
-      next: photos => {
-        this.carouselPhotos = photos
-          .map(photo => ({
-            ...photo,
-            url: this.clubService.toAbsoluteUrl(photo.url, id)
-          }))
-          .filter(photo => !!photo.url);
-        this.activeCarouselIndex = 0;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.carouselPhotos = [];
-        this.activeCarouselIndex = 0;
-        this.cdr.detectChanges();
-      }
-    });
-
-    this.clubService.getLayout(id).subscribe({
-      next: l => {
-        this.layoutUrl = this.resolveLayoutUrl(id, l);
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.layoutUrl = undefined;
-        this.cdr.detectChanges();
-      }
-    });
-
-    this.clubService.getReviewPhotosByClub(id).subscribe({
-      next: photos => {
-        this.reviewPhotos = photos;
-        this.activeReviewPhotoIndex = 0;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.reviewPhotos = [];
-        this.activeReviewPhotoIndex = 0;
-        this.cdr.detectChanges();
-      }
-    });
-
-    this.clubService.getMenu(id).subscribe({
-      next: m => {
-        this.menu = m;
-        this.cdr.detectChanges();
-      }
-    });
-
-    this.reviewsCurrentPage = 1;
-    this.reviewsTotalPages = 1;
-    this.loadReviews();
-
-    this.clubService.getEvents(id).subscribe({
-      next: e => {
-        this.events = e;
-        this.cdr.detectChanges();
-      },
-      error: err => console.warn('events error', err)
     });
   }
 
@@ -301,7 +306,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.setReservationModalOpen(false);
     this.reservedBookingId = undefined;
     this.reservedBookingClubId = undefined;
-    this.clubService.getTables(id, date).subscribe({
+    this.clubService.getTables(id, date, this.clubLinks).subscribe({
       next: t => {
         this.tables = t;
         if (!this.tables.some(table => table.tableId === this.selectedTableId)) {
@@ -431,7 +436,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     return dates;
   }
 
-  private loadAvailableBookingDates(id: string, queryDate?: string, preserveReserveSuccess = false): void {
+  private loadAvailableBookingDates(id: string, queryDate?: string, links?: unknown, preserveReserveSuccess = false): void {
     const requestId = ++this.availabilityRequestId;
     const candidateDates = this.fromEvent && queryDate
       ? [queryDate]
@@ -455,7 +460,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     }
 
     forkJoin(candidateDates.map(date =>
-      this.clubService.getTables(id, date).pipe(
+      this.clubService.getTables(id, date, links).pipe(
         map(tables => ({ date, tables })),
         catchError(() => of({ date, tables: [] as ClubTable[] }))
       )
@@ -508,7 +513,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.clubService.reserveTable(
       this.currentClubId,
       this.selectedTableId,
-      this.selectedDate
+      this.selectedDate,
+      this.clubLinks
     ).subscribe({
       next: booking => {
         this.tablesError = undefined;

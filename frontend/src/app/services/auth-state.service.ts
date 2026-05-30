@@ -73,6 +73,10 @@ export class AuthStateService {
     this.loggedInSubject.next(false);
   }
 
+  clearSession(): void {
+    this.logout();
+  }
+
   isLoggedIn(): boolean {
     return this.loggedInSubject.getValue();
   }
@@ -226,4 +230,3 @@ export class AuthStateService {
       typeof storage.removeItem === 'function';
   }
 }
-

@@ -160,7 +160,17 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
 
   private loadReceipt(): void {
     if (!this.booking) return;
-    this.bookingService.getReceiptBlob(this.booking.clubId, this.booking.id).subscribe({
+    let receiptLink = '';
+    try {
+      receiptLink = this.bookingService.requireReceiptLink(this.booking);
+    } catch (err) {
+      this.hasReceipt = false;
+      this.receiptUrl = '';
+      this.error = (err as Error).message;
+      this.cdr.detectChanges();
+      return;
+    }
+    this.bookingService.getReceiptBlob(this.booking.clubId, this.booking.id, receiptLink).subscribe({
       next: blob => {
         this.revokeReceiptUrl();
         this.receiptObjectUrl = URL.createObjectURL(blob);

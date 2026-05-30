@@ -79,6 +79,28 @@ public class UserRestController {
     }
 
     @GET
+    @Path("/me")
+    public Response getMe(@Context SecurityContext securityContext) {
+        if (securityContext == null || securityContext.getUserPrincipal() == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        final String principal = securityContext.getUserPrincipal().getName();
+        final User user = resolveUserFromPrincipal(principal);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        return Response.ok(UserMapper.toDto(user)).build();
+    }
+
+    @GET
     @Path("/{userId}")
     public Response getUser(@PathParam("userId") String userId) {
         UUID id;
@@ -581,6 +603,28 @@ public class UserRestController {
 
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    private User resolveUserFromPrincipal(String principal) {
+        if (isBlank(principal)) {
+            return null;
+        }
+
+        User user = userService.findByEmail(principal);
+        if (user != null) {
+            return user;
+        }
+
+        user = userService.findByUserName(principal);
+        if (user != null) {
+            return user;
+        }
+
+        try {
+            return userService.findById(UUID.fromString(principal)).orElse(null);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     private static String message(String msg) {

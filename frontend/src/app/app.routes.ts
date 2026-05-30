@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { ClubsPage } from './pages/clubs.page';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -59,15 +60,18 @@ export const routes: Routes = [
   },
   {
     path: 'admin/activity',
-    loadComponent: () => import('./pages/club-activity.page').then(m => m.ClubActivityPage)
+    loadComponent: () => import('./pages/club-activity.page').then(m => m.ClubActivityPage),
+    canActivate: [adminGuard]
   },
   {
     path: 'admin/bookings',
-    loadComponent: () => import('./pages/managed-club-bookings.page').then(m => m.ManagedClubBookingsPage)
+    loadComponent: () => import('./pages/managed-club-bookings.page').then(m => m.ManagedClubBookingsPage),
+    canActivate: [adminGuard]
   },
   {
     path: 'admin/bookings/:bookingId',
-    loadComponent: () => import('./pages/booking-admin-handler.page').then(m => m.BookingAdminHandlerPage)
+    loadComponent: () => import('./pages/booking-admin-handler.page').then(m => m.BookingAdminHandlerPage),
+    canActivate: [adminGuard]
   },
   {
     path: 'bookings',
@@ -77,4 +81,20 @@ export const routes: Routes = [
     path: 'bookings/:clubId/:bookingId',
     loadComponent: () => import('./pages/booking-user-handler.page').then(m => m.BookingUserHandlerPage)
   },
+  {
+    path: 'forbidden',
+    loadComponent: () => import('./pages/forbidden.page').then(m => m.ForbiddenPage)
+  },
+  {
+    path: 'error',
+    loadComponent: () => import('./pages/error.page').then(m => m.ErrorPage)
+  },
+  {
+    path: 'not-found',
+    loadComponent: () => import('./pages/not-found.page').then(m => m.NotFoundPage)
+  },
+  {
+    path: '**',
+    redirectTo: 'not-found'
+  }
 ];
