@@ -15,6 +15,7 @@ public class BookingDto {
     private String status;
     private OffsetDateTime createdAt;
     private BigDecimal totalAmount;
+    private boolean hasReceipt;
     private List<LinkDto> links;
 
     public UUID getId() {
@@ -87,6 +88,14 @@ public class BookingDto {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public boolean isHasReceipt() {
+        return hasReceipt;
+    }
+
+    public void setHasReceipt(boolean hasReceipt) {
+        this.hasReceipt = hasReceipt;
     }
 
     public List<LinkDto> getLinks() {

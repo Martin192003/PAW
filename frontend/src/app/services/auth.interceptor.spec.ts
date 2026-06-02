@@ -43,6 +43,17 @@ describe('authInterceptor', () => {
     assetReq.flush('');
   });
 
+  it('adds bearer token to absolute local backend api links', () => {
+    authState.getToken.mockReturnValue('token-123');
+
+    const url = 'http://localhost:8080/webapp_war_exploded/api/clubs/club-id/bookings/booking-id/receipt';
+    http.put(url, new FormData()).subscribe();
+
+    const apiReq = httpMock.expectOne(url);
+    expect(apiReq.request.headers.get('Authorization')).toBe('Bearer token-123');
+    apiReq.flush({ ok: true });
+  });
+
   it('skips authorization header when token is missing', () => {
     authState.getToken.mockReturnValue('');
 

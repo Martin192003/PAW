@@ -3,6 +3,7 @@ package ar.edu.itba.paw.webapp.rest.bookings;
 import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.dto.BookingDto;
 import ar.edu.itba.paw.model.dto.LinkDto;
+import ar.edu.itba.paw.service.ReceiptService;
 import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,12 @@ import java.util.UUID;
 
 @Component
 public class BookingDtoAssembler {
+
+    private final ReceiptService receiptService;
+
+    public BookingDtoAssembler(ReceiptService receiptService) {
+        this.receiptService = receiptService;
+    }
 
     public BookingDto toDto(UriInfo uriInfo, UUID clubId, Booking booking) {
         final UUID tableId = booking.getTableId() != null
@@ -29,6 +36,7 @@ public class BookingDtoAssembler {
         dto.setStatus(booking.getStatus() != null ? booking.getStatus().name() : null);
         dto.setCreatedAt(booking.getCreatedAt());
         dto.setTotalAmount(booking.getTotalAmount());
+        dto.setHasReceipt(receiptService.findByBooking(booking.getBookingId()).isPresent());
 
         List<LinkDto> links = new ArrayList<>();
         links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
@@ -68,6 +76,10 @@ public class BookingDtoAssembler {
                 .build(), "DELETE"));
         links.add(LinkBuilder.link("confirm", uriInfo.getBaseUriBuilder()
                 .path("managed-club-bookings/{bookingId}/confirmation")
+                .resolveTemplate("bookingId", booking.getBookingId())
+                .build(), "PUT"));
+        links.add(LinkBuilder.link("managed-update", uriInfo.getBaseUriBuilder()
+                .path("managed-club-bookings/{bookingId}")
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "PUT"));
         dto.setLinks(links);

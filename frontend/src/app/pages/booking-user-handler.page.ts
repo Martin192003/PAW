@@ -117,6 +117,9 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     this.bookingService.putReceipt(this.booking.clubId, this.booking.id, file, receiptLink).subscribe({
       next: () => {
         this.success = this.i18n.instant('bookingUserHandler.success.receiptUploaded');
+        if (this.booking) {
+          this.booking.hasReceipt = true;
+        }
         this.loadReceipt();
       },
       error: () => {
@@ -170,6 +173,15 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
 
   private loadReceipt(): void {
     if (!this.booking) return;
+
+    if (!this.booking.hasReceipt) {
+      this.revokeReceiptUrl();
+      this.hasReceipt = false;
+      this.receiptUrl = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
     let receiptLink = '';
     try {
       receiptLink = this.bookingService.requireReceiptLink(this.booking);

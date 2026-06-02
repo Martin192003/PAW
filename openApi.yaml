@@ -1,38 +1,33 @@
 openapi: 3.0.3
 info:
-  title: BlingBling Clubs API
-  version: 1.0.0
-  description: |
-    API BLingBling para autenticación, creación de usuarios y gestión básica de clubs.
+  title: PAW TPE API
+  version: 2026.06.01
+  description: >
+    Contrato REST de la API actual. Las colecciones simples devuelven arrays.
+    Las colecciones paginadas usadas por el frontend conservan wrapper con
+    content/page/size/totalElements/totalPages y tambien exponen Link y
+    X-Total-Count cuando el recurso lo implementa.
 servers:
-  - url: http://localhost:8080/webapp_war_exploded/api
+  - url: http://localhost:8080/webapp/api
+security:
+  - bearerAuth: []
 
 tags:
-  - name: API
   - name: Users
   - name: Clubs
   - name: Events
-  - name: Products
+  - name: Photos
+  - name: Menu
   - name: Tables
+  - name: Reviews
+  - name: Bookings
 
 paths:
-
-  /:
-    get:
-      tags: [API]
-      summary: API entry point
-      responses:
-        '200':
-          description: API root
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiIndexDto'
-
   /users:
     post:
       tags: [Users]
-      summary: Create user
+      summary: Register user
+      security: []
       requestBody:
         required: true
         content:
@@ -44,45 +39,59 @@ paths:
           description: User created
           headers:
             Location:
-              $ref: '#/components/headers/LocationHeader'
+              schema:
+                type: string
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserDto'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
-  /users/{userId}:
-    parameters:
-      - $ref: '#/components/parameters/UserIdParam'
+  /users/me:
     get:
       tags: [Users]
-      summary: Get user by id
+      summary: Get authenticated user
       responses:
         '200':
-          description: User found
-          headers:
-            ETag:
-              $ref: '#/components/headers/ETagHeader'
-            Last-Modified:
-              $ref: '#/components/headers/LastModifiedHeader'
+          description: Authenticated user with HATEOAS links
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Users]
+      summary: Get user
+      responses:
+        '200':
+          description: User. Own user returns private fields, other users return public fields.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/UserDto'
+                  - $ref: '#/components/schemas/PublicUserDto'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
-    patch:
+    put:
       tags: [Users]
-      summary: Partially update user
+      summary: Update own user
       requestBody:
         required: true
         content:
-          application/merge-patch+json:
+          application/json:
             schema:
-              $ref: '#/components/schemas/UserUpdateRequestDto'
+              $ref: '#/components/schemas/UserCreateRequestDto'
       responses:
         '200':
           description: User updated
@@ -90,16 +99,176 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-    delete:
+
+  /users/{userId}/profile:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
       tags: [Users]
-      summary: Delete user
+      summary: Get user profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Users]
+      summary: Update own user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequestDto'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/{userId}/reviews:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Reviews]
+      summary: List reviews by user
+      parameters:
+        - $ref: '#/components/parameters/PageZero'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Array of reviews
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReviewDto'
+
+  /users/verifications:
+    get:
+      tags: [Users]
+      summary: Verify account from email link
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      tags: [Users]
+      summary: Verify account from code or token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserVerificationRequestDto'
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /users/verification-requests:
+    post:
+      tags: [Users]
+      summary: Resend verification token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationRequestDto'
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /users/password-reset-requests:
+    post:
+      tags: [Users]
+      summary: Request password reset email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequestDto'
       responses:
         '204':
-          description: User deleted
+          description: Request accepted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /users/{userId}/password-reset-tokens:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [Users]
+      summary: Create password reset token for own user
+      responses:
+        '200':
+          description: Token created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordResetTokenDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/password-resets:
+    post:
+      tags: [Users]
+      summary: Reset password with token
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetDto'
+      responses:
+        '204':
+          description: Password changed
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -109,7 +278,13 @@ paths:
     get:
       tags: [Clubs]
       summary: List clubs
+      description: Supports owner filtering used by UserDto.links.clubs.
       parameters:
+        - name: ownerId
+          in: query
+          schema:
+            type: string
+            format: uuid
         - name: name
           in: query
           schema:
@@ -138,23 +313,24 @@ paths:
           in: query
           schema:
             type: string
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          schema:
-            type: integer
-            default: 10
+        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/Size'
       responses:
         '200':
           description: Paginated clubs
+          headers:
+            Link:
+              schema:
+                type: string
+            X-Total-Count:
+              schema:
+                type: integer
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PagedClubResponseDto'
+                $ref: '#/components/schemas/ClubPagedResponseDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
     post:
       tags: [Clubs]
       summary: Create club
@@ -167,49 +343,56 @@ paths:
       responses:
         '201':
           description: Club created
-          headers:
-            Location:
-              $ref: '#/components/headers/LocationHeader'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClubDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Unauthorized
+          $ref: '#/components/responses/Unauthorized'
+
+  /clubs/user/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Clubs]
+      summary: List clubs administered by user
+      deprecated: true
+      description: Legacy compatibility endpoint. Prefer GET /clubs?ownerId={userId}.
+      parameters:
+        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Paginated clubs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubPagedResponseDto'
 
   /clubs/{clubId}:
     parameters:
-      - $ref: '#/components/parameters/ClubIdParam'
+      - $ref: '#/components/parameters/ClubId'
     get:
       tags: [Clubs]
-      summary: Get club by id
+      summary: Get club
       responses:
         '200':
-          description: Club found
-          headers:
-            ETag:
-              $ref: '#/components/headers/ETagHeader'
-            Last-Modified:
-              $ref: '#/components/headers/LastModifiedHeader'
+          description: Club
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClubDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
-    patch:
+    put:
       tags: [Clubs]
-      summary: Partially update club
+      summary: Update club
       requestBody:
         required: true
         content:
-          application/merge-patch+json:
+          application/json:
             schema:
-              $ref: '#/components/schemas/ClubUpdateRequestDto'
+              $ref: '#/components/schemas/ClubCreateRequestDto'
       responses:
         '200':
           description: Club updated
@@ -217,22 +400,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClubDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Unauthorized
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /clubs/{clubId}/limits:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+    get:
+      tags: [Clubs]
+      summary: Get booking limits for club
+      responses:
+        '200':
+          description: Club limits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubLimitsDto'
         '404':
           $ref: '#/components/responses/NotFound'
 
   /clubs/{clubId}/cover:
     parameters:
-      - $ref: '#/components/parameters/ClubIdParam'
+      - $ref: '#/components/parameters/ClubId'
     get:
-      tags: [Clubs]
+      tags: [Photos]
       summary: Get club cover image
       responses:
         '200':
-          description: Binary image
+          description: Image bytes
           content:
             image/*:
               schema:
@@ -240,10 +437,26 @@ paths:
                 format: binary
         '404':
           $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Photos]
+      summary: Replace club cover image
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+      responses:
+        '204':
+          description: Cover replaced
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /clubs/{clubId}/layout:
     parameters:
-      - $ref: '#/components/parameters/ClubIdParam'
+      - $ref: '#/components/parameters/ClubId'
     get:
       tags: [Clubs]
       summary: Get club layout metadata
@@ -254,20 +467,108 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LayoutDto'
-        '204':
-          description: Club has no layout
         '404':
           $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Clubs]
+      summary: Replace club layout image
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+      responses:
+        '204':
+          description: Layout replaced
 
   /clubs/{clubId}/layout/image:
     parameters:
-      - $ref: '#/components/parameters/ClubIdParam'
+      - $ref: '#/components/parameters/ClubId'
     get:
-      tags: [Clubs]
+      tags: [Photos]
       summary: Get club layout image
       responses:
         '200':
-          description: Binary image
+          description: Image bytes
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '204':
+          description: Layout image does not exist
+
+  /clubs/{clubId}/photos:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+    get:
+      tags: [Photos]
+      summary: List club gallery photos
+      responses:
+        '200':
+          description: Photo DTO array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PhotoDto'
+    post:
+      tags: [Photos]
+      summary: Upload club gallery photo
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+      responses:
+        '201':
+          description: Photo uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoDto'
+
+  /clubs/{clubId}/photos/{photoId}:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+      - $ref: '#/components/parameters/PhotoId'
+    delete:
+      tags: [Photos]
+      summary: Delete club gallery photo
+      responses:
+        '204':
+          description: Photo deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clubs/{clubId}/review-photos:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+    get:
+      tags: [Photos]
+      summary: List review photos for club
+      responses:
+        '200':
+          description: Photo DTO array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PhotoDto'
+
+  /photos/{photoId}:
+    parameters:
+      - $ref: '#/components/parameters/PhotoId'
+    get:
+      tags: [Photos]
+      summary: Get photo image
+      responses:
+        '200':
+          description: Image bytes
           content:
             image/*:
               schema:
@@ -276,160 +577,91 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /clubs/{clubId}/capacity:
-    parameters:
-      - $ref: '#/components/parameters/ClubIdParam'
-    get:
-      tags: [Clubs]
-      summary: Get club capacity policy
-      responses:
-        '200':
-          description: Capacity policy found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClubLimitsDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /events:
+  /clubs/events:
     get:
       tags: [Events]
-      summary: List events
+      summary: List upcoming events
       parameters:
-        - name: clubId
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: upcoming
-          in: query
-          schema:
-            type: boolean
-            default: true
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          schema:
-            type: integer
-            default: 20
+        - $ref: '#/components/parameters/PageZero'
+        - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Paginated events
+          description: Event array
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventPagedResponseDto'
-
-  /clubs/{clubId}/photos:
-    get:
-      tags: [Clubs]
-      summary: Obtener fotos del club para el carrusel
-      parameters:
-        - in: path
-          name: clubId
-          required: true
-          schema:
-            $ref: '#/components/schemas/UUID'
-      responses:
-        '200':
-          description: Lista de fotos del club
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClubPhotosResponse'
-        '404':
-          description: Club no encontrado
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventDto'
 
   /clubs/{clubId}/events:
     parameters:
-      - $ref: '#/components/parameters/ClubIdParam'
+      - $ref: '#/components/parameters/ClubId'
     get:
       tags: [Events]
       summary: List events by club
       parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          schema:
-            type: integer
-            default: 20
+        - $ref: '#/components/parameters/PageZero'
+        - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Paginated club events
+          description: Event array
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventPagedResponseDto'
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventDto'
     post:
       tags: [Events]
-      summary: Create event under a club collection
+      summary: Create event
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventCreateRequestDto'
+              $ref: '#/components/schemas/EventDto'
       responses:
         '201':
           description: Event created
-          headers:
-            Location:
-              $ref: '#/components/headers/LocationHeader'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
-  /events/{eventId}:
+  /clubs/{clubId}/events/{eventId}:
     parameters:
-      - $ref: '#/components/parameters/EventIdParam'
+      - $ref: '#/components/parameters/ClubId'
+      - $ref: '#/components/parameters/EventId'
     get:
       tags: [Events]
-      summary: Get event by id
+      summary: Get event in club
       responses:
         '200':
-          description: Event found
-          headers:
-            ETag:
-              $ref: '#/components/headers/ETagHeader'
-            Last-Modified:
-              $ref: '#/components/headers/LastModifiedHeader'
+          description: Event
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventDto'
         '404':
           $ref: '#/components/responses/NotFound'
-    patch:
+    put:
       tags: [Events]
-      summary: Partially update event
+      summary: Update event
       requestBody:
         required: true
         content:
-          application/merge-patch+json:
+          application/json:
             schema:
-              $ref: '#/components/schemas/EventUpdateRequestDto'
+              $ref: '#/components/schemas/EventDto'
       responses:
         '200':
           description: Event updated
@@ -437,79 +669,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Events]
       summary: Delete event
       responses:
         '204':
           description: Event deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
 
-  /events/{eventId}/photo:
+  /clubs/{clubId}/events/{eventId}/photo:
     parameters:
-      - $ref: '#/components/parameters/EventIdParam'
+      - $ref: '#/components/parameters/ClubId'
+      - $ref: '#/components/parameters/EventId'
     get:
-      tags: [Events]
+      tags: [Photos]
       summary: Get event photo
       responses:
         '200':
-          description: Binary image
+          description: Image bytes
           content:
             image/*:
               schema:
                 type: string
                 format: binary
-        '404':
-          $ref: '#/components/responses/NotFound'
     put:
-      tags: [Events]
-      summary: Create or replace event photo
+      tags: [Photos]
+      summary: Replace event photo
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
-              type: object
-              required: [file]
-              properties:
-                file:
-                  type: string
-                  format: binary
+              $ref: '#/components/schemas/FileUpload'
       responses:
-        '201':
-          description: Photo created
-          headers:
-            Location:
-              $ref: '#/components/headers/LocationHeader'
-        '204':
-          description: Photo replaced
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        '200':
+          description: Event with photo link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDto'
     delete:
-      tags: [Events]
+      tags: [Photos]
       summary: Delete event photo
       responses:
-        '204':
-          description: Photo deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
+        '200':
+          description: Event after photo deletion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDto'
 
-  /clubs/{clubId}/products:
+  /clubs/{clubId}/menu:
     parameters:
-      - $ref: '#/components/parameters/ClubIdParam'
+      - $ref: '#/components/parameters/ClubId'
     get:
-      tags: [Products]
+      tags: [Menu]
       summary: List products by club
       responses:
         '200':
-          description: Product list
+          description: Product array
           content:
             application/json:
               schema:
@@ -517,7 +734,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProductDto'
     post:
-      tags: [Products]
+      tags: [Menu]
       summary: Create product
       requestBody:
         required: true
@@ -528,36 +745,34 @@ paths:
       responses:
         '201':
           description: Product created
-          headers:
-            Location:
-              $ref: '#/components/headers/LocationHeader'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductDto'
 
-  /products/{productId}:
+  /clubs/{clubId}/menu/{productId}:
     parameters:
-      - $ref: '#/components/parameters/ProductIdParam'
+      - $ref: '#/components/parameters/ClubId'
+      - $ref: '#/components/parameters/ProductId'
     get:
-      tags: [Products]
-      summary: Get product by id
+      tags: [Menu]
+      summary: Get product
       responses:
         '200':
-          description: Product found
+          description: Product
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductDto'
         '404':
           $ref: '#/components/responses/NotFound'
-    patch:
-      tags: [Products]
-      summary: Partially update product
+    put:
+      tags: [Menu]
+      summary: Update product
       requestBody:
         required: true
         content:
-          application/merge-patch+json:
+          application/json:
             schema:
               $ref: '#/components/schemas/ProductUpdateRequestDto'
       responses:
@@ -567,26 +782,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      tags: [Products]
-      summary: Delete product
-      responses:
-        '204':
-          description: Product deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
 
   /clubs/{clubId}/tables:
     parameters:
-      - $ref: '#/components/parameters/ClubIdParam'
+      - $ref: '#/components/parameters/ClubId'
     get:
       tags: [Tables]
-      summary: List tables by club
+      summary: List club tables
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
       responses:
         '200':
-          description: Table list
+          description: Table array
           content:
             application/json:
               schema:
@@ -605,118 +816,32 @@ paths:
       responses:
         '201':
           description: Table created
-          headers:
-            Location:
-              $ref: '#/components/headers/LocationHeader'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TableDto'
 
-  /clubs/{clubId}/reviews:
+  /clubs/{clubId}/tables/{tableId}:
     parameters:
-      - $ref: '#/components/parameters/ClubIdParam'
+      - $ref: '#/components/parameters/ClubId'
+      - $ref: '#/components/parameters/TableId'
     get:
-      tags: [ Clubs ]
-      summary: List reviews by club
-      parameters:
-        - name: sort
-          in: query
-          schema:
-            type: string
-            enum: [ created_desc, created_asc, rating_desc, rating_asc ]
-            default: created_desc
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          schema:
-            type: integer
-            default: 10
+      tags: [Tables]
+      summary: Get table
       responses:
         '200':
-          description: Paginated reviews for club
+          description: Table
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReviewPagedResponseDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    post:
-      tags: [ Clubs ]
-      summary: Create or update review for club by current user
+                $ref: '#/components/schemas/TableDto'
+    put:
+      tags: [Tables]
+      summary: Update table, including tableState
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/ReviewCreateRequestDto'
-      responses:
-        '201':
-          description: Review created
-          headers:
-            Location:
-              $ref: '#/components/headers/LocationHeader'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReviewDto'
-        '200':
-          description: Review updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReviewDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Unauthorized
-
-  /reviews/{reviewId}:
-    parameters:
-      - name: reviewId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    delete:
-      tags: [ Clubs ]
-      summary: Delete review
-      responses:
-        '204':
-          description: Review deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-
-  /tables/{tableId}:
-    parameters:
-      - $ref: '#/components/parameters/TableIdParam'
-    get:
-      tags: [Tables]
-      summary: Get table by id
-      responses:
-        '200':
-          description: Table found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TableDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    patch:
-      tags: [Tables]
-      summary: Partially update table
-      requestBody:
-        required: true
-        content:
-          application/merge-patch+json:
             schema:
               $ref: '#/components/schemas/TableUpdateRequestDto'
       responses:
@@ -726,73 +851,431 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TableDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Tables]
       summary: Delete table
       responses:
         '204':
           description: Table deleted
+
+  /clubs/{clubId}/tables/{tableId}/state:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+      - $ref: '#/components/parameters/TableId'
+    put:
+      tags: [Tables]
+      summary: Update table state
+      deprecated: true
+      description: Legacy compatibility endpoint. Prefer PUT /clubs/{clubId}/tables/{tableId}.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TableUpdateRequestDto'
+      responses:
+        '200':
+          description: Table updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableDto'
+
+  /clubs/{clubId}/reviews:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+    get:
+      tags: [Reviews]
+      summary: List reviews by club
+      parameters:
+        - $ref: '#/components/parameters/PageZero'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Review array
+          headers:
+            Link:
+              schema:
+                type: string
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReviewDto'
+    post:
+      tags: [Reviews]
+      summary: Create current user's review for club
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreateRequestDto'
+      responses:
+        '201':
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDto'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    put:
+      tags: [Reviews]
+      summary: Update current user's review for club
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreateRequestDto'
+      responses:
+        '200':
+          description: Review updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDto'
+    delete:
+      tags: [Reviews]
+      summary: Delete current user's review for club
+      responses:
+        '204':
+          description: Review deleted
+
+  /clubs/{clubId}/reviews/{reviewId}:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+      - name: reviewId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Reviews]
+      summary: Get review by id in club
+      responses:
+        '200':
+          description: Review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDto'
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /clubs/{clubId}/bookings:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+    post:
+      tags: [Bookings]
+      summary: Create booking for club
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreateRequestDto'
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDto'
+
+  /clubs/{clubId}/bookings/{bookingId}:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+      - $ref: '#/components/parameters/BookingId'
+    get:
+      tags: [Bookings]
+      summary: Get own booking in club
+      responses:
+        '200':
+          description: Booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDto'
+    delete:
+      tags: [Bookings]
+      summary: Cancel own booking in club
+      responses:
+        '204':
+          description: Booking cancelled
+
+  /clubs/{clubId}/bookings/{bookingId}/receipt:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+      - $ref: '#/components/parameters/BookingId'
+    get:
+      tags: [Bookings]
+      summary: Get booking receipt image
+      responses:
+        '200':
+          description: Receipt image
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+    put:
+      tags: [Bookings]
+      summary: Upload or replace booking receipt
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+      responses:
+        '200':
+          description: Receipt replaced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptDto'
+        '201':
+          description: Receipt uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptDto'
+    delete:
+      tags: [Bookings]
+      summary: Delete booking receipt
+      responses:
+        '204':
+          description: Receipt deleted
+
+  /bookings:
+    get:
+      tags: [Bookings]
+      summary: List authenticated user's bookings
+      parameters:
+        - $ref: '#/components/parameters/ClubIdQuery'
+        - $ref: '#/components/parameters/BookingIdQuery'
+        - $ref: '#/components/parameters/StatusQuery'
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/BookingDateQuery'
+        - $ref: '#/components/parameters/HasReceiptQuery'
+        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Paginated bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPageDto'
+
+  /managed-club-bookings:
+    get:
+      tags: [Bookings]
+      summary: List bookings for clubs managed by authenticated user
+      parameters:
+        - $ref: '#/components/parameters/ClubIdQuery'
+        - $ref: '#/components/parameters/BookingIdQuery'
+        - $ref: '#/components/parameters/StatusQuery'
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/BookingDateQuery'
+        - $ref: '#/components/parameters/HasReceiptQuery'
+        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Paginated bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPageDto'
+
+  /managed-club-bookings/{bookingId}:
+    parameters:
+      - $ref: '#/components/parameters/BookingId'
+    get:
+      tags: [Bookings]
+      summary: Get booking from managed club
+      responses:
+        '200':
+          description: Booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDto'
+    put:
+      tags: [Bookings]
+      summary: Update managed booking status
+      description: Accepts status CONFIRMADA or CANCELADA.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: '#/components/schemas/Status'
+      responses:
+        '200':
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDto'
+    delete:
+      tags: [Bookings]
+      summary: Cancel booking from managed club
+      responses:
+        '204':
+          description: Booking cancelled
+
+  /managed-club-bookings/{bookingId}/confirmation:
+    parameters:
+      - $ref: '#/components/parameters/BookingId'
+    put:
+      tags: [Bookings]
+      summary: Confirm managed booking
+      deprecated: true
+      description: Legacy compatibility endpoint. Prefer PUT /managed-club-bookings/{bookingId} with status CONFIRMADA.
+      responses:
+        '204':
+          description: Booking confirmed
+
 components:
-  headers:
-    LocationHeader:
-      description: Canonical URI of the created resource
-      schema:
-        type: string
-        format: uri
-    ETagHeader:
-      description: Entity tag for conditional requests
-      schema:
-        type: string
-    LastModifiedHeader:
-      description: Resource last modification date
-      schema:
-        type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
   parameters:
-    UserIdParam:
+    UserId:
       name: userId
       in: path
       required: true
       schema:
         type: string
         format: uuid
-    ClubIdParam:
+    ClubId:
       name: clubId
       in: path
       required: true
       schema:
         type: string
         format: uuid
-    EventIdParam:
+    EventId:
       name: eventId
       in: path
       required: true
       schema:
         type: string
         format: uuid
-    ProductIdParam:
+    ProductId:
       name: productId
       in: path
       required: true
       schema:
         type: string
         format: uuid
-    TableIdParam:
+    TableId:
       name: tableId
       in: path
       required: true
       schema:
         type: string
         format: uuid
+    PhotoId:
+      name: photoId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    BookingId:
+      name: bookingId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PageZero:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    PageOne:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    Size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+    ClubIdQuery:
+      name: clubId
+      in: query
+      schema:
+        type: string
+        format: uuid
+    BookingIdQuery:
+      name: bookingId
+      in: query
+      schema:
+        type: string
+        format: uuid
+    StatusQuery:
+      name: status
+      in: query
+      schema:
+        $ref: '#/components/schemas/Status'
+    SortQuery:
+      name: sort
+      in: query
+      schema:
+        type: string
+    BookingDateQuery:
+      name: bookingDate
+      in: query
+      schema:
+        type: string
+        format: date
+    HasReceiptQuery:
+      name: hasReceipt
+      in: query
+      schema:
+        type: boolean
 
   responses:
     BadRequest:
       description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDto'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDto'
+    Forbidden:
+      description: Authenticated user is not allowed to perform this action
       content:
         application/json:
           schema:
@@ -803,34 +1286,39 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorDto'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDto'
+    Message:
+      description: Message response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
 
   schemas:
-    ErrorDto:
-      type: object
-      required: [message]
-      properties:
-        message:
-          type: string
-
     LinkDto:
       type: object
-      required: [rel, href]
       properties:
         rel:
           type: string
-          example: self
         href:
           type: string
           format: uri
+        method:
+          type: string
 
-    ApiIndexDto:
+    ErrorDto:
       type: object
-      required: [links]
       properties:
-        links:
-          type: array
-          items:
-            $ref: '#/components/schemas/LinkDto'
+        message:
+          type: string
 
     UserDto:
       type: object
@@ -863,6 +1351,77 @@ components:
           items:
             $ref: '#/components/schemas/LinkDto'
 
+    PublicUserDto:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkDto'
+
+    UserCreateRequestDto:
+      type: object
+      properties:
+        username:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        cellphone:
+          type: string
+        locale:
+          type: string
+
+    UserVerificationRequestDto:
+      type: object
+      properties:
+        token:
+          type: string
+        code:
+          type: string
+
+    ResendVerificationRequestDto:
+      type: object
+      properties:
+        usernameOrEmail:
+          type: string
+
+    PasswordResetRequestDto:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+
+    PasswordResetTokenDto:
+      type: object
+      properties:
+        token:
+          type: string
+
+    PasswordResetDto:
+      type: object
+      properties:
+        newPassword:
+          type: string
+        confirmationPassword:
+          type: string
+
     ClubDto:
       type: object
       properties:
@@ -876,12 +1435,12 @@ components:
         location:
           type: string
         zone:
-          $ref: '#/components/schemas/Zone'
+          type: string
         musicGenre:
-          $ref: '#/components/schemas/MusicalGenre'
+          type: string
         priceRange:
-          $ref: '#/components/schemas/Price'
-        isBar:
+          type: string
+        bar:
           type: boolean
         rating:
           type: number
@@ -896,10 +1455,96 @@ components:
           items:
             $ref: '#/components/schemas/LinkDto'
 
+    ClubCreateRequestDto:
+      type: object
+      properties:
+        clubName:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        zone:
+          type: string
+        musicGenre:
+          type: string
+        priceRange:
+          type: string
+        isBar:
+          type: boolean
+        cbu:
+          type: string
+
+    ClubPagedResponseDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClubDto'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        availableToday:
+          type: boolean
+        invalidDay:
+          type: boolean
+        selectedAvailabilityDate:
+          type: string
+          nullable: true
+
+    ClubLimitsDto:
+      type: object
+      properties:
+        clubId:
+          type: string
+        maxCapacity:
+          type: integer
+        maxTables:
+          type: integer
+        minTables:
+          type: integer
+        maxBookingDays:
+          type: integer
+
+    LayoutDto:
+      type: object
+      properties:
+        clubId:
+          type: string
+        imageUrl:
+          type: string
+
+    PhotoDto:
+      type: object
+      properties:
+        photoId:
+          type: string
+          format: uuid
+        clubId:
+          type: string
+          format: uuid
+        reviewId:
+          type: string
+          format: uuid
+        url:
+          type: string
+        contentType:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkDto'
+
     EventDto:
       type: object
       properties:
-        eventId:
+        id:
           type: string
           format: uuid
         eventName:
@@ -909,6 +1554,9 @@ components:
           format: date
         description:
           type: string
+        photoId:
+          type: string
+          format: uuid
         links:
           type: array
           items:
@@ -926,7 +1574,6 @@ components:
           type: string
         basePrice:
           type: number
-          format: double
         productType:
           $ref: '#/components/schemas/ProductType'
         isAvailable:
@@ -938,6 +1585,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LinkDto'
+
+    ProductCreateRequestDto:
+      type: object
+      properties:
+        productName:
+          type: string
+        description:
+          type: string
+        basePrice:
+          type: number
+        productType:
+          $ref: '#/components/schemas/ProductType'
+        isAvailable:
+          type: boolean
+
+    ProductUpdateRequestDto:
+      allOf:
+        - $ref: '#/components/schemas/ProductCreateRequestDto'
 
     TableDto:
       type: object
@@ -956,236 +1621,15 @@ components:
           $ref: '#/components/schemas/TableState'
         price:
           type: number
-          format: double
         discount:
           type: number
-          format: double
         links:
           type: array
           items:
             $ref: '#/components/schemas/LinkDto'
-
-    PagedClubResponseDto:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/ClubDto'
-        page:
-          type: integer
-        size:
-          type: integer
-        totalElements:
-          type: integer
-        totalPages:
-          type: integer
-        links:
-          type: array
-          items:
-            $ref: '#/components/schemas/LinkDto'
-
-    EventPagedResponseDto:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/EventDto'
-        page:
-          type: integer
-        size:
-          type: integer
-        totalElements:
-          type: integer
-        totalPages:
-          type: integer
-        links:
-          type: array
-          items:
-            $ref: '#/components/schemas/LinkDto'
-
-    UUID:
-      type: string
-      format: uuid
-
-    UserCreateRequestDto:
-      type: object
-      required: [username, name, surname, email]
-      properties:
-        username:
-          type: string
-        name:
-          type: string
-        surname:
-          type: string
-        email:
-          type: string
-          format: email
-        cellphone:
-          type: string
-        locale:
-          type: string
-        password:
-          type: string
-          format: password
-
-    UserUpdateRequestDto:
-      type: object
-      properties:
-        username:
-          type: string
-        name:
-          type: string
-        surname:
-          type: string
-        email:
-          type: string
-          format: email
-        cellphone:
-          type: string
-        locale:
-          type: string
-        password:
-          type: string
-          format: password
-
-    ClubCreateRequestDto:
-      type: object
-      required: [clubName, location, zone, musicGenre, priceRange]
-      properties:
-        clubName:
-          type: string
-        description:
-          type: string
-        location:
-          type: string
-        zone:
-          $ref: '#/components/schemas/Zone'
-        musicGenre:
-          $ref: '#/components/schemas/MusicalGenre'
-        priceRange:
-          $ref: '#/components/schemas/Price'
-        isBar:
-          type: boolean
-
-    ClubUpdateRequestDto:
-      type: object
-      properties:
-        clubName:
-          type: string
-        description:
-          type: string
-        location:
-          type: string
-        zone:
-          $ref: '#/components/schemas/Zone'
-        musicGenre:
-          $ref: '#/components/schemas/MusicalGenre'
-        priceRange:
-          $ref: '#/components/schemas/Price'
-        isBar:
-          type: boolean
-
-    LayoutDto:
-      type: object
-      properties:
-        layoutId:
-          $ref: '#/components/schemas/UUID'
-        imageUrl:
-          type: string
-          format: uri
-        width:
-          type: integer
-        height:
-          type: integer
-
-    ClubLimitsDto:
-      type: object
-      properties:
-        maxCapacity:
-          type: integer
-        maxTables:
-          type: integer
-        reservedTables:
-          type: integer
-
-    ClubPhotoDto:
-      type: object
-      properties:
-        photoId:
-          $ref: '#/components/schemas/UUID'
-        url:
-          type: string
-          format: uri
-
-    ClubPhotosResponse:
-      type: object
-      properties:
-        clubId:
-          $ref: '#/components/schemas/UUID'
-        photos:
-          type: array
-          items:
-            $ref: '#/components/schemas/ClubPhotoDto'
-
-    EventCreateRequestDto:
-      type: object
-      required: [eventName, date]
-      properties:
-        eventName:
-          type: string
-        date:
-          type: string
-          format: date
-        description:
-          type: string
-
-    EventUpdateRequestDto:
-      type: object
-      properties:
-        eventName:
-          type: string
-        date:
-          type: string
-          format: date
-        description:
-          type: string
-
-    ProductCreateRequestDto:
-      type: object
-      required: [productName, basePrice, productType]
-      properties:
-        productName:
-          type: string
-        description:
-          type: string
-        basePrice:
-          type: number
-          format: double
-        productType:
-          $ref: '#/components/schemas/ProductType'
-        isAvailable:
-          type: boolean
-
-    ProductUpdateRequestDto:
-      type: object
-      properties:
-        productName:
-          type: string
-        description:
-          type: string
-        basePrice:
-          type: number
-          format: double
-        productType:
-          $ref: '#/components/schemas/ProductType'
-        isAvailable:
-          type: boolean
 
     TableCreateRequestDto:
       type: object
-      required: [tableNumber, capacity, tableState, price]
       properties:
         tableNumber:
           type: integer
@@ -1195,26 +1639,12 @@ components:
           $ref: '#/components/schemas/TableState'
         price:
           type: number
-          format: double
         discount:
           type: number
-          format: double
 
     TableUpdateRequestDto:
-      type: object
-      properties:
-        tableNumber:
-          type: integer
-        capacity:
-          type: integer
-        tableState:
-          $ref: '#/components/schemas/TableState'
-        price:
-          type: number
-          format: double
-        discount:
-          type: number
-          format: double
+      allOf:
+        - $ref: '#/components/schemas/TableCreateRequestDto'
 
     ReviewDto:
       type: object
@@ -1230,15 +1660,8 @@ components:
           format: uuid
         rating:
           type: integer
-          minimum: 1
-          maximum: 5
         description:
           type: string
-        fromTableGuest:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
         links:
           type: array
           items:
@@ -1246,22 +1669,64 @@ components:
 
     ReviewCreateRequestDto:
       type: object
-      required: [ rating ]
       properties:
         rating:
           type: integer
-          minimum: 1
-          maximum: 5
         description:
           type: string
 
-    ReviewPagedResponseDto:
+    BookingDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clubId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        tableId:
+          type: string
+          format: uuid
+        bookingStart:
+          type: string
+          format: date-time
+        bookingEnd:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/Status'
+        createdAt:
+          type: string
+          format: date-time
+        totalAmount:
+          type: number
+        hasReceipt:
+          type: boolean
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkDto'
+
+    BookingCreateRequestDto:
+      type: object
+      properties:
+        tableId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+
+    BookingPageDto:
       type: object
       properties:
         content:
           type: array
           items:
-            $ref: '#/components/schemas/ReviewDto'
+            $ref: '#/components/schemas/BookingDto'
         page:
           type: integer
         size:
@@ -1270,27 +1735,44 @@ components:
           type: integer
         totalPages:
           type: integer
+
+    ReceiptDto:
+      type: object
+      properties:
+        receiptId:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        filename:
+          type: string
+        contentType:
+          type: string
         links:
           type: array
           items:
             $ref: '#/components/schemas/LinkDto'
 
-    Zone:
-      type: string
-      enum: [ZONA_NORTE, ZONA_OESTE, ZONA_SUR, ZONA_CABA]
+    FileUpload:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
 
-    Price:
+    Status:
       type: string
-      enum: [BAJO, MEDIO, ALTO]
+      enum: [PENDIENTE, DISPONIBLE, CONFIRMADA, CANCELADA]
 
-    MusicalGenre:
+    TableState:
       type: string
-      enum: [ROCK, POP, CACHENGUE, TECHNO, REGGAETON, CUMBIA, TRAP, JAZZ, ELECTRONICA, AFROBEAT, OTRO]
+      enum: [DISPONIBLE, RESERVADA, PENDIENTE]
 
     ProductType:
       type: string
       enum: [ALCOHOLICA, NO_ALCOHOLICA, TRAGOS]
 
-    TableState:
+    Zone:
       type: string
-      enum: [DISPONIBLE, RESERVADA, PENDIENTE]
+      enum: [ZONA_NORTE, ZONA_OESTE, ZONA_SUR, ZONA_CABA]

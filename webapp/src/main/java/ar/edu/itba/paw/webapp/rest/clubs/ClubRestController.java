@@ -65,6 +65,7 @@ public class ClubRestController {
 
     @GET
     public Response listClubs(@QueryParam("name") final String nameLike,
+                              @QueryParam("ownerId") final String ownerId,
                               @QueryParam("zone") final Zone zone,
                               @QueryParam("genre") final String musicGenre,
                               @QueryParam("price") final String priceRange,
@@ -76,6 +77,10 @@ public class ClubRestController {
 
         page = (page < 1) ? DEFAULT_PAGE : page;
         size = (size < 1) ? DEFAULT_SIZE : size;
+
+        if (ownerId != null && !ownerId.isBlank()) {
+            return listClubsByOwner(ownerId, page, size);
+        }
 
         final String normalizedPriceRange =
                 (priceRange == null || priceRange.isBlank()) ? null : priceRange.toUpperCase();
@@ -123,6 +128,39 @@ public class ClubRestController {
         );
 
         Response.ResponseBuilder responseBuilder = Response.ok(response)
+                .header("X-Total-Count", totalClubs)
+                .header("Cache-Control", "no-cache, no-store, must-revalidate")
+                .header("Pragma", "no-cache")
+                .header("Expires", "0");
+        addPaginationLinks(responseBuilder, page, size, totalPages, 1);
+        return responseBuilder.build();
+    }
+
+    private Response listClubsByOwner(final String ownerId, final int page, final int size) {
+        UUID id = parseUuidOr400(ownerId);
+        if (id == null) return badRequest("ownerId invalido");
+
+        final int offset = (page - 1) * size;
+        final int totalClubs = clubService.countClubsByUser(id);
+        final List<ClubDto> dtos = clubService.getClubsByUserPaginated(id, size, offset)
+                .stream()
+                .map(this::toDtoWithLinks)
+                .collect(Collectors.toList());
+
+        final int totalPages = (int) Math.ceil((double) totalClubs / size);
+        final PagedResponseDto response = new PagedResponseDto(
+                dtos,
+                page,
+                size,
+                totalClubs,
+                totalPages,
+                false,
+                false,
+                null
+        );
+
+        Response.ResponseBuilder responseBuilder = Response.ok(response)
+                .header("X-Total-Count", totalClubs)
                 .header("Cache-Control", "no-cache, no-store, must-revalidate")
                 .header("Pragma", "no-cache")
                 .header("Expires", "0");
@@ -417,7 +455,7 @@ public class ClubRestController {
             List<Photo> rawPhotos = photoService.getClubPhotos(id, 50, 0);
             List<PhotoDto> photos = new ArrayList<>();
             if (rawPhotos == null || rawPhotos.isEmpty()) {
-                return Response.ok(new ClubPhotosResponseDto(photos)).build();
+                return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
             }
 
             for (Photo photo : rawPhotos) {
@@ -427,9 +465,9 @@ public class ClubRestController {
                 photos.add(photoDtoAssembler.toDto(uriInfo, photo));
             }
 
-            return Response.ok(new ClubPhotosResponseDto(photos)).build();
+            return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
         } catch (RuntimeException ex) {
-            return Response.ok(new ClubPhotosResponseDto(new ArrayList<>())).build();
+            return Response.ok(new GenericEntity<List<PhotoDto>>(new ArrayList<PhotoDto>()) {}).build();
         }
     }
 
@@ -555,7 +593,7 @@ public class ClubRestController {
             List<Photo> rawPhotos = photoService.getReviewPhotosByClub(id, 50, 0);
             List<PhotoDto> photos = new ArrayList<>();
             if (rawPhotos == null || rawPhotos.isEmpty()) {
-                return Response.ok(new ClubPhotosResponseDto(photos)).build();
+                return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
             }
 
             for (Photo photo : rawPhotos) {
@@ -565,9 +603,9 @@ public class ClubRestController {
                 photos.add(photoDtoAssembler.toDto(uriInfo, photo));
             }
 
-            return Response.ok(new ClubPhotosResponseDto(photos)).build();
+            return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
         } catch (RuntimeException ex) {
-            return Response.ok(new ClubPhotosResponseDto(new ArrayList<>())).build();
+            return Response.ok(new GenericEntity<List<PhotoDto>>(new ArrayList<PhotoDto>()) {}).build();
         }
     }
 
@@ -751,6 +789,11 @@ public class ClubRestController {
                 .path("clubs")
                 .path(clubId.toString())
                 .path("photos")
+                .build(), "GET"));
+        links.add(LinkBuilder.link("review-photos", uriInfo.getBaseUriBuilder()
+                .path("clubs")
+                .path(clubId.toString())
+                .path("review-photos")
                 .build(), "GET"));
         links.add(LinkBuilder.link("cover", uriInfo.getBaseUriBuilder()
                 .path("clubs")

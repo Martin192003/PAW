@@ -3,6 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Review } from '../models/review.model';
+import { environment } from '../../environments/environment';
 
 export interface ReviewCreateRequest {
   rating: number;
@@ -18,7 +19,7 @@ export interface ReviewListResult {
 @Injectable({ providedIn: 'root' })
 export class ReviewService {
 
-  private readonly apiUrl = 'http://localhost:8080/webapp_war_exploded/api';
+  private readonly apiUrl = environment.apiBaseUrl;
 
   constructor(private readonly http: HttpClient) {}
 

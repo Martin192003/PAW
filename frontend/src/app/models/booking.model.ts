@@ -8,6 +8,7 @@ export interface Booking {
   status: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | string;
   createdAt: string;
   totalAmount: number;
+  hasReceipt?: boolean;
   links?: Record<string, string> | Array<{ rel: string; href: string }>;
 }
 

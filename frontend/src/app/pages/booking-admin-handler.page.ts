@@ -160,6 +160,15 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
 
   private loadReceipt(): void {
     if (!this.booking) return;
+
+    if (!this.booking.hasReceipt) {
+      this.revokeReceiptUrl();
+      this.hasReceipt = false;
+      this.receiptUrl = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
     let receiptLink = '';
     try {
       receiptLink = this.bookingService.requireReceiptLink(this.booking);

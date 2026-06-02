@@ -14,7 +14,10 @@ export function isApiUrl(url: string, apiBaseUrl: string): boolean {
     if (parsedBase && parsed.origin !== parsedBase.origin) {
       return false;
     }
-    return apiPrefixes.some(prefix => parsed.pathname.startsWith(apiPath(prefix)));
+    if (!parsedBase && !isAllowedApiOrigin(parsed)) {
+      return false;
+    }
+    return apiPrefixes.some(prefix => parsed.pathname.startsWith(apiPath(prefix))) || hasApiPathSegment(parsed.pathname);
   } catch {
     return false;
   }
@@ -38,6 +41,32 @@ export function resolveApiUrl(pathOrUrl: string, apiBaseUrl: string): string {
 
 function isAbsoluteUrl(url: string): boolean {
   return url.startsWith('http://') || url.startsWith('https://');
+}
+
+function hasApiPathSegment(pathname: string): boolean {
+  return pathname === '/api' || pathname.includes('/api/');
+}
+
+function isAllowedApiOrigin(parsed: URL): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  if (parsed.origin === window.location.origin) {
+    return true;
+  }
+
+  const currentHost = normalizeLocalHost(window.location.hostname);
+  const parsedHost = normalizeLocalHost(parsed.hostname);
+  return currentHost !== null && parsedHost !== null && currentHost === parsedHost;
+}
+
+function normalizeLocalHost(hostname: string): string | null {
+  const normalized = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  if (normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1') {
+    return 'localhost';
+  }
+  return null;
 }
 
 function apiPath(apiBaseUrl: string): string {

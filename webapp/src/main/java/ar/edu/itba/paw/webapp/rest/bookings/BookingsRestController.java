@@ -119,6 +119,34 @@ public class BookingsRestController {
         return Response.noContent().build();
     }
 
+    @PUT
+    @Path("/managed-club-bookings/{bookingId}")
+    public Response updateManagedClubBooking(@PathParam("bookingId") UUID bookingId,
+                                             BookingDto body,
+                                             @Context SecurityContext securityContext) {
+        if (body == null || body.getStatus() == null || body.getStatus().isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        final Status status;
+        try {
+            status = Status.valueOf(body.getStatus());
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        final String login = authenticatedLoginIdentifier(securityContext);
+        if (status == Status.CONFIRMADA) {
+            bookingService.confirmManagedClubBooking(login, bookingId);
+        } else if (status == Status.CANCELADA) {
+            bookingService.cancelManagedClubBooking(login, bookingId);
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        return Response.ok(toDto(bookingService.getManagedClubBooking(login, bookingId))).build();
+    }
+
     @DELETE
     @Path("/managed-club-bookings/{bookingId}")
     public Response cancelManagedClubBooking(@PathParam("bookingId") UUID bookingId,
