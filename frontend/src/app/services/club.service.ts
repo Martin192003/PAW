@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, forkJoin, map, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -13,6 +13,7 @@ import { PagedResponse } from '../models/paged-response.model';
 import { Product } from '../models/product.model';
 import { Review } from '../models/review.model';
 import { normalizeLinks, requireAnyLink, resolveApiUrl } from '../utils/api-url.util';
+import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
 
 export interface ClubUpdatePayload {
   clubName: string;
@@ -108,6 +109,10 @@ export class ClubService {
     return throwError(() => err instanceof Error ? err : new Error('Missing HATEOAS link.'));
   }
 
+  private optionalApiContext(): HttpContext {
+    return new HttpContext().set(SKIP_API_ERROR_REDIRECT, true);
+  }
+
   getClubs(
     page: number,
     size: number,
@@ -187,7 +192,9 @@ export class ClubService {
     }
 
     return this.http
-      .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(url)
+      .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(url, {
+        context: this.optionalApiContext()
+      })
       .pipe(
         map(response => Array.isArray(response) ? response : (response?.photos ?? [])),
         map(photos => photos
@@ -206,7 +213,9 @@ export class ClubService {
     }
 
     return this.http
-      .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(url)
+      .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(url, {
+        context: this.optionalApiContext()
+      })
       .pipe(
         map(response => Array.isArray(response) ? response : (response?.photos ?? [])),
         map(photos => photos
@@ -224,7 +233,9 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.get<Layout>(url);
+    return this.http.get<Layout>(url, {
+      context: this.optionalApiContext()
+    });
   }
 
   uploadCover(clubId: string, file: File): Observable<unknown> {

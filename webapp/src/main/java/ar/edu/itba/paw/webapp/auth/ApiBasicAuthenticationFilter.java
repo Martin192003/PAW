@@ -20,12 +20,10 @@ import java.util.Base64;
 public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserService userService;
-    private final JwtUtil jwtUtil;
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiBasicAuthenticationFilter.class);
 
-    public ApiBasicAuthenticationFilter(UserService userService, JwtUtil jwtUtil) {
+    public ApiBasicAuthenticationFilter(UserService userService) {
         this.userService = userService;
-        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -78,18 +76,7 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
             var context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
-            if (authentication.isAuthenticated()) {
-                String subject = principal.getUsername();
-                String userHref = request.getContextPath() + "/api/users/" + principal.getId();
-                String token = jwtUtil.generateToken(subject);
-                response.setHeader("X-Access-Token", token);
-                response.setHeader("X-Token-Type", "Bearer");
-                response.setHeader("X-Expires-In", Long.toString(jwtUtil.getExpirationSeconds()));
-                response.setHeader("X-User-Href", userHref);
-                response.setHeader("Cache-Control", "no-store");
-                response.setHeader("Pragma", "no-cache");
-                LOGGER.info("ApiBasicAuthenticationFilter: authentication succeeded for username={}, emitted X-Access-Token (len={})", username, token == null ? 0 : token.length());
-            }
+            LOGGER.info("ApiBasicAuthenticationFilter: authentication succeeded for username={}", username);
 
             filterChain.doFilter(request, response);
         } catch (IllegalStateException ex) {
@@ -124,7 +111,6 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 }
-
 
 
 

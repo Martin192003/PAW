@@ -3,7 +3,6 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.exceptions.InvalidClubException;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
@@ -202,7 +201,7 @@ public class EventServiceImplTest {
                 .thenReturn(Optional.of(mockEvent));
         Mockito.when(mockEvent.getClubId()).thenReturn(OTHER_CLUB_ID);
 
-        Assert.assertThrows(InvalidClubException.class, () ->
+        Assert.assertThrows(NotFoundException.class, () ->
                 eventService.update(CLUB_ID, EVENT_ID, EVENT_NAME, DESCRIPTION, FUTURE_DATE, null)
         );
     }
@@ -258,7 +257,7 @@ public class EventServiceImplTest {
                 .thenReturn(Optional.of(mockEvent));
         Mockito.when(mockEvent.getClubId()).thenReturn(OTHER_CLUB_ID);
 
-        Assert.assertThrows(InvalidClubException.class, () ->
+        Assert.assertThrows(NotFoundException.class, () ->
                 eventService.delete(CLUB_ID, EVENT_ID)
         );
     }

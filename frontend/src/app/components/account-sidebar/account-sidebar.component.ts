@@ -1,7 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthStateService } from '../../services/auth-state.service';
 
 export type SideBarSection =
   | 'profile'
@@ -19,6 +20,11 @@ export type SideBarSection =
 export class SideBarComponent {
   @Input() activeSection: SideBarSection = 'profile';
 
+  constructor(
+    private readonly authState: AuthStateService,
+    private readonly router: Router,
+  ) {}
+
   readonly items: Array<{
     key: SideBarSection;
     labelKey: string;
@@ -33,5 +39,10 @@ export class SideBarComponent {
 
   isActive(section: SideBarSection): boolean {
     return this.activeSection === section;
+  }
+
+  logout(): void {
+    this.authState.clearSession();
+    void this.router.navigate(['/clubs'], { replaceUrl: true });
   }
 }

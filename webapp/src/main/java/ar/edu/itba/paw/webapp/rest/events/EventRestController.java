@@ -1,8 +1,11 @@
 package ar.edu.itba.paw.webapp.rest.events;
 
 import ar.edu.itba.paw.model.Event;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.EventDto;
+import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
+import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +28,13 @@ public class EventRestController {
 
     @Autowired
     private EventDtoAssembler eventDtoAssembler;
+
+    @Autowired
+    private ClubService clubService;
+
+    @Autowired
+    private AuthenticatedUserResolver authenticatedUserResolver;
+
     @Context
     private UriInfo uriInfo;
 
@@ -67,7 +77,14 @@ public class EventRestController {
     @POST
     @Path("/{clubId}/events")
     public Response create(@PathParam("clubId") UUID clubId,
-                           @Valid EventDto dto) {
+                           @Valid EventDto dto,
+                           @Context SecurityContext securityContext) {
+
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubId, user.getId());
 
         Event created = eventService.create(
                 clubId,
@@ -90,7 +107,7 @@ public class EventRestController {
     public Response getById(@PathParam("clubId") UUID clubId,
                             @PathParam("eventId") UUID eventId) {
 
-        Event event = eventService.get(eventId);
+        Event event = eventService.getForClub(clubId, eventId);
 
         return Response.ok( eventDtoAssembler.toDto(uriInfo,clubId, event)).build();
     }
@@ -99,8 +116,14 @@ public class EventRestController {
     @Path("/{clubId}/events/{eventId}")
     public Response update(@PathParam("clubId") UUID clubId,
                            @PathParam("eventId") UUID eventId,
-                           @Valid EventDto dto) {
+                           @Valid EventDto dto,
+                           @Context SecurityContext securityContext) {
 
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubId, user.getId());
 
         Event updated = eventService.update(
                 clubId,
@@ -117,7 +140,14 @@ public class EventRestController {
     @DELETE
     @Path("/{clubId}/events/{eventId}")
     public Response delete(@PathParam("clubId") UUID clubId,
-                           @PathParam("eventId") UUID eventId) {
+                           @PathParam("eventId") UUID eventId,
+                           @Context SecurityContext securityContext) {
+
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubId, user.getId());
 
         eventService.delete(clubId, eventId);
         return Response.noContent().build();

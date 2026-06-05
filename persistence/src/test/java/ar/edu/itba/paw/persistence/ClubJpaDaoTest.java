@@ -302,6 +302,28 @@ public class ClubJpaDaoTest {
     }
 
     @Test
+    public void testCountSearchEscapesPercentWildcard() {
+        persistClub(owner, "Club 100% Real", "desc");
+        persistClub(owner, "Club 1000 Real", "desc");
+        em.flush();
+
+        int count = clubDao.countSearch("100%", null, null, null, null);
+
+        assertEquals(1, count);
+    }
+
+    @Test
+    public void testCountSearchEscapesUnderscoreWildcard() {
+        persistClub(owner, "Club A_B", "desc");
+        persistClub(owner, "Club ACB", "desc");
+        em.flush();
+
+        int count = clubDao.countSearch("A_B", null, null, null, null);
+
+        assertEquals(1, count);
+    }
+
+    @Test
     public void testUpdateRatingAndCount() {
         BigDecimal rating = new BigDecimal("4.2");
         int quantity = 7;

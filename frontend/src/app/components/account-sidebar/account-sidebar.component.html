@@ -22,7 +22,11 @@
     </ng-template>
   </ng-container>
 
-  <button type="button" class="mt-auto flex items-center gap-3 px-6 py-5 text-left text-lg hover:bg-[#333] transition-colors">
+  <button
+    type="button"
+    class="mt-auto flex items-center gap-3 px-6 py-5 text-left text-lg hover:bg-[#333] transition-colors"
+    (click)="logout()"
+  >
     <i class="fa-solid fa-right-from-bracket"></i>
         <span>{{ 'common.logout' | translate }}</span>
   </button>

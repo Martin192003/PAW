@@ -180,10 +180,14 @@ public class ReviewServiceImpl implements ReviewService {
 
     /** Recalcula rating y cantidad desde DB y persiste solo esas columnas. */
     private void recalcClubRating(UUID clubId) {
+        final int count = reviewsDao.countSearch(null, clubId);
+        if (count == 0) {
+            clubDao.updateRatingAndCount(clubId, BigDecimal.ONE, 0);
+            return;
+        }
+
         final Double avgOrNull = reviewsDao.averageByClubId(clubId);
         final double avg = (avgOrNull != null) ? avgOrNull : 0.0;
-
-        final int count = reviewsDao.countSearch(null,clubId); 
 
         final BigDecimal rounded = BigDecimal
                 .valueOf(avg)

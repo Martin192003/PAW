@@ -751,16 +751,13 @@ public class ClubRestController {
         dto.setMusicGenre(club.getMusicGenre().toString());
         dto.setPriceRange(club.getPriceRange().toString());
         dto.setBar(club.getIsBar());
-        dto.setRating(
-                club.getRating() != null
-                        ? club.getRating().floatValue()
-                        : 0f
-        );
-        dto.setQuantityRatings(
-                club.getQuantityRatings() != null
-                        ? club.getQuantityRatings()
-                        : 0
-        );
+        final int quantityRatings = club.getQuantityRatings() != null
+                ? club.getQuantityRatings()
+                : 0;
+        dto.setRating(quantityRatings > 0 && club.getRating() != null
+                ? club.getRating().floatValue()
+                : 0f);
+        dto.setQuantityRatings(quantityRatings);
         dto.setCreatedAt(club.getCreatedAt());
 
 
@@ -985,4 +982,3 @@ public class ClubRestController {
                 .build();
     }
 }
-

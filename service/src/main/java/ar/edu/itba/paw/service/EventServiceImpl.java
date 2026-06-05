@@ -3,7 +3,6 @@ package ar.edu.itba.paw.service;
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.exceptions.InvalidClubException;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
@@ -47,11 +46,7 @@ public class EventServiceImpl implements EventService {
         validateName(eventName);
         validateDate(date);
 
-        final Event current = eventDao.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event not found"));
-
-        if (!Objects.equals(current.getClubId(), clubId))
-            throw new InvalidClubException("Event does not belong to the provided club");
+        final Event current = getForClub(clubId, eventId);
 
         UUID photoId = current.getPhotoId();
 
@@ -80,10 +75,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public void delete(UUID clubId, UUID eventId) {
-        final Event current = eventDao.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event not found"));
-        if (!Objects.equals(current.getClubId(), clubId))
-            throw new InvalidClubException("Event does not belong to the provided club");
+        final Event current = getForClub(clubId, eventId);
         if (!eventDao.delete(eventId))
             throw new NotFoundException("Event not found");
         if (current.getPhotoId() != null) {
@@ -95,6 +87,16 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public Event get(UUID eventId) {
         return eventDao.findById(eventId).orElseThrow(() -> new NotFoundException("Event not found"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Event getForClub(UUID clubId, UUID eventId) {
+        Event event = get(eventId);
+        if (!Objects.equals(event.getClubId(), clubId)) {
+            throw new NotFoundException("Event not found");
+        }
+        return event;
     }
 
     @Override
@@ -215,11 +217,7 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("contentType is required");
         }
 
-        final Event current = eventDao.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event not found"));
-
-        if (!Objects.equals(current.getClubId(), clubId))
-            throw new InvalidClubException("Event does not belong to the provided club");
+        final Event current = getForClub(clubId, eventId);
 
         UUID oldPhotoId = current.getPhotoId();
 
@@ -248,11 +246,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public void deleteEventPhoto(UUID clubId, UUID eventId) {
-        final Event current = eventDao.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event not found"));
-
-        if (!Objects.equals(current.getClubId(), clubId))
-            throw new InvalidClubException("Event does not belong to the provided club");
+        final Event current = getForClub(clubId, eventId);
 
         UUID oldPhotoId = current.getPhotoId();
         if (oldPhotoId == null) return;
@@ -265,11 +259,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public Optional<UUID> getEventPhotoId(UUID clubId, UUID eventId){
-        final Event current = eventDao.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event not found"));
-
-        if (!Objects.equals(current.getClubId(), clubId))
-            throw new InvalidClubException("Event does not belong to the provided club");
+        final Event current = getForClub(clubId, eventId);
 
         return Optional.ofNullable(current.getPhotoId());
     }

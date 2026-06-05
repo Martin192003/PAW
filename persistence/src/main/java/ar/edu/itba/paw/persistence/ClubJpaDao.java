@@ -20,6 +20,8 @@ import java.util.*;
 @Repository
 public class ClubJpaDao implements ClubDao {
 
+    private static final char LIKE_ESCAPE_CHAR = '!';
+
     @PersistenceContext
     private EntityManager em;
 
@@ -211,7 +213,7 @@ public class ClubJpaDao implements ClubDao {
                                       final int offset) {
         // 1) IDs paginados
         final StringBuilder where = new StringBuilder("WHERE 1=1\n");
-        if (nameLike != null && !nameLike.isBlank()) where.append("AND LOWER(c.club_name) LIKE :nameLike\n");
+        if (nameLike != null && !nameLike.isBlank()) where.append("AND LOWER(c.club_name) LIKE :nameLike ESCAPE '!'\n");
         if (location != null) where.append("AND c.zone = :zone\n");
         if (musicGenre != null && !musicGenre.isBlank())
             where.append("AND UPPER(c.music_genre) = UPPER(:musicGenre)\n");
@@ -236,7 +238,7 @@ public class ClubJpaDao implements ClubDao {
                 .setFirstResult(offset)
                 .setMaxResults(limit);
 
-        if (nameLike != null && !nameLike.isBlank()) nq.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
+        if (nameLike != null && !nameLike.isBlank()) nq.setParameter("nameLike", containsLikePattern(nameLike));
         if (location != null) nq.setParameter("zone", location.name()); // enum->texto
         if (musicGenre != null && !musicGenre.isBlank()) nq.setParameter("musicGenre", musicGenre.toUpperCase());
         if (priceRange != null && !priceRange.isBlank())
@@ -273,7 +275,7 @@ public class ClubJpaDao implements ClubDao {
             """);
 
         if (nameLike != null && !nameLike.isBlank()) {
-            jpql.append(" and lower(c.clubName) like :nameLike ");
+            jpql.append(" and lower(c.clubName) like :nameLike escape '!' ");
         }
         if (location != null) {
             jpql.append(" and c.zone = :zone ");
@@ -301,7 +303,7 @@ public class ClubJpaDao implements ClubDao {
         var q = em.createQuery(jpql.toString(), Long.class);
 
         if (nameLike != null && !nameLike.isBlank()) {
-            q.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
+            q.setParameter("nameLike", containsLikePattern(nameLike));
         }
         if (location != null) {
             q.setParameter("zone", location);
@@ -341,7 +343,7 @@ public class ClubJpaDao implements ClubDao {
 
         // 1) IDs paginados
         final StringBuilder where = new StringBuilder("WHERE 1=1\n");
-        if (nameLike != null && !nameLike.isBlank()) where.append("AND LOWER(c.club_name) LIKE :nameLike\n");
+        if (nameLike != null && !nameLike.isBlank()) where.append("AND LOWER(c.club_name) LIKE :nameLike ESCAPE '!'\n");
         if (location != null) where.append("AND c.zone = :zone\n");
         if (musicGenre != null && !musicGenre.isBlank())
             where.append("AND UPPER(c.music_genre) = UPPER(:musicGenre)\n");
@@ -389,7 +391,7 @@ public class ClubJpaDao implements ClubDao {
                 .setFirstResult(offset)
                 .setMaxResults(limit);
 
-        if (nameLike != null && !nameLike.isBlank()) nq.setParameter("nameLike", "%" + nameLike.toLowerCase() + "%");
+        if (nameLike != null && !nameLike.isBlank()) nq.setParameter("nameLike", containsLikePattern(nameLike));
         if (location != null) nq.setParameter("zone", location.name());
         if (musicGenre != null && !musicGenre.isBlank()) nq.setParameter("musicGenre", musicGenre.toUpperCase());
         if (priceRange != null && !priceRange.isBlank())
@@ -466,7 +468,7 @@ public class ClubJpaDao implements ClubDao {
 
         final var predicates = new ArrayList<Predicate>();
         if (nameLike != null && !nameLike.isBlank())
-            predicates.add(cb.like(cb.lower(root.get("clubName")), "%" + nameLike.toLowerCase() + "%"));
+            predicates.add(cb.like(cb.lower(root.get("clubName")), containsLikePattern(nameLike), LIKE_ESCAPE_CHAR));
         if (location != null)
             predicates.add(cb.equal(root.get("zone"), location));
         if (musicGenre != null && !musicGenre.isBlank())
@@ -477,6 +479,22 @@ public class ClubJpaDao implements ClubDao {
             predicates.add(cb.equal(root.get("isBar"), isBar));
 
         return predicates.toArray(new Predicate[0]);
+    }
+
+    private static String containsLikePattern(final String raw) {
+        return "%" + escapeLike(raw.toLowerCase(Locale.ROOT)) + "%";
+    }
+
+    private static String escapeLike(final String raw) {
+        final StringBuilder escaped = new StringBuilder(raw.length());
+        for (int i = 0; i < raw.length(); i++) {
+            final char c = raw.charAt(i);
+            if (c == LIKE_ESCAPE_CHAR || c == '%' || c == '_') {
+                escaped.append(LIKE_ESCAPE_CHAR);
+            }
+            escaped.append(c);
+        }
+        return escaped.toString();
     }
 
 }

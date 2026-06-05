@@ -104,7 +104,7 @@
         </span>
         <div>
           <i class="fa-solid fa-star mr-2.5 inline-block w-4 text-center text-[#ffd700]"></i>
-          <span *ngIf="club!.rating; else noRating">
+          <span *ngIf="club!.quantityRatings > 0; else noRating">
             {{ club!.rating | number:'1.1-1' }} ({{ club!.quantityRatings }} {{ 'clubDetails.reviewsCountLabel' | translate }})
           </span>
           <ng-template #noRating>
@@ -534,4 +534,3 @@
 
 
 </div>
-

@@ -1,10 +1,13 @@
 package ar.edu.itba.paw.webapp.rest.products;
 
 import ar.edu.itba.paw.model.Product;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.ProductCreateRequestDto;
 import ar.edu.itba.paw.model.dto.ProductDto;
 import ar.edu.itba.paw.model.dto.ProductUpdateRequestDto;
+import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.ProductService;
+import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.*;
@@ -22,15 +25,21 @@ public class ProductsRestController {
 
     private final ProductService productService;
     private final ProductDtoAssembler productDtoAssembler;
+    private final ClubService clubService;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @Context
     private UriInfo uriInfo;
 
     @Autowired
     public ProductsRestController(final ProductService productService,
-                                  final ProductDtoAssembler productDtoAssembler) {
+                                  final ProductDtoAssembler productDtoAssembler,
+                                  final ClubService clubService,
+                                  final AuthenticatedUserResolver authenticatedUserResolver) {
         this.productService = productService;
         this.productDtoAssembler = productDtoAssembler;
+        this.clubService = clubService;
+        this.authenticatedUserResolver = authenticatedUserResolver;
     }
 
     @GET
@@ -59,7 +68,9 @@ public class ProductsRestController {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createProduct(@PathParam("clubId") String clubId, ProductCreateRequestDto body) {
+    public Response createProduct(@PathParam("clubId") String clubId,
+                                  ProductCreateRequestDto body,
+                                  @Context SecurityContext securityContext) {
         UUID clubUuid;
         try {
             clubUuid = UUID.fromString(clubId);
@@ -68,6 +79,12 @@ public class ProductsRestController {
                     .entity(Map.of("message", "clubId inválido"))
                     .build();
         }
+
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubUuid, user.getId());
 
         if (body == null ||
                 isBlank(body.getProductName()) ||
@@ -132,7 +149,8 @@ public class ProductsRestController {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateProduct(@PathParam("clubId") String clubId,
                                   @PathParam("productId") String productId,
-                                  ProductUpdateRequestDto body) {
+                                  ProductUpdateRequestDto body,
+                                  @Context SecurityContext securityContext) {
         UUID clubUuid, productUuid;
         try {
             clubUuid = UUID.fromString(clubId);
@@ -140,6 +158,18 @@ public class ProductsRestController {
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("message", "clubId o productId inválido"))
+                    .build();
+        }
+
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubUuid, user.getId());
+
+        if (!productBelongsToClub(clubUuid, productUuid)) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Producto no encontrado"))
                     .build();
         }
 
@@ -174,7 +204,49 @@ public class ProductsRestController {
         return Response.ok(responseBody).build();
     }
 
+    @DELETE
+    @Path("/{productId}")
+    public Response deleteProduct(@PathParam("clubId") String clubId,
+                                  @PathParam("productId") String productId,
+                                  @Context SecurityContext securityContext) {
+        UUID clubUuid, productUuid;
+        try {
+            clubUuid = UUID.fromString(clubId);
+            productUuid = UUID.fromString(productId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("message", "clubId o productId inválido"))
+                    .build();
+        }
+
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubUuid, user.getId());
+
+        if (!productBelongsToClub(clubUuid, productUuid)) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Producto no encontrado"))
+                    .build();
+        }
+
+        boolean removed = productService.delete(productUuid);
+        if (!removed) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Producto no encontrado"))
+                    .build();
+        }
+
+        return Response.noContent().build();
+    }
+
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    private boolean productBelongsToClub(UUID clubId, UUID productId) {
+        return productService.findByClubID(clubId).stream()
+                .anyMatch(product -> productId.equals(product.getProductId()));
     }
 }

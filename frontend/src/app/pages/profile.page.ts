@@ -181,8 +181,8 @@ export class ProfilePage implements OnInit {
 
         this.authState.updateUser(updatedUser);
         this.user = updatedUser;
-        this.closeEditor();
         this.saving = false;
+        this.closeEditor();
       },
       error: (error: HttpErrorResponse) => {
         this.saving = false;

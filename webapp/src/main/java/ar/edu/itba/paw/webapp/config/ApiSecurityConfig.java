@@ -59,6 +59,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/users/verifications").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/password-reset-requests").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/users/password-resets").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/auth/tokens").permitAll()
                 .anyRequest().authenticated().and()
                 .addFilterBefore(apiBasicAuthenticationFilter(), AnonymousAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter(), AnonymousAuthenticationFilter.class);
@@ -69,6 +70,6 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     public ApiBasicAuthenticationFilter apiBasicAuthenticationFilter() {
-        return new ApiBasicAuthenticationFilter(userService, jwtUtil);
+        return new ApiBasicAuthenticationFilter(userService);
     }
 }

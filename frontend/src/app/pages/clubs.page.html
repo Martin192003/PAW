@@ -224,7 +224,7 @@
           <div><i class="fa-solid fa-music mr-1"></i>{{ club.musicGenre }}</div>
           <div><i class="fa-solid fa-dollar-sign mr-1"></i>{{ club.priceRange }}</div>
 
-          <div *ngIf="club.rating">
+          <div *ngIf="club.quantityRatings > 0">
             ⭐ {{ club.rating }}
           </div>
 

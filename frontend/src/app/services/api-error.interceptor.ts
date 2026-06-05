@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
@@ -6,6 +6,8 @@ import { environment } from '../../environments/environment';
 import { isApiUrl } from '../utils/api-url.util';
 import { AuthStateService } from './auth-state.service';
 import { ApiErrorService } from './api-error.service';
+
+export const SKIP_API_ERROR_REDIRECT = new HttpContextToken<boolean>(() => false);
 
 export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
@@ -16,6 +18,10 @@ export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (!isApiUrl(req.url, apiBaseUrl)) {
+        return throwError(() => error);
+      }
+
+      if (req.context.get(SKIP_API_ERROR_REDIRECT)) {
         return throwError(() => error);
       }
 

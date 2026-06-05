@@ -18,6 +18,8 @@ public interface EventService {
 
     Event get(UUID eventId);
 
+    Event getForClub(UUID clubId, UUID eventId);
+
 
     /** Lista eventos de un club con paginación (data) */
     List<Event> listByClub(UUID clubId, int page, int size);

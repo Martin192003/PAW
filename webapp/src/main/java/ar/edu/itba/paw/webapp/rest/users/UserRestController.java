@@ -5,7 +5,9 @@ import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.PasswordResetJobService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
+import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,26 +52,22 @@ public class UserRestController {
     @Autowired
     private ReviewService reviewService;
 
+    @Autowired
+    private AuthenticatedUserResolver authenticatedUserResolver;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
     /**
      * GET /api/users/me — recurso del usuario autenticado actual.
-     * Este es el endpoint que el frontend usa para autenticarse (con Basic Auth).
-     * El backend emite X-Access-Token en la respuesta mediante BasicTokenResponseFilter.
      */
     @GET
     @Path("/me")
-    public Response getMe() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+    public Response getMe(@Context SecurityContext securityContext) {
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(message("No autenticado"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        User user = resolveAuthenticatedUser(auth);
-        if (user == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(message("Usuario no encontrado"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -254,7 +252,9 @@ public class UserRestController {
 
     @PUT
     @Path("/{userId}")
-    public Response updateUser(@PathParam("userId") String userId, UserCreateRequestDto body) {
+    public Response updateUser(@PathParam("userId") String userId,
+                               UserCreateRequestDto body,
+                               @Context SecurityContext securityContext) {
 
         UUID id;
         try {
@@ -281,21 +281,15 @@ public class UserRestController {
                     .build();
         }
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+        User authUser = authenticatedUserResolver.resolve(securityContext);
+        if (authUser == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(message("Unauthorized"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
-        String authName = auth.getName();
-        User authUser = userService.findByUserName(authName);
-        if (authUser == null) {
-            authUser = userService.findByEmail(authName);
-        }
-
-        if (authUser == null || !authUser.getId().equals(id)) {
+        if (!authUser.getId().equals(id)) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(message("Forbidden"))
                     .type(MediaType.APPLICATION_JSON)
@@ -313,7 +307,13 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            return Response.ok(UserMapper.toDto(updated, uriInfo)).build();
+            return Response.ok(UserMapper.toDto(updated, uriInfo))
+                    .header("X-Access-Token", jwtUtil.generateToken(updated.getId().toString()))
+                    .header("X-Token-Type", "Bearer")
+                    .header("X-Expires-In", Long.toString(jwtUtil.getExpirationSeconds()))
+                    .header("Cache-Control", "no-store")
+                    .header("Pragma", "no-cache")
+                    .build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))
@@ -330,7 +330,9 @@ public class UserRestController {
 
     @PUT
     @Path("/{userId}/profile")
-    public Response updateUserProfile(@PathParam("userId") String userId, UserCreateRequestDto body) {
+    public Response updateUserProfile(@PathParam("userId") String userId,
+                                      UserCreateRequestDto body,
+                                      @Context SecurityContext securityContext) {
         UUID id;
         try {
             id = UUID.fromString(userId);
@@ -356,21 +358,15 @@ public class UserRestController {
                     .build();
         }
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+        User authUser = authenticatedUserResolver.resolve(securityContext);
+        if (authUser == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(message("Unauthorized"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
 
-        String authName = auth.getName();
-        User authUser = userService.findByUserName(authName);
-        if (authUser == null) {
-            authUser = userService.findByEmail(authName);
-        }
-
-        if (authUser == null || !authUser.getId().equals(id)) {
+        if (!authUser.getId().equals(id)) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(message("Forbidden"))
                     .type(MediaType.APPLICATION_JSON)
@@ -389,7 +385,13 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            return Response.ok(UserMapper.toDto(updated, uriInfo)).build();
+            return Response.ok(UserMapper.toDto(updated, uriInfo))
+                    .header("X-Access-Token", jwtUtil.generateToken(updated.getId().toString()))
+                    .header("X-Token-Type", "Bearer")
+                    .header("X-Expires-In", Long.toString(jwtUtil.getExpirationSeconds()))
+                    .header("Cache-Control", "no-store")
+                    .header("Pragma", "no-cache")
+                    .build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity(message("User with same username or email already exists"))

@@ -126,6 +126,23 @@ public class ReviewServiceImplTest {
     }
 
     @Test
+    public void testDeleteLastReviewKeepsPersistedRatingCompatibleWithSchema() {
+        User user = new User(USER_ID);
+        Club club = new Club();
+        club.setClubId(CLUB_ID);
+        Review review = new Review(REVIEW_ID, user, club, 4, "Nice", CREATED_AT);
+
+        Mockito.when(reviewsDao.findById(REVIEW_ID)).thenReturn(Optional.of(review));
+        Mockito.when(reviewsDao.delete(REVIEW_ID)).thenReturn(true);
+        Mockito.when(reviewsDao.countSearch(null, CLUB_ID)).thenReturn(0);
+
+        reviewService.deleteReview(REVIEW_ID);
+
+        Mockito.verify(clubDao).updateRatingAndCount(CLUB_ID, BigDecimal.ONE, 0);
+        Mockito.verify(reviewsDao, Mockito.never()).averageByClubId(CLUB_ID);
+    }
+
+    @Test
     public void testUpdateClubRating() {
         Club club = new Club();
         club.setClubId(CLUB_ID);

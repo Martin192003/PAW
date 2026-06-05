@@ -2,10 +2,12 @@ package ar.edu.itba.paw.webapp.rest.events;
 
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.Photo;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.EventDto;
-import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
+import ar.edu.itba.paw.webapp.rest.ContentDispositionHeader;
+import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +18,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.util.UUID;
@@ -33,6 +36,9 @@ public class EventPhotoRestController {
     @Autowired
     private EventDtoAssembler eventDtoAssembler;
 
+    @Autowired
+    private AuthenticatedUserResolver authenticatedUserResolver;
+
     @Context
     private HttpServletRequest request;
 
@@ -43,11 +49,16 @@ public class EventPhotoRestController {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     public Response putPhoto(@PathParam("clubId") UUID clubId,
-                             @PathParam("eventId") UUID eventId)
+                             @PathParam("eventId") UUID eventId,
+                             @Context SecurityContext securityContext)
             throws IOException, ServletException {
 
-        clubService.getClubById(clubId)
-                .orElseThrow(() -> new NotFoundException("Club not found"));
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubId, user.getId());
+        eventService.getForClub(clubId, eventId);
 
         Part filePart = request.getPart("file");
         if (filePart == null) {
@@ -70,7 +81,7 @@ public class EventPhotoRestController {
 
         eventService.setEventPhoto(clubId, eventId, photo);
 
-        Event updatedEvent = eventService.get(eventId);
+        Event updatedEvent = eventService.getForClub(clubId, eventId);
         EventDto dto = eventDtoAssembler.toDto(uriInfo, clubId, updatedEvent);
 
         return Response.ok(dto).build();
@@ -84,19 +95,25 @@ public class EventPhotoRestController {
 
         return Response.ok(photo.getData())
                 .type(photo.getContentType())
-                .header("Content-Disposition",
-                        "inline; filename=\"" + safeFilename(photo.getFilename()) + "\"")
+                .header("Content-Disposition", ContentDispositionHeader.inline(photo.getFilename(), "event-photo"))
                 .build();
     }
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     public Response deletePhoto(@PathParam("clubId") UUID clubId,
-                                @PathParam("eventId") UUID eventId) {
+                                @PathParam("eventId") UUID eventId,
+                                @Context SecurityContext securityContext) {
 
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubId, user.getId());
+        eventService.getForClub(clubId, eventId);
         eventService.deleteEventPhoto(clubId, eventId);
 
-        Event updatedEvent = eventService.get(eventId);
+        Event updatedEvent = eventService.getForClub(clubId, eventId);
         EventDto dto = eventDtoAssembler.toDto(uriInfo, clubId, updatedEvent);
 
         return Response.ok(dto).build();
@@ -122,9 +139,4 @@ public class EventPhotoRestController {
         return (filename == null || filename.trim().isEmpty()) ? "event-photo" : filename;
     }
 
-    private String safeFilename(String filename) {
-        return (filename == null || filename.trim().isEmpty())
-                ? "event-photo"
-                : filename.replace("\"", "");
-    }
 }

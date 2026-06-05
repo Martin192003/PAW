@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.exceptions.BadRequestException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.service.BookingService;
 import ar.edu.itba.paw.service.ReceiptService;
+import ar.edu.itba.paw.webapp.rest.ContentDispositionHeader;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.ServletException;
@@ -151,7 +152,7 @@ public class BookingRestController {
 
         return Response.ok(receipt.getData())
                 .type(receipt.getContentType())
-                .header("Content-Disposition", "inline; filename=\"" + safeFilename(receipt.getFilename()) + "\"")
+                .header("Content-Disposition", ContentDispositionHeader.inline(receipt.getFilename(), "receipt"))
                 .build();
     }
 
@@ -204,7 +205,4 @@ public class BookingRestController {
         return filename == null || filename.isBlank() ? "receipt" : filename;
     }
 
-    private String safeFilename(String filename) {
-        return filename == null || filename.isBlank() ? "receipt" : filename.replace("\"", "");
-    }
 }

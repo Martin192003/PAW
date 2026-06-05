@@ -1,12 +1,15 @@
 package ar.edu.itba.paw.webapp.rest.tables;
 
 import ar.edu.itba.paw.model.ClubTable;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.TableCreateRequestDto;
 import ar.edu.itba.paw.model.dto.TableDto;
 import ar.edu.itba.paw.model.dto.TableUpdateRequestDto;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
+import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.TableService;
+import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.*;
@@ -31,15 +34,21 @@ public class TablesRestController {
 
     private final TableService tableService;
     private final TableDtoAssembler tableDtoAssembler;
+    private final ClubService clubService;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @Context
     private UriInfo uriInfo;
 
     @Autowired
     public TablesRestController(final TableService tableService,
-                                final TableDtoAssembler tableDtoAssembler) {
+                                final TableDtoAssembler tableDtoAssembler,
+                                final ClubService clubService,
+                                final AuthenticatedUserResolver authenticatedUserResolver) {
         this.tableService = tableService;
         this.tableDtoAssembler = tableDtoAssembler;
+        this.clubService = clubService;
+        this.authenticatedUserResolver = authenticatedUserResolver;
     }
 
     @GET
@@ -87,7 +96,9 @@ public class TablesRestController {
     }
 
     @POST
-    public Response createTable(@PathParam("clubId") String clubId, TableCreateRequestDto body) {
+    public Response createTable(@PathParam("clubId") String clubId,
+                                TableCreateRequestDto body,
+                                @Context SecurityContext securityContext) {
         UUID clubUuid;
         try {
             clubUuid = UUID.fromString(clubId);
@@ -96,6 +107,12 @@ public class TablesRestController {
                     .entity(Map.of("message", "clubId inválido"))
                     .build();
         }
+
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubUuid, user.getId());
 
         if (body == null ||
                 body.getTableNumber() == null ||
@@ -151,7 +168,8 @@ public class TablesRestController {
     @Path("/{tableId}")
     public Response updateTable(@PathParam("clubId") String clubId,
                                 @PathParam("tableId") String tableId,
-                                TableUpdateRequestDto body) {
+                                TableUpdateRequestDto body,
+                                @Context SecurityContext securityContext) {
         UUID clubUuid, tableUuid;
         try {
             clubUuid = UUID.fromString(clubId);
@@ -162,7 +180,18 @@ public class TablesRestController {
                     .build();
         }
 
-        //TODO: no se si hacer un metodo generico pero son solo 2 veces (?)
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubUuid, user.getId());
+
+        if (!tableBelongsToClub(clubUuid, tableUuid)) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Mesa o club no encontrado"))
+                    .build();
+        }
+
         if (body == null ||
                 body.getTableNumber() == null ||
                 body.getCapacity() == null ||
@@ -197,7 +226,8 @@ public class TablesRestController {
     @Path("/{tableId}/state")
     public Response updateTableState(@PathParam("clubId") String clubId,
                                      @PathParam("tableId") String tableId,
-                                     TableUpdateRequestDto body) {
+                                     TableUpdateRequestDto body,
+                                     @Context SecurityContext securityContext) {
         UUID clubUuid, tableUuid;
         try {
             clubUuid = UUID.fromString(clubId);
@@ -207,6 +237,12 @@ public class TablesRestController {
                     .entity(Map.of("message", "clubId o tableId inválido"))
                     .build();
         }
+
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubUuid, user.getId());
 
         if (body == null || body.getTableState() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -248,13 +284,27 @@ public class TablesRestController {
     @DELETE
     @Path("/{tableId}")
     public Response deleteTable(@PathParam("clubId") String clubId,
-                                @PathParam("tableId") String tableId) {
-        UUID tableUuid;
+                                @PathParam("tableId") String tableId,
+                                @Context SecurityContext securityContext) {
+        UUID clubUuid, tableUuid;
         try {
+            clubUuid = UUID.fromString(clubId);
             tableUuid = UUID.fromString(tableId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "tableId inválido"))
+                    .entity(Map.of("message", "clubId o tableId inválido"))
+                    .build();
+        }
+
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        clubService.assertAdmin(clubUuid, user.getId());
+
+        if (!tableBelongsToClub(clubUuid, tableUuid)) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("message", "Mesa no encontrada"))
                     .build();
         }
 
@@ -266,5 +316,11 @@ public class TablesRestController {
         }
 
         return Response.noContent().build();
+    }
+
+    private boolean tableBelongsToClub(UUID clubId, UUID tableId) {
+        return tableService.findById(tableId)
+                .filter(table -> clubId.equals(table.getClubId()))
+                .isPresent();
     }
 }
