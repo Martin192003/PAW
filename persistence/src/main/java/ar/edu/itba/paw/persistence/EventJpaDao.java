@@ -59,36 +59,14 @@ public class EventJpaDao implements EventDao {
             return List.of();
         }
 
-        // 1) Paginamos solo IDs
-        @SuppressWarnings("unchecked")
-        List<Object> rawIds = em.createNativeQuery("""
-                    SELECT CAST(eventid AS TEXT)
-                    FROM event
-                    WHERE clubid = :clubId
-                    ORDER BY date DESC, eventid DESC
-                    """)
+        return em.createQuery("""
+                    SELECT e FROM Event e
+                    WHERE e.clubId = :clubId
+                    ORDER BY e.date DESC, e.eventId DESC
+                    """, Event.class)
                 .setParameter("clubId", clubId)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
-                .getResultList();
-
-        if (rawIds.isEmpty()) {
-            return List.of();
-        }
-
-        // Convertimos los IDs (String) a UUID
-        List<UUID> ids = rawIds.stream()
-                .map(o -> UUID.fromString(o.toString()))
-                .toList();
-
-        // 2) Traemos las entidades por ID (JPQL)
-        return em.createQuery("""
-            SELECT e
-            FROM Event e
-            WHERE e.eventId IN :ids
-            ORDER BY e.date DESC, e.eventId DESC
-            """, Event.class)
-                .setParameter("ids", ids)
                 .getResultList();
     }
 
@@ -118,36 +96,14 @@ public class EventJpaDao implements EventDao {
         final int safePage = Math.max(0, page);
         final int offset   = safePage * limit;
 
-        // 1) IDs futuros desde fromInclusive
-        @SuppressWarnings("unchecked")
-        List<Object> rawIds = em.createNativeQuery("""
-            SELECT CAST(eventid AS TEXT)
-            FROM event
-            WHERE date >= :from
-            ORDER BY date ASC, eventid ASC
-            """)
+        return em.createQuery("""
+                    SELECT e FROM Event e
+                    WHERE e.date >= :from
+                    ORDER BY e.date ASC, e.eventId ASC
+                    """, Event.class)
                 .setParameter("from", fromInclusive)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
-                .getResultList();
-
-        if (rawIds.isEmpty()) {
-            return List.of();
-        }
-
-        // Convertimos los IDs (String) a UUID
-        List<UUID> ids = rawIds.stream()
-                .map(o -> UUID.fromString(o.toString()))
-                .toList();
-
-        // 2) Entidades por IDs
-        return em.createQuery("""
-            SELECT e
-            FROM Event e
-            WHERE e.eventId IN :ids
-            ORDER BY e.date ASC, e.eventId ASC
-            """, Event.class)
-                .setParameter("ids", ids)
                 .getResultList();
     }
 
@@ -196,37 +152,16 @@ public class EventJpaDao implements EventDao {
 
         LocalDate today = LocalDate.now();
 
-        // 1) Query de IDs
-        @SuppressWarnings("unchecked")
-        List<Object> rawIds = em.createNativeQuery("""
-            SELECT CAST(eventid AS TEXT)
-            FROM event
-            WHERE clubid = :clubId
-              AND date >= :today
-            ORDER BY date ASC, eventid ASC
-            """)
+        return em.createQuery("""
+                    SELECT e FROM Event e
+                    WHERE e.clubId = :clubId
+                      AND e.date >= :today
+                    ORDER BY e.date ASC, e.eventId ASC
+                    """, Event.class)
                 .setParameter("clubId", clubId)
                 .setParameter("today", today)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
-                .getResultList();
-
-        if (rawIds.isEmpty()) {
-            return List.of();
-        }
-
-        List<UUID> ids = rawIds.stream()
-                .map(o -> UUID.fromString(o.toString()))
-                .toList();
-
-        // 2) Entidades
-        return em.createQuery("""
-            SELECT e
-            FROM Event e
-            WHERE e.eventId IN :ids
-            ORDER BY e.date ASC, e.eventId ASC
-            """, Event.class)
-                .setParameter("ids", ids)
                 .getResultList();
     }
 
@@ -248,37 +183,16 @@ public class EventJpaDao implements EventDao {
 
         LocalDate today = LocalDate.now();
 
-        // 1) Query de IDs
-        @SuppressWarnings("unchecked")
-        List<Object> rawIds = em.createNativeQuery("""
-            SELECT CAST(eventid AS TEXT)
-            FROM event
-            WHERE clubid = :clubId
-              AND date < :today
-            ORDER BY date DESC, eventid DESC
-            """)
+        return em.createQuery("""
+                    SELECT e FROM Event e
+                    WHERE e.clubId = :clubId
+                      AND e.date < :today
+                    ORDER BY e.date DESC, e.eventId DESC
+                    """, Event.class)
                 .setParameter("clubId", clubId)
                 .setParameter("today", today)
                 .setFirstResult(offset)
                 .setMaxResults(limit)
-                .getResultList();
-
-        if (rawIds.isEmpty()) {
-            return List.of();
-        }
-
-        List<UUID> ids = rawIds.stream()
-                .map(o -> UUID.fromString(o.toString()))
-                .toList();
-
-        // 2) Entidades por IDs
-        return em.createQuery("""
-            SELECT e
-            FROM Event e
-            WHERE e.eventId IN :ids
-            ORDER BY e.date DESC, e.eventId DESC
-            """, Event.class)
-                .setParameter("ids", ids)
                 .getResultList();
     }
 

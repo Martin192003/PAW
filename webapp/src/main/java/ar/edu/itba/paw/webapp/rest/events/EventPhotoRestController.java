@@ -15,8 +15,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 import javax.ws.rs.*;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
@@ -89,13 +92,32 @@ public class EventPhotoRestController {
 
     @GET
     public Response getPhoto(@PathParam("clubId") UUID clubId,
-                             @PathParam("eventId") UUID eventId) {
+                             @PathParam("eventId") UUID eventId,
+                             @Context Request request) {
 
         Photo photo = eventService.getEventPhoto(clubId, eventId);
 
-        return Response.ok(photo.getData())
-                .type(photo.getContentType())
+        // Cache condicional: ETag basado en photoId + createdAt, igual que PhotoRestController.
+        // Las event photos son modificables, por lo que se usa no-cache (revalidar cada vez).
+        String etagValue = photo.getPhotoId().toString()
+                + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0");
+        EntityTag etag = new EntityTag(Integer.toHexString(etagValue.hashCode()));
+
+        Response.ResponseBuilder preconditions = request.evaluatePreconditions(etag);
+
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setNoCache(true);
+        cacheControl.setPrivate(false);
+
+        if (preconditions != null) {
+            return preconditions.cacheControl(cacheControl).tag(etag).build();
+        }
+
+        return Response.ok(photo.getData(), photo.getContentType())
+                .cacheControl(cacheControl)
+                .tag(etag)
                 .header("Content-Disposition", ContentDispositionHeader.inline(photo.getFilename(), "event-photo"))
+                .header("Content-Length", photo.getSizeBytes())
                 .build();
     }
 

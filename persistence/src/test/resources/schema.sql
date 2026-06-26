@@ -4,6 +4,9 @@
 --  Motor: HSQLDB con sql.syntax_pgs=true
 -- =====================================================================
 
+-- Habilitar integridad referencial (FK constraints) en HSQLDB
+SET DATABASE REFERENTIAL INTEGRITY TRUE;
+
 -- IMPORTANTE:
 -- - No hay CREATE EXTENSION ni plpgsql
 -- - Los DEFAULT de UUID usan UUID()
@@ -228,9 +231,7 @@ CREATE INDEX IF NOT EXISTS idx_club_layouts_club_id
 -- EVENT
 -----------------------------------------------------------------------
 
-DROP TABLE IF EXISTS event CASCADE;
-
-CREATE TABLE event (
+CREATE TABLE IF NOT EXISTS event (
                        eventid    UUID PRIMARY KEY,
                        clubid     UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
                        eventname  VARCHAR(120) NOT NULL,

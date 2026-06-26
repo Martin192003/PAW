@@ -22,6 +22,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -150,8 +151,14 @@ public class BookingRestController {
                 )
                 .orElseThrow(() -> new NotFoundException("receipt.notfound"));
 
+        // Los receipts son documentos privados; nunca deben cachearse en proxies ni CDN.
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setPrivate(true);
+        cacheControl.setNoStore(true);
+
         return Response.ok(receipt.getData())
                 .type(receipt.getContentType())
+                .cacheControl(cacheControl)
                 .header("Content-Disposition", ContentDispositionHeader.inline(receipt.getFilename(), "receipt"))
                 .build();
     }
