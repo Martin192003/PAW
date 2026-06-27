@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -29,6 +29,7 @@ export class LoginPage implements OnInit {
     private authState: AuthStateService,
     private userService: UserService,
     private i18n: I18nService,
+    private location: Location,
   ) {
     this.loginForm = this.fb.group({
       usernameOrEmail: ['', [Validators.required]],
@@ -105,6 +106,15 @@ export class LoginPage implements OnInit {
   showError(field: 'usernameOrEmail' | 'password'): boolean {
     const control = this.loginForm.get(field);
     return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  goBack(): void {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+
+    void this.router.navigate(['/clubs']);
   }
 
 

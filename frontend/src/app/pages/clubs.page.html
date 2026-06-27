@@ -82,16 +82,13 @@
 
 
   <!-- FILTER BAR -->
-  <section class="w-full max-w-[1200px] px-8 my-4">
+  <section class="w-full max-w-[1300px] px-4 my-4">
     <div class="w-full flex items-center gap-3">
       <form
         (ngSubmit)="applyFilters()"
         class="flex-1 overflow-hidden rounded-lg bg-[#3c3c3c] shadow-[0_2px_6px_rgba(0,0,0,0.15)] flex flex-wrap xl:flex-nowrap items-stretch"
       >
-      <div
-        class="relative h-12 text-white"
-        [ngClass]="hasActiveFilters ? 'basis-[110px] grow-0 shrink-0' : 'basis-[260px] grow min-w-[180px]'"
-      >
+      <div class="relative h-12 basis-[260px] grow min-w-[180px] text-white">
         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-white/90 pointer-events-none"></i>
         <input
           [(ngModel)]="filters.name"
@@ -103,56 +100,56 @@
         >
       </div>
 
-      <select
-        [(ngModel)]="filters.zone"
-        name="zone"
-        class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none"
-      >
-        <option value="" class="text-black">{{ 'clubs.selectZone' | translate }}</option>
-        <option *ngFor="let zone of filterOptions.zones" [value]="zone.value" class="text-black">{{ zone.labelKey | translate }}</option>
-      </select>
+       <select
+         [(ngModel)]="filters.zone"
+         name="zone"
+         class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none cursor-pointer"
+       >
+         <option value="" class="text-black">{{ 'clubs.selectZone' | translate }}</option>
+         <option *ngFor="let zone of filterOptions.zones" [value]="zone.value" class="text-black">{{ zone.labelKey | translate }}</option>
+       </select>
 
-      <select
-        [(ngModel)]="filters.genre"
-        name="genre"
-        class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none"
-      >
-        <option value="" class="text-black">{{ 'clubs.selectGenre' | translate }}</option>
-        <option *ngFor="let genre of filterOptions.genres" [value]="genre.value" class="text-black">{{ genre.labelKey | translate }}</option>
-      </select>
+       <select
+         [(ngModel)]="filters.genre"
+         name="genre"
+         class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none cursor-pointer"
+       >
+         <option value="" class="text-black">{{ 'clubs.selectGenre' | translate }}</option>
+         <option *ngFor="let genre of filterOptions.genres" [value]="genre.value" class="text-black">{{ genre.labelKey | translate }}</option>
+       </select>
 
-      <select
-        [(ngModel)]="filters.price"
-        name="price"
-        class="h-12 min-w-[150px] bg-transparent text-white text-sm px-3 outline-none"
-      >
-        <option value="" class="text-black">{{ 'clubs.selectPrice' | translate }}</option>
-        <option *ngFor="let price of filterOptions.prices" [value]="price.value" class="text-black">{{ price.labelKey | translate }}</option>
-      </select>
+       <select
+         [(ngModel)]="filters.price"
+         name="price"
+         class="h-12 min-w-[150px] bg-transparent text-white text-sm px-3 outline-none cursor-pointer"
+       >
+         <option value="" class="text-black">{{ 'clubs.selectPrice' | translate }}</option>
+         <option *ngFor="let price of filterOptions.prices" [value]="price.value" class="text-black">{{ price.labelKey | translate }}</option>
+       </select>
 
-      <select
-        [(ngModel)]="filters.isBar"
-        name="isBar"
-        class="h-12 min-w-[140px] bg-transparent text-white text-sm px-3 outline-none"
-      >
-        <option value="" class="text-black">{{ 'clubs.typeOfVenue' | translate }}</option>
-        <option value="true" class="text-black">{{ 'clubs.bar' | translate }}</option>
-        <option value="false" class="text-black">{{ 'clubs.nightclub' | translate }}</option>
-      </select>
+       <select
+         [(ngModel)]="filters.isBar"
+         name="isBar"
+         class="h-12 min-w-[140px] bg-transparent text-white text-sm px-3 outline-none cursor-pointer"
+       >
+         <option value="" class="text-black">{{ 'clubs.typeOfVenue' | translate }}</option>
+         <option value="true" class="text-black">{{ 'clubs.bar' | translate }}</option>
+         <option value="false" class="text-black">{{ 'clubs.nightclub' | translate }}</option>
+       </select>
 
-      <select
-        [(ngModel)]="filters.sort"
-        name="sort"
-        class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none"
-      >
-        <option value="" class="text-black">{{ 'clubs.availability' | translate }}</option>
-        <option *ngFor="let sortOpt of filterOptions.sorts" [value]="sortOpt.value" class="text-black">{{ sortOpt.labelKey | translate }}</option>
-      </select>
+       <select
+         [(ngModel)]="filters.sort"
+         name="sort"
+         class="h-12 min-w-[160px] bg-transparent text-white text-sm px-3 outline-none cursor-pointer"
+       >
+         <option value="" class="text-black">{{ 'clubs.availability' | translate }}</option>
+         <option *ngFor="let sortOpt of filterOptions.sorts" [value]="sortOpt.value" class="text-black">{{ sortOpt.labelKey | translate }}</option>
+       </select>
 
-      <button
-        type="submit"
-        class="ml-auto h-12 px-7 bg-[#9c27b0] text-white font-semibold hover:bg-[#8a21a0] transition shrink-0"
-      >
+       <button
+         type="submit"
+         class="h-12 px-7 bg-[#9c27b0] text-white font-semibold hover:bg-[#8a21a0] transition shrink-0 cursor-pointer"
+       >
         <i class="fa-solid fa-filter mr-1"></i>{{ 'clubs.filter' | translate }}
       </button>
 
@@ -162,7 +159,7 @@
         *ngIf="hasActiveFilters"
         type="button"
         (click)="resetFilters()"
-        class="h-12 px-1 text-sm text-[#9c27b0] hover:text-[#540761] transition shrink-0 whitespace-nowrap bg-transparent border-0"
+        class="h-12 px-1 text-sm text-[#9c27b0] hover:text-[#540761] transition shrink-0 whitespace-nowrap bg-transparent border-0 cursor-pointer"
       >
         <i class="fa-solid fa-rotate-right mr-1"></i>{{ 'clubs.reset' | translate }}
       </button>

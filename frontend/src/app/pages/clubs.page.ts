@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -9,6 +9,7 @@ import { ClubEvent } from '../models/ClubEvent.model';
 import { ViewChild, ElementRef } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { normalizeLinks } from '../utils/api-url.util';
+import { skip } from 'rxjs/operators';
 
 
 type ClubListItem = Club & { _hasError?: boolean };
@@ -82,27 +83,17 @@ export class ClubsPage implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit() {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
+    this.applyQueryParams(this.route.snapshot.queryParamMap);
+    this.loadClubs();
 
-    this.route.queryParamMap.subscribe((params) => {
-      this.currentPage = Number(params.get('page') ?? '1') || 1;
-      this.pageSize = Number(params.get('size') ?? '10') || 10;
-      this.filters = {
-        name: params.get('name') ?? '',
-        zone: params.get('zone') ?? '',
-        genre: params.get('genre') ?? '',
-        price: params.get('price') ?? '',
-        isBar: params.get('isBar') ?? '',
-        sort: params.get('sort') ?? ''
-      };
+    this.route.queryParamMap.pipe(skip(1)).subscribe((params) => {
+      this.applyQueryParams(params);
       this.loadClubs();
     });
+
     this.loadUpcomingEvents();
   }
 
@@ -125,6 +116,19 @@ export class ClubsPage implements OnInit, OnDestroy {
           console.error('Error loading clubs:', err);
         }
       });
+  }
+
+  private applyQueryParams(params: import('@angular/router').ParamMap): void {
+    this.currentPage = Number(params.get('page') ?? '1') || 1;
+    this.pageSize = Number(params.get('size') ?? '10') || 10;
+    this.filters = {
+      name: params.get('name') ?? '',
+      zone: params.get('zone') ?? '',
+      genre: params.get('genre') ?? '',
+      price: params.get('price') ?? '',
+      isBar: params.get('isBar') ?? '',
+      sort: params.get('sort') ?? ''
+    };
   }
 
   applyFilters(): void {
