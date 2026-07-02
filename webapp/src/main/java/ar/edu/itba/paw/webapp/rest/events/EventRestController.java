@@ -60,6 +60,7 @@ public class EventRestController {
 
     @GET
     @Path("/events")
+    @Deprecated
     public Response getUpcoming(@QueryParam("page") @DefaultValue("0") int page,
                                 @QueryParam("size") @DefaultValue("20") int size){
         List<Event> events = eventService.listUpcoming(page, size);
@@ -71,6 +72,7 @@ public class EventRestController {
 
         return Response.ok(entity)
                 .header("X-Total-Count", eventService.countUpcoming())
+                .header("Warning", "299 - \"Deprecated endpoint; use /api/events\"")
                 .build();
     }
 

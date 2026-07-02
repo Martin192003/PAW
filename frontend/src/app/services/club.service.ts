@@ -141,11 +141,12 @@ export class ClubService {
 
   getClubsByUser(userId: string, page: number, size: number): Observable<PagedResponse<Club>> {
     const params = new HttpParams()
+      .set('ownerId', userId)
       .set('page', page)
       .set('size', size);
 
     return this.http.get<PagedResponse<Club>>(
-      `${this.apiUrl}/clubs/user/${encodeURIComponent(userId)}`,
+      `${this.apiUrl}/clubs`,
       { params }
     ).pipe(
       map(response => ({

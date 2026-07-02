@@ -611,6 +611,7 @@ public class ClubRestController {
 
     @GET
     @Path("/user/{userID}")
+    @Deprecated
     public Response getClubByUser(@PathParam("userID") String userID,
                                   @QueryParam("page") @DefaultValue("1") int page,
                                   @QueryParam("size") @DefaultValue("10") int size) {
@@ -642,7 +643,9 @@ public class ClubRestController {
 
         Response.ResponseBuilder responseBuilder = Response.ok(response);
         addPaginationLinks(responseBuilder, page, size, totalPages, 1);
-        return responseBuilder.build();
+        return responseBuilder
+                .header("Warning", "299 - \"Deprecated endpoint; use /api/clubs?ownerId=...\"")
+                .build();
     }
 
 

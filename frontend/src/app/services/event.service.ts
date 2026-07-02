@@ -75,7 +75,7 @@ export class EventService {
 
   getUpcomingEvents(page = 0, size = 20): Observable<PagedResponse<ClubEvent>> {
     return this.http
-      .get<EventDto[] | RawResponse>(`${this.base}/clubs/events`, { params: this.pageParams(page, size) })
+      .get<EventDto[] | RawResponse>(`${this.base}/events`, { params: this.pageParams(page, size) })
       .pipe(
         switchMap(raw => {
           const dtos: EventDto[] = Array.isArray(raw) ? raw : (raw.content ?? []);
