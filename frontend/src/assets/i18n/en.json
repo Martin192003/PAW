@@ -704,7 +704,11 @@
       "invalidBooking": "Invalid booking.",
       "loadFailed": "Could not load the booking.",
       "cancelFailed": "Could not cancel the booking.",
-      "receiptUploadFailed": "Could not upload the receipt."
+      "receiptUploadFailed": "Could not upload the receipt.",
+      "receiptEmpty": "The receipt cannot be empty.",
+      "receiptTooLarge": "The receipt cannot exceed 5 MB.",
+      "receiptUnsupportedType": "Upload a JPG, PNG, or WebP receipt.",
+      "receiptForCancelled": "Cannot upload a receipt for a cancelled booking."
     },
     "success": {
       "cancelled": "Booking cancelled successfully.",
@@ -726,5 +730,4 @@
     "close": "Close"
   }
 }
-
 

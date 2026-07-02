@@ -705,7 +705,11 @@
       "invalidBooking": "Reserva inválida.",
       "loadFailed": "No se pudo cargar la reserva.",
       "cancelFailed": "No se pudo cancelar la reserva.",
-      "receiptUploadFailed": "No se pudo cargar el comprobante."
+      "receiptUploadFailed": "No se pudo cargar el comprobante.",
+      "receiptEmpty": "El comprobante no puede estar vacío.",
+      "receiptTooLarge": "El comprobante no puede superar los 5 MB.",
+      "receiptUnsupportedType": "Subí un comprobante JPG, PNG o WebP.",
+      "receiptForCancelled": "No se puede cargar comprobante para una reserva cancelada."
     },
     "success": {
       "cancelled": "Reserva cancelada correctamente.",
@@ -727,5 +731,4 @@
     "close": "Cerrar"
   }
 }
-
 

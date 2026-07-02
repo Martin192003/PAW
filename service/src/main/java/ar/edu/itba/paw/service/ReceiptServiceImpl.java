@@ -20,6 +20,11 @@ public class ReceiptServiceImpl implements ReceiptService {
 
     private static final long MAX_BYTES = 5L * 1024 * 1024;
     private static final Set<String> ALLOWED = Set.of("image/jpeg", "image/png", "image/webp");
+    private static final Map<String, String> CONTENT_TYPE_ALIASES = Map.of(
+            "image/jpg", "image/jpeg",
+            "image/pjpeg", "image/jpeg",
+            "image/x-png", "image/png"
+    );
     private final ReceiptDao receiptDao;
     private final BookingService bookingService;
 
@@ -78,13 +83,11 @@ public class ReceiptServiceImpl implements ReceiptService {
             throw new InvalidReceiptException("receipt.tooLarge");
         }
 
-        String ct = (contentType == null || contentType.isBlank())
-                ? "application/octet-stream" : contentType.toLowerCase(Locale.ROOT);
+        String safeName = (filename == null || filename.isBlank()) ? "receipt" : filename.trim();
+        String ct = normalizeContentType(safeName, contentType);
         if (!ALLOWED.contains(ct)) {
             throw new InvalidReceiptException("receipt.unsupportedType");
         }
-
-        String safeName = (filename == null || filename.isBlank()) ? "receipt" : filename.trim();
 
         var bookingOpt = bookingService.findById(bookingId);
         if (bookingOpt.isEmpty()) {
@@ -228,5 +231,39 @@ public class ReceiptServiceImpl implements ReceiptService {
             map.put(b.getBookingId(), findByBooking(b.getBookingId()).isPresent());
         }
         return map;
+    }
+
+    private String normalizeContentType(String filename, String contentType) {
+        String ct = contentType == null ? "" : contentType.trim().toLowerCase(Locale.ROOT);
+        ct = CONTENT_TYPE_ALIASES.getOrDefault(ct, ct);
+
+        if (ALLOWED.contains(ct)) {
+            return ct;
+        }
+
+        String inferred = inferContentType(filename);
+        if (inferred != null && (ct.isBlank() || "application/octet-stream".equals(ct))) {
+            return inferred;
+        }
+
+        return ct.isBlank() ? "application/octet-stream" : ct;
+    }
+
+    private String inferContentType(String filename) {
+        if (filename == null) {
+            return null;
+        }
+
+        String lower = filename.trim().toLowerCase(Locale.ROOT);
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+            return "image/jpeg";
+        }
+        if (lower.endsWith(".png")) {
+            return "image/png";
+        }
+        if (lower.endsWith(".webp")) {
+            return "image/webp";
+        }
+        return null;
     }
 }
