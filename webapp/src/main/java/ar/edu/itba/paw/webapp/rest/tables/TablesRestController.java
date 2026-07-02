@@ -224,6 +224,7 @@ public class TablesRestController {
 
     @PUT
     @Path("/{tableId}/state")
+    @Deprecated
     public Response updateTableState(@PathParam("clubId") String clubId,
                                      @PathParam("tableId") String tableId,
                                      TableUpdateRequestDto body,
@@ -278,7 +279,9 @@ public class TablesRestController {
         }
 
         TableDto responseBody = tableDtoAssembler.toDto(uriInfo, clubUuid, updated);
-        return Response.ok(responseBody).build();
+        return Response.ok(responseBody)
+                .header("Warning", "299 - \"Deprecated endpoint; use PUT /api/clubs/{clubId}/tables/{tableId}\"")
+                .build();
     }
 
     @DELETE

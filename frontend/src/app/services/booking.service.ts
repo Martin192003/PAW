@@ -43,8 +43,8 @@ export class BookingService {
 
   confirmManagedClubBooking(bookingId: string): Observable<void> {
     return this.http.put<void>(
-      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}/confirmation`, this.apiUrl),
-      {}
+      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`, this.apiUrl),
+      { status: 'CONFIRMADA' }
     );
   }
 

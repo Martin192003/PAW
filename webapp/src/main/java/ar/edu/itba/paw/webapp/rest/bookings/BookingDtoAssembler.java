@@ -75,7 +75,7 @@ public class BookingDtoAssembler {
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "DELETE"));
         links.add(LinkBuilder.link("confirm", uriInfo.getBaseUriBuilder()
-                .path("managed-club-bookings/{bookingId}/confirmation")
+                .path("managed-club-bookings/{bookingId}")
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "PUT"));
         links.add(LinkBuilder.link("managed-update", uriInfo.getBaseUriBuilder()
