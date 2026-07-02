@@ -5,7 +5,9 @@
 
 # Node artifact files
 node_modules/
+frontend/node/
 dist/
+out/
 
 
 # Environment variable files
