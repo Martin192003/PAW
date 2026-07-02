@@ -4,9 +4,8 @@ import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ClubEvent, EventPayload } from '../models/ClubEvent.model';
 import { PagedResponse } from '../models/paged-response.model';
-import { switchMap, forkJoin } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { requireLink, resolveApiUrl, normalizeLinks } from '../utils/api-url.util';
+import { normalizeLinks, resolveApiUrl } from '../utils/api-url.util';
 
 
 interface EventDto {
@@ -15,6 +14,7 @@ interface EventDto {
   description: string;
   date: string;
   photoId: string | null;
+  clubName?: string;
   links?: Record<string, string>;
 }
 
@@ -34,7 +34,7 @@ function toClubEvent(dto: EventDto): ClubEvent {
     description: dto.description,
     date:        dto.date,
     photoId:     dto.photoId ?? '',
-    clubName:    '',
+    clubName:    dto.clubName ?? '',
     clubId,
     photoUrl:    links?.['photo'],
     links,
@@ -76,36 +76,7 @@ export class EventService {
   getUpcomingEvents(page = 0, size = 20): Observable<PagedResponse<ClubEvent>> {
     return this.http
       .get<EventDto[] | RawResponse>(`${this.base}/clubs/events`, { params: this.pageParams(page, size) })
-      .pipe(
-        switchMap(raw => {
-          const dtos: EventDto[] = Array.isArray(raw) ? raw : (raw.content ?? []);
-          const events = dtos.map(dto => {
-            const links = normalizeLinks(dto.links);
-            const clubLink = requireLink(links, 'club', 'event');
-            const clubId = extractIdFromLink(clubLink, 'clubs');
-            return { dto, links, clubId, clubLink };
-          });
-
-          // Llamar a cada club para obtener el nombre
-          const clubRequests = events.map(({ clubLink }) =>
-            this.http.get<{ clubName: string }>(resolveApiUrl(clubLink, this.base))
-          );
-
-          return forkJoin(clubRequests).pipe(
-            map(clubs => ({
-              content: events.map(({ dto, links, clubId }, i) => ({
-                ...toClubEvent(dto),
-                clubName: clubs[i].clubName,
-                clubId,
-                links,
-              })),
-              totalElements: dtos.length,
-              totalPages: 1,
-              number: 0,
-            }))
-          );
-        })
-      );
+      .pipe(map(toPagedResponse));
   }
 
   getEventsByClub(clubId: string, page = 0, size = 20): Observable<PagedResponse<ClubEvent>> {
