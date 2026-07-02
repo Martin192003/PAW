@@ -18,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -104,8 +103,7 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                     return bcrypt.matches(rawPassword, unwrapPrefix(candidate));
                 }
 
-                // Compatibilidad con registros legacy que guardaban la contraseña en claro.
-                return Objects.equals(rawPassword == null ? null : rawPassword.toString(), candidate);
+                return false;
             }
 
             @Override
