@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.PasswordResetJobService;
 import ar.edu.itba.paw.service.UserService;
@@ -227,7 +228,8 @@ public class UserRestController {
 
     @GET
     @Path("/{userId}/profile")
-    public Response getUserProfile(@PathParam("userId") String userId) {
+    public Response getUserProfile(@PathParam("userId") String userId,
+                                   @Context SecurityContext securityContext) {
         UUID id;
         try {
             id = UUID.fromString(userId);
@@ -242,6 +244,23 @@ public class UserRestController {
         if (maybe.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(message("Usuario no encontrado"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        User authUser = authenticatedUserResolver.resolve(securityContext);
+        if (authUser == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        boolean ownsProfile = authUser.getId().equals(id);
+        boolean isAdmin = authUser.getRole() == Role.ADMIN;
+        if (!ownsProfile && !isAdmin) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(message("Forbidden"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
