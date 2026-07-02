@@ -6,9 +6,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public class EventJpaDao implements EventDao {
@@ -223,5 +221,38 @@ public class EventJpaDao implements EventDao {
                 .setParameter("today", LocalDate.now())
                 .getSingleResult()
                 .intValue();
+    }
+
+    @Override
+    public Map<UUID, String> mapClubNamesForEvents(List<UUID> eventIds) {
+        if (eventIds == null || eventIds.isEmpty())
+            return Collections.emptyMap();
+
+        String placeholders = "";
+        for (int i = 0; i < eventIds.size(); i++) {
+            placeholders += (i == 0 ? ":" : ", :") + "id" + i;
+        }
+
+        String sql = """
+                    SELECT CAST(e.event_id AS TEXT) AS event_id, c.club_name
+                    FROM events e
+                    JOIN clubs c ON e.clubid = c.club_id
+                    WHERE e.event_id IN (%s)
+                """.formatted(placeholders);
+
+        var nq = em.createNativeQuery(sql);
+
+        for (int i = 0; i < eventIds.size(); i++) {
+            nq.setParameter("id" + i, eventIds.get(i));
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = nq.getResultList();
+        Map<UUID, String> result = new HashMap<>();
+        for (Object[] row : rows) {
+            result.put(UUID.fromString(row[0].toString()), (String) row[1]);
+        }
+
+        return result;
     }
 }

@@ -57,4 +57,14 @@ public class EventDtoAssembler {
     public EventDto toDto(UriInfo uriInfo, Event event) {
         return toDto(uriInfo, event.getClubId(), event);
     }
+
+    public EventDto toDto(UriInfo uriInfo, UUID clubId, Event event, String clubName) {
+        EventDto dto = toDto(uriInfo, clubId, event);
+        dto.setClubName(clubName);
+        return dto;
+    }
+
+    public EventDto toDto(UriInfo uriInfo, Event event, String clubName) {
+        return toDto(uriInfo, event.getClubId(), event, clubName);
+    }
 }

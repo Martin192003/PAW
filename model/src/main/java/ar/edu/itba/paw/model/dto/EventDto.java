@@ -15,6 +15,7 @@ public class EventDto {
     private List<LinkDto> links;
 
     private UUID photoId;
+    private String clubName;
 
     public EventDto() {}
 
@@ -45,5 +46,8 @@ public class EventDto {
 
     public  void setPhotoId(UUID photoId) { this.photoId = photoId; }
     public UUID getPhotoId() { return photoId; }
+
+    public String getClubName() { return clubName; }
+    public void setClubName(String clubName) { this.clubName = clubName; }
 
 }
