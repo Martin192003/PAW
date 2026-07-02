@@ -17,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Context;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,15 +39,45 @@ public class GlobalEventRestController {
     @GET
     public Response listUpcoming(@QueryParam("page") @DefaultValue("0") int page,
                                  @QueryParam("size") @DefaultValue("20") int size) {
+        if (page < 0 || size <= 0) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
         List<Event> events = eventService.listUpcoming(page, size);
+        int total = eventService.countUpcoming();
         List<EventDto> body = events.stream()
                 .map(event -> eventDtoAssembler.toDto(uriInfo, event))
                 .collect(Collectors.toList());
 
         GenericEntity<List<EventDto>> entity = new GenericEntity<>(body) {};
 
-        return Response.ok(entity)
-                .header("X-Total-Count", eventService.countUpcoming())
-                .build();
+        Response.ResponseBuilder response = Response.ok(entity)
+                .header("X-Total-Count", total);
+        addPaginationLinks(response, page, size, total);
+        return response.build();
+    }
+
+    private void addPaginationLinks(Response.ResponseBuilder responseBuilder, int page, int size, int total) {
+        int totalPages = (int) Math.ceil((double) total / size);
+        int lastPage = Math.max(0, totalPages - 1);
+        List<String> links = new ArrayList<>();
+        if (page > 0) {
+            links.add(pageLink(0, size, "first"));
+            links.add(pageLink(page - 1, size, "prev"));
+        }
+        if (page < lastPage) {
+            links.add(pageLink(page + 1, size, "next"));
+            links.add(pageLink(lastPage, size, "last"));
+        }
+        if (!links.isEmpty()) {
+            responseBuilder.header("Link", String.join(", ", links));
+        }
+    }
+
+    private String pageLink(int page, int size, String rel) {
+        return "<" + uriInfo.getRequestUriBuilder()
+                .replaceQueryParam("page", page)
+                .replaceQueryParam("size", size)
+                .build() + ">; rel=\"" + rel + "\"";
     }
 }

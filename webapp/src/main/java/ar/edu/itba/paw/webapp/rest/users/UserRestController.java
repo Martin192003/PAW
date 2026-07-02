@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -461,10 +462,12 @@ public class UserRestController {
                 .map(review -> ReviewMapper.toDto(review, uriInfo))
                 .collect(Collectors.toList());
 
+        int total = reviewService.countByUser(id);
         GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(dtos) {};
-        return Response.ok(entity)
-                .header("X-Total-Count", reviewService.countByUser(id))
-                .build();
+        Response.ResponseBuilder response = Response.ok(entity)
+                .header("X-Total-Count", total);
+        addPaginationLinks(response, page, size, total);
+        return response.build();
     }
 
     @POST
@@ -602,6 +605,30 @@ public class UserRestController {
 
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    private void addPaginationLinks(Response.ResponseBuilder responseBuilder, int page, int size, int total) {
+        int totalPages = (int) Math.ceil((double) total / size);
+        int lastPage = Math.max(0, totalPages - 1);
+        List<String> links = new ArrayList<>();
+        if (page > 0) {
+            links.add(pageLink(0, size, "first"));
+            links.add(pageLink(page - 1, size, "prev"));
+        }
+        if (page < lastPage) {
+            links.add(pageLink(page + 1, size, "next"));
+            links.add(pageLink(lastPage, size, "last"));
+        }
+        if (!links.isEmpty()) {
+            responseBuilder.header("Link", String.join(", ", links));
+        }
+    }
+
+    private String pageLink(int page, int size, String rel) {
+        return "<" + uriInfo.getRequestUriBuilder()
+                .replaceQueryParam("page", page)
+                .replaceQueryParam("size", size)
+                .build() + ">; rel=\"" + rel + "\"";
     }
 
     private User resolveUserFromPrincipal(String principal) {
