@@ -85,7 +85,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
 
   cancelBooking(): void {
     if (!this.booking) return;
-    this.bookingService.cancelBooking(this.booking.clubId, this.booking.id).subscribe({
+    this.bookingService.cancelBooking(this.booking.clubId, this.booking.id, this.booking.links).subscribe({
       next: () => {
         this.showCancelModal = false;
         this.success = this.i18n.instant('bookingUserHandler.success.cancelled');

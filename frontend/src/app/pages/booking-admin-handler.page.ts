@@ -85,7 +85,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
 
   confirmBooking(): void {
     if (!this.booking) return;
-    this.bookingService.confirmManagedClubBooking(this.booking.id).subscribe({
+    this.bookingService.confirmManagedClubBooking(this.booking.id, this.booking.links).subscribe({
       next: () => {
         this.success = this.i18n.instant('bookingAdminHandler.success.confirmed');
         this.load();
@@ -99,7 +99,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
 
   cancelBooking(): void {
     if (!this.booking) return;
-    this.bookingService.cancelManagedClubBooking(this.booking.id).subscribe({
+    this.bookingService.cancelManagedClubBooking(this.booking.id, this.booking.links).subscribe({
       next: () => {
         this.showCancelModal = false;
         this.success = this.i18n.instant('bookingAdminHandler.success.cancelled');

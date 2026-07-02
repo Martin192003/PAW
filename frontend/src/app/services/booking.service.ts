@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Booking, BookingFilters, BookingPage, Receipt } from '../models/booking.model';
 import { environment } from '../../environments/environment';
-import { requireLink, resolveApiUrl } from '../utils/api-url.util';
+import { requireAnyLink, requireLink, resolveApiUrl } from '../utils/api-url.util';
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
@@ -29,9 +29,14 @@ export class BookingService {
     );
   }
 
-  cancelBooking(clubId: string, bookingId: string): Observable<void> {
+  cancelBooking(clubId: string, bookingId: string, links?: Booking['links']): Observable<void> {
     return this.http.delete<void>(
-      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
+      this.resolveBookingLink(
+        links,
+        ['cancel'],
+        `booking ${bookingId} cancellation`,
+        `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`
+      )
     );
   }
 
@@ -41,16 +46,27 @@ export class BookingService {
     );
   }
 
-  confirmManagedClubBooking(bookingId: string): Observable<void> {
+  confirmManagedClubBooking(bookingId: string, links?: Booking['links']): Observable<void> {
     return this.http.put<void>(
-      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`, this.apiUrl),
+      this.resolveBookingLink(
+        links,
+        ['confirm', 'managed-update'],
+        `managed booking ${bookingId} confirmation`,
+        `${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`
+      ),
       { status: 'CONFIRMADA' }
     );
   }
 
-  cancelManagedClubBooking(bookingId: string): Observable<void> {
-    return this.http.delete<void>(
-      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
+  cancelManagedClubBooking(bookingId: string, links?: Booking['links']): Observable<void> {
+    return this.http.put<void>(
+      this.resolveBookingLink(
+        links,
+        ['managed-update'],
+        `managed booking ${bookingId} cancellation`,
+        `${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`
+      ),
+      { status: 'CANCELADA' }
     );
   }
 
@@ -87,6 +103,13 @@ export class BookingService {
 
   requireReceiptLink(booking: Booking): string {
     return resolveApiUrl(requireLink(booking.links, 'receipt', 'booking receipt'), this.apiUrl);
+  }
+
+  private resolveBookingLink(links: Booking['links'] | undefined, rels: string[], context: string, fallback: string): string {
+    if (!links) {
+      return resolveApiUrl(fallback, this.apiUrl);
+    }
+    return resolveApiUrl(requireAnyLink(links, rels, context), this.apiUrl);
   }
 
   private params(filters: BookingFilters, page: number, size: number): HttpParams {
