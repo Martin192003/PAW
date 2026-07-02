@@ -76,11 +76,6 @@ export class ClubService {
 
   constructor(private readonly http: HttpClient) {}
 
-  private buildNoCacheParams(seed?: HttpParams): HttpParams {
-    const params = seed ?? new HttpParams();
-    return params.set('_ts', Date.now().toString());
-  }
-
   private normalizeClub(club: Club): Club {
     return {
       ...club,
@@ -163,9 +158,7 @@ export class ClubService {
   }
 
   getClubById(id: string): Observable<Club> {
-    return this.http.get<Club>(`${this.apiUrl}/clubs/${id}`, {
-      params: this.buildNoCacheParams()
-    }).pipe(
+    return this.http.get<Club>(`${this.apiUrl}/clubs/${id}`).pipe(
       map(club => this.normalizeClub(club))
     );
   }
@@ -289,9 +282,7 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.get<Product[]>(url, {
-      params: this.buildNoCacheParams()
-    });
+    return this.http.get<Product[]>(url);
   }
 
   getTables(id: string, date?: string, links?: unknown) {
@@ -307,9 +298,7 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.get<ClubTable[]>(url, {
-      params: this.buildNoCacheParams(params)
-    });
+    return this.http.get<ClubTable[]>(url, { params });
   }
 
   reserveTable(clubId: string, tableId: string, date: string, links?: unknown) {
@@ -372,9 +361,7 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.get<Array<Event & { id?: string }>>(url, {
-      params: this.buildNoCacheParams()
-    }).pipe(
+    return this.http.get<Array<Event & { id?: string }>>(url).pipe(
       map((events) =>
         (events ?? []).map((event) => ({
           ...event,

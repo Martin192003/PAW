@@ -195,7 +195,7 @@ export class ClubHandlerPage implements OnInit {
       })
     ).subscribe({
       next: () => {
-        this.coverUrl = `${this.clubService.getCoverUrl(this.clubId)}?t=${Date.now()}`;
+        this.coverUrl = this.withCacheBust(this.clubService.getCoverUrl(this.clubId));
         this.loadGalleryPhotos();
         this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.coverUpdated');
         this.actionErrorMessage = '';
@@ -971,10 +971,11 @@ export class ClubHandlerPage implements OnInit {
     if (!raw) {
       return '';
     }
-    return this.withCacheBust(this.clubService.toAbsoluteUrl(raw, this.clubId));
+    return this.clubService.toAbsoluteUrl(raw, this.clubId);
   }
 
   private withCacheBust(url: string): string {
+    // Only used immediately after replacing image resources that keep the same URL.
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}t=${Date.now()}`;
   }
