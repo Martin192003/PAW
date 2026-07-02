@@ -8,6 +8,7 @@ import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,9 @@ public class ClubServiceImpl implements ClubService{
     private final PhotoService photoService;
     private final UserService userService;
     private final BookingDao bookingDao;
+
+    @Value("${club.contact.fallback-email:no-reply@local}")
+    private String fallbackContactEmail;
 
     @Autowired
     public ClubServiceImpl(ClubDao clubDao, ClubTablesDao clubTablesDao, EmailService mailService, PhotoService photoService, UserService userService, BookingDao bookingDao) {
@@ -185,7 +189,7 @@ public class ClubServiceImpl implements ClubService{
         if (club.getContactInfo() != null && club.getContactInfo().getEmail() != null) {
             return club.getContactInfo().getEmail();
         }
-        return "paw2025b06@gmail.com";
+        return fallbackContactEmail;
     }
 
     @Override

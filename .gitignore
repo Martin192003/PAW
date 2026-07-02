@@ -11,6 +11,7 @@ dist/
 # Environment variable files
 webapp/.env
 application.properties
+# Keep real local mail configuration out of git; commit only example templates.
 mail.properties
 
 # Compiled Java class files

@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 @Configuration
-@PropertySource("classpath:mail.properties")
+@PropertySource(value = "classpath:mail.properties", ignoreResourceNotFound = true)
 public class MailConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MailConfig.class);
