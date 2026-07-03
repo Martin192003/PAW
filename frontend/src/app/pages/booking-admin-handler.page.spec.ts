@@ -103,7 +103,7 @@ describe('BookingAdminHandlerPage', () => {
 
     component.confirmBooking();
 
-    expect(bookingService.confirmManagedClubBooking).toHaveBeenCalledWith('booking-1');
+    expect(bookingService.confirmManagedClubBooking).toHaveBeenCalledWith('booking-1', undefined);
     expect(component.success).toBe('bookingAdminHandler.success.confirmed');
     expect(bookingService.getManagedClubBooking).toHaveBeenCalledWith('booking-1');
   });
@@ -114,7 +114,7 @@ describe('BookingAdminHandlerPage', () => {
 
     component.cancelBooking();
 
-    expect(bookingService.cancelManagedClubBooking).toHaveBeenCalledWith('booking-1');
+    expect(bookingService.cancelManagedClubBooking).toHaveBeenCalledWith('booking-1', undefined);
     expect(component.showCancelModal).toBe(false);
     expect(component.success).toBe('bookingAdminHandler.success.cancelled');
     expect(bookingService.getManagedClubBooking).toHaveBeenCalledWith('booking-1');
