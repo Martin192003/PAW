@@ -3,7 +3,6 @@ package ar.edu.itba.paw.webapp.rest.events;
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.EventDto;
-import ar.edu.itba.paw.persistence.EventDao;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
@@ -16,7 +15,6 @@ import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,9 +32,6 @@ public class EventRestController {
 
     @Autowired
     private ClubService clubService;
-
-    @Autowired
-    private EventDao eventDao;
 
     @Autowired
     private AuthenticatedUserResolver authenticatedUserResolver;
@@ -65,33 +60,6 @@ public class EventRestController {
 
         Response.ResponseBuilder response = Response.ok(entity)
                 .header("X-Total-Count", total);
-        addPaginationLinks(response, page, size, total);
-        return response.build();
-    }
-
-    @GET
-    @Path("/events")
-    @Deprecated
-    public Response getUpcoming(@QueryParam("page") @DefaultValue("0") int page,
-                                @QueryParam("size") @DefaultValue("20") int size){
-        if (page < 0 || size <= 0) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-
-        List<Event> events = eventService.listUpcoming(page, size);
-        int total = eventService.countUpcoming();
-        List<UUID> eventIds = events.stream().map(Event::getEventId).toList();
-        Map<UUID, String> clubNames = eventDao.mapClubNamesForEvents(eventIds);
-
-        List<EventDto> body = events.stream()
-                .map(event -> eventDtoAssembler.toDto(uriInfo, event, clubNames.get(event.getEventId())))
-                .collect(Collectors.toList());
-
-        GenericEntity<List<EventDto>> entity = new GenericEntity<>(body) {};
-
-        Response.ResponseBuilder response = Response.ok(entity)
-                .header("X-Total-Count", total)
-                .header("Warning", "299 - \"Deprecated endpoint; use /api/events\"");
         addPaginationLinks(response, page, size, total);
         return response.build();
     }

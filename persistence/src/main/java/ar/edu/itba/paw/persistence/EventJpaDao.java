@@ -228,29 +228,18 @@ public class EventJpaDao implements EventDao {
         if (eventIds == null || eventIds.isEmpty())
             return Collections.emptyMap();
 
-        String placeholders = "";
-        for (int i = 0; i < eventIds.size(); i++) {
-            placeholders += (i == 0 ? ":" : ", :") + "id" + i;
-        }
+        List<Object[]> rows = em.createQuery("""
+                    SELECT e.eventId, c.clubName
+                    FROM Event e, Club c
+                    WHERE e.clubId = c.clubId
+                      AND e.eventId IN :eventIds
+                """, Object[].class)
+                .setParameter("eventIds", eventIds)
+                .getResultList();
 
-        String sql = """
-                    SELECT CAST(e.event_id AS TEXT) AS event_id, c.club_name
-                    FROM events e
-                    JOIN clubs c ON e.clubid = c.club_id
-                    WHERE e.event_id IN (%s)
-                """.formatted(placeholders);
-
-        var nq = em.createNativeQuery(sql);
-
-        for (int i = 0; i < eventIds.size(); i++) {
-            nq.setParameter("id" + i, eventIds.get(i));
-        }
-
-        @SuppressWarnings("unchecked")
-        List<Object[]> rows = nq.getResultList();
         Map<UUID, String> result = new HashMap<>();
         for (Object[] row : rows) {
-            result.put(UUID.fromString(row[0].toString()), (String) row[1]);
+            result.put((UUID) row[0], (String) row[1]);
         }
 
         return result;

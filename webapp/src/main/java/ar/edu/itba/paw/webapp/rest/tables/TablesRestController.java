@@ -222,68 +222,6 @@ public class TablesRestController {
         return Response.ok(responseBody).build();
     }
 
-    @PUT
-    @Path("/{tableId}/state")
-    @Deprecated
-    public Response updateTableState(@PathParam("clubId") String clubId,
-                                     @PathParam("tableId") String tableId,
-                                     TableUpdateRequestDto body,
-                                     @Context SecurityContext securityContext) {
-        UUID clubUuid, tableUuid;
-        try {
-            clubUuid = UUID.fromString(clubId);
-            tableUuid = UUID.fromString(tableId);
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId o tableId inválido"))
-                    .build();
-        }
-
-        User user = authenticatedUserResolver.resolve(securityContext);
-        if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
-        clubService.assertAdmin(clubUuid, user.getId());
-
-        if (body == null || body.getTableState() == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "Missing required fields"))
-                    .build();
-        }
-
-        ClubTable current = tableService.findByClubId(clubUuid).stream()
-                .filter(t -> t.getTableId().equals(tableUuid))
-                .findFirst()
-                .orElse(null);
-
-        if (current == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Mesa o club no encontrado"))
-                    .build();
-        }
-
-        ClubTable updated = tableService.update(
-                tableUuid,
-                clubUuid,
-                BigDecimal.valueOf(current.getTableNumber()),
-                BigDecimal.valueOf(current.getCapacity()),
-                body.getTableState(),
-                current.getPrice(),
-                current.getDiscount()
-        );
-
-        if (updated == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Mesa o club no encontrado"))
-                    .build();
-        }
-
-        TableDto responseBody = tableDtoAssembler.toDto(uriInfo, clubUuid, updated);
-        return Response.ok(responseBody)
-                .header("Warning", "299 - \"Deprecated endpoint; use PUT /api/clubs/{clubId}/tables/{tableId}\"")
-                .build();
-    }
-
     @DELETE
     @Path("/{tableId}")
     public Response deleteTable(@PathParam("clubId") String clubId,

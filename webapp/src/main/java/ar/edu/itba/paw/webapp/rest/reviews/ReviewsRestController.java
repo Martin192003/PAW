@@ -146,19 +146,13 @@ public class ReviewsRestController {
         }
 
         try {
-            reviewService.createReview(
-                    user.getId(),
-                    clubId,
+            Review updated = reviewService.updateReview(
+                    existingOpt.get().getReviewId(),
                     body.getRating(),
                     body.getDescription(),
                     null
             );
-
-            Optional<Review> updatedOpt = reviewService.getUserReviewForClub(user.getId(), clubId);
-            if (updatedOpt.isEmpty()) {
-                return Response.serverError().entity(Map.of("message", "Unable to retrieve updated review")).build();
-            }
-            return Response.ok(ReviewMapper.toDto(updatedOpt.get(), uriInfo)).build();
+            return Response.ok(ReviewMapper.toDto(updated, uriInfo)).build();
         } catch (Exception e) {
             return Response.serverError()
                     .entity(Map.of("message", "Internal server error"))

@@ -112,17 +112,6 @@ public class BookingsRestController {
     }
 
     @PUT
-    @Path("/managed-club-bookings/{bookingId}/confirmation")
-    @Deprecated
-    public Response confirmManagedClubBooking(@PathParam("bookingId") UUID bookingId,
-                                              @Context SecurityContext securityContext) {
-        bookingService.confirmManagedClubBooking(authenticatedLoginIdentifier(securityContext), bookingId);
-        return Response.noContent()
-                .header("Warning", "299 - \"Deprecated endpoint; use PUT /api/managed-club-bookings/{bookingId}\"")
-                .build();
-    }
-
-    @PUT
     @Path("/managed-club-bookings/{bookingId}")
     public Response updateManagedClubBooking(@PathParam("bookingId") UUID bookingId,
                                              BookingDto body,

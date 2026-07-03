@@ -617,46 +617,6 @@ public class ClubRestController {
     }
 
     @GET
-    @Path("/user/{userID}")
-    @Deprecated
-    public Response getClubByUser(@PathParam("userID") String userID,
-                                  @QueryParam("page") @DefaultValue("1") int page,
-                                  @QueryParam("size") @DefaultValue("10") int size) {
-        UUID id = parseUuidOr400(userID);
-        if (id == null) return badRequest("userId inválido");
-
-        page = (page < 1) ? DEFAULT_PAGE : page;
-        size = (size < 1) ? DEFAULT_SIZE : size;
-        final int offset = (page - 1) * size;
-
-        final int totalClubs = clubService.countClubsByUser(id);
-        final List<ClubDto> dtos = clubService.getClubsByUserPaginated(id, size, offset)
-                .stream()
-                .map(this::toDtoWithLinks)
-                .collect(Collectors.toList());
-
-        final int totalPages = (int) Math.ceil((double) totalClubs / size);
-
-        final PagedResponseDto response = new PagedResponseDto(
-                dtos,
-                page,
-                size,
-                totalClubs,
-                totalPages,
-                false,
-                false,
-                null
-        );
-
-        Response.ResponseBuilder responseBuilder = Response.ok(response);
-        addPaginationLinks(responseBuilder, page, size, totalPages, 1);
-        return responseBuilder
-                .header("Warning", "299 - \"Deprecated endpoint; use /api/clubs?ownerId=...\"")
-                .build();
-    }
-
-
-    @GET
     @Path("/{clubId}/layout/image")
     public Response getLayoutImage(@PathParam("clubId") String clubId, @Context Request request) {
         UUID id = parseUuidOr400(clubId);

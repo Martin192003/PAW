@@ -80,6 +80,28 @@ public class ReviewServiceImplTest {
     }
 
     @Test
+    public void testUpdateReviewUsesDaoUpdate() throws IOException {
+        User user = new User(USER_ID);
+        Club club = new Club();
+        club.setClubId(CLUB_ID);
+
+        Review existingReview = new Review(REVIEW_ID, user, club, 5, "Great!", CREATED_AT);
+        Review updatedReview = new Review(REVIEW_ID, user, club, 2, "Updated", CREATED_AT);
+
+        Mockito.when(reviewsDao.findById(REVIEW_ID)).thenReturn(Optional.of(existingReview));
+        Mockito.when(reviewsDao.update(REVIEW_ID, 2, "Updated")).thenReturn(updatedReview);
+        Mockito.when(clubDao.findById(CLUB_ID)).thenReturn(Optional.of(club));
+        Mockito.when(reviewsDao.averageByClubId(CLUB_ID)).thenReturn(2.0);
+        Mockito.when(reviewsDao.findByClub(club)).thenReturn(List.of(updatedReview));
+
+        Review result = reviewService.updateReview(REVIEW_ID, 2, "Updated", null);
+
+        Assert.assertEquals(updatedReview, result);
+        Mockito.verify(reviewsDao).update(REVIEW_ID, 2, "Updated");
+        Mockito.verify(reviewsDao, Mockito.never()).upsert(Mockito.any(), Mockito.any(), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean());
+    }
+
+    @Test
     public void testGetUserReviewForClubReturnsReview() {
         User user = new User(USER_ID);
         Club club = new Club();
