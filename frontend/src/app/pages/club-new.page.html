@@ -262,7 +262,7 @@
         </a>
         <button
           type="submit"
-          [disabled]="submitting"
+          [disabled]="clubForm.invalid || submitting"
           class="inline-block px-4 py-2 text-white bg-[#9c27b0] border border-[#9c27b0]
                  rounded text-base cursor-pointer
                  shadow-[0_2px_10px_rgba(156,39,176,0.4)]

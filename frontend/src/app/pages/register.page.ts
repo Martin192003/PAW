@@ -1,12 +1,16 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { UserCreateRequest } from '../models/user.model';
 import { UserService } from '../services/user.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
+
+const PASSWORD_MIN_LENGTH = 6;
+const PHONE_MAX_LENGTH = 30;
+const PHONE_PATTERN = /^(?=.*\d)[0-9+()\-\s]+$/;
 
 @Component({
   standalone: true,
@@ -29,21 +33,16 @@ export class RegisterPage {
       username: ['', [Validators.required]],
       name: ['', [Validators.required]],
       surname: ['', [Validators.required]],
-      password: ['', [Validators.required]],
+      password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH)]],
       passwordRepeat: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      cellphone: ['', [Validators.required]],
-    });
+      cellphone: ['', [Validators.required, Validators.maxLength(PHONE_MAX_LENGTH), Validators.pattern(PHONE_PATTERN)]],
+    }, { validators: this.passwordsMatchValidator() });
   }
 
   onSubmit(): void {
     this.registerForm.markAllAsTouched();
     if (this.registerForm.invalid || this.submitting) return;
-
-    if (this.registerForm.value.password !== this.registerForm.value.passwordRepeat) {
-      this.errorMessage = this.i18n.instant('register.errors.passwordMismatch');
-      return;
-    }
 
     const payload: UserCreateRequest = {
       username: this.registerForm.value.username.trim(),
@@ -72,7 +71,34 @@ export class RegisterPage {
 
   showError(field: string): boolean {
     const control = this.registerForm.get(field);
-    return !!(control && control.invalid && (control.dirty || control.touched));
+    if (!control || !(control.dirty || control.touched)) return false;
+    return control.invalid || (field === 'passwordRepeat' && this.registerForm.hasError('passwordMismatch'));
+  }
+
+  getError(field: string): string {
+    const control = this.registerForm.get(field);
+    if (!control) return '';
+
+    if (control.errors?.['required']) return this.i18n.instant('register.errors.required');
+    if (control.errors?.['email']) return this.i18n.instant('register.errors.email');
+    if (control.errors?.['minlength']) {
+      return this.i18n.instant('register.errors.minlength', {
+        min: control.errors['minlength'].requiredLength,
+      });
+    }
+    if (control.errors?.['maxlength']) {
+      return this.i18n.instant('register.errors.maxlength', {
+        max: control.errors['maxlength'].requiredLength,
+      });
+    }
+    if (control.errors?.['pattern'] && field === 'cellphone') {
+      return this.i18n.instant('register.errors.phonePattern');
+    }
+    if (field === 'passwordRepeat' && this.registerForm.hasError('passwordMismatch')) {
+      return this.i18n.instant('register.errors.passwordMismatch');
+    }
+
+    return this.i18n.instant('register.errors.invalid');
   }
 
   private getLocale(): string {
@@ -107,5 +133,16 @@ export class RegisterPage {
     }
 
     return null;
+  }
+
+  private passwordsMatchValidator(): ValidatorFn {
+    return (group: AbstractControl): ValidationErrors | null => {
+      const password = group.get('password')?.value;
+      const passwordRepeat = group.get('passwordRepeat')?.value;
+
+      if (!password || !passwordRepeat) return null;
+
+      return password === passwordRepeat ? null : { passwordMismatch: true };
+    };
   }
 }

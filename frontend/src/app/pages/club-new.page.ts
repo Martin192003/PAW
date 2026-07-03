@@ -22,6 +22,8 @@ import { I18nService } from '../services/i18n.service';
 
 declare const L: any; // Leaflet (cargado vía CDN o instalado como paquete)
 
+const CBU_MAX_LENGTH = 50;
+
 @Component({
   selector: 'app-add-club',
   standalone: true,
@@ -71,11 +73,11 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
       name:        ['', [Validators.required, Validators.maxLength(100)]],
       location:    ['', [Validators.required]],
       priceRange:  ['', [Validators.required]],
-      description: [''],
+      description: ['', [Validators.required]],
       musicGenre:  ['', [Validators.required]],
       zone:        ['', [Validators.required]],
       isBar:       ['', [Validators.required]],
-      cbu:         [''],
+      cbu:         ['', [Validators.required, Validators.maxLength(CBU_MAX_LENGTH)]],
       image:       [null],
     });
 
@@ -239,11 +241,11 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
       clubName: val.name,
       location: val.location,
       priceRange: val.priceRange,
-      description: val.description ?? '',
+      description: val.description?.trim() ?? '',
       musicGenre: val.musicGenre,
       zone: val.zone,
       bar: val.isBar === 'true',
-      cbu: val.cbu ?? '',
+      cbu: val.cbu?.trim() ?? '',
     };
 
     this.clubService.createClub(payload).pipe(
