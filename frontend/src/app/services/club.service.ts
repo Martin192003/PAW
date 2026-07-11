@@ -289,18 +289,38 @@ export class ClubService {
     return this.http.put(url, formData);
   }
 
-  uploadGalleryPhotos(clubId: string, files: File[]): Observable<unknown> {
+  uploadGalleryPhotos(clubId: string, files: File[], links?: unknown): Observable<unknown> {
+    let url = '';
+    try {
+      url = this.resolveClubLink(links, this.linkRels.photos, `club ${clubId} photos`, `${this.apiUrl}/clubs/${clubId}/photos`);
+    } catch (err) {
+      return this.missingLinkError(err);
+    }
+
     const uploads = files.map((file) => {
       const formData = new FormData();
       formData.append('file', file);
-      return this.http.post(`${this.apiUrl}/clubs/${clubId}/photos`, formData);
+      return this.http.post(url, formData);
     });
 
     return forkJoin(uploads);
   }
 
-  deleteGalleryPhoto(clubId: string, photoId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/photos/${photoId}`);
+  /**
+   * No hay un link HATEOAS individual por foto para borrar (el backend solo
+   * expone `self` de la foto como GET en /photos/{id}). El recurso que sí
+   * soporta DELETE es la colección `photos` del club, así que resolvemos esa
+   * URL a partir de los links del club y le agregamos el id.
+   */
+  deleteGalleryPhoto(clubId: string, photoId: string, links?: unknown): Observable<void> {
+    let base = '';
+    try {
+      base = this.resolveClubLink(links, this.linkRels.photos, `club ${clubId} photos`, `${this.apiUrl}/clubs/${clubId}/photos`);
+    } catch (err) {
+      return this.missingLinkError(err);
+    }
+
+    return this.http.delete<void>(`${base}/${encodeURIComponent(photoId)}`);
   }
 
   toAbsoluteUrl(path: string, clubId?: string): string {
@@ -456,8 +476,14 @@ export class ClubService {
     return this.http.put<ClubTable>(url, payload).pipe(map(updated => this.normalizeTable(updated)));
   }
 
-  deleteTable(clubId: string, tableId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/tables/${tableId}`);
+  deleteTable(clubId: string, tableId: string, table?: ClubTable): Observable<void> {
+    const url = this.resolveClubLink(
+      table?.links,
+      ['self', 'delete'],
+      `table ${tableId}`,
+      `${this.apiUrl}/clubs/${clubId}/tables/${tableId}`
+    );
+    return this.http.delete<void>(url);
   }
 
   createEvent(clubId: string, payload: EventPayload, links?: unknown): Observable<Event> {
@@ -479,19 +505,49 @@ export class ClubService {
     );
   }
 
-  deleteEvent(clubId: string, eventId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}`);
+  deleteEvent(clubId: string, eventId: string, event?: Event): Observable<void> {
+    const url = this.resolveClubLink(
+      event?.links,
+      ['delete', 'self'],
+      `event ${eventId}`,
+      `${this.apiUrl}/clubs/${clubId}/events/${eventId}`
+    );
+    return this.http.delete<void>(url);
   }
 
-  uploadEventPhoto(clubId: string, eventId: string, file: File): Observable<Event> {
+  uploadEventPhoto(clubId: string, eventId: string, file: File, event?: Event): Observable<Event> {
+    let url = '';
+    try {
+      url = this.resolveClubLink(
+        event?.links,
+        ['photo'],
+        `event ${eventId} photo`,
+        `${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`
+      );
+    } catch (err) {
+      return this.missingLinkError(err);
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.put<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`, formData);
+    return this.http.put<Event>(url, formData);
   }
 
-  deleteEventPhoto(clubId: string, eventId: string): Observable<Event> {
-    return this.http.delete<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`);
+  deleteEventPhoto(clubId: string, eventId: string, event?: Event): Observable<Event> {
+    let url = '';
+    try {
+      url = this.resolveClubLink(
+        event?.links,
+        ['photo'],
+        `event ${eventId} photo`,
+        `${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`
+      );
+    } catch (err) {
+      return this.missingLinkError(err);
+    }
+
+    return this.http.delete<Event>(url);
   }
 
   private normalizePhoto(photo: ClubPhoto, clubId: string): ClubPhoto {

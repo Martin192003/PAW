@@ -260,7 +260,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     const selected = files.slice(0, maxBatch);
     this.uploadingGallery = true;
 
-    this.clubService.uploadGalleryPhotos(this.clubId, selected).pipe(
+    this.clubService.uploadGalleryPhotos(this.clubId, selected, this.club?.links).pipe(
       timeout(this.mutationTimeoutMs),
       finalize(() => {
         this.uploadingGallery = false;
@@ -291,7 +291,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       return;
     }
 
-    this.clubService.deleteGalleryPhoto(this.clubId, photo.photoId).pipe(
+    this.clubService.deleteGalleryPhoto(this.clubId, photo.photoId, this.club?.links).pipe(
       timeout(this.mutationTimeoutMs)
     ).subscribe({
       next: () => {
@@ -650,7 +650,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       return;
     }
 
-    this.clubService.deleteTable(this.clubId, table.tableId).subscribe({
+    this.clubService.deleteTable(this.clubId, table.tableId, table).subscribe({
       next: () => {
         this.tables = this.tables.filter((item) => item.tableId !== table.tableId);
         this.cdr.detectChanges();
@@ -742,7 +742,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       return;
     }
 
-    this.clubService.deleteEvent(this.clubId, event.eventId).subscribe({
+    this.clubService.deleteEvent(this.clubId, event.eventId, event).subscribe({
       next: () => {
         this.events = this.events.filter((item) => item.eventId !== event.eventId);
         this.eventPage = Math.min(this.eventPage, this.eventTotalPages);
@@ -760,15 +760,16 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     });
   }
 
-  onEventPhotoSelected(eventId: string, uploadEvent: globalThis.Event): void {
+  onEventPhotoSelected(event: Event, uploadEvent: globalThis.Event): void {
     const input = uploadEvent.target as HTMLInputElement;
     const file = input.files?.[0];
+    const eventId = event.eventId;
     if (!file || !this.clubId || !eventId) {
       return;
     }
 
     this.uploadingEventPhotoId = eventId;
-    this.clubService.uploadEventPhoto(this.clubId, eventId, file).subscribe({
+    this.clubService.uploadEventPhoto(this.clubId, eventId, file, event).subscribe({
       next: () => {
         this.uploadingEventPhotoId = null;
         this.loadEvents();
@@ -790,7 +791,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       return;
     }
 
-    this.clubService.deleteEventPhoto(this.clubId, event.eventId).subscribe({
+    this.clubService.deleteEventPhoto(this.clubId, event.eventId, event).subscribe({
       next: (updatedEvent) => {
         this.upsertEventInList(updatedEvent);
         this.loadEvents();
