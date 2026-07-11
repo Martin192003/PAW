@@ -12,14 +12,17 @@ import { apiErrorInterceptor } from './services/api-error.interceptor';
 import { AuthBootstrapService } from './services/auth-bootstrap.service';
 
 import { routes } from './app.routes';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideClientHydration } from '@angular/platform-browser';
 import { authInterceptor } from './services/auth.interceptor';
 
 export class CustomTranslateLoader implements TranslateLoader {
   constructor(private http: HttpClient) {}
 
   getTranslation(lang: string): Observable<any> {
-    return this.http.get(`/assets/i18n/${lang}.json`);
+    const url = typeof document === 'undefined'
+      ? `assets/i18n/${lang}.json`
+      : new URL(`assets/i18n/${lang}.json`, document.baseURI).toString();
+    return this.http.get(url);
   }
 }
 
@@ -27,7 +30,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideClientHydration(withEventReplay()),
+    provideClientHydration(),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, apiErrorInterceptor])),
     importProvidersFrom(
       TranslateModule.forRoot({

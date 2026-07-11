@@ -3,7 +3,6 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { finalize } from 'rxjs/operators';
 import { User } from '../models/user.model';
 import { AuthStateService } from '../services/auth-state.service';
 import { UserService } from '../services/user.service';
@@ -60,9 +59,7 @@ export class ProfilePage implements OnInit {
   activeField: EditableProfileField | null = null;
   draftValue = '';
   errorMessage = '';
-  passwordResetError = '';
   saving = false;
-  creatingPasswordResetToken = false;
 
   constructor(
     private readonly authState: AuthStateService,
@@ -118,25 +115,11 @@ export class ProfilePage implements OnInit {
   }
 
   goToPasswordReset(): void {
-    if (!this.user || this.creatingPasswordResetToken) {
+    if (!this.user) {
       return;
     }
 
-    this.creatingPasswordResetToken = true;
-    this.passwordResetError = '';
-
-    this.userService.createPasswordResetToken(this.user.userId).pipe(
-      finalize(() => {
-        this.creatingPasswordResetToken = false;
-      })
-    ).subscribe({
-      next: ({ token }) => {
-        this.router.navigate(['/reset-password'], { queryParams: { token } });
-      },
-      error: (error: HttpErrorResponse) => {
-        this.passwordResetError = this.extractPasswordResetError(error);
-      }
-    });
+    this.router.navigate(['/reset-password'], { queryParams: { source: 'profile' } });
   }
 
   closeEditor(): void {
@@ -214,21 +197,5 @@ export class ProfilePage implements OnInit {
     }
 
     return fallback;
-  }
-
-  private extractPasswordResetError(error: HttpErrorResponse): string {
-    if (error.status === 0) {
-      return this.i18n.instant('profile.errors.connection');
-    }
-
-    if (error.status === 401 || error.status === 403) {
-      return this.i18n.instant('profile.errors.invalidSession');
-    }
-
-    if (error.status >= 500) {
-      return this.i18n.instant('profile.errors.resetPasswordServer');
-    }
-
-    return this.extractErrorMessage(error) || this.i18n.instant('profile.errors.resetPassword');
   }
 }

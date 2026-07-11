@@ -311,10 +311,13 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            return Response.ok(UserMapper.toDto(updated, uriInfo))
-                    .header("X-Access-Token", jwtUtil.generateToken(updated.getId().toString()))
-                    .header("X-Token-Type", "Bearer")
-                    .header("X-Expires-In", Long.toString(jwtUtil.getExpirationSeconds()))
+            UserUpdateResponseDto response = new UserUpdateResponseDto(
+                    UserMapper.toDto(updated, uriInfo),
+                    jwtUtil.generateToken(updated.getId().toString()),
+                    "Bearer",
+                    jwtUtil.getExpirationSeconds()
+            );
+            return Response.ok(response)
                     .header("Cache-Control", "no-store")
                     .header("Pragma", "no-cache")
                     .build();
@@ -389,10 +392,13 @@ public class UserRestController {
 
         try {
             User updated = userService.update(existing);
-            return Response.ok(UserMapper.toDto(updated, uriInfo))
-                    .header("X-Access-Token", jwtUtil.generateToken(updated.getId().toString()))
-                    .header("X-Token-Type", "Bearer")
-                    .header("X-Expires-In", Long.toString(jwtUtil.getExpirationSeconds()))
+            UserUpdateResponseDto response = new UserUpdateResponseDto(
+                    UserMapper.toDto(updated, uriInfo),
+                    jwtUtil.generateToken(updated.getId().toString()),
+                    "Bearer",
+                    jwtUtil.getExpirationSeconds()
+            );
+            return Response.ok(response)
                     .header("Cache-Control", "no-store")
                     .header("Pragma", "no-cache")
                     .build();
@@ -469,52 +475,6 @@ public class UserRestController {
     }
 
     @POST
-    @Path("/{userId}/password-reset-tokens")
-    public Response createPasswordResetToken(@PathParam("userId") String userId) {
-        UUID id;
-        try {
-            id = UUID.fromString(userId);
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId invalido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        Optional<User> maybe = userService.findById(id);
-        if (maybe.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(message("Usuario no encontrado"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(message("Unauthorized"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        String authName = auth.getName();
-        User authUser = userService.findByUserName(authName);
-        if (authUser == null) {
-            authUser = userService.findByEmail(authName);
-        }
-
-        if (authUser == null || !authUser.getId().equals(id)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(message("Forbidden"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        String token = userService.createPasswordResetToken(id);
-        return Response.ok(new PasswordResetTokenDto(token)).build();
-    }
-
-    @POST
     @Path("/password-resets")
     public Response resetPassword(@QueryParam("token") String token, PasswordResetDto body) {
         if (isBlank(token)) {
@@ -546,7 +506,22 @@ public class UserRestController {
                     .build();
         }
 
-        return Response.noContent().build();
+        User user = updated.get();
+        AuthTokenDto response = new AuthTokenDto(
+                jwtUtil.generateToken(user.getId().toString()),
+                "Bearer",
+                jwtUtil.getExpirationSeconds(),
+                new AuthTokenUserDto(uriInfo.getBaseUriBuilder()
+                        .path("users/{id}")
+                        .resolveTemplate("id", user.getId().toString())
+                        .build()
+                        .toString())
+        );
+
+        return Response.ok(response)
+                .header("Cache-Control", "no-store")
+                .header("Pragma", "no-cache")
+                .build();
     }
 
     private Response buildVerificationLoginResponse(String tokenOrCode) {

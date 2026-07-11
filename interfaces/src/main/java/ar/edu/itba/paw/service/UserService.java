@@ -23,7 +23,6 @@ public interface UserService {
     boolean resendVerificationToken(String usernameOrEmail);
 
     boolean requestPasswordReset(String email);
-    String createPasswordResetToken(UUID userId);
     Optional<User> resetPassword(String token, String newPassword);
     Optional<User> findByBookingId(UUID bookingId);
     User updateUserField(UUID userId, String field, String value);

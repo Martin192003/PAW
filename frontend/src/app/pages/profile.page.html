@@ -63,17 +63,12 @@
           <button
             type="button"
             (click)="goToPasswordReset()"
-            [disabled]="creatingPasswordResetToken"
             [attr.aria-label]="'profile.resetPassword' | translate"
-            class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center cursor-pointer text-base sm:text-lg hover:scale-105 transition-transform disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
+            class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-[#9c27b0] to-[#d500f9] text-white shadow-[0_0_12px_rgba(156,39,176,0.6)] flex items-center justify-center cursor-pointer text-base sm:text-lg hover:scale-105 transition-transform"
           >
-            <i class="fa-solid" [ngClass]="creatingPasswordResetToken ? 'fa-spinner fa-spin' : 'fa-key'"></i>
+            <i class="fa-solid fa-key"></i>
           </button>
         </div>
-
-        <p *ngIf="passwordResetError" class="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {{ passwordResetError }}
-        </p>
       </div>
     </div>
 

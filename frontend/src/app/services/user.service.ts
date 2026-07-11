@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -28,10 +28,6 @@ export type UserUpdateResult = {
   token: string | null;
 };
 
-export type PasswordResetTokenResult = {
-  token: string;
-};
-
 type AuthTokenResponse = {
   accessToken: string;
   tokenType: string;
@@ -39,6 +35,13 @@ type AuthTokenResponse = {
   user: {
     href: string;
   };
+};
+
+type UserUpdateResponse = {
+  user: User;
+  accessToken?: string;
+  tokenType?: string;
+  expiresIn?: number;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -56,10 +59,10 @@ export class UserService {
   }
 
   updateUser(userId: string, payload: UserUpdatePayload): Observable<UserUpdateResult> {
-    return this.http.put<User>(`${this.apiUrl}/users/${userId}`, payload, { observe: 'response' }).pipe(
-      map((response: HttpResponse<User>) => ({
-        user: response.body as User,
-        token: response.headers.get('X-Access-Token')
+    return this.http.put<UserUpdateResponse>(`${this.apiUrl}/users/${userId}`, payload).pipe(
+      map((response) => ({
+        user: response.user,
+        token: response.accessToken ?? null
       }))
     );
   }
@@ -98,14 +101,20 @@ export class UserService {
     );
   }
 
-  createPasswordResetToken(userId: string): Observable<PasswordResetTokenResult> {
-    return this.http.post<PasswordResetTokenResult>(`${this.apiUrl}/users/${userId}/password-reset-tokens`, {});
-  }
-
-  resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<void> {
+  resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<LoginResponse> {
     const params = new HttpParams().set('token', token);
-    return this.http.post(`${this.apiUrl}/users/password-resets`, { newPassword, confirmationPassword }, { params }).pipe(
-      map(() => undefined)
+    return this.http.post<AuthTokenResponse>(
+      `${this.apiUrl}/users/password-resets`,
+      { newPassword, confirmationPassword },
+      { params }
+    ).pipe(
+      switchMap((tokenResponse) => {
+        const nextToken = tokenResponse.accessToken;
+        const headers = new HttpHeaders({ Authorization: `Bearer ${nextToken}` });
+        return this.http.get<User>(tokenResponse.user.href, { headers }).pipe(
+          map((user) => ({ token: nextToken, user }))
+        );
+      })
     );
   }
 }

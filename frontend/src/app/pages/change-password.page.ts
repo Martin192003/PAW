@@ -134,10 +134,10 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
         this.submittingReset = false;
       })
     ).subscribe({
-      next: () => {
+      next: (response) => {
         this.ngZone.run(() => {
-          this.resetCompleted = true;
-          this.showResetModal = true;
+          this.authState.setSession(response.token, response.user, false);
+          this.router.navigate(['/clubs']);
           this.cdr.detectChanges();
         });
       },
@@ -177,7 +177,7 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
   confirmResetModal(): void {
     this.showResetModal = false;
     this.resetCompleted = false;
-    this.router.navigate(['/login']);
+    this.router.navigate(['/clubs']);
   }
 
   private resolveForgotError(error: HttpErrorResponse): string {
