@@ -1,7 +1,9 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
+import { skip, takeUntil } from 'rxjs/operators';
 
 import { ClubService } from '../services/club.service';
 import { Club } from '../models/club.model';
@@ -17,22 +19,49 @@ type ClubActivityItem = Club & { _hasError?: boolean };
   templateUrl: './club-activity.page.html',
   styleUrl: './club-activity.page.css'
 })
-export class ClubActivityPage implements OnInit {
+export class ClubActivityPage implements OnInit, OnDestroy {
   clubs: ClubActivityItem[] = [];
 
   currentPage = 1;
   pageSize = 3;
   totalPages = 0;
 
+  private readonly destroy$ = new Subject<void>();
+
   constructor(
     private readonly clubService: ClubService,
     private readonly authState: AuthStateService,
     private readonly cdr: ChangeDetectorRef,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    this.applyQueryParams(this.route.snapshot.queryParamMap);
     this.loadClubs();
+
+    this.route.queryParamMap.pipe(skip(1), takeUntil(this.destroy$)).subscribe((params) => {
+      this.applyQueryParams(params);
+      this.loadClubs();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private applyQueryParams(params: ParamMap): void {
+    this.currentPage = Number(params.get('page') ?? '1') || 1;
+  }
+
+  private updateQueryParams(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: this.currentPage },
+      queryParamsHandling: '',
+      replaceUrl: true
+    });
   }
 
   loadClubs(): void {
@@ -140,7 +169,7 @@ export class ClubActivityPage implements OnInit {
       return;
     }
     this.currentPage -= 1;
-    this.loadClubs();
+    this.updateQueryParams();
   }
 
   nextPage(): void {
@@ -148,7 +177,7 @@ export class ClubActivityPage implements OnInit {
       return;
     }
     this.currentPage += 1;
-    this.loadClubs();
+    this.updateQueryParams();
   }
 }
 

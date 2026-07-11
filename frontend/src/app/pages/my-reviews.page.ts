@@ -1,7 +1,9 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { skip, takeUntil } from 'rxjs/operators';
 
 import { ReviewService } from '../services/review.service';
 import { ClubService } from '../services/club.service';
@@ -22,7 +24,7 @@ type ReviewItem = Review & {
   imports: [CommonModule, SideBarComponent, TranslateModule],
   templateUrl: './my-reviews.page.html'
 })
-export class MyReviewsPage implements OnInit {
+export class MyReviewsPage implements OnInit, OnDestroy {
 
   reviews: ReviewItem[] = [];
   loading = false;
@@ -34,18 +36,31 @@ export class MyReviewsPage implements OnInit {
   totalPages = 1;
 
   private clubCache = new Map<string, Club>();
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly reviewService: ReviewService,
     private readonly clubService: ClubService,
     private readonly authState: AuthStateService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly i18n: I18nService
   ) {}
 
   ngOnInit(): void {
+    this.applyQueryParams(this.route.snapshot.queryParamMap);
     this.loadReviews();
+
+    this.route.queryParamMap.pipe(skip(1), takeUntil(this.destroy$)).subscribe((params) => {
+      this.applyQueryParams(params);
+      this.loadReviews();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   goBack(): void {
@@ -60,13 +75,26 @@ export class MyReviewsPage implements OnInit {
   prevPage(): void {
     if (this.currentPage <= 1) return;
     this.currentPage -= 1;
-    this.loadReviews();
+    this.updateQueryParams();
   }
 
   nextPage(): void {
     if (this.currentPage >= this.totalPages) return;
     this.currentPage += 1;
-    this.loadReviews();
+    this.updateQueryParams();
+  }
+
+  private applyQueryParams(params: ParamMap): void {
+    this.currentPage = Number(params.get('page') ?? '1') || 1;
+  }
+
+  private updateQueryParams(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: this.currentPage },
+      queryParamsHandling: '',
+      replaceUrl: true
+    });
   }
 
   loadReviews(): void {
@@ -109,9 +137,11 @@ export class MyReviewsPage implements OnInit {
       next: () => {
         this.deletingReviewId = null;
         this.reviews = this.reviews.filter(r => r.reviewId !== review.reviewId);
-        // Si la página queda vacía y no es la primera, retrocedo
+        // Si la página queda vacía y no es la primera, retrocedo (actualizando la URL)
         if (this.reviews.length === 0 && this.currentPage > 1) {
           this.currentPage -= 1;
+          this.updateQueryParams();
+          return;
         }
         this.loadReviews();
       },

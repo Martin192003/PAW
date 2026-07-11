@@ -1,5 +1,6 @@
-import { of, throwError } from 'rxjs';
+import { of, throwError, BehaviorSubject } from 'rxjs';
 import { vi } from 'vitest';
+import { convertToParamMap, ParamMap } from '@angular/router';
 import { ClubActivityPage } from './club-activity.page';
 
 describe('ClubActivityPage', () => {
@@ -7,6 +8,8 @@ describe('ClubActivityPage', () => {
   let authState: { getUser: ReturnType<typeof vi.fn> };
   let cdr: { detectChanges: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
+  let queryParamMap$: BehaviorSubject<ParamMap>;
+  let route: { snapshot: { queryParamMap: ParamMap }; queryParamMap: BehaviorSubject<ParamMap> };
   let component: ClubActivityPage;
 
   const club = {
@@ -29,7 +32,21 @@ describe('ClubActivityPage', () => {
     clubService = { getClubsByUser: vi.fn() };
     authState = { getUser: vi.fn().mockReturnValue({ userId: 'admin-1' }) };
     cdr = { detectChanges: vi.fn() };
-    router = { navigate: vi.fn().mockResolvedValue(true) };
+
+    // Simula el ActivatedRoute real: queryParamMap es un observable que
+    // re-emite el valor actual al suscribirse (por eso BehaviorSubject), y
+    // router.navigate() empuja los nuevos queryParams como una navegacion real.
+    queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({}));
+    route = {
+      snapshot: { queryParamMap: convertToParamMap({}) },
+      queryParamMap: queryParamMap$
+    };
+    router = {
+      navigate: vi.fn().mockImplementation((_commands: unknown[], extras: { queryParams?: Record<string, unknown> }) => {
+        queryParamMap$.next(convertToParamMap(extras?.queryParams ?? {}));
+        return Promise.resolve(true);
+      })
+    };
 
     clubService.getClubsByUser.mockImplementation(
       (_userId, page) => of({ content: [club], page, totalPages: 3 })
@@ -39,7 +56,8 @@ describe('ClubActivityPage', () => {
       clubService as any,
       authState as any,
       cdr as any,
-      router as any
+      router as any,
+      route as any
     );
   });
 

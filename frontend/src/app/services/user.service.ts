@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
@@ -82,13 +82,47 @@ export class UserService {
     );
   }
 
+  /**
+   * GET /users/verifications?token=... (link del mail).
+   *
+   * El backend puede responder de dos formas: un AuthTokenResponse (cuenta
+   * recien verificada, login automatico) o un ApiMessageResponse (ya estaba
+   * verificada, o el backend todavia no emite token). Igual que login() y
+   * resetPassword(), si viene un token hay que resolver el usuario completo
+   * antes de devolver un LoginResponse utilizable por la pagina.
+   */
   verifyByToken(token: string): Observable<LoginResponse | ApiMessageResponse> {
     const params = new HttpParams().set('token', token);
-    return this.http.get<LoginResponse | ApiMessageResponse>(`${this.apiUrl}/users/verifications`, { params });
+    return this.http
+      .get<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/users/verifications`, { params })
+      .pipe(switchMap((response) => this.resolveVerificationResponse(response)));
   }
 
+  /** POST /users/verifications (codigo ingresado a mano). Mismo shape que verifyByToken. */
   verifyByCode(payload: UserVerificationRequest): Observable<LoginResponse | ApiMessageResponse> {
-    return this.http.post<LoginResponse | ApiMessageResponse>(`${this.apiUrl}/users/verifications`, payload);
+    return this.http
+      .post<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/users/verifications`, payload)
+      .pipe(switchMap((response) => this.resolveVerificationResponse(response)));
+  }
+
+  private resolveVerificationResponse(
+    response: AuthTokenResponse | ApiMessageResponse
+  ): Observable<LoginResponse | ApiMessageResponse> {
+    if (!this.isAuthTokenResponse(response)) {
+      return of(response);
+    }
+
+    const token = response.accessToken;
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return this.http.get<User>(response.user.href, { headers }).pipe(
+      map((user) => ({ token, user }))
+    );
+  }
+
+  private isAuthTokenResponse(
+    response: AuthTokenResponse | ApiMessageResponse
+  ): response is AuthTokenResponse {
+    return !!response && typeof response === 'object' && 'accessToken' in response;
   }
 
   resendVerification(payload: ResendVerificationRequest): Observable<ApiMessageResponse> {
