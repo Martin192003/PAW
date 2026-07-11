@@ -52,7 +52,7 @@ export class ClubActivityPage implements OnInit, OnDestroy {
   }
 
   private applyQueryParams(params: ParamMap): void {
-    this.currentPage = Number(params.get('page') ?? '1') || 1;
+    this.currentPage = this.parsePage(params.get('page'));
   }
 
   private updateQueryParams(): void {
@@ -62,6 +62,11 @@ export class ClubActivityPage implements OnInit, OnDestroy {
       queryParamsHandling: '',
       replaceUrl: true
     });
+  }
+
+  private parsePage(rawPage: string | null): number {
+    const page = Number(rawPage ?? '1');
+    return Number.isInteger(page) && page > 0 ? page : 1;
   }
 
   loadClubs(): void {

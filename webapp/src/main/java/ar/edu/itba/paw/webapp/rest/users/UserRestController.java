@@ -543,7 +543,23 @@ public class UserRestController {
             }
         }
 
-        return Response.ok(message("Cuenta verificada correctamente")).build();
+        // If the account was already verified but the token still resolves to a user,
+        // keep the endpoint idempotent: a valid verification token always starts a session.
+        AuthTokenDto response = new AuthTokenDto(
+                jwtUtil.generateToken(user.getId().toString()),
+                "Bearer",
+                jwtUtil.getExpirationSeconds(),
+                new AuthTokenUserDto(uriInfo.getBaseUriBuilder()
+                        .path("users/{id}")
+                        .resolveTemplate("id", user.getId().toString())
+                        .build()
+                        .toString())
+        );
+
+        return Response.ok(response)
+                .header("Cache-Control", "no-store")
+                .header("Pragma", "no-cache")
+                .build();
     }
 
     /**

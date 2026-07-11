@@ -178,7 +178,11 @@ paths:
             type: string
       responses:
         '200':
-          $ref: '#/components/responses/Message'
+          description: Account verified. Returns a bearer token so the user can continue authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenDto'
         '400':
           $ref: '#/components/responses/BadRequest'
     post:
@@ -193,7 +197,11 @@ paths:
               $ref: '#/components/schemas/UserVerificationRequestDto'
       responses:
         '200':
-          $ref: '#/components/responses/Message'
+          description: Account verified. Returns a bearer token so the user can continue authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenDto'
         '400':
           $ref: '#/components/responses/BadRequest'
 
@@ -1313,6 +1321,30 @@ components:
           type: integer
           format: int64
           description: Token lifetime in seconds.
+
+    AuthTokenDto:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: Bearer token for subsequent requests.
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+          description: Token lifetime in seconds.
+        user:
+          $ref: '#/components/schemas/AuthTokenUserDto'
+
+    AuthTokenUserDto:
+      type: object
+      properties:
+        href:
+          type: string
+          format: uri
+          description: Link to the authenticated user resource.
 
     UserVerificationRequestDto:
       type: object
