@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Event;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,5 +37,7 @@ public interface EventDao {
     int countUpcomingByClub(UUID clubId);
 
     int countPastByClub(UUID clubId);
+
+    Map<UUID, String> mapClubNamesForEvents(List<UUID> eventIds);
 
 }

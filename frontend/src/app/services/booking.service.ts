@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Booking, BookingFilters, BookingPage, Receipt } from '../models/booking.model';
 import { environment } from '../../environments/environment';
-import { requireLink, resolveApiUrl } from '../utils/api-url.util';
+import { requireAnyLink, requireLink, resolveApiUrl } from '../utils/api-url.util';
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
@@ -23,34 +23,63 @@ export class BookingService {
     });
   }
 
+  /**
+   * Carga una reserva a partir de clubId + bookingId.
+   *
+   * Es el punto de entrada legítimo para deep links (`/bookings/:clubId/:bookingId`
+   * desde la ruta), donde todavía no tenemos ningún `Booking` con `links` a mano.
+   * Una vez cargada, el resto de las operaciones sobre esa reserva (cancelar,
+   * recibo, etc.) deben usar `booking.links` en vez de reconstruir la URL.
+   */
   getBooking(clubId: string, bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
       resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 
-  cancelBooking(clubId: string, bookingId: string): Observable<void> {
+  cancelBooking(clubId: string, bookingId: string, links?: Booking['links']): Observable<void> {
     return this.http.delete<void>(
-      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
+      this.resolveBookingLink(
+        links,
+        ['cancel'],
+        `booking ${bookingId} cancellation`,
+        `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`
+      )
     );
   }
 
+  /**
+   * Igual que {@link getBooking}, pero para el detalle del admin: punto de
+   * entrada legítimo desde `/admin/bookings/:bookingId`. A partir de ahí,
+   * confirmar/cancelar usan `booking.links`.
+   */
   getManagedClubBooking(bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
       resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 
-  confirmManagedClubBooking(bookingId: string): Observable<void> {
+  confirmManagedClubBooking(bookingId: string, links?: Booking['links']): Observable<void> {
     return this.http.put<void>(
-      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}/confirmation`, this.apiUrl),
-      {}
+      this.resolveBookingLink(
+        links,
+        ['confirm', 'managed-update'],
+        `managed booking ${bookingId} confirmation`,
+        `${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`
+      ),
+      { status: 'CONFIRMADA' }
     );
   }
 
-  cancelManagedClubBooking(bookingId: string): Observable<void> {
-    return this.http.delete<void>(
-      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
+  cancelManagedClubBooking(bookingId: string, links?: Booking['links']): Observable<void> {
+    return this.http.put<void>(
+      this.resolveBookingLink(
+        links,
+        ['managed-update'],
+        `managed booking ${bookingId} cancellation`,
+        `${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`
+      ),
+      { status: 'CANCELADA' }
     );
   }
 
@@ -87,6 +116,20 @@ export class BookingService {
 
   requireReceiptLink(booking: Booking): string {
     return resolveApiUrl(requireLink(booking.links, 'receipt', 'booking receipt'), this.apiUrl);
+  }
+
+  /**
+   * Resuelve la URL de una acción de la reserva (cancelar, confirmar, etc.)
+   * a partir de sus links HATEOAS. La URL construida a mano (`fallback`) es
+   * un último recurso documentado para cuando el caller todavía no tiene la
+   * reserva completa (por ejemplo, justo después de crearla). Los llamadores
+   * que ya tienen el `Booking` cargado deben pasar siempre sus `links`.
+   */
+  private resolveBookingLink(links: Booking['links'] | undefined, rels: string[], context: string, fallback: string): string {
+    if (!links) {
+      return resolveApiUrl(fallback, this.apiUrl);
+    }
+    return resolveApiUrl(requireAnyLink(links, rels, context), this.apiUrl);
   }
 
   private params(filters: BookingFilters, page: number, size: number): HttpParams {

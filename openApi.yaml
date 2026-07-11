@@ -350,25 +350,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /clubs/user/{userId}:
-    parameters:
-      - $ref: '#/components/parameters/UserId'
-    get:
-      tags: [Clubs]
-      summary: List clubs administered by user
-      deprecated: true
-      description: Legacy compatibility endpoint. Prefer GET /clubs?ownerId={userId}.
-      parameters:
-        - $ref: '#/components/parameters/PageOne'
-        - $ref: '#/components/parameters/Size'
-      responses:
-        '200':
-          description: Paginated clubs
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClubPagedResponseDto'
-
   /clubs/{clubId}:
     parameters:
       - $ref: '#/components/parameters/ClubId'
@@ -576,27 +557,6 @@ paths:
                 format: binary
         '404':
           $ref: '#/components/responses/NotFound'
-
-  /clubs/events:
-    get:
-      tags: [Events]
-      summary: List upcoming events
-      parameters:
-        - $ref: '#/components/parameters/PageZero'
-        - $ref: '#/components/parameters/Size'
-      responses:
-        '200':
-          description: Event array
-          headers:
-            X-Total-Count:
-              schema:
-                type: integer
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventDto'
 
   /clubs/{clubId}/events:
     parameters:
@@ -858,29 +818,6 @@ paths:
         '204':
           description: Table deleted
 
-  /clubs/{clubId}/tables/{tableId}/state:
-    parameters:
-      - $ref: '#/components/parameters/ClubId'
-      - $ref: '#/components/parameters/TableId'
-    put:
-      tags: [Tables]
-      summary: Update table state
-      deprecated: true
-      description: Legacy compatibility endpoint. Prefer PUT /clubs/{clubId}/tables/{tableId}.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TableUpdateRequestDto'
-      responses:
-        '200':
-          description: Table updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TableDto'
-
   /clubs/{clubId}/reviews:
     parameters:
       - $ref: '#/components/parameters/ClubId'
@@ -1136,18 +1073,6 @@ paths:
       responses:
         '204':
           description: Booking cancelled
-
-  /managed-club-bookings/{bookingId}/confirmation:
-    parameters:
-      - $ref: '#/components/parameters/BookingId'
-    put:
-      tags: [Bookings]
-      summary: Confirm managed booking
-      deprecated: true
-      description: Legacy compatibility endpoint. Prefer PUT /managed-club-bookings/{bookingId} with status CONFIRMADA.
-      responses:
-        '204':
-          description: Booking confirmed
 
 components:
   securitySchemes:

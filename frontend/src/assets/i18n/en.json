@@ -87,9 +87,15 @@
     "submitting": "Signing up...",
     "hasAccount": "Already have an account? Sign in",
     "errors": {
+      "required": "This field is required.",
+      "email": "Enter a valid email.",
+      "minlength": "Minimum {{min}} characters.",
+      "maxlength": "Maximum {{max}} characters.",
+      "phonePattern": "Phone can only contain numbers and valid symbols.",
       "passwordMismatch": "Passwords do not match.",
       "conflict": "A user with that username or email already exists.",
       "invalidData": "Review the entered information.",
+      "invalid": "Invalid field.",
       "registerFailed": "Could not create the user. Please try again."
     }
   },
@@ -704,7 +710,11 @@
       "invalidBooking": "Invalid booking.",
       "loadFailed": "Could not load the booking.",
       "cancelFailed": "Could not cancel the booking.",
-      "receiptUploadFailed": "Could not upload the receipt."
+      "receiptUploadFailed": "Could not upload the receipt.",
+      "receiptEmpty": "The receipt cannot be empty.",
+      "receiptTooLarge": "The receipt cannot exceed 5 MB.",
+      "receiptUnsupportedType": "Upload a JPG, PNG, or WebP receipt.",
+      "receiptForCancelled": "Cannot upload a receipt for a cancelled booking."
     },
     "success": {
       "cancelled": "Booking cancelled successfully.",
@@ -726,5 +736,4 @@
     "close": "Close"
   }
 }
-
 

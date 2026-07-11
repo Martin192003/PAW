@@ -15,6 +15,7 @@ public interface ReviewService {
     void updateClubRating(Club club);
 
     void createReview(UUID userId, UUID clubId, int rating, String description, Photo photo) throws IOException;
+    Review updateReview(UUID reviewId, int rating, String description, Photo photo) throws IOException;
     List<Review> listByClub(UUID clubId, String sort, int limit, int offset);
     int countByClub(UUID clubId);
     Optional<Review> getUserReviewForClub(UUID userId, UUID clubId);

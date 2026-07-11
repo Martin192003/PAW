@@ -98,6 +98,38 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
+    @Transactional
+    public Review updateReview(UUID reviewId, int rating, String description, Photo photo) throws IOException {
+        if (rating < 1 || rating > 5) {
+            throw new IllegalArgumentException("Rating must be between 1 and 5");
+        }
+
+        Review existing = reviewsDao.findById(reviewId)
+                .orElseThrow(() -> new ReviewNotFounException("No se encontro la review"));
+        Club club = existing.getClub();
+
+        Review updated = reviewsDao.update(reviewId, rating, description);
+        if (updated == null) {
+            throw new ReviewNotFounException("No se encontro la review");
+        }
+
+        updateClubRating(club);
+        if (photo != null) {
+            UUID photoId = photoService.uploadReviewPhoto(
+                    club.getClubId(),
+                    updated.getReviewId(),
+                    updated.getUser().getId(),
+                    photo
+            );
+            if (photoId != null) {
+                reviewsDao.updatePhotoId(updated.getReviewId(), photoId);
+            }
+        }
+
+        return updated;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<Review> getUserReviewForClub(UUID userId, UUID clubId) {
         User user = userDao.findById(userId)

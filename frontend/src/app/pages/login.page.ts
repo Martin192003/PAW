@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,14 +8,16 @@ import { AuthStateService } from '../services/auth-state.service';
 import { UserService } from '../services/user.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
-import { finalize } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
 
 @Component({
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink, TranslateModule],
   templateUrl: './login.page.html',
 })
-export class LoginPage implements OnInit {
+export class LoginPage implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   submitting = false;
   invalidCredentials = false;
   errorMessage = '';
@@ -46,12 +48,17 @@ export class LoginPage implements OnInit {
       return;
     }
 
-    this.route.queryParamMap.subscribe((params) => {
+    this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       this.invalidCredentials = params.has('error');
       if (this.invalidCredentials) {
         this.errorMessage = this.i18n.instant('login.errors.invalidCredentials');
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onSubmit(): void {

@@ -354,12 +354,11 @@ public class ClubRestController {
                             .build()
                             .toString();
 
-                    return Response.ok(
-                            new LayoutDto(
-                                    id.toString(),
-                                    imageUrl
-                            )
-                    ).build();
+                    return Response.ok(new LayoutDto(
+                            id.toString(),
+                            imageUrl,
+                            buildLayoutLinks(id)
+                    )).build();
                 })
                 .orElse(notFound("Layout no encontrado"));
     }
@@ -372,7 +371,10 @@ public class ClubRestController {
         if (id == null) return badRequest("clubId inválido");
 
         return clubService.getLimits(id)
-                .map(limits -> Response.ok(limits).build())
+                .map(limits -> {
+                    limits.setLinks(buildLimitsLinks(id));
+                    return Response.ok(limits).build();
+                })
                 .orElse(notFound("Club no encontrado"));
     }
 
@@ -433,7 +435,12 @@ public class ClubRestController {
                     .build()
                     .toString();
 
-            return Response.noContent()
+            Response.ResponseBuilder response = photoService.getCoverPhoto(id)
+                    .map(photo -> Response.ok(photoDtoAssembler.toDto(uriInfo, photo)))
+                    .orElseGet(Response::noContent);
+
+            return response
+                    .location(URI.create(coverUrl))
                     .header("X-Cover-Url", coverUrl)
                     .build();
         } catch (IOException | ServletException e) {
@@ -610,43 +617,6 @@ public class ClubRestController {
     }
 
     @GET
-    @Path("/user/{userID}")
-    public Response getClubByUser(@PathParam("userID") String userID,
-                                  @QueryParam("page") @DefaultValue("1") int page,
-                                  @QueryParam("size") @DefaultValue("10") int size) {
-        UUID id = parseUuidOr400(userID);
-        if (id == null) return badRequest("userId inválido");
-
-        page = (page < 1) ? DEFAULT_PAGE : page;
-        size = (size < 1) ? DEFAULT_SIZE : size;
-        final int offset = (page - 1) * size;
-
-        final int totalClubs = clubService.countClubsByUser(id);
-        final List<ClubDto> dtos = clubService.getClubsByUserPaginated(id, size, offset)
-                .stream()
-                .map(this::toDtoWithLinks)
-                .collect(Collectors.toList());
-
-        final int totalPages = (int) Math.ceil((double) totalClubs / size);
-
-        final PagedResponseDto response = new PagedResponseDto(
-                dtos,
-                page,
-                size,
-                totalClubs,
-                totalPages,
-                false,
-                false,
-                null
-        );
-
-        Response.ResponseBuilder responseBuilder = Response.ok(response);
-        addPaginationLinks(responseBuilder, page, size, totalPages, 1);
-        return responseBuilder.build();
-    }
-
-
-    @GET
     @Path("/{clubId}/layout/image")
     public Response getLayoutImage(@PathParam("clubId") String clubId, @Context Request request) {
         UUID id = parseUuidOr400(clubId);
@@ -727,9 +697,14 @@ public class ClubRestController {
                     .build()
                     .toString();
 
-            return Response.noContent()
-                .header("X-Layout-Url", imageUrl)
-                .build();
+            return Response.ok(new LayoutDto(
+                            id.toString(),
+                            imageUrl,
+                            buildLayoutLinks(id)
+                    ))
+                    .location(URI.create(imageUrl))
+                    .header("X-Layout-Url", imageUrl)
+                    .build();
         } catch (IOException | ServletException e) {
             return badRequest("Error procesando archivo de layout");
         }
@@ -737,6 +712,45 @@ public class ClubRestController {
 
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    private List<LinkDto> buildLayoutLinks(UUID clubId) {
+        return List.of(
+                LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(clubId.toString())
+                        .path("layout")
+                        .build(), "GET"),
+                LinkBuilder.link("image", uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(clubId.toString())
+                        .path("layout")
+                        .path("image")
+                        .build(), "GET"),
+                LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(clubId.toString())
+                        .build(), "GET")
+        );
+    }
+
+    private List<LinkDto> buildLimitsLinks(UUID clubId) {
+        return List.of(
+                LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(clubId.toString())
+                        .path("limits")
+                        .build(), "GET"),
+                LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(clubId.toString())
+                        .build(), "GET"),
+                LinkBuilder.link("tables", uriInfo.getBaseUriBuilder()
+                        .path("clubs")
+                        .path(clubId.toString())
+                        .path("tables")
+                        .build(), "GET")
+        );
     }
 
     private ClubDto toDtoWithLinks(Club club) {

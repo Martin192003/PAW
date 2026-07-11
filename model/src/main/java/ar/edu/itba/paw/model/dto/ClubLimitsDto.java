@@ -3,6 +3,7 @@ package ar.edu.itba.paw.model.dto;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -13,6 +14,7 @@ public class ClubLimitsDto {
     private Integer maxTables;
     private Integer minReservationPeople;
     private Integer maxReservationPeople;
+    private List<LinkDto> links;
 
     public ClubLimitsDto() {}
 
@@ -27,5 +29,8 @@ public class ClubLimitsDto {
         this.minReservationPeople = minReservationPeople;
         this.maxReservationPeople = maxReservationPeople;
     }
-}
 
+    public void setLinks(List<LinkDto> links) {
+        this.links = links;
+    }
+}

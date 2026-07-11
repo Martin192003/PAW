@@ -7,26 +7,25 @@ import java.io.IOException;
 import java.util.regex.Pattern;
 
 /**
- * Agrega headers de cache apropiados para los assets estáticos de Angular.
+ * Agrega headers de cache apropiados para los assets estaticos de Angular.
  *
  * Angular genera nombres con hash para todos sus assets (outputHashing: "all"),
  * por lo que esos archivos nunca cambian de contenido. Se les aplica cache
- * incondicional de un año con la directiva "immutable".
+ * incondicional de un anio con la directiva "immutable".
  *
- * Política:
+ * Politica:
  *   - Assets hasheados (*.js, *.css, *.woff2, *.png, etc. con segmento hash):
  *       Cache-Control: public, max-age=31536000, immutable
- *   - index.html y noscript.html (no hasheados, punto de entrada de la SPA):
+ *   - index.html, index.csr.html y noscript.html (no hasheados):
  *       Cache-Control: no-cache  (siempre revalidar)
  */
 public class StaticAssetsCacheFilter implements Filter {
 
-    // Patrón que detecta un segmento de hash típico de Angular (8+ hex chars entre guiones o puntos)
-    // Ejemplos: main.A1B2C3D4.js, styles.deadbeef1234.css, chunk-ABCD1234.js
+    // Angular output hashes are alphanumeric, not only hexadecimal.
+    // Examples: styles-L6HQ23U3.css, chunk-QASGRXRC.js.
     private static final Pattern HASHED_ASSET =
-            Pattern.compile(".*[\\-\\.][0-9A-Fa-f]{8,}\\.[a-zA-Z0-9]+$");
+            Pattern.compile(".*[\\-\\.][0-9A-Za-z]{8,}\\.[a-zA-Z0-9]+$");
 
-    // Extensiones de assets estáticos servidos por el WAR
     private static final Pattern STATIC_EXTENSION =
             Pattern.compile(".*\\.(js|css|woff|woff2|ttf|eot|svg|png|jpg|jpeg|webp|ico|map)$",
                     Pattern.CASE_INSENSITIVE);
@@ -69,6 +68,8 @@ public class StaticAssetsCacheFilter implements Filter {
     }
 
     private boolean isIndexHtml(String uri) {
-        return uri.endsWith("/index.html") || uri.endsWith("/noscript.html");
+        return uri.endsWith("/index.html")
+                || uri.endsWith("/index.csr.html")
+                || uri.endsWith("/noscript.html");
     }
 }

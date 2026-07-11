@@ -1,0 +1,11 @@
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+MAIL_DEBUG=false
+MAIL_OPTIONAL=true
+MAIL_TEST_CONNECTION=false
+
+local.base.url=http://localhost:8080/webapp
+app.base.url=http://localhost:8080/webapp
+club.contact.fallback-email=no-reply@local

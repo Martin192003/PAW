@@ -5,4 +5,5 @@ export interface Product {
   basePrice: number;
   productType: string;
   isAvailable: boolean;
+  links?: Record<string, string>;
 }

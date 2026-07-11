@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
+import { forkJoin, of, Subject } from 'rxjs';
+import { catchError, skip, takeUntil } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { SideBarComponent } from '../components/account-sidebar/account-sidebar.component';
@@ -22,7 +22,8 @@ import { argentinaDateCode, formatArgentinaDate } from '../utils/argentina-date.
   imports: [CommonModule, FormsModule, SideBarComponent, TranslateModule],
   templateUrl: './managed-club-bookings.page.html'
 })
-export class ManagedClubBookingsPage implements OnInit {
+export class ManagedClubBookingsPage implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   bookings: Booking[] = [];
   clubs: Club[] = [];
   clubNames: Record<string, string> = {};
@@ -47,6 +48,7 @@ export class ManagedClubBookingsPage implements OnInit {
     private readonly bookingService: BookingService,
     private readonly clubService: ClubService,
     private readonly authState: AuthStateService,
+    private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
     private readonly i18n: I18nService
@@ -54,7 +56,47 @@ export class ManagedClubBookingsPage implements OnInit {
 
   ngOnInit(): void {
     this.loadClubs();
+    this.applyQueryParams(this.route.snapshot.queryParamMap);
     this.loadBookings();
+
+    this.route.queryParamMap.pipe(skip(1), takeUntil(this.destroy$)).subscribe((params) => {
+      this.applyQueryParams(params);
+      this.loadBookings();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private applyQueryParams(params: ParamMap): void {
+    this.currentPage = Number(params.get('page') ?? '1') || 1;
+    this.filters = {
+      clubId: params.get('clubId') ?? '',
+      bookingDate: params.get('bookingDate') ?? '',
+      status: params.get('status') ?? '',
+      sort: params.get('sort') ?? '',
+      hasReceipt: params.get('hasReceipt') ?? ''
+    };
+  }
+
+  private updateQueryParams(): void {
+    const queryParams: Record<string, string | number | null> = {
+      page: this.currentPage,
+      clubId: this.filters.clubId || null,
+      bookingDate: this.filters.bookingDate || null,
+      status: this.filters.status || null,
+      sort: this.filters.sort || null,
+      hasReceipt: this.filters.hasReceipt || null
+    };
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: '',
+      replaceUrl: true
+    });
   }
 
   loadClubs(): void {
@@ -99,7 +141,7 @@ export class ManagedClubBookingsPage implements OnInit {
 
   applyFilters(): void {
     this.currentPage = 1;
-    this.loadBookings();
+    this.updateQueryParams();
   }
 
   resetFilters(): void {
@@ -111,7 +153,7 @@ export class ManagedClubBookingsPage implements OnInit {
       hasReceipt: ''
     };
     this.currentPage = 1;
-    this.loadBookings();
+    this.updateQueryParams();
   }
 
   goToBooking(booking: Booking): void {
@@ -121,13 +163,13 @@ export class ManagedClubBookingsPage implements OnInit {
   prevPage(): void {
     if (this.currentPage <= 1) return;
     this.currentPage -= 1;
-    this.loadBookings();
+    this.updateQueryParams();
   }
 
   nextPage(): void {
     if (this.currentPage >= this.totalPages) return;
     this.currentPage += 1;
-    this.loadBookings();
+    this.updateQueryParams();
   }
 
   hasActiveFilters(): boolean {

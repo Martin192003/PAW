@@ -5,12 +5,15 @@
 
 # Node artifact files
 node_modules/
+frontend/node/
 dist/
+out/
 
 
 # Environment variable files
 webapp/.env
 application.properties
+# Keep real local mail configuration out of git; commit only example templates.
 mail.properties
 
 # Compiled Java class files

@@ -30,7 +30,10 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String method = request.getMethod();
         String path = request.getRequestURI();
-        return "OPTIONS".equalsIgnoreCase(method) || path == null || !path.contains("/api/");
+        return "OPTIONS".equalsIgnoreCase(method)
+                || !"POST".equalsIgnoreCase(method)
+                || path == null
+                || !(path.endsWith("/api/auth/tokens") || path.endsWith("/api/auth/tokens/"));
     }
 
     @Override
@@ -111,7 +114,6 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 }
-
 
 
 

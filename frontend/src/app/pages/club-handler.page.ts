@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -20,7 +20,7 @@ import { Event } from '../models/event.model';
 import { Review } from '../models/review.model';
 import { Layout } from '../models/layout.model';
 import { ClubPhoto } from '../models/club-photo.model';
-import { finalize, timeout } from 'rxjs';
+import { finalize, Subject, takeUntil, timeout } from 'rxjs';
 import { I18nService } from '../services/i18n.service';
 
 type ClubHandlerTab = 'menu' | 'tables' | 'events' | 'reviews';
@@ -43,8 +43,9 @@ type ProductForm = Omit<ProductPayload, 'basePrice'> & {
   templateUrl: './club-handler.page.html',
   styleUrl: './club-handler.page.css'
 })
-export class ClubHandlerPage implements OnInit {
+export class ClubHandlerPage implements OnInit, OnDestroy {
   private readonly mutationTimeoutMs = 12000;
+  private readonly destroy$ = new Subject<void>();
 
   clubId = '';
 
@@ -148,7 +149,7 @@ export class ClubHandlerPage implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.queryParamMap.subscribe((params) => {
+    this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       const clubId = params.get('clubId');
       if (!clubId) {
         this.errorMessage = this.i18n.instant('clubHandler.errors.loadSelectedClub');
@@ -161,6 +162,11 @@ export class ClubHandlerPage implements OnInit {
       this.reviewPage = 1;
       this.loadClubHandlerData();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   goBack(): void {
@@ -187,7 +193,7 @@ export class ClubHandlerPage implements OnInit {
     }
 
     this.uploadingCover = true;
-    this.clubService.uploadCover(this.clubId, file).pipe(
+    this.clubService.uploadCover(this.clubId, file, this.club?.links).pipe(
       timeout(this.mutationTimeoutMs),
       finalize(() => {
         this.uploadingCover = false;
@@ -195,7 +201,9 @@ export class ClubHandlerPage implements OnInit {
       })
     ).subscribe({
       next: () => {
-        this.coverUrl = `${this.clubService.getCoverUrl(this.clubId)}?t=${Date.now()}`;
+        this.coverUrl = this.withCacheBust(
+          this.club ? this.resolveCoverUrl(this.club) : this.clubService.getCoverUrl(this.clubId)
+        );
         this.loadGalleryPhotos();
         this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.coverUpdated');
         this.actionErrorMessage = '';
@@ -217,7 +225,7 @@ export class ClubHandlerPage implements OnInit {
     }
 
     this.uploadingLayout = true;
-    this.clubService.uploadLayout(this.clubId, file).pipe(
+    this.clubService.uploadLayout(this.clubId, file, this.club?.links).pipe(
       timeout(this.mutationTimeoutMs),
       finalize(() => {
         this.uploadingLayout = false;
@@ -493,9 +501,12 @@ export class ClubHandlerPage implements OnInit {
     }
 
     this.savingProduct = true;
+    const editingProduct = this.editingProductId
+      ? this.menu.find(product => product.productId === this.editingProductId)
+      : undefined;
     const request$ = this.editingProductId
-      ? this.clubService.updateProduct(this.clubId, this.editingProductId, payload)
-      : this.clubService.createProduct(this.clubId, payload);
+      ? this.clubService.updateProduct(this.clubId, this.editingProductId, payload, editingProduct)
+      : this.clubService.createProduct(this.clubId, payload, this.club?.links);
 
     request$.pipe(
       timeout(this.mutationTimeoutMs),
@@ -531,7 +542,7 @@ export class ClubHandlerPage implements OnInit {
       isAvailable: !product.isAvailable
     };
 
-    this.clubService.updateProduct(this.clubId, product.productId, payload).subscribe({
+    this.clubService.updateProduct(this.clubId, product.productId, payload, product).subscribe({
       next: (updatedProduct) => {
         this.upsertProductInList({
           ...product,
@@ -603,9 +614,12 @@ export class ClubHandlerPage implements OnInit {
     }
 
     this.savingTable = true;
+    const editingTable = this.editingTableId
+      ? this.tables.find(table => table.tableId === this.editingTableId)
+      : undefined;
     const request$ = this.editingTableId
-      ? this.clubService.updateTable(this.clubId, this.editingTableId, payload)
-      : this.clubService.createTable(this.clubId, payload);
+      ? this.clubService.updateTable(this.clubId, this.editingTableId, payload, editingTable)
+      : this.clubService.createTable(this.clubId, payload, this.club?.links);
 
     request$.pipe(
       timeout(this.mutationTimeoutMs),
@@ -691,9 +705,12 @@ export class ClubHandlerPage implements OnInit {
     }
 
     this.savingEvent = true;
+    const editingEvent = this.editingEventId
+      ? this.events.find(event => event.eventId === this.editingEventId)
+      : undefined;
     const request$ = this.editingEventId
-      ? this.clubService.updateEvent(this.clubId, this.editingEventId, payload)
-      : this.clubService.createEvent(this.clubId, payload);
+      ? this.clubService.updateEvent(this.clubId, this.editingEventId, payload, editingEvent)
+      : this.clubService.createEvent(this.clubId, payload, this.club?.links);
 
     request$.pipe(
       timeout(this.mutationTimeoutMs),
@@ -801,10 +818,13 @@ export class ClubHandlerPage implements OnInit {
   }
 
   getGalleryPhotoUrl(photo: ClubPhoto): string {
+    if (photo.url) {
+      return this.clubService.toAbsoluteUrl(photo.url, this.clubId);
+    }
     if (photo.photoId) {
       return this.clubService.getPhotoUrl(photo.photoId);
     }
-    return this.clubService.toAbsoluteUrl(photo.url, this.clubId);
+    return '';
   }
 
   private loadClubHandlerData(): void {
@@ -889,16 +909,9 @@ export class ClubHandlerPage implements OnInit {
   }
 
   private loadGalleryPhotos(): void {
-    this.clubService.getClubPhotos(this.clubId).subscribe({
+    this.clubService.getClubPhotos(this.clubId, this.club?.links).subscribe({
       next: (photos) => {
-        this.galleryPhotos = (photos ?? [])
-          .filter((photo) => photo.photoType === 'CAROUSEL')
-          .map((photo) => ({
-            ...photo,
-            url: photo.photoId
-              ? this.clubService.getPhotoUrl(photo.photoId)
-              : this.clubService.toAbsoluteUrl(photo.url, this.clubId)
-          }));
+        this.galleryPhotos = (photos ?? []).filter((photo) => photo.photoType === 'CAROUSEL');
         this.cdr.detectChanges();
       },
       error: () => {
@@ -971,10 +984,11 @@ export class ClubHandlerPage implements OnInit {
     if (!raw) {
       return '';
     }
-    return this.withCacheBust(this.clubService.toAbsoluteUrl(raw, this.clubId));
+    return this.clubService.toAbsoluteUrl(raw, this.clubId);
   }
 
   private withCacheBust(url: string): string {
+    // Only used immediately after replacing image resources that keep the same URL.
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}t=${Date.now()}`;
   }

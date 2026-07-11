@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ClubEvent, EventPayload } from '../models/ClubEvent.model';
 import { PagedResponse } from '../models/paged-response.model';
-import { switchMap, forkJoin } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { requireLink, resolveApiUrl, normalizeLinks } from '../utils/api-url.util';
+import { normalizeLinks, requireAnyLink, resolveApiUrl } from '../utils/api-url.util';
 
 
 interface EventDto {
@@ -15,6 +14,7 @@ interface EventDto {
   description: string;
   date: string;
   photoId: string | null;
+  clubName?: string;
   links?: Record<string, string>;
 }
 
@@ -34,7 +34,7 @@ function toClubEvent(dto: EventDto): ClubEvent {
     description: dto.description,
     date:        dto.date,
     photoId:     dto.photoId ?? '',
-    clubName:    '',
+    clubName:    dto.clubName ?? '',
     clubId,
     photoUrl:    links?.['photo'],
     links,
@@ -75,37 +75,8 @@ export class EventService {
 
   getUpcomingEvents(page = 0, size = 20): Observable<PagedResponse<ClubEvent>> {
     return this.http
-      .get<EventDto[] | RawResponse>(`${this.base}/clubs/events`, { params: this.pageParams(page, size) })
-      .pipe(
-        switchMap(raw => {
-          const dtos: EventDto[] = Array.isArray(raw) ? raw : (raw.content ?? []);
-          const events = dtos.map(dto => {
-            const links = normalizeLinks(dto.links);
-            const clubLink = requireLink(links, 'club', 'event');
-            const clubId = extractIdFromLink(clubLink, 'clubs');
-            return { dto, links, clubId, clubLink };
-          });
-
-          // Llamar a cada club para obtener el nombre
-          const clubRequests = events.map(({ clubLink }) =>
-            this.http.get<{ clubName: string }>(resolveApiUrl(clubLink, this.base))
-          );
-
-          return forkJoin(clubRequests).pipe(
-            map(clubs => ({
-              content: events.map(({ dto, links, clubId }, i) => ({
-                ...toClubEvent(dto),
-                clubName: clubs[i].clubName,
-                clubId,
-                links,
-              })),
-              totalElements: dtos.length,
-              totalPages: 1,
-              number: 0,
-            }))
-          );
-        })
-      );
+      .get<EventDto[] | RawResponse>(`${this.base}/events`, { params: this.pageParams(page, size) })
+      .pipe(map(toPagedResponse));
   }
 
   getEventsByClub(clubId: string, page = 0, size = 20): Observable<PagedResponse<ClubEvent>> {
@@ -114,6 +85,11 @@ export class EventService {
       .pipe(map(toPagedResponse));
   }
 
+  /**
+   * Entrypoint por clubId + eventId (deep link). Si ya tenés el `ClubEvent`
+   * cargado (por ejemplo, desde `getEventsByClub`), usá sus `links` en vez de
+   * llamar de nuevo con ids sueltos.
+   */
   getEventById(clubId: string, eventId: string): Observable<ClubEvent> {
     return this.http
       .get<EventDto>(`${this.base}/clubs/${clubId}/events/${eventId}`)
@@ -121,27 +97,48 @@ export class EventService {
   }
 
 
-  createEvent(clubId: string, payload: EventPayload): Observable<ClubEvent> {
+  createEvent(clubId: string, payload: EventPayload, clubLinks?: Record<string, string>): Observable<ClubEvent> {
+    const url = this.resolveEventLink(clubLinks, ['events', 'club-events'], `club ${clubId} events`, `${this.base}/clubs/${clubId}/events`);
     return this.http
-      .post<EventDto>(`${this.base}/clubs/${clubId}/events`, payload)
+      .post<EventDto>(url, payload)
       .pipe(map(toClubEvent));
   }
 
-  updateEvent(clubId: string, eventId: string, payload: EventPayload): Observable<ClubEvent> {
+  updateEvent(clubId: string, eventId: string, payload: EventPayload, event?: ClubEvent): Observable<ClubEvent> {
+    const url = this.resolveEventLink(event?.links, ['update', 'self'], `event ${eventId}`, `${this.base}/clubs/${clubId}/events/${eventId}`);
     return this.http
-      .put<EventDto>(`${this.base}/clubs/${clubId}/events/${eventId}`, payload)
+      .put<EventDto>(url, payload)
       .pipe(map(toClubEvent));
   }
 
-  deleteEvent(clubId: string, eventId: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/clubs/${clubId}/events/${eventId}`);
+  deleteEvent(clubId: string, eventId: string, event?: ClubEvent): Observable<void> {
+    const url = this.resolveEventLink(event?.links, ['delete', 'self'], `event ${eventId}`, `${this.base}/clubs/${clubId}/events/${eventId}`);
+    return this.http.delete<void>(url);
   }
 
 
-  getEventPhoto(clubId: string, eventId: string): Observable<Blob> {
-    return this.http.get(`${this.base}/clubs/${clubId}/events/${eventId}/photo`, {
+  getEventPhoto(clubId: string, eventId: string, event?: ClubEvent): Observable<Blob> {
+    const url = this.resolveEventLink(event?.links, ['photo'], `event ${eventId} photo`, `${this.base}/clubs/${clubId}/events/${eventId}/photo`);
+    return this.http.get(url, {
       responseType: 'blob',
     });
+  }
+
+  /**
+   * Resuelve la URL de una acción sobre un evento a partir de sus links
+   * HATEOAS. La reconstrucción manual (`fallback`) es un último recurso
+   * documentado para cuando todavía no tenemos el `ClubEvent` completo.
+   */
+  private resolveEventLink(
+    links: Record<string, string> | undefined,
+    rels: string[],
+    context: string,
+    fallback: string
+  ): string {
+    if (!links) {
+      return resolveApiUrl(fallback, this.base);
+    }
+    return resolveApiUrl(requireAnyLink(links, rels, context), this.base);
   }
 
 

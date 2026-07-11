@@ -11,7 +11,7 @@
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { catchError, combineLatest, forkJoin, map, of } from 'rxjs';
+import { catchError, combineLatest, forkJoin, map, of, Subject, takeUntil } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ClubService } from '../services/club.service';
@@ -83,6 +83,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   private availabilityRequestId = 0;
   private previousBodyOverflow?: string;
   private previousDocumentOverflow?: string;
+  private readonly destroy$ = new Subject<void>();
 
   private readonly defaultCoords = {
     lat: -34.5891429,
@@ -131,12 +132,14 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       this.mapInstance.remove();
       this.mapInstance = undefined;
     }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngOnInit() {
     // Estado del usuario logueado para condicionar UI de reviews
     this.currentUser = this.authState.getUser();
-    this.authState.isLoggedIn$.subscribe(logged => {
+    this.authState.isLoggedIn$.pipe(takeUntil(this.destroy$)).subscribe(logged => {
       this.isLoggedIn = logged;
       this.currentUser = logged ? this.authState.getUser() : null;
       if (!logged) {
@@ -152,7 +155,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       this.route.paramMap,
       this.route.queryParamMap,
       this.route.fragment
-    ]).subscribe(([params, queryParams, fragment]) => {
+    ]).pipe(takeUntil(this.destroy$)).subscribe(([params, queryParams, fragment]) => {
       const id = params.get('id');
       if (!id) return;
 
@@ -549,13 +552,10 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
   refreshAfterReservation(): void {
     this.setReservationModalOpen(false);
-    if (isPlatformBrowser(this.platformId)) {
-      window.location.reload();
-      return;
-    }
-
     if (this.currentClubId) {
-      this.loadAvailableBookingDates(this.currentClubId, this.selectedDate, true);
+      // Refrescamos solo la disponibilidad de mesas vía el service (sin
+      // recargar toda la página) para no perder el estado de la SPA.
+      this.loadAvailableBookingDates(this.currentClubId, this.selectedDate, this.clubLinks, true);
     }
   }
 

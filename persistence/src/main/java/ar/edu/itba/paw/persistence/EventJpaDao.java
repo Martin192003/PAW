@@ -6,9 +6,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 public class EventJpaDao implements EventDao {
@@ -223,5 +221,27 @@ public class EventJpaDao implements EventDao {
                 .setParameter("today", LocalDate.now())
                 .getSingleResult()
                 .intValue();
+    }
+
+    @Override
+    public Map<UUID, String> mapClubNamesForEvents(List<UUID> eventIds) {
+        if (eventIds == null || eventIds.isEmpty())
+            return Collections.emptyMap();
+
+        List<Object[]> rows = em.createQuery("""
+                    SELECT e.eventId, c.clubName
+                    FROM Event e, Club c
+                    WHERE e.clubId = c.clubId
+                      AND e.eventId IN :eventIds
+                """, Object[].class)
+                .setParameter("eventIds", eventIds)
+                .getResultList();
+
+        Map<UUID, String> result = new HashMap<>();
+        for (Object[] row : rows) {
+            result.put((UUID) row[0], (String) row[1]);
+        }
+
+        return result;
     }
 }

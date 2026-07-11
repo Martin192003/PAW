@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -580,6 +581,23 @@ public void testFindUpcomingByClubPaginatesPage2Empty() {
 
       assertEquals(0, eventDao.countPastByClub(otherClub.getClubId()));
   }
+
+  @Test
+  public void testMapClubNamesForEvents() {
+      Map<UUID, String> result = eventDao.mapClubNamesForEvents(
+              List.of(todayEvent.getEventId(), futureEvent.getEventId())
+      );
+
+      assertEquals(2, result.size());
+      assertEquals(club.getClubName(), result.get(todayEvent.getEventId()));
+      assertEquals(club.getClubName(), result.get(futureEvent.getEventId()));
+  }
+
+  @Test
+  public void testMapClubNamesForEventsWithEmptyListReturnsEmptyMap() {
+      assertTrue(eventDao.mapClubNamesForEvents(List.of()).isEmpty());
+  }
+
     // ----------------------------------------------------------------
     // Helpers
     // ----------------------------------------------------------------

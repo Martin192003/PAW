@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.PasswordResetJobService;
 import ar.edu.itba.paw.service.UserService;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -211,7 +213,8 @@ public class UserRestController {
 
     @GET
     @Path("/{userId}/profile")
-    public Response getUserProfile(@PathParam("userId") String userId) {
+    public Response getUserProfile(@PathParam("userId") String userId,
+                                   @Context SecurityContext securityContext) {
         UUID id;
         try {
             id = UUID.fromString(userId);
@@ -226,6 +229,23 @@ public class UserRestController {
         if (maybe.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(message("Usuario no encontrado"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        User authUser = authenticatedUserResolver.resolve(securityContext);
+        if (authUser == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        boolean ownsProfile = authUser.getId().equals(id);
+        boolean isAdmin = authUser.getRole() == Role.ADMIN;
+        if (!ownsProfile && !isAdmin) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(message("Forbidden"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -426,10 +446,12 @@ public class UserRestController {
                 .map(review -> ReviewMapper.toDto(review, uriInfo))
                 .collect(Collectors.toList());
 
+        int total = reviewService.countByUser(id);
         GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(dtos) {};
-        return Response.ok(entity)
-                .header("X-Total-Count", reviewService.countByUser(id))
-                .build();
+        Response.ResponseBuilder response = Response.ok(entity)
+                .header("X-Total-Count", total);
+        addPaginationLinks(response, page, size, total);
+        return response.build();
     }
 
     @POST
@@ -567,6 +589,30 @@ public class UserRestController {
 
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    private void addPaginationLinks(Response.ResponseBuilder responseBuilder, int page, int size, int total) {
+        int totalPages = (int) Math.ceil((double) total / size);
+        int lastPage = Math.max(0, totalPages - 1);
+        List<String> links = new ArrayList<>();
+        if (page > 0) {
+            links.add(pageLink(0, size, "first"));
+            links.add(pageLink(page - 1, size, "prev"));
+        }
+        if (page < lastPage) {
+            links.add(pageLink(page + 1, size, "next"));
+            links.add(pageLink(lastPage, size, "last"));
+        }
+        if (!links.isEmpty()) {
+            responseBuilder.header("Link", String.join(", ", links));
+        }
+    }
+
+    private String pageLink(int page, int size, String rel) {
+        return "<" + uriInfo.getRequestUriBuilder()
+                .replaceQueryParam("page", page)
+                .replaceQueryParam("size", size)
+                .build() + ">; rel=\"" + rel + "\"";
     }
 
     private User resolveUserFromPrincipal(String principal) {

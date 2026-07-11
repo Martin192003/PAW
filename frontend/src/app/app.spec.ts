@@ -209,11 +209,17 @@ describe('ClubService HATEOAS', () => {
 });
 
 class ActivatedRouteStub {
-  private readonly subject = new BehaviorSubject(convertToParamMap({}));
+  private currentParamMap = convertToParamMap({});
+  private readonly subject = new BehaviorSubject(this.currentParamMap);
   readonly queryParamMap = this.subject.asObservable();
 
+  get snapshot(): { queryParamMap: ReturnType<typeof convertToParamMap> } {
+    return { queryParamMap: this.currentParamMap };
+  }
+
   setQueryParams(params: Record<string, string>): void {
-    this.subject.next(convertToParamMap(params));
+    this.currentParamMap = convertToParamMap(params);
+    this.subject.next(this.currentParamMap);
   }
 }
 

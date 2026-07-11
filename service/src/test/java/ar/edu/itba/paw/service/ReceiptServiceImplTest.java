@@ -31,6 +31,7 @@ public class ReceiptServiceImplTest {
     @Mock private BookingService bookingService;
     @Mock private TableService tableService;
     @Mock private ClubService clubService;
+    @Mock private EmailService emailService;
 
     @InjectMocks private ReceiptServiceImpl receiptService;
 
@@ -118,6 +119,30 @@ public class ReceiptServiceImplTest {
     }
 
     @Test
+    public void testUploadForBookingNormalizesJpgAlias() {
+        mockValidBookingForUpload();
+        Mockito.when(receiptDao.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
+        Mockito.when(receiptDao.create(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(RECEIPT_ID);
+
+        receiptService.uploadForBooking(BOOKING_ID, UPLOADED_BY, "recibo.jpg", "image/jpg", DATA);
+
+        Mockito.verify(receiptDao).create(BOOKING_ID, UPLOADED_BY, "recibo.jpg", "image/jpeg", DATA);
+    }
+
+    @Test
+    public void testUploadForBookingInfersOctetStreamFromFilename() {
+        mockValidBookingForUpload();
+        Mockito.when(receiptDao.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
+        Mockito.when(receiptDao.create(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(RECEIPT_ID);
+
+        receiptService.uploadForBooking(BOOKING_ID, UPLOADED_BY, "recibo.png", "application/octet-stream", DATA);
+
+        Mockito.verify(receiptDao).create(BOOKING_ID, UPLOADED_BY, "recibo.png", "image/png", DATA);
+    }
+
+    @Test
     public void testDeleteByBookingForUserSuccess() {
         Booking booking = Mockito.mock(Booking.class);
         Receipt receipt = Mockito.mock(Receipt.class);
@@ -146,5 +171,14 @@ public class ReceiptServiceImplTest {
 
         Assert.assertTrue(res.isPresent());
         Assert.assertEquals(full, res.get());
+    }
+
+    private void mockValidBookingForUpload() {
+        Booking booking = Mockito.mock(Booking.class);
+        Mockito.when(bookingService.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+        Mockito.when(booking.getUser()).thenReturn(new User(UPLOADED_BY));
+        Mockito.when(booking.getStatus()).thenReturn(Status.PENDIENTE);
+        Mockito.when(booking.getTableId()).thenReturn(UUID.randomUUID());
+        Mockito.when(tableService.findById(Mockito.any())).thenReturn(Optional.empty());
     }
 }

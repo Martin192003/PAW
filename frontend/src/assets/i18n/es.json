@@ -87,9 +87,15 @@
     "submitting": "Registrando...",
     "hasAccount": "¿Ya tenés cuenta? Inicia sesión",
     "errors": {
+      "required": "Este campo es obligatorio.",
+      "email": "Ingresá un email válido.",
+      "minlength": "Mínimo {{min}} caracteres.",
+      "maxlength": "Máximo {{max}} caracteres.",
+      "phonePattern": "El teléfono solo puede contener números y símbolos válidos.",
       "passwordMismatch": "Las contraseñas no coinciden.",
       "conflict": "Ya existe un usuario con ese nombre o email.",
       "invalidData": "Revisá los datos ingresados.",
+      "invalid": "Campo inválido.",
       "registerFailed": "No se pudo crear el usuario. Intentá nuevamente."
     }
   },
@@ -705,7 +711,11 @@
       "invalidBooking": "Reserva inválida.",
       "loadFailed": "No se pudo cargar la reserva.",
       "cancelFailed": "No se pudo cancelar la reserva.",
-      "receiptUploadFailed": "No se pudo cargar el comprobante."
+      "receiptUploadFailed": "No se pudo cargar el comprobante.",
+      "receiptEmpty": "El comprobante no puede estar vacío.",
+      "receiptTooLarge": "El comprobante no puede superar los 5 MB.",
+      "receiptUnsupportedType": "Subí un comprobante JPG, PNG o WebP.",
+      "receiptForCancelled": "No se puede cargar comprobante para una reserva cancelada."
     },
     "success": {
       "cancelled": "Reserva cancelada correctamente.",
@@ -727,5 +737,4 @@
     "close": "Cerrar"
   }
 }
-
 

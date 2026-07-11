@@ -14,6 +14,7 @@ import { BookingService } from '../services/booking.service';
 import { ClubService } from '../services/club.service';
 import { I18nService } from '../services/i18n.service';
 import { argentinaDateCode, formatArgentinaDateTime } from '../utils/argentina-date.util';
+import { normalizeLinks } from '../utils/api-url.util';
 
 @Component({
   standalone: true,
@@ -22,6 +23,10 @@ import { argentinaDateCode, formatArgentinaDateTime } from '../utils/argentina-d
   templateUrl: './booking-user-handler.page.html'
 })
 export class BookingUserHandlerPage implements OnInit, OnDestroy {
+  private static readonly maxReceiptBytes = 5 * 1024 * 1024;
+  private static readonly allowedReceiptTypes = new Set(['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/png', 'image/x-png', 'image/webp']);
+  private static readonly allowedReceiptExtensions = /\.(jpe?g|png|webp)$/i;
+
   booking?: Booking;
   club?: Club;
   table?: ClubTable;
@@ -64,8 +69,10 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     this.bookingService.getBooking(clubId, bookingId).pipe(
       switchMap(booking => {
         this.booking = booking;
+        const clubLink = this.extractLink(booking.links, 'club');
         return forkJoin({
-          club: this.clubService.getClubById(booking.clubId).pipe(catchError(() => of(undefined))),
+          club: (clubLink ? this.clubService.getClubByLink(clubLink) : this.clubService.getClubById(booking.clubId))
+            .pipe(catchError(() => of(undefined))),
           tables: this.clubService.getTables(booking.clubId).pipe(catchError(() => of([] as ClubTable[])))
         });
       })
@@ -85,7 +92,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
 
   cancelBooking(): void {
     if (!this.booking) return;
-    this.bookingService.cancelBooking(this.booking.clubId, this.booking.id).subscribe({
+    this.bookingService.cancelBooking(this.booking.clubId, this.booking.id, this.booking.links).subscribe({
       next: () => {
         this.showCancelModal = false;
         this.success = this.i18n.instant('bookingUserHandler.success.cancelled');
@@ -103,6 +110,15 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file || !this.booking) return;
+
+    const validationError = this.validateReceiptFile(file);
+    if (validationError) {
+      this.error = validationError;
+      this.success = '';
+      this.cdr.detectChanges();
+      input.value = '';
+      return;
+    }
 
     let receiptLink = '';
     try {
@@ -122,8 +138,9 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
         }
         this.loadReceipt();
       },
-      error: () => {
-        this.error = this.i18n.instant('bookingUserHandler.errors.receiptUploadFailed');
+      error: error => {
+        this.error = this.receiptUploadErrorMessage(error);
+        this.success = '';
         this.cdr.detectChanges();
       }
     });
@@ -209,10 +226,57 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     });
   }
 
+  private extractLink(links: Booking['links'], rel: string): string | undefined {
+    return normalizeLinks(links as any)?.[rel];
+  }
+
   private revokeReceiptUrl(): void {
     if (this.receiptObjectUrl) {
       URL.revokeObjectURL(this.receiptObjectUrl);
       this.receiptObjectUrl = '';
     }
+  }
+
+  private validateReceiptFile(file: File): string | null {
+    if (file.size <= 0) {
+      return this.i18n.instant('bookingUserHandler.errors.receiptEmpty');
+    }
+    if (file.size > BookingUserHandlerPage.maxReceiptBytes) {
+      return this.i18n.instant('bookingUserHandler.errors.receiptTooLarge');
+    }
+
+    const type = (file.type || '').trim().toLowerCase();
+    if (type && BookingUserHandlerPage.allowedReceiptTypes.has(type)) {
+      return null;
+    }
+    if ((!type || type === 'application/octet-stream') && BookingUserHandlerPage.allowedReceiptExtensions.test(file.name || '')) {
+      return null;
+    }
+    return this.i18n.instant('bookingUserHandler.errors.receiptUnsupportedType');
+  }
+
+  private receiptUploadErrorMessage(error: unknown): string {
+    const message = this.extractErrorMessage(error);
+    switch (message) {
+      case 'receipt.empty':
+        return this.i18n.instant('bookingUserHandler.errors.receiptEmpty');
+      case 'receipt.tooLarge':
+        return this.i18n.instant('bookingUserHandler.errors.receiptTooLarge');
+      case 'receipt.unsupportedType':
+        return this.i18n.instant('bookingUserHandler.errors.receiptUnsupportedType');
+      case 'receipt.for.cancelled':
+        return this.i18n.instant('bookingUserHandler.errors.receiptForCancelled');
+      default:
+        return this.i18n.instant('bookingUserHandler.errors.receiptUploadFailed');
+    }
+  }
+
+  private extractErrorMessage(error: unknown): string | null {
+    const payload = (error as { error?: unknown })?.error;
+    if (payload && typeof payload === 'object' && 'message' in payload) {
+      const message = (payload as { message?: unknown }).message;
+      return typeof message === 'string' ? message : null;
+    }
+    return typeof payload === 'string' && payload.trim() ? payload.trim() : null;
   }
 }

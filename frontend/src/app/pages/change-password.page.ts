@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -6,7 +6,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { UserService } from '../services/user.service';
 import { AuthStateService } from '../services/auth-state.service';
-import { finalize } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
 
@@ -17,7 +18,8 @@ import { I18nService } from '../services/i18n.service';
   templateUrl: './change-password.page.html',
   styleUrls: ['./change-password.page.css'],
 })
-export class ChangePasswordPage implements OnInit {
+export class ChangePasswordPage implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   token: string | null = null;
   submittingForgot = false;
   submittingReset = false;
@@ -55,7 +57,7 @@ export class ChangePasswordPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.queryParamMap.subscribe((params) => {
+    this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       this.token = params.get('token');
       const loggedUserEmail = this.authState.getUser()?.email ?? '';
       this.useLoggedUserEmail = !this.token && params.get('source') === 'profile' && loggedUserEmail.trim().length > 0;
@@ -66,6 +68,11 @@ export class ChangePasswordPage implements OnInit {
       this.resetError = '';
       this.resetCompleted = false;
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   submitForgot(): void {
