@@ -10,12 +10,12 @@ import { I18nService } from '../services/i18n.service';
 
 describe('AddClubComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn> };
-  let clubService: { createClub: ReturnType<typeof vi.fn> };
+  let clubService: { createClub: ReturnType<typeof vi.fn>; uploadCover: ReturnType<typeof vi.fn> };
   let component: AddClubComponent;
 
   beforeEach(() => {
     router = { navigate: vi.fn().mockResolvedValue(true) };
-    clubService = { createClub: vi.fn() };
+    clubService = { createClub: vi.fn(), uploadCover: vi.fn() };
 
     TestBed.configureTestingModule({
       imports: [AddClubComponent, TranslateModule.forRoot()],
@@ -112,6 +112,43 @@ describe('AddClubComponent', () => {
       bar: true,
     }));
     expect(router.navigate).toHaveBeenCalledWith(['/clubs']);
+  });
+
+  it('does not upload a cover when no image was selected', () => {
+    clubService.createClub.mockReturnValue(of({ clubId: 'club-1', links: {} }));
+    fillValidForm();
+
+    component.onSubmit();
+
+    expect(clubService.uploadCover).not.toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/clubs']);
+  });
+
+  it('uploads the selected cover image after the club is created, using the returned id and links', () => {
+    const club = { clubId: 'club-1', links: { cover: '/api/clubs/club-1/cover' } };
+    clubService.createClub.mockReturnValue(of(club));
+    clubService.uploadCover.mockReturnValue(of({}));
+    fillValidForm();
+    const file = new File(['fake-image'], 'cover.png', { type: 'image/png' });
+    component.selectedImage = file;
+
+    component.onSubmit();
+
+    expect(clubService.uploadCover).toHaveBeenCalledWith('club-1', file, club.links);
+    expect(router.navigate).toHaveBeenCalledWith(['/clubs']);
+  });
+
+  it('still navigates away when the club was created but the cover upload fails', () => {
+    const club = { clubId: 'club-1', links: {} };
+    clubService.createClub.mockReturnValue(of(club));
+    clubService.uploadCover.mockReturnValue(throwError(() => new Error('upload failed')));
+    fillValidForm();
+    component.selectedImage = new File(['fake-image'], 'cover.png', { type: 'image/png' });
+
+    component.onSubmit();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/clubs']);
+    expect(component.submitting).toBe(false);
   });
 
   it('server field errors are displayed when provided', () => {

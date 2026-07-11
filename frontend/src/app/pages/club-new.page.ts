@@ -16,7 +16,8 @@ import { CommonModule } from '@angular/common';
 import { ClubService } from '../services/club.service';
 import { ClubCreateRequestDto } from '../models/club.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { finalize } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
 
@@ -249,6 +250,29 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     this.clubService.createClub(payload).pipe(
+      // El endpoint de creación es JSON puro (no multipart): el club se crea
+      // primero y recién con su id/links ya asignados se puede subir la
+      // portada a POST /clubs/{id}/cover (mismo endpoint y mismo método de
+      // servicio que usa club-handler.page.ts para cambiar la portada).
+      switchMap((club) => {
+        const image = this.selectedImage;
+        if (!image) {
+          return of(club);
+        }
+
+        return this.clubService.uploadCover(club.clubId, image, club.links).pipe(
+          map(() => club),
+          catchError((err) => {
+            // El club ya fue creado exitosamente; un club sin portada es un
+            // estado válido en el resto de la app (listado y detalle ya
+            // manejan la ausencia de cover), así que no revertimos ni
+            // bloqueamos la navegación por un fallo puntual de la subida.
+            // El usuario puede volver a subirla luego desde la edición del club.
+            console.error('No se pudo subir la portada del club recién creado:', err);
+            return of(club);
+          })
+        );
+      }),
       finalize(() => {
         this.submitting = false;
       })
