@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS products (
                                         product_name VARCHAR(100) NOT NULL,
                                         description  TEXT,
                                         base_price   NUMERIC(10,2) NOT NULL,
-                                        product_type VARCHAR(50) NOT NULL CHECK (product_type IN ('alcoholicas','noAlcoholicas')),
+                                        product_type VARCHAR(50) NOT NULL CHECK (product_type IN ('alcoholicas','noAlcoholicas','tragos')),
                                         is_available BOOLEAN DEFAULT TRUE,
                                         created_at   TIMESTAMPTZ DEFAULT NOW()
 );

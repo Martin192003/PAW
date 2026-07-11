@@ -58,24 +58,6 @@ public class UserRestController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    /**
-     * GET /api/users/me — recurso del usuario autenticado actual.
-     */
-    @GET
-    @Path("/me")
-    public Response getMe(@Context SecurityContext securityContext) {
-        User user = authenticatedUserResolver.resolve(securityContext);
-        if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(message("No autenticado"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        UserDto dto = UserMapper.toDto(user, uriInfo);
-        return Response.ok(dto).build();
-    }
-
     @GET
     @Path("/{userId}")
     public Response getUser(@PathParam("userId") String userId) {
@@ -97,16 +79,18 @@ public class UserRestController {
                     .build();
         }
 
-        // Verificar si el caller es el mismo usuario: si es así, devuelve PrivateUserDto (UserDto)
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User caller = (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken))
                 ? resolveAuthenticatedUser(auth) : null;
 
         if (caller != null && caller.getId().equals(id)) {
-            return Response.ok(UserMapper.toDto(maybe.get(), uriInfo)).build();
+            return Response.ok(UserMapper.toDto(maybe.get(), uriInfo))
+                    .header("Cache-Control", "private, no-store")
+                    .header("Pragma", "no-cache")
+                    .header("Vary", "Authorization")
+                    .build();
         }
 
-        // Para cualquier otro caller: PublicUserDto (sin PII)
         return Response.ok(UserMapper.toPublicDto(maybe.get(), uriInfo)).build();
     }
 

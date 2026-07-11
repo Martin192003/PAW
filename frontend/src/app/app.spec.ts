@@ -122,18 +122,20 @@ describe('AuthBootstrapService', () => {
   let service: AuthBootstrapService;
   let authState: {
     getToken: ReturnType<typeof vi.fn>;
+    getUser: ReturnType<typeof vi.fn>;
     updateUser: ReturnType<typeof vi.fn>;
     clearSession: ReturnType<typeof vi.fn>;
   };
-  let userService: { getMe: ReturnType<typeof vi.fn> };
+  let userService: { getUserById: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     authState = {
       getToken: vi.fn(),
+      getUser: vi.fn(),
       updateUser: vi.fn(),
       clearSession: vi.fn(),
     };
-    userService = { getMe: vi.fn() };
+    userService = { getUserById: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
@@ -146,14 +148,15 @@ describe('AuthBootstrapService', () => {
     service = TestBed.inject(AuthBootstrapService);
   });
 
-  it('calls /users/me when token exists', async () => {
+  it('loads the stored user when token exists', async () => {
     authState.getToken.mockReturnValue('token-123');
-    userService.getMe.mockReturnValue(of({ id: 'u1' } as any));
+    authState.getUser.mockReturnValue({ userId: 'u1' });
+    userService.getUserById.mockReturnValue(of({ userId: 'u1' } as any));
 
     await firstValueFrom(service.initialize());
 
-    expect(userService.getMe).toHaveBeenCalled();
-    expect(authState.updateUser).toHaveBeenCalledWith(expect.objectContaining({ id: 'u1' }));
+    expect(userService.getUserById).toHaveBeenCalledWith('u1');
+    expect(authState.updateUser).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1' }));
   });
 
   it('skips bootstrap when there is no token', async () => {
@@ -161,7 +164,7 @@ describe('AuthBootstrapService', () => {
 
     await firstValueFrom(service.initialize());
 
-    expect(userService.getMe).not.toHaveBeenCalled();
+    expect(userService.getUserById).not.toHaveBeenCalled();
   });
 });
 
