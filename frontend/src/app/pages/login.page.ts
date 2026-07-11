@@ -24,6 +24,13 @@ export class LoginPage implements OnInit, OnDestroy {
 
   loginForm!: FormGroup;
 
+  /**
+   * Destino al que volver después de un login exitoso (por ejemplo,
+   * `/clubs/new` cuando authGuard interrumpió el flujo de creación de club).
+   * Viene del query param `returnUrl` que setean los guards al redirigir acá.
+   */
+  private returnUrl: string | null = null;
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -41,10 +48,10 @@ export class LoginPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.returnUrl = this.sanitizeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+
     if (this.authState.isLoggedIn()) {
-      void this.router.navigate(['/clubs'], { replaceUrl: true }).catch(() => {
-        this.errorMessage = this.i18n.instant('login.errors.loginFailed');
-      });
+      this.redirectAfterLogin();
       return;
     }
 
@@ -81,9 +88,7 @@ export class LoginPage implements OnInit, OnDestroy {
       next: (response) => {
         try {
           this.authState.setSession(response.token, response.user, !!this.loginForm.value.rememberMe);
-          void this.router.navigate(['/clubs'], { replaceUrl: true }).catch(() => {
-            this.errorMessage = this.i18n.instant('login.errors.loginFailed');
-          });
+          this.redirectAfterLogin();
         } catch {
           this.errorMessage = this.i18n.instant('login.errors.loginFailed');
         }
@@ -136,6 +141,33 @@ export class LoginPage implements OnInit, OnDestroy {
       return this.extractServerMessage(error.error) ?? this.i18n.instant('login.errors.required');
     }
     return this.extractServerMessage(error.error) ?? this.i18n.instant('login.errors.loginFailed');
+  }
+
+  /**
+   * Solo aceptamos returnUrl que sean una ruta interna de la app (empieza
+   * con "/" pero no "//", que el navegador podria interpretar como un host
+   * externo). Cualquier otra cosa se descarta para evitar un open redirect.
+   */
+  private sanitizeReturnUrl(raw: string | null): string | null {
+    if (!raw) return null;
+    if (!raw.startsWith('/') || raw.startsWith('//')) return null;
+    return raw;
+  }
+
+  /**
+   * Vuelve a returnUrl si un guard lo dejó guardado (ej. clubs/new), o a
+   * /clubs por default. Usamos navigateByUrl en vez de navigate([...]) porque
+   * returnUrl es una URL completa (puede traer sus propios query params,
+   * como pasa con /admin/bookings?status=...) y navigate() no la parsea bien.
+   */
+  private redirectAfterLogin(): void {
+    const destination$ = this.returnUrl
+      ? this.router.navigateByUrl(this.returnUrl, { replaceUrl: true })
+      : this.router.navigate(['/clubs'], { replaceUrl: true });
+
+    void destination$.catch(() => {
+      this.errorMessage = this.i18n.instant('login.errors.loginFailed');
+    });
   }
 
   private extractServerMessage(errorBody: unknown): string | null {

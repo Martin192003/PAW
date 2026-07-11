@@ -14,6 +14,7 @@ describe('LoginPage', () => {
   let queryParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let router: {
     navigate: ReturnType<typeof vi.fn>;
+    navigateByUrl: ReturnType<typeof vi.fn>;
     createUrlTree: ReturnType<typeof vi.fn>;
     serializeUrl: ReturnType<typeof vi.fn>;
     events: Subject<unknown>;
@@ -24,10 +25,11 @@ describe('LoginPage', () => {
   };
   let userService: { login: ReturnType<typeof vi.fn> };
 
-  function createComponent(loggedIn = false): LoginPage {
-    queryParams = new BehaviorSubject(convertToParamMap({}));
+  function createComponent(loggedIn = false, initialQueryParams: Record<string, string> = {}): LoginPage {
+    queryParams = new BehaviorSubject(convertToParamMap(initialQueryParams));
     router = {
       navigate: vi.fn().mockResolvedValue(true),
+      navigateByUrl: vi.fn().mockResolvedValue(true),
       // The template uses routerLink (e.g. "Registrarse" / "Olvidé mi contraseña"),
       // which needs a working createUrlTree/serializeUrl/events even on a mocked Router.
       createUrlTree: vi.fn().mockReturnValue({} as any),
@@ -43,7 +45,13 @@ describe('LoginPage', () => {
     TestBed.configureTestingModule({
       imports: [LoginPage, TranslateModule.forRoot()],
       providers: [
-        { provide: ActivatedRoute, useValue: { queryParamMap: queryParams.asObservable() } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: queryParams.value },
+            queryParamMap: queryParams.asObservable(),
+          },
+        },
         { provide: Router, useValue: router as unknown as Router },
         { provide: AuthStateService, useValue: authState as unknown as AuthStateService },
         { provide: UserService, useValue: userService as unknown as UserService },
@@ -142,5 +150,40 @@ describe('LoginPage', () => {
 
     expect(component.invalidCredentials).toBe(true);
     expect(component.errorMessage).toBe('login.errors.invalidCredentials');
+  });
+
+  it('redirects to returnUrl after a successful login when a guard set one', () => {
+    const component = createComponent(false, { returnUrl: '/clubs/new' });
+    userService.login.mockReturnValue(of({ token: 'token-123', user: { userId: 'user-1' } }));
+
+    component.loginForm.setValue({
+      usernameOrEmail: 'user@example.com',
+      password: 'secret',
+      rememberMe: false,
+    });
+    component.onSubmit();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/clubs/new', { replaceUrl: true });
+    expect(router.navigate).not.toHaveBeenCalledWith(['/clubs'], { replaceUrl: true });
+  });
+
+  it('sends an already logged-in user straight to returnUrl instead of /clubs', () => {
+    createComponent(true, { returnUrl: '/clubs/new' });
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/clubs/new', { replaceUrl: true });
+  });
+
+  it('ignores an external returnUrl and falls back to /clubs', () => {
+    const component = createComponent(false, { returnUrl: '//evil.example.com' });
+    userService.login.mockReturnValue(of({ token: 'token-123', user: { userId: 'user-1' } }));
+
+    component.loginForm.setValue({
+      usernameOrEmail: 'user@example.com',
+      password: 'secret',
+      rememberMe: false,
+    });
+    component.onSubmit();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/clubs'], { replaceUrl: true });
   });
 });

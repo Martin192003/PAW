@@ -1,21 +1,20 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthStateService } from '../services/auth-state.service';
+import { redirectToLogin } from './auth-redirect.util';
 
-export const adminGuard: CanActivateFn = () => {
+export const adminGuard: CanActivateFn = (_route, state) => {
   const authState = inject(AuthStateService);
   const router = inject(Router);
 
   const token = authState.getToken();
   if (!token) {
-    router.navigate(['/login'], { queryParams: { reason: 'auth' } }).catch(() => undefined);
-    return false;
+    return redirectToLogin(router, state, 'auth');
   }
 
   const user = authState.getUser();
   if (!user) {
-    router.navigate(['/login'], { queryParams: { reason: 'auth' } }).catch(() => undefined);
-    return false;
+    return redirectToLogin(router, state, 'auth');
   }
 
   const role = (user.role || '').toUpperCase();

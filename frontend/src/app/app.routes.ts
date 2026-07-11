@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { ClubsPage } from './pages/clubs.page';
 import { adminGuard } from './guards/admin.guard';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -38,7 +39,8 @@ export const routes: Routes = [
   },
   {
     path: 'clubs/new',
-    loadComponent: () => import('./pages/club-new.page').then(m => m.AddClubComponent)
+    loadComponent: () => import('./pages/club-new.page').then(m => m.AddClubComponent),
+    canActivate: [authGuard]
   },
   {
     path: 'clubs/handle',
