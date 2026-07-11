@@ -46,7 +46,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
                 .antMatchers("/api/photos/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs").permitAll()
-                .antMatchers(HttpMethod.GET, "/api/events").hasAnyRole("USER", "ADMIN")
+                .antMatchers(HttpMethod.GET, "/api/events").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/clubs").hasAnyRole("USER", "ADMIN")
                 .antMatchers(HttpMethod.GET, "/api/clubs/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/clubs/**/cover").permitAll()
