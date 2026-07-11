@@ -14,6 +14,7 @@ import { BookingService } from '../services/booking.service';
 import { ClubService } from '../services/club.service';
 import { I18nService } from '../services/i18n.service';
 import { argentinaDateCode, formatArgentinaDateTime } from '../utils/argentina-date.util';
+import { normalizeLinks } from '../utils/api-url.util';
 
 @Component({
   standalone: true,
@@ -68,8 +69,10 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     this.bookingService.getBooking(clubId, bookingId).pipe(
       switchMap(booking => {
         this.booking = booking;
+        const clubLink = this.extractLink(booking.links, 'club');
         return forkJoin({
-          club: this.clubService.getClubById(booking.clubId).pipe(catchError(() => of(undefined))),
+          club: (clubLink ? this.clubService.getClubByLink(clubLink) : this.clubService.getClubById(booking.clubId))
+            .pipe(catchError(() => of(undefined))),
           tables: this.clubService.getTables(booking.clubId).pipe(catchError(() => of([] as ClubTable[])))
         });
       })
@@ -221,6 +224,10 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private extractLink(links: Booking['links'], rel: string): string | undefined {
+    return normalizeLinks(links as any)?.[rel];
   }
 
   private revokeReceiptUrl(): void {

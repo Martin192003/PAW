@@ -9,7 +9,8 @@ import { ClubEvent } from '../models/ClubEvent.model';
 import { ViewChild, ElementRef } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { normalizeLinks } from '../utils/api-url.util';
-import { skip } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { skip, takeUntil } from 'rxjs/operators';
 
 
 type ClubListItem = Club & { _hasError?: boolean };
@@ -33,6 +34,7 @@ export class ClubsPage implements OnInit, OnDestroy {
   checkingEventId?: string;
   private previousBodyOverflow?: string;
   private previousDocumentOverflow?: string;
+  private readonly destroy$ = new Subject<void>();
 
   readonly filterOptions = {
     zones: [
@@ -89,7 +91,7 @@ export class ClubsPage implements OnInit, OnDestroy {
     this.applyQueryParams(this.route.snapshot.queryParamMap);
     this.loadClubs();
 
-    this.route.queryParamMap.pipe(skip(1)).subscribe((params) => {
+    this.route.queryParamMap.pipe(skip(1), takeUntil(this.destroy$)).subscribe((params) => {
       this.applyQueryParams(params);
       this.loadClubs();
     });
@@ -99,6 +101,8 @@ export class ClubsPage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.setEventAvailabilityModalOpen(false);
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadClubs() {

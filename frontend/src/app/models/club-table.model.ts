@@ -5,4 +5,5 @@ export interface ClubTable {
   tableState: string;
   price: number;
   discount: number;
+  links?: Record<string, string>;
 }

@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { NgClass, NgIf } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { Subject, takeUntil } from 'rxjs';
 import { ApiMessageResponse, LoginResponse } from '../models/user.model';
 import { AuthStateService } from '../services/auth-state.service';
 import { I18nService } from '../services/i18n.service';
@@ -14,7 +15,8 @@ import { UserService } from '../services/user.service';
   imports: [NgIf, NgClass, ReactiveFormsModule, TranslateModule],
   templateUrl: './verify-mail.page.html',
 })
-export class VerifyMailPage {
+export class VerifyMailPage implements OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   email = '';
 
   tokenChecking = false;
@@ -50,7 +52,7 @@ export class VerifyMailPage {
       usernameOrEmail: ['', [Validators.required]],
     });
 
-    this.route.queryParamMap.subscribe((params) => {
+    this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       const emailParam = params.get('email') ?? '';
       const usernameOrEmailParam = params.get('usernameOrEmail') ?? '';
       const token = params.get('token') ?? '';
@@ -71,6 +73,11 @@ export class VerifyMailPage {
         this.triggerAutoResend(this.email);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   verifyWithCode(): void {

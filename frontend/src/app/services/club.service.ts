@@ -72,6 +72,7 @@ export class ClubService {
     tables: ['tables', 'club-tables'],
     bookings: ['bookings', 'club-bookings'],
     layout: ['layout', 'club-layout'],
+    cover: ['cover', 'club-cover'],
   };
 
   constructor(private readonly http: HttpClient) {}
@@ -87,6 +88,30 @@ export class ClubService {
     return clubs.map(club => this.normalizeClub(club));
   }
 
+  private normalizeProduct(product: Product): Product {
+    return {
+      ...product,
+      links: normalizeLinks(product.links)
+    };
+  }
+
+  private normalizeTable(table: ClubTable): ClubTable {
+    return {
+      ...table,
+      links: normalizeLinks(table.links)
+    };
+  }
+
+  /**
+   * Resuelve la URL de un recurso a partir de los links HATEOAS del club.
+   *
+   * La construcción manual (`fallback`) es un último recurso **documentado**:
+   * solo se usa cuando todavía no tenemos el objeto con `links` a mano (por
+   * ejemplo, la primera carga de una página a partir de un id de ruta). En
+   * cuanto el llamador tiene el recurso padre ya cargado, debe pasar sus
+   * `links` para que se use el href que devuelve el backend en vez de la URL
+   * construida a mano.
+   */
   private resolveClubLink(
     links: unknown,
     rels: string[],
@@ -157,6 +182,14 @@ export class ClubService {
     );
   }
 
+  /**
+   * Carga un club a partir de su id.
+   *
+   * Este es el único punto de entrada legítimo por id: se usa cuando todavía
+   * no tenemos ningún recurso con links (por ejemplo, al entrar directo a
+   * `/clubs/:id` desde la URL). Si ya tenés un club, booking, producto, etc.
+   * con `links.club`, preferí `getClubByLink` en su lugar.
+   */
   getClubById(id: string): Observable<Club> {
     return this.http.get<Club>(`${this.apiUrl}/clubs/${id}`).pipe(
       map(club => this.normalizeClub(club))
@@ -169,10 +202,19 @@ export class ClubService {
     );
   }
 
+  /**
+   * Fallback documentado para la URL de portada cuando todavía no tenemos el
+   * club cargado (y por lo tanto no tenemos `club.links['cover']`). Los
+   * llamadores que ya tienen el club deben preferir su link `cover`.
+   */
   getCoverUrl(id: string): string {
     return resolveApiUrl(`${this.apiUrl}/clubs/${id}/cover`, this.apiUrl);
   }
 
+  /**
+   * Fallback documentado para la URL de una foto cuando no tenemos el link
+   * `self` de la foto a mano. Preferir `photo.links['self']` cuando exista.
+   */
   getPhotoUrl(photoId: string): string {
     return resolveApiUrl(`${this.apiUrl}/photos/${photoId}`, this.apiUrl);
   }
@@ -232,17 +274,19 @@ export class ClubService {
     });
   }
 
-  uploadCover(clubId: string, file: File): Observable<unknown> {
+  uploadCover(clubId: string, file: File, links?: unknown): Observable<unknown> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.put(`${this.apiUrl}/clubs/${clubId}/cover`, formData);
+    const url = this.resolveClubLink(links, this.linkRels.cover, `club ${clubId} cover`, `${this.apiUrl}/clubs/${clubId}/cover`);
+    return this.http.put(url, formData);
   }
 
-  uploadLayout(clubId: string, file: File): Observable<unknown> {
+  uploadLayout(clubId: string, file: File, links?: unknown): Observable<unknown> {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.put(`${this.apiUrl}/clubs/${clubId}/layout`, formData);
+    const url = this.resolveClubLink(links, this.linkRels.layout, `club ${clubId} layout`, `${this.apiUrl}/clubs/${clubId}/layout`);
+    return this.http.put(url, formData);
   }
 
   uploadGalleryPhotos(clubId: string, files: File[]): Observable<unknown> {
@@ -282,7 +326,9 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.get<Product[]>(url);
+    return this.http.get<Product[]>(url).pipe(
+      map(products => (products ?? []).map(product => this.normalizeProduct(product)))
+    );
   }
 
   getTables(id: string, date?: string, links?: unknown) {
@@ -298,7 +344,9 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.get<ClubTable[]>(url, { params });
+    return this.http.get<ClubTable[]>(url, { params }).pipe(
+      map(tables => (tables ?? []).map(table => this.normalizeTable(table)))
+    );
   }
 
   reserveTable(clubId: string, tableId: string, date: string, links?: unknown) {
@@ -378,32 +426,57 @@ export class ClubService {
     );
   }
 
-  createProduct(clubId: string, payload: ProductPayload): Observable<Product> {
-    return this.http.post<Product>(`${this.apiUrl}/clubs/${clubId}/menu`, payload);
+  createProduct(clubId: string, payload: ProductPayload, links?: unknown): Observable<Product> {
+    const url = this.resolveClubLink(links, this.linkRels.menu, `club ${clubId} menu`, `${this.apiUrl}/clubs/${clubId}/menu`);
+    return this.http.post<Product>(url, payload).pipe(map(product => this.normalizeProduct(product)));
   }
 
-  updateProduct(clubId: string, productId: string, payload: ProductPayload): Observable<Product> {
-    return this.http.put<Product>(`${this.apiUrl}/clubs/${clubId}/menu/${productId}`, payload);
+  updateProduct(clubId: string, productId: string, payload: ProductPayload, product?: Product): Observable<Product> {
+    const url = this.resolveClubLink(
+      product?.links,
+      ['self', 'update'],
+      `product ${productId}`,
+      `${this.apiUrl}/clubs/${clubId}/menu/${productId}`
+    );
+    return this.http.put<Product>(url, payload).pipe(map(updated => this.normalizeProduct(updated)));
   }
 
-  createTable(clubId: string, payload: TablePayload): Observable<ClubTable> {
-    return this.http.post<ClubTable>(`${this.apiUrl}/clubs/${clubId}/tables`, payload);
+  createTable(clubId: string, payload: TablePayload, links?: unknown): Observable<ClubTable> {
+    const url = this.resolveClubLink(links, this.linkRels.tables, `club ${clubId} tables`, `${this.apiUrl}/clubs/${clubId}/tables`);
+    return this.http.post<ClubTable>(url, payload).pipe(map(table => this.normalizeTable(table)));
   }
 
-  updateTable(clubId: string, tableId: string, payload: TablePayload): Observable<ClubTable> {
-    return this.http.put<ClubTable>(`${this.apiUrl}/clubs/${clubId}/tables/${tableId}`, payload);
+  updateTable(clubId: string, tableId: string, payload: TablePayload, table?: ClubTable): Observable<ClubTable> {
+    const url = this.resolveClubLink(
+      table?.links,
+      ['self', 'update'],
+      `table ${tableId}`,
+      `${this.apiUrl}/clubs/${clubId}/tables/${tableId}`
+    );
+    return this.http.put<ClubTable>(url, payload).pipe(map(updated => this.normalizeTable(updated)));
   }
 
   deleteTable(clubId: string, tableId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/tables/${tableId}`);
   }
 
-  createEvent(clubId: string, payload: EventPayload): Observable<Event> {
-    return this.http.post<Event>(`${this.apiUrl}/clubs/${clubId}/events`, payload);
+  createEvent(clubId: string, payload: EventPayload, links?: unknown): Observable<Event> {
+    const url = this.resolveClubLink(links, this.linkRels.events, `club ${clubId} events`, `${this.apiUrl}/clubs/${clubId}/events`);
+    return this.http.post<Event>(url, payload).pipe(
+      map(event => ({ ...event, links: normalizeLinks(event.links) }))
+    );
   }
 
-  updateEvent(clubId: string, eventId: string, payload: EventPayload): Observable<Event> {
-    return this.http.put<Event>(`${this.apiUrl}/clubs/${clubId}/events/${eventId}`, payload);
+  updateEvent(clubId: string, eventId: string, payload: EventPayload, event?: Event): Observable<Event> {
+    const url = this.resolveClubLink(
+      event?.links,
+      ['update', 'self'],
+      `event ${eventId}`,
+      `${this.apiUrl}/clubs/${clubId}/events/${eventId}`
+    );
+    return this.http.put<Event>(url, payload).pipe(
+      map(updated => ({ ...updated, links: normalizeLinks(updated.links) }))
+    );
   }
 
   deleteEvent(clubId: string, eventId: string): Observable<void> {

@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { LoginPage } from './login.page';
 import { AuthStateService } from '../services/auth-state.service';
@@ -12,7 +12,12 @@ import { UserService } from '../services/user.service';
 
 describe('LoginPage', () => {
   let queryParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
-  let router: { navigate: ReturnType<typeof vi.fn> };
+  let router: {
+    navigate: ReturnType<typeof vi.fn>;
+    createUrlTree: ReturnType<typeof vi.fn>;
+    serializeUrl: ReturnType<typeof vi.fn>;
+    events: Subject<unknown>;
+  };
   let authState: {
     isLoggedIn: ReturnType<typeof vi.fn>;
     setSession: ReturnType<typeof vi.fn>;
@@ -21,7 +26,14 @@ describe('LoginPage', () => {
 
   function createComponent(loggedIn = false): LoginPage {
     queryParams = new BehaviorSubject(convertToParamMap({}));
-    router = { navigate: vi.fn().mockResolvedValue(true) };
+    router = {
+      navigate: vi.fn().mockResolvedValue(true),
+      // The template uses routerLink (e.g. "Registrarse" / "Olvidé mi contraseña"),
+      // which needs a working createUrlTree/serializeUrl/events even on a mocked Router.
+      createUrlTree: vi.fn().mockReturnValue({} as any),
+      serializeUrl: vi.fn().mockReturnValue(''),
+      events: new Subject<unknown>(),
+    };
     authState = {
       isLoggedIn: vi.fn().mockReturnValue(loggedIn),
       setSession: vi.fn(),
