@@ -16,7 +16,13 @@ export class AuthBootstrapService {
       return of(true);
     }
 
-    return this.userService.getMe().pipe(
+    const storedUser = this.authState.getUser();
+    if (!storedUser?.userId) {
+      this.authState.clearSession();
+      return of(true);
+    }
+
+    return this.userService.getUserById(storedUser.userId).pipe(
       map((user) => {
         this.authState.updateUser(user);
         return true;

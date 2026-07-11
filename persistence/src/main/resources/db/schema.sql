@@ -1,4 +1,6 @@
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -----------------------------------------------------------------------
 -- USERS
 -----------------------------------------------------------------------
@@ -81,7 +83,7 @@ CREATE TABLE IF NOT EXISTS activity (
 -- PHOTOS
 -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS photos (
-                                      photo_id   UUID PRIMARY KEY DEFAULT UUID(),
+                                      photo_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                       club_id    UUID NOT NULL REFERENCES clubs (club_id) ON DELETE CASCADE,
                                       url        TEXT NOT NULL,
                                       data       BYTEA,
@@ -115,7 +117,7 @@ CREATE TABLE IF NOT EXISTS reviews (
 -- NOTIFICATIONS
 -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS notifications (
-                                             notification_id UUID PRIMARY KEY DEFAULT UUID(),
+                                             notification_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                              user_id    UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                                              type       VARCHAR(30) NOT NULL,
                                              message    TEXT NOT NULL,
@@ -130,12 +132,12 @@ CREATE INDEX IF NOT EXISTS notifications_user_read_idx
 -- PRODUCTS
 -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS products (
-                                        product_id   UUID PRIMARY KEY DEFAULT UUID(),
+                                        product_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                         club_id      UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
                                         product_name VARCHAR(100) NOT NULL,
                                         description  TEXT,
                                         base_price   NUMERIC(10,2) NOT NULL,
-                                        product_type VARCHAR(50) NOT NULL CHECK (product_type IN ('alcoholicas','noAlcoholicas')),
+                                        product_type VARCHAR(50) NOT NULL CHECK (product_type IN ('alcoholicas','noAlcoholicas','tragos')),
                                         is_available BOOLEAN DEFAULT TRUE,
                                         created_at   TIMESTAMPTZ DEFAULT NOW()
 );
@@ -144,7 +146,7 @@ CREATE TABLE IF NOT EXISTS products (
 -- PROMOTIONS
 -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS promotions (
-                                          promotion_id   UUID PRIMARY KEY DEFAULT UUID(),
+                                          promotion_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                           club_id        UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
                                           promotion_name VARCHAR(100) NOT NULL,
                                           description    TEXT,
@@ -170,7 +172,7 @@ CREATE TABLE IF NOT EXISTS booking_items (
 -- RECEIPTS (una sola definición, sin duplicados)
 -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS receipts (
-                                        receipt_id   UUID PRIMARY KEY DEFAULT UUID(),
+                                        receipt_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                         booking_id   UUID NOT NULL REFERENCES bookings (booking_id) ON DELETE CASCADE,
                                         uploaded_by  UUID NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
                                         url          TEXT NOT NULL,
@@ -198,7 +200,7 @@ CREATE TABLE IF NOT EXISTS club_admins (
 -- CLUB_LAYOUTS
 -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS club_layouts (
-                                            layout_id    UUID PRIMARY KEY DEFAULT UUID(),
+                                            layout_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                                             club_id      UUID NOT NULL REFERENCES clubs(club_id) ON DELETE CASCADE,
                                             uploaded_by  UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                                             url          TEXT NOT NULL,

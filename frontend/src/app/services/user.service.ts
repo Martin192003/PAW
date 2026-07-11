@@ -51,14 +51,6 @@ export class UserService {
     return this.http.get<User>(`${this.apiUrl}/users/${userId}`);
   }
 
-  /**
-   * Devuelve el usuario autenticado actual (GET /api/users/me).
-   * Requiere Bearer token en el header Authorization (lo agrega el interceptor).
-   */
-  getMe(): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/users/me`);
-  }
-
   register(payload: UserCreateRequest): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/users`, payload);
   }
@@ -80,7 +72,7 @@ export class UserService {
       switchMap((tokenResponse) => {
         const token = tokenResponse.accessToken;
         const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-        return this.http.get<User>(`${this.apiUrl}/users/me`, { headers }).pipe(
+        return this.http.get<User>(tokenResponse.user.href, { headers }).pipe(
           map((user) => ({ token, user }))
         );
       })

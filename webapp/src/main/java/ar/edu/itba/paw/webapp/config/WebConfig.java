@@ -137,7 +137,6 @@ public class WebConfig {
 
         var pop = new ResourceDatabasePopulator();
         pop.addScript(schemaSql);
-        pop.setContinueOnError(true);
         pop.setIgnoreFailedDrops(true);
         dsi.setDatabasePopulator(pop);
         dsi.setEnabled(runSchema);

@@ -58,7 +58,11 @@ public class AuthRestController {
                     jwtUtil.generateToken(user.getId().toString()),
                     "Bearer",
                     jwtUtil.getExpirationSeconds(),
-                    new AuthTokenUserDto(uriInfo.getBaseUriBuilder().path("users/me").build().toString())
+                    new AuthTokenUserDto(uriInfo.getBaseUriBuilder()
+                            .path("users/{id}")
+                            .resolveTemplate("id", user.getId().toString())
+                            .build()
+                            .toString())
             );
 
             return Response.ok(response)
