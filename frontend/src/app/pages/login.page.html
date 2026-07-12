@@ -45,19 +45,22 @@
           />
         </div>
 
-        <div *ngIf="submittedAttempted && loginForm.invalid" class="mb-3 text-sm text-[#d32f2f] font-semibold" role="alert">
-          {{ 'login.errors.required' | translate }}
-        </div>
+        <ng-container *ngIf="errorMessage; else requiredError">
+          <div class="mb-3 text-sm text-[#d32f2f] font-semibold" role="alert">
+            {{ errorMessage }}
+          </div>
+        </ng-container>
+        <ng-template #requiredError>
+          <div *ngIf="submittedAttempted && loginForm.invalid" class="mb-3 text-sm text-[#d32f2f] font-semibold" role="alert">
+            {{ 'login.errors.required' | translate }}
+          </div>
+        </ng-template>
 
         <div class="mb-7">
           <label class="inline-flex items-center gap-3 text-white text-base font-semibold select-none">
             <input type="checkbox" formControlName="rememberMe" class="h-5 w-5 accent-[#9c27b0] cursor-pointer" />
             {{ 'login.rememberMe' | translate }}
           </label>
-        </div>
-
-        <div *ngIf="errorMessage" class="mb-3 text-sm text-[#d32f2f] font-semibold" role="alert">
-          {{ errorMessage }}
         </div>
 
         <div class="login-buttons flex flex-col items-center gap-6 pt-1">
@@ -68,7 +71,7 @@
                    shadow-[0_2px_10px_rgba(156,39,176,0.4)] hover:bg-[#540761] transition-colors
                    disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
           >
-            {{ submitting ? ('login.submitting' | translate) : ('login.submit' | translate) }}
+            {{ 'login.submit' | translate }}
           </button>
 
           <a routerLink="/register" class="login-forgot text-lg text-[#c000ff] hover:text-[#ffffff] transition-colors">
