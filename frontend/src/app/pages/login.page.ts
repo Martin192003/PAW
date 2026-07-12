@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -21,6 +21,7 @@ export class LoginPage implements OnInit, OnDestroy {
   submitting = false;
   invalidCredentials = false;
   errorMessage = '';
+  submittedAttempted = false;
 
   loginForm!: FormGroup;
 
@@ -39,6 +40,7 @@ export class LoginPage implements OnInit, OnDestroy {
     private userService: UserService,
     private i18n: I18nService,
     private location: Location,
+    private cd: ChangeDetectorRef,
   ) {
     this.loginForm = this.fb.group({
       usernameOrEmail: ['', [Validators.required]],
@@ -69,6 +71,7 @@ export class LoginPage implements OnInit, OnDestroy {
   }
 
   onSubmit(): void {
+    this.submittedAttempted = true;
     this.loginForm.markAllAsTouched();
     if (this.loginForm.invalid || this.submitting) return;
 
@@ -111,13 +114,16 @@ export class LoginPage implements OnInit, OnDestroy {
 
         this.invalidCredentials = status === 401;
         this.errorMessage = error ? this.resolveErrorMessage(error) : this.i18n.instant('login.errors.loginFailed');
+        // Ensure validation and error message render immediately
+        this.submittedAttempted = true;
+        try { this.cd.detectChanges(); } catch {}
       },
     });
   }
 
   showError(field: 'usernameOrEmail' | 'password'): boolean {
     const control = this.loginForm.get(field);
-    return !!(control && control.invalid && (control.dirty || control.touched));
+    return !!(control && control.invalid && (control.dirty || control.touched || this.submittedAttempted));
   }
 
   goBack(): void {
