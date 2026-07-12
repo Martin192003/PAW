@@ -94,6 +94,8 @@
       "phonePattern": "Phone can only contain numbers and valid symbols.",
       "passwordMismatch": "Passwords do not match.",
       "conflict": "A user with that username or email already exists.",
+      "emailConflict": "An account with that email already exists.",
+      "usernameConflict": "That username is already in use.",
       "invalidData": "Review the entered information.",
       "invalid": "Invalid field.",
       "registerFailed": "Could not create the user. Please try again."
@@ -101,19 +103,12 @@
   },
   "verifyMail": {
     "title": "Verify your account",
-    "description": "You can verify your user through the email link or by entering the code manually.",
+    "description": "We sent you a verification email. Open the link to activate your account.",
     "associatedEmail": "Associated email:",
     "linkVerification": {
-      "title": "1) Link verification",
-      "description": "If you opened this screen from the email link, verification runs automatically.",
-      "checking": "Verifying link..."
-    },
-    "codeVerification": {
-      "title": "2) Code verification",
-      "placeholder": "Enter the code/token received by email",
-      "required": "The code is required.",
-      "verifying": "Verifying...",
-      "verify": "Verify code"
+      "title": "Verifying account",
+      "description": "We are verifying your account from the email link.",
+      "checking": "Activating your account..."
     },
     "resendVerification": {
       "title": "Didn't receive the email?",
@@ -130,8 +125,12 @@
       "verifiedSuccess": "Account verified successfully.",
       "resendSuccess": "We sent you a new verification email."
     },
+    "success": {
+      "title": "Account verified",
+      "description": "Your account was authenticated successfully. You can now use BlingBling.",
+      "continue": "Go home"
+    },
     "errors": {
-      "verifyCode": "Could not verify the code.",
       "verifyLink": "Could not verify the link.",
       "resend": "Could not resend the verification email."
     }

@@ -33,6 +33,7 @@ public class UserJpaDao implements UserDao {
         u.setLocale(locale);
 
         em.persist(u);
+        em.flush();
         return u;
     }
 

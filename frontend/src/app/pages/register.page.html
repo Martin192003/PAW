@@ -1,13 +1,22 @@
-<main class="register-page min-h-screen w-full bg-[#1b1a1a] flex items-center justify-center px-4 py-8">
-  <section class="register-group w-full max-w-[520px]">
-	<div
-	  class="app-title text-[#9c27b0] text-[2rem] leading-tight font-bold tracking-widest mb-4"
-	  style="font-family: 'Darklinos', Arial, sans-serif;"
-	>
-	  Bling <br />&nbsp;&nbsp;Bling
-	</div>
+<main class="register-page min-h-screen w-full bg-[#1b1a1a] flex flex-col items-center px-4 py-8 sm:pt-14">
+  <button
+    type="button"
+    class="fixed left-5 top-4 z-10 flex h-10 w-10 items-center justify-center rounded bg-[#9c27b0] text-lg text-white shadow-[0_4px_12px_rgba(156,39,176,0.35)] transition-colors hover:bg-[#8a21a0] cursor-pointer"
+    routerLink="/login"
+    aria-label="Volver"
+  >
+    <i class="fa-solid fa-arrow-left"></i>
+  </button>
 
-	<div class="register-card w-full rounded-[10px] bg-[#3c3c3c] px-7 py-8 shadow-[0_4px_24px_rgba(0,0,0,0.6),0_1.5px_12px_rgba(140,0,183,0.35)]">
+  <section class="register-group flex w-full max-w-[520px] flex-col items-center">
+    <div
+      class="mb-8 text-center text-[2.6rem] font-black leading-[0.95] tracking-widest text-[#9c27b0] sm:text-[3.3rem]"
+      style="font-family: 'Darklinos', Arial, sans-serif;"
+    >
+      Bling <br />&nbsp;&nbsp;Bling
+    </div>
+
+	<div class="register-card w-full rounded-[20px] bg-[#3c3c3c] px-8 py-9 shadow-[0_4px_24px_rgba(0,0,0,0.6),0_1.5px_12px_rgba(140,0,183,0.35)] sm:px-10">
 	  <h1 class="register-title text-white text-2xl font-bold text-center mb-6">{{ 'register.title' | translate }}</h1>
 
 	  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
@@ -21,7 +30,7 @@
 				   focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
 			[ngClass]="showError('username') ? 'border-[#dc3545]' : 'border-[#ccc]'"
 		  />
-		  <span *ngIf="showError('username')" class="text-[#ff9a9a] text-xs mt-1 block">
+		  <span *ngIf="showError('username')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
 			{{ getError('username') }}
 		  </span>
 		</div>
@@ -36,7 +45,7 @@
 				   focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
 			[ngClass]="showError('name') ? 'border-[#dc3545]' : 'border-[#ccc]'"
 		  />
-		  <span *ngIf="showError('name')" class="text-[#ff9a9a] text-xs mt-1 block">
+		  <span *ngIf="showError('name')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
 			{{ getError('name') }}
 		  </span>
 		</div>
@@ -51,7 +60,7 @@
 				   focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
 			[ngClass]="showError('surname') ? 'border-[#dc3545]' : 'border-[#ccc]'"
 		  />
-		  <span *ngIf="showError('surname')" class="text-[#ff9a9a] text-xs mt-1 block">
+		  <span *ngIf="showError('surname')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
 			{{ getError('surname') }}
 		  </span>
 		</div>
@@ -68,7 +77,7 @@
 				   focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
 			[ngClass]="showError('password') ? 'border-[#dc3545]' : 'border-[#ccc]'"
 		  />
-		  <span *ngIf="showError('password')" class="text-[#ff9a9a] text-xs mt-1 block">
+		  <span *ngIf="showError('password')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
 			{{ getError('password') }}
 		  </span>
 		</div>
@@ -84,7 +93,7 @@
 				   focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
 			[ngClass]="showError('passwordRepeat') ? 'border-[#dc3545]' : 'border-[#ccc]'"
 		  />
-		  <span *ngIf="showError('passwordRepeat')" class="text-[#ff9a9a] text-xs mt-1 block">
+		  <span *ngIf="showError('passwordRepeat')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
 			{{ getError('passwordRepeat') }}
 		  </span>
 		</div>
@@ -99,7 +108,7 @@
 				   focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
 			[ngClass]="showError('email') ? 'border-[#dc3545]' : 'border-[#ccc]'"
 		  />
-		  <span *ngIf="showError('email')" class="text-[#ff9a9a] text-xs mt-1 block">
+		  <span *ngIf="showError('email')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
 			{{ getError('email') }}
 		  </span>
 		</div>
@@ -109,29 +118,29 @@
 			formControlName="cellphone"
 			type="text"
 			[placeholder]="'register.phone' | translate"
+			(input)="onPhoneInput($event)"
 			class="w-full px-4 py-3 border rounded-[8px] bg-transparent text-white text-base placeholder-[#aaa]
 				   transition-colors focus:border-[#2196f3] focus:outline-none
 				   focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
 			[ngClass]="showError('cellphone') ? 'border-[#dc3545]' : 'border-[#ccc]'"
 		  />
-		  <span *ngIf="showError('cellphone')" class="text-[#ff9a9a] text-xs mt-1 block">
+		  <span *ngIf="showError('cellphone')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
 			{{ getError('cellphone') }}
 		  </span>
 		</div>
 
-		<div *ngIf="errorMessage" class="error mb-3 px-4 py-3 rounded bg-[#d32f2f] border border-[#b71c1c] text-white text-sm font-semibold" role="alert">
+		<div *ngIf="errorMessage" class="mb-3 text-sm text-[#d32f2f] font-semibold" role="alert">
 		  {{ errorMessage }}
 		</div>
 
-		<div class="register-buttons flex flex-col gap-3 pt-1">
+		<div class="register-buttons flex flex-col items-center gap-3 pt-1">
 		  <button
 			type="submit"
-			[disabled]="registerForm.invalid || submitting"
 			class="w-full px-4 py-3 text-white bg-[#9c27b0] border border-[#9c27b0] rounded text-base font-semibold
 				   shadow-[0_2px_10px_rgba(156,39,176,0.4)] hover:bg-[#540761] transition-colors
-				   disabled:opacity-60 disabled:cursor-not-allowed"
+				   disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
 		  >
-			{{ submitting ? ('register.submitting' | translate) : ('register.submit' | translate) }}
+			{{ 'register.submit' | translate }}
 		  </button>
 		  <a routerLink="/login" class="register-login text-sm text-[#d7b6ff] hover:text-[#ffffff] transition-colors">
 			{{ 'register.hasAccount' | translate }}

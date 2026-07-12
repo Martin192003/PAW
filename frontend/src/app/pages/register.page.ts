@@ -20,6 +20,10 @@ const PHONE_PATTERN = /^(?=.*\d)[0-9+()\-\s]+$/;
 export class RegisterPage {
   submitting = false;
   errorMessage = '';
+  submittedAttempted = false;
+  frozenErrors: { [key: string]: boolean } = {};
+  frozenErrorMessages: { [key: string]: string } = {};
+  serverFieldErrors: { [key: string]: string } = {};
 
   registerForm: FormGroup;
 
@@ -41,7 +45,20 @@ export class RegisterPage {
   }
 
   onSubmit(): void {
+    this.submittedAttempted = true;
     this.registerForm.markAllAsTouched();
+    
+    this.frozenErrors = {};
+    this.frozenErrorMessages = {};
+    const fields = ['username', 'name', 'surname', 'password', 'passwordRepeat', 'email', 'cellphone'];
+    fields.forEach(field => {
+      const hasError = this.hasCurrentError(field);
+      this.frozenErrors[field] = hasError;
+      if (hasError) {
+        this.frozenErrorMessages[field] = this.currentErrorMessage(field);
+      }
+    });
+    
     if (this.registerForm.invalid || this.submitting) return;
 
     const payload: UserCreateRequest = {
@@ -56,6 +73,7 @@ export class RegisterPage {
 
     this.submitting = true;
     this.errorMessage = '';
+    this.serverFieldErrors = {};
 
     this.userService.register(payload).subscribe({
       next: () => {
@@ -64,18 +82,47 @@ export class RegisterPage {
       },
       error: (error: HttpErrorResponse) => {
         this.submitting = false;
+        if (this.applyServerFieldError(error)) {
+          return;
+        }
         this.errorMessage = this.resolveErrorMessage(error);
       },
     });
   }
 
   showError(field: string): boolean {
-    const control = this.registerForm.get(field);
-    if (!control || !(control.dirty || control.touched)) return false;
-    return control.invalid || (field === 'passwordRepeat' && this.registerForm.hasError('passwordMismatch'));
+    if (this.serverFieldErrors[field]) {
+      return true;
+    }
+
+    if (!this.submittedAttempted) return false;
+
+    if (this.frozenErrors[field] !== undefined) {
+      return this.frozenErrors[field];
+    }
+
+    return this.hasCurrentError(field);
   }
 
   getError(field: string): string {
+    if (this.serverFieldErrors[field]) {
+      return this.serverFieldErrors[field];
+    }
+
+    if (this.frozenErrorMessages[field]) {
+      return this.frozenErrorMessages[field];
+    }
+
+    return this.currentErrorMessage(field);
+  }
+
+  private hasCurrentError(field: string): boolean {
+    const control = this.registerForm.get(field);
+    if (!control) return false;
+    return control.invalid || (field === 'passwordRepeat' && this.registerForm.hasError('passwordMismatch'));
+  }
+
+  private currentErrorMessage(field: string): string {
     const control = this.registerForm.get(field);
     if (!control) return '';
 
@@ -115,6 +162,35 @@ export class RegisterPage {
     return this.extractServerMessage(error.error) ?? this.i18n.instant('register.errors.registerFailed');
   }
 
+  private applyServerFieldError(error: HttpErrorResponse): boolean {
+    if (error.status !== 409) {
+      return false;
+    }
+
+    const serverMessage = this.extractServerMessage(error.error);
+    const field = this.duplicateFieldFromMessage(serverMessage);
+    if (!field) {
+      return false;
+    }
+
+    const control = this.registerForm.get(field);
+    control?.setErrors({ ...(control.errors ?? {}), duplicate: true });
+    control?.markAsTouched();
+    this.serverFieldErrors[field] = field === 'email'
+      ? this.i18n.instant('register.errors.emailConflict')
+      : this.i18n.instant('register.errors.usernameConflict');
+    this.frozenErrors[field] = true;
+    this.frozenErrorMessages[field] = this.serverFieldErrors[field];
+    this.errorMessage = '';
+    return true;
+  }
+
+  private duplicateFieldFromMessage(message: string | null): 'email' | 'username' | null {
+    if (message === 'user.email.duplicate') return 'email';
+    if (message === 'user.username.duplicate') return 'username';
+    return null;
+  }
+
   private extractServerMessage(errorBody: unknown): string | null {
     if (!errorBody) return null;
 
@@ -144,5 +220,15 @@ export class RegisterPage {
 
       return password === passwordRepeat ? null : { passwordMismatch: true };
     };
+  }
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const original = input.value;
+    const filtered = original.replace(/[^0-9+\-() ]/g, '');
+    if (original !== filtered) {
+      input.value = filtered;
+      this.registerForm.get('cellphone')?.setValue(filtered, { emitEvent: false });
+    }
   }
 }

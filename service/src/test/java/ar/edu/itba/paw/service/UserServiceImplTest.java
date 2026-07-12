@@ -49,6 +49,9 @@ public class UserServiceImplTest {
         clubDao = mock(ClubDao.class);
 
         userService = new UserServiceImpl(userDao, passwordEncoder, mailService, bookingDao, reviewDao, clubDao);
+
+        when(userDao.findByUserName(anyString())).thenReturn(Optional.empty());
+        when(userDao.findByEmail(anyString())).thenReturn(Optional.empty());
     }
 
     private User makeUser(UUID id) {
@@ -86,6 +89,20 @@ public class UserServiceImplTest {
         when(passwordEncoder.encode("pw")).thenReturn("ENC");
         when(userDao.create(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), any(Role.class), anyString()))
                 .thenThrow(new DataIntegrityViolationException(""));
+
+        userService.create("test","Test","pw","Test","mail@mail.com","123","USER","es");
+    }
+
+    @Test(expected = DuplicateEntityException.class)
+    public void testCreateExistingEmailThrowsBeforePersisting() {
+        when(userDao.findByEmail("mail@mail.com")).thenReturn(Optional.of(makeUser(UUID.randomUUID())));
+
+        userService.create("test","Test","pw","Test","mail@mail.com","123","USER","es");
+    }
+
+    @Test(expected = DuplicateEntityException.class)
+    public void testCreateExistingUsernameThrowsBeforePersisting() {
+        when(userDao.findByUserName("test")).thenReturn(Optional.of(makeUser(UUID.randomUUID())));
 
         userService.create("test","Test","pw","Test","mail@mail.com","123","USER","es");
     }

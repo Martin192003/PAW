@@ -198,15 +198,29 @@ public class AuthRestController {
     }
 
     private AuthTokenDto tokenFor(User user) {
+        String href = uriInfo.getBaseUriBuilder()
+                .path("users/{id}")
+                .resolveTemplate("id", user.getId().toString())
+                .build()
+                .toString();
+
         return new AuthTokenDto(
                 jwtUtil.generateToken(user.getId().toString()),
                 "Bearer",
                 jwtUtil.getExpirationSeconds(),
-                new AuthTokenUserDto(uriInfo.getBaseUriBuilder()
-                        .path("users/{id}")
-                        .resolveTemplate("id", user.getId().toString())
-                        .build()
-                        .toString())
+                new AuthTokenUserDto(
+                        href,
+                        user.getId(),
+                        user.getUsername(),
+                        user.getName(),
+                        user.getSurname(),
+                        user.getEmail(),
+                        user.getCellphone(),
+                        user.getRole() != null ? user.getRole().name() : null,
+                        user.isVerified(),
+                        user.getCreatedAt(),
+                        user.getLocale()
+                )
         );
     }
 

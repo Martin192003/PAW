@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, switchMap, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   ApiMessageResponse,
@@ -9,7 +9,6 @@ import {
   ResendVerificationRequest,
   UserCreateRequest,
   UserLoginRequest,
-  UserVerificationRequest,
   User,
 } from '../models/user.model';
 import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
@@ -35,6 +34,16 @@ type AuthTokenResponse = {
   expiresIn: number;
   user: {
     href: string;
+    userId?: string;
+    username?: string;
+    name?: string;
+    surname?: string;
+    email?: string;
+    cellphone?: string;
+    role?: string;
+    verified?: boolean;
+    createdAt?: string;
+    locale?: string;
   };
 };
 
@@ -56,7 +65,9 @@ export class UserService {
   }
 
   register(payload: UserCreateRequest): Observable<unknown> {
-    return this.http.post(`${this.apiUrl}/users`, payload);
+    return this.http.post(`${this.apiUrl}/users`, payload, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    });
   }
 
   updateUser(userId: string, payload: UserUpdatePayload): Observable<UserUpdateResult> {
@@ -97,35 +108,54 @@ export class UserService {
   verifyByToken(token: string): Observable<LoginResponse | ApiMessageResponse> {
     const params = new HttpParams().set('token', token);
     return this.http
-      .get<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/auth/verifications`, { params })
-      .pipe(switchMap((response) => this.resolveVerificationResponse(response)));
-  }
-
-  /** POST /auth/verifications (codigo ingresado a mano). Mismo shape que verifyByToken. */
-  verifyByCode(payload: UserVerificationRequest): Observable<LoginResponse | ApiMessageResponse> {
-    return this.http
-      .post<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/auth/verifications`, payload)
-      .pipe(switchMap((response) => this.resolveVerificationResponse(response)));
+      .get<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/auth/verifications`, {
+        params,
+        context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+      })
+      .pipe(
+        timeout(15000),
+        map((response) => this.resolveVerificationResponse(response))
+      );
   }
 
   private resolveVerificationResponse(
     response: AuthTokenResponse | ApiMessageResponse
-  ): Observable<LoginResponse | ApiMessageResponse> {
+  ): LoginResponse | ApiMessageResponse {
     if (!this.isAuthTokenResponse(response)) {
-      return of(response);
+      return response;
     }
 
-    const token = response.accessToken;
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    return this.http.get<User>(response.user.href, { headers }).pipe(
-      map((user) => ({ token, user }))
-    );
+    return {
+      token: response.accessToken,
+      user: this.userFromAuthTokenResponse(response),
+    };
   }
 
   private isAuthTokenResponse(
     response: AuthTokenResponse | ApiMessageResponse
   ): response is AuthTokenResponse {
     return !!response && typeof response === 'object' && 'accessToken' in response;
+  }
+
+  private userFromAuthTokenResponse(response: AuthTokenResponse): User {
+    const userId = response.user.userId ?? this.userIdFromHref(response.user.href);
+    return {
+      userId,
+      username: response.user.username ?? '',
+      name: response.user.name ?? '',
+      surname: response.user.surname ?? '',
+      email: response.user.email ?? '',
+      cellphone: response.user.cellphone ?? '',
+      role: response.user.role ?? 'USER',
+      verified: response.user.verified ?? true,
+      createdAt: response.user.createdAt ?? '',
+      locale: response.user.locale ?? '',
+    };
+  }
+
+  private userIdFromHref(href: string): string {
+    const parts = href.split('/').filter(Boolean);
+    return parts[parts.length - 1] ?? '';
   }
 
   resendVerification(payload: ResendVerificationRequest): Observable<ApiMessageResponse> {

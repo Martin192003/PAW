@@ -77,13 +77,52 @@ describe('RegisterPage', () => {
     expect(cellphone?.hasError('maxlength')).toBe(true);
   });
 
-  it('live password mismatch is validated while typing', () => {
+  it('password mismatch is validated but not shown before submit', () => {
     fillValidForm();
 
     component.registerForm.get('passwordRepeat')?.setValue('different');
     component.registerForm.get('passwordRepeat')?.markAsDirty();
 
     expect(component.registerForm.hasError('passwordMismatch')).toBe(true);
+    expect(component.showError('passwordRepeat')).toBe(false);
+  });
+
+  it('keeps the submitted email error message frozen until next submit', () => {
+    fillValidForm();
+    component.registerForm.get('email')?.setValue('');
+
+    component.onSubmit();
+
+    expect(component.showError('email')).toBe(true);
+    expect(component.getError('email')).toBe('register.errors.required');
+
+    component.registerForm.get('email')?.setValue('not-an-email');
+
+    expect(component.showError('email')).toBe(true);
+    expect(component.getError('email')).toBe('register.errors.required');
+
+    component.onSubmit();
+
+    expect(component.showError('email')).toBe(true);
+    expect(component.getError('email')).toBe('register.errors.email');
+  });
+
+  it('keeps the submitted password repeat error message frozen until next submit', () => {
+    fillValidForm();
+    component.registerForm.get('passwordRepeat')?.setValue('');
+
+    component.onSubmit();
+
+    expect(component.showError('passwordRepeat')).toBe(true);
+    expect(component.getError('passwordRepeat')).toBe('register.errors.required');
+
+    component.registerForm.get('passwordRepeat')?.setValue('different');
+
+    expect(component.showError('passwordRepeat')).toBe(true);
+    expect(component.getError('passwordRepeat')).toBe('register.errors.required');
+
+    component.onSubmit();
+
     expect(component.showError('passwordRepeat')).toBe(true);
     expect(component.getError('passwordRepeat')).toBe('register.errors.passwordMismatch');
   });
@@ -108,15 +147,38 @@ describe('RegisterPage', () => {
     });
   });
 
-  it('409 conflict uses conflict error message', () => {
+  it('409 duplicate email is shown under email field', () => {
     userService.register.mockReturnValue(
-      throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' }))
+      throwError(() => new HttpErrorResponse({
+        status: 409,
+        statusText: 'Conflict',
+        error: { message: 'user.email.duplicate' },
+      }))
     );
     fillValidForm();
 
     component.onSubmit();
 
-    expect(component.errorMessage).toBe('register.errors.conflict');
+    expect(component.errorMessage).toBe('');
+    expect(component.showError('email')).toBe(true);
+    expect(component.getError('email')).toBe('register.errors.emailConflict');
+  });
+
+  it('409 duplicate username is shown under username field', () => {
+    userService.register.mockReturnValue(
+      throwError(() => new HttpErrorResponse({
+        status: 409,
+        statusText: 'Conflict',
+        error: { message: 'user.username.duplicate' },
+      }))
+    );
+    fillValidForm();
+
+    component.onSubmit();
+
+    expect(component.errorMessage).toBe('');
+    expect(component.showError('username')).toBe(true);
+    expect(component.getError('username')).toBe('register.errors.usernameConflict');
   });
 
   it('400 error uses server message when present', () => {

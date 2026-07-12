@@ -132,11 +132,6 @@ export class LoginPage implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      this.location.back();
-      return;
-    }
-
     void this.router.navigate(['/clubs']);
   }
 

@@ -16,6 +16,7 @@ import ar.edu.itba.paw.model.User;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -52,13 +53,23 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User create(String username, String name, String password, String surname, String email, String cellphone, String role, String locale){
+        String normalizedUsername = username.trim();
+        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+
+        if (userDao.findByUserName(normalizedUsername).isPresent()) {
+            throw new DuplicateEntityException("user.username.duplicate");
+        }
+        if (userDao.findByEmail(normalizedEmail).isPresent()) {
+            throw new DuplicateEntityException("user.email.duplicate");
+        }
+
         try {
             User user = userDao.create(
-                    username,
+                    normalizedUsername,
                     name,
                     passwordEncoder.encode(password),
                     surname,
-                    email,
+                    normalizedEmail,
                     cellphone,
                     Role.USER,
                     locale
@@ -66,7 +77,7 @@ public class UserServiceImpl implements UserService {
             if(user == null) {
                 return null;
             }
-            mailService.sendUserRegistrationConfirmation(email, username, user.getVerificationToken());
+            mailService.sendUserRegistrationConfirmation(normalizedEmail, normalizedUsername, user.getVerificationToken());
             return user;
         } catch (DataIntegrityViolationException ex) {
             throw new DuplicateEntityException("user.email.duplicate", ex);

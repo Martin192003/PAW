@@ -191,7 +191,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendUserRegistrationConfirmation(String to, String username, String verificationToken) {
-        String verificationUrl = abs("/verify-account?token=" + verificationToken);
+        String verificationUrl = abs("/verify-mail?token=" + verificationToken);
 
         Map<String, Object> model = Map.of(
                 "username", username,

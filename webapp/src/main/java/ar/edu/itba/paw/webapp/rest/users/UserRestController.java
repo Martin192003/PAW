@@ -9,6 +9,7 @@ import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -137,7 +138,12 @@ public class UserRestController {
                     .build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
-                    .entity(message("User with same username or email already exists"))
+                    .entity(message(duplicateUserMessage(e)))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        } catch (DataIntegrityViolationException e) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(message("user.duplicate"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (Exception e) {
@@ -291,6 +297,14 @@ public class UserRestController {
 
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    private static String duplicateUserMessage(DuplicateEntityException e) {
+        String message = e.getMessage();
+        if ("user.email.duplicate".equals(message) || "user.username.duplicate".equals(message)) {
+            return message;
+        }
+        return "user.duplicate";
     }
 
     private void addPaginationLinks(Response.ResponseBuilder responseBuilder, int page, int size, int total) {
