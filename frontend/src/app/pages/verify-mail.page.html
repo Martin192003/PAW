@@ -10,10 +10,10 @@
   <section class="mx-auto w-full max-w-3xl flex-1 flex items-center justify-center px-4 py-10">
     <article class="w-full max-w-xl rounded-[20px] bg-[#3c3c3c] px-8 py-9 text-center shadow-[0_4px_24px_rgba(0,0,0,0.6),0_1.5px_12px_rgba(140,0,183,0.35)] sm:px-10">
       <h1 class="mb-4 text-3xl font-bold">
-        {{ verifiedStateVisible ? ('verifyMail.success.title' | translate) : ('verifyMail.title' | translate) }}
+        {{ headingKey | translate }}
       </h1>
       <p class="mb-2 text-[#e6e6e6]">
-        {{ verifiedStateVisible ? ('verifyMail.success.description' | translate) : ('verifyMail.description' | translate) }}
+        {{ descriptionKey | translate }}
       </p>
       <p *ngIf="email" class="mb-6 text-[#d7b6ff]">{{ 'verifyMail.associatedEmail' | translate }} <span class="font-semibold">{{ email }}</span></p>
 

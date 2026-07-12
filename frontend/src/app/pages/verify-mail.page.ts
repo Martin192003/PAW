@@ -133,6 +133,25 @@ export class VerifyMailPage implements OnDestroy {
     return this.verifyingFromLink && this.tokenChecking && !this.verifiedStateVisible && !this.tokenErrorMessage;
   }
 
+  // El titulo/descripcion de arriba tenian solo dos estados (pagina inicial
+  // de "revisa tu mail" vs "cuenta verificada"), asi que mientras se estaba
+  // verificando el link se veia por un instante la pantalla de "revisa tu
+  // mail" (que no tiene sentido si ya se abrio el link) antes de pasar a la
+  // de verificado. Con este tercer estado ("verificando cuenta") ese frame
+  // intermedio queda coherente con el resto del flujo en vez de parecer una
+  // pantalla equivocada.
+  get headingKey(): string {
+    if (this.verifiedStateVisible) return 'verifyMail.success.title';
+    if (this.linkCheckInProgress) return 'verifyMail.linkVerification.title';
+    return 'verifyMail.title';
+  }
+
+  get descriptionKey(): string {
+    if (this.verifiedStateVisible) return 'verifyMail.success.description';
+    if (this.linkCheckInProgress) return 'verifyMail.linkVerification.description';
+    return 'verifyMail.description';
+  }
+
   private verifyFromToken(token: string): void {
     this.tokenChecking = true;
     this.tokenSuccessMessage = '';
