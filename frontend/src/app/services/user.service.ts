@@ -83,7 +83,7 @@ export class UserService {
   }
 
   /**
-   * GET /users/verifications?token=... (link del mail).
+   * GET /auth/verifications?token=... (link del mail).
    *
    * El backend puede responder de dos formas: un AuthTokenResponse (cuenta
    * recien verificada, login automatico) o un ApiMessageResponse (ya estaba
@@ -94,14 +94,14 @@ export class UserService {
   verifyByToken(token: string): Observable<LoginResponse | ApiMessageResponse> {
     const params = new HttpParams().set('token', token);
     return this.http
-      .get<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/users/verifications`, { params })
+      .get<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/auth/verifications`, { params })
       .pipe(switchMap((response) => this.resolveVerificationResponse(response)));
   }
 
-  /** POST /users/verifications (codigo ingresado a mano). Mismo shape que verifyByToken. */
+  /** POST /auth/verifications (codigo ingresado a mano). Mismo shape que verifyByToken. */
   verifyByCode(payload: UserVerificationRequest): Observable<LoginResponse | ApiMessageResponse> {
     return this.http
-      .post<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/users/verifications`, payload)
+      .post<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/auth/verifications`, payload)
       .pipe(switchMap((response) => this.resolveVerificationResponse(response)));
   }
 
@@ -126,11 +126,11 @@ export class UserService {
   }
 
   resendVerification(payload: ResendVerificationRequest): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiUrl}/users/verification-requests`, payload);
+    return this.http.post<ApiMessageResponse>(`${this.apiUrl}/auth/verification-requests`, payload);
   }
 
   requestPasswordReset(email: string): Observable<void> {
-    return this.http.post(`${this.apiUrl}/users/password-reset-requests`, { email }).pipe(
+    return this.http.post(`${this.apiUrl}/auth/password-reset-requests`, { email }).pipe(
       map(() => undefined)
     );
   }
@@ -138,7 +138,7 @@ export class UserService {
   resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<LoginResponse> {
     const params = new HttpParams().set('token', token);
     return this.http.post<AuthTokenResponse>(
-      `${this.apiUrl}/users/password-resets`,
+      `${this.apiUrl}/auth/password-resets`,
       { newPassword, confirmationPassword },
       { params }
     ).pipe(

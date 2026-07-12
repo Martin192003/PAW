@@ -150,9 +150,10 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 ## Endpoints principales
 
 - `POST /api/auth/tokens`: crea token Bearer.
-- `GET /api/users/me`: perfil privado del usuario autenticado.
+- `GET /api/auth/verifications`: verifica cuenta desde token/codigo y devuelve Bearer.
+- `POST /api/auth/password-reset-requests`: solicita reset de password.
+- `POST /api/auth/password-resets`: confirma reset de password y devuelve Bearer.
 - `GET /api/users/{userId}`: usuario publico, o privado si es el propio usuario.
-- `GET /api/users/{userId}/profile`: perfil privado solo para el mismo usuario o admin.
 - `GET /api/clubs`: busqueda/listado de clubes.
 - `GET /api/clubs?ownerId={userId}`: clubes por duenio/admin.
 - `GET /api/clubs/{clubId}`: detalle de club.
@@ -160,14 +161,15 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 - `GET /api/clubs/{clubId}/events`: eventos de un club.
 - `GET /api/clubs/{clubId}/reviews`: reviews paginadas.
 - `GET /api/bookings`: reservas del usuario autenticado.
-- `GET /api/managed-club-bookings`: reservas administradas por el usuario admin.
+- `GET /api/bookings?managed=true`: reservas administradas por el usuario admin.
+- `GET /api/bookings/{bookingId}?managed=true`: detalle de reserva administrada.
 
 ## Decisiones REST/HATEOAS
 
 - La API usa JAX-RS/Jersey bajo `/api/*`.
 - Los DTOs principales exponen `links` con `rel`, `href` y `method`.
 - El frontend prioriza links HATEOAS en flujos principales y conserva fallback solo donde todavia hace falta compatibilidad.
-- Endpoints legacy como `/api/clubs/user/{id}`, `/api/clubs/events`, `/api/managed-club-bookings/{id}/confirmation` y `/api/clubs/{clubId}/tables/{tableId}/state` se dejaron compatibles, pero el frontend fue migrado a rutas canonicas.
+- Los endpoints de autenticacion viven bajo `/api/auth/*`; `/api/users` queda reservado para el recurso usuario.
 - Las colecciones relevantes mantienen `X-Total-Count` y agregan `Link` pagination cuando aplica.
 - Los assets Angular hasheados reciben `Cache-Control: public, max-age=31536000, immutable`; `index.html` e `index.csr.html` se revalidan con `no-cache`.
 

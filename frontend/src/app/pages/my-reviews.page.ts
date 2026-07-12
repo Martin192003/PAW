@@ -92,8 +92,7 @@ export class MyReviewsPage implements OnInit, OnDestroy {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { page: this.currentPage },
-      queryParamsHandling: '',
-      replaceUrl: true
+      queryParamsHandling: ''
     });
   }
 

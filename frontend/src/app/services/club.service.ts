@@ -6,7 +6,7 @@ import { AvailabilityPagedResponse } from '../models/availability-paged-response
 import { ClubLimits } from '../models/club-limits.model';
 import { ClubPhoto } from '../models/club-photo.model';
 import { ClubTable } from '../models/club-table.model';
-import { Club, ClubCreateRequestDto } from '../models/club.model';
+import { Club, ClubPayload } from '../models/club.model';
 import { Event } from '../models/event.model';
 import { Layout } from '../models/layout.model';
 import { PagedResponse } from '../models/paged-response.model';
@@ -176,7 +176,7 @@ export class ClubService {
     );
   }
 
-  createClub(payload: ClubCreateRequestDto): Observable<Club> {
+  createClub(payload: ClubPayload): Observable<Club> {
     return this.http.post<Club>(`${this.apiUrl}/clubs`, payload).pipe(
       map(club => this.normalizeClub(club))
     );

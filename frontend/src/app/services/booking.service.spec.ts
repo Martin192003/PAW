@@ -51,9 +51,10 @@ describe('BookingService filters', () => {
       hasReceipt: 'false',
     }, 1, 10).subscribe();
 
-    const req = httpMock.expectOne(request => request.url.endsWith('/managed-club-bookings'));
+     const req = httpMock.expectOne(request => request.url.endsWith('/bookings'));
     expect(req.request.params.get('page')).toBe('1');
     expect(req.request.params.get('size')).toBe('10');
+    expect(req.request.params.get('managed')).toBe('true');
     expect(req.request.params.get('clubId')).toBe('club-1');
     expect(req.request.params.get('status')).toBe('PENDIENTE');
     expect(req.request.params.get('hasReceipt')).toBe('false');

@@ -13,6 +13,7 @@ security:
   - bearerAuth: []
 
 tags:
+  - name: Auth
   - name: Users
   - name: Clubs
   - name: Events
@@ -33,7 +34,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserCreateRequestDto'
+              $ref: '#/components/schemas/UserDto'
       responses:
         '201':
           description: User created
@@ -49,20 +50,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '409':
           $ref: '#/components/responses/Conflict'
-
-  /users/me:
-    get:
-      tags: [Users]
-      summary: Get authenticated user
-      responses:
-        '200':
-          description: Authenticated user with HATEOAS links
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserDto'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
 
   /users/{userId}:
     parameters:
@@ -91,7 +78,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserCreateRequestDto'
+              $ref: '#/components/schemas/UserDto'
       responses:
         '200':
           description: User updated. A replacement bearer token is returned in the response body when profile fields used in authentication may have changed.
@@ -105,42 +92,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
-  /users/{userId}/profile:
-    parameters:
-      - $ref: '#/components/parameters/UserId'
-    get:
-      tags: [Users]
-      summary: Get user profile
-      responses:
-        '200':
-          description: User profile
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    put:
-      tags: [Users]
-      summary: Update own user profile
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserCreateRequestDto'
-      responses:
-        '200':
-          description: Profile updated. A replacement bearer token is returned in the response body when profile fields used in authentication may have changed.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserUpdateResponseDto'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
 
   /users/{userId}/reviews:
     parameters:
@@ -165,9 +116,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/ReviewDto'
 
-  /users/verifications:
+  /auth/verifications:
     get:
-      tags: [Users]
+      tags: [Auth]
       summary: Verify account from email link
       security: []
       parameters:
@@ -186,7 +137,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
     post:
-      tags: [Users]
+      tags: [Auth]
       summary: Verify account from code or token
       security: []
       requestBody:
@@ -205,9 +156,9 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /users/verification-requests:
+  /auth/verification-requests:
     post:
-      tags: [Users]
+      tags: [Auth]
       summary: Resend verification token
       security: []
       requestBody:
@@ -222,9 +173,9 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /users/password-reset-requests:
+  /auth/password-reset-requests:
     post:
-      tags: [Users]
+      tags: [Auth]
       summary: Request password reset email
       security: []
       requestBody:
@@ -239,9 +190,9 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /users/password-resets:
+  /auth/password-resets:
     post:
-      tags: [Users]
+      tags: [Auth]
       summary: Reset password with token
       security: []
       parameters:
@@ -333,7 +284,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ClubCreateRequestDto'
+              $ref: '#/components/schemas/ClubDto'
       responses:
         '201':
           description: Club created
@@ -367,7 +318,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ClubCreateRequestDto'
+              $ref: '#/components/schemas/ClubDto'
       responses:
         '200':
           description: Club updated
@@ -695,7 +646,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductCreateRequestDto'
+              $ref: '#/components/schemas/ProductDto'
       responses:
         '201':
           description: Product created
@@ -728,7 +679,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductUpdateRequestDto'
+              $ref: '#/components/schemas/ProductDto'
       responses:
         '200':
           description: Product updated
@@ -766,7 +717,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TableCreateRequestDto'
+              $ref: '#/components/schemas/TableDto'
       responses:
         '201':
           description: Table created
@@ -797,7 +748,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TableUpdateRequestDto'
+              $ref: '#/components/schemas/TableDto'
       responses:
         '200':
           description: Table updated
@@ -845,7 +796,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewCreateRequestDto'
+              $ref: '#/components/schemas/ReviewDto'
       responses:
         '201':
           description: Review created
@@ -863,7 +814,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewCreateRequestDto'
+              $ref: '#/components/schemas/ReviewDto'
       responses:
         '200':
           description: Review updated
@@ -996,6 +947,12 @@ paths:
         - $ref: '#/components/parameters/SortQuery'
         - $ref: '#/components/parameters/BookingDateQuery'
         - $ref: '#/components/parameters/HasReceiptQuery'
+        - name: managed
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: When true, lists bookings managed by the authenticated user instead of bookings made by them.
         - $ref: '#/components/parameters/PageOne'
         - $ref: '#/components/parameters/Size'
       responses:
@@ -1006,33 +963,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/BookingPageDto'
 
-  /managed-club-bookings:
-    get:
-      tags: [Bookings]
-      summary: List bookings for clubs managed by authenticated user
-      parameters:
-        - $ref: '#/components/parameters/ClubIdQuery'
-        - $ref: '#/components/parameters/BookingIdQuery'
-        - $ref: '#/components/parameters/StatusQuery'
-        - $ref: '#/components/parameters/SortQuery'
-        - $ref: '#/components/parameters/BookingDateQuery'
-        - $ref: '#/components/parameters/HasReceiptQuery'
-        - $ref: '#/components/parameters/PageOne'
-        - $ref: '#/components/parameters/Size'
-      responses:
-        '200':
-          description: Paginated bookings
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BookingPageDto'
-
-  /managed-club-bookings/{bookingId}:
+  /bookings/{bookingId}:
     parameters:
       - $ref: '#/components/parameters/BookingId'
+      - name: managed
+        in: query
+        required: true
+        schema:
+          type: boolean
+          enum: [true]
+        description: When true, addresses the booking as a manager of one of the club's bookings.
     get:
       tags: [Bookings]
-      summary: Get booking from managed club
+      summary: Get a managed booking by id
       responses:
         '200':
           description: Booking
@@ -1049,11 +992,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [status]
-              properties:
-                status:
-                  $ref: '#/components/schemas/Status'
+              $ref: '#/components/schemas/BookingDto'
       responses:
         '200':
           description: Booking updated
@@ -1063,11 +1002,10 @@ paths:
                 $ref: '#/components/schemas/BookingDto'
     delete:
       tags: [Bookings]
-      summary: Cancel booking from managed club
+      summary: Cancel managed booking
       responses:
         '204':
           description: Booking cancelled
-
 components:
   securitySchemes:
     bearerAuth:
@@ -1245,51 +1183,7 @@ components:
         userId:
           type: string
           format: uuid
-        username:
-          type: string
-        name:
-          type: string
-        surname:
-          type: string
-        email:
-          type: string
-          format: email
-        cellphone:
-          type: string
-        role:
-          type: string
-        verified:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        locale:
-          type: string
-        links:
-          type: array
-          items:
-            $ref: '#/components/schemas/LinkDto'
-
-    PublicUserDto:
-      type: object
-      properties:
-        userId:
-          type: string
-          format: uuid
-        username:
-          type: string
-        name:
-          type: string
-        surname:
-          type: string
-        links:
-          type: array
-          items:
-            $ref: '#/components/schemas/LinkDto'
-
-    UserCreateRequestDto:
-      type: object
-      properties:
+          readOnly: true
         username:
           type: string
         name:
@@ -1301,10 +1195,45 @@ components:
           format: email
         password:
           type: string
+          writeOnly: true
         cellphone:
           type: string
+        role:
+          type: string
+          readOnly: true
+        verified:
+          type: boolean
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
         locale:
           type: string
+        links:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/LinkDto'
+
+    PublicUserDto:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        links:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/LinkDto'
 
     UserUpdateResponseDto:
       type: object
@@ -1381,6 +1310,7 @@ components:
         clubId:
           type: string
           format: uuid
+          readOnly: true
         clubName:
           type: string
         description:
@@ -1395,61 +1325,25 @@ components:
           type: string
         bar:
           type: boolean
+        cbu:
+          type: string
+          writeOnly: true
         rating:
           type: number
           format: float
+          readOnly: true
         quantityRatings:
           type: integer
+          readOnly: true
         createdAt:
           type: string
           format: date-time
+          readOnly: true
         links:
           type: array
+          readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
-
-    ClubCreateRequestDto:
-      type: object
-      properties:
-        clubName:
-          type: string
-        description:
-          type: string
-        location:
-          type: string
-        zone:
-          type: string
-        musicGenre:
-          type: string
-        priceRange:
-          type: string
-        isBar:
-          type: boolean
-        cbu:
-          type: string
-
-    ClubPagedResponseDto:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/ClubDto'
-        page:
-          type: integer
-        size:
-          type: integer
-        totalElements:
-          type: integer
-        totalPages:
-          type: integer
-        availableToday:
-          type: boolean
-        invalidDay:
-          type: boolean
-        selectedAvailabilityDate:
-          type: string
-          nullable: true
 
     ClubLimitsDto:
       type: object
@@ -1521,6 +1415,7 @@ components:
         productId:
           type: string
           format: uuid
+          readOnly: true
         productName:
           type: string
         description:
@@ -1534,28 +1429,12 @@ components:
         createdAt:
           type: string
           format: date-time
+          readOnly: true
         links:
           type: array
+          readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
-
-    ProductCreateRequestDto:
-      type: object
-      properties:
-        productName:
-          type: string
-        description:
-          type: string
-        basePrice:
-          type: number
-        productType:
-          $ref: '#/components/schemas/ProductType'
-        isAvailable:
-          type: boolean
-
-    ProductUpdateRequestDto:
-      allOf:
-        - $ref: '#/components/schemas/ProductCreateRequestDto'
 
     TableDto:
       type: object
@@ -1563,9 +1442,11 @@ components:
         tableId:
           type: string
           format: uuid
+          readOnly: true
         clubId:
           type: string
           format: uuid
+          readOnly: true
         tableNumber:
           type: integer
         capacity:
@@ -1578,26 +1459,10 @@ components:
           type: number
         links:
           type: array
+          readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
 
-    TableCreateRequestDto:
-      type: object
-      properties:
-        tableNumber:
-          type: integer
-        capacity:
-          type: integer
-        tableState:
-          $ref: '#/components/schemas/TableState'
-        price:
-          type: number
-        discount:
-          type: number
-
-    TableUpdateRequestDto:
-      allOf:
-        - $ref: '#/components/schemas/TableCreateRequestDto'
 
     ReviewDto:
       type: object
@@ -1605,28 +1470,24 @@ components:
         reviewId:
           type: string
           format: uuid
+          readOnly: true
         userId:
           type: string
           format: uuid
+          readOnly: true
         clubId:
           type: string
           format: uuid
+          readOnly: true
         rating:
           type: integer
         description:
           type: string
         links:
           type: array
+          readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
-
-    ReviewCreateRequestDto:
-      type: object
-      properties:
-        rating:
-          type: integer
-        description:
-          type: string
 
     BookingDto:
       type: object

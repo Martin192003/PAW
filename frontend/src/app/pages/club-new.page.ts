@@ -14,7 +14,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ClubService } from '../services/club.service';
-import { ClubCreateRequestDto } from '../models/club.model';
+import { ClubPayload } from '../models/club.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { catchError, finalize, map, switchMap } from 'rxjs/operators';
@@ -238,7 +238,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const val = this.clubForm.value;
 
-    const payload: ClubCreateRequestDto = {
+    const payload: ClubPayload = {
       clubName: val.name,
       location: val.location,
       priceRange: val.priceRange,

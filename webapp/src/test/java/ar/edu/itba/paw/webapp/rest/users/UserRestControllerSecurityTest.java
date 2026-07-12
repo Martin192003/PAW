@@ -2,15 +2,18 @@ package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.dto.PublicUserDto;
 import ar.edu.itba.paw.model.dto.UserDto;
 import ar.edu.itba.paw.service.UserService;
-import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
+import ar.edu.itba.paw.webapp.auth.PawUserDetails;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.time.OffsetDateTime;
@@ -26,45 +29,47 @@ public class UserRestControllerSecurityTest {
 
     private UserRestController controller;
     private UserService userService;
-    private AuthenticatedUserResolver authenticatedUserResolver;
-    private SecurityContext securityContext;
 
     @Before
     public void setUp() {
         controller = new UserRestController();
         userService = mock(UserService.class);
-        authenticatedUserResolver = mock(AuthenticatedUserResolver.class);
-        securityContext = mock(SecurityContext.class);
+        SecurityContextHolder.clearContext();
 
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getBaseUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/"));
 
         ReflectionTestUtils.setField(controller, "userService", userService);
-        ReflectionTestUtils.setField(controller, "authenticatedUserResolver", authenticatedUserResolver);
         ReflectionTestUtils.setField(controller, "uriInfo", uriInfo);
     }
 
+    @After
+    public void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
-    public void otherUserCannotViewPrivateProfile() {
+    public void otherUserGetsPublicRepresentation() {
         UUID targetId = UUID.randomUUID();
         User target = user(targetId, Role.USER);
         User caller = user(UUID.randomUUID(), Role.USER);
         when(userService.findById(targetId)).thenReturn(Optional.of(target));
-        when(authenticatedUserResolver.resolve(securityContext)).thenReturn(caller);
+        authenticate(caller);
 
-        Response response = controller.getUserProfile(targetId.toString(), securityContext);
+        Response response = controller.getUser(targetId.toString());
 
-        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), response.getStatus());
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertTrue(response.getEntity() instanceof PublicUserDto);
     }
 
     @Test
-    public void userCanViewOwnPrivateProfile() {
+    public void userGetsOwnPrivateRepresentation() {
         UUID userId = UUID.randomUUID();
         User user = user(userId, Role.USER);
         when(userService.findById(userId)).thenReturn(Optional.of(user));
-        when(authenticatedUserResolver.resolve(securityContext)).thenReturn(user);
 
-        Response response = controller.getUserProfile(userId.toString(), securityContext);
+        authenticate(user);
+        Response response = controller.getUser(userId.toString());
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertTrue(response.getEntity() instanceof UserDto);
@@ -72,28 +77,35 @@ public class UserRestControllerSecurityTest {
     }
 
     @Test
-    public void adminCanViewOtherPrivateProfile() {
+    public void adminGetsPublicRepresentationForOtherUser() {
         UUID targetId = UUID.randomUUID();
         User target = user(targetId, Role.USER);
         User admin = user(UUID.randomUUID(), Role.ADMIN);
         when(userService.findById(targetId)).thenReturn(Optional.of(target));
-        when(authenticatedUserResolver.resolve(securityContext)).thenReturn(admin);
 
-        Response response = controller.getUserProfile(targetId.toString(), securityContext);
+        authenticate(admin);
+        Response response = controller.getUser(targetId.toString());
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        assertTrue(response.getEntity() instanceof UserDto);
+        assertTrue(response.getEntity() instanceof PublicUserDto);
     }
 
     @Test
-    public void anonymousCallerCannotViewPrivateProfile() {
+    public void anonymousCallerGetsPublicRepresentation() {
         UUID targetId = UUID.randomUUID();
         when(userService.findById(targetId)).thenReturn(Optional.of(user(targetId, Role.USER)));
-        when(authenticatedUserResolver.resolve(securityContext)).thenReturn(null);
 
-        Response response = controller.getUserProfile(targetId.toString(), securityContext);
+        Response response = controller.getUser(targetId.toString());
 
-        assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertTrue(response.getEntity() instanceof PublicUserDto);
+    }
+
+    private static void authenticate(User user) {
+        PawUserDetails principal = new PawUserDetails(user);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, user.getPassword(), principal.getAuthorities())
+        );
     }
 
     private static User user(UUID id, Role role) {

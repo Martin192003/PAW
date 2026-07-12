@@ -13,6 +13,7 @@ public class ClubDto {
     private String musicGenre;
     private String priceRange;
     private boolean isBar;
+    private String cbu;
     private Float rating;
     private Integer quantityRatings;
     private List<LinkDto> links;
@@ -43,7 +44,12 @@ public class ClubDto {
     public void setPriceRange(String priceRange) { this.priceRange = priceRange; }
 
     public boolean isBar() { return isBar; }
+    public boolean getIsBar() { return isBar; }
     public void setBar(boolean bar) { isBar = bar; }
+    public void setIsBar(boolean bar) { isBar = bar; }
+
+    public String getCbu() { return cbu; }
+    public void setCbu(String cbu) { this.cbu = cbu; }
 
     public Float getRating() { return rating; }
     public void setRating(Float rating) { this.rating = rating; }

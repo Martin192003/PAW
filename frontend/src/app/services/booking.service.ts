@@ -12,8 +12,8 @@ export class BookingService {
   constructor(private readonly http: HttpClient) {}
 
   listManagedClubBookings(filters: BookingFilters, page: number, size: number): Observable<BookingPage> {
-    return this.http.get<BookingPage>(`${this.apiUrl}/managed-club-bookings`, {
-      params: this.params(filters, page, size)
+    return this.http.get<BookingPage>(`${this.apiUrl}/bookings`, {
+      params: this.params(filters, page, size).set('managed', 'true')
     });
   }
 
@@ -55,7 +55,7 @@ export class BookingService {
    */
   getManagedClubBooking(bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
-      resolveApiUrl(`${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
+      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}?managed=true`, this.apiUrl)
     );
   }
 
@@ -65,7 +65,7 @@ export class BookingService {
         links,
         ['confirm', 'managed-update'],
         `managed booking ${bookingId} confirmation`,
-        `${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`
+        `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}?managed=true`
       ),
       { status: 'CONFIRMADA' }
     );
@@ -77,7 +77,7 @@ export class BookingService {
         links,
         ['managed-update'],
         `managed booking ${bookingId} cancellation`,
-        `${this.apiUrl}/managed-club-bookings/${encodeURIComponent(bookingId)}`
+        `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}?managed=true`
       ),
       { status: 'CANCELADA' }
     );

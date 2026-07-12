@@ -2,9 +2,7 @@ package ar.edu.itba.paw.webapp.rest.tables;
 
 import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.TableCreateRequestDto;
 import ar.edu.itba.paw.model.dto.TableDto;
-import ar.edu.itba.paw.model.dto.TableUpdateRequestDto;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.ClubService;
@@ -97,7 +95,7 @@ public class TablesRestController {
 
     @POST
     public Response createTable(@PathParam("clubId") String clubId,
-                                TableCreateRequestDto body,
+                                TableDto body,
                                 @Context SecurityContext securityContext) {
         UUID clubUuid;
         try {
@@ -168,7 +166,7 @@ public class TablesRestController {
     @Path("/{tableId}")
     public Response updateTable(@PathParam("clubId") String clubId,
                                 @PathParam("tableId") String tableId,
-                                TableUpdateRequestDto body,
+                                TableDto body,
                                 @Context SecurityContext securityContext) {
         UUID clubUuid, tableUuid;
         try {

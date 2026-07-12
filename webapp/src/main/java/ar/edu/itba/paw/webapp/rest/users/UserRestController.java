@@ -1,9 +1,7 @@
 package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.dto.*;
-import ar.edu.itba.paw.service.PasswordResetJobService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
@@ -47,9 +45,6 @@ public class UserRestController {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private PasswordResetJobService passwordResetJobService;
 
     @Autowired
     private ReviewService reviewService;
@@ -97,7 +92,7 @@ public class UserRestController {
     }
 
     @POST
-    public Response createUser(UserCreateRequestDto body) {
+    public Response createUser(UserDto body) {
         if (body == null ||
                 isBlank(body.getUsername()) ||
                 isBlank(body.getName()) ||
@@ -154,192 +149,12 @@ public class UserRestController {
         }
     }
 
-    // Verificacion por enlace desde el mail: /api/users/verifications?token=...
-    @GET
-    @Path("/verifications")
-    public Response verifyFromLink(@QueryParam("token") String token) {
-        if (isBlank(token)) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Token de verificacion requerido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        return buildVerificationLoginResponse(token.trim());
-    }
-
-    // Verificacion manual por codigo/token ingresado en frontend
-    @POST
-    @Path("/verifications")
-    public Response verifyFromCode(UserVerificationRequestDto body) {
-        if (body == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Body requerido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        String tokenOrCode = !isBlank(body.getToken()) ? body.getToken() : body.getCode();
-        if (isBlank(tokenOrCode)) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Debes enviar token o codigo"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        return buildVerificationLoginResponse(tokenOrCode.trim());
-    }
-
-    @POST
-    @Path("/verification-requests")
-    public Response resendVerification(ResendVerificationRequestDto body) {
-        if (body == null || isBlank(body.getUsernameOrEmail())) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("usernameOrEmail requerido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        boolean sent = userService.resendVerificationToken(body.getUsernameOrEmail().trim());
-        if (!sent) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("No se pudo reenviar el mail de verificacion"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        return Response.ok(message("Te enviamos un nuevo mail de verificacion")).build();
-    }
-
-    @GET
-    @Path("/{userId}/profile")
-    public Response getUserProfile(@PathParam("userId") String userId,
-                                   @Context SecurityContext securityContext) {
-        UUID id;
-        try {
-            id = UUID.fromString(userId);
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId invalido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        Optional<User> maybe = userService.findById(id);
-        if (maybe.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(message("Usuario no encontrado"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        User authUser = authenticatedUserResolver.resolve(securityContext);
-        if (authUser == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(message("Unauthorized"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        boolean ownsProfile = authUser.getId().equals(id);
-        boolean isAdmin = authUser.getRole() == Role.ADMIN;
-        if (!ownsProfile && !isAdmin) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(message("Forbidden"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        UserDto dto = UserMapper.toDto(maybe.get(), uriInfo);
-        return Response.ok(dto).build();
-    }
-
     @PUT
     @Path("/{userId}")
     public Response updateUser(@PathParam("userId") String userId,
-                               UserCreateRequestDto body,
+                               UserDto body,
                                @Context SecurityContext securityContext) {
 
-        UUID id;
-        try {
-            id = UUID.fromString(userId);
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId invalido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        Optional<User> maybe = userService.findById(id);
-        if (maybe.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(message("Usuario no encontrado"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        if (body == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Body requerido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        User authUser = authenticatedUserResolver.resolve(securityContext);
-        if (authUser == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(message("Unauthorized"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        if (!authUser.getId().equals(id)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(message("Forbidden"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        User existing = maybe.get();
-
-        if (!isBlank(body.getUsername())) existing.setUserName(body.getUsername());
-        if (!isBlank(body.getName())) existing.setName(body.getName());
-        if (!isBlank(body.getSurname())) existing.setSurname(body.getSurname());
-        if (!isBlank(body.getEmail())) existing.setEmail(body.getEmail());
-        if (!isBlank(body.getCellphone())) existing.setCellphone(body.getCellphone());
-        if (!isBlank(body.getLocale())) existing.setLocale(body.getLocale());
-
-        try {
-            User updated = userService.update(existing);
-            UserUpdateResponseDto response = new UserUpdateResponseDto(
-                    UserMapper.toDto(updated, uriInfo),
-                    jwtUtil.generateToken(updated.getId().toString()),
-                    "Bearer",
-                    jwtUtil.getExpirationSeconds()
-            );
-            return Response.ok(response)
-                    .header("Cache-Control", "no-store")
-                    .header("Pragma", "no-cache")
-                    .build();
-        } catch (DuplicateEntityException e) {
-            return Response.status(Response.Status.CONFLICT)
-                    .entity(message("User with same username or email already exists"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        } catch (Exception e) {
-            LOGGER.error("Error updating user " + userId, e);
-            return Response.serverError()
-                    .entity(message("Internal server error"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-    }
-
-    @PUT
-    @Path("/{userId}/profile")
-    public Response updateUserProfile(@PathParam("userId") String userId,
-                                      UserCreateRequestDto body,
-                                      @Context SecurityContext securityContext) {
         UUID id;
         try {
             id = UUID.fromString(userId);
@@ -388,7 +203,6 @@ public class UserRestController {
         if (!isBlank(body.getEmail())) existing.setEmail(body.getEmail().trim());
         if (!isBlank(body.getCellphone())) existing.setCellphone(body.getCellphone().trim());
         if (!isBlank(body.getLocale())) existing.setLocale(body.getLocale().trim());
-        //ignoro la contrasena
 
         try {
             User updated = userService.update(existing);
@@ -408,7 +222,7 @@ public class UserRestController {
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (Exception e) {
-            LOGGER.error("Error updating user profile " + userId, e);
+            LOGGER.error("Error updating user " + userId, e);
             return Response.serverError()
                     .entity(message("Internal server error"))
                     .type(MediaType.APPLICATION_JSON)
@@ -459,109 +273,6 @@ public class UserRestController {
         addPaginationLinks(response, page, size, total);
         return response.build();
     }
-
-    @POST
-    @Path("/password-reset-requests")
-    public Response requestPasswordReset(PasswordResetRequestDto body) {
-        if (body == null || isBlank(body.getEmail())) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Email requerido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        passwordResetJobService.requestPasswordReset(body.getEmail().trim());
-        return Response.noContent().build();
-    }
-
-    @POST
-    @Path("/password-resets")
-    public Response resetPassword(@QueryParam("token") String token, PasswordResetDto body) {
-        if (isBlank(token)) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Token requerido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        if (body == null || isBlank(body.getNewPassword()) || isBlank(body.getConfirmationPassword())) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Contrasena requerida"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        if (!body.getNewPassword().equals(body.getConfirmationPassword())) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Las contrasenas no coinciden"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        Optional<User> updated = userService.resetPassword(token.trim(), body.getNewPassword());
-        if (updated.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(message("Token invalido o vencido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        User user = updated.get();
-        AuthTokenDto response = new AuthTokenDto(
-                jwtUtil.generateToken(user.getId().toString()),
-                "Bearer",
-                jwtUtil.getExpirationSeconds(),
-                new AuthTokenUserDto(uriInfo.getBaseUriBuilder()
-                        .path("users/{id}")
-                        .resolveTemplate("id", user.getId().toString())
-                        .build()
-                        .toString())
-        );
-
-        return Response.ok(response)
-                .header("Cache-Control", "no-store")
-                .header("Pragma", "no-cache")
-                .build();
-    }
-
-    private Response buildVerificationLoginResponse(String tokenOrCode) {
-        User user = userService.findByVerificationToken(tokenOrCode);
-        if (user == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Token o codigo de verificacion invalido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        if (!user.isVerified()) {
-            boolean verified = userService.verifyUser(tokenOrCode);
-            if (!verified) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(message("Token o codigo de verificacion invalido"))
-                        .type(MediaType.APPLICATION_JSON)
-                        .build();
-            }
-        }
-
-        // If the account was already verified but the token still resolves to a user,
-        // keep the endpoint idempotent: a valid verification token always starts a session.
-        AuthTokenDto response = new AuthTokenDto(
-                jwtUtil.generateToken(user.getId().toString()),
-                "Bearer",
-                jwtUtil.getExpirationSeconds(),
-                new AuthTokenUserDto(uriInfo.getBaseUriBuilder()
-                        .path("users/{id}")
-                        .resolveTemplate("id", user.getId().toString())
-                        .build()
-                        .toString())
-        );
-
-        return Response.ok(response)
-                .header("Cache-Control", "no-store")
-                .header("Pragma", "no-cache")
-                .build();
-    }
-
     /**
      * Resuelve el User de dominio a partir del Authentication de Spring Security.
      * Soporta PawUserDetails (tiene el UUID) y fallback por username/email.
@@ -605,29 +316,6 @@ public class UserRestController {
                 .replaceQueryParam("size", size)
                 .build() + ">; rel=\"" + rel + "\"";
     }
-
-    private User resolveUserFromPrincipal(String principal) {
-        if (isBlank(principal)) {
-            return null;
-        }
-
-        User user = userService.findByEmail(principal);
-        if (user != null) {
-            return user;
-        }
-
-        user = userService.findByUserName(principal);
-        if (user != null) {
-            return user;
-        }
-
-        try {
-            return userService.findById(UUID.fromString(principal)).orElse(null);
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
-    }
-
     private static String message(String msg) {
         try {
             return new com.fasterxml.jackson.databind.ObjectMapper()

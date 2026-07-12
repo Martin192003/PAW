@@ -201,8 +201,7 @@ export class ClubsPage implements OnInit, OnDestroy {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams,
-      queryParamsHandling: '',
-      replaceUrl: true
+      queryParamsHandling: ''
     });
   }
 

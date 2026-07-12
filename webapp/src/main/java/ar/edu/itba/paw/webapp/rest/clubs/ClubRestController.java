@@ -219,7 +219,7 @@ public class ClubRestController {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createClub(ClubCreateRequestDto body,
+    public Response createClub(ClubDto body,
                                @Context SecurityContext securityContext) {
 
         if (body == null ||
@@ -266,7 +266,7 @@ public class ClubRestController {
     @PUT
     @Path("/{clubId}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateClub(@PathParam("clubId") String clubId, ClubCreateRequestDto body, @Context SecurityContext securityContext) {
+    public Response updateClub(@PathParam("clubId") String clubId, ClubDto body, @Context SecurityContext securityContext) {
         UUID id;
         try {
             id = UUID.fromString(clubId);

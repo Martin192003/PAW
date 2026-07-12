@@ -75,11 +75,13 @@ public class BookingDtoAssembler {
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "DELETE"));
         links.add(LinkBuilder.link("confirm", uriInfo.getBaseUriBuilder()
-                .path("managed-club-bookings/{bookingId}")
+                .path("bookings/{bookingId}")
+                .queryParam("managed", "true")
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "PUT"));
         links.add(LinkBuilder.link("managed-update", uriInfo.getBaseUriBuilder()
-                .path("managed-club-bookings/{bookingId}")
+                .path("bookings/{bookingId}")
+                .queryParam("managed", "true")
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "PUT"));
         dto.setLinks(links);

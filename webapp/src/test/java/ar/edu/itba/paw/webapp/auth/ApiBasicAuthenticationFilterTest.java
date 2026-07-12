@@ -43,7 +43,7 @@ public class ApiBasicAuthenticationFilterTest {
 
     @Test
     public void basicCredentialsAreIgnoredOutsideTokenCreation() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users/" + UUID.randomUUID() + "/profile");
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users/" + UUID.randomUUID());
         request.addHeader("Authorization", basic("demo@example.com", "secret"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 

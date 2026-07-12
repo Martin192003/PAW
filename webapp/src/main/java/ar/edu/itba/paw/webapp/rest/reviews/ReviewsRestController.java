@@ -2,7 +2,6 @@ package ar.edu.itba.paw.webapp.rest.reviews;
 
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.ReviewCreateRequestDto;
 import ar.edu.itba.paw.model.dto.ReviewDto;
 import ar.edu.itba.paw.service.ReviewService;
 import ar.edu.itba.paw.service.UserService;
@@ -63,7 +62,7 @@ public class ReviewsRestController {
     @POST
     @Path("/{clubId}/reviews")
     public Response create(@PathParam("clubId") String clubIdStr,
-                           ReviewCreateRequestDto body,
+                           ReviewDto body,
                            @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
         if (clubId == null) return badRequest("clubId inválido");
@@ -119,7 +118,7 @@ public class ReviewsRestController {
     @PUT
     @Path("/{clubId}/reviews")
     public Response update(@PathParam("clubId") String clubIdStr,
-                           ReviewCreateRequestDto body,
+                           ReviewDto body,
                            @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
         if (clubId == null) return badRequest("clubId inválido");

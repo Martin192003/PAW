@@ -2,9 +2,7 @@ package ar.edu.itba.paw.webapp.rest.products;
 
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.ProductCreateRequestDto;
 import ar.edu.itba.paw.model.dto.ProductDto;
-import ar.edu.itba.paw.model.dto.ProductUpdateRequestDto;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.ProductService;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
@@ -69,7 +67,7 @@ public class ProductsRestController {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createProduct(@PathParam("clubId") String clubId,
-                                  ProductCreateRequestDto body,
+                                  ProductDto body,
                                   @Context SecurityContext securityContext) {
         UUID clubUuid;
         try {
@@ -149,7 +147,7 @@ public class ProductsRestController {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateProduct(@PathParam("clubId") String clubId,
                                   @PathParam("productId") String productId,
-                                  ProductUpdateRequestDto body,
+                                  ProductDto body,
                                   @Context SecurityContext securityContext) {
         UUID clubUuid, productUuid;
         try {
