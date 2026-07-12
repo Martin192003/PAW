@@ -61,6 +61,7 @@ export class VerifyMailPage implements OnDestroy {
 
       this.email = emailParam || usernameOrEmailParam;
       this.verifyingFromLink = !!token;
+      this.tokenChecking = !!token;
 
       if (this.email) {
         this.resendForm.patchValue({ usernameOrEmail: this.email });
@@ -126,7 +127,7 @@ export class VerifyMailPage implements OnDestroy {
   }
 
   get verifiedStateVisible(): boolean {
-    return this.verificationCompleted || (this.verifyingFromLink && this.authState.isLoggedIn());
+    return this.verificationCompleted;
   }
 
   get linkCheckInProgress(): boolean {

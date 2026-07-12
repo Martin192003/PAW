@@ -14,13 +14,16 @@ import { I18nService } from './services/i18n.service';
 })
 export class App {
   title = signal('Clubs App');
-  showTopbar = true;
+  showTopbar = false;
 
   constructor(
     private readonly router: Router,
     private readonly i18n: I18nService
   ) {
-    this.updateTopbarVisibility(this.router.url);
+    const initialPath = this.normalizePath(this.router.url);
+    if (initialPath !== '/') {
+      this.updateTopbarVisibility(initialPath);
+    }
 
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
@@ -30,12 +33,16 @@ export class App {
   }
 
   private updateTopbarVisibility(url: string): void {
-    const path = (url || '').split('?')[0];
+    const path = this.normalizePath(url);
     this.showTopbar = ![
       '/login',
       '/register',
       '/verify-mail',
       '/verify-account'
     ].includes(path);
+  }
+
+  private normalizePath(url: string): string {
+    return (url || '').split('?')[0];
   }
 }
