@@ -128,7 +128,8 @@
     "success": {
       "title": "Cuenta verificada",
       "description": "Tu cuenta fue autenticada correctamente. Ya podés usar BlingBling.",
-      "continue": "Ir a inicio"
+      "continue": "Ir a inicio",
+      "redirecting": "Te redirigimos al inicio en {{seconds}}s..."
     },
     "errors": {
       "verifyLink": "No se pudo verificar el enlace.",

@@ -57,28 +57,51 @@ describe('AddClubComponent', () => {
     });
   }
 
-  it('description is required', () => {
+  it('description is required (shown only after a submit attempt, like register.page)', () => {
     fillValidForm();
     const description = component.clubForm.get('description');
-
     description?.setValue('');
-    description?.markAsTouched();
+
+    // Antes de intentar enviar, no se muestra (mismo comportamiento que registro).
+    expect(component.showError('description')).toBe(false);
+
+    component.onSubmit();
 
     expect(description?.hasError('required')).toBe(true);
     expect(component.showError('description')).toBe(true);
     expect(component.getError('description')).toBe('clubNew.errors.required');
   });
 
-  it('cbu is required', () => {
+  it('cbu is required (shown only after a submit attempt, like register.page)', () => {
     fillValidForm();
     const cbu = component.clubForm.get('cbu');
-
     cbu?.setValue('');
-    cbu?.markAsTouched();
+
+    expect(component.showError('cbu')).toBe(false);
+
+    component.onSubmit();
 
     expect(cbu?.hasError('required')).toBe(true);
     expect(component.showError('cbu')).toBe(true);
     expect(component.getError('cbu')).toBe('clubNew.errors.required');
+  });
+
+  it('error stays frozen until the next submit attempt, same as register.page', () => {
+    clubService.createClub.mockReturnValue(of({}));
+    fillValidForm();
+    component.clubForm.get('name')?.setValue('');
+
+    component.onSubmit();
+    expect(component.showError('name')).toBe(true);
+
+    // Se corrige el campo pero todavia no se reintenta el submit: el error
+    // sigue visible (congelado) hasta el proximo intento, igual que en
+    // register.page.
+    component.clubForm.get('name')?.setValue('Fixed name');
+    expect(component.showError('name')).toBe(true);
+
+    component.onSubmit();
+    expect(component.showError('name')).toBe(false);
   });
 
   it('cbu max length is enforced', () => {

@@ -42,6 +42,18 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
   submitting = false;
   errorMessage = '';
 
+  // Igual que en register.page.ts: los errores de campo no se muestran en
+  // vivo mientras el usuario completa el form, solo despues de un intento de
+  // submit. El estado se "congela" en cada intento para que no aparezcan ni
+  // desaparezcan solos mientras se sigue escribiendo, hasta el proximo submit.
+  submittedAttempted = false;
+  frozenErrors: { [key: string]: boolean } = {};
+  frozenErrorMessages: { [key: string]: string } = {};
+
+  private static readonly FIELDS = [
+    'name', 'location', 'priceRange', 'description', 'musicGenre', 'zone', 'isBar', 'cbu'
+  ];
+
   // ----------------------------------------------------------------
   // Tooltip precio
   // ----------------------------------------------------------------
@@ -112,17 +124,21 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
   // Helpers de validación (usados en el template)
   // ----------------------------------------------------------------
   showError(field: string): boolean {
-    const ctrl = this.clubForm.get(field);
-    return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
+    if (!this.submittedAttempted) return false;
+
+    if (this.frozenErrors[field] !== undefined) {
+      return this.frozenErrors[field];
+    }
+
+    return this.hasCurrentError(field);
   }
 
   getError(field: string): string {
-    const ctrl = this.clubForm.get(field);
-    if (!ctrl || !ctrl.errors) return '';
-    if (ctrl.errors['required'])   return this.i18n.instant('clubNew.errors.required');
-    if (ctrl.errors['maxlength'])  return this.i18n.instant('clubNew.errors.maxlength', { max: ctrl.errors['maxlength'].requiredLength });
-    if (ctrl.errors['serverError']) return ctrl.errors['serverError'];
-    return this.i18n.instant('clubNew.errors.invalid');
+    if (this.frozenErrorMessages[field]) {
+      return this.frozenErrorMessages[field];
+    }
+
+    return this.currentErrorMessage(field);
   }
 
   fieldClass(field: string): object {
@@ -130,6 +146,20 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
       'border-[#dc3545]': this.showError(field),
       'border-[#ccc]':    !this.showError(field),
     };
+  }
+
+  private hasCurrentError(field: string): boolean {
+    const ctrl = this.clubForm.get(field);
+    return !!(ctrl && ctrl.invalid);
+  }
+
+  private currentErrorMessage(field: string): string {
+    const ctrl = this.clubForm.get(field);
+    if (!ctrl || !ctrl.errors) return '';
+    if (ctrl.errors['required'])    return this.i18n.instant('clubNew.errors.required');
+    if (ctrl.errors['maxlength'])   return this.i18n.instant('clubNew.errors.maxlength', { max: ctrl.errors['maxlength'].requiredLength });
+    if (ctrl.errors['serverError']) return ctrl.errors['serverError'];
+    return this.i18n.instant('clubNew.errors.invalid');
   }
 
   // ----------------------------------------------------------------
@@ -230,7 +260,26 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
   // Submit
   // ----------------------------------------------------------------
   onSubmit(): void {
+    this.submittedAttempted = true;
     this.clubForm.markAllAsTouched();
+
+    // Descarta cualquier serverError de un intento anterior antes de
+    // recalcular: si el campo ya es valido segun sus validadores propios
+    // (required/maxlength), updateValueAndValidity limpia el error manual.
+    AddClubComponent.FIELDS.forEach(field => {
+      this.clubForm.get(field)?.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    });
+
+    this.frozenErrors = {};
+    this.frozenErrorMessages = {};
+    AddClubComponent.FIELDS.forEach(field => {
+      const hasError = this.hasCurrentError(field);
+      this.frozenErrors[field] = hasError;
+      if (hasError) {
+        this.frozenErrorMessages[field] = this.currentErrorMessage(field);
+      }
+    });
+
     if (this.clubForm.invalid || this.submitting) return;
 
     this.submitting    = true;
@@ -291,13 +340,18 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // Aplica errores de validación que vienen del servidor (campo → mensaje)
+  // Aplica errores de validación que vienen del servidor (campo → mensaje).
+  // Estos llegan despues del submit (async), asi que hay que actualizar
+  // tambien el estado "congelado" para que se muestren de inmediato, sin
+  // esperar a un proximo intento de submit.
   private applyServerErrors(fieldErrors: Record<string, string>): void {
     for (const [field, message] of Object.entries(fieldErrors)) {
       const ctrl = this.clubForm.get(field);
       if (ctrl) {
         ctrl.setErrors({ serverError: message });
         ctrl.markAsTouched();
+        this.frozenErrors[field] = true;
+        this.frozenErrorMessages[field] = message;
       } else {
         this.errorMessage = message;
       }

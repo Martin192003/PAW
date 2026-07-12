@@ -26,13 +26,9 @@
       </div>
 
       <div *ngIf="verifiedStateVisible" class="mb-1">
-        <button
-          type="button"
-          (click)="continueAfterVerification()"
-          class="inline-block cursor-pointer rounded border border-[#9c27b0] bg-[#9c27b0] px-6 py-3 font-semibold text-white shadow-[0_2px_10px_rgba(156,39,176,0.4)] transition-colors hover:bg-[#540761]"
-        >
-          {{ 'verifyMail.success.continue' | translate }}
-        </button>
+        <p class="text-sm text-[#d7b6ff]">
+          {{ 'verifyMail.success.redirecting' | translate:{ seconds: redirectCountdown } }}
+        </p>
       </div>
 
       <div *ngIf="(!verifyingFromLink || tokenErrorMessage) && !verifiedStateVisible" class="mb-6 rounded border border-[#4f4f4f] bg-[#2f2f2f] p-4 text-center">

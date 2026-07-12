@@ -111,6 +111,10 @@ export class UserService {
       .get<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/auth/verifications`, {
         params,
         context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+        // Esta llamada tiene efecto (verifica la cuenta y hace login automatico),
+        // asi que nunca debe resolverse desde la cache de transferencia SSR->cliente:
+        // siempre tiene que ser un pedido real hecho por el browser.
+        transferCache: false,
       })
       .pipe(
         timeout(15000),

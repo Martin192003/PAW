@@ -128,7 +128,8 @@
     "success": {
       "title": "Account verified",
       "description": "Your account was authenticated successfully. You can now use BlingBling.",
-      "continue": "Go home"
+      "continue": "Go home",
+      "redirecting": "Redirecting you home in {{seconds}}s..."
     },
     "errors": {
       "verifyLink": "Could not verify the link.",

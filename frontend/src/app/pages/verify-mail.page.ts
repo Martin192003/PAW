@@ -1,5 +1,5 @@
-import { Component, OnDestroy } from '@angular/core';
-import { NgClass, NgIf } from '@angular/common';
+import { ChangeDetectorRef, Component, Inject, OnDestroy, PLATFORM_ID } from '@angular/core';
+import { NgClass, NgIf, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -30,6 +30,11 @@ export class VerifyMailPage implements OnDestroy {
   verifyingFromLink = false;
   verificationCompleted = false;
 
+  // Cuenta atrás antes de redirigir automáticamente a /clubs una vez
+  // verificada la cuenta (reemplaza al botón manual: ver handleVerificationSuccess).
+  redirectCountdown = 5;
+  private redirectTimerId: ReturnType<typeof setInterval> | null = null;
+
   private autoResendTriggered = false;
 
   readonly resendForm: FormGroup;
@@ -41,6 +46,8 @@ export class VerifyMailPage implements OnDestroy {
     private readonly authState: AuthStateService,
     private readonly i18n: I18nService,
     private readonly userService: UserService,
+    private readonly cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private readonly platformId: object,
   ) {
     this.resendForm = this.fb.group({
       usernameOrEmail: ['', [Validators.required]],
@@ -59,6 +66,20 @@ export class VerifyMailPage implements OnDestroy {
         this.resendForm.patchValue({ usernameOrEmail: this.email });
       }
 
+      // La verificación (y el auto-resend) son acciones con efecto: si corren
+      // durante el render en el servidor (SSR), el HTML ya sale servido con
+      // el resultado, pero al hidratar en el browser el componente se vuelve
+      // a construir y dispara la MISMA verificación de nuevo desde el cliente.
+      // Esa segunda corrida (ahora sí en el browser) es la que termina
+      // pisando el estado renderizado por el servidor, y el botón de "Ir a
+      // inicio" solo terminaba viéndose bien después de un refresh manual.
+      // Al limitar esto a isPlatformBrowser, la verificación corre una sola
+      // vez, siempre en el cliente, y la UI se actualiza de forma normal sin
+      // necesitar un refresh.
+      if (!isPlatformBrowser(this.platformId)) {
+        return;
+      }
+
       if (token) {
         this.verifyFromToken(token);
       }
@@ -73,6 +94,7 @@ export class VerifyMailPage implements OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.clearRedirectTimer();
   }
 
   resendVerification(): void {
@@ -88,10 +110,12 @@ export class VerifyMailPage implements OnDestroy {
       next: (response) => {
         this.resendSubmitting = false;
         this.resendSuccessMessage = response.message || this.i18n.instant('verifyMail.messages.resendSuccess');
+        this.cdr.detectChanges();
       },
       error: (error: HttpErrorResponse) => {
         this.resendSubmitting = false;
         this.resendErrorMessage = this.resolveErrorMessage(error, this.i18n.instant('verifyMail.errors.resend'));
+        this.cdr.detectChanges();
       },
     });
   }
@@ -118,10 +142,16 @@ export class VerifyMailPage implements OnDestroy {
       next: (response) => {
         this.tokenChecking = false;
         this.handleVerificationSuccess(response);
+        // Por alguna razon esta respuesta no siempre dispara un ciclo de
+        // change detection solo (viene de un flujo SSR->hidratacion medio
+        // particular), asi que forzamos el refresco de la vista a mano para
+        // no depender de que zone.js lo detecte por su cuenta.
+        this.cdr.detectChanges();
       },
       error: (error: HttpErrorResponse) => {
         this.tokenChecking = false;
         this.tokenErrorMessage = this.resolveErrorMessage(error, this.i18n.instant('verifyMail.errors.verifyLink'));
+        this.cdr.detectChanges();
       },
     });
   }
@@ -135,10 +165,12 @@ export class VerifyMailPage implements OnDestroy {
       next: (response) => {
         this.resendSubmitting = false;
         this.resendSuccessMessage = response.message || 'Te enviamos un nuevo mail de verificacion.';
+        this.cdr.detectChanges();
       },
       error: (error: HttpErrorResponse) => {
         this.resendSubmitting = false;
         this.resendErrorMessage = this.resolveErrorMessage(error, this.i18n.instant('verifyMail.errors.resend'));
+        this.cdr.detectChanges();
       },
     });
   }
@@ -150,6 +182,34 @@ export class VerifyMailPage implements OnDestroy {
 
     this.tokenSuccessMessage = this.i18n.instant('verifyMail.messages.verifiedSuccess');
     this.verificationCompleted = true;
+    this.startRedirectCountdown();
+  }
+
+  private startRedirectCountdown(): void {
+    // Solo tiene sentido en el browser: en SSR no hay a donde "volver" ni
+    // tiempo real que contar, y no queremos temporizadores corriendo en el
+    // servidor (ver el guard de isPlatformBrowser en el constructor).
+    if (!isPlatformBrowser(this.platformId) || this.redirectTimerId) {
+      return;
+    }
+
+    this.redirectCountdown = 5;
+    this.redirectTimerId = setInterval(() => {
+      this.redirectCountdown -= 1;
+      if (this.redirectCountdown <= 0) {
+        this.clearRedirectTimer();
+        this.continueAfterVerification();
+        return;
+      }
+      this.cdr.detectChanges();
+    }, 1000);
+  }
+
+  private clearRedirectTimer(): void {
+    if (this.redirectTimerId !== null) {
+      clearInterval(this.redirectTimerId);
+      this.redirectTimerId = null;
+    }
   }
 
   continueAfterVerification(): void {

@@ -51,7 +51,7 @@
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
           [ngClass]="fieldClass('name')"
         />
-        <span *ngIf="showError('name')" class="text-[#ff0000] text-xs mt-1">
+        <span *ngIf="showError('name')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
           {{ getError('name') }}
         </span>
       </div>
@@ -68,7 +68,7 @@
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
           [ngClass]="fieldClass('location')"
         />
-        <span *ngIf="showError('location')" class="text-[#ff0000] text-xs mt-1">
+        <span *ngIf="showError('location')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
           {{ getError('location') }}
         </span>
       </div>
@@ -133,7 +133,7 @@
             </span>
           </div>
         </div>
-        <span *ngIf="showError('priceRange')" class="text-[#ff0000] text-xs mt-1">
+        <span *ngIf="showError('priceRange')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
           {{ getError('priceRange') }}
         </span>
       </div>
@@ -148,7 +148,7 @@
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
           [ngClass]="fieldClass('description')"
         ></textarea>
-        <span *ngIf="showError('description')" class="text-[#ff0000] text-xs mt-1">
+        <span *ngIf="showError('description')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
           {{ getError('description') }}
         </span>
       </div>
@@ -175,7 +175,7 @@
           <option value="AFROBEAT">{{ 'clubNew.genres.afrobeat' | translate }}</option>
           <option value="OTRO">{{ 'clubNew.genres.other' | translate }}</option>
         </select>
-        <span *ngIf="showError('musicGenre')" class="text-[#ff0000] text-xs mt-1">
+        <span *ngIf="showError('musicGenre')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
           {{ getError('musicGenre') }}
         </span>
       </div>
@@ -195,7 +195,7 @@
           <option value="ZONA_SUR">{{ 'clubNew.zones.sur' | translate }}</option>
           <option value="ZONA_CABA">{{ 'clubNew.zones.caba' | translate }}</option>
         </select>
-        <span *ngIf="showError('zone')" class="text-[#ff0000] text-xs mt-1">
+        <span *ngIf="showError('zone')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
           {{ getError('zone') }}
         </span>
       </div>
@@ -213,7 +213,7 @@
           <option value="true">{{ 'clubNew.venueTypes.bar' | translate }}</option>
           <option value="false">{{ 'clubNew.venueTypes.nightclub' | translate }}</option>
         </select>
-        <span *ngIf="showError('isBar')" class="text-[#ff0000] text-xs mt-1">
+        <span *ngIf="showError('isBar')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
           {{ getError('isBar') }}
         </span>
       </div>
@@ -229,7 +229,7 @@
                  focus:border-[#2196f3] focus:outline-none focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
           [ngClass]="fieldClass('cbu')"
         />
-        <span *ngIf="showError('cbu')" class="text-[#ff0000] text-xs mt-1">
+        <span *ngIf="showError('cbu')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
           {{ getError('cbu') }}
         </span>
       </div>
@@ -244,7 +244,7 @@
                  box-border file:mr-4 file:py-1 file:px-3 file:rounded file:border-0
                  file:bg-[#9c27b0] file:text-white file:cursor-pointer"
         />
-        <span *ngIf="showError('image')" class="text-[#ff0000] text-xs mt-1">
+        <span *ngIf="showError('image')" class="text-[#d32f2f] text-xs mt-1 block font-semibold">
           {{ getError('image') }}
         </span>
       </div>
@@ -262,7 +262,7 @@
         </a>
         <button
           type="submit"
-          [disabled]="clubForm.invalid || submitting"
+          [disabled]="submitting"
           class="inline-block px-4 py-2 text-white bg-[#9c27b0] border border-[#9c27b0]
                  rounded text-base cursor-pointer
                  shadow-[0_2px_10px_rgba(156,39,176,0.4)]
