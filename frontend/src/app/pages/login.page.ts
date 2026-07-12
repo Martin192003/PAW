@@ -73,7 +73,12 @@ export class LoginPage implements OnInit, OnDestroy {
   onSubmit(): void {
     this.submittedAttempted = true;
     this.loginForm.markAllAsTouched();
-    if (this.loginForm.invalid || this.submitting) return;
+    
+    if (this.loginForm.invalid || this.submitting) {
+      // Clear server error when form has validation errors
+      this.errorMessage = '';
+      return;
+    }
 
     this.submitting = true;
     this.invalidCredentials = false;
