@@ -31,9 +31,6 @@
                    focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
             [ngClass]="showError('usernameOrEmail') ? 'border-[#dc3545]' : 'border-[#ccc]'"
           />
-          <div *ngIf="showError('usernameOrEmail')" class="mt-2 text-sm text-[#ffcdd2]">
-            {{ loginForm.get('usernameOrEmail')?.hasError('required') ? ('login.errors.required' | translate) : '' }}
-          </div>
         </div>
 
         <div class="form-group mb-6">
@@ -48,9 +45,10 @@
                    focus:shadow-[0_0_0_0.2rem_rgba(33,150,243,0.25)]"
             [ngClass]="showError('password') ? 'border-[#dc3545]' : 'border-[#ccc]'"
           />
-          <div *ngIf="showError('password')" class="mt-2 text-sm text-[#ffcdd2]">
-            {{ loginForm.get('password')?.hasError('required') ? ('login.errors.required' | translate) : '' }}
-          </div>
+        </div>
+
+        <div *ngIf="submittedAttempted && loginForm.invalid" class="error mb-3 px-4 py-3 rounded bg-[#d32f2f] border border-[#b71c1c] text-white text-sm font-semibold" role="alert">
+          {{ 'login.errors.required' | translate }}
         </div>
 
         <div class="mb-7">
