@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -12,6 +12,7 @@ import {
   UserVerificationRequest,
   User,
 } from '../models/user.model';
+import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
 
 type UserUpdatePayload = {
   username: string;
@@ -71,6 +72,8 @@ export class UserService {
     return this.http.post<AuthTokenResponse>(`${this.apiUrl}/auth/tokens`, {
       email: payload.usernameOrEmail.trim(),
       password: payload.password,
+    }, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
       switchMap((tokenResponse) => {
         const token = tokenResponse.accessToken;
