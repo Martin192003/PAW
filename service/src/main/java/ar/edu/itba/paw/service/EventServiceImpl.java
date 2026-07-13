@@ -34,6 +34,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public Event create(UUID clubId, String eventName, String description, LocalDate date) {
         validateName(eventName);
+        validateDescription(description);
         validateDate(date);
 
         return eventDao.create(clubId, eventName.trim(), trimOrNull(description), date);
@@ -44,6 +45,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public Event update(UUID clubId, UUID eventId, String eventName, String description, LocalDate date, Photo image) {
         validateName(eventName);
+        validateDescription(description);
         validateDate(date);
 
         final Event current = getForClub(clubId, eventId);
@@ -133,6 +135,16 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("eventName is required");
         if (name.trim().length() > 120)
             throw new ValidationException("eventName too long (max 120)");
+    }
+
+    // "description" es TEXT en la base (sin limite de longitud a nivel de
+    // columna); este limite espeja el maxLength del frontend (club-handler.page.ts).
+    private static final int DESCRIPTION_MAX_LENGTH = 500;
+
+    private void validateDescription(String description) {
+        if (description != null && description.length() > DESCRIPTION_MAX_LENGTH) {
+            throw new ValidationException("description too long (max " + DESCRIPTION_MAX_LENGTH + ")");
+        }
     }
 
     private void validateDate(LocalDate date) {

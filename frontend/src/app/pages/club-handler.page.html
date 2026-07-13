@@ -139,7 +139,8 @@
 
             <label class="md:col-span-2 grid gap-1">
               <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.description' | translate }}</span>
-              <textarea name="clubDescription" [(ngModel)]="clubForm.description" class="field-input min-h-[88px]"></textarea>
+              <textarea name="clubDescription" [(ngModel)]="clubForm.description" class="field-input min-h-[88px]" [class.has-error]="showClubError('description')"></textarea>
+              <span *ngIf="showClubError('description')" class="field-error-text">{{ getClubError('description') }}</span>
             </label>
 
             <div class="md:col-span-2 flex gap-2">
@@ -256,7 +257,10 @@
                   <input name="productName" [(ngModel)]="productForm.productName" class="field-input" [class.has-error]="showProductError('productName')" [placeholder]="'clubHandler.placeholders.productName' | translate" />
                   <span *ngIf="showProductError('productName')" class="field-error-text">{{ getProductError('productName') }}</span>
                 </div>
-                <textarea name="productDescription" [(ngModel)]="productForm.description" class="field-input min-h-[70px]" [placeholder]="'clubHandler.placeholders.productDescription' | translate"></textarea>
+                <div>
+                  <textarea name="productDescription" [(ngModel)]="productForm.description" class="field-input min-h-[70px]" [class.has-error]="showProductError('description')" [placeholder]="'clubHandler.placeholders.productDescription' | translate"></textarea>
+                  <span *ngIf="showProductError('description')" class="field-error-text">{{ getProductError('description') }}</span>
+                </div>
                 <div>
                   <input name="productBasePrice" [(ngModel)]="productForm.basePrice" type="number" min="0" step="0.01" class="field-input" [class.has-error]="showProductError('basePrice')" [placeholder]="'clubHandler.placeholders.productPrice' | translate" />
                   <span *ngIf="showProductError('basePrice')" class="field-error-text">{{ getProductError('basePrice') }}</span>
@@ -409,7 +413,10 @@
                 <input name="eventDate" [(ngModel)]="eventForm.date" type="date" class="field-input" [class.has-error]="showEventError('date')" />
                 <span *ngIf="showEventError('date')" class="field-error-text">{{ getEventError('date') }}</span>
               </div>
-              <input name="eventDescription" [(ngModel)]="eventForm.description" class="field-input md:col-span-2" [placeholder]="'clubHandler.placeholders.eventDescription' | translate" />
+              <div class="md:col-span-2">
+                <input name="eventDescription" [(ngModel)]="eventForm.description" class="field-input" [class.has-error]="showEventError('description')" [placeholder]="'clubHandler.placeholders.eventDescription' | translate" />
+                <span *ngIf="showEventError('description')" class="field-error-text">{{ getEventError('description') }}</span>
+              </div>
 
               <div class="md:col-span-4 flex gap-2">
                 <button type="submit" class="btn-primary" [disabled]="savingEvent">

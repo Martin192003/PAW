@@ -458,18 +458,21 @@
       "required": "Este campo es obligatorio.",
       "clubNameMax": "El nombre del club no puede superar los 100 caracteres.",
       "locationMax": "La ubicación no puede superar los 255 caracteres.",
-      "cbuMax": "El CBU no puede superar los 50 caracteres."
+      "cbuMax": "El CBU no puede superar los 50 caracteres.",
+      "descriptionMax": "La descripción no puede superar los 1000 caracteres."
     },
     "productErrors": {
       "required": "Este campo es obligatorio.",
       "invalid": "Valor inválido.",
       "productNameMax": "El nombre del producto no puede superar los 100 caracteres.",
+      "descriptionMax": "La descripción no puede superar los 300 caracteres.",
       "priceMax": "El precio debe ser menor a 99.999.999,99."
     },
     "eventErrors": {
       "required": "Este campo es obligatorio.",
       "eventNameMax": "El nombre del evento no puede superar los 120 caracteres.",
-      "pastDate": "La fecha no puede ser anterior a hoy."
+      "pastDate": "La fecha no puede ser anterior a hoy.",
+      "descriptionMax": "La descripción no puede superar los 500 caracteres."
     },
     "placeholders": {
       "productName": "Nombre del producto",

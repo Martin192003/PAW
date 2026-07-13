@@ -143,7 +143,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   clubSubmittedAttempted = false;
   clubFrozenErrors: { [key: string]: boolean } = {};
   clubFrozenErrorMessages: { [key: string]: string } = {};
-  private static readonly CLUB_FIELDS = ['clubName', 'location', 'cbu'];
+  private static readonly CLUB_FIELDS = ['clubName', 'location', 'cbu', 'description'];
 
   // Idem para el formulario de productos: product_name es VARCHAR(100) y
   // base_price es NUMERIC(10,2) (tope 99.999.999,99), pero solo se validaba
@@ -151,13 +151,13 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   productSubmittedAttempted = false;
   productFrozenErrors: { [key: string]: boolean } = {};
   productFrozenErrorMessages: { [key: string]: string } = {};
-  private static readonly PRODUCT_FIELDS = ['productName', 'basePrice'];
+  private static readonly PRODUCT_FIELDS = ['productName', 'basePrice', 'description'];
 
   // Idem para el formulario de eventos: eventname es VARCHAR(120) en schema.sql.
   eventSubmittedAttempted = false;
   eventFrozenErrors: { [key: string]: boolean } = {};
   eventFrozenErrorMessages: { [key: string]: string } = {};
-  private static readonly EVENT_FIELDS = ['eventName', 'date'];
+  private static readonly EVENT_FIELDS = ['eventName', 'date', 'description'];
 
   savingEvent = false;
   editingEventId: string | null = null;
@@ -474,6 +474,10 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         if (!value) return this.i18n.instant('clubHandler.clubErrors.required');
         if (value.length > 50) return this.i18n.instant('clubHandler.clubErrors.cbuMax');
         return '';
+      case 'description':
+        if (!value) return this.i18n.instant('clubHandler.clubErrors.required');
+        if (value.length > 1000) return this.i18n.instant('clubHandler.clubErrors.descriptionMax');
+        return '';
       default:
         return '';
     }
@@ -507,16 +511,8 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       }
     }
 
-    if (!payload.description) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.clubRequiredFields');
-      this.actionSuccessMessage = '';
-      hasError = true;
-    }
-
     if (hasError) {
-      if (!this.actionErrorMessage) {
-        this.actionErrorMessage = '';
-      }
+      this.actionErrorMessage = '';
       this.actionSuccessMessage = '';
       return;
     }
@@ -605,6 +601,12 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         if (value >= 99999999.99) return this.i18n.instant('clubHandler.productErrors.priceMax');
         return '';
       }
+      case 'description': {
+        const value = (this.productForm.description ?? '').trim();
+        if (!value) return this.i18n.instant('clubHandler.productErrors.required');
+        if (value.length > 300) return this.i18n.instant('clubHandler.productErrors.descriptionMax');
+        return '';
+      }
       default:
         return '';
     }
@@ -629,26 +631,18 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       }
     }
 
+    if (hasError) {
+      this.actionErrorMessage = '';
+      this.actionSuccessMessage = '';
+      return;
+    }
+
     const payload: ProductPayload = {
       ...this.productForm,
       productName: this.productForm.productName.trim(),
       description: this.productForm.description.trim(),
       basePrice: Number(this.productForm.basePrice)
     };
-
-    if (!payload.description) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.productInvalid');
-      this.actionSuccessMessage = '';
-      hasError = true;
-    }
-
-    if (hasError) {
-      if (!this.actionErrorMessage) {
-        this.actionErrorMessage = '';
-      }
-      this.actionSuccessMessage = '';
-      return;
-    }
 
     this.savingProduct = true;
     const editingProduct = this.editingProductId
@@ -943,6 +937,13 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         const parsed = new Date(`${value}T00:00:00`);
         if (Number.isNaN(parsed.getTime())) return this.i18n.instant('clubHandler.eventErrors.required');
         if (parsed < today) return this.i18n.instant('clubHandler.eventErrors.pastDate');
+        return '';
+      }
+      case 'description': {
+        // A diferencia de club/producto, la descripcion del evento es
+        // opcional (EventServiceImpl la deja en null si viene vacia).
+        const value = (this.eventForm.description ?? '').trim();
+        if (value.length > 500) return this.i18n.instant('clubHandler.eventErrors.descriptionMax');
         return '';
       }
       default:
