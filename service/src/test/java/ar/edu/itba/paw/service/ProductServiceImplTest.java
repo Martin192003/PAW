@@ -109,7 +109,7 @@ public class ProductServiceImplTest {
 
         String longName = "a".repeat(101);
 
-        Assert.assertThrows(IllegalArgumentException.class, () -> {
+        Assert.assertThrows(ValidationException.class, () -> {
             productService.create(CLUB_ID, longName, DESCRIPTION, BASE_PRICE, TYPE, IS_AVAILABLE);
         });
     }
