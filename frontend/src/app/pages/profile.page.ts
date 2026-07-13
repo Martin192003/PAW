@@ -14,6 +14,7 @@ type EditableProfileField = 'username' | 'name' | 'surname' | 'email' | 'cellpho
 
 const PHONE_MAX_LENGTH = 30;
 const PHONE_PATTERN = /^(?=.*\d)[0-9+()\-\s]+$/;
+const USER_TEXT_FIELD_MAX_LENGTH = 100;
 
 const FIELD_I18N: Record<EditableProfileField, { labelKey: string; placeholderKey: string; ariaLabelKey: string }> = {
   username: {
@@ -248,8 +249,11 @@ export class ProfilePage implements OnInit {
         return [Validators.required, Validators.email];
       case 'cellphone':
         return [Validators.required, Validators.maxLength(PHONE_MAX_LENGTH), Validators.pattern(PHONE_PATTERN)];
+      // username/name/surname son VARCHAR(100) en la base (ver schema.sql):
+      // sin este limite, un valor mas largo pasaba la validacion del
+      // frontend y rompia en el UPDATE con un error de base de datos.
       default:
-        return [Validators.required];
+        return [Validators.required, Validators.maxLength(USER_TEXT_FIELD_MAX_LENGTH)];
     }
   }
 

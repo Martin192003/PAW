@@ -454,6 +454,22 @@
       "discountRange": "El descuento debe estar entre 0 y 100.",
       "duplicateNumber": "Ya existe una mesa con ese número en este club."
     },
+    "clubErrors": {
+      "required": "Este campo es obligatorio.",
+      "clubNameMax": "El nombre del club no puede superar los 100 caracteres.",
+      "locationMax": "La ubicación no puede superar los 255 caracteres.",
+      "cbuMax": "El CBU no puede superar los 50 caracteres."
+    },
+    "productErrors": {
+      "required": "Este campo es obligatorio.",
+      "invalid": "Valor inválido.",
+      "productNameMax": "El nombre del producto no puede superar los 100 caracteres.",
+      "priceMax": "El precio debe ser menor a 99.999.999,99."
+    },
+    "eventErrors": {
+      "required": "Este campo es obligatorio.",
+      "eventNameMax": "El nombre del evento no puede superar los 120 caracteres."
+    },
     "placeholders": {
       "productName": "Nombre del producto",
       "productDescription": "Descripción del producto",

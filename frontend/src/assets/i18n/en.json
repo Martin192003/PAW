@@ -453,6 +453,22 @@
       "discountRange": "Discount must be between 0 and 100.",
       "duplicateNumber": "A table with that number already exists in this club."
     },
+    "clubErrors": {
+      "required": "This field is required.",
+      "clubNameMax": "Club name cannot be longer than 100 characters.",
+      "locationMax": "Location cannot be longer than 255 characters.",
+      "cbuMax": "CBU cannot be longer than 50 characters."
+    },
+    "productErrors": {
+      "required": "This field is required.",
+      "invalid": "Invalid value.",
+      "productNameMax": "Product name cannot be longer than 100 characters.",
+      "priceMax": "Price must be less than 99,999,999.99."
+    },
+    "eventErrors": {
+      "required": "This field is required.",
+      "eventNameMax": "Event name cannot be longer than 120 characters."
+    },
     "placeholders": {
       "productName": "Product name",
       "productDescription": "Product description",

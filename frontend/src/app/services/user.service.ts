@@ -71,7 +71,12 @@ export class UserService {
   }
 
   updateUser(userId: string, payload: UserUpdatePayload): Observable<UserUpdateResult> {
-    return this.http.put<UserUpdateResponse>(`${this.apiUrl}/users/${userId}`, payload).pipe(
+    // Sin este flag, un 409 (usuario/email duplicado) lo agarra el interceptor
+    // global y redirige a /error antes de que profile.page.ts pueda mostrarlo
+    // como error de campo (mismo problema que tenian createTable/createProduct).
+    return this.http.put<UserUpdateResponse>(`${this.apiUrl}/users/${userId}`, payload, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    }).pipe(
       map((response) => ({
         user: response.user,
         token: response.accessToken ?? null

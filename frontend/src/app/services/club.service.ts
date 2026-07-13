@@ -448,7 +448,12 @@ export class ClubService {
 
   createProduct(clubId: string, payload: ProductPayload, links?: unknown): Observable<Product> {
     const url = this.resolveClubLink(links, this.linkRels.menu, `club ${clubId} menu`, `${this.apiUrl}/clubs/${clubId}/menu`);
-    return this.http.post<Product>(url, payload).pipe(map(product => this.normalizeProduct(product)));
+    // Sin este flag un 409/500 lo agarra primero el interceptor global y
+    // redirige a /error antes de que el formulario pueda mostrar su propio
+    // error de campo (mismo problema que tenian createTable/updateTable).
+    return this.http.post<Product>(url, payload, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    }).pipe(map(product => this.normalizeProduct(product)));
   }
 
   updateProduct(clubId: string, productId: string, payload: ProductPayload, product?: Product): Observable<Product> {
@@ -458,7 +463,9 @@ export class ClubService {
       `product ${productId}`,
       `${this.apiUrl}/clubs/${clubId}/menu/${productId}`
     );
-    return this.http.put<Product>(url, payload).pipe(map(updated => this.normalizeProduct(updated)));
+    return this.http.put<Product>(url, payload, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    }).pipe(map(updated => this.normalizeProduct(updated)));
   }
 
   createTable(clubId: string, payload: TablePayload, links?: unknown): Observable<ClubTable> {
@@ -495,7 +502,11 @@ export class ClubService {
 
   createEvent(clubId: string, payload: EventPayload, links?: unknown): Observable<Event> {
     const url = this.resolveClubLink(links, this.linkRels.events, `club ${clubId} events`, `${this.apiUrl}/clubs/${clubId}/events`);
-    return this.http.post<Event>(url, payload).pipe(
+    // Mismo motivo que createProduct/createTable: sin el flag, un 409/500
+    // termina en la pantalla de error global en vez del error de campo.
+    return this.http.post<Event>(url, payload, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    }).pipe(
       map(event => ({ ...event, links: normalizeLinks(event.links) }))
     );
   }
@@ -507,7 +518,9 @@ export class ClubService {
       `event ${eventId}`,
       `${this.apiUrl}/clubs/${clubId}/events/${eventId}`
     );
-    return this.http.put<Event>(url, payload).pipe(
+    return this.http.put<Event>(url, payload, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    }).pipe(
       map(updated => ({ ...updated, links: normalizeLinks(updated.links) }))
     );
   }
