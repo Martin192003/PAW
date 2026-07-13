@@ -19,7 +19,19 @@ import { argentinaDateCode, formatArgentinaDate } from '../utils/argentina-date.
   standalone: true,
   selector: 'app-user-bookings-page',
   imports: [CommonModule, FormsModule, RouterLink, SideBarComponent, TranslateModule],
-  templateUrl: './user-bookings.page.html'
+  templateUrl: './user-bookings.page.html',
+  styles: [`
+    :host button:not(:disabled),
+    :host a[routerLink],
+    :host select,
+    :host input[type="date"] {
+      cursor: pointer;
+    }
+
+    :host button:disabled {
+      cursor: not-allowed;
+    }
+  `]
 })
 export class UserBookingsPage implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();

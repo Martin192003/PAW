@@ -309,7 +309,7 @@ public class EmailServiceImpl implements EmailService {
 
         final DateTimeFormatter df = DateTimeFormatter.ofPattern("EEE dd/MM", locale);
         final String dateTimePretty = df.format(date) + " 23:59–06:00";
-        final String ctaUrl = abs("/admin/clubs/bookings?userId=" + booking.getBookingId());
+        final String ctaUrl = abs("/admin/bookings/" + booking.getBookingId());
         Map<String, Object> ownerModel = new HashMap<>();
         ownerModel.put("clubName", clubName);
         ownerModel.put("tableNumber", tableNum);
@@ -412,7 +412,7 @@ public class EmailServiceImpl implements EmailService {
                 "booking-cancelled-owner",
                 ownerModel,
                 "Ver panel",
-                abs("/admin/clubs/bookings?userId=" + owner.getId())
+                abs("/admin/bookings/" + booking.getBookingId())
         );
     }
 
@@ -460,7 +460,7 @@ public class EmailServiceImpl implements EmailService {
                 "receipt-uploaded-notification",
                 ownerModel,
                 "Ver recibo",
-                abs("/admin/booking?bookingId=" + booking.getBookingId()),
+                abs("/admin/bookings/" + booking.getBookingId()),
                 receipt.getFilename(),
                 receipt.getData(),
                 receipt.getContentType()
@@ -553,7 +553,7 @@ public class EmailServiceImpl implements EmailService {
                 ? createdOdt.atZoneSameInstant(ZONE_ID).format(fmt)
                 : OffsetDateTime.now(ZONE_ID).format(fmt);
 
-        final String ctaUrl  = abs("/admin/clubs/handle?clubId=" + club.getClubId());
+        final String ctaUrl  = abs("/clubs/handle?clubId=" + club.getClubId());
         final String ctaText = "Abrir reseñas";
 
         String subject;

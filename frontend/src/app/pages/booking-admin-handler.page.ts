@@ -20,7 +20,16 @@ import { normalizeLinks } from '../utils/api-url.util';
   standalone: true,
   selector: 'app-booking-admin-handler-page',
   imports: [CommonModule, TranslateModule],
-  templateUrl: './booking-admin-handler.page.html'
+  templateUrl: './booking-admin-handler.page.html',
+  styles: [`
+    :host button:not(:disabled) {
+      cursor: pointer;
+    }
+
+    :host button:disabled {
+      cursor: not-allowed;
+    }
+  `]
 })
 export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   booking?: Booking;

@@ -20,7 +20,17 @@ import { normalizeLinks } from '../utils/api-url.util';
   standalone: true,
   selector: 'app-booking-user-handler-page',
   imports: [CommonModule, TranslateModule],
-  templateUrl: './booking-user-handler.page.html'
+  templateUrl: './booking-user-handler.page.html',
+  styles: [`
+    :host button:not(:disabled),
+    :host label {
+      cursor: pointer;
+    }
+
+    :host button:disabled {
+      cursor: not-allowed;
+    }
+  `]
 })
 export class BookingUserHandlerPage implements OnInit, OnDestroy {
   private static readonly maxReceiptBytes = 5 * 1024 * 1024;

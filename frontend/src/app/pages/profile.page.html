@@ -88,7 +88,7 @@
         <h2 class="mt-2 text-2xl font-bold text-white">{{ activeFieldLabelKey | translate }}</h2>
       </div>
 
-      <button type="button" (click)="closeEditor()" [attr.aria-label]="'profile.closeModal' | translate" class="text-white/80 hover:text-white text-2xl leading-none transition-colors">
+      <button type="button" (click)="closeEditor()" [attr.aria-label]="'profile.closeModal' | translate" class="text-white/80 hover:text-white text-2xl leading-none transition-colors cursor-pointer">
         &times;
       </button>
     </div>
@@ -112,11 +112,11 @@
         {{ errorMessage }}
       </p>
 
-      <div class="flex items-center justify-end gap-3 pt-2">
-        <button type="button" (click)="closeEditor()" class="rounded-xl bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15 transition-colors">
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <button type="button" (click)="closeEditor()" class="rounded-xl bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15 transition-colors cursor-pointer">
           {{ 'common.cancel' | translate }}
         </button>
-        <button type="submit" class="rounded-xl bg-[#9c27b0] px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(156,39,176,0.35)] hover:bg-[#7d1f8b] transition-colors">
+        <button type="submit" class="rounded-xl bg-[#9c27b0] px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(156,39,176,0.35)] hover:bg-[#7d1f8b] transition-colors cursor-pointer">
           {{ 'common.save' | translate }}
         </button>
       </div>
