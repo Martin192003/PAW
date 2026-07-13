@@ -25,6 +25,7 @@ public final class ReviewMapper {
         dto.setDescription(review.getDescription());
         dto.setCreatedAt(review.getCreatedAtOffset());
         dto.setFromTableGuest(review.isFromTableGuest());
+        dto.setPhotoId(review.getPhotoId());
 
         return dto;
     }
@@ -50,6 +51,15 @@ public final class ReviewMapper {
                     .path("users/{userId}")
                     .resolveTemplate("userId", dto.getUserId())
                     .build(), "GET"));
+        }
+        if (dto.getPhotoId() != null) {
+            String photoUrl = uriInfo.getBaseUriBuilder()
+                    .path("photos/{photoId}")
+                    .resolveTemplate("photoId", dto.getPhotoId())
+                    .build()
+                    .toString();
+            dto.setPhotoUrl(photoUrl);
+            links.add(LinkBuilder.link("photo", photoUrl, "GET"));
         }
         dto.setLinks(links);
 

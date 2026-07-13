@@ -30,6 +30,8 @@ export class MyReviewsPage implements OnInit, OnDestroy {
   loading = false;
   errorMessage = '';
   deletingReviewId: string | null = null;
+  deleteModalOpen = false;
+  reviewPendingDelete: ReviewItem | null = null;
 
   currentPage = 1;
   pageSize = 5;
@@ -132,16 +134,29 @@ export class MyReviewsPage implements OnInit, OnDestroy {
     });
   }
 
-  deleteReview(review: ReviewItem): void {
+  openDeleteModal(review: ReviewItem): void {
     if (!review.clubId || this.deletingReviewId) return;
-    if (!window.confirm(this.i18n.instant('myReviews.confirmDelete'))) return;
+    this.reviewPendingDelete = review;
+    this.deleteModalOpen = true;
+  }
+
+  closeDeleteModal(): void {
+    if (this.deletingReviewId) return;
+    this.deleteModalOpen = false;
+    this.reviewPendingDelete = null;
+  }
+
+  confirmDeleteReview(): void {
+    const review = this.reviewPendingDelete;
+    if (!review?.clubId || this.deletingReviewId) return;
 
     this.deletingReviewId = review.reviewId;
     this.reviewService.delete(review.clubId).subscribe({
       next: () => {
         this.deletingReviewId = null;
+        this.deleteModalOpen = false;
+        this.reviewPendingDelete = null;
         this.reviews = this.reviews.filter(r => r.reviewId !== review.reviewId);
-        // Si la página queda vacía y no es la primera, retrocedo (actualizando la URL)
         if (this.reviews.length === 0 && this.currentPage > 1) {
           this.currentPage -= 1;
           this.updateQueryParams();
@@ -156,7 +171,6 @@ export class MyReviewsPage implements OnInit, OnDestroy {
       }
     });
   }
-
   /**
    * Pide los nombres de club de cada review en paralelo (con cache).
    * El DTO de review trae solo clubId.

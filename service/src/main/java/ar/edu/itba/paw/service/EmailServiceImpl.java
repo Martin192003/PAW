@@ -266,12 +266,14 @@ public class EmailServiceImpl implements EmailService {
 
 
         String subject = messageSource.getMessage("email.booking.confirmed", new Object[] { club.getClubName() }, locale);
+        String ctaUrl = abs(userBookingPath(club, booking));
 
         sendTemplatedEmail(
                 userEmail,
                 subject,
                 "table-reserved-user",
                 Map.of(
+                        "username", Objects.requireNonNullElse(booking.getUser().getUsername(), "usuario"),
                         "clubName", club.getClubName(),
                         "tableNumber", table.getTableNumber(),
                         "capacity", table.getCapacity(),
@@ -279,7 +281,7 @@ public class EmailServiceImpl implements EmailService {
                         "from", "23:59",
                         "to", "06:00"
                 ),
-                "Ver reserva",  abs("/booking?bookingId=" + booking.getBookingId())
+                "Ver reserva", ctaUrl
         );
     }
 
@@ -470,6 +472,10 @@ public class EmailServiceImpl implements EmailService {
         return path.startsWith("/") ? b + path : b + "/" + path;
     }
 
+    private String userBookingPath(Club club, Booking booking) {
+        return "/bookings/" + club.getClubId() + "/" + booking.getBookingId();
+    }
+
     @Override
     @Async
     public void notifyConfirmationEmailToUser(Booking booking, Club club, ClubTable table, Locale locale) {
@@ -485,7 +491,7 @@ public class EmailServiceImpl implements EmailService {
 
         LocalDate selectedDate = booking.getBookingStart().atZoneSameInstant(ZONE_ID).toLocalDate();
 
-        String ctaUrl = abs("/booking?bookingId=" + booking.getBookingId());
+        String ctaUrl = abs(userBookingPath(club, booking));
 
         String subject = messageSource.getMessage("email.booking.confirmed.user.subject", new Object[] { club.getClubName() }, locale);
 

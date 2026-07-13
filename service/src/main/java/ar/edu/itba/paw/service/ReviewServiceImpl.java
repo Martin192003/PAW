@@ -79,12 +79,18 @@ public class ReviewServiceImpl implements ReviewService {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
 
+        UUID previousPhotoId = reviewsDao.findByUserAndClub(user, club)
+                .map(Review::getPhotoId)
+                .orElse(null);
+
         Review review = reviewsDao.upsert(user, club, rating, description, hadTable);
         updateClubRating(club);
         if (photo != null) {
             UUID photoId = photoService.uploadReviewPhoto(clubId, review.getReviewId(), user.getId(), photo);
             if (photoId != null) {
                 reviewsDao.updatePhotoId(review.getReviewId(), photoId);
+                review.setPhotoId(photoId);
+                deleteReplacedReviewPhoto(previousPhotoId, photoId);
             }
         }
 
@@ -107,6 +113,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review existing = reviewsDao.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFounException("No se encontro la review"));
         Club club = existing.getClub();
+        UUID previousPhotoId = existing.getPhotoId();
 
         Review updated = reviewsDao.update(reviewId, rating, description);
         if (updated == null) {
@@ -123,6 +130,8 @@ public class ReviewServiceImpl implements ReviewService {
             );
             if (photoId != null) {
                 reviewsDao.updatePhotoId(updated.getReviewId(), photoId);
+                updated.setPhotoId(photoId);
+                deleteReplacedReviewPhoto(previousPhotoId, photoId);
             }
         }
 
@@ -226,6 +235,13 @@ public class ReviewServiceImpl implements ReviewService {
                 .setScale(1, java.math.RoundingMode.HALF_UP);
 
         clubDao.updateRatingAndCount(clubId, rounded, count);
+    }
+
+    private void deleteReplacedReviewPhoto(UUID previousPhotoId, UUID newPhotoId) {
+        if (previousPhotoId == null || previousPhotoId.equals(newPhotoId)) {
+            return;
+        }
+        photoService.delete(previousPhotoId);
     }
 
     public List<Review> findByClubPaginated(UUID clubId, int page, int size) {

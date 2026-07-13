@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.rest.reviews;
 
 import ar.edu.itba.paw.model.Review;
+import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.ReviewDto;
 import ar.edu.itba.paw.service.ReviewService;
@@ -9,12 +10,16 @@ import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -33,6 +38,9 @@ public class ReviewsRestController {
 
     @Context
     private UriInfo uriInfo;
+
+    @Context
+    private HttpServletRequest request;
 
     @GET
     @Path("/{clubId}/reviews")
@@ -93,7 +101,7 @@ public class ReviewsRestController {
 
             Optional<Review> maybe = reviewService.getUserReviewForClub(user.getId(), clubId);
             if (maybe.isEmpty()) {
-                return Response.serverError().entity(Map.of("message", "Unable to retrieve created review")).build();
+                return serverError("Unable to retrieve created review");
             }
             Review created = maybe.get();
 
@@ -105,13 +113,56 @@ public class ReviewsRestController {
                     .entity(ReviewMapper.toDto(created, uriInfo))
                     .build();
         } catch (DuplicateEntityException e) {
-            return Response.status(Response.Status.CONFLICT)
-                    .entity(Map.of("message", "Review already exists for this user and club"))
-                    .build();
+            return error(Response.Status.CONFLICT, "Review already exists for this user and club");
         } catch (Exception e) {
-            return Response.serverError()
-                    .entity(Map.of("message", "Internal server error"))
+            return serverError("Internal server error");
+        }
+    }
+
+    @POST
+    @Path("/{clubId}/reviews")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response createMultipart(@PathParam("clubId") String clubIdStr,
+                                    @Context SecurityContext securityContext) {
+        UUID clubId = parseUuidOr400(clubIdStr);
+        if (clubId == null) return badRequest("clubId invalido");
+
+        Integer rating = formInteger("rating");
+        if (rating == null) {
+            return badRequest("Missing required fields");
+        }
+
+        User user = authenticatedUser(securityContext);
+        if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
+
+        try {
+            reviewService.createReview(
+                    user.getId(),
+                    clubId,
+                    rating,
+                    formString("description"),
+                    optionalPhoto()
+            );
+
+            Optional<Review> maybe = reviewService.getUserReviewForClub(user.getId(), clubId);
+            if (maybe.isEmpty()) {
+                return serverError("Unable to retrieve created review");
+            }
+            Review created = maybe.get();
+
+            URI location = uriInfo.getBaseUriBuilder()
+                    .path("clubs/{clubId}/reviews/{reviewId}")
+                    .resolveTemplate("clubId", clubId)
+                    .resolveTemplate("reviewId", created.getReviewId())
                     .build();
+
+            return Response.created(location)
+                    .entity(ReviewMapper.toDto(created, uriInfo))
+                    .build();
+        } catch (DuplicateEntityException e) {
+            return error(Response.Status.CONFLICT, "Review already exists for this user and club");
+        } catch (Exception e) {
+            return serverError("Internal server error");
         }
     }
 
@@ -139,9 +190,7 @@ public class ReviewsRestController {
         Optional<Review> existingOpt = reviewService.getUserReviewForClub(user.getId(), clubId);
 
         if (existingOpt.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Review no encontrado"))
-                    .build();
+            return notFound("Review no encontrado");
         }
 
         try {
@@ -153,9 +202,40 @@ public class ReviewsRestController {
             );
             return Response.ok(ReviewMapper.toDto(updated, uriInfo)).build();
         } catch (Exception e) {
-            return Response.serverError()
-                    .entity(Map.of("message", "Internal server error"))
-                    .build();
+            return serverError("Internal server error");
+        }
+    }
+
+    @PUT
+    @Path("/{clubId}/reviews")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response updateMultipart(@PathParam("clubId") String clubIdStr,
+                                    @Context SecurityContext securityContext) {
+        UUID clubId = parseUuidOr400(clubIdStr);
+        if (clubId == null) return badRequest("clubId invalido");
+
+        Integer rating = formInteger("rating");
+        if (rating == null) return badRequest("Body requerido");
+
+        User user = authenticatedUser(securityContext);
+        if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
+
+        Optional<Review> existingOpt = reviewService.getUserReviewForClub(user.getId(), clubId);
+
+        if (existingOpt.isEmpty()) {
+            return notFound("Review no encontrado");
+        }
+
+        try {
+            Review updated = reviewService.updateReview(
+                    existingOpt.get().getReviewId(),
+                    rating,
+                    formString("description"),
+                    optionalPhoto()
+            );
+            return Response.ok(ReviewMapper.toDto(updated, uriInfo)).build();
+        } catch (Exception e) {
+            return serverError("Internal server error");
         }
     }
 
@@ -184,9 +264,7 @@ public class ReviewsRestController {
             reviewService.deleteReview(existingOpt.get().getReviewId());
             return Response.noContent().build();
         } catch (Exception e) {
-            return Response.serverError()
-                    .entity(Map.of("message", "Internal server error"))
-                    .build();
+            return serverError("Internal server error");
         }
     }
 
@@ -216,24 +294,110 @@ public class ReviewsRestController {
     }
 
     private static Response badRequest(final String msg) {
-        return Response.status(Response.Status.BAD_REQUEST)
-                .entity(Map.of("message", msg))
-                .build();
+        return error(Response.Status.BAD_REQUEST, msg);
     }
 
     private static Response notFound(final String msg) {
-        return Response.status(Response.Status.NOT_FOUND)
-                .entity(Map.of("message", msg))
+        return error(Response.Status.NOT_FOUND, msg);
+    }
+
+    private static Response serverError(final String msg) {
+        return error(Response.Status.INTERNAL_SERVER_ERROR, msg);
+    }
+
+    private static Response error(final Response.Status status, final String msg) {
+        return Response.status(status)
+                .type(MediaType.APPLICATION_JSON)
+                .entity(message(msg))
                 .build();
     }
 
     private static String message(String msg) {
-        try {
-            return new com.fasterxml.jackson.databind.ObjectMapper()
-                    .writeValueAsString(java.util.Map.of("message", msg));
-        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            return "{\"message\":\"" + msg.replace("\"", "\\\"") + "\"}";
+        return "{\"message\":\"" + msg.replace("\\", "\\\\").replace("\"", "\\\"") + "\"}";
+    }
+
+    private User authenticatedUser(SecurityContext securityContext) {
+        if (securityContext == null || securityContext.getUserPrincipal() == null) {
+            return null;
         }
+
+        String principalName = securityContext.getUserPrincipal().getName();
+        User user = userService.findByEmail(principalName);
+        if (user == null) {
+            user = userService.findByUserName(principalName);
+        }
+        return user;
+    }
+
+    private String formString(String field) {
+        String value = request.getParameter(field);
+        if (value == null || value.trim().isEmpty()) {
+            value = multipartText(field);
+        }
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private String multipartText(String field) {
+        try {
+            Part part = request.getPart(field);
+            if (part == null || part.getSize() == 0) {
+                return null;
+            }
+            return new String(part.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException | ServletException e) {
+            throw new BadRequestException("Invalid multipart field " + field, e);
+        }
+    }
+
+    private Integer formInteger(String field) {
+        String value = formString(field);
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("Invalid " + field);
+        }
+    }
+
+    private Photo optionalPhoto() throws IOException, ServletException {
+        Part filePart = request.getPart("file");
+        if (filePart == null || filePart.getSize() == 0) {
+            return null;
+        }
+
+        String contentType = filePart.getContentType();
+        validateImageContentType(contentType);
+
+        byte[] data = filePart.getInputStream().readAllBytes();
+        Photo photo = new Photo();
+        photo.setFilename(extractFilename(filePart));
+        photo.setContentType(contentType);
+        photo.setData(data);
+        photo.setSizeBytes((long) data.length);
+        return photo;
+    }
+
+    private static void validateImageContentType(String contentType) {
+        if (contentType == null) {
+            throw new BadRequestException("Invalid image type");
+        }
+
+        String normalized = contentType.toLowerCase();
+        if (!normalized.equals("image/jpeg")
+                && !normalized.equals("image/png")
+                && !normalized.equals("image/webp")) {
+            throw new BadRequestException("Invalid image type");
+        }
+    }
+
+    private static String extractFilename(Part part) {
+        String filename = part.getSubmittedFileName();
+        return filename == null || filename.trim().isEmpty() ? "review-photo" : filename.trim();
     }
 
     private void addPaginationLinks(Response.ResponseBuilder responseBuilder,

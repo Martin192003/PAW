@@ -9,6 +9,7 @@ export interface ReviewCreateRequest {
   rating: number;
   description?: string;
   fromTableGuest?: boolean;
+  photo?: File;
 }
 
 export interface ReviewListResult {
@@ -70,7 +71,7 @@ export class ReviewService {
    * Crea una review nueva. Requiere estar autenticado.
    */
   create(clubId: string, payload: ReviewCreateRequest): Observable<Review> {
-    return this.http.post<Review>(`${this.apiUrl}/clubs/${clubId}/reviews`, payload);
+    return this.http.post<Review>(`${this.apiUrl}/clubs/${clubId}/reviews`, this.toRequestBody(payload));
   }
 
   /**
@@ -78,7 +79,7 @@ export class ReviewService {
    * Actualiza la review del usuario autenticado para ese club.
    */
   update(clubId: string, payload: ReviewCreateRequest): Observable<Review> {
-    return this.http.put<Review>(`${this.apiUrl}/clubs/${clubId}/reviews`, payload);
+    return this.http.put<Review>(`${this.apiUrl}/clubs/${clubId}/reviews`, this.toRequestBody(payload));
   }
 
   /**
@@ -87,5 +88,22 @@ export class ReviewService {
    */
   delete(clubId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/reviews`);
+  }
+
+  private toRequestBody(payload: ReviewCreateRequest): ReviewCreateRequest | FormData {
+    if (!payload.photo) {
+      return payload;
+    }
+
+    const formData = new FormData();
+    formData.append('rating', String(payload.rating));
+    if (payload.description) {
+      formData.append('description', payload.description);
+    }
+    if (payload.fromTableGuest !== undefined) {
+      formData.append('fromTableGuest', String(payload.fromTableGuest));
+    }
+    formData.append('file', payload.photo);
+    return formData;
   }
 }

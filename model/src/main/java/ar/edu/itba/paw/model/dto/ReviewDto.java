@@ -14,6 +14,8 @@ public class ReviewDto {
     private String description;
     private OffsetDateTime createdAt;
     private boolean fromTableGuest;
+    private UUID photoId;
+    private String photoUrl;
     private List<LinkDto> links;
 
     public ReviewDto() {
@@ -81,6 +83,22 @@ public class ReviewDto {
 
     public void setFromTableGuest(boolean fromTableGuest) {
         this.fromTableGuest = fromTableGuest;
+    }
+
+    public UUID getPhotoId() {
+        return photoId;
+    }
+
+    public void setPhotoId(UUID photoId) {
+        this.photoId = photoId;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public List<LinkDto> getLinks() {

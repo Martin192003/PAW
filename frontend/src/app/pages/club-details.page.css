@@ -1,0 +1,13 @@
+:host button:not(:disabled),
+:host select,
+:host input[type='radio'],
+:host label.cursor-pointer,
+:host [role='button'] {
+  cursor: pointer;
+}
+
+:host button:disabled,
+:host select:disabled,
+:host input:disabled {
+  cursor: not-allowed;
+}

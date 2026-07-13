@@ -17,7 +17,7 @@
             th:text="#{email.table.user.heading}">Tu reserva esta lista</h2>
         <p style="text-align:center;color:#9a9aa6;font-size:13px;margin:0 0 28px;" th:text="#{email.table.user.body(${clubName})}">Tu mesa fue confirmada.</p>
 
-        <p style="font-size:15px;margin:0 0 16px;" th:text="#{email.table.user.greeting}">Hola!</p>
+        <p style="font-size:15px;margin:0 0 16px;" th:text="#{email.table.user.greeting(${username})}">Hola!</p>
 
         <div style="background:#1f1f27;border:1px solid #3a3a45;border-radius:8px;padding:18px 20px;margin:0 0 24px;">
             <p style="margin:0 0 8px;font-size:14px;"><span style="color:#9a9aa6;">Mesa</span> &nbsp; <span style="color:#ffffff;font-weight:600;" th:text="${tableNumber}">0</span></p>

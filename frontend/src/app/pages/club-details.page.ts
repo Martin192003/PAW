@@ -30,7 +30,8 @@ import { I18nService } from '../services/i18n.service';
 @Component({
   standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
-  templateUrl: './club-details.page.html'
+  templateUrl: './club-details.page.html',
+  styleUrl: './club-details.page.css'
 })
 export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
@@ -52,7 +53,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   loadingBookingDates = false;
   selectedDate = '';
   tablesError?: string;
-  reserveSuccess?: string;
   reservationModalOpen = false;
   reservedBookingId?: string;
   reservedBookingClubId?: string;
@@ -73,16 +73,21 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   reviewFormMode: 'create' | 'edit' = 'create';
   reviewFormRating = 0;
   reviewFormDescription = '';
+  reviewFormPhoto?: File;
+  reviewFormPhotoName = '';
   reviewFormSubmitting = false;
   reviewFormError?: string;
-  reviewSuccessMessage?: string;
   reviewDeleting = false;
+  deleteReviewModalOpen = false;
 
   private currentClubId?: string;
   private clubLinks?: unknown;
   private availabilityRequestId = 0;
   private previousBodyOverflow?: string;
   private previousDocumentOverflow?: string;
+  private static readonly maxReviewPhotoBytes = 5 * 1024 * 1024;
+  private static readonly allowedReviewPhotoTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+  private static readonly allowedReviewPhotoExtensions = /\.(jpe?g|png|webp)$/i;
   private readonly destroy$ = new Subject<void>();
 
   private readonly defaultCoords = {
@@ -223,18 +228,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
           }
         });
 
-        this.clubService.getReviewPhotosByClub(id, this.clubLinks).subscribe({
-          next: photos => {
-            this.reviewPhotos = photos;
-            this.activeReviewPhotoIndex = 0;
-            this.cdr.detectChanges();
-          },
-          error: () => {
-            this.reviewPhotos = [];
-            this.activeReviewPhotoIndex = 0;
-            this.cdr.detectChanges();
-          }
-        });
+        this.loadReviewPhotos(id);
 
         this.clubService.getMenu(id, this.clubLinks).subscribe({
           next: m => {
@@ -271,16 +265,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.selectedTableId = undefined;
     this.tablesOpen = true;
     this.loadTables(this.currentClubId, nextDate);
-
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {
-        date: nextDate,
-        fromEvent: this.fromEvent ? 'true' : null
-      },
-      queryParamsHandling: 'merge',
-      fragment: 'dd-tables'
-    }).catch(err => console.error('query update error', err));
   }
 
   formatBookingDate(date: string): string {
@@ -305,7 +289,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.tablesError = undefined;
-    this.reserveSuccess = undefined;
     this.setReservationModalOpen(false);
     this.reservedBookingId = undefined;
     this.reservedBookingClubId = undefined;
@@ -439,7 +422,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     return dates;
   }
 
-  private loadAvailableBookingDates(id: string, queryDate?: string, links?: unknown, preserveReserveSuccess = false): void {
+  private loadAvailableBookingDates(id: string, queryDate?: string, links?: unknown): void {
     const requestId = ++this.availabilityRequestId;
     const candidateDates = this.fromEvent && queryDate
       ? [queryDate]
@@ -447,9 +430,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
     this.loadingBookingDates = true;
     this.tablesError = undefined;
-    if (!preserveReserveSuccess) {
-      this.reserveSuccess = undefined;
-    }
     this.bookingDates = [];
     this.selectedDate = '';
     this.tables = [];
@@ -499,7 +479,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   onReserveClick(): void {
     if (!this.currentClubId || !this.selectedTableId || !this.selectedDate) {
       this.tablesError = this.i18n.instant('clubDetails.selectTableAndDate');
-      this.reserveSuccess = undefined;
       this.cdr.detectChanges();
       return;
     }
@@ -507,7 +486,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     const tableExists = this.tables.some(table => table.tableId === this.selectedTableId);
     if (!tableExists) {
       this.tablesError = this.i18n.instant('clubDetails.tableUnavailable');
-      this.reserveSuccess = undefined;
       this.selectedTableId = undefined;
       this.cdr.detectChanges();
       return;
@@ -521,7 +499,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     ).subscribe({
       next: booking => {
         this.tablesError = undefined;
-        this.reserveSuccess = this.i18n.instant('clubDetails.reservationMadeSuccess');
         this.reservedBookingId = booking.id;
         this.reservedBookingClubId = this.currentClubId;
         this.setReservationModalOpen(true);
@@ -529,7 +506,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: err => {
-        this.reserveSuccess = undefined;
         if (err?.status === 401) {
           this.tablesError = this.i18n.instant('clubDetails.reservationRequiresLogin');
           this.cdr.detectChanges();
@@ -555,7 +531,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     if (this.currentClubId) {
       // Refrescamos solo la disponibilidad de mesas vía el service (sin
       // recargar toda la página) para no perder el estado de la SPA.
-      this.loadAvailableBookingDates(this.currentClubId, this.selectedDate, this.clubLinks, true);
+      this.loadAvailableBookingDates(this.currentClubId, this.selectedDate, this.clubLinks);
     }
   }
 
@@ -609,13 +585,24 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  get visibleReviews(): Review[] {
+    if (this.isEditingMyReview()) {
+      return this.reviews.filter(review => !this.isMyReview(review));
+    }
+    return this.reviews;
+  }
+
+  isEditingMyReview(): boolean {
+    return this.reviewFormOpen && this.reviewFormMode === 'edit';
+  }
+
   private loadReviews(): void {
     if (!this.currentClubId) return;
 
     const clubId = this.currentClubId;
     this.reviewService.listByClub(clubId, this.reviewsCurrentPage - 1, this.reviewsPageSize).subscribe({
       next: ({ reviews, total }) => {
-        this.reviews = reviews;
+        this.reviews = this.prioritizeMyReview(reviews);
         const pages = Math.max(1, Math.ceil(total / this.reviewsPageSize));
         this.reviewsTotalPages = pages;
         this.refreshMyReview(clubId);
@@ -671,19 +658,72 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     const inCurrentPage = this.reviews.find(r => r.userId === user.userId);
     if (inCurrentPage) {
       this.myReview = inCurrentPage;
+      this.reviews = this.prioritizeMyReview(this.reviews);
       return;
     }
 
-    // Si no esta en la pagina actual, pedimos hasta encontrarla (sin spamear: hasta 5 paginas).
-    this.reviewService.listByClub(clubId, 0, 50).subscribe({
-      next: ({ reviews }) => {
-        this.myReview = reviews.find(r => r.userId === user.userId);
+    this.findMyReviewInClub(clubId, user.userId);
+  }
+
+  private loadReviewPhotos(clubId: string): void {
+    this.clubService.getReviewPhotosByClub(clubId, this.clubLinks).subscribe({
+      next: photos => {
+        this.reviewPhotos = photos;
+        this.activeReviewPhotoIndex = 0;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.reviewPhotos = [];
+        this.activeReviewPhotoIndex = 0;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private findMyReviewInClub(clubId: string, userId: string, page = 0, pageSize = 50): void {
+    this.reviewService.listByClub(clubId, page, pageSize).subscribe({
+      next: ({ reviews, total }) => {
+        if (clubId !== this.currentClubId || this.currentUser?.userId !== userId) {
+          return;
+        }
+
+        const found = reviews.find(r => r.userId === userId);
+        if (found) {
+          this.myReview = found;
+          this.reviews = this.prioritizeMyReview([found, ...this.reviews]);
+          this.cdr.detectChanges();
+          return;
+        }
+
+        if ((page + 1) * pageSize < total) {
+          this.findMyReviewInClub(clubId, userId, page + 1, pageSize);
+          return;
+        }
+
+        this.myReview = undefined;
         this.cdr.detectChanges();
       },
       error: () => {
         // mantenemos el valor previo
       }
     });
+  }
+
+  private prioritizeMyReview(reviews: Review[]): Review[] {
+    const userId = this.currentUser?.userId;
+    if (!userId) {
+      return reviews;
+    }
+
+    const ownReview = reviews.find(review => review.userId === userId);
+    if (!ownReview) {
+      return reviews;
+    }
+
+    return [
+      ownReview,
+      ...reviews.filter(review => review.userId !== userId)
+    ];
   }
 
   isMyReview(review: Review): boolean {
@@ -695,8 +735,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.reviewFormMode = 'create';
     this.reviewFormRating = 0;
     this.reviewFormDescription = '';
+    this.clearReviewPhoto();
     this.reviewFormError = undefined;
-    this.reviewSuccessMessage = undefined;
     this.reviewFormOpen = true;
   }
 
@@ -705,19 +745,83 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.reviewFormMode = 'edit';
     this.reviewFormRating = review.rating ?? 0;
     this.reviewFormDescription = review.description ?? '';
+    this.clearReviewPhoto();
     this.reviewFormError = undefined;
-    this.reviewSuccessMessage = undefined;
     this.reviewFormOpen = true;
   }
 
   closeReviewForm(): void {
     this.reviewFormOpen = false;
     this.reviewFormError = undefined;
+    this.clearReviewPhoto();
+  }
+
+  openDeleteReviewModal(): void {
+    if (!this.currentClubId || !this.myReview || this.reviewDeleting) {
+      return;
+    }
+    this.deleteReviewModalOpen = true;
+  }
+
+  closeDeleteReviewModal(): void {
+    if (this.reviewDeleting) {
+      return;
+    }
+    this.deleteReviewModalOpen = false;
   }
 
   setReviewFormRating(rating: number): void {
     if (rating < 1 || rating > 5) return;
     this.reviewFormRating = rating;
+  }
+
+  onReviewPhotoSelected(event: globalThis.Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.reviewFormError = undefined;
+    this.clearReviewPhoto();
+
+    if (!file) {
+      return;
+    }
+
+    const validationError = this.validateReviewPhoto(file);
+    if (validationError) {
+      this.reviewFormError = validationError;
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.reviewFormPhoto = file;
+    this.reviewFormPhotoName = file.name;
+    this.cdr.detectChanges();
+  }
+
+  clearReviewPhoto(): void {
+    this.reviewFormPhoto = undefined;
+    this.reviewFormPhotoName = '';
+  }
+
+  private validateReviewPhoto(file: File): string | null {
+    if (file.size <= 0) {
+      return this.i18n.instant('clubDetails.reviewMessages.invalidPhoto');
+    }
+
+    if (file.size > ClubDetailsPage.maxReviewPhotoBytes) {
+      return this.i18n.instant('clubDetails.reviewMessages.photoTooLarge');
+    }
+
+    const type = (file.type || '').trim().toLowerCase();
+    if (ClubDetailsPage.allowedReviewPhotoTypes.has(type)) {
+      return null;
+    }
+
+    if ((!type || type === 'application/octet-stream') && ClubDetailsPage.allowedReviewPhotoExtensions.test(file.name || '')) {
+      return null;
+    }
+
+    return this.i18n.instant('clubDetails.reviewMessages.invalidPhoto');
   }
 
   submitReviewForm(): void {
@@ -731,7 +835,8 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     const payload = {
       rating: this.reviewFormRating,
       description: this.reviewFormDescription?.trim() || undefined,
-      fromTableGuest: false
+      fromTableGuest: false,
+      photo: this.reviewFormPhoto
     };
 
     this.reviewFormSubmitting = true;
@@ -744,12 +849,11 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     request$.subscribe({
       next: () => {
         this.reviewFormSubmitting = false;
-        this.reviewSuccessMessage = this.reviewFormMode === 'create'
-          ? this.i18n.instant('clubDetails.reviewMessages.created')
-          : this.i18n.instant('clubDetails.reviewMessages.updated');
         this.reviewFormOpen = false;
+        this.clearReviewPhoto();
         this.reviewsCurrentPage = 1;
         this.loadReviews();
+        this.loadReviewPhotos(this.currentClubId!);
         this.refreshClubRating();
       },
       error: err => {
@@ -768,18 +872,16 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
   deleteMyReview(): void {
     if (!this.currentClubId || !this.myReview || this.reviewDeleting) return;
-    if (isPlatformBrowser(this.platformId) && !window.confirm(this.i18n.instant('clubDetails.reviewMessages.confirmDelete'))) {
-      return;
-    }
 
     this.reviewDeleting = true;
     this.reviewService.delete(this.currentClubId).subscribe({
       next: () => {
         this.reviewDeleting = false;
+        this.deleteReviewModalOpen = false;
         this.myReview = undefined;
-        this.reviewSuccessMessage = this.i18n.instant('clubDetails.reviewMessages.deleted');
         this.reviewsCurrentPage = 1;
         this.loadReviews();
+        this.loadReviewPhotos(this.currentClubId!);
         this.refreshClubRating();
       },
       error: err => {

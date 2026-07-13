@@ -71,7 +71,7 @@
               <div class="flex flex-wrap gap-2">
                   <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded border border-purple-500/40 px-3 py-1 text-xs text-white transition hover:bg-purple-500/20"
+                  class="inline-flex cursor-pointer items-center gap-2 rounded border border-purple-500/40 px-3 py-1 text-xs text-white transition hover:bg-purple-500/20"
                   (click)="goToClub(r.clubId)"
                 >
                   <i class="fa-solid fa-arrow-up-right-from-square"></i>
@@ -79,9 +79,9 @@
                 </button>
                   <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded border border-red-500/40 px-3 py-1 text-xs text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
+                  class="inline-flex cursor-pointer items-center gap-2 rounded border border-red-500/40 px-3 py-1 text-xs text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                   [disabled]="deletingReviewId === r.reviewId"
-                  (click)="deleteReview(r)"
+                  (click)="openDeleteModal(r)"
                 >
                   <i class="fa-solid" [ngClass]="deletingReviewId === r.reviewId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
                     {{ 'common.delete' | translate }}
@@ -125,4 +125,52 @@
       </ng-container>
     </main>
   </section>
+
+  <div
+    *ngIf="deleteModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deleteReviewTitle"
+    (click)="closeDeleteModal()"
+  >
+    <div
+      class="w-full max-w-[440px] rounded-lg border border-white/10 bg-[#181818] p-6 text-white shadow-[0_18px_50px_rgba(0,0,0,0.55)]"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="mb-4 flex items-start gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-300">
+          <i class="fa-solid fa-trash"></i>
+        </div>
+        <div>
+          <h2 id="deleteReviewTitle" class="m-0 text-xl font-semibold text-white">
+            {{ 'myReviews.deleteTitle' | translate }}
+          </h2>
+          <p class="mt-2 text-sm leading-6 text-white/75">
+            {{ 'myReviews.deleteBody' | translate }}
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="button"
+          class="cursor-pointer rounded-md border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+          (click)="closeDeleteModal()"
+          [disabled]="!!deletingReviewId"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="cursor-pointer rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          (click)="confirmDeleteReview()"
+          [disabled]="!!deletingReviewId"
+        >
+          <i class="fa-solid mr-2" [ngClass]="deletingReviewId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+          {{ 'clubDetails.deleteReview' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

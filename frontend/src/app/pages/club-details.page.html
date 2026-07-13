@@ -22,7 +22,7 @@
       <ng-container *ngIf="carouselPhotos.length > 0; else coverFallback">
         <div class="relative h-[300px] w-full overflow-hidden bg-black md:h-[400px]">
           <img
-            class="block h-full w-full object-cover transition-opacity duration-300"
+            class="block h-full w-full object-contain transition-opacity duration-300"
             [src]="carouselPhotos[activeCarouselIndex]?.url"
             [alt]="'clubDetails.carouselPhotoAlt' | translate: { clubName: club!.clubName, index: activeCarouselIndex + 1 }"
             loading="lazy"
@@ -72,7 +72,7 @@
       <ng-template #coverFallback>
         <div class="relative h-[300px] w-full overflow-hidden bg-black md:h-[400px]" *ngIf="coverUrl; else noCover">
           <img
-            class="block h-full w-full object-cover"
+            class="block h-full w-full object-contain"
             [src]="coverUrl"
             [alt]="'clubDetails.coverAlt' | translate: { clubName: club!.clubName }"
             loading="lazy"
@@ -193,10 +193,6 @@
             {{ tablesError }}
           </div>
 
-          <div *ngIf="reserveSuccess" class="mb-3 rounded bg-[#1f5a2a] px-3 py-2 text-sm text-white">
-            {{ reserveSuccess }}
-          </div>
-
           <p class="m-0 p-3 text-center text-base text-white" *ngIf="!loadingBookingDates && tables.length === 0">{{ 'clubDetails.noTablesAvailable' | translate }}</p>
 
           <form>
@@ -297,23 +293,6 @@
                 {{ 'clubDetails.leaveReview' | translate }}
           </button>
 
-          <button
-              *ngIf="isLoggedIn && myReview && !reviewFormOpen"
-            type="button"
-            class="inline-flex items-center gap-2 rounded-md border border-purple-500/40 bg-transparent px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-500/20"
-            (click)="openEditReviewForm(myReview)"
-          >
-            <i class="fa-solid fa-pen"></i>
-                {{ 'clubDetails.editMyReview' | translate }}
-          </button>
-        </div>
-
-        <!-- Mensaje de éxito -->
-        <div
-          *ngIf="reviewSuccessMessage"
-          class="mb-4 rounded bg-[#1f5a2a] px-3 py-2 text-sm text-white"
-        >
-          {{ reviewSuccessMessage }}
         </div>
 
         <!-- Formulario de crear/editar reseña -->
@@ -355,10 +334,35 @@
               name="reviewDescription"
               rows="4"
               maxlength="1000"
-              class="w-full rounded border border-purple-500/30 bg-[#1f1f1f] px-3 py-2 text-white placeholder-[#666] focus:border-purple-500 focus:outline-none"
+              class="max-h-40 w-full resize-none overflow-y-auto rounded border border-purple-500/30 bg-[#1f1f1f] px-3 py-2 text-white placeholder-[#666] focus:border-purple-500 focus:outline-none"
                placeholder="{{ 'clubDetails.commentPlaceholder' | translate }}"
               [(ngModel)]="reviewFormDescription"
             ></textarea>
+          </div>
+
+          <div class="mb-4">
+            <label for="reviewPhoto" class="mb-2 block text-sm font-medium text-[#bab8b8]">
+              {{ 'clubDetails.photoLabel' | translate }}
+            </label>
+            <input
+              #reviewPhotoInput
+              id="reviewPhoto"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+              class="block w-full rounded border border-purple-500/30 bg-[#1f1f1f] px-3 py-2 text-sm text-white file:mr-4 file:rounded file:border-0 file:bg-[#9c27b0] file:px-3 file:py-1 file:text-white"
+              (change)="onReviewPhotoSelected($event)"
+            />
+            <p class="mb-0 mt-2 text-xs text-[#999]">{{ 'clubDetails.photoHelp' | translate }}</p>
+            <div *ngIf="reviewFormPhotoName" class="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#d7d7d7]">
+              <span>{{ reviewFormPhotoName }}</span>
+              <button
+                type="button"
+                class="rounded border border-white/15 px-2 py-1 text-white transition hover:bg-white/10"
+                (click)="clearReviewPhoto(); reviewPhotoInput.value = ''"
+              >
+                {{ 'common.delete' | translate }}
+              </button>
+            </div>
           </div>
 
           <div *ngIf="reviewFormError" class="mb-3 rounded bg-[#5a1a1a] px-3 py-2 text-sm text-white">
@@ -389,7 +393,7 @@
               type="button"
               class="ml-auto inline-flex items-center gap-2 rounded-md border border-red-500/40 bg-transparent px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
               [disabled]="reviewDeleting"
-              (click)="deleteMyReview()"
+              (click)="openDeleteReviewModal()"
             >
                <i class="fa-solid" [ngClass]="reviewDeleting ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
                {{ 'clubDetails.deleteReview' | translate }}
@@ -406,11 +410,11 @@
           {{ 'clubDetails.loginToReview' | translate }}
         </div>
 
-        <div *ngIf="reviews.length > 0; else noReviews" class="mb-6">
+        <div *ngIf="visibleReviews.length > 0; else noReviews" class="mb-6">
           <div class="space-y-4">
-            <div class="flex gap-4 rounded-lg border p-4 transition hover:bg-black/40"
-                 [ngClass]="isMyReview(r) ? 'border-purple-500/60 bg-purple-900/20' : 'border-white/10 bg-black/20 hover:border-purple-500/30'"
-                 *ngFor="let r of reviews">
+            <div class="flex gap-4 rounded-lg border p-4 transition"
+                 [ngClass]="'border-white/10 bg-black/20'"
+                 *ngFor="let r of visibleReviews">
               <div class="flex-1">
                 <div class="mb-3 flex items-start justify-between gap-2">
                   <div>
@@ -445,7 +449,7 @@
                     type="button"
                     class="inline-flex items-center gap-2 rounded border border-red-500/40 px-3 py-1 text-xs text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
                     [disabled]="reviewDeleting"
-                    (click)="deleteMyReview()"
+                    (click)="openDeleteReviewModal()"
                   >
                      <i class="fa-solid" [ngClass]="reviewDeleting ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
                      {{ 'common.delete' | translate }}
@@ -466,7 +470,7 @@
         </div>
 
         <ng-template #noReviews>
-          <div class="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-white/10 py-8 text-[#999]">
+          <div *ngIf="!isEditingMyReview()" class="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-white/10 py-8 text-[#999]">
             <i class="fa-solid fa-comments text-3xl text-[#9c27b0]"></i>
             <p class="m-0">{{ 'clubDetails.noReviews' | translate }}</p>
             <small class="text-[#666]">{{ 'clubDetails.beFirstReview' | translate }}</small>
@@ -495,6 +499,54 @@
         </div>
       </div>
 </section>
+  </div>
+
+  <div
+    *ngIf="deleteReviewModalOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deleteReviewTitle"
+    (click)="closeDeleteReviewModal()"
+  >
+    <div
+      class="w-full max-w-[440px] rounded-lg border border-white/10 bg-[#181818] p-6 text-white shadow-[0_18px_50px_rgba(0,0,0,0.55)]"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="mb-4 flex items-start gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-300">
+          <i class="fa-solid fa-trash"></i>
+        </div>
+        <div>
+          <h2 id="deleteReviewTitle" class="m-0 text-xl font-semibold text-white">
+            {{ 'clubDetails.reviewMessages.deleteTitle' | translate }}
+          </h2>
+          <p class="mt-2 text-sm leading-6 text-white/75">
+            {{ 'clubDetails.reviewMessages.deleteBody' | translate }}
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="button"
+          class="rounded-md border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+          (click)="closeDeleteReviewModal()"
+          [disabled]="reviewDeleting"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+          (click)="deleteMyReview()"
+          [disabled]="reviewDeleting"
+        >
+          <i class="fa-solid mr-2" [ngClass]="reviewDeleting ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+          {{ 'clubDetails.deleteReview' | translate }}
+        </button>
+      </div>
+    </div>
   </div>
 
   <div
