@@ -463,7 +463,12 @@ export class ClubService {
 
   createTable(clubId: string, payload: TablePayload, links?: unknown): Observable<ClubTable> {
     const url = this.resolveClubLink(links, this.linkRels.tables, `club ${clubId} tables`, `${this.apiUrl}/clubs/${clubId}/tables`);
-    return this.http.post<ClubTable>(url, payload).pipe(map(table => this.normalizeTable(table)));
+    // El 409 por numero de mesa duplicado lo maneja club-handler.page.ts como
+    // error de campo (igual que el resto de los formularios); sin este flag
+    // el interceptor global lo agarra primero y redirige a /error.
+    return this.http.post<ClubTable>(url, payload, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    }).pipe(map(table => this.normalizeTable(table)));
   }
 
   updateTable(clubId: string, tableId: string, payload: TablePayload, table?: ClubTable): Observable<ClubTable> {
@@ -473,7 +478,9 @@ export class ClubService {
       `table ${tableId}`,
       `${this.apiUrl}/clubs/${clubId}/tables/${tableId}`
     );
-    return this.http.put<ClubTable>(url, payload).pipe(map(updated => this.normalizeTable(updated)));
+    return this.http.put<ClubTable>(url, payload, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    }).pipe(map(updated => this.normalizeTable(updated)));
   }
 
   deleteTable(clubId: string, tableId: string, table?: ClubTable): Observable<void> {
