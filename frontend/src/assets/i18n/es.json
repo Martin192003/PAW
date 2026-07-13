@@ -230,6 +230,13 @@
     "noFallback": "No se encontraron datos de perfil. Por favor, iniciá sesión primero.",
     "errors": {
       "emptyField": "El campo no puede quedar vacío",
+      "required": "Este campo es obligatorio.",
+      "email": "Ingresá un email válido.",
+      "maxlength": "Máximo {{max}} caracteres.",
+      "phonePattern": "El teléfono solo puede contener números y símbolos válidos.",
+      "invalid": "Campo inválido.",
+      "emailConflict": "Ya existe una cuenta registrada con ese email.",
+      "usernameConflict": "Ese nombre de usuario ya está en uso.",
       "saveFailed": "No se pudo guardar el cambio",
       "invalidSession": "Tu sesión no es válida. Volvé a iniciar sesión.",
       "serverUpdate": "Error interno del servidor al actualizar el perfil",

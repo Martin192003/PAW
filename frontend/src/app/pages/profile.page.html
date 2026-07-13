@@ -93,18 +93,19 @@
       </button>
     </div>
 
-    <form (ngSubmit)="saveEditor()" class="space-y-4">
+    <form [formGroup]="editorForm" (ngSubmit)="saveEditor()" class="space-y-4">
       <div>
         <label class="mb-2 block text-sm font-semibold text-white/90" [for]="field + '-input'">{{ activeFieldLabelKey | translate }}</label>
         <input
           [id]="field + '-input'"
-          name="draftValue"
-          [(ngModel)]="draftValue"
+          formControlName="draftValue"
           [type]="activeFieldType"
-          class="w-full rounded-[12px] border border-white/10 bg-transparent px-4 py-3 text-white placeholder:text-white/40 outline-none transition-colors focus:border-[#d500f9] focus:shadow-[0_0_0_3px_rgba(213,0,249,0.15)]"
+          class="w-full rounded-[12px] border bg-transparent px-4 py-3 text-white placeholder:text-white/40 outline-none transition-colors focus:border-[#d500f9] focus:shadow-[0_0_0_3px_rgba(213,0,249,0.15)]"
+          [ngClass]="showError() ? 'border-[#dc3545]' : 'border-white/10'"
           [placeholder]="activeFieldPlaceholderKey | translate"
           autocomplete="off"
         />
+        <span *ngIf="showError()" class="text-[#d32f2f] text-xs mt-1 block font-semibold">{{ getError() }}</span>
       </div>
 
       <p *ngIf="errorMessage" class="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">

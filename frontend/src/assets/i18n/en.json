@@ -230,6 +230,13 @@
     "noFallback": "No profile data found. Please log in first.",
     "errors": {
       "emptyField": "This field cannot be empty",
+      "required": "This field is required.",
+      "email": "Enter a valid email.",
+      "maxlength": "Maximum {{max}} characters.",
+      "phonePattern": "Phone can only contain numbers and valid symbols.",
+      "invalid": "Invalid field.",
+      "emailConflict": "There is already an account registered with that email.",
+      "usernameConflict": "That username is already taken.",
       "saveFailed": "Could not save the change",
       "invalidSession": "Your session is invalid. Please sign in again.",
       "serverUpdate": "Internal server error while updating the profile",
