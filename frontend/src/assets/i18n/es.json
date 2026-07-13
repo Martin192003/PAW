@@ -445,6 +445,15 @@
       "newTitle": "Nueva mesa",
       "editTitle": "Editar mesa"
     },
+    "tableErrors": {
+      "required": "Este campo es obligatorio.",
+      "invalid": "Valor inválido.",
+      "tableNumberMax": "El número de mesa debe ser menor a 1.000.000.",
+      "capacityMax": "La capacidad debe ser menor a 10.000.",
+      "priceMax": "El precio debe ser menor a 99.999.999,99.",
+      "discountRange": "El descuento debe estar entre 0 y 100.",
+      "duplicateNumber": "Ya existe una mesa con ese número en este club."
+    },
     "placeholders": {
       "productName": "Nombre del producto",
       "productDescription": "Descripción del producto",

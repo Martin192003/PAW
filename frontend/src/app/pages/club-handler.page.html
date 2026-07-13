@@ -315,10 +315,22 @@
               <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 space-y-2" (ngSubmit)="saveTable()">
                 <h3 class="text-white text-sm font-semibold">{{ editingTableId ? ('clubHandler.tableForm.editTitle' | translate) : ('clubHandler.tableForm.newTitle' | translate) }}</h3>
 
-                <input name="tableNumber" [(ngModel)]="tableForm.tableNumber" type="number" min="1" class="field-input" [placeholder]="'clubHandler.placeholders.tableNumber' | translate" />
-                <input name="tableCapacity" [(ngModel)]="tableForm.capacity" type="number" min="1" class="field-input" [placeholder]="'clubHandler.placeholders.tableCapacity' | translate" />
-                <input name="tablePrice" [(ngModel)]="tableForm.price" type="number" min="0" step="0.01" class="field-input" [placeholder]="'clubHandler.placeholders.tablePrice' | translate" />
-                <input name="tableDiscount" [(ngModel)]="tableForm.discount" type="number" min="0" step="0.01" class="field-input" [placeholder]="'clubHandler.placeholders.tableDiscount' | translate" />
+                <div>
+                  <input name="tableNumber" [(ngModel)]="tableForm.tableNumber" type="number" min="1" class="field-input" [class.has-error]="showTableError('tableNumber')" [placeholder]="'clubHandler.placeholders.tableNumber' | translate" />
+                  <span *ngIf="showTableError('tableNumber')" class="field-error-text">{{ getTableError('tableNumber') }}</span>
+                </div>
+                <div>
+                  <input name="tableCapacity" [(ngModel)]="tableForm.capacity" type="number" min="1" class="field-input" [class.has-error]="showTableError('capacity')" [placeholder]="'clubHandler.placeholders.tableCapacity' | translate" />
+                  <span *ngIf="showTableError('capacity')" class="field-error-text">{{ getTableError('capacity') }}</span>
+                </div>
+                <div>
+                  <input name="tablePrice" [(ngModel)]="tableForm.price" type="number" min="0" step="0.01" class="field-input" [class.has-error]="showTableError('price')" [placeholder]="'clubHandler.placeholders.tablePrice' | translate" />
+                  <span *ngIf="showTableError('price')" class="field-error-text">{{ getTableError('price') }}</span>
+                </div>
+                <div>
+                  <input name="tableDiscount" [(ngModel)]="tableForm.discount" type="number" min="0" step="0.01" class="field-input" [class.has-error]="showTableError('discount')" [placeholder]="'clubHandler.placeholders.tableDiscount' | translate" />
+                  <span *ngIf="showTableError('discount')" class="field-error-text">{{ getTableError('discount') }}</span>
+                </div>
 
                 <select name="tableState" [(ngModel)]="tableForm.tableState" class="field-input">
                   <option *ngFor="let state of tableStates" [value]="state">{{ ('clubHandler.tableStates.' + state) | translate }}</option>

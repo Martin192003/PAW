@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import {
   ClubService,
@@ -125,6 +126,16 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     discount: null,
     tableState: 'DISPONIBLE'
   };
+
+  // Mismo patron de "errores congelados" que register.page.ts / club-new.page.ts:
+  // antes esto solo validaba "no vacio / no negativo" y dejaba pasar valores
+  // como una capacidad de 17 digitos, que el backend rechazaba con un 500
+  // crudo (InvalidCapacityException sin manejar). Estos limites replican
+  // exactamente los que valida TableServiceImpl.create/update.
+  tableSubmittedAttempted = false;
+  tableFrozenErrors: { [key: string]: boolean } = {};
+  tableFrozenErrorMessages: { [key: string]: string } = {};
+  private static readonly TABLE_FIELDS = ['tableNumber', 'capacity', 'price', 'discount'];
 
   savingEvent = false;
   editingEventId: string | null = null;
@@ -570,6 +581,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       discount: null,
       tableState: this.tableStates[0]
     };
+    this.resetTableValidation();
   }
 
   startEditTable(table: ClubTable): void {
@@ -581,6 +593,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       discount: table.discount,
       tableState: this.normalizeTableState(table.tableState)
     };
+    this.resetTableValidation();
     this.clearActionMessages();
   }
 
@@ -588,13 +601,73 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.startCreateTable();
   }
 
+  showTableError(field: string): boolean {
+    if (!this.tableSubmittedAttempted) return false;
+    return !!this.tableFrozenErrors[field];
+  }
+
+  getTableError(field: string): string {
+    return this.tableFrozenErrorMessages[field] ?? '';
+  }
+
+  private resetTableValidation(): void {
+    this.tableSubmittedAttempted = false;
+    this.tableFrozenErrors = {};
+    this.tableFrozenErrorMessages = {};
+  }
+
+  private tableFieldError(field: string): string {
+    const raw = (this.tableForm as unknown as Record<string, unknown>)[field];
+    const isEmpty = raw === null || raw === undefined || raw === '';
+    const value = Number(raw);
+
+    switch (field) {
+      case 'tableNumber':
+        if (isEmpty) return this.i18n.instant('clubHandler.tableErrors.required');
+        if (!Number.isFinite(value) || value <= 0) return this.i18n.instant('clubHandler.tableErrors.invalid');
+        if (value >= 1_000_000) return this.i18n.instant('clubHandler.tableErrors.tableNumberMax');
+        return '';
+      case 'capacity':
+        if (isEmpty) return this.i18n.instant('clubHandler.tableErrors.required');
+        if (!Number.isFinite(value) || value <= 0) return this.i18n.instant('clubHandler.tableErrors.invalid');
+        if (value >= 10_000) return this.i18n.instant('clubHandler.tableErrors.capacityMax');
+        return '';
+      case 'price':
+        if (isEmpty) return this.i18n.instant('clubHandler.tableErrors.required');
+        if (!Number.isFinite(value) || value < 0) return this.i18n.instant('clubHandler.tableErrors.invalid');
+        if (value >= 99999999.99) return this.i18n.instant('clubHandler.tableErrors.priceMax');
+        return '';
+      case 'discount':
+        // El descuento es opcional (default 0), a diferencia de los otros campos.
+        if (isEmpty) return '';
+        if (!Number.isFinite(value) || value < 0 || value > 100) return this.i18n.instant('clubHandler.tableErrors.discountRange');
+        return '';
+      default:
+        return '';
+    }
+  }
+
   saveTable(): void {
     if (!this.clubId || this.savingTable) {
       return;
     }
 
-    if (this.tableForm.tableNumber == null || this.tableForm.capacity == null || this.tableForm.price == null) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableRequiredFields');
+    this.tableSubmittedAttempted = true;
+    this.tableFrozenErrors = {};
+    this.tableFrozenErrorMessages = {};
+
+    let hasError = false;
+    for (const field of ClubHandlerPage.TABLE_FIELDS) {
+      const message = this.tableFieldError(field);
+      if (message) {
+        this.tableFrozenErrors[field] = true;
+        this.tableFrozenErrorMessages[field] = message;
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      this.actionErrorMessage = '';
       this.actionSuccessMessage = '';
       return;
     }
@@ -606,12 +679,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       discount: Number(this.tableForm.discount ?? 0),
       tableState: this.tableForm.tableState
     };
-
-    if (payload.tableNumber <= 0 || payload.capacity <= 0 || payload.price < 0 || payload.discount < 0) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableInvalid');
-      this.actionSuccessMessage = '';
-      return;
-    }
 
     this.savingTable = true;
     const editingTable = this.editingTableId
@@ -634,7 +701,21 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.tableSaved');
         this.actionErrorMessage = '';
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
+        // El numero de mesa es unico por club a nivel de base de datos (constraint
+        // club_tables_club_id_table_number_key), pero no se valida proactivamente
+        // antes del insert. El 409 que devuelve el DataIntegrityViolationExceptionMapper
+        // del backend es siempre por esto, asi que se muestra como error de campo
+        // en vez del cartel generico, igual que los otros formularios.
+        if (error.status === 409) {
+          this.tableSubmittedAttempted = true;
+          this.tableFrozenErrors['tableNumber'] = true;
+          this.tableFrozenErrorMessages['tableNumber'] = this.i18n.instant('clubHandler.tableErrors.duplicateNumber');
+          this.actionErrorMessage = '';
+          this.actionSuccessMessage = '';
+          return;
+        }
+
         this.loadTables();
         this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableSaveFailed');
         this.actionSuccessMessage = '';
