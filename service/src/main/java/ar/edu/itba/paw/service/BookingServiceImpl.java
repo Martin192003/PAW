@@ -353,6 +353,35 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
+    public Booking getForUserOrAdminInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
+        if (clubId == null) {
+            throw new BadRequestException("clubId es requerido");
+        }
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        final Booking booking = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+
+        final ClubTable table = ensureTableExists(booking.getTableId());
+        if (!clubId.equals(table.getClubId())) {
+            throw new BookingNotFoundException(bookingId.toString());
+        }
+
+        final boolean isOwner = booking.getUser() != null
+                && booking.getUser().getId() != null
+                && booking.getUser().getId().equals(user.getId());
+
+        final List<UUID> adminClubIds = clubDao.findIdsByAdmin(user.getId());
+        final boolean isClubAdmin = adminClubIds != null && adminClubIds.contains(clubId);
+
+        if (!isOwner && !isClubAdmin) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
+
+        return booking;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Booking> searchForAdminPaginated(UUID adminUserId,
                                                  UUID clubId,
                                                  String oldBookingId,
