@@ -673,6 +673,7 @@
   },
   "bookingAdminHandler": {
     "title": "Booking",
+    "loading": "Loading booking...",
     "details": {
       "title": "Booking Details",
       "user": "User",
@@ -693,7 +694,8 @@
     },
     "buttons": {
       "cancel": "Cancel",
-      "confirm": "Confirm"
+      "confirm": "Confirm",
+      "confirmDisabledHint": "The booking can't be confirmed until the user uploads a receipt."
     },
     "modal": {
       "cancelTitle": "Cancel booking?",
@@ -708,6 +710,7 @@
       "invalidBooking": "Invalid booking.",
       "loadFailed": "Could not load booking.",
       "confirmFailed": "Could not confirm booking.",
+      "receiptRequired": "The booking can't be confirmed: the user hasn't uploaded a receipt yet.",
       "cancelFailed": "Could not cancel booking."
     },
     "success": {
@@ -718,6 +721,7 @@
   "bookingUserHandler": {
     "back": "Back",
     "title": "Booking",
+    "loading": "Loading booking...",
     "details": {
       "title": "Booking Details",
       "user": "User",
@@ -736,7 +740,8 @@
       "noReceipt": "No receipt uploaded.",
       "viewTab": "View in tab",
       "upload": "Upload receipt",
-      "edit": "Edit receipt"
+      "edit": "Edit receipt",
+      "lockedConfirmed": "This booking is already confirmed, so the receipt can no longer be changed."
     },
     "modal": {
       "cancelTitle": "Cancel booking?",
@@ -762,7 +767,8 @@
       "receiptEmpty": "The receipt cannot be empty.",
       "receiptTooLarge": "The receipt cannot exceed 5 MB.",
       "receiptUnsupportedType": "Upload a JPG, PNG, or WebP receipt.",
-      "receiptForCancelled": "Cannot upload a receipt for a cancelled booking."
+      "receiptForCancelled": "Cannot upload a receipt for a cancelled booking.",
+      "receiptForConfirmed": "The receipt for an already confirmed booking cannot be changed."
     },
     "success": {
       "cancelled": "Booking cancelled successfully.",

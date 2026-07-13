@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
+import ar.edu.itba.paw.persistence.ReceiptDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -33,6 +34,7 @@ public class BookingServiceImpl implements BookingService {
     private final TableService tableService;
     private final ClubDao clubDao;
     private final EmailService emailService;
+    private final ReceiptDao receiptDao;
 
     public BookingServiceImpl(final BookingDao bookingDao,
                               final ClubTablesDao tablesDao,
@@ -40,7 +42,8 @@ public class BookingServiceImpl implements BookingService {
                               final ClubService clubService,
                               final TableService tableService,
                               final ClubDao clubDao,
-                              final EmailService emailService) {
+                              final EmailService emailService,
+                              final ReceiptDao receiptDao) {
         this.bookingDao = bookingDao;
         this.tablesDao = tablesDao;
         this.userService = userService;
@@ -48,6 +51,7 @@ public class BookingServiceImpl implements BookingService {
         this.tableService = tableService;
         this.clubDao = clubDao;
         this.emailService = emailService;
+        this.receiptDao = receiptDao;
     }
 
     @Override
@@ -297,6 +301,9 @@ public class BookingServiceImpl implements BookingService {
         }
         if (b.getStatus() != Status.PENDIENTE) {
             throw new InvalidStatusTransitionException(b.getStatus(), Status.CONFIRMADA);
+        }
+        if (receiptDao.findByBooking(bookingId).isEmpty()) {
+            throw new InvalidReceiptException("receipt.required");
         }
 
         bookingDao.updateStatus(bookingId, Status.CONFIRMADA)

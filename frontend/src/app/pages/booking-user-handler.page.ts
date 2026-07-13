@@ -36,6 +36,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
   error = '';
   success = '';
   showCancelModal = false;
+  loading = false;
 
   private receiptObjectUrl = '';
 
@@ -66,6 +67,14 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
       return;
     }
 
+    // Sin este flag la pantalla se queda completamente en blanco (solo el
+    // header) mientras espera la respuesta, lo que parece un error/pantalla
+    // rota en vez de una carga en curso, sobre todo justo despues de crear
+    // la reserva.
+    this.loading = true;
+    this.error = '';
+    this.cdr.detectChanges();
+
     this.bookingService.getBooking(clubId, bookingId).pipe(
       switchMap(booking => {
         this.booking = booking;
@@ -80,10 +89,12 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
       next: ({ club, tables }) => {
         this.club = club;
         this.table = tables.find(table => table.tableId === this.booking?.tableId);
+        this.loading = false;
         this.loadReceipt();
         this.cdr.detectChanges();
       },
       error: () => {
+        this.loading = false;
         this.error = this.i18n.instant('bookingUserHandler.errors.loadFailed');
         this.cdr.detectChanges();
       }
@@ -168,6 +179,17 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
 
   isCancelled(): boolean {
     return (this.booking?.status || '').trim().toUpperCase() === 'CANCELADA';
+  }
+
+  isConfirmed(): boolean {
+    return (this.booking?.status || '').trim().toUpperCase() === 'CONFIRMADA';
+  }
+
+  // Una vez que el admin confirma la reserva, el comprobante queda fijo: ya
+  // se uso para validar el pago, asi que no tendria sentido dejar que el
+  // usuario lo reemplace o lo borre despues de esa validacion.
+  canEditReceipt(): boolean {
+    return !this.isCancelled() && !this.isConfirmed();
   }
 
   priceToPay(): number {
@@ -266,6 +288,8 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
         return this.i18n.instant('bookingUserHandler.errors.receiptUnsupportedType');
       case 'receipt.for.cancelled':
         return this.i18n.instant('bookingUserHandler.errors.receiptForCancelled');
+      case 'receipt.for.confirmed':
+        return this.i18n.instant('bookingUserHandler.errors.receiptForConfirmed');
       default:
         return this.i18n.instant('bookingUserHandler.errors.receiptUploadFailed');
     }
