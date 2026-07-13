@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { UserService } from '../services/user.service';
@@ -10,6 +10,10 @@ import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
+
+// Antes este formulario pedia 8 caracteres mientras que el de registro
+// (register.page.ts) pedia 6: se unifica al mismo minimo en toda la app.
+const PASSWORD_MIN_LENGTH = 6;
 
 @Component({
   standalone: true,
@@ -27,13 +31,26 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
   showResetModal = false;
   useLoggedUserEmail = false;
 
+  // Errores generales de la request (red, 5xx, token invalido/vencido: no son
+  // atribuibles a un campo puntual del formulario), se siguen mostrando como
+  // cartel arriba del form. Los que si son de un campo van por el mismo
+  // patron de "errores congelados" que register.page.ts / club-handler.page.ts.
   forgotError = '';
   resetError = '';
-  forgotSuccess = '';
   resetCompleted = false;
 
   forgotForm: FormGroup;
   resetForm: FormGroup;
+
+  forgotSubmittedAttempted = false;
+  forgotFrozenErrors: { [key: string]: boolean } = {};
+  forgotFrozenErrorMessages: { [key: string]: string } = {};
+  forgotServerFieldErrors: { [key: string]: string } = {};
+
+  resetSubmittedAttempted = false;
+  resetFrozenErrors: { [key: string]: boolean } = {};
+  resetFrozenErrorMessages: { [key: string]: string } = {};
+  resetServerFieldErrors: { [key: string]: string } = {};
 
   constructor(
     private readonly fb: FormBuilder,
@@ -51,9 +68,9 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     });
 
     this.resetForm = this.fb.group({
-      newPassword: ['', [Validators.required, Validators.minLength(8)]],
-      confirmationPassword: ['', [Validators.required, Validators.minLength(8)]],
-    });
+      newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH)]],
+      confirmationPassword: ['', [Validators.required]],
+    }, { validators: this.passwordsMatchValidator() });
   }
 
   ngOnInit(): void {
@@ -76,12 +93,22 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
   }
 
   submitForgot(): void {
+    this.forgotSubmittedAttempted = true;
     this.forgotForm.markAllAsTouched();
+
+    this.forgotFrozenErrors = {};
+    this.forgotFrozenErrorMessages = {};
+    const hasError = this.hasCurrentForgotError('email');
+    this.forgotFrozenErrors['email'] = hasError;
+    if (hasError) {
+      this.forgotFrozenErrorMessages['email'] = this.currentForgotErrorMessage('email');
+    }
+
     if (this.forgotForm.invalid || this.submittingForgot) return;
 
     this.submittingForgot = true;
     this.forgotError = '';
-    this.forgotSuccess = '';
+    this.forgotServerFieldErrors = {};
     this.showForgotModal = false;
 
     const email = (this.forgotForm.value.email ?? '').trim();
@@ -93,14 +120,13 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     ).subscribe({
       next: () => {
         this.ngZone.run(() => {
-          this.forgotSuccess = this.i18n.instant('passwordReset.modal.sentBody');
           this.showForgotModal = true;
           this.cdr.detectChanges();
         });
       },
       error: (error: HttpErrorResponse) => {
         this.ngZone.run(() => {
-          this.forgotError = this.resolveForgotError(error);
+          this.applyForgotError(error);
           this.cdr.detectChanges();
         });
       },
@@ -108,24 +134,32 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
   }
 
   submitReset(): void {
+    this.resetSubmittedAttempted = true;
     this.resetForm.markAllAsTouched();
+
+    this.resetFrozenErrors = {};
+    this.resetFrozenErrorMessages = {};
+    (['newPassword', 'confirmationPassword'] as const).forEach((field) => {
+      const hasError = this.hasCurrentResetError(field);
+      this.resetFrozenErrors[field] = hasError;
+      if (hasError) {
+        this.resetFrozenErrorMessages[field] = this.currentResetErrorMessage(field);
+      }
+    });
+
     if (this.resetForm.invalid || this.submittingReset) return;
-
-    const newPassword = this.resetForm.value.newPassword;
-    const confirmationPassword = this.resetForm.value.confirmationPassword;
-
-    if (newPassword !== confirmationPassword) {
-      this.resetError = this.i18n.instant('passwordReset.errors.passwordsDontMatch');
-      return;
-    }
 
     if (!this.token) {
       this.resetError = this.i18n.instant('passwordReset.errors.invalidToken');
       return;
     }
 
+    const newPassword = this.resetForm.value.newPassword;
+    const confirmationPassword = this.resetForm.value.confirmationPassword;
+
     this.submittingReset = true;
     this.resetError = '';
+    this.resetServerFieldErrors = {};
     this.resetCompleted = false;
     this.showResetModal = false;
 
@@ -143,7 +177,7 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
       },
       error: (error: HttpErrorResponse) => {
         this.ngZone.run(() => {
-          this.resetError = this.resolveResetError(error);
+          this.applyResetError(error);
           this.cdr.detectChanges();
         });
       },
@@ -158,19 +192,60 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     this.location.back();
   }
 
-  showForgotError(): boolean {
-    const control = this.forgotForm.get('email');
-    return !!(control && control.invalid && (control.dirty || control.touched));
+  showForgotError(field: string): boolean {
+    if (this.forgotServerFieldErrors[field]) {
+      return true;
+    }
+
+    if (!this.forgotSubmittedAttempted) return false;
+
+    if (this.forgotFrozenErrors[field] !== undefined) {
+      return this.forgotFrozenErrors[field];
+    }
+
+    return this.hasCurrentForgotError(field);
+  }
+
+  getForgotError(field: string): string {
+    if (this.forgotServerFieldErrors[field]) {
+      return this.forgotServerFieldErrors[field];
+    }
+
+    if (this.forgotFrozenErrorMessages[field]) {
+      return this.forgotFrozenErrorMessages[field];
+    }
+
+    return this.currentForgotErrorMessage(field);
   }
 
   showResetError(field: 'newPassword' | 'confirmationPassword'): boolean {
-    const control = this.resetForm.get(field);
-    return !!(control && control.invalid && (control.dirty || control.touched));
+    if (this.resetServerFieldErrors[field]) {
+      return true;
+    }
+
+    if (!this.resetSubmittedAttempted) return false;
+
+    if (this.resetFrozenErrors[field] !== undefined) {
+      return this.resetFrozenErrors[field];
+    }
+
+    return this.hasCurrentResetError(field);
+  }
+
+  getResetError(field: 'newPassword' | 'confirmationPassword'): string {
+    if (this.resetServerFieldErrors[field]) {
+      return this.resetServerFieldErrors[field];
+    }
+
+    if (this.resetFrozenErrorMessages[field]) {
+      return this.resetFrozenErrorMessages[field];
+    }
+
+    return this.currentResetErrorMessage(field);
   }
 
   confirmForgotModal(): void {
     this.showForgotModal = false;
-    this.forgotSuccess = '';
     this.router.navigate([this.useLoggedUserEmail ? '/profile' : '/login']);
   }
 
@@ -180,17 +255,124 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     this.router.navigate(['/clubs']);
   }
 
-  private resolveForgotError(error: HttpErrorResponse): string {
-    if (error.status === 0) return this.i18n.instant('passwordReset.errors.network');
-    if (error.status === 400) return this.i18n.instant('passwordReset.errors.invalidEmail');
-    return this.i18n.instant('passwordReset.errors.emailSendFailed');
+  private hasCurrentForgotError(field: string): boolean {
+    const control = this.forgotForm.get(field);
+    return !!(control && control.invalid);
   }
 
-  private resolveResetError(error: HttpErrorResponse): string {
-    if (error.status === 0) return this.i18n.instant('passwordReset.errors.network');
-    if (error.status === 400) return this.i18n.instant('passwordReset.errors.invalidData');
-    if (error.status === 404) return this.i18n.instant('passwordReset.errors.invalidToken');
-    if (error.status === 409) return this.i18n.instant('passwordReset.errors.passwordUnchanged');
-    return this.i18n.instant('passwordReset.errors.updateFailed');
+  private currentForgotErrorMessage(field: string): string {
+    const control = this.forgotForm.get(field);
+    if (!control || !control.errors) return '';
+
+    if (control.errors['required']) return this.i18n.instant('passwordReset.errors.required');
+    if (control.errors['email']) return this.i18n.instant('passwordReset.errors.email');
+    return this.i18n.instant('passwordReset.errors.invalid');
+  }
+
+  private hasCurrentResetError(field: 'newPassword' | 'confirmationPassword'): boolean {
+    const control = this.resetForm.get(field);
+    if (!control) return false;
+    return control.invalid || (field === 'confirmationPassword' && this.resetForm.hasError('passwordMismatch'));
+  }
+
+  private currentResetErrorMessage(field: 'newPassword' | 'confirmationPassword'): string {
+    const control = this.resetForm.get(field);
+    if (!control) return '';
+
+    if (control.errors?.['required']) return this.i18n.instant('passwordReset.errors.required');
+    if (control.errors?.['minlength']) {
+      return this.i18n.instant('passwordReset.errors.minlength', {
+        min: control.errors['minlength'].requiredLength,
+      });
+    }
+    if (field === 'confirmationPassword' && this.resetForm.hasError('passwordMismatch')) {
+      return this.i18n.instant('passwordReset.errors.passwordsDontMatch');
+    }
+
+    return this.i18n.instant('passwordReset.errors.invalid');
+  }
+
+  private passwordsMatchValidator(): ValidatorFn {
+    return (group: AbstractControl): ValidationErrors | null => {
+      const newPassword = group.get('newPassword')?.value;
+      const confirmationPassword = group.get('confirmationPassword')?.value;
+
+      if (!newPassword || !confirmationPassword) return null;
+
+      return newPassword === confirmationPassword ? null : { passwordMismatch: true };
+    };
+  }
+
+  // El 400 de "email requerido" solo puede pasar si se manda un email vacio
+  // directo a la API (el frontend ya lo exige antes de submitir), pero se
+  // mapea igual al campo por si acaso, en vez de mostrar un cartel generico.
+  private applyForgotError(error: HttpErrorResponse): void {
+    if (error.status === 0) {
+      this.forgotError = this.i18n.instant('passwordReset.errors.network');
+      return;
+    }
+
+    if (error.status === 400) {
+      this.forgotServerFieldErrors['email'] = this.i18n.instant('passwordReset.errors.invalidEmail');
+      return;
+    }
+
+    this.forgotError = this.i18n.instant('passwordReset.errors.emailSendFailed');
+  }
+
+  private applyResetError(error: HttpErrorResponse): void {
+    if (error.status === 0) {
+      this.resetError = this.i18n.instant('passwordReset.errors.network');
+      return;
+    }
+
+    // El token vencido/invalido no es un campo editable del formulario (viene
+    // del link del mail), asi que se sigue mostrando como cartel arriba del
+    // form en vez de error de campo.
+    if (error.status === 404) {
+      this.resetError = this.i18n.instant('passwordReset.errors.invalidToken');
+      return;
+    }
+
+    if (error.status === 400) {
+      const message = this.extractServerMessage(error.error);
+
+      if (message === 'password_confirmation_mismatch') {
+        this.resetServerFieldErrors['confirmationPassword'] = this.i18n.instant('passwordReset.errors.passwordsDontMatch');
+        return;
+      }
+
+      if (message === 'password_required' || message === 'token_required') {
+        this.resetError = this.i18n.instant('passwordReset.errors.invalidData');
+        return;
+      }
+
+      // Unico otro 400 posible a esta altura: ValidationException de
+      // "la contraseña no puede ser igual a la anterior" (UserServiceImpl).
+      this.resetServerFieldErrors['newPassword'] = this.i18n.instant('passwordReset.errors.passwordUnchanged');
+      return;
+    }
+
+    this.resetError = this.i18n.instant('passwordReset.errors.updateFailed');
+  }
+
+  private extractServerMessage(errorBody: unknown): string | null {
+    if (!errorBody) return null;
+
+    if (typeof errorBody === 'string') {
+      try {
+        const parsed = JSON.parse(errorBody) as { message?: string };
+        return parsed.message ?? null;
+      } catch {
+        return errorBody;
+      }
+    }
+
+    if (typeof errorBody === 'object' && errorBody !== null && 'message' in errorBody) {
+      const message = (errorBody as { message?: unknown }).message;
+      return typeof message === 'string' ? message : null;
+    }
+
+    return null;
   }
 }

@@ -172,17 +172,24 @@ export class UserService {
   }
 
   requestPasswordReset(email: string): Observable<void> {
-    return this.http.post(`${this.apiUrl}/auth/password-reset-requests`, { email }).pipe(
+    // Sin este flag, cualquier codigo de la lista del interceptor
+    // (401/403/404/409/415/500+) redirige a /error antes de que
+    // change-password.page.ts pueda mostrar su propio error de campo/cartel.
+    return this.http.post(`${this.apiUrl}/auth/password-reset-requests`, { email }, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    }).pipe(
       map(() => undefined)
     );
   }
 
   resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<LoginResponse> {
     const params = new HttpParams().set('token', token);
+    // Sin este flag, un token invalido/vencido (404) redirige a /error en vez
+    // de mostrar el cartel de "token invalido o vencido" en el propio formulario.
     return this.http.post<AuthTokenResponse>(
       `${this.apiUrl}/auth/password-resets`,
       { newPassword, confirmationPassword },
-      { params }
+      { params, context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
     ).pipe(
       switchMap((tokenResponse) => {
         const nextToken = tokenResponse.accessToken;

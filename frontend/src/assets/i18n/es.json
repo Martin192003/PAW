@@ -257,7 +257,6 @@
     "submitSending": "Enviando...",
     "newPasswordPlaceholder": "Nueva contraseña",
     "confirmPasswordPlaceholder": "Confirmar contraseña",
-    "minLength": "Mínimo 8 caracteres.",
     "submitReset": "Restablecer contraseña",
     "submitSaving": "Guardando...",
     "backToHome": "Volver al inicio",
@@ -269,6 +268,10 @@
       "accept": "Aceptar"
     },
     "errors": {
+      "required": "Este campo es obligatorio.",
+      "email": "Ingresá un email válido.",
+      "minlength": "Mínimo {{min}} caracteres.",
+      "invalid": "Campo inválido.",
       "network": "No pudimos conectar con el servidor.",
       "invalidEmail": "Revisá el email e intentá de nuevo.",
       "emailSendFailed": "No pudimos enviar el email. Intentálo más tarde.",
