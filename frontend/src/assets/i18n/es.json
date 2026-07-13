@@ -468,7 +468,8 @@
     },
     "eventErrors": {
       "required": "Este campo es obligatorio.",
-      "eventNameMax": "El nombre del evento no puede superar los 120 caracteres."
+      "eventNameMax": "El nombre del evento no puede superar los 120 caracteres.",
+      "pastDate": "La fecha no puede ser anterior a hoy."
     },
     "placeholders": {
       "productName": "Nombre del producto",

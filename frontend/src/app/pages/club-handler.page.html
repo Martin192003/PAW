@@ -405,7 +405,10 @@
                 <input name="eventName" [(ngModel)]="eventForm.eventName" class="field-input" [class.has-error]="showEventError('eventName')" [placeholder]="'clubHandler.placeholders.eventName' | translate" />
                 <span *ngIf="showEventError('eventName')" class="field-error-text">{{ getEventError('eventName') }}</span>
               </div>
-              <input name="eventDate" [(ngModel)]="eventForm.date" type="date" class="field-input" />
+              <div>
+                <input name="eventDate" [(ngModel)]="eventForm.date" type="date" class="field-input" [class.has-error]="showEventError('date')" />
+                <span *ngIf="showEventError('date')" class="field-error-text">{{ getEventError('date') }}</span>
+              </div>
               <input name="eventDescription" [(ngModel)]="eventForm.description" class="field-input md:col-span-2" [placeholder]="'clubHandler.placeholders.eventDescription' | translate" />
 
               <div class="md:col-span-4 flex gap-2">

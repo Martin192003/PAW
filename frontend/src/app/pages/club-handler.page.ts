@@ -157,7 +157,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   eventSubmittedAttempted = false;
   eventFrozenErrors: { [key: string]: boolean } = {};
   eventFrozenErrorMessages: { [key: string]: string } = {};
-  private static readonly EVENT_FIELDS = ['eventName'];
+  private static readonly EVENT_FIELDS = ['eventName', 'date'];
 
   savingEvent = false;
   editingEventId: string | null = null;
@@ -932,6 +932,19 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         if (value.length > 120) return this.i18n.instant('clubHandler.eventErrors.eventNameMax');
         return '';
       }
+      case 'date': {
+        const value = this.eventForm.date;
+        if (!value) return this.i18n.instant('clubHandler.eventErrors.required');
+        // EventServiceImpl.validateDate() rechaza fechas anteriores a hoy
+        // (InvalidDateRangeException, mapeada a 400). Se valida lo mismo acá
+        // para no depender del viaje al backend para un error tan básico.
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const parsed = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(parsed.getTime())) return this.i18n.instant('clubHandler.eventErrors.required');
+        if (parsed < today) return this.i18n.instant('clubHandler.eventErrors.pastDate');
+        return '';
+      }
       default:
         return '';
     }
@@ -956,25 +969,17 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       }
     }
 
+    if (hasError) {
+      this.actionErrorMessage = '';
+      this.actionSuccessMessage = '';
+      return;
+    }
+
     const payload: EventPayload = {
       eventName: this.eventForm.eventName.trim(),
       description: this.eventForm.description.trim(),
       date: this.eventForm.date
     };
-
-    if (!payload.date) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventRequiredFields');
-      this.actionSuccessMessage = '';
-      hasError = true;
-    }
-
-    if (hasError) {
-      if (!this.actionErrorMessage) {
-        this.actionErrorMessage = '';
-      }
-      this.actionSuccessMessage = '';
-      return;
-    }
 
     this.savingEvent = true;
     const editingEvent = this.editingEventId
@@ -998,7 +1003,21 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         this.actionErrorMessage = '';
         this.loadEvents();
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
+        // eventName y date ya se validan arriba antes de mandar el request,
+        // asi que el unico 400 que puede llegar del backend a esta altura es
+        // InvalidDateRangeException/ValidationException (EventServiceImpl).
+        // Se muestra como error de campo en vez del cartel/modal generico,
+        // igual que el resto de los formularios (mesas, club, producto).
+        if (error.status === 400) {
+          this.eventSubmittedAttempted = true;
+          this.eventFrozenErrors['date'] = true;
+          this.eventFrozenErrorMessages['date'] = this.i18n.instant('clubHandler.eventErrors.pastDate');
+          this.actionErrorMessage = '';
+          this.actionSuccessMessage = '';
+          return;
+        }
+
         this.loadEvents();
         this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventSaveFailed');
         this.actionSuccessMessage = '';
