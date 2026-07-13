@@ -33,26 +33,26 @@
       <ng-container *ngIf="club as currentClub">
         <section class="rounded-xl border border-[#3a3a3a] bg-[#222]/80 p-4 sm:p-5 mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.45)]">
           <div class="flex flex-col lg:flex-row gap-4">
-            <div class="w-full lg:w-[280px] h-[170px] rounded-lg overflow-hidden bg-black border border-[#333]">
-              <img
-                *ngIf="coverUrl"
-                [src]="coverUrl"
-                [alt]="currentClub.clubName"
-                class="w-full h-full object-cover"
-                (error)="coverUrl = ''"
-              />
+            <div class="w-full lg:w-[280px]">
+              <div class="h-[170px] rounded-lg overflow-hidden bg-black border border-[#333]">
+                <img
+                  *ngIf="coverUrl"
+                  [src]="coverUrl"
+                  [alt]="currentClub.clubName"
+                  class="w-full h-full object-cover"
+                  (error)="coverUrl = ''"
+                />
 
-              <div
-                *ngIf="!coverUrl"
-                class="w-full h-full flex items-center justify-center text-[#9c27b0] text-lg font-bold text-center tracking-widest"
-                style="font-family: 'Darklinos', Arial, sans-serif;"
-              >
-                Bling <br />&nbsp;&nbsp;Bling
+                <div
+                  *ngIf="!coverUrl"
+                  class="w-full h-full flex items-center justify-center text-[#9c27b0] text-lg font-bold text-center tracking-widest"
+                  style="font-family: 'Darklinos', Arial, sans-serif;"
+                >
+                  Bling <br />&nbsp;&nbsp;Bling
+                </div>
               </div>
-            </div>
 
-            <div class="lg:w-[160px]">
-              <label class="btn-secondary inline-flex items-center gap-2 cursor-pointer w-full justify-center">
+              <label class="btn-secondary mt-3 inline-flex items-center gap-2 w-full justify-center">
                 <i class="fa-solid fa-image"></i>
                 {{ uploadingCover ? ('clubHandler.uploading' | translate) : ('clubHandler.changeCover' | translate) }}
                 <input
@@ -128,13 +128,26 @@
 
             <label class="grid gap-1">
               <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.cbu' | translate }}</span>
-              <input name="clubCbu" [(ngModel)]="clubForm.cbu" class="field-input" [class.has-error]="showClubError('cbu')" />
+              <input
+                name="clubCbu"
+                [(ngModel)]="clubForm.cbu"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                autocomplete="off"
+                class="field-input"
+                [class.has-error]="showClubError('cbu')"
+                (ngModelChange)="onClubCbuInput($event)"
+              />
               <span *ngIf="showClubError('cbu')" class="field-error-text">{{ getClubError('cbu') }}</span>
             </label>
 
-            <label class="md:col-span-2 flex items-center gap-2 text-sm text-[#d5d5d5] mt-1">
-              <input type="checkbox" name="clubIsBar" [(ngModel)]="clubForm.isBar" />
-              {{ 'clubHandler.form.isBar' | translate }}
+            <label class="grid gap-1">
+              <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.venueType' | translate }}</span>
+              <select name="clubIsBar" [(ngModel)]="clubForm.isBar" class="field-input">
+                <option [ngValue]="true">{{ 'clubNew.venueTypes.bar' | translate }}</option>
+                <option [ngValue]="false">{{ 'clubNew.venueTypes.nightclub' | translate }}</option>
+              </select>
             </label>
 
             <label class="md:col-span-2 grid gap-1">
@@ -205,8 +218,14 @@
                 [alt]="'clubHandler.galleryPhotoAlt' | translate"
                 class="gallery-image"
               />
-              <button type="button" class="btn-danger px-2 py-1 text-xs" (click)="deleteGalleryPhoto(photo)">
-                <i class="fa-solid fa-trash"></i> {{ 'common.delete' | translate }}
+              <button
+                type="button"
+                class="btn-danger px-2 py-1 text-xs"
+                [disabled]="deletingGalleryPhotoId === photo.photoId"
+                (click)="openDeleteGalleryPhotoModal(photo)"
+              >
+                <i class="fa-solid" [ngClass]="deletingGalleryPhotoId === photo.photoId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+                {{ 'common.delete' | translate }}
               </button>
             </article>
           </div>
@@ -270,13 +289,8 @@
                   <option *ngFor="let type of productTypes" [value]="type">{{ ('clubHandler.productTypes.' + type) | translate }}</option>
                 </select>
 
-                <label class="flex items-center gap-2 text-sm text-[#d8d8d8]">
-                  <input name="productAvailable" type="checkbox" [(ngModel)]="productForm.isAvailable" />
-                  {{ 'clubHandler.available' | translate }}
-                </label>
-
-                <div class="flex gap-2">
-                  <button type="submit" class="btn-primary flex-1" [disabled]="savingProduct">
+                <div class="form-action-row">
+                  <button type="submit" class="btn-primary form-submit-button" [disabled]="savingProduct">
                     {{ savingProduct ? ('clubHandler.saving' | translate) : (editingProductId ? ('clubHandler.update' | translate) : ('clubHandler.create' | translate)) }}
                   </button>
                   <button *ngIf="editingProductId" type="button" class="btn-secondary" (click)="cancelEditProduct()">{{ 'common.cancel' | translate }}</button>
@@ -294,7 +308,6 @@
                       <th class="py-2 pr-3">{{ 'clubHandler.headers.description' | translate }}</th>
                       <th class="py-2 pr-3">{{ 'clubHandler.headers.price' | translate }}</th>
                       <th class="py-2 pr-3">{{ 'clubHandler.headers.type' | translate }}</th>
-                      <th class="py-2 pr-3">{{ 'clubHandler.headers.state' | translate }}</th>
                       <th class="py-2 pr-3">{{ 'clubHandler.headers.actions' | translate }}</th>
                     </tr>
                     </thead>
@@ -304,15 +317,16 @@
                       <td class="py-2 pr-3">{{ p.description }}</td>
                       <td class="py-2 pr-3">${{ p.basePrice | number:'1.0-0' }}</td>
                       <td class="py-2 pr-3">{{ ('clubHandler.productTypes.' + p.productType) | translate }}</td>
-                      <td class="py-2 pr-3">
-                        <span [class]="p.isAvailable ? 'text-emerald-300' : 'text-red-300'">
-                          {{ p.isAvailable ? ('clubHandler.available' | translate) : ('clubHandler.notAvailable' | translate) }}
-                        </span>
-                      </td>
                       <td class="py-2 pr-3 flex gap-2">
                         <button type="button" class="btn-secondary px-2 py-1" (click)="startEditProduct(p)"> {{ 'common.edit' | translate }}</button>
-                        <button type="button" class="btn-danger px-2 py-1" (click)="toggleProductAvailability(p)">
-                          {{ p.isAvailable ? ('clubHandler.disable' | translate) : ('clubHandler.enable' | translate) }}
+                        <button
+                          type="button"
+                          class="btn-danger px-2 py-1"
+                          [disabled]="deletingProductId === p.productId"
+                          (click)="openDeleteProductModal(p)"
+                        >
+                          <i class="fa-solid" [ngClass]="deletingProductId === p.productId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+                          {{ 'common.delete' | translate }}
                         </button>
                       </td>
                     </tr>
@@ -345,12 +359,8 @@
                   <span *ngIf="showTableError('discount')" class="field-error-text">{{ getTableError('discount') }}</span>
                 </div>
 
-                <select name="tableState" [(ngModel)]="tableForm.tableState" class="field-input">
-                  <option *ngFor="let state of tableStates" [value]="state">{{ ('clubHandler.tableStates.' + state) | translate }}</option>
-                </select>
-
-                <div class="flex gap-2">
-                  <button type="submit" class="btn-primary flex-1" [disabled]="savingTable">
+                <div class="form-action-row">
+                  <button type="submit" class="btn-primary form-submit-button" [disabled]="savingTable">
                     {{ savingTable ? ('clubHandler.saving' | translate) : (editingTableId ? ('clubHandler.update' | translate) : ('clubHandler.create' | translate)) }}
                   </button>
                   <button *ngIf="editingTableId" type="button" class="btn-secondary" (click)="cancelEditTable()">{{ 'common.cancel' | translate }}</button>
@@ -367,7 +377,6 @@
                       <th class="py-2 pr-3">{{ 'clubHandler.headers.capacity' | translate }}</th>
                       <th class="py-2 pr-3">{{ 'clubHandler.headers.price' | translate }}</th>
                       <th class="py-2 pr-3">{{ 'clubHandler.headers.discount' | translate }}</th>
-                      <th class="py-2 pr-3">{{ 'clubHandler.headers.state' | translate }}</th>
                       <th class="py-2 pr-3">{{ 'clubHandler.headers.actions' | translate }}</th>
                     </tr>
                     </thead>
@@ -377,7 +386,6 @@
                       <td class="py-2 pr-3">{{ t.capacity }}</td>
                       <td class="py-2 pr-3">${{ t.price | number:'1.0-0' }}</td>
                       <td class="py-2 pr-3">{{ t.discount }}%</td>
-                      <td class="py-2 pr-3">{{ ('clubHandler.tableStates.' + t.tableState) | translate }}</td>
                       <td class="py-2 pr-3 flex gap-2">
                         <button type="button" class="btn-secondary px-2 py-1" (click)="startEditTable(t)"> {{ 'common.edit' | translate }}</button>
                         <button type="button" class="btn-danger px-2 py-1" (click)="deleteTable(t)">{{ 'common.delete' | translate }}</button>
@@ -418,8 +426,8 @@
                 <span *ngIf="showEventError('description')" class="field-error-text">{{ getEventError('description') }}</span>
               </div>
 
-              <div class="md:col-span-4 flex gap-2">
-                <button type="submit" class="btn-primary" [disabled]="savingEvent">
+              <div class="md:col-span-4 form-action-row">
+                <button type="submit" class="btn-primary form-submit-button" [disabled]="savingEvent">
                   {{ savingEvent ? ('clubHandler.saving' | translate) : (editingEventId ? ('clubHandler.updateEvent' | translate) : ('clubHandler.createEvent' | translate)) }}
                 </button>
                 <button *ngIf="editingEventId" type="button" class="btn-secondary" (click)="cancelEditEvent()">{{ 'common.cancel' | translate }}</button>
@@ -548,6 +556,90 @@
       </ng-container>
     </main>
   </section>
+
+  <div
+    *ngIf="deleteGalleryPhotoModalOpen"
+    class="confirm-modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-gallery-photo-title"
+    (click)="closeDeleteGalleryPhotoModal()"
+  >
+    <div class="confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-content">
+        <div class="confirm-modal-icon">
+          <i class="fa-solid fa-trash"></i>
+        </div>
+
+        <div class="confirm-modal-copy">
+          <h2 id="delete-gallery-photo-title">{{ 'clubHandler.messages.galleryPhotoDeleteTitle' | translate }}</h2>
+          <p>{{ 'clubHandler.messages.galleryPhotoDeleteBody' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="confirm-modal-actions">
+        <button
+          type="button"
+          class="btn-secondary"
+          [disabled]="!!deletingGalleryPhotoId"
+          (click)="closeDeleteGalleryPhotoModal()"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn-danger"
+          [disabled]="!!deletingGalleryPhotoId"
+          (click)="confirmDeleteGalleryPhoto()"
+        >
+          <i class="fa-solid mr-2" [ngClass]="deletingGalleryPhotoId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    *ngIf="deleteProductModalOpen"
+    class="confirm-modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-product-title"
+    (click)="closeDeleteProductModal()"
+  >
+    <div class="confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-content">
+        <div class="confirm-modal-icon">
+          <i class="fa-solid fa-trash"></i>
+        </div>
+
+        <div class="confirm-modal-copy">
+          <h2 id="delete-product-title">{{ 'clubHandler.messages.productDeleteTitle' | translate }}</h2>
+          <p>{{ 'clubHandler.messages.productDeleteBody' | translate: { name: productPendingDelete?.productName } }}</p>
+        </div>
+      </div>
+
+      <div class="confirm-modal-actions">
+        <button
+          type="button"
+          class="btn-secondary"
+          [disabled]="!!deletingProductId"
+          (click)="closeDeleteProductModal()"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn-danger"
+          [disabled]="!!deletingProductId"
+          (click)="confirmDeleteProduct()"
+        >
+          <i class="fa-solid mr-2" [ngClass]="deletingProductId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div
     *ngIf="actionErrorMessage || errorMessage || (!loading && !club && clubLoadAttempted)"

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -31,9 +31,8 @@ type TableForm = {
   capacity: number | null;
   price: number | null;
   discount: number | null;
-  tableState: string;
 };
-type ProductForm = Omit<ProductPayload, 'basePrice'> & {
+type ProductForm = Omit<ProductPayload, 'basePrice' | 'isAvailable'> & {
   basePrice: number | null;
 };
 
@@ -47,6 +46,7 @@ type ProductForm = Omit<ProductPayload, 'basePrice'> & {
 export class ClubHandlerPage implements OnInit, OnDestroy {
   private readonly mutationTimeoutMs = 12000;
   private readonly destroy$ = new Subject<void>();
+  private actionSuccessTimeout: ReturnType<typeof setTimeout> | undefined;
 
   clubId = '';
 
@@ -77,7 +77,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   reviewTotalPages = 0;
 
   readonly productTypes = ['ALCOHOLICA', 'NO_ALCOHOLICA', 'TRAGOS'];
-  readonly tableStates = ['DISPONIBLE', 'RESERVADA', 'PENDIENTE'];
   readonly priceRanges = ['BAJO', 'MEDIO', 'ALTO'];
   readonly musicGenres = [
     'ROCK',
@@ -109,12 +108,14 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
 
   savingProduct = false;
   editingProductId: string | null = null;
+  deletingProductId: string | null = null;
+  productPendingDelete: Product | null = null;
+  deleteProductModalOpen = false;
   productForm: ProductForm = {
     productName: '',
     description: '',
     basePrice: null,
-    productType: 'ALCOHOLICA',
-    isAvailable: true
+    productType: 'ALCOHOLICA'
   };
 
   savingTable = false;
@@ -123,8 +124,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     tableNumber: null,
     capacity: null,
     price: null,
-    discount: null,
-    tableState: 'DISPONIBLE'
+    discount: null
   };
 
   // Mismo patron de "errores congelados" que register.page.ts / club-new.page.ts:
@@ -171,6 +171,9 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   uploadingCover = false;
   uploadingLayout = false;
   uploadingGallery = false;
+  deletingGalleryPhotoId: string | null = null;
+  galleryPhotoPendingDelete: ClubPhoto | null = null;
+  deleteGalleryPhotoModalOpen = false;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -178,7 +181,8 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     private readonly clubService: ClubService,
     private readonly reviewService: ReviewService,
     private readonly cdr: ChangeDetectorRef,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -198,6 +202,9 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.actionSuccessTimeout) {
+      clearTimeout(this.actionSuccessTimeout);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -238,7 +245,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
           this.club ? this.resolveCoverUrl(this.club) : this.clubService.getCoverUrl(this.clubId)
         );
         this.loadGalleryPhotos();
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.coverUpdated');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.coverUpdated'));
         this.actionErrorMessage = '';
       },
       error: () => {
@@ -269,7 +276,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         this.layoutUrl = this.withCacheBust(
           this.clubService.toAbsoluteUrl(`/clubs/${this.clubId}/layout/image`, this.clubId)
         );
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.layoutUpdated');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.layoutUpdated'));
         this.actionErrorMessage = '';
       },
       error: () => {
@@ -302,7 +309,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     ).subscribe({
       next: () => {
         this.loadGalleryPhotos();
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.galleryUpdated');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.galleryUpdated'));
         this.actionErrorMessage = '';
       },
       error: () => {
@@ -315,29 +322,55 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     input.value = '';
   }
 
-  deleteGalleryPhoto(photo: ClubPhoto): void {
-    if (!this.clubId || !photo.photoId) {
+  openDeleteGalleryPhotoModal(photo: ClubPhoto): void {
+    if (!photo.photoId || this.deletingGalleryPhotoId) {
+      return;
+    }
+    this.galleryPhotoPendingDelete = photo;
+    this.deleteGalleryPhotoModalOpen = true;
+  }
+
+  closeDeleteGalleryPhotoModal(): void {
+    if (this.deletingGalleryPhotoId) {
+      return;
+    }
+    this.deleteGalleryPhotoModalOpen = false;
+    this.galleryPhotoPendingDelete = null;
+  }
+
+  confirmDeleteGalleryPhoto(): void {
+    const photo = this.galleryPhotoPendingDelete;
+    if (!this.clubId || !photo?.photoId) {
       return;
     }
 
-    if (!window.confirm(this.i18n.instant('clubHandler.messages.confirmDeleteGalleryPhoto'))) {
-      return;
-    }
+    this.deletingGalleryPhotoId = photo.photoId;
 
     this.clubService.deleteGalleryPhoto(this.clubId, photo.photoId, this.club?.links).pipe(
-      timeout(this.mutationTimeoutMs)
+      timeout(this.mutationTimeoutMs),
+      finalize(() => {
+        this.deletingGalleryPhotoId = null;
+        this.cdr.markForCheck();
+      })
     ).subscribe({
       next: () => {
-        this.galleryPhotos = this.galleryPhotos.filter((item) => item.photoId !== photo.photoId);
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.galleryPhotoDeleted');
-        this.actionErrorMessage = '';
-        this.cdr.detectChanges();
-        this.loadGalleryPhotos();
+        this.zone.run(() => {
+          this.galleryPhotos = this.galleryPhotos.filter((item) => item.photoId !== photo.photoId);
+          this.deleteGalleryPhotoModalOpen = false;
+          this.galleryPhotoPendingDelete = null;
+          this.showActionSuccess(this.i18n.instant('clubHandler.messages.galleryPhotoDeleted'));
+          this.actionErrorMessage = '';
+          this.cdr.detectChanges();
+          this.loadGalleryPhotos();
+        });
       },
       error: () => {
-        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.galleryPhotoDeleteFailed');
-        this.actionSuccessMessage = '';
-        this.loadGalleryPhotos();
+        this.zone.run(() => {
+          this.actionErrorMessage = this.i18n.instant('clubHandler.messages.galleryPhotoDeleteFailed');
+          this.actionSuccessMessage = '';
+          this.loadGalleryPhotos();
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -472,6 +505,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         return '';
       case 'cbu':
         if (!value) return this.i18n.instant('clubHandler.clubErrors.required');
+        if (/\D/.test(value)) return this.i18n.instant('clubHandler.clubErrors.required');
         if (value.length > 50) return this.i18n.instant('clubHandler.clubErrors.cbuMax');
         return '';
       case 'description':
@@ -481,6 +515,10 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       default:
         return '';
     }
+  }
+
+  onClubCbuInput(value: string): void {
+    this.clubForm.cbu = this.digitsOnly(value);
   }
 
   saveClub(): void {
@@ -493,7 +531,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       clubName: this.clubForm.clubName.trim(),
       location: this.clubForm.location.trim(),
       description: this.clubForm.description.trim(),
-      cbu: this.clubForm.cbu.trim()
+      cbu: this.digitsOnly(this.clubForm.cbu)
     };
     this.clubForm = payload;
 
@@ -528,7 +566,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       next: (updatedClub) => {
         this.club = updatedClub;
         this.editingClub = false;
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.clubUpdated');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.clubUpdated'));
         this.actionErrorMessage = '';
       },
       error: () => {
@@ -539,14 +577,17 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     });
   }
 
+  private digitsOnly(value: string): string {
+    return value.replace(/\D/g, '');
+  }
+
   startCreateProduct(): void {
     this.editingProductId = null;
     this.productForm = {
       productName: '',
       description: '',
       basePrice: null,
-      productType: this.productTypes[0],
-      isAvailable: true
+      productType: this.productTypes[0]
     };
     this.resetProductValidation();
   }
@@ -557,8 +598,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       productName: product.productName,
       description: product.description,
       basePrice: product.basePrice,
-      productType: this.normalizeProductType(product.productType),
-      isAvailable: product.isAvailable
+      productType: this.normalizeProductType(product.productType)
     };
     this.resetProductValidation();
     this.clearActionMessages();
@@ -641,7 +681,8 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       ...this.productForm,
       productName: this.productForm.productName.trim(),
       description: this.productForm.description.trim(),
-      basePrice: Number(this.productForm.basePrice)
+      basePrice: Number(this.productForm.basePrice),
+      isAvailable: true
     };
 
     this.savingProduct = true;
@@ -662,7 +703,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       next: (savedProduct) => {
         this.upsertProductInList(savedProduct);
         this.startCreateProduct();
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.productSaved');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.productSaved'));
         this.actionErrorMessage = '';
       },
       error: () => {
@@ -673,34 +714,56 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     });
   }
 
-  toggleProductAvailability(product: Product): void {
-    if (!this.clubId) {
+  openDeleteProductModal(product: Product): void {
+    if (!product.productId || this.deletingProductId) {
+      return;
+    }
+    this.productPendingDelete = product;
+    this.deleteProductModalOpen = true;
+  }
+
+  closeDeleteProductModal(): void {
+    if (this.deletingProductId) {
+      return;
+    }
+    this.deleteProductModalOpen = false;
+    this.productPendingDelete = null;
+  }
+
+  confirmDeleteProduct(): void {
+    const product = this.productPendingDelete;
+    if (!this.clubId || !product?.productId) {
       return;
     }
 
-    const payload: ProductPayload = {
-      productName: product.productName,
-      description: product.description,
-      basePrice: product.basePrice,
-      productType: this.normalizeProductType(product.productType),
-      isAvailable: !product.isAvailable
-    };
-
-    this.clubService.updateProduct(this.clubId, product.productId, payload, product).subscribe({
-      next: (updatedProduct) => {
-        this.upsertProductInList({
-          ...product,
-          ...updatedProduct,
-          isAvailable: payload.isAvailable,
-          productType: payload.productType
+    this.deletingProductId = product.productId;
+    this.clubService.deleteProduct(this.clubId, product.productId, product).pipe(
+      timeout(this.mutationTimeoutMs),
+      finalize(() => {
+        this.deletingProductId = null;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: () => {
+        this.zone.run(() => {
+          this.menu = this.menu.filter((item) => item.productId !== product.productId);
+          if (this.editingProductId === product.productId) {
+            this.startCreateProduct();
+          }
+          this.deleteProductModalOpen = false;
+          this.productPendingDelete = null;
+          this.showActionSuccess(this.i18n.instant('clubHandler.messages.productDeleted'));
+          this.actionErrorMessage = '';
+          this.cdr.detectChanges();
         });
-        this.actionSuccessMessage = this.i18n.instant(payload.isAvailable ? 'clubHandler.messages.productEnabled' : 'clubHandler.messages.productDisabled');
-        this.actionErrorMessage = '';
       },
       error: () => {
-        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.productAvailabilityFailed');
-        this.actionSuccessMessage = '';
-        this.loadMenu();
+        this.zone.run(() => {
+          this.actionErrorMessage = this.i18n.instant('clubHandler.messages.productDeleteFailed');
+          this.actionSuccessMessage = '';
+          this.loadMenu();
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -711,8 +774,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       tableNumber: null,
       capacity: null,
       price: null,
-      discount: null,
-      tableState: this.tableStates[0]
+      discount: null
     };
     this.resetTableValidation();
   }
@@ -723,8 +785,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       tableNumber: table.tableNumber,
       capacity: table.capacity,
       price: table.price,
-      discount: table.discount,
-      tableState: this.normalizeTableState(table.tableState)
+      discount: table.discount
     };
     this.resetTableValidation();
     this.clearActionMessages();
@@ -810,7 +871,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       capacity: Number(this.tableForm.capacity),
       price: Number(this.tableForm.price),
       discount: Number(this.tableForm.discount ?? 0),
-      tableState: this.tableForm.tableState
+      tableState: 'DISPONIBLE'
     };
 
     this.savingTable = true;
@@ -831,7 +892,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       next: (savedTable) => {
         this.upsertTableInList(savedTable);
         this.startCreateTable();
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.tableSaved');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.tableSaved'));
         this.actionErrorMessage = '';
       },
       error: (error: HttpErrorResponse) => {
@@ -868,7 +929,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       next: () => {
         this.tables = this.tables.filter((item) => item.tableId !== table.tableId);
         this.cdr.detectChanges();
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.tableDeleted');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.tableDeleted'));
         this.actionErrorMessage = '';
       },
       error: () => {
@@ -1000,7 +1061,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       next: (savedEvent) => {
         this.upsertEventInList(savedEvent);
         this.startCreateEvent();
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.eventSaved');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventSaved'));
         this.actionErrorMessage = '';
         this.loadEvents();
       },
@@ -1042,7 +1103,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
           this.eventPage -= 1;
         }
         this.cdr.detectChanges();
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.eventDeleted');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventDeleted'));
         this.actionErrorMessage = '';
       },
       error: () => {
@@ -1065,7 +1126,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       next: () => {
         this.uploadingEventPhotoId = null;
         this.loadEvents();
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.eventPhotoUpdated');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventPhotoUpdated'));
         this.actionErrorMessage = '';
       },
       error: () => {
@@ -1087,7 +1148,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       next: (updatedEvent) => {
         this.upsertEventInList(updatedEvent);
         this.loadEvents();
-        this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.eventPhotoDeleted');
+        this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventPhotoDeleted'));
         this.actionErrorMessage = '';
       },
       error: () => {
@@ -1204,12 +1265,16 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   private loadGalleryPhotos(): void {
     this.clubService.getClubPhotos(this.clubId, this.club?.links).subscribe({
       next: (photos) => {
-        this.galleryPhotos = (photos ?? []).filter((photo) => photo.photoType === 'CAROUSEL');
-        this.cdr.detectChanges();
+        this.zone.run(() => {
+          this.galleryPhotos = (photos ?? []).filter((photo) => photo.photoType === 'CAROUSEL');
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.galleryPhotos = [];
-        this.cdr.detectChanges();
+        this.zone.run(() => {
+          this.galleryPhotos = [];
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -1217,10 +1282,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   private loadTables(): void {
     this.clubService.getTables(this.clubId).subscribe({
       next: (tables) => {
-        this.tables = (tables ?? []).map((table) => ({
-          ...table,
-          tableState: this.normalizeTableState(table.tableState)
-        }));
+        this.tables = tables ?? [];
         this.cdr.detectChanges();
       },
       error: () => {
@@ -1289,6 +1351,28 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   private clearActionMessages(): void {
     this.actionErrorMessage = '';
     this.actionSuccessMessage = '';
+    if (this.actionSuccessTimeout) {
+      clearTimeout(this.actionSuccessTimeout);
+      this.actionSuccessTimeout = undefined;
+    }
+  }
+
+  private showActionSuccess(message: string): void {
+    if (this.actionSuccessTimeout) {
+      clearTimeout(this.actionSuccessTimeout);
+    }
+
+    this.actionSuccessMessage = message;
+    this.actionSuccessTimeout = globalThis.setTimeout(() => {
+      this.zone.run(() => {
+        if (this.actionSuccessMessage === message) {
+          this.actionSuccessMessage = '';
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+        }
+        this.actionSuccessTimeout = undefined;
+      });
+    }, 3500);
   }
 
   private normalizeProductType(raw: string): string {
@@ -1303,14 +1387,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       return 'TRAGOS';
     }
     return this.productTypes[0];
-  }
-
-  private normalizeTableState(raw: string): string {
-    const normalized = (raw || '').toUpperCase();
-    if (normalized === 'DISPONIBLE' || normalized === 'RESERVADA' || normalized === 'PENDIENTE') {
-      return normalized;
-    }
-    return this.tableStates[0];
   }
 
   private upsertProductInList(product: Product): void {
@@ -1343,7 +1419,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
 
     const normalized: ClubTable = {
       ...table,
-      tableState: this.normalizeTableState(table.tableState)
+      tableState: table.tableState
     };
 
     const currentIndex = this.tables.findIndex((item) => item.tableId === normalized.tableId);

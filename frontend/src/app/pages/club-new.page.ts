@@ -4,6 +4,10 @@ import {
   OnDestroy,
   AfterViewInit,
   ChangeDetectorRef,
+  ElementRef,
+  Inject,
+  PLATFORM_ID,
+  ViewChild,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -12,7 +16,7 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ClubService } from '../services/club.service';
 import { ClubPayload } from '../models/club.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -21,7 +25,6 @@ import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
 
-declare const L: any; // Leaflet (cargado vía CDN o instalado como paquete)
 
 const CBU_MAX_LENGTH = 50;
 // Espeja DESCRIPTION_MAX_LENGTH en ClubServiceImpl (backend): la columna es
@@ -37,6 +40,8 @@ const DESCRIPTION_MAX_LENGTH = 1000;
   styleUrl: './club-new.page.css',
 })
 export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
+
+  @ViewChild('locationMap') locationMapRef?: ElementRef<HTMLDivElement>;
 
   // ----------------------------------------------------------------
   // Estado del formulario
@@ -80,6 +85,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private clubService: ClubService,
     private i18n: I18nService,
+    @Inject(PLATFORM_ID) private platformId: object,
   ) {}
 
   // ----------------------------------------------------------------
@@ -103,8 +109,9 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
       this.handleLocationChange(val ?? '');
     });
 
-    // Cerrar tooltip al hacer click fuera
-    document.addEventListener('click', this.closeTooltip);
+    if (isPlatformBrowser(this.platformId)) {
+      document.addEventListener('click', this.closeTooltip);
+    }
   }
 
   ngAfterViewInit(): void {
@@ -117,7 +124,9 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearTimeout(this.typingTimer);
-    document.removeEventListener('click', this.closeTooltip);
+    if (isPlatformBrowser(this.platformId)) {
+      document.removeEventListener('click', this.closeTooltip);
+    }
     if (this.map) {
       this.map.remove();
       this.map = null;
@@ -176,6 +185,15 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  onCbuInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = this.digitsOnly(input.value);
+    if (input.value !== digits) {
+      input.value = digits;
+    }
+    this.clubForm.get('cbu')?.setValue(digits, { emitEvent: false });
+  }
+
   // ----------------------------------------------------------------
   // Tooltip precio
   // ----------------------------------------------------------------
@@ -218,48 +236,135 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 50); // esperar que el DOM aplique la transición
   }
 
-  private initializeMap(): void {
-    if (this.map) {
-      setTimeout(() => this.map.invalidateSize(true), 650);
+  private async initializeMap(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    this.map = L.map('locationMap', { zoomControl: true }).setView([this.lat, this.lng], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(this.map);
+    const container = this.locationMapRef?.nativeElement;
+    if (!container) {
+      return;
+    }
 
-    this.marker = L.marker([this.lat, this.lng]).addTo(this.map);
+    if (this.map) {
+      this.scheduleMapResize();
+      return;
+    }
 
-    setTimeout(() => {
-      this.map.invalidateSize(true);
+    try {
+      const L = await this.loadLeaflet();
+      this.map = L.map(container, { zoomControl: true }).setView([this.lat, this.lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(this.map);
+
+      this.marker = L.marker([this.lat, this.lng]).addTo(this.map);
+      this.scheduleMapResize();
+
       const loc = this.clubForm.get('location')!.value;
       if (loc?.trim().length > 0) {
-        this.updateMap(loc.trim());
+        setTimeout(() => this.updateMap(loc.trim()), 250);
       }
-    }, 650);
+    } catch (error) {
+      console.error('map init error', error);
+    }
   }
 
   private async updateMap(address: string): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) return;
     if (!address || address.trim().length < 3) return;
+    if (!this.map) {
+      await this.initializeMap();
+    }
+    if (!this.map) return;
+
     try {
-      const res     = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`);
       const results = await res.json();
-      if (results && results.length > 0) {
+      if (Array.isArray(results) && results.length > 0) {
         this.lat = parseFloat(results[0].lat);
         this.lng = parseFloat(results[0].lon);
         if (this.marker) {
           this.marker.setLatLng([this.lat, this.lng]);
         } else {
+          const L = await this.loadLeaflet();
           this.marker = L.marker([this.lat, this.lng]).addTo(this.map);
         }
         this.map.setView([this.lat, this.lng], 15);
+        this.scheduleMapResize();
       }
     } catch (e) {
-      console.error('Error geocodificando dirección:', e);
+      console.error('Error geocodificando direccion:', e);
     }
   }
 
+  private scheduleMapResize(): void {
+    [0, 120, 350, 700].forEach(delay => {
+      setTimeout(() => this.map?.invalidateSize(true), delay);
+    });
+  }
+
+  private async loadLeaflet(): Promise<any> {
+    const windowWithLeaflet = window as any;
+    if (windowWithLeaflet.L) {
+      return windowWithLeaflet.L;
+    }
+
+    this.ensureStylesheet(
+      'leaflet-css',
+      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+      'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='
+    );
+
+    await this.ensureScript(
+      'leaflet-js',
+      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+      'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='
+    );
+
+    return windowWithLeaflet.L;
+  }
+
+  private ensureStylesheet(id: string, href: string, integrity: string): void {
+    if (document.getElementById(id)) {
+      return;
+    }
+
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.integrity = integrity;
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+  }
+
+  private ensureScript(id: string, src: string, integrity: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const existing = document.getElementById(id) as HTMLScriptElement | null;
+      if (existing?.dataset['loaded'] === 'true') {
+        resolve();
+        return;
+      }
+
+      const script = existing || document.createElement('script');
+      script.id = id;
+      script.src = src;
+      script.async = true;
+      script.integrity = integrity;
+      script.crossOrigin = 'anonymous';
+
+      script.onload = () => {
+        script.dataset['loaded'] = 'true';
+        resolve();
+      };
+      script.onerror = () => reject(new Error('Leaflet script failed to load'));
+
+      if (!existing) {
+        document.body.appendChild(script);
+      }
+    });
+  }
   // ----------------------------------------------------------------
   // Submit
   // ----------------------------------------------------------------
@@ -299,7 +404,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
       musicGenre: val.musicGenre,
       zone: val.zone,
       bar: val.isBar === 'true',
-      cbu: val.cbu?.trim() ?? '',
+      cbu: this.digitsOnly(val.cbu ?? ''),
     };
 
     this.clubService.createClub(payload).pipe(
@@ -360,5 +465,9 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
         this.errorMessage = message;
       }
     }
+  }
+
+  private digitsOnly(value: string): string {
+    return value.replace(/\D/g, '');
   }
 }

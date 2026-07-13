@@ -1,0 +1,10 @@
+:host ::ng-deep .location-map.leaflet-container,
+:host ::ng-deep .location-map .leaflet-pane,
+:host ::ng-deep .location-map .leaflet-top,
+:host ::ng-deep .location-map .leaflet-bottom {
+  z-index: 0;
+}
+
+:host ::ng-deep .location-map .leaflet-control {
+  z-index: 1;
+}
