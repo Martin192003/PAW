@@ -99,6 +99,7 @@ public class ReceiptServiceImpl implements ReceiptService {
         }
 
         if (booking.getStatus() == Status.CANCELADA) throw new InvalidReceiptException("receipt.for.cancelled");
+        if (booking.getStatus() == Status.CONFIRMADA) throw new InvalidReceiptException("receipt.for.confirmed");
 
         if (receiptDao.findByBooking(bookingId).isPresent()) {
             throw new DuplicateKeyException("receipt.already.exists");
@@ -168,7 +169,16 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Transactional
     public Receipt putForBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier,
                                        String filename, String contentType, byte[] data) {
-        final Booking booking = bookingService.getForUserInClub(clubId, bookingId, loginIdentifier);
+        // getForUserOrAdminInClub (no getForUserInClub): un admin del club
+        // tambien puede tocar el comprobante de una reserva que no es suya
+        // (ver getForBookingInClub mas abajo para el motivo completo).
+        final Booking booking = bookingService.getForUserOrAdminInClub(clubId, bookingId, loginIdentifier);
+        // Validar el estado antes de borrar el comprobante viejo: si se borra
+        // primero y despues uploadForBooking rechaza por estar CONFIRMADA, se
+        // pierde el comprobante sin dejar uno nuevo en su lugar.
+        if (booking.getStatus() == Status.CANCELADA) throw new InvalidReceiptException("receipt.for.cancelled");
+        if (booking.getStatus() == Status.CONFIRMADA) throw new InvalidReceiptException("receipt.for.confirmed");
+
         receiptDao.findByBooking(bookingId)
                 .ifPresent(receipt -> receiptDao.delete(receipt.getReceiptId()));
 
@@ -180,14 +190,19 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Override
     @Transactional(readOnly = true)
     public Optional<Receipt> getForBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
-        bookingService.getForUserInClub(clubId, bookingId, loginIdentifier);
+        // Antes usaba getForUserInClub, que solo deja pasar al dueño de la
+        // reserva: un admin del club que entraba a "Club reservations" para
+        // revisar el comprobante antes de confirmar/rechazar se encontraba
+        // con un 403 (UnauthorizedException -> /forbidden). El admin
+        // necesita poder ver el comprobante aunque la reserva no sea suya.
+        bookingService.getForUserOrAdminInClub(clubId, bookingId, loginIdentifier);
         return getReceiptForBooking(bookingId);
     }
 
     @Override
     @Transactional
     public boolean deleteByBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
-        final Booking booking = bookingService.getForUserInClub(clubId, bookingId, loginIdentifier);
+        final Booking booking = bookingService.getForUserOrAdminInClub(clubId, bookingId, loginIdentifier);
         return deleteByBookingForUser(bookingId, booking.getUser().getId());
     }
 
@@ -202,6 +217,9 @@ public class ReceiptServiceImpl implements ReceiptService {
 
         if (booking.getUser() == null || !booking.getUser().getId().equals(userId)) {
             throw new UnauthorizedException("receipt.delete.notAllowed");
+        }
+        if (booking.getStatus() == Status.CONFIRMADA) {
+            throw new InvalidReceiptException("receipt.for.confirmed");
         }
 
         var receiptOpt = receiptDao.findByBooking(bookingId);

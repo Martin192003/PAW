@@ -669,6 +669,7 @@
   },
   "bookingAdminHandler": {
     "title": "Reserva",
+    "loading": "Cargando la reserva...",
     "details": {
       "title": "Detalles de la reserva",
       "user": "Usuario",
@@ -689,7 +690,8 @@
     },
     "buttons": {
       "cancel": "Cancelar",
-      "confirm": "Confirmar"
+      "confirm": "Confirmar",
+      "confirmDisabledHint": "No se puede confirmar la reserva hasta que el usuario cargue un comprobante."
     },
     "modal": {
       "cancelTitle": "¿Cancelar reserva?",
@@ -704,6 +706,7 @@
       "invalidBooking": "Reserva inválida.",
       "loadFailed": "No se pudo cargar la reserva.",
       "confirmFailed": "No se pudo confirmar la reserva.",
+      "receiptRequired": "No se puede confirmar la reserva: el usuario todavía no cargó un comprobante.",
       "cancelFailed": "No se pudo cancelar la reserva."
     },
     "success": {
@@ -714,6 +717,7 @@
   "bookingUserHandler": {
     "back": "Volver",
     "title": "Reserva",
+    "loading": "Cargando la reserva...",
     "details": {
       "title": "Detalles de la reserva",
       "user": "Usuario",
@@ -732,7 +736,8 @@
       "noReceipt": "No hay comprobante cargado.",
       "viewTab": "Ver en pestaña",
       "upload": "Subir comprobante",
-      "edit": "Editar comprobante"
+      "edit": "Editar comprobante",
+      "lockedConfirmed": "La reserva ya fue confirmada, por lo que el comprobante no se puede modificar."
     },
     "modal": {
       "cancelTitle": "¿Cancelar reserva?",
@@ -758,7 +763,8 @@
       "receiptEmpty": "El comprobante no puede estar vacío.",
       "receiptTooLarge": "El comprobante no puede superar los 5 MB.",
       "receiptUnsupportedType": "Subí un comprobante JPG, PNG o WebP.",
-      "receiptForCancelled": "No se puede cargar comprobante para una reserva cancelada."
+      "receiptForCancelled": "No se puede cargar comprobante para una reserva cancelada.",
+      "receiptForConfirmed": "No se puede modificar el comprobante de una reserva ya confirmada."
     },
     "success": {
       "cancelled": "Reserva cancelada correctamente.",

@@ -41,6 +41,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   error = '';
   success = '';
   showCancelModal = false;
+  loading = false;
 
   private receiptObjectUrl = '';
 
@@ -69,6 +70,13 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
       return;
     }
 
+    // Sin este flag la pantalla se queda en blanco (solo el header) mientras
+    // espera la respuesta, lo que parece una pantalla rota en vez de una
+    // carga en curso.
+    this.loading = true;
+    this.error = '';
+    this.cdr.detectChanges();
+
     this.bookingService.getManagedClubBooking(bookingId).pipe(
       switchMap(booking => {
         this.booking = booking;
@@ -85,10 +93,12 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
         this.club = club;
         this.table = tables.find(table => table.tableId === this.booking?.tableId);
         this.user = user;
+        this.loading = false;
         this.loadReceipt();
         this.cdr.detectChanges();
       },
       error: () => {
+        this.loading = false;
         this.error = this.i18n.instant('bookingAdminHandler.errors.loadFailed');
         this.cdr.detectChanges();
       }
@@ -102,8 +112,8 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
         this.success = this.i18n.instant('bookingAdminHandler.success.confirmed');
         this.load();
       },
-      error: () => {
-        this.error = this.i18n.instant('bookingAdminHandler.errors.confirmFailed');
+      error: error => {
+        this.error = this.confirmErrorMessage(error);
         this.cdr.detectChanges();
       }
     });
@@ -217,5 +227,24 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
       URL.revokeObjectURL(this.receiptObjectUrl);
       this.receiptObjectUrl = '';
     }
+  }
+
+  private confirmErrorMessage(error: unknown): string {
+    const message = this.extractErrorMessage(error);
+    switch (message) {
+      case 'receipt.required':
+        return this.i18n.instant('bookingAdminHandler.errors.receiptRequired');
+      default:
+        return this.i18n.instant('bookingAdminHandler.errors.confirmFailed');
+    }
+  }
+
+  private extractErrorMessage(error: unknown): string | null {
+    const payload = (error as { error?: unknown })?.error;
+    if (payload && typeof payload === 'object' && 'message' in payload) {
+      const message = (payload as { message?: unknown }).message;
+      return typeof message === 'string' ? message : null;
+    }
+    return typeof payload === 'string' && payload.trim() ? payload.trim() : null;
   }
 }
