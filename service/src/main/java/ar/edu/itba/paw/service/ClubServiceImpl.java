@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.dto.ClubLimitsDto;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
+import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
@@ -18,6 +19,14 @@ import java.util.*;
 
 @Service
 public class ClubServiceImpl implements ClubService{
+
+    // "description" es TEXT en la base (sin limite de longitud a nivel de
+    // columna), asi que sin este chequeo un club podia guardar una
+    // descripcion arbitrariamente larga. El limite del frontend
+    // (club-new.page.ts / club-handler.page.ts) espeja este mismo numero,
+    // pero se valida tambien aca para que no sea bypasseable pegandole
+    // directo a la API.
+    private static final int DESCRIPTION_MAX_LENGTH = 1000;
 
     private final ClubDao clubDao;
     private final ClubTablesDao clubTablesDao;
@@ -43,6 +52,8 @@ public class ClubServiceImpl implements ClubService{
     @Transactional
     public Club create(String name, String description, String location, Price priceRange,
                        User contactInfo, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu, Photo image) {
+
+        validateDescription(description);
 
         User managedContact = userService.findById(contactInfo.getId()).orElseThrow();
         if (managedContact.getRole() != Role.ADMIN) {
@@ -77,7 +88,14 @@ public class ClubServiceImpl implements ClubService{
     @Override
     @Transactional
     public Club update(UUID clubId, String name, String location, BigDecimal rating, Integer quantityRatings, Price priceRange, String description, UUID contactInfoId, MusicalGenre musicGenre, Zone zone, Boolean isBar, String cbu) {
+        validateDescription(description);
         return clubDao.update(clubId, name, location, rating, quantityRatings, priceRange, description, contactInfoId, musicGenre, zone, isBar, cbu);
+    }
+
+    private void validateDescription(String description) {
+        if (description != null && description.length() > DESCRIPTION_MAX_LENGTH) {
+            throw new ValidationException("description too long (max " + DESCRIPTION_MAX_LENGTH + ")");
+        }
     }
 
     @Override

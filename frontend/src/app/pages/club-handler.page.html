@@ -95,12 +95,14 @@
           <form *ngIf="editingClub" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3" (ngSubmit)="saveClub()">
             <label class="grid gap-1">
               <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.clubName' | translate }}</span>
-              <input name="clubName" [(ngModel)]="clubForm.clubName" class="field-input" />
+              <input name="clubName" [(ngModel)]="clubForm.clubName" class="field-input" [class.has-error]="showClubError('clubName')" />
+              <span *ngIf="showClubError('clubName')" class="field-error-text">{{ getClubError('clubName') }}</span>
             </label>
 
             <label class="grid gap-1">
               <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.location' | translate }}</span>
-              <input name="clubLocation" [(ngModel)]="clubForm.location" class="field-input" />
+              <input name="clubLocation" [(ngModel)]="clubForm.location" class="field-input" [class.has-error]="showClubError('location')" />
+              <span *ngIf="showClubError('location')" class="field-error-text">{{ getClubError('location') }}</span>
             </label>
 
             <label class="grid gap-1">
@@ -126,7 +128,8 @@
 
             <label class="grid gap-1">
               <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.cbu' | translate }}</span>
-              <input name="clubCbu" [(ngModel)]="clubForm.cbu" class="field-input" />
+              <input name="clubCbu" [(ngModel)]="clubForm.cbu" class="field-input" [class.has-error]="showClubError('cbu')" />
+              <span *ngIf="showClubError('cbu')" class="field-error-text">{{ getClubError('cbu') }}</span>
             </label>
 
             <label class="md:col-span-2 flex items-center gap-2 text-sm text-[#d5d5d5] mt-1">
@@ -136,7 +139,8 @@
 
             <label class="md:col-span-2 grid gap-1">
               <span class="text-sm text-[#c8c8c8]">{{ 'clubHandler.form.description' | translate }}</span>
-              <textarea name="clubDescription" [(ngModel)]="clubForm.description" class="field-input min-h-[88px]"></textarea>
+              <textarea name="clubDescription" [(ngModel)]="clubForm.description" class="field-input min-h-[88px]" [class.has-error]="showClubError('description')"></textarea>
+              <span *ngIf="showClubError('description')" class="field-error-text">{{ getClubError('description') }}</span>
             </label>
 
             <div class="md:col-span-2 flex gap-2">
@@ -249,9 +253,18 @@
               <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 space-y-2" (ngSubmit)="saveProduct()">
                 <h3 class="text-white text-sm font-semibold">{{ editingProductId ? ('clubHandler.productForm.editTitle' | translate) : ('clubHandler.productForm.newTitle' | translate) }}</h3>
 
-                <input name="productName" [(ngModel)]="productForm.productName" class="field-input" [placeholder]="'clubHandler.placeholders.productName' | translate" />
-                <textarea name="productDescription" [(ngModel)]="productForm.description" class="field-input min-h-[70px]" [placeholder]="'clubHandler.placeholders.productDescription' | translate"></textarea>
-                <input name="productBasePrice" [(ngModel)]="productForm.basePrice" type="number" min="0" step="0.01" class="field-input" [placeholder]="'clubHandler.placeholders.productPrice' | translate" />
+                <div>
+                  <input name="productName" [(ngModel)]="productForm.productName" class="field-input" [class.has-error]="showProductError('productName')" [placeholder]="'clubHandler.placeholders.productName' | translate" />
+                  <span *ngIf="showProductError('productName')" class="field-error-text">{{ getProductError('productName') }}</span>
+                </div>
+                <div>
+                  <textarea name="productDescription" [(ngModel)]="productForm.description" class="field-input min-h-[70px]" [class.has-error]="showProductError('description')" [placeholder]="'clubHandler.placeholders.productDescription' | translate"></textarea>
+                  <span *ngIf="showProductError('description')" class="field-error-text">{{ getProductError('description') }}</span>
+                </div>
+                <div>
+                  <input name="productBasePrice" [(ngModel)]="productForm.basePrice" type="number" min="0" step="0.01" class="field-input" [class.has-error]="showProductError('basePrice')" [placeholder]="'clubHandler.placeholders.productPrice' | translate" />
+                  <span *ngIf="showProductError('basePrice')" class="field-error-text">{{ getProductError('basePrice') }}</span>
+                </div>
 
                 <select name="productType" [(ngModel)]="productForm.productType" class="field-input">
                   <option *ngFor="let type of productTypes" [value]="type">{{ ('clubHandler.productTypes.' + type) | translate }}</option>
@@ -315,10 +328,22 @@
               <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 space-y-2" (ngSubmit)="saveTable()">
                 <h3 class="text-white text-sm font-semibold">{{ editingTableId ? ('clubHandler.tableForm.editTitle' | translate) : ('clubHandler.tableForm.newTitle' | translate) }}</h3>
 
-                <input name="tableNumber" [(ngModel)]="tableForm.tableNumber" type="number" min="1" class="field-input" [placeholder]="'clubHandler.placeholders.tableNumber' | translate" />
-                <input name="tableCapacity" [(ngModel)]="tableForm.capacity" type="number" min="1" class="field-input" [placeholder]="'clubHandler.placeholders.tableCapacity' | translate" />
-                <input name="tablePrice" [(ngModel)]="tableForm.price" type="number" min="0" step="0.01" class="field-input" [placeholder]="'clubHandler.placeholders.tablePrice' | translate" />
-                <input name="tableDiscount" [(ngModel)]="tableForm.discount" type="number" min="0" step="0.01" class="field-input" [placeholder]="'clubHandler.placeholders.tableDiscount' | translate" />
+                <div>
+                  <input name="tableNumber" [(ngModel)]="tableForm.tableNumber" type="number" min="1" class="field-input" [class.has-error]="showTableError('tableNumber')" [placeholder]="'clubHandler.placeholders.tableNumber' | translate" />
+                  <span *ngIf="showTableError('tableNumber')" class="field-error-text">{{ getTableError('tableNumber') }}</span>
+                </div>
+                <div>
+                  <input name="tableCapacity" [(ngModel)]="tableForm.capacity" type="number" min="1" class="field-input" [class.has-error]="showTableError('capacity')" [placeholder]="'clubHandler.placeholders.tableCapacity' | translate" />
+                  <span *ngIf="showTableError('capacity')" class="field-error-text">{{ getTableError('capacity') }}</span>
+                </div>
+                <div>
+                  <input name="tablePrice" [(ngModel)]="tableForm.price" type="number" min="0" step="0.01" class="field-input" [class.has-error]="showTableError('price')" [placeholder]="'clubHandler.placeholders.tablePrice' | translate" />
+                  <span *ngIf="showTableError('price')" class="field-error-text">{{ getTableError('price') }}</span>
+                </div>
+                <div>
+                  <input name="tableDiscount" [(ngModel)]="tableForm.discount" type="number" min="0" step="0.01" class="field-input" [class.has-error]="showTableError('discount')" [placeholder]="'clubHandler.placeholders.tableDiscount' | translate" />
+                  <span *ngIf="showTableError('discount')" class="field-error-text">{{ getTableError('discount') }}</span>
+                </div>
 
                 <select name="tableState" [(ngModel)]="tableForm.tableState" class="field-input">
                   <option *ngFor="let state of tableStates" [value]="state">{{ ('clubHandler.tableStates.' + state) | translate }}</option>
@@ -380,9 +405,18 @@
             </div>
 
             <form class="rounded-lg border border-[#3a3a3a] bg-[#262626] p-3 mb-4 grid grid-cols-1 md:grid-cols-4 gap-2" (ngSubmit)="saveEvent()">
-              <input name="eventName" [(ngModel)]="eventForm.eventName" class="field-input" [placeholder]="'clubHandler.placeholders.eventName' | translate" />
-              <input name="eventDate" [(ngModel)]="eventForm.date" type="date" class="field-input" />
-              <input name="eventDescription" [(ngModel)]="eventForm.description" class="field-input md:col-span-2" [placeholder]="'clubHandler.placeholders.eventDescription' | translate" />
+              <div>
+                <input name="eventName" [(ngModel)]="eventForm.eventName" class="field-input" [class.has-error]="showEventError('eventName')" [placeholder]="'clubHandler.placeholders.eventName' | translate" />
+                <span *ngIf="showEventError('eventName')" class="field-error-text">{{ getEventError('eventName') }}</span>
+              </div>
+              <div>
+                <input name="eventDate" [(ngModel)]="eventForm.date" type="date" class="field-input" [class.has-error]="showEventError('date')" />
+                <span *ngIf="showEventError('date')" class="field-error-text">{{ getEventError('date') }}</span>
+              </div>
+              <div class="md:col-span-2">
+                <input name="eventDescription" [(ngModel)]="eventForm.description" class="field-input" [class.has-error]="showEventError('description')" [placeholder]="'clubHandler.placeholders.eventDescription' | translate" />
+                <span *ngIf="showEventError('description')" class="field-error-text">{{ getEventError('description') }}</span>
+              </div>
 
               <div class="md:col-span-4 flex gap-2">
                 <button type="submit" class="btn-primary" [disabled]="savingEvent">

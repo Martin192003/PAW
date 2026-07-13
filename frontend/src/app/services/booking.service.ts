@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Booking, BookingFilters, BookingPage, Receipt } from '../models/booking.model';
 import { environment } from '../../environments/environment';
 import { requireAnyLink, requireLink, resolveApiUrl } from '../utils/api-url.util';
+import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
@@ -38,13 +39,18 @@ export class BookingService {
   }
 
   cancelBooking(clubId: string, bookingId: string, links?: Booking['links']): Observable<void> {
+    // Sin este flag, un 409 (InvalidStatusTransitionException, ej. cancelar
+    // una reserva que ya no admite ese cambio de estado) lo agarra el
+    // interceptor global y redirige a /error en vez de dejar que la pantalla
+    // muestre su propio mensaje inline (mismo problema que tenian las mesas).
     return this.http.delete<void>(
       this.resolveBookingLink(
         links,
         ['cancel'],
         `booking ${bookingId} cancellation`,
         `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`
-      )
+      ),
+      { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
     );
   }
 
@@ -60,6 +66,8 @@ export class BookingService {
   }
 
   confirmManagedClubBooking(bookingId: string, links?: Booking['links']): Observable<void> {
+    // Mismo motivo que cancelBooking: confirmar tambien puede pegar contra
+    // InvalidStatusTransitionException (409).
     return this.http.put<void>(
       this.resolveBookingLink(
         links,
@@ -67,7 +75,8 @@ export class BookingService {
         `managed booking ${bookingId} confirmation`,
         `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}?managed=true`
       ),
-      { status: 'CONFIRMADA' }
+      { status: 'CONFIRMADA' },
+      { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
     );
   }
 
@@ -79,19 +88,25 @@ export class BookingService {
         `managed booking ${bookingId} cancellation`,
         `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}?managed=true`
       ),
-      { status: 'CANCELADA' }
+      { status: 'CANCELADA' },
+      { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
     );
   }
 
   putReceipt(clubId: string, bookingId: string, file: File, receiptLink?: string): Observable<Receipt> {
     const formData = new FormData();
     formData.append('file', file);
+    // InvalidReceiptException mapea a 400, pero se agrega el flag igual para
+    // que la pantalla siga mostrando su propio error inline en vez de
+    // depender de que el interceptor no la intercepte por casualidad.
+    const options = { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) };
     if (receiptLink) {
-      return this.http.put<Receipt>(resolveApiUrl(receiptLink, this.apiUrl), formData);
+      return this.http.put<Receipt>(resolveApiUrl(receiptLink, this.apiUrl), formData, options);
     }
     return this.http.put<Receipt>(
       resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
-      formData
+      formData,
+      options
     );
   }
 
@@ -106,11 +121,13 @@ export class BookingService {
   }
 
   deleteReceipt(clubId: string, bookingId: string, receiptLink?: string): Observable<void> {
+    const options = { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) };
     if (receiptLink) {
-      return this.http.delete<void>(resolveApiUrl(receiptLink, this.apiUrl));
+      return this.http.delete<void>(resolveApiUrl(receiptLink, this.apiUrl), options);
     }
     return this.http.delete<void>(
-      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl)
+      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
+      options
     );
   }
 

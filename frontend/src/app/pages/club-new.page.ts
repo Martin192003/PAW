@@ -24,6 +24,10 @@ import { I18nService } from '../services/i18n.service';
 declare const L: any; // Leaflet (cargado vía CDN o instalado como paquete)
 
 const CBU_MAX_LENGTH = 50;
+// Espeja DESCRIPTION_MAX_LENGTH en ClubServiceImpl (backend): la columna es
+// TEXT (sin limite de longitud), asi que este tope es una regla de negocio,
+// no algo impuesto por el schema.
+const DESCRIPTION_MAX_LENGTH = 1000;
 
 @Component({
   selector: 'app-add-club',
@@ -86,7 +90,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
       name:        ['', [Validators.required, Validators.maxLength(100)]],
       location:    ['', [Validators.required]],
       priceRange:  ['', [Validators.required]],
-      description: ['', [Validators.required]],
+      description: ['', [Validators.required, Validators.maxLength(DESCRIPTION_MAX_LENGTH)]],
       musicGenre:  ['', [Validators.required]],
       zone:        ['', [Validators.required]],
       isBar:       ['', [Validators.required]],

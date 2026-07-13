@@ -230,6 +230,13 @@
     "noFallback": "No profile data found. Please log in first.",
     "errors": {
       "emptyField": "This field cannot be empty",
+      "required": "This field is required.",
+      "email": "Enter a valid email.",
+      "maxlength": "Maximum {{max}} characters.",
+      "phonePattern": "Phone can only contain numbers and valid symbols.",
+      "invalid": "Invalid field.",
+      "emailConflict": "There is already an account registered with that email.",
+      "usernameConflict": "That username is already taken.",
       "saveFailed": "Could not save the change",
       "invalidSession": "Your session is invalid. Please sign in again.",
       "serverUpdate": "Internal server error while updating the profile",
@@ -444,6 +451,35 @@
     "tableForm": {
       "newTitle": "New table",
       "editTitle": "Edit table"
+    },
+    "tableErrors": {
+      "required": "This field is required.",
+      "invalid": "Invalid value.",
+      "tableNumberMax": "Table number must be less than 1,000,000.",
+      "capacityMax": "Capacity must be less than 10,000.",
+      "priceMax": "Price must be less than 99,999,999.99.",
+      "discountRange": "Discount must be between 0 and 100.",
+      "duplicateNumber": "A table with that number already exists in this club."
+    },
+    "clubErrors": {
+      "required": "This field is required.",
+      "clubNameMax": "Club name cannot be longer than 100 characters.",
+      "locationMax": "Location cannot be longer than 255 characters.",
+      "cbuMax": "CBU cannot be longer than 50 characters.",
+      "descriptionMax": "Description cannot be longer than 1000 characters."
+    },
+    "productErrors": {
+      "required": "This field is required.",
+      "invalid": "Invalid value.",
+      "productNameMax": "Product name cannot be longer than 100 characters.",
+      "descriptionMax": "Description cannot be longer than 300 characters.",
+      "priceMax": "Price must be less than 99,999,999.99."
+    },
+    "eventErrors": {
+      "required": "This field is required.",
+      "eventNameMax": "Event name cannot be longer than 120 characters.",
+      "pastDate": "Date cannot be earlier than today.",
+      "descriptionMax": "Description cannot be longer than 500 characters."
     },
     "placeholders": {
       "productName": "Product name",

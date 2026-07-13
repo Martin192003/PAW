@@ -25,17 +25,32 @@ export class SideBarComponent {
     private readonly router: Router,
   ) {}
 
-  readonly items: Array<{
+  // 'clubs' (Mis clubes) y 'clubsReservations' (Reservas de clubes) llevan a
+  // /admin/activity y /admin/bookings, que ya estan protegidas por
+  // adminGuard. Alguien sin role ADMIN no administra ningun club, asi que
+  // ademas de bloquear la ruta hay que ni mostrar esas tabs.
+  private readonly allItems: Array<{
     key: SideBarSection;
     labelKey: string;
     route?: string;
+    adminOnly?: boolean;
   }> = [
     { key: 'profile', labelKey: 'sidebar.profile', route: '/profile' },
-    { key: 'clubs', labelKey: 'sidebar.clubs', route: '/admin/activity' },
-    { key: 'clubsReservations', labelKey: 'sidebar.clubsReservations', route: '/admin/bookings' },
+    { key: 'clubs', labelKey: 'sidebar.clubs', route: '/admin/activity', adminOnly: true },
+    { key: 'clubsReservations', labelKey: 'sidebar.clubsReservations', route: '/admin/bookings', adminOnly: true },
     { key: 'myReservations', labelKey: 'sidebar.myReservations', route: '/bookings' },
     { key: 'reviews', labelKey: 'sidebar.reviews', route: '/profile/reviews'  }
   ];
+
+  get items(): Array<{ key: SideBarSection; labelKey: string; route?: string }> {
+    const isAdmin = this.isAdmin();
+    return this.allItems.filter((item) => !item.adminOnly || isAdmin);
+  }
+
+  private isAdmin(): boolean {
+    const role = this.authState.getUser()?.role ?? '';
+    return role.toUpperCase() === 'ADMIN';
+  }
 
   isActive(section: SideBarSection): boolean {
     return this.activeSection === section;

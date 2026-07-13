@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { User } from '../models/user.model';
@@ -11,6 +11,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
 
 type EditableProfileField = 'username' | 'name' | 'surname' | 'email' | 'cellphone';
+
+const PHONE_MAX_LENGTH = 30;
+const PHONE_PATTERN = /^(?=.*\d)[0-9+()\-\s]+$/;
+const USER_TEXT_FIELD_MAX_LENGTH = 100;
 
 const FIELD_I18N: Record<EditableProfileField, { labelKey: string; placeholderKey: string; ariaLabelKey: string }> = {
   username: {
@@ -50,23 +54,37 @@ const FIELD_TYPES: Record<EditableProfileField, string> = {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, SideBarComponent, TranslateModule],
+  imports: [CommonModule, ReactiveFormsModule, SideBarComponent, TranslateModule],
   templateUrl: './profile.page.html',
   styleUrl: './profile.page.css'
 })
 export class ProfilePage implements OnInit {
   user: User | null = null;
   activeField: EditableProfileField | null = null;
-  draftValue = '';
   errorMessage = '';
   saving = false;
+
+  // Mismo patron de "errores congelados" que register.page.ts / club-new.page.ts:
+  // el error no se muestra en vivo mientras se escribe, solo despues de un
+  // intento de guardar, y una vez mostrado queda fijo hasta el proximo intento.
+  submittedAttempted = false;
+  frozenError = false;
+  frozenErrorMessage = '';
+  serverFieldError = '';
+
+  readonly editorForm: FormGroup;
 
   constructor(
     private readonly authState: AuthStateService,
     private readonly userService: UserService,
     private readonly router: Router,
-    private readonly i18n: I18nService
-  ) {}
+    private readonly i18n: I18nService,
+    private readonly fb: FormBuilder,
+  ) {
+    this.editorForm = this.fb.group({
+      draftValue: [''],
+    });
+  }
 
   ngOnInit(): void {
     const cachedUser = this.authState.getUser();
@@ -110,8 +128,17 @@ export class ProfilePage implements OnInit {
     }
 
     this.activeField = field;
-    this.draftValue = this.user[field] ?? '';
     this.errorMessage = '';
+    this.submittedAttempted = false;
+    this.frozenError = false;
+    this.frozenErrorMessage = '';
+    this.serverFieldError = '';
+
+    const control = this.editorForm.get('draftValue')!;
+    control.setValidators(this.validatorsFor(field));
+    control.setValue(this.user[field] ?? '');
+    control.markAsUntouched();
+    control.updateValueAndValidity({ emitEvent: false });
   }
 
   goToPasswordReset(): void {
@@ -128,8 +155,34 @@ export class ProfilePage implements OnInit {
     }
 
     this.activeField = null;
-    this.draftValue = '';
     this.errorMessage = '';
+    this.submittedAttempted = false;
+    this.frozenError = false;
+    this.frozenErrorMessage = '';
+    this.serverFieldError = '';
+    this.editorForm.reset({ draftValue: '' });
+  }
+
+  showError(): boolean {
+    if (this.serverFieldError) {
+      return true;
+    }
+
+    if (!this.submittedAttempted) return false;
+
+    return this.frozenError;
+  }
+
+  getError(): string {
+    if (this.serverFieldError) {
+      return this.serverFieldError;
+    }
+
+    if (this.frozenErrorMessage) {
+      return this.frozenErrorMessage;
+    }
+
+    return this.currentErrorMessage();
   }
 
   saveEditor(): void {
@@ -137,12 +190,17 @@ export class ProfilePage implements OnInit {
       return;
     }
 
-    const nextValue = this.draftValue.trim();
-    if (!nextValue) {
-      this.errorMessage = this.i18n.instant('profile.errors.emptyField');
-      return;
-    }
+    this.submittedAttempted = true;
+    const control = this.editorForm.get('draftValue');
+    control?.markAsTouched();
+    control?.updateValueAndValidity({ onlySelf: true, emitEvent: false });
 
+    this.frozenError = this.hasCurrentError();
+    this.frozenErrorMessage = this.frozenError ? this.currentErrorMessage() : '';
+
+    if (this.editorForm.invalid || this.saving) return;
+
+    const nextValue = (control?.value ?? '').trim();
     const userId = this.user.userId;
     const payload = {
       username: this.activeField === 'username' ? nextValue : this.user.username,
@@ -155,6 +213,7 @@ export class ProfilePage implements OnInit {
 
     this.saving = true;
     this.errorMessage = '';
+    this.serverFieldError = '';
 
     this.userService.updateUser(userId, payload).subscribe({
       next: ({ user: updatedUser, token }) => {
@@ -169,6 +228,9 @@ export class ProfilePage implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.saving = false;
+        if (this.applyServerFieldError(error)) {
+          return;
+        }
         this.errorMessage = this.extractErrorMessage(error);
       }
     });
@@ -179,6 +241,63 @@ export class ProfilePage implements OnInit {
     if (this.activeField) {
       this.closeEditor();
     }
+  }
+
+  private validatorsFor(field: EditableProfileField): ValidatorFn[] {
+    switch (field) {
+      case 'email':
+        return [Validators.required, Validators.email];
+      case 'cellphone':
+        return [Validators.required, Validators.maxLength(PHONE_MAX_LENGTH), Validators.pattern(PHONE_PATTERN)];
+      // username/name/surname son VARCHAR(100) en la base (ver schema.sql):
+      // sin este limite, un valor mas largo pasaba la validacion del
+      // frontend y rompia en el UPDATE con un error de base de datos.
+      default:
+        return [Validators.required, Validators.maxLength(USER_TEXT_FIELD_MAX_LENGTH)];
+    }
+  }
+
+  private hasCurrentError(): boolean {
+    const control = this.editorForm.get('draftValue');
+    return !!(control && control.invalid);
+  }
+
+  private currentErrorMessage(): string {
+    const control = this.editorForm.get('draftValue');
+    if (!control || !control.errors) return '';
+
+    if (control.errors['required']) return this.i18n.instant('profile.errors.required');
+    if (control.errors['email']) return this.i18n.instant('profile.errors.email');
+    if (control.errors['maxlength']) {
+      return this.i18n.instant('profile.errors.maxlength', {
+        max: control.errors['maxlength'].requiredLength,
+      });
+    }
+    if (control.errors['pattern'] && this.activeField === 'cellphone') {
+      return this.i18n.instant('profile.errors.phonePattern');
+    }
+
+    return this.i18n.instant('profile.errors.invalid');
+  }
+
+  // El backend no distingue el campo en conflicto en /users/{id} (a diferencia
+  // de /users en el alta), pero como acá se edita un solo campo por vez, un
+  // 409 solo puede deberse al campo que se está editando (username o email
+  // son los únicos con restricción de unicidad).
+  private applyServerFieldError(error: HttpErrorResponse): boolean {
+    if (error.status !== 409) {
+      return false;
+    }
+
+    if (this.activeField !== 'username' && this.activeField !== 'email') {
+      return false;
+    }
+
+    this.serverFieldError = this.activeField === 'email'
+      ? this.i18n.instant('profile.errors.emailConflict')
+      : this.i18n.instant('profile.errors.usernameConflict');
+    this.editorForm.get('draftValue')?.markAsTouched();
+    return true;
   }
 
   private extractErrorMessage(error: HttpErrorResponse): string {

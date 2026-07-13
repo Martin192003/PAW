@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import {
   ClubService,
@@ -125,6 +126,38 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     discount: null,
     tableState: 'DISPONIBLE'
   };
+
+  // Mismo patron de "errores congelados" que register.page.ts / club-new.page.ts:
+  // antes esto solo validaba "no vacio / no negativo" y dejaba pasar valores
+  // como una capacidad de 17 digitos, que el backend rechazaba con un 500
+  // crudo (InvalidCapacityException sin manejar). Estos limites replican
+  // exactamente los que valida TableServiceImpl.create/update.
+  tableSubmittedAttempted = false;
+  tableFrozenErrors: { [key: string]: boolean } = {};
+  tableFrozenErrorMessages: { [key: string]: string } = {};
+  private static readonly TABLE_FIELDS = ['tableNumber', 'capacity', 'price', 'discount'];
+
+  // Mismo patron para el formulario de datos del club: clubName/location/cbu
+  // son VARCHAR(100)/VARCHAR(255)/VARCHAR(50) en schema.sql y antes no tenian
+  // ningun limite en el frontend.
+  clubSubmittedAttempted = false;
+  clubFrozenErrors: { [key: string]: boolean } = {};
+  clubFrozenErrorMessages: { [key: string]: string } = {};
+  private static readonly CLUB_FIELDS = ['clubName', 'location', 'cbu', 'description'];
+
+  // Idem para el formulario de productos: product_name es VARCHAR(100) y
+  // base_price es NUMERIC(10,2) (tope 99.999.999,99), pero solo se validaba
+  // que el precio no fuera <= 0.
+  productSubmittedAttempted = false;
+  productFrozenErrors: { [key: string]: boolean } = {};
+  productFrozenErrorMessages: { [key: string]: string } = {};
+  private static readonly PRODUCT_FIELDS = ['productName', 'basePrice', 'description'];
+
+  // Idem para el formulario de eventos: eventname es VARCHAR(120) en schema.sql.
+  eventSubmittedAttempted = false;
+  eventFrozenErrors: { [key: string]: boolean } = {};
+  eventFrozenErrorMessages: { [key: string]: string } = {};
+  private static readonly EVENT_FIELDS = ['eventName', 'date', 'description'];
 
   savingEvent = false;
   editingEventId: string | null = null;
@@ -401,11 +434,53 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       cbu: this.club.cbu
     };
     this.editingClub = true;
+    this.resetClubValidation();
     this.clearActionMessages();
   }
 
   cancelEditClub(): void {
     this.editingClub = false;
+  }
+
+  showClubError(field: string): boolean {
+    if (!this.clubSubmittedAttempted) return false;
+    return !!this.clubFrozenErrors[field];
+  }
+
+  getClubError(field: string): string {
+    return this.clubFrozenErrorMessages[field] ?? '';
+  }
+
+  private resetClubValidation(): void {
+    this.clubSubmittedAttempted = false;
+    this.clubFrozenErrors = {};
+    this.clubFrozenErrorMessages = {};
+  }
+
+  private clubFieldError(field: string): string {
+    const raw = (this.clubForm as unknown as Record<string, unknown>)[field];
+    const value = typeof raw === 'string' ? raw.trim() : '';
+
+    switch (field) {
+      case 'clubName':
+        if (!value) return this.i18n.instant('clubHandler.clubErrors.required');
+        if (value.length > 100) return this.i18n.instant('clubHandler.clubErrors.clubNameMax');
+        return '';
+      case 'location':
+        if (!value) return this.i18n.instant('clubHandler.clubErrors.required');
+        if (value.length > 255) return this.i18n.instant('clubHandler.clubErrors.locationMax');
+        return '';
+      case 'cbu':
+        if (!value) return this.i18n.instant('clubHandler.clubErrors.required');
+        if (value.length > 50) return this.i18n.instant('clubHandler.clubErrors.cbuMax');
+        return '';
+      case 'description':
+        if (!value) return this.i18n.instant('clubHandler.clubErrors.required');
+        if (value.length > 1000) return this.i18n.instant('clubHandler.clubErrors.descriptionMax');
+        return '';
+      default:
+        return '';
+    }
   }
 
   saveClub(): void {
@@ -420,9 +495,24 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       description: this.clubForm.description.trim(),
       cbu: this.clubForm.cbu.trim()
     };
+    this.clubForm = payload;
 
-    if (!payload.clubName || !payload.location || !payload.description || !payload.cbu) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.clubRequiredFields');
+    this.clubSubmittedAttempted = true;
+    this.clubFrozenErrors = {};
+    this.clubFrozenErrorMessages = {};
+
+    let hasError = false;
+    for (const field of ClubHandlerPage.CLUB_FIELDS) {
+      const message = this.clubFieldError(field);
+      if (message) {
+        this.clubFrozenErrors[field] = true;
+        this.clubFrozenErrorMessages[field] = message;
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      this.actionErrorMessage = '';
       this.actionSuccessMessage = '';
       return;
     }
@@ -458,6 +548,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       productType: this.productTypes[0],
       isAvailable: true
     };
+    this.resetProductValidation();
   }
 
   startEditProduct(product: Product): void {
@@ -469,6 +560,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       productType: this.normalizeProductType(product.productType),
       isAvailable: product.isAvailable
     };
+    this.resetProductValidation();
     this.clearActionMessages();
   }
 
@@ -476,13 +568,71 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.startCreateProduct();
   }
 
+  showProductError(field: string): boolean {
+    if (!this.productSubmittedAttempted) return false;
+    return !!this.productFrozenErrors[field];
+  }
+
+  getProductError(field: string): string {
+    return this.productFrozenErrorMessages[field] ?? '';
+  }
+
+  private resetProductValidation(): void {
+    this.productSubmittedAttempted = false;
+    this.productFrozenErrors = {};
+    this.productFrozenErrorMessages = {};
+  }
+
+  private productFieldError(field: string): string {
+    switch (field) {
+      case 'productName': {
+        const value = (this.productForm.productName ?? '').trim();
+        if (!value) return this.i18n.instant('clubHandler.productErrors.required');
+        if (value.length > 100) return this.i18n.instant('clubHandler.productErrors.productNameMax');
+        return '';
+      }
+      case 'basePrice': {
+        const raw = this.productForm.basePrice;
+        if (raw === null || raw === undefined || (raw as unknown) === '') {
+          return this.i18n.instant('clubHandler.productErrors.required');
+        }
+        const value = Number(raw);
+        if (!Number.isFinite(value) || value <= 0) return this.i18n.instant('clubHandler.productErrors.invalid');
+        if (value >= 99999999.99) return this.i18n.instant('clubHandler.productErrors.priceMax');
+        return '';
+      }
+      case 'description': {
+        const value = (this.productForm.description ?? '').trim();
+        if (!value) return this.i18n.instant('clubHandler.productErrors.required');
+        if (value.length > 300) return this.i18n.instant('clubHandler.productErrors.descriptionMax');
+        return '';
+      }
+      default:
+        return '';
+    }
+  }
+
   saveProduct(): void {
     if (!this.clubId || this.savingProduct) {
       return;
     }
 
-    if (this.productForm.basePrice == null) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.productPriceRequired');
+    this.productSubmittedAttempted = true;
+    this.productFrozenErrors = {};
+    this.productFrozenErrorMessages = {};
+
+    let hasError = false;
+    for (const field of ClubHandlerPage.PRODUCT_FIELDS) {
+      const message = this.productFieldError(field);
+      if (message) {
+        this.productFrozenErrors[field] = true;
+        this.productFrozenErrorMessages[field] = message;
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      this.actionErrorMessage = '';
       this.actionSuccessMessage = '';
       return;
     }
@@ -493,12 +643,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       description: this.productForm.description.trim(),
       basePrice: Number(this.productForm.basePrice)
     };
-
-    if (!payload.productName || !payload.description || payload.basePrice <= 0) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.productInvalid');
-      this.actionSuccessMessage = '';
-      return;
-    }
 
     this.savingProduct = true;
     const editingProduct = this.editingProductId
@@ -570,6 +714,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       discount: null,
       tableState: this.tableStates[0]
     };
+    this.resetTableValidation();
   }
 
   startEditTable(table: ClubTable): void {
@@ -581,6 +726,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       discount: table.discount,
       tableState: this.normalizeTableState(table.tableState)
     };
+    this.resetTableValidation();
     this.clearActionMessages();
   }
 
@@ -588,13 +734,73 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.startCreateTable();
   }
 
+  showTableError(field: string): boolean {
+    if (!this.tableSubmittedAttempted) return false;
+    return !!this.tableFrozenErrors[field];
+  }
+
+  getTableError(field: string): string {
+    return this.tableFrozenErrorMessages[field] ?? '';
+  }
+
+  private resetTableValidation(): void {
+    this.tableSubmittedAttempted = false;
+    this.tableFrozenErrors = {};
+    this.tableFrozenErrorMessages = {};
+  }
+
+  private tableFieldError(field: string): string {
+    const raw = (this.tableForm as unknown as Record<string, unknown>)[field];
+    const isEmpty = raw === null || raw === undefined || raw === '';
+    const value = Number(raw);
+
+    switch (field) {
+      case 'tableNumber':
+        if (isEmpty) return this.i18n.instant('clubHandler.tableErrors.required');
+        if (!Number.isFinite(value) || value <= 0) return this.i18n.instant('clubHandler.tableErrors.invalid');
+        if (value >= 1_000_000) return this.i18n.instant('clubHandler.tableErrors.tableNumberMax');
+        return '';
+      case 'capacity':
+        if (isEmpty) return this.i18n.instant('clubHandler.tableErrors.required');
+        if (!Number.isFinite(value) || value <= 0) return this.i18n.instant('clubHandler.tableErrors.invalid');
+        if (value >= 10_000) return this.i18n.instant('clubHandler.tableErrors.capacityMax');
+        return '';
+      case 'price':
+        if (isEmpty) return this.i18n.instant('clubHandler.tableErrors.required');
+        if (!Number.isFinite(value) || value < 0) return this.i18n.instant('clubHandler.tableErrors.invalid');
+        if (value >= 99999999.99) return this.i18n.instant('clubHandler.tableErrors.priceMax');
+        return '';
+      case 'discount':
+        // El descuento es opcional (default 0), a diferencia de los otros campos.
+        if (isEmpty) return '';
+        if (!Number.isFinite(value) || value < 0 || value > 100) return this.i18n.instant('clubHandler.tableErrors.discountRange');
+        return '';
+      default:
+        return '';
+    }
+  }
+
   saveTable(): void {
     if (!this.clubId || this.savingTable) {
       return;
     }
 
-    if (this.tableForm.tableNumber == null || this.tableForm.capacity == null || this.tableForm.price == null) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableRequiredFields');
+    this.tableSubmittedAttempted = true;
+    this.tableFrozenErrors = {};
+    this.tableFrozenErrorMessages = {};
+
+    let hasError = false;
+    for (const field of ClubHandlerPage.TABLE_FIELDS) {
+      const message = this.tableFieldError(field);
+      if (message) {
+        this.tableFrozenErrors[field] = true;
+        this.tableFrozenErrorMessages[field] = message;
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      this.actionErrorMessage = '';
       this.actionSuccessMessage = '';
       return;
     }
@@ -606,12 +812,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       discount: Number(this.tableForm.discount ?? 0),
       tableState: this.tableForm.tableState
     };
-
-    if (payload.tableNumber <= 0 || payload.capacity <= 0 || payload.price < 0 || payload.discount < 0) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableInvalid');
-      this.actionSuccessMessage = '';
-      return;
-    }
 
     this.savingTable = true;
     const editingTable = this.editingTableId
@@ -634,7 +834,21 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         this.actionSuccessMessage = this.i18n.instant('clubHandler.messages.tableSaved');
         this.actionErrorMessage = '';
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
+        // El numero de mesa es unico por club a nivel de base de datos (constraint
+        // club_tables_club_id_table_number_key), pero no se valida proactivamente
+        // antes del insert. El 409 que devuelve el DataIntegrityViolationExceptionMapper
+        // del backend es siempre por esto, asi que se muestra como error de campo
+        // en vez del cartel generico, igual que los otros formularios.
+        if (error.status === 409) {
+          this.tableSubmittedAttempted = true;
+          this.tableFrozenErrors['tableNumber'] = true;
+          this.tableFrozenErrorMessages['tableNumber'] = this.i18n.instant('clubHandler.tableErrors.duplicateNumber');
+          this.actionErrorMessage = '';
+          this.actionSuccessMessage = '';
+          return;
+        }
+
         this.loadTables();
         this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableSaveFailed');
         this.actionSuccessMessage = '';
@@ -671,6 +885,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       description: '',
       date: ''
     };
+    this.resetEventValidation();
   }
 
   startEditEvent(event: Event): void {
@@ -680,6 +895,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       description: event.description,
       date: (event.date || '').slice(0, 10)
     };
+    this.resetEventValidation();
     this.clearActionMessages();
   }
 
@@ -687,8 +903,76 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.startCreateEvent();
   }
 
+  showEventError(field: string): boolean {
+    if (!this.eventSubmittedAttempted) return false;
+    return !!this.eventFrozenErrors[field];
+  }
+
+  getEventError(field: string): string {
+    return this.eventFrozenErrorMessages[field] ?? '';
+  }
+
+  private resetEventValidation(): void {
+    this.eventSubmittedAttempted = false;
+    this.eventFrozenErrors = {};
+    this.eventFrozenErrorMessages = {};
+  }
+
+  private eventFieldError(field: string): string {
+    switch (field) {
+      case 'eventName': {
+        const value = (this.eventForm.eventName ?? '').trim();
+        if (!value) return this.i18n.instant('clubHandler.eventErrors.required');
+        if (value.length > 120) return this.i18n.instant('clubHandler.eventErrors.eventNameMax');
+        return '';
+      }
+      case 'date': {
+        const value = this.eventForm.date;
+        if (!value) return this.i18n.instant('clubHandler.eventErrors.required');
+        // EventServiceImpl.validateDate() rechaza fechas anteriores a hoy
+        // (InvalidDateRangeException, mapeada a 400). Se valida lo mismo acá
+        // para no depender del viaje al backend para un error tan básico.
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const parsed = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(parsed.getTime())) return this.i18n.instant('clubHandler.eventErrors.required');
+        if (parsed < today) return this.i18n.instant('clubHandler.eventErrors.pastDate');
+        return '';
+      }
+      case 'description': {
+        // A diferencia de club/producto, la descripcion del evento es
+        // opcional (EventServiceImpl la deja en null si viene vacia).
+        const value = (this.eventForm.description ?? '').trim();
+        if (value.length > 500) return this.i18n.instant('clubHandler.eventErrors.descriptionMax');
+        return '';
+      }
+      default:
+        return '';
+    }
+  }
+
   saveEvent(): void {
     if (!this.clubId || this.savingEvent) {
+      return;
+    }
+
+    this.eventSubmittedAttempted = true;
+    this.eventFrozenErrors = {};
+    this.eventFrozenErrorMessages = {};
+
+    let hasError = false;
+    for (const field of ClubHandlerPage.EVENT_FIELDS) {
+      const message = this.eventFieldError(field);
+      if (message) {
+        this.eventFrozenErrors[field] = true;
+        this.eventFrozenErrorMessages[field] = message;
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      this.actionErrorMessage = '';
+      this.actionSuccessMessage = '';
       return;
     }
 
@@ -697,12 +981,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       description: this.eventForm.description.trim(),
       date: this.eventForm.date
     };
-
-    if (!payload.eventName || !payload.date) {
-      this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventRequiredFields');
-      this.actionSuccessMessage = '';
-      return;
-    }
 
     this.savingEvent = true;
     const editingEvent = this.editingEventId
@@ -726,7 +1004,21 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         this.actionErrorMessage = '';
         this.loadEvents();
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
+        // eventName y date ya se validan arriba antes de mandar el request,
+        // asi que el unico 400 que puede llegar del backend a esta altura es
+        // InvalidDateRangeException/ValidationException (EventServiceImpl).
+        // Se muestra como error de campo en vez del cartel/modal generico,
+        // igual que el resto de los formularios (mesas, club, producto).
+        if (error.status === 400) {
+          this.eventSubmittedAttempted = true;
+          this.eventFrozenErrors['date'] = true;
+          this.eventFrozenErrorMessages['date'] = this.i18n.instant('clubHandler.eventErrors.pastDate');
+          this.actionErrorMessage = '';
+          this.actionSuccessMessage = '';
+          return;
+        }
+
         this.loadEvents();
         this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventSaveFailed');
         this.actionSuccessMessage = '';
