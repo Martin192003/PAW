@@ -765,6 +765,7 @@ public class ClubRestController {
         dto.setMusicGenre(club.getMusicGenre().toString());
         dto.setPriceRange(club.getPriceRange().toString());
         dto.setBar(club.getIsBar());
+        dto.setCbu(club.getCbu());
         final int quantityRatings = club.getQuantityRatings() != null
                 ? club.getQuantityRatings()
                 : 0;
