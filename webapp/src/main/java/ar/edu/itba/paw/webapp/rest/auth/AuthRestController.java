@@ -24,6 +24,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +38,7 @@ public class AuthRestController {
     private final UserService userService;
     private final PasswordResetJobService passwordResetJobService;
     private final JwtUtil jwtUtil;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @Context
     private UriInfo uriInfo;
@@ -44,10 +46,12 @@ public class AuthRestController {
     @Autowired
     public AuthRestController(UserService userService,
                               PasswordResetJobService passwordResetJobService,
-                              JwtUtil jwtUtil) {
+                              JwtUtil jwtUtil,
+                              AuthenticatedUserResolver authenticatedUserResolver) {
         this.userService = userService;
         this.passwordResetJobService = passwordResetJobService;
         this.jwtUtil = jwtUtil;
+        this.authenticatedUserResolver = authenticatedUserResolver;
     }
 
     @POST
@@ -172,6 +176,51 @@ public class AuthRestController {
         }
 
         return Response.ok(tokenFor(updated.get()))
+                .header("Cache-Control", "no-store")
+                .header("Pragma", "no-cache")
+                .build();
+    }
+
+    /**
+     * Cambio de contraseña para un usuario que ya tiene sesion iniciada (ej.
+     * desde /profile). A diferencia de /password-resets, no requiere token de
+     * mail: la identidad se toma del JWT de la request, no de un link.
+     * Reutiliza PasswordResetDto (mismos campos newPassword/confirmationPassword)
+     * y UserServiceImpl.changePasswordForAuthenticatedUser, que ya existia pero
+     * no tenia ningun endpoint que lo expusiera.
+     */
+    @POST
+    @Path("/password-changes")
+    public Response changePassword(PasswordResetDto body, @Context SecurityContext securityContext) {
+        User authUser = authenticatedUserResolver.resolve(securityContext);
+        if (authUser == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new ErrorDto("unauthorized"))
+                    .build();
+        }
+
+        if (body == null || isBlank(body.getNewPassword()) || isBlank(body.getConfirmationPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorDto("password_required"))
+                    .build();
+        }
+
+        if (!body.getNewPassword().equals(body.getConfirmationPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorDto("password_confirmation_mismatch"))
+                    .build();
+        }
+
+        boolean changed = userService.changePasswordForAuthenticatedUser(authUser.getId(), body.getNewPassword());
+        if (!changed) {
+            // false tambien puede significar "usuario no encontrado", pero eso no
+            // deberia pasar nunca aca: ya se resolvio un usuario autenticado arriba.
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorDto("password_unchanged"))
+                    .build();
+        }
+
+        return Response.noContent()
                 .header("Cache-Control", "no-store")
                 .header("Pragma", "no-cache")
                 .build();

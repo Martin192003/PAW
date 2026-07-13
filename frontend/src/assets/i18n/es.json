@@ -250,7 +250,7 @@
     "forgotTitle": "Recuperar contraseña",
     "resetTitle": "Restablecer contraseña",
     "forgotDescription": "Te enviaremos un correo con los pasos para restablecer tu contraseña.",
-    "forgotLoggedDescription": "Te enviaremos un correo a la dirección asociada a tu cuenta.",
+    "authenticatedChangeDescription": "Ingresá tu nueva contraseña para actualizarla.",
     "emailPlaceholder": "Email",
     "emailInvalid": "Ingresá un email válido.",
     "submitSend": "Enviar",
@@ -279,6 +279,7 @@
       "invalidToken": "Token inválido o vencido.",
       "invalidData": "Los datos ingresados no son válidos.",
       "passwordUnchanged": "La contraseña debe ser distinta a la anterior.",
+      "sessionExpired": "Tu sesión venció. Iniciá sesión de nuevo e intentá otra vez.",
       "updateFailed": "No pudimos actualizar la contraseña. Intentálo más tarde."
     }
   },

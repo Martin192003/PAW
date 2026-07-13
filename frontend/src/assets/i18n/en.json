@@ -250,7 +250,7 @@
     "forgotTitle": "Recover password",
     "resetTitle": "Reset password",
     "forgotDescription": "We will send you an email with the steps to reset your password.",
-    "forgotLoggedDescription": "We will send an email to the address associated with your account.",
+    "authenticatedChangeDescription": "Enter your new password to update it.",
     "emailPlaceholder": "Email",
     "emailInvalid": "Enter a valid email.",
     "submitSend": "Send",
@@ -279,6 +279,7 @@
       "invalidToken": "Invalid or expired token.",
       "invalidData": "The entered data is invalid.",
       "passwordUnchanged": "The password must be different from the previous one.",
+      "sessionExpired": "Your session expired. Log in again and try once more.",
       "updateFailed": "Could not update the password. Please try again later."
     }
   },

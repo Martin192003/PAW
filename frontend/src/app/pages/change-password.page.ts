@@ -78,13 +78,19 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
       this.token = params.get('token');
       const loggedUserEmail = this.authState.getUser()?.email ?? '';
       this.useLoggedUserEmail = !this.token && params.get('source') === 'profile' && loggedUserEmail.trim().length > 0;
-      if (this.useLoggedUserEmail) {
-        this.forgotForm.patchValue({ email: loggedUserEmail });
-      }
       this.showResetModal = false;
       this.resetError = '';
       this.resetCompleted = false;
     });
+  }
+
+  // Si ya tenes sesion iniciada y entraste desde /profile, no tiene sentido
+  // mandarte un mail y hacerte tocar un link para volver a esta misma pantalla:
+  // se muestra directamente el formulario de nueva contraseña, identificando
+  // al usuario por el JWT de la sesion actual en vez de por un token de mail.
+  // El flujo de "te mando un mail" solo aplica cuando NO hay sesion (login).
+  get showResetForm(): boolean {
+    return !!this.token || this.useLoggedUserEmail;
   }
 
   ngOnDestroy(): void {
@@ -149,11 +155,6 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
 
     if (this.resetForm.invalid || this.submittingReset) return;
 
-    if (!this.token) {
-      this.resetError = this.i18n.instant('passwordReset.errors.invalidToken');
-      return;
-    }
-
     const newPassword = this.resetForm.value.newPassword;
     const confirmationPassword = this.resetForm.value.confirmationPassword;
 
@@ -163,7 +164,18 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     this.resetCompleted = false;
     this.showResetModal = false;
 
-    this.userService.resetPassword(this.token, newPassword, confirmationPassword).pipe(
+    if (this.token) {
+      this.submitTokenReset(this.token, newPassword, confirmationPassword);
+      return;
+    }
+
+    // Sin token: solo se llega hasta acá si useLoggedUserEmail es true
+    // (ver showResetForm), es decir, cambio de contraseña autenticado.
+    this.submitAuthenticatedChange(newPassword, confirmationPassword);
+  }
+
+  private submitTokenReset(token: string, newPassword: string, confirmationPassword: string): void {
+    this.userService.resetPassword(token, newPassword, confirmationPassword).pipe(
       finalize(() => {
         this.submittingReset = false;
       })
@@ -178,6 +190,30 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
       error: (error: HttpErrorResponse) => {
         this.ngZone.run(() => {
           this.applyResetError(error);
+          this.cdr.detectChanges();
+        });
+      },
+    });
+  }
+
+  private submitAuthenticatedChange(newPassword: string, confirmationPassword: string): void {
+    this.userService.changePasswordAuthenticated(newPassword, confirmationPassword).pipe(
+      finalize(() => {
+        this.submittingReset = false;
+      })
+    ).subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          // A diferencia del flujo con token, aca la sesion actual sigue
+          // siendo valida (el JWT no cambia), asi que no hace falta un nuevo
+          // login: solo se confirma el cambio con el mismo modal de éxito.
+          this.resetCompleted = true;
+          this.cdr.detectChanges();
+        });
+      },
+      error: (error: HttpErrorResponse) => {
+        this.ngZone.run(() => {
+          this.applyAuthenticatedChangeError(error);
           this.cdr.detectChanges();
         });
       },
@@ -252,7 +288,7 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
   confirmResetModal(): void {
     this.showResetModal = false;
     this.resetCompleted = false;
-    this.router.navigate(['/clubs']);
+    this.router.navigate([this.useLoggedUserEmail ? '/profile' : '/clubs']);
   }
 
   private hasCurrentForgotError(field: string): boolean {
@@ -350,6 +386,40 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
       // Unico otro 400 posible a esta altura: ValidationException de
       // "la contraseña no puede ser igual a la anterior" (UserServiceImpl).
       this.resetServerFieldErrors['newPassword'] = this.i18n.instant('passwordReset.errors.passwordUnchanged');
+      return;
+    }
+
+    this.resetError = this.i18n.instant('passwordReset.errors.updateFailed');
+  }
+
+  // A diferencia de /auth/password-resets, /auth/password-changes devuelve
+  // "password_unchanged" como mensaje literal (ver AuthRestController), asi
+  // que no hace falta adivinar cual es el unico 400 restante.
+  private applyAuthenticatedChangeError(error: HttpErrorResponse): void {
+    if (error.status === 0) {
+      this.resetError = this.i18n.instant('passwordReset.errors.network');
+      return;
+    }
+
+    if (error.status === 401) {
+      this.resetError = this.i18n.instant('passwordReset.errors.sessionExpired');
+      return;
+    }
+
+    if (error.status === 400) {
+      const message = this.extractServerMessage(error.error);
+
+      if (message === 'password_confirmation_mismatch') {
+        this.resetServerFieldErrors['confirmationPassword'] = this.i18n.instant('passwordReset.errors.passwordsDontMatch');
+        return;
+      }
+
+      if (message === 'password_unchanged') {
+        this.resetServerFieldErrors['newPassword'] = this.i18n.instant('passwordReset.errors.passwordUnchanged');
+        return;
+      }
+
+      this.resetError = this.i18n.instant('passwordReset.errors.invalidData');
       return;
     }
 

@@ -200,4 +200,16 @@ export class UserService {
       })
     );
   }
+
+  /**
+   * Cambio de contraseña para un usuario que ya tiene sesion iniciada (ej.
+   * desde /profile). A diferencia de resetPassword(), no hace falta un token
+   * de mail: la identidad sale del JWT que ya se manda en cada request
+   * (interceptor de auth), asi que no hace falta reflejar un nuevo token acá.
+   */
+  changePasswordAuthenticated(newPassword: string, confirmationPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/auth/password-changes`, { newPassword, confirmationPassword }, {
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    });
+  }
 }
