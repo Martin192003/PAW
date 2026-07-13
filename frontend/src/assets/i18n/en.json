@@ -427,6 +427,7 @@
       "zone": "Zone",
       "cbu": "CBU",
       "isBar": "Is a bar",
+      "venueType": "Venue type",
       "description": "Description"
     },
     "saving": "Saving...",
@@ -439,10 +440,6 @@
     "noPhoto": "No photo",
     "uploadPhoto": "Upload photo",
     "removePhoto": "Remove photo",
-    "available": "Available",
-    "notAvailable": "Not available",
-    "disable": "Disable",
-    "enable": "Enable",
     "eventFilters": {
       "all": "All",
       "past": "Past",
@@ -514,11 +511,6 @@
       "NO_ALCOHOLICA": "Non-alcoholic",
       "TRAGOS": "Drinks"
     },
-    "tableStates": {
-      "DISPONIBLE": "Available",
-      "RESERVADA": "Reserved",
-      "PENDIENTE": "Pending"
-    },
     "priceRanges": {
       "BAJO": "Low",
       "MEDIO": "Medium",
@@ -555,6 +547,8 @@
       "galleryUpdated": "Gallery photos updated.",
       "galleryUpdateFailed": "Could not upload gallery photos.",
       "confirmDeleteGalleryPhoto": "Delete this gallery photo?",
+      "galleryPhotoDeleteTitle": "Delete gallery photo",
+      "galleryPhotoDeleteBody": "This photo will be removed from the club gallery. This action cannot be undone.",
       "galleryPhotoDeleted": "Gallery photo deleted.",
       "galleryPhotoDeleteFailed": "Could not delete the gallery photo.",
       "clubRequiredFields": "Complete the required club fields.",
@@ -564,9 +558,10 @@
       "productInvalid": "Complete the product fields with valid values.",
       "productSaved": "Product saved successfully.",
       "productSaveFailed": "Could not confirm the product save. The menu was reloaded.",
-      "productEnabled": "Product enabled.",
-      "productDisabled": "Product disabled.",
-      "productAvailabilityFailed": "Could not change product availability.",
+      "productDeleteTitle": "Delete product",
+      "productDeleteBody": "The product {{name}} will be removed from the menu. This action cannot be undone.",
+      "productDeleted": "Product deleted.",
+      "productDeleteFailed": "Could not delete the product.",
       "tableRequiredFields": "Complete table number, capacity and price.",
       "tableInvalid": "Review the table values.",
       "tableSaved": "Table saved successfully.",

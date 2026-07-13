@@ -428,6 +428,7 @@
       "zone": "Zona",
       "cbu": "CBU",
       "isBar": "Es bar",
+      "venueType": "Tipo de lugar",
       "description": "Descripción"
     },
     "saving": "Guardando...",
@@ -440,10 +441,6 @@
     "noPhoto": "Sin foto",
     "uploadPhoto": "Subir foto",
     "removePhoto": "Eliminar foto",
-    "available": "Disponible",
-    "notAvailable": "No disponible",
-    "disable": "Deshabilitar",
-    "enable": "Habilitar",
     "eventFilters": {
       "all": "Todos",
       "past": "Pasados",
@@ -515,11 +512,6 @@
       "NO_ALCOHOLICA": "No alcohólica",
       "TRAGOS": "Tragos"
     },
-    "tableStates": {
-      "DISPONIBLE": "Disponible",
-      "RESERVADA": "Reservada",
-      "PENDIENTE": "Pendiente"
-    },
     "priceRanges": {
       "BAJO": "Bajo",
       "MEDIO": "Medio",
@@ -556,6 +548,8 @@
       "galleryUpdated": "Fotos de galería actualizadas.",
       "galleryUpdateFailed": "No se pudieron subir las fotos de galería.",
       "confirmDeleteGalleryPhoto": "¿Eliminar esta foto de la galería?",
+      "galleryPhotoDeleteTitle": "Eliminar foto de la galería",
+      "galleryPhotoDeleteBody": "Esta foto se va a eliminar de la galería del club. Esta acción no se puede deshacer.",
       "galleryPhotoDeleted": "Foto eliminada de la galería.",
       "galleryPhotoDeleteFailed": "No se pudo eliminar la foto de la galería.",
       "clubRequiredFields": "Completá los campos requeridos del club.",
@@ -565,9 +559,10 @@
       "productInvalid": "Completá los campos del producto con valores válidos.",
       "productSaved": "Producto guardado correctamente.",
       "productSaveFailed": "No se pudo confirmar el guardado del producto. Se recargó el menú.",
-      "productEnabled": "Producto habilitado.",
-      "productDisabled": "Producto deshabilitado.",
-      "productAvailabilityFailed": "No se pudo cambiar la disponibilidad del producto.",
+      "productDeleteTitle": "Eliminar producto",
+      "productDeleteBody": "El producto {{name}} se va a eliminar del menú. Esta acción no se puede deshacer.",
+      "productDeleted": "Producto eliminado.",
+      "productDeleteFailed": "No se pudo eliminar el producto.",
       "tableRequiredFields": "Completá número de mesa, capacidad y precio.",
       "tableInvalid": "Revisá los valores de la mesa.",
       "tableSaved": "Mesa guardada correctamente.",

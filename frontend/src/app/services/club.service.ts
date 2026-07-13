@@ -468,6 +468,16 @@ export class ClubService {
     }).pipe(map(updated => this.normalizeProduct(updated)));
   }
 
+  deleteProduct(clubId: string, productId: string, product?: Product): Observable<void> {
+    const url = this.resolveClubLink(
+      product?.links,
+      ['self', 'delete'],
+      `product ${productId}`,
+      `${this.apiUrl}/clubs/${clubId}/menu/${productId}`
+    );
+    return this.http.delete<void>(url);
+  }
+
   createTable(clubId: string, payload: TablePayload, links?: unknown): Observable<ClubTable> {
     const url = this.resolveClubLink(links, this.linkRels.tables, `club ${clubId} tables`, `${this.apiUrl}/clubs/${clubId}/tables`);
     // El 409 por numero de mesa duplicado lo maneja club-handler.page.ts como

@@ -9,6 +9,23 @@ table td {
   vertical-align: top;
 }
 
+button:not(:disabled),
+label.btn-primary,
+label.btn-secondary,
+label.btn-danger,
+.btn-primary:not(:disabled),
+.btn-secondary:not(:disabled),
+.btn-danger:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  cursor: not-allowed;
+}
+
 .field-input {
   width: 100%;
   border: 1px solid #484848;
@@ -26,6 +43,11 @@ table td {
 
 .field-input.has-error {
   border-color: #dc3545;
+}
+
+textarea.field-input {
+  resize: none;
+  overflow-y: auto;
 }
 
 .field-error-text {
@@ -69,6 +91,16 @@ table td {
 
 .btn-danger:hover {
   background: #a82828;
+}
+
+.form-action-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.form-submit-button {
+  width: min(100%, 9.5rem);
 }
 
 .gallery-card {
@@ -149,4 +181,68 @@ table td {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.confirm-modal {
+  width: min(100%, 27.5rem);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  background: #181818;
+  padding: 1.25rem;
+  color: #fff;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+.confirm-modal-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.confirm-modal-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.confirm-modal-copy {
+  min-width: 0;
+}
+
+.confirm-modal-copy h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.confirm-modal-copy p {
+  margin: 0.5rem 0 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
 }
