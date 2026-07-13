@@ -234,6 +234,7 @@
       "email": "Ingresá un email válido.",
       "maxlength": "Máximo {{max}} caracteres.",
       "phonePattern": "El teléfono solo puede contener números y símbolos válidos.",
+      "usernamePattern": "El usuario solo puede contener letras y números.",
       "invalid": "Campo inválido.",
       "emailConflict": "Ya existe una cuenta registrada con ese email.",
       "usernameConflict": "Ese nombre de usuario ya está en uso.",
@@ -568,12 +569,16 @@
       "tableSaved": "Mesa guardada correctamente.",
       "tableSaveFailed": "No se pudo confirmar el guardado de la mesa. Se recargaron las mesas.",
       "confirmDeleteTable": "¿Eliminar mesa {{number}}?",
+      "tableDeleteTitle": "Eliminar mesa",
+      "tableDeleteBody": "La mesa {{number}} se va a eliminar del club. Esta acción no se puede deshacer.",
       "tableDeleted": "Mesa eliminada.",
       "tableDeleteFailed": "No se pudo eliminar la mesa.",
       "eventRequiredFields": "Completá nombre y fecha del evento.",
       "eventSaved": "Evento guardado correctamente.",
       "eventSaveFailed": "No se pudo confirmar el guardado del evento. Se recargaron los eventos.",
       "confirmDeleteEvent": "¿Eliminar evento {{name}}?",
+      "eventDeleteTitle": "Eliminar evento",
+      "eventDeleteBody": "El evento {{name}} se va a eliminar del club. Esta acción no se puede deshacer.",
       "eventDeleted": "Evento eliminado.",
       "eventDeleteFailed": "No se pudo eliminar el evento.",
       "eventPhotoUpdated": "Foto de evento actualizada.",
@@ -786,4 +791,3 @@
     "close": "Cerrar"
   }
 }
-

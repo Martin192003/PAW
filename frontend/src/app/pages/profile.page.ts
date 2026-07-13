@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { User } from '../models/user.model';
@@ -14,6 +14,7 @@ type EditableProfileField = 'username' | 'name' | 'surname' | 'email' | 'cellpho
 
 const PHONE_MAX_LENGTH = 30;
 const PHONE_PATTERN = /^(?=.*\d)[0-9+()\-\s]+$/;
+const USERNAME_PATTERN = /^[A-Za-z0-9]+$/;
 const USER_TEXT_FIELD_MAX_LENGTH = 100;
 
 const FIELD_I18N: Record<EditableProfileField, { labelKey: string; placeholderKey: string; ariaLabelKey: string }> = {
@@ -50,6 +51,25 @@ const FIELD_TYPES: Record<EditableProfileField, string> = {
   surname: 'text',
   email: 'email',
   cellphone: 'text'
+};
+
+const trimmedRequiredValidator: ValidatorFn = (control): ValidationErrors | null => {
+  const value = control.value;
+  if (typeof value === 'string') {
+    return value.trim().length > 0 ? null : { required: true };
+  }
+
+  return Validators.required(control);
+};
+
+const trimmedPatternValidator = (pattern: RegExp): ValidatorFn => (control): ValidationErrors | null => {
+  const value = control.value;
+  if (typeof value !== 'string') return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  return pattern.test(trimmed) ? null : { pattern: true };
 };
 
 @Component({
@@ -191,6 +211,8 @@ export class ProfilePage implements OnInit {
     }
 
     this.submittedAttempted = true;
+    this.errorMessage = '';
+    this.serverFieldError = '';
     const control = this.editorForm.get('draftValue');
     control?.markAsTouched();
     control?.updateValueAndValidity({ onlySelf: true, emitEvent: false });
@@ -212,8 +234,6 @@ export class ProfilePage implements OnInit {
     };
 
     this.saving = true;
-    this.errorMessage = '';
-    this.serverFieldError = '';
 
     this.userService.updateUser(userId, payload).subscribe({
       next: ({ user: updatedUser, token }) => {
@@ -245,15 +265,18 @@ export class ProfilePage implements OnInit {
 
   private validatorsFor(field: EditableProfileField): ValidatorFn[] {
     switch (field) {
+      case 'username':
+        return [
+          trimmedRequiredValidator,
+          Validators.maxLength(USER_TEXT_FIELD_MAX_LENGTH),
+          trimmedPatternValidator(USERNAME_PATTERN)
+        ];
       case 'email':
-        return [Validators.required, Validators.email];
+        return [trimmedRequiredValidator, Validators.email];
       case 'cellphone':
-        return [Validators.required, Validators.maxLength(PHONE_MAX_LENGTH), Validators.pattern(PHONE_PATTERN)];
-      // username/name/surname son VARCHAR(100) en la base (ver schema.sql):
-      // sin este limite, un valor mas largo pasaba la validacion del
-      // frontend y rompia en el UPDATE con un error de base de datos.
+        return [trimmedRequiredValidator, Validators.maxLength(PHONE_MAX_LENGTH), Validators.pattern(PHONE_PATTERN)];
       default:
-        return [Validators.required, Validators.maxLength(USER_TEXT_FIELD_MAX_LENGTH)];
+        return [trimmedRequiredValidator, Validators.maxLength(USER_TEXT_FIELD_MAX_LENGTH)];
     }
   }
 
@@ -276,14 +299,17 @@ export class ProfilePage implements OnInit {
     if (control.errors['pattern'] && this.activeField === 'cellphone') {
       return this.i18n.instant('profile.errors.phonePattern');
     }
+    if (control.errors['pattern'] && this.activeField === 'username') {
+      return this.i18n.instant('profile.errors.usernamePattern');
+    }
 
     return this.i18n.instant('profile.errors.invalid');
   }
 
   // El backend no distingue el campo en conflicto en /users/{id} (a diferencia
-  // de /users en el alta), pero como acá se edita un solo campo por vez, un
-  // 409 solo puede deberse al campo que se está editando (username o email
-  // son los únicos con restricción de unicidad).
+  // de /users en el alta), pero como aca se edita un solo campo por vez, un
+  // 409 solo puede deberse al campo que se esta editando (username o email
+  // son los unicos con restriccion de unicidad).
   private applyServerFieldError(error: HttpErrorResponse): boolean {
     if (error.status !== 409) {
       return false;

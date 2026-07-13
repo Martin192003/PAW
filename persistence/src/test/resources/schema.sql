@@ -17,7 +17,7 @@ SET DATABASE REFERENTIAL INTEGRITY TRUE;
 -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS users (
                                      user_id       UUID PRIMARY KEY,
-                                     user_name     VARCHAR(100) NOT NULL,
+                                     user_name     VARCHAR(100) NOT NULL UNIQUE,
                                      name          VARCHAR(100) NOT NULL DEFAULT '',
                                      surname       VARCHAR(100) NOT NULL,
                                      email         TEXT NOT NULL UNIQUE,

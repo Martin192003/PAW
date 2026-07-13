@@ -136,6 +136,53 @@ public class UserServiceImplTest {
         userService.update(newUser);
     }
 
+    @Test(expected = DuplicateEntityException.class)
+    public void testUpdateDuplicateUsernameThrowsWhenLoadedUserAlreadyHasNewValue() {
+        UUID id = UUID.randomUUID();
+        User mutatedLoadedUser = makeUser(id);
+        mutatedLoadedUser.setUserName("newName");
+        User otherUser = makeUser(UUID.randomUUID());
+        otherUser.setUserName("newName");
+
+        when(userDao.findById(id)).thenReturn(Optional.of(mutatedLoadedUser));
+        when(userDao.findByUserName("newName")).thenReturn(Optional.of(otherUser));
+
+        userService.update(mutatedLoadedUser);
+    }
+
+    @Test(expected = DuplicateEntityException.class)
+    public void testUpdateDuplicateEmailThrows() {
+        UUID id = UUID.randomUUID();
+        User dbUser = makeUser(id);
+        User newUser = makeUser(id);
+        newUser.setEmail("dup@mail.com");
+        User otherUser = makeUser(UUID.randomUUID());
+        otherUser.setEmail("dup@mail.com");
+
+        when(userDao.findById(id)).thenReturn(Optional.of(dbUser));
+        when(userDao.findByEmail("dup@mail.com")).thenReturn(Optional.of(otherUser));
+
+        userService.update(newUser);
+    }
+
+    @Test
+    public void testUpdateKeepsSameUsernameWhenLookupFindsSelf() {
+        UUID id = UUID.randomUUID();
+        User dbUser = makeUser(id);
+        User newUser = makeUser(id);
+        newUser.setName("Nuevo");
+
+        when(userDao.findById(id)).thenReturn(Optional.of(dbUser));
+        when(userDao.findByUserName("test")).thenReturn(Optional.of(dbUser));
+        when(userDao.findByEmail("test@mail.com")).thenReturn(Optional.of(dbUser));
+        when(userDao.update(any(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), any(Role.class), anyString()))
+                .thenReturn(newUser);
+
+        User updated = userService.update(newUser);
+
+        assertEquals("Nuevo", updated.getName());
+    }
+
     @Test
     public void testDelete() {
         when(userDao.delete(any())).thenReturn(true);

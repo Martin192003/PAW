@@ -53,8 +53,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User create(String username, String name, String password, String surname, String email, String cellphone, String role, String locale){
-        String normalizedUsername = username.trim();
-        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+        String normalizedUsername = normalizeUsername(username);
+        String normalizedEmail = normalizeEmail(email);
 
         if (userDao.findByUserName(normalizedUsername).isPresent()) {
             throw new DuplicateEntityException("user.username.duplicate");
@@ -80,7 +80,7 @@ public class UserServiceImpl implements UserService {
             mailService.sendUserRegistrationConfirmation(normalizedEmail, normalizedUsername, user.getVerificationToken());
             return user;
         } catch (DataIntegrityViolationException ex) {
-            throw new DuplicateEntityException("user.email.duplicate", ex);
+            throw duplicateEntityExceptionFromDataIntegrity(ex);
         }
     }
 
@@ -91,22 +91,27 @@ public class UserServiceImpl implements UserService {
                 new IllegalArgumentException("User not found")
         );
 
-        if(!existingUser.getUsername().equals(user.getUsername()) && userDao.findByUserName(user.getUsername()).isPresent()){
-            throw new DuplicateEntityException("user.username.duplicate");
+        String normalizedUsername = normalizeUsername(user.getUsername());
+        String normalizedEmail = normalizeEmail(user.getEmail());
+
+        assertUsernameAvailable(normalizedUsername, existingUser.getId());
+        assertEmailAvailable(normalizedEmail, existingUser.getId());
+
+        try {
+            return userDao.update(
+                    existingUser.getId(),
+                    normalizedUsername,
+                    user.getName(),
+                    user.getSurname(),
+                    normalizedEmail,
+                    existingUser.getPassword(),
+                    user.getCellphone(),
+                    existingUser.getRole(),
+                    user.getLocale()
+            );
+        } catch (DataIntegrityViolationException ex) {
+            throw duplicateEntityExceptionFromDataIntegrity(ex);
         }
-        user.setVerified(existingUser.isVerified());
-        user.setVerificationToken(existingUser.getVerificationToken());
-        return userDao.update(
-                user.getId(),
-                user.getUsername(),
-                user.getName(),
-                user.getSurname(),
-                user.getEmail(),
-                existingUser.getPassword(),
-                user.getCellphone(),
-                existingUser.getRole(),
-                user.getLocale()
-        );
     }
 
     @Override
@@ -226,10 +231,9 @@ public class UserServiceImpl implements UserService {
 
         switch (field.toLowerCase()) {
             case "username":
-                if (!existingUser.getUsername().equals(value) && userDao.findByUserName(value).isPresent()) {
-                    throw new DuplicateEntityException("user.username.duplicate");
-                }
-                existingUser.setUserName(value);
+                String normalizedUsername = normalizeUsername(value);
+                assertUsernameAvailable(normalizedUsername, existingUser.getId());
+                existingUser.setUserName(normalizedUsername);
                 break;
             case "name":
                 existingUser.setName(value);
@@ -238,10 +242,9 @@ public class UserServiceImpl implements UserService {
                 existingUser.setSurname(value);
                 break;
             case "email":
-                if (!existingUser.getEmail().equals(value) && userDao.findByEmail(value).isPresent()) {
-                    throw new DuplicateEntityException("user.email.duplicate");
-                }
-                existingUser.setEmail(value);
+                String normalizedEmail = normalizeEmail(value);
+                assertEmailAvailable(normalizedEmail, existingUser.getId());
+                existingUser.setEmail(normalizedEmail);
                 break;
             case "cellphone":
                 existingUser.setCellphone(value);
@@ -250,17 +253,59 @@ public class UserServiceImpl implements UserService {
                 throw new IllegalArgumentException("Invalid field: " + field);
         }
 
-        return userDao.update(
-                existingUser.getId(),
-                existingUser.getUsername(),
-                existingUser.getName(),
-                existingUser.getSurname(),
-                existingUser.getEmail(),
-                existingUser.getPassword(),
-                existingUser.getCellphone(),
-                existingUser.getRole(),
-                existingUser.getLocale()
-        );
+        try {
+            return userDao.update(
+                    existingUser.getId(),
+                    existingUser.getUsername(),
+                    existingUser.getName(),
+                    existingUser.getSurname(),
+                    existingUser.getEmail(),
+                    existingUser.getPassword(),
+                    existingUser.getCellphone(),
+                    existingUser.getRole(),
+                    existingUser.getLocale()
+            );
+        } catch (DataIntegrityViolationException ex) {
+            throw duplicateEntityExceptionFromDataIntegrity(ex);
+        }
+    }
+
+    private void assertUsernameAvailable(String username, UUID ownUserId) {
+        userDao.findByUserName(username)
+                .filter(found -> !ownUserId.equals(found.getId()))
+                .ifPresent(found -> {
+                    throw new DuplicateEntityException("user.username.duplicate");
+                });
+    }
+
+    private void assertEmailAvailable(String email, UUID ownUserId) {
+        userDao.findByEmail(email)
+                .filter(found -> !ownUserId.equals(found.getId()))
+                .ifPresent(found -> {
+                    throw new DuplicateEntityException("user.email.duplicate");
+                });
+    }
+
+    private String normalizeUsername(String username) {
+        return username.trim();
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private DuplicateEntityException duplicateEntityExceptionFromDataIntegrity(DataIntegrityViolationException ex) {
+        String details = Optional.ofNullable(ex.getMostSpecificCause())
+                .map(Throwable::getMessage)
+                .orElseGet(ex::getMessage);
+        String normalizedDetails = details == null ? "" : details.toLowerCase(Locale.ROOT);
+        if (normalizedDetails.contains("user_name") || normalizedDetails.contains("username")) {
+            return new DuplicateEntityException("user.username.duplicate", ex);
+        }
+        if (normalizedDetails.contains("email")) {
+            return new DuplicateEntityException("user.email.duplicate", ex);
+        }
+        return new DuplicateEntityException("user.duplicate", ex);
     }
 
     @Override

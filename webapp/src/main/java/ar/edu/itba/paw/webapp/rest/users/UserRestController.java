@@ -202,16 +202,28 @@ public class UserRestController {
         }
 
         User existing = maybe.get();
+        User requested = new User(
+                existing.getId(),
+                existing.getUsername(),
+                existing.getName(),
+                existing.getSurname(),
+                existing.getEmail(),
+                existing.getPassword(),
+                existing.getCellphone(),
+                existing.getRole(),
+                existing.getCreatedAt(),
+                existing.getLocale()
+        );
 
-        if (!isBlank(body.getUsername())) existing.setUserName(body.getUsername().trim());
-        if (!isBlank(body.getName())) existing.setName(body.getName().trim());
-        if (!isBlank(body.getSurname())) existing.setSurname(body.getSurname().trim());
-        if (!isBlank(body.getEmail())) existing.setEmail(body.getEmail().trim());
-        if (!isBlank(body.getCellphone())) existing.setCellphone(body.getCellphone().trim());
-        if (!isBlank(body.getLocale())) existing.setLocale(body.getLocale().trim());
+        if (!isBlank(body.getUsername())) requested.setUserName(body.getUsername().trim());
+        if (!isBlank(body.getName())) requested.setName(body.getName().trim());
+        if (!isBlank(body.getSurname())) requested.setSurname(body.getSurname().trim());
+        if (!isBlank(body.getEmail())) requested.setEmail(body.getEmail().trim());
+        if (!isBlank(body.getCellphone())) requested.setCellphone(body.getCellphone().trim());
+        if (!isBlank(body.getLocale())) requested.setLocale(body.getLocale().trim());
 
         try {
-            User updated = userService.update(existing);
+            User updated = userService.update(requested);
             UserUpdateResponseDto response = new UserUpdateResponseDto(
                     UserMapper.toDto(updated, uriInfo),
                     jwtUtil.generateToken(updated.getId().toString()),
@@ -224,7 +236,12 @@ public class UserRestController {
                     .build();
         } catch (DuplicateEntityException e) {
             return Response.status(Response.Status.CONFLICT)
-                    .entity(message("User with same username or email already exists"))
+                    .entity(message(duplicateUserMessage(e)))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        } catch (DataIntegrityViolationException e) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(message("user.duplicate"))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         } catch (Exception e) {

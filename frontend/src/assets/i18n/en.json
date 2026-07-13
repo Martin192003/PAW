@@ -234,6 +234,7 @@
       "email": "Enter a valid email.",
       "maxlength": "Maximum {{max}} characters.",
       "phonePattern": "Phone can only contain numbers and valid symbols.",
+      "usernamePattern": "Username can only contain letters and numbers.",
       "invalid": "Invalid field.",
       "emailConflict": "There is already an account registered with that email.",
       "usernameConflict": "That username is already taken.",
@@ -567,12 +568,16 @@
       "tableSaved": "Table saved successfully.",
       "tableSaveFailed": "Could not confirm the table save. The tables were reloaded.",
       "confirmDeleteTable": "Delete table {{number}}?",
+      "tableDeleteTitle": "Delete table",
+      "tableDeleteBody": "Table {{number}} will be removed from the club. This action cannot be undone.",
       "tableDeleted": "Table deleted.",
       "tableDeleteFailed": "Could not delete the table.",
       "eventRequiredFields": "Complete event name and date.",
       "eventSaved": "Event saved successfully.",
       "eventSaveFailed": "Could not confirm the event save. Events were reloaded.",
       "confirmDeleteEvent": "Delete event {{name}}?",
+      "eventDeleteTitle": "Delete event",
+      "eventDeleteBody": "The event {{name}} will be removed from the club. This action cannot be undone.",
       "eventDeleted": "Event deleted.",
       "eventDeleteFailed": "Could not delete the event.",
       "eventPhotoUpdated": "Event photo updated.",
@@ -785,4 +790,3 @@
     "close": "Close"
   }
 }
-

@@ -14,6 +14,7 @@ import { skip, takeUntil } from 'rxjs/operators';
 
 
 type ClubListItem = Club & { _hasError?: boolean };
+type EventListItem = ClubEvent & { _hasError?: boolean };
 
 @Component({
   standalone: true,
@@ -26,7 +27,7 @@ export class ClubsPage implements OnInit, OnDestroy {
   pageSize = 10;
   totalPages = 0;
 
-  upcomingEvents: ClubEvent[] = [];
+  upcomingEvents: EventListItem[] = [];
   currentEventIndex = 0;
   eventAvailabilityModalOpen = false;
   unavailableEventName = '';
@@ -166,6 +167,11 @@ export class ClubsPage implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  onEventImageError(event: EventListItem): void {
+    event._hasError = true;
+    this.cdr.detectChanges();
+  }
+
   nextPage() {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
@@ -232,7 +238,10 @@ export class ClubsPage implements OnInit, OnDestroy {
   loadUpcomingEvents(): void {
     this.eventService.getUpcomingEvents(0, 10).subscribe({
       next: (res) => {
-        this.upcomingEvents = res.content;
+        this.upcomingEvents = res.content.map(event => ({
+          ...event,
+          _hasError: false
+        }));
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -350,9 +359,4 @@ export class ClubsPage implements OnInit, OnDestroy {
     this.carouselTrack.nativeElement.scrollBy({ left: -280, behavior: 'smooth' });
   }
 
-
-  onEventImageError(event: Event, clubEvent: ClubEvent): void {
-    (clubEvent as any)._photoError = true;
-    this.cdr.detectChanges();
-  }
 }

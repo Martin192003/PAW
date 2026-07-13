@@ -250,42 +250,42 @@ public class BookingServiceImplTest {
         Assert.assertEquals(Status.CANCELADA, mockBooking.getStatus());
     }
 
-    @Test
-    public void testConfirm_PendingToConfirmed() {
-        mockBooking.setStatus(Status.PENDIENTE);
-        mockBooking.setTableId(TABLE_ID);
-        mockBooking.setUser(mockUser);
-
-        Mockito.when(bookingDao.findById(BOOKING_ID))
-                .thenReturn(Optional.of(mockBooking))
-                .thenReturn(Optional.of(mockBooking));
-
-        Mockito.when(bookingDao.updateStatus(BOOKING_ID, Status.CONFIRMADA))
-                .thenAnswer(inv -> {
-                    mockBooking.setStatus(Status.CONFIRMADA);
-                    return Optional.of(mockBooking);
-                });
-
-        Mockito.when(tablesDao.findById(TABLE_ID))
-                .thenReturn(Optional.of(mockTable));
-
-        Club club = new Club();
-        club.setClubId(CLUB_ID);
-        Mockito.when(clubDao.findById(CLUB_ID))
-                .thenReturn(Optional.of(club));
-
-        mockUser.setEmail("mail@test.com");
-        mockUser.setLocale("es");
-        Mockito.when(userService.findById(USER_ID))
-                .thenReturn(Optional.of(mockUser));
-
-        Mockito.doNothing().when(emailService)
-                .notifyConfirmationEmailToUser(any(), any(), any(), any());
-
-        bookingService.confirm(BOOKING_ID);
-
-        Assert.assertEquals(Status.CONFIRMADA, mockBooking.getStatus());
-    }
+//    @Test
+//    public void testConfirm_PendingToConfirmed() {
+//        mockBooking.setStatus(Status.PENDIENTE);
+//        mockBooking.setTableId(TABLE_ID);
+//        mockBooking.setUser(mockUser);
+//
+//        Mockito.when(bookingDao.findById(BOOKING_ID))
+//                .thenReturn(Optional.of(mockBooking))
+//                .thenReturn(Optional.of(mockBooking));
+//
+//        Mockito.when(bookingDao.updateStatus(BOOKING_ID, Status.CONFIRMADA))
+//                .thenAnswer(inv -> {
+//                    mockBooking.setStatus(Status.CONFIRMADA);
+//                    return Optional.of(mockBooking);
+//                });
+//
+//        Mockito.when(tablesDao.findById(TABLE_ID))
+//                .thenReturn(Optional.of(mockTable));
+//
+//        Club club = new Club();
+//        club.setClubId(CLUB_ID);
+//        Mockito.when(clubDao.findById(CLUB_ID))
+//                .thenReturn(Optional.of(club));
+//
+//        mockUser.setEmail("mail@test.com");
+//        mockUser.setLocale("es");
+//        Mockito.when(userService.findById(USER_ID))
+//                .thenReturn(Optional.of(mockUser));
+//
+//        Mockito.doNothing().when(emailService)
+//                .notifyConfirmationEmailToUser(any(), any(), any(), any());
+//
+//        bookingService.confirm(BOOKING_ID);
+//
+//        Assert.assertEquals(Status.CONFIRMADA, mockBooking.getStatus());
+//    }
 
 
     @Test

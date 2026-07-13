@@ -18,24 +18,12 @@ npm install
 El frontend espera la API bajo `/api`. Para desarrollo local podes:
 
 1. Servir la SPA desde el WAR (misma origin que la API).
-2. Usar `ng serve` con un proxy hacia el backend.
-
-Ejemplo de proxy (archivo local no versionado):
-
-```json
-{
-  "/api": {
-	"target": "http://localhost:8080/webapp_war_exploded",
-	"secure": false,
-	"changeOrigin": true
-  }
-}
-```
+2. Usar `ng serve` con el proxy versionado hacia el backend.
 
 Luego:
 
 ```bash
-ng serve --proxy-config proxy.conf.json
+npm start
 ```
 
 ## Build

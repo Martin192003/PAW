@@ -388,7 +388,15 @@
                       <td class="py-2 pr-3">{{ t.discount }}%</td>
                       <td class="py-2 pr-3 flex gap-2">
                         <button type="button" class="btn-secondary px-2 py-1" (click)="startEditTable(t)"> {{ 'common.edit' | translate }}</button>
-                        <button type="button" class="btn-danger px-2 py-1" (click)="deleteTable(t)">{{ 'common.delete' | translate }}</button>
+                        <button
+                          type="button"
+                          class="btn-danger px-2 py-1"
+                          [disabled]="deletingTableId === t.tableId"
+                          (click)="openDeleteTableModal(t)"
+                        >
+                          <i class="fa-solid mr-1" [ngClass]="deletingTableId === t.tableId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+                          {{ 'common.delete' | translate }}
+                        </button>
                       </td>
                     </tr>
                     </tbody>
@@ -458,13 +466,28 @@
                       [src]="getEventPhotoUrl(e)"
                       [alt]="e.eventName"
                       class="w-16 h-12 rounded object-cover border border-[#3b3b3b]"
+                      (error)="onEventPhotoError(e)"
                     />
-                    <span *ngIf="!getEventPhotoUrl(e)" class="text-[#999] text-sm">{{ 'clubHandler.noPhoto' | translate }}</span>
+                    <div
+                      *ngIf="!getEventPhotoUrl(e)"
+                      class="w-16 h-12 rounded border border-[#3b3b3b] bg-black flex items-center justify-center text-[#9c27b0] text-[0.62rem] font-bold text-center tracking-widest leading-tight"
+                      style="font-family: 'Darklinos', Arial, sans-serif;"
+                    >
+                      Bling <br />&nbsp;&nbsp;Bling
+                    </div>
                   </td>
                   <td class="py-2 pr-3">
                     <div class="flex flex-wrap gap-2">
                       <button type="button" class="btn-secondary px-2 py-1" (click)="startEditEvent(e)"> {{ 'common.edit' | translate }}</button>
-                      <button type="button" class="btn-danger px-2 py-1" (click)="deleteEvent(e)">{{ 'common.delete' | translate }}</button>
+                      <button
+                        type="button"
+                        class="btn-danger px-2 py-1"
+                        [disabled]="deletingEventId === e.eventId"
+                        (click)="openDeleteEventModal(e)"
+                      >
+                        <i class="fa-solid mr-1" [ngClass]="deletingEventId === e.eventId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+                        {{ 'common.delete' | translate }}
+                      </button>
 
                       <label class="btn-secondary px-2 py-1 cursor-pointer">
                         {{ uploadingEventPhotoId === e.eventId ? ('clubHandler.uploading' | translate) : ('clubHandler.uploadPhoto' | translate) }}
@@ -642,6 +665,90 @@
   </div>
 
   <div
+    *ngIf="deleteTableModalOpen"
+    class="confirm-modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-table-title"
+    (click)="closeDeleteTableModal()"
+  >
+    <div class="confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-content">
+        <div class="confirm-modal-icon">
+          <i class="fa-solid fa-trash"></i>
+        </div>
+
+        <div class="confirm-modal-copy">
+          <h2 id="delete-table-title">{{ 'clubHandler.messages.tableDeleteTitle' | translate }}</h2>
+          <p>{{ 'clubHandler.messages.tableDeleteBody' | translate: { number: tablePendingDelete?.tableNumber } }}</p>
+        </div>
+      </div>
+
+      <div class="confirm-modal-actions">
+        <button
+          type="button"
+          class="btn-secondary"
+          [disabled]="!!deletingTableId"
+          (click)="closeDeleteTableModal()"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn-danger"
+          [disabled]="!!deletingTableId"
+          (click)="confirmDeleteTable()"
+        >
+          <i class="fa-solid mr-2" [ngClass]="deletingTableId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    *ngIf="deleteEventModalOpen"
+    class="confirm-modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-event-title"
+    (click)="closeDeleteEventModal()"
+  >
+    <div class="confirm-modal" (click)="$event.stopPropagation()">
+      <div class="confirm-modal-content">
+        <div class="confirm-modal-icon">
+          <i class="fa-solid fa-trash"></i>
+        </div>
+
+        <div class="confirm-modal-copy">
+          <h2 id="delete-event-title">{{ 'clubHandler.messages.eventDeleteTitle' | translate }}</h2>
+          <p>{{ 'clubHandler.messages.eventDeleteBody' | translate: { name: eventPendingDelete?.eventName } }}</p>
+        </div>
+      </div>
+
+      <div class="confirm-modal-actions">
+        <button
+          type="button"
+          class="btn-secondary"
+          [disabled]="!!deletingEventId"
+          (click)="closeDeleteEventModal()"
+        >
+          {{ 'common.cancel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn-danger"
+          [disabled]="!!deletingEventId"
+          (click)="confirmDeleteEvent()"
+        >
+          <i class="fa-solid mr-2" [ngClass]="deletingEventId ? 'fa-spinner fa-spin' : 'fa-trash'"></i>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div
     *ngIf="actionErrorMessage || errorMessage || (!loading && !club && clubLoadAttempted)"
     class="error-modal-backdrop"
     role="dialog"
@@ -674,8 +781,4 @@
     </div>
   </div>
 </div>
-
-
-
-
 

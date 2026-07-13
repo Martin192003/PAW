@@ -120,6 +120,9 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
 
   savingTable = false;
   editingTableId: string | null = null;
+  deletingTableId: string | null = null;
+  tablePendingDelete: ClubTable | null = null;
+  deleteTableModalOpen = false;
   tableForm: TableForm = {
     tableNumber: null,
     capacity: null,
@@ -127,27 +130,19 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     discount: null
   };
 
-  // Mismo patron de "errores congelados" que register.page.ts / club-new.page.ts:
-  // antes esto solo validaba "no vacio / no negativo" y dejaba pasar valores
-  // como una capacidad de 17 digitos, que el backend rechazaba con un 500
-  // crudo (InvalidCapacityException sin manejar). Estos limites replican
-  // exactamente los que valida TableServiceImpl.create/update.
+
   tableSubmittedAttempted = false;
   tableFrozenErrors: { [key: string]: boolean } = {};
   tableFrozenErrorMessages: { [key: string]: string } = {};
   private static readonly TABLE_FIELDS = ['tableNumber', 'capacity', 'price', 'discount'];
 
-  // Mismo patron para el formulario de datos del club: clubName/location/cbu
-  // son VARCHAR(100)/VARCHAR(255)/VARCHAR(50) en schema.sql y antes no tenian
-  // ningun limite en el frontend.
+
   clubSubmittedAttempted = false;
   clubFrozenErrors: { [key: string]: boolean } = {};
   clubFrozenErrorMessages: { [key: string]: string } = {};
   private static readonly CLUB_FIELDS = ['clubName', 'location', 'cbu', 'description'];
 
-  // Idem para el formulario de productos: product_name es VARCHAR(100) y
-  // base_price es NUMERIC(10,2) (tope 99.999.999,99), pero solo se validaba
-  // que el precio no fuera <= 0.
+
   productSubmittedAttempted = false;
   productFrozenErrors: { [key: string]: boolean } = {};
   productFrozenErrorMessages: { [key: string]: string } = {};
@@ -161,6 +156,9 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
 
   savingEvent = false;
   editingEventId: string | null = null;
+  deletingEventId: string | null = null;
+  eventPendingDelete: Event | null = null;
+  deleteEventModalOpen = false;
   eventForm: EventPayload = {
     eventName: '',
     description: '',
@@ -174,6 +172,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   deletingGalleryPhotoId: string | null = null;
   galleryPhotoPendingDelete: ClubPhoto | null = null;
   deleteGalleryPhotoModalOpen = false;
+  private readonly failedEventPhotoIds = new Set<string>();
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -896,11 +895,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         this.actionErrorMessage = '';
       },
       error: (error: HttpErrorResponse) => {
-        // El numero de mesa es unico por club a nivel de base de datos (constraint
-        // club_tables_club_id_table_number_key), pero no se valida proactivamente
-        // antes del insert. El 409 que devuelve el DataIntegrityViolationExceptionMapper
-        // del backend es siempre por esto, asi que se muestra como error de campo
-        // en vez del cartel generico, igual que los otros formularios.
         if (error.status === 409) {
           this.tableSubmittedAttempted = true;
           this.tableFrozenErrors['tableNumber'] = true;
@@ -917,24 +911,57 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     });
   }
 
-  deleteTable(table: ClubTable): void {
-    if (!this.clubId) {
+  openDeleteTableModal(table: ClubTable): void {
+    if (!table.tableId || this.deletingTableId) {
       return;
     }
-    if (!window.confirm(this.i18n.instant('clubHandler.messages.confirmDeleteTable', { number: table.tableNumber }))) {
+    this.tablePendingDelete = table;
+    this.deleteTableModalOpen = true;
+  }
+
+  closeDeleteTableModal(): void {
+    if (this.deletingTableId) {
+      return;
+    }
+    this.deleteTableModalOpen = false;
+    this.tablePendingDelete = null;
+  }
+
+  confirmDeleteTable(): void {
+    const table = this.tablePendingDelete;
+    if (!this.clubId || !table?.tableId) {
       return;
     }
 
-    this.clubService.deleteTable(this.clubId, table.tableId, table).subscribe({
+    this.deletingTableId = table.tableId;
+
+    this.clubService.deleteTable(this.clubId, table.tableId, table).pipe(
+      timeout(this.mutationTimeoutMs),
+      finalize(() => {
+        this.deletingTableId = null;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
       next: () => {
-        this.tables = this.tables.filter((item) => item.tableId !== table.tableId);
-        this.cdr.detectChanges();
-        this.showActionSuccess(this.i18n.instant('clubHandler.messages.tableDeleted'));
-        this.actionErrorMessage = '';
+        this.zone.run(() => {
+          this.tables = this.tables.filter((item) => item.tableId !== table.tableId);
+          if (this.editingTableId === table.tableId) {
+            this.startCreateTable();
+          }
+          this.deleteTableModalOpen = false;
+          this.tablePendingDelete = null;
+          this.showActionSuccess(this.i18n.instant('clubHandler.messages.tableDeleted'));
+          this.actionErrorMessage = '';
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableDeleteFailed');
-        this.actionSuccessMessage = '';
+        this.zone.run(() => {
+          this.actionErrorMessage = this.i18n.instant('clubHandler.messages.tableDeleteFailed');
+          this.actionSuccessMessage = '';
+          this.loadTables();
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -1087,28 +1114,61 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     });
   }
 
-  deleteEvent(event: Event): void {
-    if (!this.clubId || !event.eventId) {
+  openDeleteEventModal(event: Event): void {
+    if (!event.eventId || this.deletingEventId) {
       return;
     }
-    if (!window.confirm(this.i18n.instant('clubHandler.messages.confirmDeleteEvent', { name: event.eventName }))) {
+    this.eventPendingDelete = event;
+    this.deleteEventModalOpen = true;
+  }
+
+  closeDeleteEventModal(): void {
+    if (this.deletingEventId) {
+      return;
+    }
+    this.deleteEventModalOpen = false;
+    this.eventPendingDelete = null;
+  }
+
+  confirmDeleteEvent(): void {
+    const event = this.eventPendingDelete;
+    if (!this.clubId || !event?.eventId) {
       return;
     }
 
-    this.clubService.deleteEvent(this.clubId, event.eventId, event).subscribe({
+    this.deletingEventId = event.eventId;
+
+    this.clubService.deleteEvent(this.clubId, event.eventId, event).pipe(
+      timeout(this.mutationTimeoutMs),
+      finalize(() => {
+        this.deletingEventId = null;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
       next: () => {
-        this.events = this.events.filter((item) => item.eventId !== event.eventId);
-        this.eventPage = Math.min(this.eventPage, this.eventTotalPages);
-        if (this.pagedEvents.length === 0 && this.eventPage > 1) {
-          this.eventPage -= 1;
-        }
-        this.cdr.detectChanges();
-        this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventDeleted'));
-        this.actionErrorMessage = '';
+        this.zone.run(() => {
+          this.events = this.events.filter((item) => item.eventId !== event.eventId);
+          this.eventPage = Math.min(this.eventPage, this.eventTotalPages);
+          if (this.pagedEvents.length === 0 && this.eventPage > 1) {
+            this.eventPage -= 1;
+          }
+          if (this.editingEventId === event.eventId) {
+            this.startCreateEvent();
+          }
+          this.deleteEventModalOpen = false;
+          this.eventPendingDelete = null;
+          this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventDeleted'));
+          this.actionErrorMessage = '';
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
-        this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventDeleteFailed');
-        this.actionSuccessMessage = '';
+        this.zone.run(() => {
+          this.actionErrorMessage = this.i18n.instant('clubHandler.messages.eventDeleteFailed');
+          this.actionSuccessMessage = '';
+          this.loadEvents();
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -1125,6 +1185,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.clubService.uploadEventPhoto(this.clubId, eventId, file, event).subscribe({
       next: () => {
         this.uploadingEventPhotoId = null;
+        this.failedEventPhotoIds.delete(eventId);
         this.loadEvents();
         this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventPhotoUpdated'));
         this.actionErrorMessage = '';
@@ -1146,6 +1207,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
 
     this.clubService.deleteEventPhoto(this.clubId, event.eventId, event).subscribe({
       next: (updatedEvent) => {
+        this.failedEventPhotoIds.add(event.eventId);
         this.upsertEventInList(updatedEvent);
         this.loadEvents();
         this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventPhotoDeleted'));
@@ -1159,6 +1221,10 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   }
 
   getEventPhotoUrl(event: Event): string {
+    if (event.eventId && this.failedEventPhotoIds.has(event.eventId)) {
+      return '';
+    }
+
     const photoLink = event.links?.['photo'];
     if (photoLink) {
       return this.clubService.toAbsoluteUrl(photoLink);
@@ -1169,6 +1235,13 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     }
 
     return this.clubService.toAbsoluteUrl(`/clubs/${this.clubId}/events/${event.eventId}/photo`);
+  }
+
+  onEventPhotoError(event: Event): void {
+    if (event.eventId) {
+      this.failedEventPhotoIds.add(event.eventId);
+    }
+    this.cdr.detectChanges();
   }
 
   getGalleryPhotoUrl(photo: ClubPhoto): string {

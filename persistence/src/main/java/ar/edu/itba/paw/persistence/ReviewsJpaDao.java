@@ -212,14 +212,10 @@ public class ReviewsJpaDao implements ReviewsDao {
 
     @Override
     public void updatePhotoId(UUID reviewId, UUID photoId) {
-        em.createQuery("""
-      UPDATE Review r
-      SET r.photoId = :pid
-      WHERE r.reviewId = :rid
-      """)
-                .setParameter("pid", photoId)
-                .setParameter("rid", reviewId)
-                .executeUpdate();
+        Review review = em.find(Review.class, reviewId);
+        if (review != null) {
+            review.setPhotoId(photoId);
+        }
     }
 
     @Override

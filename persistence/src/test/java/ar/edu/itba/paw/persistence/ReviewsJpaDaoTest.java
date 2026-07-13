@@ -110,6 +110,25 @@ public class ReviewsJpaDaoTest {
                 () -> reviewsDao.update(null, 3, "desc"));
     }
 
+    @Test
+    public void testUpdatePhotoIdWorksWithPendingPhotoInsert() {
+        Photo photo = new Photo();
+        photo.setClubId(review.getClub().getClubId());
+        photo.setPostedBy(user.getId());
+        photo.setFilename("review.jpg");
+        photo.setContentType("image/jpeg");
+        photo.setData(new byte[]{1, 2, 3});
+        photo.setPhotoType(PhotoType.REVIEW);
+        em.persist(photo);
+
+        reviewsDao.updatePhotoId(review.getReviewId(), photo.getPhotoId());
+        em.flush();
+        em.clear();
+
+        Review found = em.find(Review.class, review.getReviewId());
+        assertEquals(photo.getPhotoId(), found.getPhotoId());
+    }
+
     /* ---------------------------------------------------------------------- */
     /*                                DELETE                                   */
     /* ---------------------------------------------------------------------- */
