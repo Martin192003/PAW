@@ -1340,13 +1340,13 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       return '';
     }
 
+    if (!this.clubId || !event.eventId || !event.photoId) {
+      return '';
+    }
+
     const photoLink = event.links?.['photo'];
     if (photoLink) {
       return this.clubService.toAbsoluteUrl(photoLink);
-    }
-
-    if (!this.clubId || !event.eventId || !event.photoId) {
-      return '';
     }
 
     return this.clubService.toAbsoluteUrl(`/clubs/${this.clubId}/events/${event.eventId}/photo`);
