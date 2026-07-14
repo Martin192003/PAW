@@ -1114,9 +1114,15 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         // endpoint de foto necesita que el evento ya exista (requiere
         // eventId). Si esto falla, el evento igual quedo creado/actualizado:
         // se avisa con un mensaje distinto en vez de perder el guardado.
+        //
+        // Importante: hay que usar el evento que devuelve uploadEventPhoto
+        // (con photoId ya seteado), no el "savedEvent" original de
+        // create/update. Ese seguia con photoId null porque se capturo antes
+        // de subir la foto, y al insertarlo en la lista con upsertEventInList
+        // quedaba una copia desactualizada hasta el proximo loadEvents().
         return this.clubService.uploadEventPhoto(clubId, savedEvent.eventId, photoToUpload, savedEvent).pipe(
           timeout(this.mutationTimeoutMs),
-          map(() => ({ savedEvent, photoFailed: false })),
+          map((eventWithPhoto) => ({ savedEvent: eventWithPhoto, photoFailed: false })),
           catchError(() => of({ savedEvent, photoFailed: true }))
         );
       }),
@@ -1126,6 +1132,11 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       })
     ).subscribe({
       next: ({ savedEvent, photoFailed }) => {
+        if (!photoFailed && savedEvent.eventId) {
+          // Por si este eventId habia quedado marcado como "foto rota" de un
+          // intento anterior (p. ej. reintentando despues de un error).
+          this.failedEventPhotoIds.delete(savedEvent.eventId);
+        }
         this.upsertEventInList(savedEvent);
         this.startCreateEvent();
         this.showActionSuccess(this.i18n.instant(

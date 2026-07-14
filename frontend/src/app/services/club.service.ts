@@ -561,7 +561,16 @@ export class ClubService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.http.put<Event>(url, formData);
+    // createEvent/updateEvent normalizan los links (array de {rel,href} ->
+    // Record<string,string>) antes de devolver el Event; esta llamada no lo
+    // hacia, asi que el Event resultante quedaba con "links" en formato
+    // array. getEventPhotoUrl() lee event.links?.['photo'] esperando un
+    // objeto ya normalizado, y con el array eso siempre daba undefined -
+    // por eso la foto recien subida en el alta no se mostraba bien hasta
+    // el proximo loadEvents() (que si pasa por normalizeEvent/backend list).
+    return this.http.put<Event>(url, formData).pipe(
+      map(updated => ({ ...updated, links: normalizeLinks(updated.links) }))
+    );
   }
 
   deleteEventPhoto(clubId: string, eventId: string, event?: Event): Observable<Event> {
@@ -577,7 +586,9 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.delete<Event>(url);
+    return this.http.delete<Event>(url).pipe(
+      map(updated => ({ ...updated, links: normalizeLinks(updated.links) }))
+    );
   }
 
   private normalizePhoto(photo: ClubPhoto, clubId: string): ClubPhoto {
