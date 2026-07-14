@@ -73,13 +73,14 @@ public class ClubRestController {
                               @QueryParam("availableToday") final Boolean availableToday,
                               @QueryParam("sort") final String sort,
                               @QueryParam("page") @DefaultValue("1") int page,
-                              @QueryParam("size") @DefaultValue("10") int size) {
+                              @QueryParam("size") @DefaultValue("10") int size,
+                              @Context SecurityContext securityContext) {
 
         page = (page < 1) ? DEFAULT_PAGE : page;
         size = (size < 1) ? DEFAULT_SIZE : size;
 
         if (ownerId != null && !ownerId.isBlank()) {
-            return listClubsByOwner(ownerId, page, size);
+            return listClubsByOwner(ownerId, page, size, securityContext);
         }
 
         final String normalizedPriceRange =
@@ -112,7 +113,7 @@ public class ClubRestController {
         final int totalPages = (int) Math.ceil((double) totalClubs / size);
 
         List<ClubDto> dtos = clubs.stream()
-                .map(this::toDtoWithLinks)
+                .map(club -> toDtoWithLinks(club, false))
                 .toList();
 
 
@@ -129,22 +130,24 @@ public class ClubRestController {
 
         Response.ResponseBuilder responseBuilder = Response.ok(response)
                 .header("X-Total-Count", totalClubs)
-                .header("Cache-Control", "no-cache, no-store, must-revalidate")
-                .header("Pragma", "no-cache")
-                .header("Expires", "0");
+                .header("Cache-Control", "no-cache");
         addPaginationLinks(responseBuilder, page, size, totalPages, 1);
         return responseBuilder.build();
     }
 
-    private Response listClubsByOwner(final String ownerId, final int page, final int size) {
+    private Response listClubsByOwner(final String ownerId,
+                                      final int page,
+                                      final int size,
+                                      final SecurityContext securityContext) {
         UUID id = parseUuidOr400(ownerId);
         if (id == null) return badRequest("ownerId invalido");
 
+        final boolean includeSensitive = isAuthenticatedUser(id, securityContext);
         final int offset = (page - 1) * size;
         final int totalClubs = clubService.countClubsByUser(id);
         final List<ClubDto> dtos = clubService.getClubsByUserPaginated(id, size, offset)
                 .stream()
-                .map(this::toDtoWithLinks)
+                .map(club -> toDtoWithLinks(club, includeSensitive))
                 .collect(Collectors.toList());
 
         final int totalPages = (int) Math.ceil((double) totalClubs / size);
@@ -160,10 +163,8 @@ public class ClubRestController {
         );
 
         Response.ResponseBuilder responseBuilder = Response.ok(response)
-                .header("X-Total-Count", totalClubs)
-                .header("Cache-Control", "no-cache, no-store, must-revalidate")
-                .header("Pragma", "no-cache")
-                .header("Expires", "0");
+                .header("X-Total-Count", totalClubs);
+        applyClubCacheHeaders(responseBuilder, includeSensitive);
         addPaginationLinks(responseBuilder, page, size, totalPages, 1);
         return responseBuilder.build();
     }
@@ -197,7 +198,8 @@ public class ClubRestController {
 
     @GET
     @Path("/{clubId}")
-    public Response getClub(@PathParam("clubId") String clubId) {
+    public Response getClub(@PathParam("clubId") String clubId,
+                            @Context SecurityContext securityContext) {
         UUID id;
         try {
             id = UUID.fromString(clubId);
@@ -214,7 +216,10 @@ public class ClubRestController {
                     .build();
         }
 
-        return Response.ok(toDtoWithLinks(club)).build();
+        final boolean includeSensitive = canViewSensitiveClubData(club, securityContext);
+        Response.ResponseBuilder response = Response.ok(toDtoWithLinks(club, includeSensitive));
+        applyClubCacheHeaders(response, includeSensitive);
+        return response.build();
     }
 
     @POST
@@ -259,7 +264,7 @@ public class ClubRestController {
                 .build();
 
         return Response.created(uri)
-                .entity(toDtoWithLinks(created))
+                .entity(toDtoWithLinks(created, true))
                 .build();
     }
 
@@ -331,7 +336,11 @@ public class ClubRestController {
                 cbu
         );
 
-        return Response.ok(toDtoWithLinks(updated)).build();
+        return Response.ok(toDtoWithLinks(updated, true))
+                .header("Cache-Control", "private, no-store")
+                .header("Pragma", "no-cache")
+                .header("Vary", "Authorization")
+                .build();
     }
 
     @GET
@@ -754,6 +763,10 @@ public class ClubRestController {
     }
 
     private ClubDto toDtoWithLinks(Club club) {
+        return toDtoWithLinks(club, false);
+    }
+
+    private ClubDto toDtoWithLinks(Club club, boolean includeSensitive) {
 
         ClubDto dto = new ClubDto();
 
@@ -765,7 +778,9 @@ public class ClubRestController {
         dto.setMusicGenre(club.getMusicGenre().toString());
         dto.setPriceRange(club.getPriceRange().toString());
         dto.setBar(club.getIsBar());
-        dto.setCbu(club.getCbu());
+        if (includeSensitive) {
+            dto.setCbu(club.getCbu());
+        }
         final int quantityRatings = club.getQuantityRatings() != null
                 ? club.getQuantityRatings()
                 : 0;
@@ -842,6 +857,29 @@ public class ClubRestController {
         dto.setLinks(links);
 
         return dto;
+    }
+
+    private boolean canViewSensitiveClubData(Club club, SecurityContext securityContext) {
+        User user = resolveAuthenticatedUser(securityContext);
+        return user != null
+                && club.getContactInfo() != null
+                && user.getId().equals(club.getContactInfo().getId());
+    }
+
+    private boolean isAuthenticatedUser(UUID userId, SecurityContext securityContext) {
+        User user = resolveAuthenticatedUser(securityContext);
+        return user != null && user.getId().equals(userId);
+    }
+
+    private void applyClubCacheHeaders(Response.ResponseBuilder responseBuilder, boolean includeSensitive) {
+        if (includeSensitive) {
+            responseBuilder
+                    .header("Cache-Control", "private, no-store")
+                    .header("Pragma", "no-cache")
+                    .header("Vary", "Authorization");
+            return;
+        }
+        responseBuilder.header("Cache-Control", "no-cache");
     }
 
     private void addPaginationLinks(Response.ResponseBuilder responseBuilder,

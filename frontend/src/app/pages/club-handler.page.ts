@@ -523,7 +523,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       musicGenre: this.club.musicGenre,
       zone: this.club.zone,
       isBar: this.club.bar,
-      cbu: this.club.cbu
+      cbu: this.club.cbu ?? ''
     };
     this.editingClub = true;
     this.resetClubValidation();

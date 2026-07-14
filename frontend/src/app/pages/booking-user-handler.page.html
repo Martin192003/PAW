@@ -34,7 +34,6 @@
           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.club' | translate }}</dt><dd class="truncate text-white/80">{{ club?.clubName || booking.clubId }}</dd></div>
           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.start' | translate }}</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingStart) }}</dd></div>
           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.end' | translate }}</dt><dd class="text-white/80">{{ formatDateTime(booking.bookingEnd) }}</dd></div>
-          <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.cbu' | translate }}</dt><dd class="break-all text-white/80">{{ club?.cbu }}</dd></div>
           <div class="grid grid-cols-[130px_1fr] gap-4 py-3"><dt class="font-semibold">{{ 'bookingUserHandler.details.total' | translate }}</dt><dd class="text-lg font-semibold">$ {{ priceToPay() | number:'1.0-0' }}</dd></div>
         </dl>
 

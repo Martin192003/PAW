@@ -74,10 +74,8 @@ describe('ClubDetailsPage reservation flow', () => {
 
     expect(clubService.getTables).toHaveBeenCalledWith('club-1', '2026-07-03', undefined);
     expect(component.tables).toEqual([table]);
-    expect(router.navigate).toHaveBeenCalledWith([], expect.objectContaining({
-      queryParams: expect.objectContaining({ date: '2026-07-03' }),
-      fragment: 'dd-tables',
-    }));
+    expect(component.selectedDate).toBe('2026-07-03');
+    expect(component.tablesOpen).toBe(true);
   });
 
   it('blocks reservation while table or date is invalid', () => {
@@ -103,7 +101,7 @@ describe('ClubDetailsPage reservation flow', () => {
       '2026-07-03',
       undefined
     );
-    expect(component.reserveSuccess).toBe('clubDetails.reservationMadeSuccess');
+    expect(component.tablesError).toBeUndefined();
     expect(component.reservationModalOpen).toBe(true);
     expect(component.reservedBookingId).toBe('booking-1');
   });
@@ -116,7 +114,8 @@ describe('ClubDetailsPage reservation flow', () => {
 
     component.onReserveClick();
 
-    expect(component.reserveSuccess).toBeUndefined();
+    expect(component.reservationModalOpen).toBe(false);
+    expect(component.reservedBookingId).toBeUndefined();
     expect(component.tablesError).toBe('Table already booked');
   });
 

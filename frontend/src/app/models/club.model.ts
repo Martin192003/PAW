@@ -30,7 +30,7 @@ export interface Club {
   musicGenre: string;
   priceRange: string;
   bar: boolean;
-  cbu: string;
+  cbu?: string;
   rating: number;
   quantityRatings: number;
   createdAt: string;

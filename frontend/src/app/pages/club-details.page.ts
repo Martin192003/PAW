@@ -844,7 +844,9 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
 
     const request$ = this.reviewFormMode === 'create'
       ? this.reviewService.create(this.currentClubId, payload)
-      : this.reviewService.update(this.currentClubId, payload);
+      : this.myReview
+        ? this.reviewService.update(this.currentClubId, this.myReview.reviewId, payload)
+        : this.reviewService.create(this.currentClubId, payload);
 
     request$.subscribe({
       next: () => {
@@ -874,7 +876,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     if (!this.currentClubId || !this.myReview || this.reviewDeleting) return;
 
     this.reviewDeleting = true;
-    this.reviewService.delete(this.currentClubId).subscribe({
+    this.reviewService.delete(this.currentClubId, this.myReview.reviewId).subscribe({
       next: () => {
         this.reviewDeleting = false;
         this.deleteReviewModalOpen = false;
