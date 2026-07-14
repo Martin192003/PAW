@@ -9,7 +9,7 @@ function detectApiBaseUrl(): string {
   }
   const { origin, pathname, port } = window.location;
 
-  if (port === '4200') {
+  if (port === '8080') {
     return '/api';
   }
 

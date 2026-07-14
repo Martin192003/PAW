@@ -34,7 +34,7 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
      *   {@code cors.allowed-origins=http://localhost:4200,https://mi-dominio.com}
      * Si se despliega con frontend y backend en el mismo WAR, usualmente no se necesita CORS real.
      */
-    @Value("${cors.allowed-origins:http://localhost:4200}")
+    @Value("${cors.allowed-origins:http://localhost:8080}")
     private String corsAllowedOrigins;
 
     @Override

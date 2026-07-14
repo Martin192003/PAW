@@ -16,6 +16,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.mockito.ArgumentMatchers.any;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -143,6 +144,28 @@ public class BookingServiceImplTest {
         Assert.assertThrows(InvalidDateRangeException.class, () -> {
             bookingService.create(mockUser, TABLE_ID, END, START, TOTAL_AMOUNT);
         });
+    }
+
+    @Test
+    public void testCreateForClubWithoutOwnerDoesNotCreateBooking() {
+        mockTable.setPrice(TOTAL_AMOUNT);
+        mockUser.setEmail("user@example.com");
+
+        Club club = new Club();
+        club.setClubId(CLUB_ID);
+
+        Mockito.when(tableService.findById(TABLE_ID)).thenReturn(Optional.of(mockTable));
+        Mockito.when(tableService.findAvailableByClubAndRange(Mockito.eq(CLUB_ID), any(), any()))
+                .thenReturn(List.of(mockTable));
+        Mockito.when(userService.findByUserName("user@example.com")).thenReturn(mockUser);
+        Mockito.when(clubService.getClubById(CLUB_ID)).thenReturn(Optional.of(club));
+        Mockito.when(clubService.getAdminsByClub(CLUB_ID)).thenReturn(List.of());
+
+        Assert.assertThrows(InvalidClubException.class, () ->
+                bookingService.createForClub(CLUB_ID, TABLE_ID, LocalDate.now().plusDays(1), "user@example.com")
+        );
+
+        Mockito.verify(bookingDao, Mockito.never()).create(any(), any(), any(), any(), any(), any());
     }
 
     @Test

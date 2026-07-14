@@ -112,14 +112,16 @@ public class ClubJpaDao implements ClubDao {
                 .setParameter("cid", clubId)
                 .getResultList();
 
-        //Hay solo uno
-        User contact = em.createQuery("""
+        // Puede no existir si el club no tiene contact_info o si el id no existe.
+        List<User> contacts = em.createQuery("""
                         select c.contactInfo
                         from Club c
                         where c.clubId = :cid
                         """, User.class)
                 .setParameter("cid", clubId)
-                .getSingleResult();
+                .setMaxResults(1)
+                .getResultList();
+        User contact = contacts.isEmpty() ? null : contacts.getFirst();
 
         LinkedHashMap<UUID, User> byId = new LinkedHashMap<>();
         if (contact != null && contact.getId() != null) {

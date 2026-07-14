@@ -12,6 +12,7 @@ describe('apiErrorInterceptor', () => {
   let httpMock: HttpTestingController;
   let authState: { clearSession: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
+  let apiErrors: ApiErrorService;
 
   beforeEach(() => {
 	authState = { clearSession: vi.fn() };
@@ -29,6 +30,7 @@ describe('apiErrorInterceptor', () => {
 
 	http = TestBed.inject(HttpClient);
 	httpMock = TestBed.inject(HttpTestingController);
+	apiErrors = TestBed.inject(ApiErrorService);
   });
 
   afterEach(() => {
@@ -43,5 +45,21 @@ describe('apiErrorInterceptor', () => {
 
 	expect(authState.clearSession).toHaveBeenCalled();
 	expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { reason: 'expired' } });
+  });
+
+  it('uses the generic message instead of rendering html error bodies', () => {
+	http.get('/api/bookings').subscribe({ error: () => undefined });
+
+	const req = httpMock.expectOne('/api/bookings');
+	req.flush('<!doctype html><html><body>HTTP Status 500</body></html>', {
+	  status: 500,
+	  statusText: 'Internal Server Error',
+	});
+
+	expect(apiErrors.getSnapshot()).toEqual({
+	  status: 500,
+	  message: 'Ocurrio un error inesperado.',
+	});
+	expect(router.navigate).toHaveBeenCalledWith(['/error']);
   });
 });

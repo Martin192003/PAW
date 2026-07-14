@@ -244,6 +244,16 @@ public class ClubJpaDaoTest {
         assertEquals(owner.getId(), admins.getFirst().getId());
     }
 
+    @Test
+    public void testFindAdminsByClubIdReturnsEmptyWhenClubHasNoContactOrAdmins() {
+        Club orphanClub = persistClub(null, "Orphan Club", "desc");
+        em.flush();
+
+        List<User> admins = clubDao.findAdminsByClubId(orphanClub.getClubId());
+
+        assertTrue(admins.isEmpty());
+    }
+
     // ----------------- Tests findClubsWithBookingsByUserId -----------------
 
     @Test

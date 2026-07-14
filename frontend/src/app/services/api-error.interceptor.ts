@@ -50,12 +50,27 @@ function extractErrorMessage(error: HttpErrorResponse): string | null {
   const payload = error.error;
   if (payload && typeof payload === 'object' && 'message' in payload) {
     const message = (payload as { message?: unknown }).message;
-    return typeof message === 'string' ? message : null;
+    return isDisplayableErrorMessage(message) ? message.trim() : null;
   }
-  if (typeof payload === 'string' && payload.trim()) {
+  if (isDisplayableErrorMessage(payload)) {
     return payload.trim();
   }
   return null;
+}
+
+function isDisplayableErrorMessage(value: unknown): value is string {
+  if (typeof value !== 'string') {
+    return false;
+  }
+  const message = value.trim();
+  if (!message) {
+    return false;
+  }
+  const lower = message.toLowerCase();
+  if (lower.startsWith('<!doctype html') || lower.startsWith('<html') || lower.includes('<body')) {
+    return false;
+  }
+  return message.length <= 500;
 }
 
 function defaultStatusMessage(status: number): string {

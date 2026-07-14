@@ -597,13 +597,17 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("El usuario debe tener un email válido para recibir notificaciones");
         }
 
+        var club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new NotFoundException("error.club.notfound"));
+        var admins = clubService.getAdminsByClub(clubId);
+        if (admins.isEmpty()) {
+            throw new InvalidClubException("El club no tiene un administrador asignado.");
+        }
+        var owner = admins.get(0);
+
         BigDecimal total = table.getPrice() != null ? table.getPrice() : BigDecimal.ZERO;
 
         Booking booking = create(user, tableId, start, end, total);
-
-        var club = clubService.getClubById(clubId).orElseThrow(IllegalArgumentException::new);
-        var admins = clubService.getAdminsByClub(clubId);
-        var owner = admins.isEmpty() ? null : admins.get(0);
 
         Locale locale = user.getLocale() != null
                 ? Locale.forLanguageTag(user.getLocale())
