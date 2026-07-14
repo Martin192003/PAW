@@ -131,7 +131,7 @@ public class AuthRestController {
                     .build();
         }
 
-        return Response.ok(new ApiMessageDto("Te enviamos un nuevo mail de verificacion")).build();
+        return Response.ok(new ApiMessageDto("verification_email_sent")).build();
     }
 
     @POST

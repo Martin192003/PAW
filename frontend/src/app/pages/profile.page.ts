@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, NgZone, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -100,6 +100,8 @@ export class ProfilePage implements OnInit {
     private readonly router: Router,
     private readonly i18n: I18nService,
     private readonly fb: FormBuilder,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly ngZone: NgZone,
   ) {
     this.editorForm = this.fb.group({
       draftValue: [''],
@@ -205,6 +207,20 @@ export class ProfilePage implements OnInit {
     return this.currentErrorMessage();
   }
 
+  onDraftInput(event: Event): void {
+    if (this.activeField !== 'cellphone') {
+      return;
+    }
+
+    const input = event.target as HTMLInputElement;
+    const original = input.value;
+    const filtered = original.replace(/[^0-9+\-() ]/g, '');
+    if (original !== filtered) {
+      input.value = filtered;
+      this.editorForm.get('draftValue')?.setValue(filtered, { emitEvent: false });
+    }
+  }
+
   saveEditor(): void {
     if (!this.user || !this.activeField) {
       return;
@@ -237,21 +253,26 @@ export class ProfilePage implements OnInit {
 
     this.userService.updateUser(userId, payload).subscribe({
       next: ({ user: updatedUser, token }) => {
-        if (token) {
-          this.authState.updateToken(token);
-        }
+        this.ngZone.run(() => {
+          if (token) {
+            this.authState.updateToken(token);
+          }
 
-        this.authState.updateUser(updatedUser);
-        this.user = updatedUser;
-        this.saving = false;
-        this.closeEditor();
+          this.authState.updateUser(updatedUser);
+          this.user = updatedUser;
+          this.saving = false;
+          this.closeEditor();
+          this.cdr.detectChanges();
+        });
       },
       error: (error: HttpErrorResponse) => {
-        this.saving = false;
-        if (this.applyServerFieldError(error)) {
-          return;
-        }
-        this.errorMessage = this.extractErrorMessage(error);
+        this.ngZone.run(() => {
+          this.saving = false;
+          if (!this.applyServerFieldError(error)) {
+            this.errorMessage = this.extractErrorMessage(error);
+          }
+          this.cdr.detectChanges();
+        });
       }
     });
   }

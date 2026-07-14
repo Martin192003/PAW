@@ -49,6 +49,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
   loading = false;
 
   private receiptObjectUrl = '';
+  private messageTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -66,6 +67,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearMessageTimeout();
     this.revokeReceiptUrl();
   }
 
@@ -73,6 +75,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     const clubId = this.route.snapshot.paramMap.get('clubId');
     const bookingId = this.route.snapshot.paramMap.get('bookingId');
     if (!clubId || !bookingId) {
+      this.clearMessageTimeout();
       this.error = this.i18n.instant('bookingUserHandler.errors.invalidBooking');
       return;
     }
@@ -105,6 +108,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
+        this.clearMessageTimeout();
         this.error = this.i18n.instant('bookingUserHandler.errors.loadFailed');
         this.cdr.detectChanges();
       }
@@ -116,13 +120,12 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     this.bookingService.cancelBooking(this.booking.clubId, this.booking.id, this.booking.links).subscribe({
       next: () => {
         this.showCancelModal = false;
-        this.success = this.i18n.instant('bookingUserHandler.success.cancelled');
+        this.showSuccess(this.i18n.instant('bookingUserHandler.success.cancelled'));
         this.load();
       },
       error: () => {
-        this.error = this.i18n.instant('bookingUserHandler.errors.cancelFailed');
+        this.showError(this.i18n.instant('bookingUserHandler.errors.cancelFailed'));
         this.showCancelModal = false;
-        this.cdr.detectChanges();
       }
     });
   }
@@ -134,9 +137,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
 
     const validationError = this.validateReceiptFile(file);
     if (validationError) {
-      this.error = validationError;
-      this.success = '';
-      this.cdr.detectChanges();
+      this.showError(validationError);
       input.value = '';
       return;
     }
@@ -145,24 +146,21 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     try {
       receiptLink = this.bookingService.requireReceiptLink(this.booking);
     } catch (err) {
-      this.error = (err as Error).message;
-      this.cdr.detectChanges();
+      this.showError((err as Error).message);
       input.value = '';
       return;
     }
 
     this.bookingService.putReceipt(this.booking.clubId, this.booking.id, file, receiptLink).subscribe({
       next: () => {
-        this.success = this.i18n.instant('bookingUserHandler.success.receiptUploaded');
+        this.showSuccess(this.i18n.instant('bookingUserHandler.success.receiptUploaded'));
         if (this.booking) {
           this.booking.hasReceipt = true;
         }
         this.loadReceipt();
       },
       error: error => {
-        this.error = this.receiptUploadErrorMessage(error);
-        this.success = '';
-        this.cdr.detectChanges();
+        this.showError(this.receiptUploadErrorMessage(error));
       }
     });
     input.value = '';
@@ -237,6 +235,7 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     } catch (err) {
       this.hasReceipt = false;
       this.receiptUrl = '';
+      this.clearMessageTimeout();
       this.error = (err as Error).message;
       this.cdr.detectChanges();
       return;
@@ -266,6 +265,37 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     if (this.receiptObjectUrl) {
       URL.revokeObjectURL(this.receiptObjectUrl);
       this.receiptObjectUrl = '';
+    }
+  }
+
+  private showSuccess(message: string): void {
+    this.success = message;
+    this.error = '';
+    this.scheduleMessageClear();
+    this.cdr.detectChanges();
+  }
+
+  private showError(message: string): void {
+    this.error = message;
+    this.success = '';
+    this.scheduleMessageClear();
+    this.cdr.detectChanges();
+  }
+
+  private scheduleMessageClear(): void {
+    this.clearMessageTimeout();
+    this.messageTimeoutId = setTimeout(() => {
+      this.success = '';
+      this.error = '';
+      this.messageTimeoutId = undefined;
+      this.cdr.detectChanges();
+    }, 4000);
+  }
+
+  private clearMessageTimeout(): void {
+    if (this.messageTimeoutId) {
+      clearTimeout(this.messageTimeoutId);
+      this.messageTimeoutId = undefined;
     }
   }
 

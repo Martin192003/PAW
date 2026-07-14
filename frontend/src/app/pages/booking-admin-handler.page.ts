@@ -44,6 +44,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   loading = false;
 
   private receiptObjectUrl = '';
+  private messageTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -60,12 +61,14 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearMessageTimeout();
     this.revokeReceiptUrl();
   }
 
   load(): void {
     const bookingId = this.route.snapshot.paramMap.get('bookingId');
     if (!bookingId) {
+      this.clearMessageTimeout();
       this.error = this.i18n.instant('bookingAdminHandler.errors.invalidBooking');
       return;
     }
@@ -99,6 +102,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
+        this.clearMessageTimeout();
         this.error = this.i18n.instant('bookingAdminHandler.errors.loadFailed');
         this.cdr.detectChanges();
       }
@@ -109,12 +113,11 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     if (!this.booking) return;
     this.bookingService.confirmManagedClubBooking(this.booking.id, this.booking.links).subscribe({
       next: () => {
-        this.success = this.i18n.instant('bookingAdminHandler.success.confirmed');
+        this.showSuccess(this.i18n.instant('bookingAdminHandler.success.confirmed'));
         this.load();
       },
       error: error => {
-        this.error = this.confirmErrorMessage(error);
-        this.cdr.detectChanges();
+        this.showError(this.confirmErrorMessage(error));
       }
     });
   }
@@ -124,13 +127,12 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     this.bookingService.cancelManagedClubBooking(this.booking.id, this.booking.links).subscribe({
       next: () => {
         this.showCancelModal = false;
-        this.success = this.i18n.instant('bookingAdminHandler.success.cancelled');
+        this.showSuccess(this.i18n.instant('bookingAdminHandler.success.cancelled'));
         this.load();
       },
       error: () => {
         this.showCancelModal = false;
-        this.error = this.i18n.instant('bookingAdminHandler.errors.cancelFailed');
-        this.cdr.detectChanges();
+        this.showError(this.i18n.instant('bookingAdminHandler.errors.cancelFailed'));
       }
     });
   }
@@ -197,6 +199,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     } catch (err) {
       this.hasReceipt = false;
       this.receiptUrl = '';
+      this.clearMessageTimeout();
       this.error = (err as Error).message;
       this.cdr.detectChanges();
       return;
@@ -226,6 +229,37 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     if (this.receiptObjectUrl) {
       URL.revokeObjectURL(this.receiptObjectUrl);
       this.receiptObjectUrl = '';
+    }
+  }
+
+  private showSuccess(message: string): void {
+    this.success = message;
+    this.error = '';
+    this.scheduleMessageClear();
+    this.cdr.detectChanges();
+  }
+
+  private showError(message: string): void {
+    this.error = message;
+    this.success = '';
+    this.scheduleMessageClear();
+    this.cdr.detectChanges();
+  }
+
+  private scheduleMessageClear(): void {
+    this.clearMessageTimeout();
+    this.messageTimeoutId = setTimeout(() => {
+      this.success = '';
+      this.error = '';
+      this.messageTimeoutId = undefined;
+      this.cdr.detectChanges();
+    }, 4000);
+  }
+
+  private clearMessageTimeout(): void {
+    if (this.messageTimeoutId) {
+      clearTimeout(this.messageTimeoutId);
+      this.messageTimeoutId = undefined;
     }
   }
 

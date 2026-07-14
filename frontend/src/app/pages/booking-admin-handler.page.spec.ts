@@ -56,6 +56,7 @@ describe('BookingAdminHandlerPage', () => {
   } as any;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     bookingService = {
       getManagedClubBooking: vi.fn().mockReturnValue(of(booking)),
       confirmManagedClubBooking: vi.fn().mockReturnValue(of(undefined)),
@@ -79,6 +80,11 @@ describe('BookingAdminHandlerPage', () => {
       { detectChanges: vi.fn() } as any,
       { instant: (key: string) => key, getLanguage: () => 'es' } as any
     );
+  });
+
+  afterEach(() => {
+    component.ngOnDestroy();
+    vi.useRealTimers();
   });
 
   it('loads the admin booking view', () => {
@@ -106,6 +112,10 @@ describe('BookingAdminHandlerPage', () => {
     expect(bookingService.confirmManagedClubBooking).toHaveBeenCalledWith('booking-1', undefined);
     expect(component.success).toBe('bookingAdminHandler.success.confirmed');
     expect(bookingService.getManagedClubBooking).toHaveBeenCalledWith('booking-1');
+
+    vi.advanceTimersByTime(4000);
+
+    expect(component.success).toBe('');
   });
 
   it('cancels a booking, closes the modal and reloads it', () => {
@@ -118,6 +128,10 @@ describe('BookingAdminHandlerPage', () => {
     expect(component.showCancelModal).toBe(false);
     expect(component.success).toBe('bookingAdminHandler.success.cancelled');
     expect(bookingService.getManagedClubBooking).toHaveBeenCalledWith('booking-1');
+
+    vi.advanceTimersByTime(4000);
+
+    expect(component.success).toBe('');
   });
 
   it('shows an error when the admin booking fails to load', () => {
@@ -135,5 +149,9 @@ describe('BookingAdminHandlerPage', () => {
     component.confirmBooking();
 
     expect(component.error).toBe('bookingAdminHandler.errors.confirmFailed');
+
+    vi.advanceTimersByTime(4000);
+
+    expect(component.error).toBe('');
   });
 });

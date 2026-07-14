@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Location } from '@angular/common';
 import { UserService } from '../services/user.service';
 import { AuthStateService } from '../services/auth-state.service';
 import { Subject } from 'rxjs';
@@ -56,7 +55,6 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly location: Location,
     private readonly userService: UserService,
     private readonly authState: AuthStateService,
     private readonly cdr: ChangeDetectorRef,
@@ -222,10 +220,6 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
 
   goToClubs(): void {
     this.router.navigate(['/clubs']);
-  }
-
-  goBack(): void {
-    this.location.back();
   }
 
   showForgotError(field: string): boolean {

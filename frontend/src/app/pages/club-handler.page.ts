@@ -68,12 +68,18 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
 
   activeTab: ClubHandlerTab = 'menu';
 
+  menuPage = 1;
+  readonly menuPageSize = 10;
+
+  tablePage = 1;
+  readonly tablePageSize = 10;
+
   eventFilter: EventFilter = 'all';
   eventPage = 1;
-  readonly eventPageSize = 5;
+  readonly eventPageSize = 10;
 
   reviewPage = 1;
-  readonly reviewPageSize = 5;
+  readonly reviewPageSize = 10;
   reviewTotalPages = 0;
 
   readonly productTypes = ['ALCOHOLICA', 'NO_ALCOHOLICA', 'TRAGOS'];
@@ -383,6 +389,54 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   setTab(tab: ClubHandlerTab): void {
     this.activeTab = tab;
     this.clearActionMessages();
+  }
+
+  get menuTotalPages(): number {
+    const total = Math.ceil(this.menu.length / this.menuPageSize);
+    return Math.max(total, 1);
+  }
+
+  get pagedMenu(): Product[] {
+    const start = (this.menuPage - 1) * this.menuPageSize;
+    return this.menu.slice(start, start + this.menuPageSize);
+  }
+
+  prevMenuPage(): void {
+    if (this.menuPage <= 1) {
+      return;
+    }
+    this.menuPage -= 1;
+  }
+
+  nextMenuPage(): void {
+    if (this.menuPage >= this.menuTotalPages) {
+      return;
+    }
+    this.menuPage += 1;
+  }
+
+  get tableTotalPages(): number {
+    const total = Math.ceil(this.tables.length / this.tablePageSize);
+    return Math.max(total, 1);
+  }
+
+  get pagedTables(): ClubTable[] {
+    const start = (this.tablePage - 1) * this.tablePageSize;
+    return this.tables.slice(start, start + this.tablePageSize);
+  }
+
+  prevTablePage(): void {
+    if (this.tablePage <= 1) {
+      return;
+    }
+    this.tablePage -= 1;
+  }
+
+  nextTablePage(): void {
+    if (this.tablePage >= this.tableTotalPages) {
+      return;
+    }
+    this.tablePage += 1;
   }
 
   setEventFilter(filter: EventFilter): void {
@@ -752,6 +806,10 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       next: () => {
         this.zone.run(() => {
           this.menu = this.menu.filter((item) => item.productId !== product.productId);
+          this.menuPage = Math.min(this.menuPage, this.menuTotalPages);
+          if (this.pagedMenu.length === 0 && this.menuPage > 1) {
+            this.menuPage -= 1;
+          }
           if (this.editingProductId === product.productId) {
             this.startCreateProduct();
           }
@@ -951,6 +1009,10 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       next: () => {
         this.zone.run(() => {
           this.tables = this.tables.filter((item) => item.tableId !== table.tableId);
+          this.tablePage = Math.min(this.tablePage, this.tableTotalPages);
+          if (this.pagedTables.length === 0 && this.tablePage > 1) {
+            this.tablePage -= 1;
+          }
           if (this.editingTableId === table.tableId) {
             this.startCreateTable();
           }
@@ -1313,6 +1375,10 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.coverUrl = '';
     this.layoutUrl = '';
     this.galleryPhotos = [];
+    this.menuPage = 1;
+    this.tablePage = 1;
+    this.eventPage = 1;
+    this.reviewPage = 1;
     this.clubLoadAttempted = false;
     this.errorMessage = '';
 
@@ -1366,6 +1432,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
           ...product,
           productType: this.normalizeProductType(product.productType)
         }));
+        this.menuPage = Math.min(this.menuPage, this.menuTotalPages);
         this.cdr.detectChanges();
       },
       error: () => {
@@ -1409,6 +1476,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.clubService.getTables(this.clubId).subscribe({
       next: (tables) => {
         this.tables = tables ?? [];
+        this.tablePage = Math.min(this.tablePage, this.tableTotalPages);
         this.cdr.detectChanges();
       },
       error: () => {
@@ -1422,6 +1490,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.clubService.getEvents(this.clubId).subscribe({
       next: (events) => {
         this.events = events.map((event) => this.normalizeEvent(event));
+        this.eventPage = Math.min(this.eventPage, this.eventTotalPages);
         this.cdr.detectChanges();
       },
       error: () => {
@@ -1534,6 +1603,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     }
 
     this.menu = [normalized, ...this.menu];
+    this.menuPage = 1;
     this.cdr.detectChanges();
   }
 
@@ -1556,6 +1626,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     }
 
     this.tables = [normalized, ...this.tables];
+    this.tablePage = 1;
     this.cdr.detectChanges();
   }
 

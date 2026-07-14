@@ -951,8 +951,6 @@ public class ClubRestController {
             case "image/jpg":
             case "image/png":
             case "image/webp":
-            case "image/gif":
-            case "image/avif":
                 return;
             default:
                 throw new BadRequestException("Unsupported image content type");

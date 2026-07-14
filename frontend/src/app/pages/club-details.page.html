@@ -480,7 +480,7 @@
 
         <div class="mt-6 flex items-center justify-center gap-2" *ngIf="reviews.length > 0 && reviewsTotalPages > 1">
           <button type="button"
-                  class="rounded border border-purple-500/30 bg-[#141414] px-3 py-2 text-white transition hover:bg-purple-500/20 disabled:opacity-50"
+                  class="cursor-pointer rounded border border-purple-500/30 bg-[#141414] px-3 py-2 text-white transition hover:bg-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                   (click)="previousReviewsPage()"
                   [disabled]="reviewsCurrentPage === 1"
                   [attr.title]="'clubDetails.previousPage' | translate">
@@ -490,7 +490,7 @@
             {{ reviewsCurrentPage }} <small>{{ 'clubDetails.of' | translate }}</small> {{ reviewsTotalPages }}
           </span>
           <button type="button"
-                  class="rounded border border-purple-500/30 bg-[#141414] px-3 py-2 text-white transition hover:bg-purple-500/20 disabled:opacity-50"
+                  class="cursor-pointer rounded border border-purple-500/30 bg-[#141414] px-3 py-2 text-white transition hover:bg-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                   (click)="nextReviewsPage()"
                   [disabled]="reviewsCurrentPage >= reviewsTotalPages"
                   [attr.title]="'clubDetails.nextPage' | translate">

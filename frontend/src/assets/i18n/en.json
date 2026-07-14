@@ -55,6 +55,7 @@
       "required": "This field is required.",
       "maxlength": "Maximum {{max}} characters.",
       "invalid": "Invalid field.",
+      "invalidImageType": "The image must be JPG, PNG or WebP.",
       "saveFailed": "An error occurred while saving the club."
     }
   },
@@ -133,6 +134,8 @@
     },
     "errors": {
       "verifyLink": "Could not verify the link.",
+      "expiredVerificationLink": "This verification email has expired because a new one was generated. Use the latest email you received or resend the verification email.",
+      "missingVerificationToken": "The verification link is incomplete. Resend the verification email.",
       "resend": "Could not resend the verification email."
     }
   },

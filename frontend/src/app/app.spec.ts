@@ -39,6 +39,15 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('main')).toBeTruthy();
   });
+
+  it('hides the topbar on password reset routes', () => {
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'url', 'get').mockReturnValue('/reset-password?token=abc');
+
+    const fixture = TestBed.createComponent(App);
+
+    expect(fixture.componentInstance.showTopbar).toBe(false);
+  });
 });
 
 describe('apiErrorInterceptor', () => {

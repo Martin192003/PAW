@@ -35,7 +35,7 @@ public class AuthRestControllerTest {
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertTrue(response.getEntity() instanceof ApiMessageDto);
-        assertEquals("Te enviamos un nuevo mail de verificacion", ((ApiMessageDto) response.getEntity()).getMessage());
+        assertEquals("verification_email_sent", ((ApiMessageDto) response.getEntity()).getMessage());
     }
 
     @Test

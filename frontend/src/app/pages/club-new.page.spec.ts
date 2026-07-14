@@ -190,6 +190,23 @@ describe('AddClubComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/clubs']);
   });
 
+  it('rejects gif cover images when creating a club', () => {
+    fillValidForm();
+    const input = document.createElement('input');
+    const file = new File(['fake-gif'], 'cover.gif', { type: 'image/gif' });
+    Object.defineProperty(input, 'files', {
+      value: [file],
+      configurable: true,
+    });
+
+    component.onFileChange({ target: input } as unknown as Event);
+
+    expect(component.selectedImage).toBeNull();
+    expect(component.clubForm.get('image')?.hasError('invalidImageType')).toBe(true);
+    expect(component.showError('image')).toBe(true);
+    expect(component.getError('image')).toBe('clubNew.errors.invalidImageType');
+  });
+
   it('still navigates away when the club was created but the cover upload fails', () => {
     const club = { clubId: 'club-1', links: {} };
     clubService.createClub.mockReturnValue(of(club));
