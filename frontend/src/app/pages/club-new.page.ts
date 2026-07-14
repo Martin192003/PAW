@@ -28,6 +28,8 @@ import { AuthStateService } from '../services/auth-state.service';
 
 
 const CBU_MAX_LENGTH = 50;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/png', 'image/x-png', 'image/webp']);
+const ALLOWED_IMAGE_EXTENSIONS = /\.(jpe?g|png|webp)$/i;
 // Espeja DESCRIPTION_MAX_LENGTH en ClubServiceImpl (backend): la columna es
 // TEXT (sin limite de longitud), asi que este tope es una regla de negocio,
 // no algo impuesto por el schema.
@@ -61,7 +63,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
   frozenErrorMessages: { [key: string]: string } = {};
 
   private static readonly FIELDS = [
-    'name', 'location', 'priceRange', 'description', 'musicGenre', 'zone', 'isBar', 'cbu'
+    'name', 'location', 'priceRange', 'description', 'musicGenre', 'zone', 'isBar', 'cbu', 'image'
   ];
 
   // ----------------------------------------------------------------
@@ -139,6 +141,10 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
   // Helpers de validación (usados en el template)
   // ----------------------------------------------------------------
   showError(field: string): boolean {
+    if (field === 'image' && this.hasCurrentError(field)) {
+      return true;
+    }
+
     if (!this.submittedAttempted) return false;
 
     if (this.frozenErrors[field] !== undefined) {
@@ -173,6 +179,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!ctrl || !ctrl.errors) return '';
     if (ctrl.errors['required'])    return this.i18n.instant('clubNew.errors.required');
     if (ctrl.errors['maxlength'])   return this.i18n.instant('clubNew.errors.maxlength', { max: ctrl.errors['maxlength'].requiredLength });
+    if (ctrl.errors['invalidImageType']) return this.i18n.instant('clubNew.errors.invalidImageType');
     if (ctrl.errors['serverError']) return ctrl.errors['serverError'];
     return this.i18n.instant('clubNew.errors.invalid');
   }
@@ -182,9 +189,28 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
   // ----------------------------------------------------------------
   onFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.selectedImage = input.files[0];
+    const control = this.clubForm.get('image');
+    const file = input.files?.[0] ?? null;
+
+    this.selectedImage = null;
+    control?.setErrors(null);
+
+    if (!file) {
+      control?.setValue(null, { emitEvent: false });
+      return;
     }
+
+    if (!this.isAllowedImageFile(file)) {
+      input.value = '';
+      control?.setValue(null, { emitEvent: false });
+      control?.setErrors({ invalidImageType: true });
+      this.frozenErrors['image'] = true;
+      this.frozenErrorMessages['image'] = this.i18n.instant('clubNew.errors.invalidImageType');
+      return;
+    }
+
+    this.selectedImage = file;
+    control?.setValue(file.name, { emitEvent: false });
   }
 
   onCbuInput(event: Event): void {
@@ -194,6 +220,15 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
       input.value = digits;
     }
     this.clubForm.get('cbu')?.setValue(digits, { emitEvent: false });
+  }
+
+  private isAllowedImageFile(file: File): boolean {
+    const type = (file.type || '').trim().toLowerCase();
+    if (type && type !== 'application/octet-stream') {
+      return ALLOWED_IMAGE_TYPES.has(type);
+    }
+
+    return ALLOWED_IMAGE_EXTENSIONS.test(file.name || '');
   }
 
   // ----------------------------------------------------------------

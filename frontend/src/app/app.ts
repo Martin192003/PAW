@@ -37,6 +37,8 @@ export class App {
     this.showTopbar = ![
       '/login',
       '/register',
+      '/forgot-password',
+      '/reset-password',
       '/verify-mail',
       '/verify-account'
     ].includes(path);

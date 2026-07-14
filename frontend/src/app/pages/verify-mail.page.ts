@@ -110,7 +110,7 @@ export class VerifyMailPage implements OnDestroy {
     this.userService.resendVerification({ usernameOrEmail }).subscribe({
       next: (response) => {
         this.resendSubmitting = false;
-        this.resendSuccessMessage = response.message || this.i18n.instant('verifyMail.messages.resendSuccess');
+        this.resendSuccessMessage = this.displayMessageForApiCode(response.message || 'verification_email_sent');
         this.cdr.detectChanges();
       },
       error: (error: HttpErrorResponse) => {
@@ -184,7 +184,7 @@ export class VerifyMailPage implements OnDestroy {
     this.userService.resendVerification({ usernameOrEmail }).subscribe({
       next: (response) => {
         this.resendSubmitting = false;
-        this.resendSuccessMessage = response.message || 'Te enviamos un nuevo mail de verificacion.';
+        this.resendSuccessMessage = this.displayMessageForApiCode(response.message || 'verification_email_sent');
         this.cdr.detectChanges();
       },
       error: (error: HttpErrorResponse) => {
@@ -243,18 +243,31 @@ export class VerifyMailPage implements OnDestroy {
   private resolveErrorMessage(error: HttpErrorResponse, fallback: string): string {
     if (typeof error.error === 'object' && error.error !== null && 'message' in error.error) {
       const msg = (error.error as { message?: unknown }).message;
-      if (typeof msg === 'string' && msg.trim()) return msg;
+      if (typeof msg === 'string' && msg.trim()) return this.displayMessageForApiCode(msg.trim());
     }
 
     if (typeof error.error === 'string' && error.error.trim()) {
       try {
         const parsed = JSON.parse(error.error) as { message?: string };
-        if (parsed.message) return parsed.message;
+        if (parsed.message) return this.displayMessageForApiCode(parsed.message);
       } catch {
         return error.error;
       }
     }
 
     return fallback;
+  }
+
+  private displayMessageForApiCode(message: string): string {
+    switch (message) {
+      case 'invalid_verification_token':
+        return this.i18n.instant('verifyMail.errors.expiredVerificationLink');
+      case 'verification_token_required':
+        return this.i18n.instant('verifyMail.errors.missingVerificationToken');
+      case 'verification_email_sent':
+        return this.i18n.instant('verifyMail.messages.resendSuccess');
+      default:
+        return message;
+    }
   }
 }

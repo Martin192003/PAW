@@ -55,6 +55,7 @@
       "required": "Este campo es obligatorio.",
       "maxlength": "Máximo {{max}} caracteres.",
       "invalid": "Campo inválido.",
+      "invalidImageType": "La imagen debe ser JPG, PNG o WebP.",
       "saveFailed": "Ocurrió un error al guardar el club."
     }
   },
@@ -133,6 +134,8 @@
     },
     "errors": {
       "verifyLink": "No se pudo verificar el enlace.",
+      "expiredVerificationLink": "Este mail de verificación ya expiró porque se generó uno nuevo. Usá el último mail que recibiste o pedí reenviar la verificación.",
+      "missingVerificationToken": "El enlace de verificación está incompleto. Pedí reenviar el mail de verificación.",
       "resend": "No se pudo reenviar el mail de verificación."
     }
   },
