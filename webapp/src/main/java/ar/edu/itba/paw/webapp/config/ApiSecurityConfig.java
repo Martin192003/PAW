@@ -56,11 +56,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.DELETE, "/api/clubs/**/photos/**").hasAnyRole("USER", "ADMIN")
                 .antMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/auth/tokens").permitAll()
-                .antMatchers(HttpMethod.GET, "/api/auth/verifications").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/auth/verifications").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/auth/verification-requests").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/auth/password-reset-requests").permitAll()
-                .antMatchers(HttpMethod.POST, "/api/auth/password-resets").permitAll()
+                .antMatchers(HttpMethod.POST, "/api/auth/challenges").permitAll()
                 .anyRequest().authenticated().and()
                 .addFilterBefore(apiBasicAuthenticationFilter(), AnonymousAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter(), AnonymousAuthenticationFilter.class);

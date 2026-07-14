@@ -1,3 +1,5 @@
+import { Link } from './club.model';
+
 export interface UserCreateRequest {
   username: string;
   name: string;
@@ -9,13 +11,12 @@ export interface UserCreateRequest {
 }
 
 export interface UserUpdateRequest {
-  username: string;
-  name: string;
-  surname: string;
-  email: string;
-  cellphone: string;
-  locale: string;
-  password?: string;
+  username?: string;
+  name?: string;
+  surname?: string;
+  email?: string;
+  cellphone?: string;
+  locale?: string;
 }
 
 export interface UserLoginRequest {
@@ -36,11 +37,15 @@ export interface ApiMessageResponse {
   message: string;
 }
 
-export interface User {
+export interface PublicUser {
   userId: string;
   username: string;
   name: string;
   surname: string;
+  links?: Link[];
+}
+
+export interface User extends PublicUser {
   email: string;
   cellphone: string;
   role: string;

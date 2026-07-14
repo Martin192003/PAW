@@ -1,8 +1,8 @@
 package ar.edu.itba.paw.webapp.rest.auth;
 
 import ar.edu.itba.paw.model.dto.ApiMessageDto;
+import ar.edu.itba.paw.model.dto.AuthChallengeRequestDto;
 import ar.edu.itba.paw.model.dto.ErrorDto;
-import ar.edu.itba.paw.model.dto.ResendVerificationRequestDto;
 import ar.edu.itba.paw.service.PasswordResetJobService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
@@ -21,17 +21,17 @@ public class AuthRestControllerTest {
     private final AuthRestController controller = new AuthRestController(
             userService,
             mock(PasswordResetJobService.class),
-            mock(JwtUtil.class),
-            mock(AuthenticatedUserResolver.class)
+            mock(JwtUtil.class)
     );
 
     @Test
     public void resendVerificationReturnsSerializableMessageDto() {
-        ResendVerificationRequestDto request = new ResendVerificationRequestDto();
+        AuthChallengeRequestDto request = new AuthChallengeRequestDto();
+        request.setChallengeType("email_verification");
         request.setUsernameOrEmail("user@example.com");
         when(userService.resendVerificationToken("user@example.com")).thenReturn(true);
 
-        Response response = controller.resendVerification(request);
+        Response response = controller.createChallenge(request);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertTrue(response.getEntity() instanceof ApiMessageDto);
@@ -40,11 +40,12 @@ public class AuthRestControllerTest {
 
     @Test
     public void resendVerificationReturnsBadRequestWhenEmailIsNotSent() {
-        ResendVerificationRequestDto request = new ResendVerificationRequestDto();
+        AuthChallengeRequestDto request = new AuthChallengeRequestDto();
+        request.setChallengeType("email_verification");
         request.setUsernameOrEmail("user@example.com");
         when(userService.resendVerificationToken("user@example.com")).thenReturn(false);
 
-        Response response = controller.resendVerification(request);
+        Response response = controller.createChallenge(request);
 
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         assertTrue(response.getEntity() instanceof ErrorDto);

@@ -169,7 +169,14 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
 
     // Sin token: solo se llega hasta acá si useLoggedUserEmail es true
     // (ver showResetForm), es decir, cambio de contraseña autenticado.
-    this.submitAuthenticatedChange(newPassword, confirmationPassword);
+    const userId = this.authState.getUser()?.userId;
+    if (!userId) {
+      this.applyAuthenticatedChangeError(new HttpErrorResponse({ status: 401 }));
+      this.submittingReset = false;
+      return;
+    }
+
+    this.submitAuthenticatedChange(userId, newPassword, confirmationPassword);
   }
 
   private submitTokenReset(token: string, newPassword: string, confirmationPassword: string): void {
@@ -194,8 +201,8 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     });
   }
 
-  private submitAuthenticatedChange(newPassword: string, confirmationPassword: string): void {
-    this.userService.changePasswordAuthenticated(newPassword, confirmationPassword).pipe(
+  private submitAuthenticatedChange(userId: string, newPassword: string, confirmationPassword: string): void {
+    this.userService.changePasswordAuthenticated(userId, newPassword, confirmationPassword).pipe(
       finalize(() => {
         this.submittingReset = false;
       })
@@ -386,9 +393,8 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     this.resetError = this.i18n.instant('passwordReset.errors.updateFailed');
   }
 
-  // A diferencia de /auth/password-resets, /auth/password-changes devuelve
-  // "password_unchanged" como mensaje literal (ver AuthRestController), asi
-  // que no hace falta adivinar cual es el unico 400 restante.
+  // El subrecurso de credenciales devuelve "password_unchanged" como mensaje
+  // literal, asi que no hace falta adivinar cual es el unico 400 restante.
   private applyAuthenticatedChangeError(error: HttpErrorResponse): void {
     if (error.status === 0) {
       this.resetError = this.i18n.instant('passwordReset.errors.network');

@@ -2,14 +2,11 @@ package ar.edu.itba.paw.webapp.rest.auth;
 
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.ApiMessageDto;
+import ar.edu.itba.paw.model.dto.AuthChallengeRequestDto;
 import ar.edu.itba.paw.model.dto.AuthTokenDto;
+import ar.edu.itba.paw.model.dto.AuthTokenRequestDto;
 import ar.edu.itba.paw.model.dto.AuthTokenUserDto;
 import ar.edu.itba.paw.model.dto.ErrorDto;
-import ar.edu.itba.paw.model.dto.LoginDto;
-import ar.edu.itba.paw.model.dto.PasswordResetDto;
-import ar.edu.itba.paw.model.dto.PasswordResetRequestDto;
-import ar.edu.itba.paw.model.dto.ResendVerificationRequestDto;
-import ar.edu.itba.paw.model.dto.UserVerificationRequestDto;
 import ar.edu.itba.paw.service.PasswordResetJobService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
@@ -17,15 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.util.Optional;
 
@@ -38,7 +32,6 @@ public class AuthRestController {
     private final UserService userService;
     private final PasswordResetJobService passwordResetJobService;
     private final JwtUtil jwtUtil;
-    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @Context
     private UriInfo uriInfo;
@@ -46,25 +39,67 @@ public class AuthRestController {
     @Autowired
     public AuthRestController(UserService userService,
                               PasswordResetJobService passwordResetJobService,
-                              JwtUtil jwtUtil,
-                              AuthenticatedUserResolver authenticatedUserResolver) {
+                              JwtUtil jwtUtil) {
         this.userService = userService;
         this.passwordResetJobService = passwordResetJobService;
         this.jwtUtil = jwtUtil;
-        this.authenticatedUserResolver = authenticatedUserResolver;
     }
 
     @POST
     @Path("/tokens")
-    public Response createToken(LoginDto loginDto) {
-        if (loginDto == null || isBlank(loginDto.getEmail()) || isBlank(loginDto.getPassword())) {
+    public Response createToken(AuthTokenRequestDto body) {
+        if (body == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorDto("Missing required fields"))
+                    .build();
+        }
+
+        String grantType = isBlank(body.getGrantType()) ? "password" : body.getGrantType().trim();
+        switch (grantType) {
+            case "password":
+                return passwordToken(body);
+            case "email_verification":
+                return verificationToken(body);
+            case "password_reset":
+                return passwordResetToken(body);
+            default:
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorDto("unsupported_grant_type"))
+                        .build();
+        }
+    }
+
+    @POST
+    @Path("/challenges")
+    public Response createChallenge(AuthChallengeRequestDto body) {
+        if (body == null || isBlank(body.getChallengeType())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorDto("challenge_type_required"))
+                    .build();
+        }
+
+        switch (body.getChallengeType().trim()) {
+            case "email_verification":
+                return resendVerification(body);
+            case "password_reset":
+                return requestPasswordReset(body);
+            default:
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorDto("unsupported_challenge_type"))
+                        .build();
+        }
+    }
+
+    private Response passwordToken(AuthTokenRequestDto body) {
+        String loginIdentifier = !isBlank(body.getUsernameOrEmail()) ? body.getUsernameOrEmail() : body.getEmail();
+        if (isBlank(loginIdentifier) || isBlank(body.getPassword())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("Missing required fields"))
                     .build();
         }
 
         try {
-            User user = userService.authenticateAndGetUser(loginDto.getEmail().trim(), loginDto.getPassword());
+            User user = userService.authenticateAndGetUser(loginIdentifier.trim(), body.getPassword());
             if (user == null) {
                 return Response.status(Response.Status.UNAUTHORIZED)
                         .entity(new ErrorDto("invalid_credentials"))
@@ -84,27 +119,7 @@ public class AuthRestController {
         }
     }
 
-    @GET
-    @Path("/verifications")
-    public Response verifyFromLink(@QueryParam("token") String token) {
-        if (isBlank(token)) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorDto("verification_token_required"))
-                    .build();
-        }
-
-        return buildVerificationLoginResponse(token.trim());
-    }
-
-    @POST
-    @Path("/verifications")
-    public Response verifyFromCode(UserVerificationRequestDto body) {
-        if (body == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorDto("body_required"))
-                    .build();
-        }
-
+    private Response verificationToken(AuthTokenRequestDto body) {
         String tokenOrCode = !isBlank(body.getToken()) ? body.getToken() : body.getCode();
         if (isBlank(tokenOrCode)) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -115,9 +130,7 @@ public class AuthRestController {
         return buildVerificationLoginResponse(tokenOrCode.trim());
     }
 
-    @POST
-    @Path("/verification-requests")
-    public Response resendVerification(ResendVerificationRequestDto body) {
+    private Response resendVerification(AuthChallengeRequestDto body) {
         if (body == null || isBlank(body.getUsernameOrEmail())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("username_or_email_required"))
@@ -134,9 +147,7 @@ public class AuthRestController {
         return Response.ok(new ApiMessageDto("verification_email_sent")).build();
     }
 
-    @POST
-    @Path("/password-reset-requests")
-    public Response requestPasswordReset(PasswordResetRequestDto body) {
+    private Response requestPasswordReset(AuthChallengeRequestDto body) {
         if (body == null || isBlank(body.getEmail())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("email_required"))
@@ -147,16 +158,14 @@ public class AuthRestController {
         return Response.noContent().build();
     }
 
-    @POST
-    @Path("/password-resets")
-    public Response resetPassword(@QueryParam("token") String token, PasswordResetDto body) {
-        if (isBlank(token)) {
+    private Response passwordResetToken(AuthTokenRequestDto body) {
+        if (isBlank(body.getToken())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("token_required"))
                     .build();
         }
 
-        if (body == null || isBlank(body.getNewPassword()) || isBlank(body.getConfirmationPassword())) {
+        if (isBlank(body.getNewPassword()) || isBlank(body.getConfirmationPassword())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("password_required"))
                     .build();
@@ -168,7 +177,7 @@ public class AuthRestController {
                     .build();
         }
 
-        Optional<User> updated = userService.resetPassword(token.trim(), body.getNewPassword());
+        Optional<User> updated = userService.resetPassword(body.getToken().trim(), body.getNewPassword());
         if (updated.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorDto("invalid_or_expired_token"))
@@ -176,51 +185,6 @@ public class AuthRestController {
         }
 
         return Response.ok(tokenFor(updated.get()))
-                .header("Cache-Control", "no-store")
-                .header("Pragma", "no-cache")
-                .build();
-    }
-
-    /**
-     * Cambio de contraseña para un usuario que ya tiene sesion iniciada (ej.
-     * desde /profile). A diferencia de /password-resets, no requiere token de
-     * mail: la identidad se toma del JWT de la request, no de un link.
-     * Reutiliza PasswordResetDto (mismos campos newPassword/confirmationPassword)
-     * y UserServiceImpl.changePasswordForAuthenticatedUser, que ya existia pero
-     * no tenia ningun endpoint que lo expusiera.
-     */
-    @POST
-    @Path("/password-changes")
-    public Response changePassword(PasswordResetDto body, @Context SecurityContext securityContext) {
-        User authUser = authenticatedUserResolver.resolve(securityContext);
-        if (authUser == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(new ErrorDto("unauthorized"))
-                    .build();
-        }
-
-        if (body == null || isBlank(body.getNewPassword()) || isBlank(body.getConfirmationPassword())) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorDto("password_required"))
-                    .build();
-        }
-
-        if (!body.getNewPassword().equals(body.getConfirmationPassword())) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorDto("password_confirmation_mismatch"))
-                    .build();
-        }
-
-        boolean changed = userService.changePasswordForAuthenticatedUser(authUser.getId(), body.getNewPassword());
-        if (!changed) {
-            // false tambien puede significar "usuario no encontrado", pero eso no
-            // deberia pasar nunca aca: ya se resolvio un usuario autenticado arriba.
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorDto("password_unchanged"))
-                    .build();
-        }
-
-        return Response.noContent()
                 .header("Cache-Control", "no-store")
                 .header("Pragma", "no-cache")
                 .build();
@@ -257,19 +221,7 @@ public class AuthRestController {
                 jwtUtil.generateToken(user.getId().toString()),
                 "Bearer",
                 jwtUtil.getExpirationSeconds(),
-                new AuthTokenUserDto(
-                        href,
-                        user.getId(),
-                        user.getUsername(),
-                        user.getName(),
-                        user.getSurname(),
-                        user.getEmail(),
-                        user.getCellphone(),
-                        user.getRole() != null ? user.getRole().name() : null,
-                        user.isVerified(),
-                        user.getCreatedAt(),
-                        user.getLocale()
-                )
+                new AuthTokenUserDto(href, user.getId())
         );
     }
 

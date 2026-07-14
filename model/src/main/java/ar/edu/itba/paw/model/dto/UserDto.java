@@ -11,10 +11,9 @@ public class UserDto {
     private String name;
     private String surname;
     private String email;
-    private String password;
     private String cellphone;
     private String role;
-    private boolean verified;
+    private Boolean verified;
     private OffsetDateTime createdAt;
     private String locale;
     private List<LinkDto> links;
@@ -36,17 +35,14 @@ public class UserDto {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
     public String getCellphone() { return cellphone; }
     public void setCellphone(String cellphone) { this.cellphone = cellphone; }
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
-    public boolean isVerified() { return verified; }
-    public void setVerified(boolean verified) { this.verified = verified; }
+    public Boolean isVerified() { return verified; }
+    public void setVerified(Boolean verified) { this.verified = verified; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }

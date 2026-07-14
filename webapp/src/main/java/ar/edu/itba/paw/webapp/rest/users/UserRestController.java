@@ -93,7 +93,7 @@ public class UserRestController {
     }
 
     @POST
-    public Response createUser(UserDto body) {
+    public Response createUser(UserCreateDto body) {
         if (body == null ||
                 isBlank(body.getUsername()) ||
                 isBlank(body.getName()) ||
@@ -155,7 +155,7 @@ public class UserRestController {
         }
     }
 
-    @PUT
+    @PATCH
     @Path("/{userId}")
     public Response updateUser(@PathParam("userId") String userId,
                                UserDto body,
@@ -251,6 +251,64 @@ public class UserRestController {
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
+    }
+
+    @PUT
+    @Path("/{userId}/credentials/password")
+    public Response changePassword(@PathParam("userId") String userId,
+                                   PasswordResetDto body,
+                                   @Context SecurityContext securityContext) {
+        UUID id;
+        try {
+            id = UUID.fromString(userId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("userId invalido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        User authUser = authenticatedUserResolver.resolve(securityContext);
+        if (authUser == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (!authUser.getId().equals(id)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(message("Forbidden"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (body == null || isBlank(body.getNewPassword()) || isBlank(body.getConfirmationPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("password_required"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (!body.getNewPassword().equals(body.getConfirmationPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("password_confirmation_mismatch"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        boolean changed = userService.changePasswordForAuthenticatedUser(id, body.getNewPassword());
+        if (!changed) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("password_unchanged"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        return Response.noContent()
+                .header("Cache-Control", "no-store")
+                .header("Pragma", "no-cache")
+                .build();
     }
 
     @GET

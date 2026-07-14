@@ -16,13 +16,19 @@ import { AuthStateService } from './services/auth-state.service';
 import { authInterceptor } from './services/auth.interceptor';
 import { ClubService } from './services/club.service';
 import { EventService } from './services/event.service';
+import { I18nService } from './services/i18n.service';
 import { UserService } from './services/user.service';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App, TranslateModule.forRoot()],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: I18nService, useValue: {} },
+      ],
     }).compileComponents();
   });
 
@@ -138,7 +144,7 @@ describe('AuthBootstrapService', () => {
     updateUser: ReturnType<typeof vi.fn>;
     clearSession: ReturnType<typeof vi.fn>;
   };
-  let userService: { getUserById: ReturnType<typeof vi.fn> };
+  let userService: { getCurrentUserById: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     authState = {
@@ -147,7 +153,7 @@ describe('AuthBootstrapService', () => {
       updateUser: vi.fn(),
       clearSession: vi.fn(),
     };
-    userService = { getUserById: vi.fn() };
+    userService = { getCurrentUserById: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
@@ -163,11 +169,11 @@ describe('AuthBootstrapService', () => {
   it('loads the stored user when token exists', async () => {
     authState.getToken.mockReturnValue('token-123');
     authState.getUser.mockReturnValue({ userId: 'u1' });
-    userService.getUserById.mockReturnValue(of({ userId: 'u1' } as any));
+    userService.getCurrentUserById.mockReturnValue(of({ userId: 'u1' } as any));
 
     await firstValueFrom(service.initialize());
 
-    expect(userService.getUserById).toHaveBeenCalledWith('u1');
+    expect(userService.getCurrentUserById).toHaveBeenCalledWith('u1');
     expect(authState.updateUser).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1' }));
   });
 
@@ -176,7 +182,7 @@ describe('AuthBootstrapService', () => {
 
     await firstValueFrom(service.initialize());
 
-    expect(userService.getUserById).not.toHaveBeenCalled();
+    expect(userService.getCurrentUserById).not.toHaveBeenCalled();
   });
 });
 

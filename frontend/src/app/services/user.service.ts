@@ -1,27 +1,19 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpContext, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpContext, HttpHeaders } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 import { map, switchMap, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   ApiMessageResponse,
   LoginResponse,
+  PublicUser,
   ResendVerificationRequest,
   UserCreateRequest,
   UserLoginRequest,
   User,
+  UserUpdateRequest,
 } from '../models/user.model';
 import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
-
-type UserUpdatePayload = {
-  username: string;
-  name: string;
-  surname: string;
-  email: string;
-  cellphone: string;
-  locale: string;
-  password?: string;
-};
 
 export type UserUpdateResult = {
   user: User;
@@ -35,15 +27,6 @@ type AuthTokenResponse = {
   user: {
     href: string;
     userId?: string;
-    username?: string;
-    name?: string;
-    surname?: string;
-    email?: string;
-    cellphone?: string;
-    role?: string;
-    verified?: boolean;
-    createdAt?: string;
-    locale?: string;
   };
 };
 
@@ -60,7 +43,11 @@ export class UserService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getUserById(userId: string): Observable<User> {
+  getUserById(userId: string): Observable<PublicUser> {
+    return this.http.get<PublicUser>(`${this.apiUrl}/users/${userId}`);
+  }
+
+  getCurrentUserById(userId: string): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/users/${userId}`);
   }
 
@@ -70,11 +57,11 @@ export class UserService {
     });
   }
 
-  updateUser(userId: string, payload: UserUpdatePayload): Observable<UserUpdateResult> {
+  updateUser(userId: string, payload: UserUpdateRequest): Observable<UserUpdateResult> {
     // Sin este flag, un 409 (usuario/email duplicado) lo agarra el interceptor
     // global y redirige a /error antes de que profile.page.ts pueda mostrarlo
     // como error de campo (mismo problema que tenian createTable/createProduct).
-    return this.http.put<UserUpdateResponse>(`${this.apiUrl}/users/${userId}`, payload, {
+    return this.http.patch<UserUpdateResponse>(`${this.apiUrl}/users/${userId}`, payload, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
       map((response) => ({
@@ -86,23 +73,18 @@ export class UserService {
 
   login(payload: UserLoginRequest): Observable<LoginResponse> {
     return this.http.post<AuthTokenResponse>(`${this.apiUrl}/auth/tokens`, {
-      email: payload.usernameOrEmail.trim(),
+      grantType: 'password',
+      usernameOrEmail: payload.usernameOrEmail.trim(),
       password: payload.password,
     }, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
-      switchMap((tokenResponse) => {
-        const token = tokenResponse.accessToken;
-        const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-        return this.http.get<User>(tokenResponse.user.href, { headers }).pipe(
-          map((user) => ({ token, user }))
-        );
-      })
+      switchMap((tokenResponse) => this.loginResponseFromTokenResponse(tokenResponse))
     );
   }
 
   /**
-   * GET /auth/verifications?token=... (link del mail).
+   * POST /auth/tokens con grant email_verification.
    *
    * El backend puede responder de dos formas: un AuthTokenResponse (cuenta
    * recien verificada, login automatico) o un ApiMessageResponse (ya estaba
@@ -111,33 +93,28 @@ export class UserService {
    * antes de devolver un LoginResponse utilizable por la pagina.
    */
   verifyByToken(token: string): Observable<LoginResponse | ApiMessageResponse> {
-    const params = new HttpParams().set('token', token);
     return this.http
-      .get<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/auth/verifications`, {
-        params,
+      .post<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/auth/tokens`, {
+        grantType: 'email_verification',
+        token: token.trim(),
+      }, {
         context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
-        // Esta llamada tiene efecto (verifica la cuenta y hace login automatico),
-        // asi que nunca debe resolverse desde la cache de transferencia SSR->cliente:
-        // siempre tiene que ser un pedido real hecho por el browser.
         transferCache: false,
       })
       .pipe(
         timeout(15000),
-        map((response) => this.resolveVerificationResponse(response))
+        switchMap((response) => this.resolveVerificationResponse(response))
       );
   }
 
   private resolveVerificationResponse(
     response: AuthTokenResponse | ApiMessageResponse
-  ): LoginResponse | ApiMessageResponse {
+  ): Observable<LoginResponse | ApiMessageResponse> {
     if (!this.isAuthTokenResponse(response)) {
-      return response;
+      return of(response);
     }
 
-    return {
-      token: response.accessToken,
-      user: this.userFromAuthTokenResponse(response),
-    };
+    return this.loginResponseFromTokenResponse(response);
   }
 
   private isAuthTokenResponse(
@@ -146,36 +123,21 @@ export class UserService {
     return !!response && typeof response === 'object' && 'accessToken' in response;
   }
 
-  private userFromAuthTokenResponse(response: AuthTokenResponse): User {
-    const userId = response.user.userId ?? this.userIdFromHref(response.user.href);
-    return {
-      userId,
-      username: response.user.username ?? '',
-      name: response.user.name ?? '',
-      surname: response.user.surname ?? '',
-      email: response.user.email ?? '',
-      cellphone: response.user.cellphone ?? '',
-      role: response.user.role ?? 'USER',
-      verified: response.user.verified ?? true,
-      createdAt: response.user.createdAt ?? '',
-      locale: response.user.locale ?? '',
-    };
-  }
-
-  private userIdFromHref(href: string): string {
-    const parts = href.split('/').filter(Boolean);
-    return parts[parts.length - 1] ?? '';
-  }
-
   resendVerification(payload: ResendVerificationRequest): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiUrl}/auth/verification-requests`, payload);
+    return this.http.post<ApiMessageResponse>(`${this.apiUrl}/auth/challenges`, {
+      challengeType: 'email_verification',
+      usernameOrEmail: payload.usernameOrEmail,
+    });
   }
 
   requestPasswordReset(email: string): Observable<void> {
     // Sin este flag, cualquier codigo de la lista del interceptor
     // (401/403/404/409/415/500+) redirige a /error antes de que
     // change-password.page.ts pueda mostrar su propio error de campo/cartel.
-    return this.http.post(`${this.apiUrl}/auth/password-reset-requests`, { email }, {
+    return this.http.post(`${this.apiUrl}/auth/challenges`, {
+      challengeType: 'password_reset',
+      email,
+    }, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
       map(() => undefined)
@@ -183,21 +145,27 @@ export class UserService {
   }
 
   resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<LoginResponse> {
-    const params = new HttpParams().set('token', token);
     // Sin este flag, un token invalido/vencido (404) redirige a /error en vez
     // de mostrar el cartel de "token invalido o vencido" en el propio formulario.
     return this.http.post<AuthTokenResponse>(
-      `${this.apiUrl}/auth/password-resets`,
-      { newPassword, confirmationPassword },
-      { params, context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
+      `${this.apiUrl}/auth/tokens`,
+      {
+        grantType: 'password_reset',
+        token,
+        newPassword,
+        confirmationPassword
+      },
+      { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
     ).pipe(
-      switchMap((tokenResponse) => {
-        const nextToken = tokenResponse.accessToken;
-        const headers = new HttpHeaders({ Authorization: `Bearer ${nextToken}` });
-        return this.http.get<User>(tokenResponse.user.href, { headers }).pipe(
-          map((user) => ({ token: nextToken, user }))
-        );
-      })
+      switchMap((tokenResponse) => this.loginResponseFromTokenResponse(tokenResponse))
+    );
+  }
+
+  private loginResponseFromTokenResponse(tokenResponse: AuthTokenResponse): Observable<LoginResponse> {
+    const token = tokenResponse.accessToken;
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return this.http.get<User>(tokenResponse.user.href, { headers }).pipe(
+      map((user) => ({ token, user }))
     );
   }
 
@@ -207,8 +175,8 @@ export class UserService {
    * de mail: la identidad sale del JWT que ya se manda en cada request
    * (interceptor de auth), asi que no hace falta reflejar un nuevo token acá.
    */
-  changePasswordAuthenticated(newPassword: string, confirmationPassword: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/auth/password-changes`, { newPassword, confirmationPassword }, {
+  changePasswordAuthenticated(userId: string, newPassword: string, confirmationPassword: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/users/${userId}/credentials/password`, { newPassword, confirmationPassword }, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     });
   }

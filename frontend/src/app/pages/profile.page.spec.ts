@@ -1,7 +1,6 @@
-import { NgZone } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
@@ -25,7 +24,7 @@ describe('ProfilePage', () => {
   };
 
   let authState: { getUser: ReturnType<typeof vi.fn>; updateUser: ReturnType<typeof vi.fn>; updateToken: ReturnType<typeof vi.fn> };
-  let userService: { getUserById: ReturnType<typeof vi.fn>; updateUser: ReturnType<typeof vi.fn> };
+  let userService: { getCurrentUserById: ReturnType<typeof vi.fn>; updateUser: ReturnType<typeof vi.fn> };
   let component: ProfilePage;
 
   beforeEach(() => {
@@ -35,17 +34,16 @@ describe('ProfilePage', () => {
       updateToken: vi.fn(),
     };
     userService = {
-      getUserById: vi.fn().mockReturnValue(of(user)),
+      getCurrentUserById: vi.fn().mockReturnValue(of(user)),
       updateUser: vi.fn(),
     };
     TestBed.configureTestingModule({
       imports: [ProfilePage, TranslateModule.forRoot()],
       providers: [
+        provideRouter([]),
         { provide: AuthStateService, useValue: authState as unknown as AuthStateService },
         { provide: UserService, useValue: userService as unknown as UserService },
-        { provide: Router, useValue: { navigate: vi.fn() } as unknown as Router },
         { provide: I18nService, useValue: { instant: (key: string) => key } },
-        { provide: NgZone, useValue: { run: (fn: () => void) => fn() } as unknown as NgZone },
       ],
     });
 

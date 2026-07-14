@@ -22,7 +22,7 @@ export class AuthBootstrapService {
       return of(true);
     }
 
-    return this.userService.getUserById(storedUser.userId).pipe(
+    return this.userService.getCurrentUserById(storedUser.userId).pipe(
       map((user) => {
         this.authState.updateUser(user);
         return true;

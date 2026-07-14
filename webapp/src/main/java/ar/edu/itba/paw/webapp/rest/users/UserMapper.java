@@ -2,7 +2,6 @@ package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.LinkDto;
-import ar.edu.itba.paw.model.dto.PublicUserDto;
 import ar.edu.itba.paw.model.dto.UserDto;
 import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 
@@ -40,11 +39,11 @@ public final class UserMapper {
         return dto;
     }
 
-    // --- DTO público (otros usuarios) ---
+    // --- Misma representación de usuario, sin campos privados ---
 
-    public static PublicUserDto toPublicDto(User user, UriInfo uriInfo) {
+    public static UserDto toPublicDto(User user, UriInfo uriInfo) {
         if (user == null) return null;
-        PublicUserDto dto = new PublicUserDto();
+        UserDto dto = new UserDto();
         dto.setUserId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setName(user.getName());

@@ -2,7 +2,6 @@ package ar.edu.itba.paw.webapp.rest.users;
 
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.PublicUserDto;
 import ar.edu.itba.paw.model.dto.UserDto;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
@@ -59,7 +58,11 @@ public class UserRestControllerSecurityTest {
         Response response = controller.getUser(targetId.toString());
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        assertTrue(response.getEntity() instanceof PublicUserDto);
+        assertTrue(response.getEntity() instanceof UserDto);
+        UserDto dto = (UserDto) response.getEntity();
+        assertEquals(target.getUsername(), dto.getUsername());
+        assertEquals(null, dto.getEmail());
+        assertEquals(null, dto.getCellphone());
     }
 
     @Test
@@ -87,7 +90,8 @@ public class UserRestControllerSecurityTest {
         Response response = controller.getUser(targetId.toString());
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        assertTrue(response.getEntity() instanceof PublicUserDto);
+        assertTrue(response.getEntity() instanceof UserDto);
+        assertEquals(null, ((UserDto) response.getEntity()).getEmail());
     }
 
     @Test
@@ -98,7 +102,8 @@ public class UserRestControllerSecurityTest {
         Response response = controller.getUser(targetId.toString());
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        assertTrue(response.getEntity() instanceof PublicUserDto);
+        assertTrue(response.getEntity() instanceof UserDto);
+        assertEquals(null, ((UserDto) response.getEntity()).getEmail());
     }
 
     private static void authenticate(User user) {

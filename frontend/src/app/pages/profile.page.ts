@@ -117,7 +117,7 @@ export class ProfilePage implements OnInit {
       return;
     }
 
-    this.userService.getUserById(userId).subscribe({
+    this.userService.getCurrentUserById(userId).subscribe({
       next: (freshUser) => {
         this.user = freshUser;
         this.authState.updateUser(freshUser);
