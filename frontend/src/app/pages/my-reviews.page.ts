@@ -148,10 +148,10 @@ export class MyReviewsPage implements OnInit, OnDestroy {
 
   confirmDeleteReview(): void {
     const review = this.reviewPendingDelete;
-    if (!review?.clubId || this.deletingReviewId) return;
+    if (!review?.clubId || !review.reviewId || this.deletingReviewId) return;
 
     this.deletingReviewId = review.reviewId;
-    this.reviewService.delete(review.clubId).subscribe({
+    this.reviewService.delete(review.clubId, review.reviewId).subscribe({
       next: () => {
         this.deletingReviewId = null;
         this.deleteModalOpen = false;

@@ -167,35 +167,30 @@ public class ReviewsRestController {
     }
 
     @PUT
-    @Path("/{clubId}/reviews")
+    @Path("/{clubId}/reviews/{reviewId}")
     public Response update(@PathParam("clubId") String clubIdStr,
+                           @PathParam("reviewId") String reviewIdStr,
                            ReviewDto body,
                            @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
         if (clubId == null) return badRequest("clubId inválido");
 
+        UUID reviewId = parseUuidOr400(reviewIdStr);
+        if (reviewId == null) return badRequest("reviewId inválido");
+
         if (body == null || body.getRating() == null) return badRequest("Body requerido");
 
-        if (securityContext == null || securityContext.getUserPrincipal() == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
-
-        String principalName = securityContext.getUserPrincipal().getName();
-        User user = userService.findByEmail(principalName);
-        if (user == null) {
-            user = userService.findByUserName(principalName);
-        }
+        User user = authenticatedUser(securityContext);
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
 
-        Optional<Review> existingOpt = reviewService.getUserReviewForClub(user.getId(), clubId);
-
+        Optional<Review> existingOpt = ownedReview(clubId, reviewId, user);
         if (existingOpt.isEmpty()) {
             return notFound("Review no encontrado");
         }
 
         try {
             Review updated = reviewService.updateReview(
-                    existingOpt.get().getReviewId(),
+                    reviewId,
                     body.getRating(),
                     body.getDescription(),
                     null
@@ -207,12 +202,16 @@ public class ReviewsRestController {
     }
 
     @PUT
-    @Path("/{clubId}/reviews")
+    @Path("/{clubId}/reviews/{reviewId}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response updateMultipart(@PathParam("clubId") String clubIdStr,
+                                    @PathParam("reviewId") String reviewIdStr,
                                     @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
         if (clubId == null) return badRequest("clubId invalido");
+
+        UUID reviewId = parseUuidOr400(reviewIdStr);
+        if (reviewId == null) return badRequest("reviewId invalido");
 
         Integer rating = formInteger("rating");
         if (rating == null) return badRequest("Body requerido");
@@ -220,15 +219,14 @@ public class ReviewsRestController {
         User user = authenticatedUser(securityContext);
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
 
-        Optional<Review> existingOpt = reviewService.getUserReviewForClub(user.getId(), clubId);
-
+        Optional<Review> existingOpt = ownedReview(clubId, reviewId, user);
         if (existingOpt.isEmpty()) {
             return notFound("Review no encontrado");
         }
 
         try {
             Review updated = reviewService.updateReview(
-                    existingOpt.get().getReviewId(),
+                    reviewId,
                     rating,
                     formString("description"),
                     optionalPhoto()
@@ -240,28 +238,24 @@ public class ReviewsRestController {
     }
 
     @DELETE
-    @Path("/{clubId}/reviews")
+    @Path("/{clubId}/reviews/{reviewId}")
     public Response delete(@PathParam("clubId") String clubIdStr,
+                           @PathParam("reviewId") String reviewIdStr,
                            @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
         if (clubId == null) return badRequest("clubId inválido");
 
-        if (securityContext == null || securityContext.getUserPrincipal() == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
+        UUID reviewId = parseUuidOr400(reviewIdStr);
+        if (reviewId == null) return badRequest("reviewId inválido");
 
-        String principalName = securityContext.getUserPrincipal().getName();
-        User user = userService.findByEmail(principalName);
-        if (user == null) {
-            user = userService.findByUserName(principalName);
-        }
+        User user = authenticatedUser(securityContext);
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
 
-        Optional<Review> existingOpt = reviewService.getUserReviewForClub(user.getId(), clubId);
+        Optional<Review> existingOpt = ownedReview(clubId, reviewId, user);
         if (existingOpt.isEmpty()) return notFound("Review no encontrado");
 
         try {
-            reviewService.deleteReview(existingOpt.get().getReviewId());
+            reviewService.deleteReview(reviewId);
             return Response.noContent().build();
         } catch (Exception e) {
             return serverError("Internal server error");
@@ -327,6 +321,12 @@ public class ReviewsRestController {
             user = userService.findByUserName(principalName);
         }
         return user;
+    }
+
+    private Optional<Review> ownedReview(UUID clubId, UUID reviewId, User user) {
+        return reviewService.findById(reviewId)
+                .filter(review -> review.getClub() != null && clubId.equals(review.getClub().getClubId()))
+                .filter(review -> review.getUser() != null && user.getId().equals(review.getUser().getId()));
     }
 
     private String formString(String field) {

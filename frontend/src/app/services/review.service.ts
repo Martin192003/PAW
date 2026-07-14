@@ -75,19 +75,19 @@ export class ReviewService {
   }
 
   /**
-   * PUT /clubs/{clubId}/reviews
-   * Actualiza la review del usuario autenticado para ese club.
+   * PUT /clubs/{clubId}/reviews/{reviewId}
+   * Actualiza una review concreta del usuario autenticado.
    */
-  update(clubId: string, payload: ReviewCreateRequest): Observable<Review> {
-    return this.http.put<Review>(`${this.apiUrl}/clubs/${clubId}/reviews`, this.toRequestBody(payload));
+  update(clubId: string, reviewId: string, payload: ReviewCreateRequest): Observable<Review> {
+    return this.http.put<Review>(`${this.apiUrl}/clubs/${clubId}/reviews/${reviewId}`, this.toRequestBody(payload));
   }
 
   /**
-   * DELETE /clubs/{clubId}/reviews
-   * Borra la review del usuario autenticado para ese club.
+   * DELETE /clubs/{clubId}/reviews/{reviewId}
+   * Borra una review concreta del usuario autenticado.
    */
-  delete(clubId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/reviews`);
+  delete(clubId: string, reviewId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/reviews/${reviewId}`);
   }
 
   private toRequestBody(payload: ReviewCreateRequest): ReviewCreateRequest | FormData {
