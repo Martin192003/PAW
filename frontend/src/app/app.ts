@@ -40,7 +40,10 @@ export class App {
       '/forgot-password',
       '/reset-password',
       '/verify-mail',
-      '/verify-account'
+      '/verify-account',
+      '/error',
+      '/forbidden',
+      '/not-found'
     ].includes(path);
   }
 

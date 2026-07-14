@@ -115,7 +115,8 @@ textarea.field-input {
 .gallery-image {
   width: 100%;
   height: 170px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #000;
   border-radius: 0.45rem;
   border: 1px solid #2f2f2f;
 }

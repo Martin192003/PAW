@@ -39,7 +39,7 @@
                   *ngIf="coverUrl"
                   [src]="coverUrl"
                   [alt]="currentClub.clubName"
-                  class="w-full h-full object-cover"
+                  class="w-full h-full object-contain"
                   (error)="coverUrl = ''"
                 />
 
