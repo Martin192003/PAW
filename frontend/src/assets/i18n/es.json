@@ -492,7 +492,7 @@
       "tableNumber": "Número de mesa",
       "tableCapacity": "Capacidad",
       "tablePrice": "Precio",
-      "tableDiscount": "Descuento",
+      "tableDiscount": "Descuento (opcional)",
       "eventName": "Nombre del evento",
       "eventDescription": "Descripción del evento"
     },

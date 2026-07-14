@@ -491,7 +491,7 @@
       "tableNumber": "Table number",
       "tableCapacity": "Capacity",
       "tablePrice": "Price",
-      "tableDiscount": "Discount",
+      "tableDiscount": "Discount (optional)",
       "eventName": "Event name",
       "eventDescription": "Event description"
     },
