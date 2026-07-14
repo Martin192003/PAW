@@ -434,6 +434,22 @@
                 <span *ngIf="showEventError('description')" class="field-error-text">{{ getEventError('description') }}</span>
               </div>
 
+              <div class="md:col-span-4 flex flex-wrap items-center gap-2">
+                <label class="btn-secondary px-2 py-1 cursor-pointer">
+                  {{ selectedEventPhotoName ? ('clubHandler.changePhoto' | translate) : ('clubHandler.uploadPhoto' | translate) }}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    class="hidden"
+                    (change)="onNewEventPhotoSelected($event)"
+                  />
+                </label>
+                <span *ngIf="selectedEventPhotoName" class="text-[#bdbdbd] text-sm truncate max-w-[220px]">{{ selectedEventPhotoName }}</span>
+                <button *ngIf="selectedEventPhotoName" type="button" class="btn-danger px-2 py-1" (click)="clearSelectedEventPhoto()">
+                  {{ 'common.cancel' | translate }}
+                </button>
+              </div>
+
               <div class="md:col-span-4 form-action-row">
                 <button type="submit" class="btn-primary form-submit-button" [disabled]="savingEvent">
                   {{ savingEvent ? ('clubHandler.saving' | translate) : (editingEventId ? ('clubHandler.updateEvent' | translate) : ('clubHandler.createEvent' | translate)) }}
