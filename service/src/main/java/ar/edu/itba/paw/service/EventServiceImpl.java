@@ -275,6 +275,13 @@ public class EventServiceImpl implements EventService {
 
         return Optional.ofNullable(current.getPhotoId());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<UUID, String> mapClubNamesForEvents(List<UUID> eventIds) {
+        return eventDao.mapClubNamesForEvents(eventIds);
+    }
+
     @Override
     @Transactional
     public Photo getEventPhoto(UUID clubId, UUID eventId) {

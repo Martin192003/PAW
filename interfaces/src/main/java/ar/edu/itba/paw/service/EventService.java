@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.dto.EventDto;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -59,4 +60,6 @@ public interface EventService {
     void deleteEventPhoto(UUID clubId, UUID eventId);
 
     Optional<UUID> getEventPhotoId(UUID clubId, UUID eventId);
+
+    Map<UUID, String> mapClubNamesForEvents(List<UUID> eventIds);
 }
