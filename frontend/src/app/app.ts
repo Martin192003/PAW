@@ -38,7 +38,10 @@ export class App {
       '/login',
       '/register',
       '/verify-mail',
-      '/verify-account'
+      '/verify-account',
+      '/error',
+      '/forbidden',
+      '/not-found'
     ].includes(path);
   }
 
