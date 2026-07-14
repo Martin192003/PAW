@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.rest.auth;
 
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.dto.ApiMessageDto;
 import ar.edu.itba.paw.model.dto.AuthTokenDto;
 import ar.edu.itba.paw.model.dto.AuthTokenUserDto;
 import ar.edu.itba.paw.model.dto.ErrorDto;
@@ -26,7 +27,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
-import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -131,7 +131,7 @@ public class AuthRestController {
                     .build();
         }
 
-        return Response.ok(Map.of("message", "Te enviamos un nuevo mail de verificacion")).build();
+        return Response.ok(new ApiMessageDto("Te enviamos un nuevo mail de verificacion")).build();
     }
 
     @POST

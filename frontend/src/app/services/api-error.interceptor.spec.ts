@@ -11,12 +11,12 @@ describe('apiErrorInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
   let authState: { clearSession: ReturnType<typeof vi.fn> };
-  let router: { navigate: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn>; url: string };
   let apiErrors: ApiErrorService;
 
   beforeEach(() => {
 	authState = { clearSession: vi.fn() };
-	router = { navigate: vi.fn().mockResolvedValue(true) };
+	router = { navigate: vi.fn().mockResolvedValue(true), url: '/bookings/club-id/booking-id' };
 
 	TestBed.configureTestingModule({
 	  providers: [
@@ -44,6 +44,19 @@ describe('apiErrorInterceptor', () => {
 	req.flush({ message: 'unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
 	expect(authState.clearSession).toHaveBeenCalled();
+	expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+	  queryParams: { reason: 'expired', returnUrl: '/bookings/club-id/booking-id' },
+	});
+  });
+
+  it('does not preserve login as returnUrl on 401', () => {
+	router.url = '/login?reason=expired';
+
+	http.get('/api/secure').subscribe({ error: () => undefined });
+
+	const req = httpMock.expectOne('/api/secure');
+	req.flush({ message: 'unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
 	expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { reason: 'expired' } });
   });
 

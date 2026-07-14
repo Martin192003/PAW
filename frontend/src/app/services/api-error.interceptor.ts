@@ -28,7 +28,12 @@ export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
       const status = error.status;
       if (status === 401) {
         authState.clearSession();
-        router.navigate(['/login'], { queryParams: { reason: 'expired' } }).catch(() => undefined);
+        const returnUrl = currentReturnUrl(router);
+        router.navigate(['/login'], {
+          queryParams: returnUrl
+            ? { reason: 'expired', returnUrl }
+            : { reason: 'expired' },
+        }).catch(() => undefined);
       } else if (status === 403) {
         router.navigate(['/forbidden']).catch(() => undefined);
       } else if (status === 404) {
@@ -45,6 +50,14 @@ export const apiErrorInterceptor: HttpInterceptorFn = (req, next) => {
     })
   );
 };
+
+function currentReturnUrl(router: Router): string | undefined {
+  const url = router.url;
+  if (!url || !url.startsWith('/') || url.startsWith('//') || url.startsWith('/login')) {
+    return undefined;
+  }
+  return url;
+}
 
 function extractErrorMessage(error: HttpErrorResponse): string | null {
   const payload = error.error;

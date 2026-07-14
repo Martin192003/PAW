@@ -7,15 +7,21 @@ import { vi } from 'vitest';
 import { AddClubComponent } from './club-new.page';
 import { ClubService } from '../services/club.service';
 import { I18nService } from '../services/i18n.service';
+import { AuthStateService } from '../services/auth-state.service';
 
 describe('AddClubComponent', () => {
   let router: { navigate: ReturnType<typeof vi.fn> };
   let clubService: { createClub: ReturnType<typeof vi.fn>; uploadCover: ReturnType<typeof vi.fn> };
+  let authState: { getUser: ReturnType<typeof vi.fn>; updateUser: ReturnType<typeof vi.fn> };
   let component: AddClubComponent;
 
   beforeEach(() => {
     router = { navigate: vi.fn().mockResolvedValue(true) };
     clubService = { createClub: vi.fn(), uploadCover: vi.fn() };
+    authState = {
+      getUser: vi.fn().mockReturnValue(null),
+      updateUser: vi.fn(),
+    };
 
     TestBed.configureTestingModule({
       imports: [AddClubComponent, TranslateModule.forRoot()],
@@ -30,6 +36,7 @@ describe('AddClubComponent', () => {
         },
         { provide: Router, useValue: router as unknown as Router },
         { provide: ClubService, useValue: clubService as unknown as ClubService },
+        { provide: AuthStateService, useValue: authState as unknown as AuthStateService },
         { provide: I18nService, useValue: { instant: (key: string, params?: Record<string, unknown>) => params ? `${key}:${JSON.stringify(params)}` : key } },
       ],
     });
@@ -135,6 +142,28 @@ describe('AddClubComponent', () => {
       bar: true,
     }));
     expect(router.navigate).toHaveBeenCalledWith(['/clubs']);
+  });
+
+  it('updates the cached user role after creating a club', () => {
+    const user = {
+      userId: 'user-1',
+      username: 'owner',
+      name: 'Owner',
+      surname: 'User',
+      email: 'owner@example.com',
+      cellphone: '123',
+      role: 'USER',
+      verified: true,
+      createdAt: '2026-01-01T00:00:00Z',
+      locale: 'es',
+    };
+    authState.getUser.mockReturnValue(user);
+    clubService.createClub.mockReturnValue(of({ clubId: 'club-1', links: {} }));
+    fillValidForm();
+
+    component.onSubmit();
+
+    expect(authState.updateUser).toHaveBeenCalledWith({ ...user, role: 'ADMIN' });
   });
 
   it('does not upload a cover when no image was selected', () => {

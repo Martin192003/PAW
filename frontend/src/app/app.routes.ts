@@ -44,7 +44,8 @@ export const routes: Routes = [
   },
   {
     path: 'clubs/handle',
-    loadComponent: () => import('./pages/club-handler.page').then(m => m.ClubHandlerPage)
+    loadComponent: () => import('./pages/club-handler.page').then(m => m.ClubHandlerPage),
+    canActivate: [adminGuard]
   },
   {
     path: 'clubs/:id',

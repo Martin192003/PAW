@@ -24,6 +24,7 @@ import { of } from 'rxjs';
 import { catchError, finalize, map, switchMap } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
+import { AuthStateService } from '../services/auth-state.service';
 
 
 const CBU_MAX_LENGTH = 50;
@@ -85,6 +86,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private clubService: ClubService,
     private i18n: I18nService,
+    private authState: AuthStateService,
     @Inject(PLATFORM_ID) private platformId: object,
   ) {}
 
@@ -436,6 +438,7 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
       })
     ).subscribe({
       next: () => {
+        this.promoteCurrentUserToAdmin();
         this.router.navigate(['/clubs']);
       },
       error: (err: HttpErrorResponse) => {
@@ -453,6 +456,15 @@ export class AddClubComponent implements OnInit, AfterViewInit, OnDestroy {
   // Estos llegan despues del submit (async), asi que hay que actualizar
   // tambien el estado "congelado" para que se muestren de inmediato, sin
   // esperar a un proximo intento de submit.
+  private promoteCurrentUserToAdmin(): void {
+    const user = this.authState.getUser();
+    if (!user || (user.role || '').toUpperCase() === 'ADMIN') {
+      return;
+    }
+
+    this.authState.updateUser({ ...user, role: 'ADMIN' });
+  }
+
   private applyServerErrors(fieldErrors: Record<string, string>): void {
     for (const [field, message] of Object.entries(fieldErrors)) {
       const ctrl = this.clubForm.get(field);

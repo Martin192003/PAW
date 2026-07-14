@@ -7,6 +7,7 @@ import { BehaviorSubject, firstValueFrom, of } from 'rxjs';
 import { vi } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
+import { adminGuard } from './guards/admin.guard';
 import { ClubsPage } from './pages/clubs.page';
 import { ApiErrorService } from './services/api-error.service';
 import { apiErrorInterceptor } from './services/api-error.interceptor';
@@ -44,11 +45,11 @@ describe('apiErrorInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
   let authState: { clearSession: ReturnType<typeof vi.fn> };
-  let router: { navigate: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn>; url: string };
 
   beforeEach(() => {
     authState = { clearSession: vi.fn() };
-    router = { navigate: vi.fn().mockResolvedValue(true) };
+    router = { navigate: vi.fn().mockResolvedValue(true), url: '/bookings/club-id/booking-id' };
 
     TestBed.configureTestingModule({
       providers: [
@@ -75,7 +76,9 @@ describe('apiErrorInterceptor', () => {
     req.flush({ message: 'unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
     expect(authState.clearSession).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { reason: 'expired' } });
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+      queryParams: { reason: 'expired', returnUrl: '/bookings/club-id/booking-id' },
+    });
   });
 });
 
@@ -294,6 +297,11 @@ describe('ClubsPage query params', () => {
 });
 
 describe('routes', () => {
+  it('protects club management with adminGuard', () => {
+    const route = routes.find(candidate => candidate.path === 'clubs/handle');
+    expect(route?.canActivate).toContain(adminGuard);
+  });
+
   it('includes wildcard not-found route', () => {
     const hasWildcard = routes.some(route => route.path === '**' && route.redirectTo === 'not-found');
     expect(hasWildcard).toBe(true);
