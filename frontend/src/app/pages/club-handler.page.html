@@ -312,7 +312,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr *ngFor="let p of menu" class="border-b border-[#353535] text-[#cfcfcf]">
+                    <tr *ngFor="let p of pagedMenu" class="border-b border-[#353535] text-[#cfcfcf]">
                       <td class="py-2 pr-3">{{ p.productName }}</td>
                       <td class="py-2 pr-3">{{ p.description }}</td>
                       <td class="py-2 pr-3">${{ p.basePrice | number:'1.0-0' }}</td>
@@ -332,6 +332,28 @@
                     </tr>
                     </tbody>
                   </table>
+
+                  <div *ngIf="menu.length > menuPageSize" class="flex items-center justify-center gap-3 mt-4">
+                    <button
+                      type="button"
+                      class="w-9 h-9 cursor-pointer rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:cursor-not-allowed disabled:opacity-35"
+                      [disabled]="menuPage === 1"
+                      (click)="prevMenuPage()"
+                    >
+                      <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <span class="text-[#bdbdbd] text-sm">{{ menuPage }} {{ 'common.of' | translate }} {{ menuTotalPages }}</span>
+
+                    <button
+                      type="button"
+                      class="w-9 h-9 cursor-pointer rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:cursor-not-allowed disabled:opacity-35"
+                      [disabled]="menuPage === menuTotalPages"
+                      (click)="nextMenuPage()"
+                    >
+                      <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -381,7 +403,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr *ngFor="let t of tables" class="border-b border-[#353535] text-[#cfcfcf]">
+                    <tr *ngFor="let t of pagedTables" class="border-b border-[#353535] text-[#cfcfcf]">
                       <td class="py-2 pr-3">{{ t.tableNumber }}</td>
                       <td class="py-2 pr-3">{{ t.capacity }}</td>
                       <td class="py-2 pr-3">${{ t.price | number:'1.0-0' }}</td>
@@ -401,6 +423,28 @@
                     </tr>
                     </tbody>
                   </table>
+
+                  <div *ngIf="tables.length > tablePageSize" class="flex items-center justify-center gap-3 mt-4">
+                    <button
+                      type="button"
+                      class="w-9 h-9 cursor-pointer rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:cursor-not-allowed disabled:opacity-35"
+                      [disabled]="tablePage === 1"
+                      (click)="prevTablePage()"
+                    >
+                      <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <span class="text-[#bdbdbd] text-sm">{{ tablePage }} {{ 'common.of' | translate }} {{ tableTotalPages }}</span>
+
+                    <button
+                      type="button"
+                      class="w-9 h-9 cursor-pointer rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:cursor-not-allowed disabled:opacity-35"
+                      [disabled]="tablePage === tableTotalPages"
+                      (click)="nextTablePage()"
+                    >
+                      <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -533,7 +577,7 @@
             <div *ngIf="filteredEvents.length > eventPageSize" class="flex items-center justify-center gap-3 mt-4">
               <button
                 type="button"
-                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:opacity-35"
+                class="w-9 h-9 cursor-pointer rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:cursor-not-allowed disabled:opacity-35"
                 [disabled]="eventPage === 1"
                 (click)="prevEventPage()"
               >
@@ -544,7 +588,7 @@
 
               <button
                 type="button"
-                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:opacity-35"
+                class="w-9 h-9 cursor-pointer rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:cursor-not-allowed disabled:opacity-35"
                 [disabled]="eventPage === eventTotalPages"
                 (click)="nextEventPage()"
               >
@@ -572,7 +616,7 @@
             <div *ngIf="reviewTotalPages > 1" class="flex items-center justify-center gap-3 mt-4">
               <button
                 type="button"
-                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:opacity-35"
+                class="w-9 h-9 cursor-pointer rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:cursor-not-allowed disabled:opacity-35"
                 [disabled]="reviewPage === 1"
                 (click)="prevReviewPage()"
               >
@@ -583,7 +627,7 @@
 
               <button
                 type="button"
-                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:opacity-35"
+                class="w-9 h-9 cursor-pointer rounded-full bg-[#2a2a2a] hover:bg-[#9c27b0] transition disabled:cursor-not-allowed disabled:opacity-35"
                 [disabled]="reviewPage === reviewTotalPages"
                 (click)="nextReviewPage()"
               >
