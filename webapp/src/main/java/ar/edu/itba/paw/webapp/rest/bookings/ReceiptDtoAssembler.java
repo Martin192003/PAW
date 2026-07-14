@@ -32,9 +32,7 @@ public class ReceiptDtoAssembler {
                 .resolveTemplate("bookingId", receipt.getBookingId())
                 .build(), "GET"));
         links.add(LinkBuilder.link("booking", uriInfo.getBaseUriBuilder()
-                .path(BookingRestController.class)
-                .path(BookingRestController.class, "getBooking")
-                .resolveTemplate("clubId", clubId)
+                .path("bookings/{bookingId}")
                 .resolveTemplate("bookingId", receipt.getBookingId())
                 .build(), "GET"));
         dto.setLinks(links);
