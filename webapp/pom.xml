@@ -13,7 +13,6 @@
   <packaging>war</packaging>
 
   <name>webapp Maven Webapp</name>
-  <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 
   <dependencies>
@@ -67,7 +66,6 @@
           <version>${javax.servlet-api.version}</version>
           <scope>provided</scope>
       </dependency>
-      <!--VER ESTO POR FAVOR NO OLVIDARSE-->
       <dependency>
           <groupId>ar.edu.itba.paw</groupId>
           <artifactId>interfaces</artifactId>
@@ -135,7 +133,6 @@
           <version>${project.parent.version}</version>
           <type>pom</type>
       </dependency>
-        <!--TODO: fijarse que esta dos veces-->
       <dependency>
           <groupId>io.jsonwebtoken</groupId>
           <artifactId>jjwt-api</artifactId>

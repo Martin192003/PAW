@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--TODO: Consultar si está bien la version, antes 2.4 -->
 <web-app
         version="3.0"
         xmlns="http://java.sun.com/xml/ns/javaee"
@@ -52,7 +51,6 @@
         <filter-name>encodingFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
-    <!--TODO: Preguntar si ta bien lo del entityManager-->
     <filter>
         <filter-name>openEntityManagerInView</filter-name>
         <filter-class>org.springframework.orm.jpa.support.OpenEntityManagerInViewFilter</filter-class>

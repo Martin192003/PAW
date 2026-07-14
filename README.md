@@ -149,11 +149,10 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 
 ## Endpoints principales
 
-- `POST /api/auth/tokens`: crea token Bearer.
-- `GET /api/auth/verifications`: verifica cuenta desde token/codigo y devuelve Bearer.
-- `POST /api/auth/password-reset-requests`: solicita reset de password.
-- `POST /api/auth/password-resets`: confirma reset de password y devuelve Bearer.
+- `POST /api/auth/tokens`: crea token Bearer con grants `password`, `email_verification` o `password_reset`.
+- `POST /api/auth/challenges`: solicita desafios de autenticacion como reenvio de verificacion o reset de password.
 - `GET /api/users/{userId}`: usuario publico, o privado si es el propio usuario.
+- `PUT /api/users/{userId}/credentials/password`: cambia password del usuario autenticado.
 - `GET /api/clubs`: busqueda/listado de clubes.
 - `GET /api/clubs?ownerId={userId}`: clubes por duenio/admin.
 - `GET /api/clubs/{clubId}`: detalle de club.
@@ -162,7 +161,9 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 - `GET /api/clubs/{clubId}/reviews`: reviews paginadas.
 - `GET /api/bookings`: reservas del usuario autenticado.
 - `GET /api/bookings?managed=true`: reservas administradas por el usuario admin.
-- `GET /api/bookings/{bookingId}?managed=true`: detalle de reserva administrada.
+- `GET /api/bookings/{bookingId}`: detalle canonico de reserva propia o administrada, segun permisos.
+- `PUT /api/bookings/{bookingId}`: confirma o cancela una reserva administrada.
+- `DELETE /api/bookings/{bookingId}`: cancela una reserva propia o administrada.
 
 ## Decisiones REST/HATEOAS
 
@@ -178,4 +179,3 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 - No versionar `target/`, `out/`, `frontend/node/`, `.env`, `application.properties`, `mail.properties`, WARs ni credenciales.
 - Si hubo credenciales reales en el historial Git, rotarlas aunque ya no esten en el arbol actual.
 - El frontend requiere npm para verificar build TypeScript/Angular; los tests backend se ejecutan con Maven.
-

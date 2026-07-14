@@ -34,7 +34,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserDto'
+              $ref: '#/components/schemas/UserCreateDto'
       responses:
         '201':
           description: User created
@@ -59,20 +59,18 @@ paths:
       summary: Get user
       responses:
         '200':
-          description: User. Own user returns private fields, other users return public fields.
+          description: User. Private fields are present only when the caller requests its own user.
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/UserDto'
-                  - $ref: '#/components/schemas/PublicUserDto'
+                $ref: '#/components/schemas/UserDto'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
-    put:
+    patch:
       tags: [Users]
-      summary: Update own user
+      summary: Partially update own user
       requestBody:
         required: true
         content:
@@ -92,6 +90,27 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  /users/{userId}/credentials/password:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    put:
+      tags: [Users]
+      summary: Replace authenticated user's password credential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetDto'
+      responses:
+        '204':
+          description: Password changed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /users/{userId}/reviews:
     parameters:
@@ -116,39 +135,21 @@ paths:
                 items:
                   $ref: '#/components/schemas/ReviewDto'
 
-  /auth/verifications:
-    get:
-      tags: [Auth]
-      summary: Verify account from email link
-      security: []
-      parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Account verified. Returns a bearer token so the user can continue authenticated.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthTokenDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+  /auth/tokens:
     post:
       tags: [Auth]
-      summary: Verify account from code or token
+      summary: Create authentication token
+      description: Supports password, email_verification and password_reset grants.
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserVerificationRequestDto'
+              $ref: '#/components/schemas/AuthTokenRequestDto'
       responses:
         '200':
-          description: Account verified. Returns a bearer token so the user can continue authenticated.
+          description: Bearer token created.
           content:
             application/json:
               schema:
@@ -156,68 +157,25 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /auth/verification-requests:
+  /auth/challenges:
     post:
       tags: [Auth]
-      summary: Resend verification token
+      summary: Create authentication challenge
+      description: Sends verification or password reset email depending on challengeType.
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResendVerificationRequestDto'
+              $ref: '#/components/schemas/AuthChallengeRequestDto'
       responses:
         '200':
           $ref: '#/components/responses/Message'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /auth/password-reset-requests:
-    post:
-      tags: [Auth]
-      summary: Request password reset email
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PasswordResetRequestDto'
-      responses:
         '204':
-          description: Request accepted
+          description: Challenge accepted without response body
         '400':
           $ref: '#/components/responses/BadRequest'
-
-  /auth/password-resets:
-    post:
-      tags: [Auth]
-      summary: Reset password with token
-      security: []
-      parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PasswordResetDto'
-      responses:
-        '200':
-          description: Password changed. Returns a bearer token so the user can continue authenticated.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthTokenDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
 
   /clubs:
     get:
@@ -797,6 +755,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ReviewDto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewMultipartRequest'
       responses:
         '201':
           description: Review created
@@ -806,29 +767,6 @@ paths:
                 $ref: '#/components/schemas/ReviewDto'
         '409':
           $ref: '#/components/responses/Conflict'
-    put:
-      tags: [Reviews]
-      summary: Update current user's review for club
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReviewDto'
-      responses:
-        '200':
-          description: Review updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReviewDto'
-    delete:
-      tags: [Reviews]
-      summary: Delete current user's review for club
-      responses:
-        '204':
-          description: Review deleted
-
   /clubs/{clubId}/reviews/{reviewId}:
     parameters:
       - $ref: '#/components/parameters/ClubId'
@@ -850,6 +788,39 @@ paths:
                 $ref: '#/components/schemas/ReviewDto'
         '404':
           $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Reviews]
+      summary: Update authenticated user's review by id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewDto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewMultipartRequest'
+      responses:
+        '200':
+          description: Review updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Reviews]
+      summary: Delete authenticated user's review by id
+      responses:
+        '204':
+          description: Review deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /clubs/{clubId}/bookings:
     parameters:
@@ -866,31 +837,16 @@ paths:
       responses:
         '201':
           description: Booking created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: Canonical booking URI.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BookingDto'
-
-  /clubs/{clubId}/bookings/{bookingId}:
-    parameters:
-      - $ref: '#/components/parameters/ClubId'
-      - $ref: '#/components/parameters/BookingId'
-    get:
-      tags: [Bookings]
-      summary: Get own booking in club
-      responses:
-        '200':
-          description: Booking
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BookingDto'
-    delete:
-      tags: [Bookings]
-      summary: Cancel own booking in club
-      responses:
-        '204':
-          description: Booking cancelled
 
   /clubs/{clubId}/bookings/{bookingId}/receipt:
     parameters:
@@ -966,16 +922,10 @@ paths:
   /bookings/{bookingId}:
     parameters:
       - $ref: '#/components/parameters/BookingId'
-      - name: managed
-        in: query
-        required: true
-        schema:
-          type: boolean
-          enum: [true]
-        description: When true, addresses the booking as a manager of one of the club's bookings.
     get:
       tags: [Bookings]
-      summary: Get a managed booking by id
+      summary: Get booking by canonical id
+      description: Returns the booking when the authenticated user is the owner or manages its club.
       responses:
         '200':
           description: Booking
@@ -983,10 +933,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BookingDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
     put:
       tags: [Bookings]
       summary: Update managed booking status
-      description: Accepts status CONFIRMADA or CANCELADA.
+      description: Accepts status CONFIRMADA or CANCELADA when the authenticated user manages the booking's club.
       requestBody:
         required: true
         content:
@@ -1000,12 +954,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BookingDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Bookings]
-      summary: Cancel managed booking
+      summary: Cancel booking by canonical id
+      description: Cancels the booking when the authenticated user is the owner or manages its club.
       responses:
         '204':
           description: Booking cancelled
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     bearerAuth:
@@ -1193,11 +1158,10 @@ components:
         email:
           type: string
           format: email
-        password:
-          type: string
-          writeOnly: true
+          description: Present only in the authenticated user's private representation.
         cellphone:
           type: string
+          description: Present only in the authenticated user's private representation.
         role:
           type: string
           readOnly: true
@@ -1216,24 +1180,26 @@ components:
           items:
             $ref: '#/components/schemas/LinkDto'
 
-    PublicUserDto:
+    UserCreateDto:
       type: object
+      required: [username, name, surname, email, password, cellphone]
       properties:
-        userId:
-          type: string
-          format: uuid
-          readOnly: true
         username:
           type: string
         name:
           type: string
         surname:
           type: string
-        links:
-          type: array
-          readOnly: true
-          items:
-            $ref: '#/components/schemas/LinkDto'
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+        cellphone:
+          type: string
+        locale:
+          type: string
 
     UserUpdateResponseDto:
       type: object
@@ -1274,27 +1240,54 @@ components:
           type: string
           format: uri
           description: Link to the authenticated user resource.
-
-    UserVerificationRequestDto:
-      type: object
-      properties:
-        token:
+        userId:
           type: string
-        code:
-          type: string
+          format: uuid
 
-    ResendVerificationRequestDto:
+    AuthTokenRequestDto:
       type: object
+      required: [grantType]
       properties:
-        usernameOrEmail:
+        grantType:
           type: string
-
-    PasswordResetRequestDto:
-      type: object
-      properties:
+          enum: [password, email_verification, password_reset]
         email:
           type: string
           format: email
+          description: Accepted for password grant.
+        usernameOrEmail:
+          type: string
+          description: Accepted for password grant.
+        password:
+          type: string
+          writeOnly: true
+        token:
+          type: string
+          description: Verification or password reset token.
+        code:
+          type: string
+          description: Verification code.
+        newPassword:
+          type: string
+          writeOnly: true
+        confirmationPassword:
+          type: string
+          writeOnly: true
+
+    AuthChallengeRequestDto:
+      type: object
+      required: [challengeType]
+      properties:
+        challengeType:
+          type: string
+          enum: [email_verification, password_reset]
+        usernameOrEmail:
+          type: string
+          description: Required for email_verification.
+        email:
+          type: string
+          format: email
+          description: Required for password_reset.
 
     PasswordResetDto:
       type: object
@@ -1327,7 +1320,8 @@ components:
           type: boolean
         cbu:
           type: string
-          writeOnly: true
+          nullable: true
+          description: Required on create/update. Returned only on owner-authenticated club responses; omitted or null in public club representations.
         rating:
           type: number
           format: float
@@ -1488,6 +1482,20 @@ components:
           readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
+
+    ReviewMultipartRequest:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description:
+          type: string
+        file:
+          type: string
+          format: binary
 
     BookingDto:
       type: object
