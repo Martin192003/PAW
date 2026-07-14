@@ -21,7 +21,7 @@ import { Event } from '../models/event.model';
 import { Review } from '../models/review.model';
 import { Layout } from '../models/layout.model';
 import { ClubPhoto } from '../models/club-photo.model';
-import { finalize, Subject, takeUntil, timeout } from 'rxjs';
+import { catchError, finalize, map, of, Subject, switchMap, takeUntil, timeout } from 'rxjs';
 import { I18nService } from '../services/i18n.service';
 
 type ClubHandlerTab = 'menu' | 'tables' | 'events' | 'reviews';
@@ -164,6 +164,12 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     description: '',
     date: ''
   };
+  // Foto elegida en el formulario de alta/edicion de evento, todavia no
+  // subida: se manda recien despues de crear/actualizar el evento (el
+  // endpoint de foto necesita un eventId existente, no hay forma de crear
+  // el evento con la foto en un solo request).
+  selectedEventPhotoFile: File | null = null;
+  selectedEventPhotoName = '';
 
   uploadingEventPhotoId: string | null = null;
   uploadingCover = false;
@@ -973,6 +979,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       description: '',
       date: ''
     };
+    this.clearSelectedEventPhoto();
     this.resetEventValidation();
   }
 
@@ -983,8 +990,24 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       description: event.description,
       date: (event.date || '').slice(0, 10)
     };
+    this.clearSelectedEventPhoto();
     this.resetEventValidation();
     this.clearActionMessages();
+  }
+
+  onNewEventPhotoSelected(uploadEvent: globalThis.Event): void {
+    const input = uploadEvent.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    this.selectedEventPhotoFile = file;
+    this.selectedEventPhotoName = file.name;
+  }
+
+  clearSelectedEventPhoto(): void {
+    this.selectedEventPhotoFile = null;
+    this.selectedEventPhotoName = '';
   }
 
   cancelEditEvent(): void {
@@ -1078,17 +1101,36 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       ? this.clubService.updateEvent(this.clubId, this.editingEventId, payload, editingEvent)
       : this.clubService.createEvent(this.clubId, payload, this.club?.links);
 
+    const photoToUpload = this.selectedEventPhotoFile;
+    const clubId = this.clubId;
+
     request$.pipe(
       timeout(this.mutationTimeoutMs),
+      switchMap((savedEvent) => {
+        if (!photoToUpload || !savedEvent.eventId) {
+          return of({ savedEvent, photoFailed: false });
+        }
+        // La foto se manda en un segundo request recien ahora, porque el
+        // endpoint de foto necesita que el evento ya exista (requiere
+        // eventId). Si esto falla, el evento igual quedo creado/actualizado:
+        // se avisa con un mensaje distinto en vez de perder el guardado.
+        return this.clubService.uploadEventPhoto(clubId, savedEvent.eventId, photoToUpload, savedEvent).pipe(
+          timeout(this.mutationTimeoutMs),
+          map(() => ({ savedEvent, photoFailed: false })),
+          catchError(() => of({ savedEvent, photoFailed: true }))
+        );
+      }),
       finalize(() => {
         this.savingEvent = false;
         this.cdr.markForCheck();
       })
     ).subscribe({
-      next: (savedEvent) => {
+      next: ({ savedEvent, photoFailed }) => {
         this.upsertEventInList(savedEvent);
         this.startCreateEvent();
-        this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventSaved'));
+        this.showActionSuccess(this.i18n.instant(
+          photoFailed ? 'clubHandler.messages.eventSavedPhotoFailed' : 'clubHandler.messages.eventSaved'
+        ));
         this.actionErrorMessage = '';
         this.loadEvents();
       },

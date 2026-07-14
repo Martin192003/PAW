@@ -440,6 +440,7 @@
     "noReviews": "There are no reviews yet.",
     "noPhoto": "No photo",
     "uploadPhoto": "Upload photo",
+    "changePhoto": "Change photo",
     "removePhoto": "Remove photo",
     "eventFilters": {
       "all": "All",
@@ -490,7 +491,7 @@
       "tableNumber": "Table number",
       "tableCapacity": "Capacity",
       "tablePrice": "Price",
-      "tableDiscount": "Discount",
+      "tableDiscount": "Discount (optional)",
       "eventName": "Event name",
       "eventDescription": "Event description"
     },
@@ -574,6 +575,7 @@
       "tableDeleteFailed": "Could not delete the table.",
       "eventRequiredFields": "Complete event name and date.",
       "eventSaved": "Event saved successfully.",
+      "eventSavedPhotoFailed": "Event saved, but the photo could not be uploaded. You can retry from the list.",
       "eventSaveFailed": "Could not confirm the event save. Events were reloaded.",
       "confirmDeleteEvent": "Delete event {{name}}?",
       "eventDeleteTitle": "Delete event",

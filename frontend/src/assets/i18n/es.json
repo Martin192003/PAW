@@ -441,6 +441,7 @@
     "noReviews": "No hay reseñas aún.",
     "noPhoto": "Sin foto",
     "uploadPhoto": "Subir foto",
+    "changePhoto": "Cambiar foto",
     "removePhoto": "Eliminar foto",
     "eventFilters": {
       "all": "Todos",
@@ -491,7 +492,7 @@
       "tableNumber": "Número de mesa",
       "tableCapacity": "Capacidad",
       "tablePrice": "Precio",
-      "tableDiscount": "Descuento",
+      "tableDiscount": "Descuento (opcional)",
       "eventName": "Nombre del evento",
       "eventDescription": "Descripción del evento"
     },
@@ -575,6 +576,7 @@
       "tableDeleteFailed": "No se pudo eliminar la mesa.",
       "eventRequiredFields": "Completá nombre y fecha del evento.",
       "eventSaved": "Evento guardado correctamente.",
+      "eventSavedPhotoFailed": "Evento guardado, pero no se pudo subir la foto. Podés reintentarlo desde la lista.",
       "eventSaveFailed": "No se pudo confirmar el guardado del evento. Se recargaron los eventos.",
       "confirmDeleteEvent": "¿Eliminar evento {{name}}?",
       "eventDeleteTitle": "Eliminar evento",
