@@ -20,8 +20,9 @@
       </button>
 
       <div #carouselTrack
-           class="flex gap-4 overflow-x-auto scroll-smooth px-2 py-2 justify-[safe_center]
-                [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+           class="flex gap-4 overflow-x-auto scroll-smooth px-2 py-2
+                [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+           [ngClass]="shouldCenterUpcomingEvents ? 'justify-center' : 'justify-start'">
 
         <button
            *ngFor="let event of upcomingEvents"

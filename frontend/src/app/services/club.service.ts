@@ -102,6 +102,14 @@ export class ClubService {
     };
   }
 
+  private normalizeEvent(event: Event & { id?: string }): Event {
+    return {
+      ...event,
+      eventId: event.eventId || event.id || '',
+      links: normalizeLinks(event.links)
+    };
+  }
+
   /**
    * Resuelve la URL de un recurso a partir de los links HATEOAS del club.
    *
@@ -430,13 +438,7 @@ export class ClubService {
     }
 
     return this.http.get<Array<Event & { id?: string }>>(url).pipe(
-      map((events) =>
-        (events ?? []).map((event) => ({
-          ...event,
-          eventId: event.eventId || event.id || '',
-          links: normalizeLinks(event.links)
-        }))
-      )
+      map((events) => (events ?? []).map((event) => this.normalizeEvent(event)))
     );
   }
 
@@ -514,10 +516,10 @@ export class ClubService {
     const url = this.resolveClubLink(links, this.linkRels.events, `club ${clubId} events`, `${this.apiUrl}/clubs/${clubId}/events`);
     // Mismo motivo que createProduct/createTable: sin el flag, un 409/500
     // termina en la pantalla de error global en vez del error de campo.
-    return this.http.post<Event>(url, payload, {
+    return this.http.post<Event & { id?: string }>(url, payload, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
-      map(event => ({ ...event, links: normalizeLinks(event.links) }))
+      map(event => this.normalizeEvent(event))
     );
   }
 
@@ -528,10 +530,10 @@ export class ClubService {
       `event ${eventId}`,
       `${this.apiUrl}/clubs/${clubId}/events/${eventId}`
     );
-    return this.http.put<Event>(url, payload, {
+    return this.http.put<Event & { id?: string }>(url, payload, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
-      map(updated => ({ ...updated, links: normalizeLinks(updated.links) }))
+      map(updated => this.normalizeEvent(updated))
     );
   }
 
@@ -568,8 +570,8 @@ export class ClubService {
     // objeto ya normalizado, y con el array eso siempre daba undefined -
     // por eso la foto recien subida en el alta no se mostraba bien hasta
     // el proximo loadEvents() (que si pasa por normalizeEvent/backend list).
-    return this.http.put<Event>(url, formData).pipe(
-      map(updated => ({ ...updated, links: normalizeLinks(updated.links) }))
+    return this.http.put<Event & { id?: string }>(url, formData).pipe(
+      map(updated => this.normalizeEvent(updated))
     );
   }
 
@@ -586,8 +588,8 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.delete<Event>(url).pipe(
-      map(updated => ({ ...updated, links: normalizeLinks(updated.links) }))
+    return this.http.delete<Event & { id?: string }>(url).pipe(
+      map(updated => this.normalizeEvent(updated))
     );
   }
 

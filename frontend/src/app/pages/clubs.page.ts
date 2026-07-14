@@ -158,6 +158,10 @@ export class ClubsPage implements OnInit, OnDestroy {
     return Object.values(this.filters).some((value) => value.trim() !== '');
   }
 
+  get shouldCenterUpcomingEvents(): boolean {
+    return this.upcomingEvents.length <= 4;
+  }
+
   onImageError(event: Event, club: ClubListItem) {
     club._hasError = true;
     this.cdr.detectChanges();
