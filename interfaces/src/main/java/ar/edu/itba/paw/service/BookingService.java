@@ -66,6 +66,14 @@ public interface BookingService {
 
     Booking getForUser(UUID bookingId, UUID userId);
 
+    Booking getForUser(String loginIdentifier, UUID bookingId);
+
+    void cancelForUser(String loginIdentifier, UUID bookingId);
+
+    Booking getAccessibleBooking(String loginIdentifier, UUID bookingId);
+
+    void cancelAccessibleBooking(String loginIdentifier, UUID bookingId);
+
     List<Booking> searchForAdminPaginated(UUID adminUserId, UUID clubId, String oldBookingId, Status status, String sort, String oldBookingDate, Boolean hasReceipt,int limit, int offset);
 
     int countSearch(UUID userId, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt);

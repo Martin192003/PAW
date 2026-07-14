@@ -74,41 +74,14 @@ public class BookingRestController {
                 authenticatedLoginIdentifier(securityContext)
         );
 
-        final URI location = uriInfo.getAbsolutePathBuilder()
-                .path(booking.getBookingId().toString())
+        final URI location = uriInfo.getBaseUriBuilder()
+                .path("bookings/{bookingId}")
+                .resolveTemplate("bookingId", booking.getBookingId().toString())
                 .build();
 
         return Response.created(location)
                 .entity(bookingDtoAssembler.toDto(uriInfo, clubId, booking))
                 .build();
-    }
-
-    @GET
-    @Path("/{bookingId}")
-    public Response getBooking(@PathParam("clubId") UUID clubId,
-                               @PathParam("bookingId") UUID bookingId,
-                               @Context SecurityContext securityContext) {
-        final Booking booking = bookingService.getForUserInClub(
-                clubId,
-                bookingId,
-                authenticatedLoginIdentifier(securityContext)
-        );
-
-        return Response.ok(bookingDtoAssembler.toDto(uriInfo, clubId, booking)).build();
-    }
-
-    @DELETE
-    @Path("/{bookingId}")
-    public Response cancelBooking(@PathParam("clubId") UUID clubId,
-                                  @PathParam("bookingId") UUID bookingId,
-                                  @Context SecurityContext securityContext) {
-        bookingService.cancelForUserInClub(
-                clubId,
-                bookingId,
-                authenticatedLoginIdentifier(securityContext)
-        );
-
-        return Response.noContent().build();
     }
 
     @PUT

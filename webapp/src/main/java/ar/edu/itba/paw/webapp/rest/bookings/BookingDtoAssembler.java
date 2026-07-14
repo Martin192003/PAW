@@ -40,9 +40,7 @@ public class BookingDtoAssembler {
 
         List<LinkDto> links = new ArrayList<>();
         links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
-                .path(BookingRestController.class)
-                .path(BookingRestController.class, "getBooking")
-                .resolveTemplate("clubId", clubId)
+                .path("bookings/{bookingId}")
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "GET"));
         links.add(LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
@@ -69,19 +67,15 @@ public class BookingDtoAssembler {
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "GET"));
         links.add(LinkBuilder.link("cancel", uriInfo.getBaseUriBuilder()
-                .path(BookingRestController.class)
-                .path(BookingRestController.class, "cancelBooking")
-                .resolveTemplate("clubId", clubId)
+                .path("bookings/{bookingId}")
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "DELETE"));
         links.add(LinkBuilder.link("confirm", uriInfo.getBaseUriBuilder()
                 .path("bookings/{bookingId}")
-                .queryParam("managed", "true")
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "PUT"));
         links.add(LinkBuilder.link("managed-update", uriInfo.getBaseUriBuilder()
                 .path("bookings/{bookingId}")
-                .queryParam("managed", "true")
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "PUT"));
         dto.setLinks(links);

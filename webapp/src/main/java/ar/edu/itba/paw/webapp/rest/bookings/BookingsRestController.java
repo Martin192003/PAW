@@ -82,28 +82,16 @@ public class BookingsRestController {
     @GET
     @Path("/bookings/{bookingId}")
     public Response getBookingById(@PathParam("bookingId") UUID bookingId,
-                                   @QueryParam("managed") @DefaultValue("false") boolean managed,
                                    @Context SecurityContext securityContext) {
-        if (!managed) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-        final Booking booking = bookingService.getManagedClubBooking(
-                authenticatedLoginIdentifier(securityContext),
-                bookingId
-        );
-
-        return Response.ok(toDto(booking)).build();
+        final String login = authenticatedLoginIdentifier(securityContext);
+        return Response.ok(toDto(bookingService.getAccessibleBooking(login, bookingId))).build();
     }
 
     @PUT
     @Path("/bookings/{bookingId}")
     public Response updateBookingById(@PathParam("bookingId") UUID bookingId,
-                                      @QueryParam("managed") @DefaultValue("false") boolean managed,
                                       BookingDto body,
                                       @Context SecurityContext securityContext) {
-        if (!managed) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
         if (body == null || body.getStatus() == null || body.getStatus().isBlank()) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
@@ -129,13 +117,9 @@ public class BookingsRestController {
 
     @DELETE
     @Path("/bookings/{bookingId}")
-    public Response cancelManagedClubBooking(@PathParam("bookingId") UUID bookingId,
-                                             @QueryParam("managed") @DefaultValue("false") boolean managed,
-                                             @Context SecurityContext securityContext) {
-        if (!managed) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-        bookingService.cancelManagedClubBooking(authenticatedLoginIdentifier(securityContext), bookingId);
+    public Response cancelBooking(@PathParam("bookingId") UUID bookingId,
+                                  @Context SecurityContext securityContext) {
+        bookingService.cancelAccessibleBooking(authenticatedLoginIdentifier(securityContext), bookingId);
         return Response.noContent().build();
     }
 

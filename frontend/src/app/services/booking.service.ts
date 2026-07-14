@@ -24,21 +24,13 @@ export class BookingService {
     });
   }
 
-  /**
-   * Carga una reserva a partir de clubId + bookingId.
-   *
-   * Es el punto de entrada legítimo para deep links (`/bookings/:clubId/:bookingId`
-   * desde la ruta), donde todavía no tenemos ningún `Booking` con `links` a mano.
-   * Una vez cargada, el resto de las operaciones sobre esa reserva (cancelar,
-   * recibo, etc.) deben usar `booking.links` en vez de reconstruir la URL.
-   */
-  getBooking(clubId: string, bookingId: string): Observable<Booking> {
+  getBooking(_clubId: string, bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
-      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
+      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 
-  cancelBooking(clubId: string, bookingId: string, links?: Booking['links']): Observable<void> {
+  cancelBooking(_clubId: string, bookingId: string, links?: Booking['links']): Observable<void> {
     // Sin este flag, un 409 (InvalidStatusTransitionException, ej. cancelar
     // una reserva que ya no admite ese cambio de estado) lo agarra el
     // interceptor global y redirige a /error en vez de dejar que la pantalla
@@ -48,7 +40,7 @@ export class BookingService {
         links,
         ['cancel'],
         `booking ${bookingId} cancellation`,
-        `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`
+        `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`
       ),
       { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
     );
@@ -61,7 +53,7 @@ export class BookingService {
    */
   getManagedClubBooking(bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
-      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}?managed=true`, this.apiUrl)
+      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 
@@ -73,7 +65,7 @@ export class BookingService {
         links,
         ['confirm', 'managed-update'],
         `managed booking ${bookingId} confirmation`,
-        `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}?managed=true`
+        `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`
       ),
       { status: 'CONFIRMADA' },
       { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
@@ -86,7 +78,7 @@ export class BookingService {
         links,
         ['managed-update'],
         `managed booking ${bookingId} cancellation`,
-        `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}?managed=true`
+        `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`
       ),
       { status: 'CANCELADA' },
       { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }

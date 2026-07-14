@@ -8,7 +8,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Booking } from '../models/booking.model';
 import { Club } from '../models/club.model';
 import { ClubTable } from '../models/club-table.model';
-import { User } from '../models/user.model';
+import { PublicUser } from '../models/user.model';
 import { BookingService } from '../services/booking.service';
 import { ClubService } from '../services/club.service';
 import { UserService } from '../services/user.service';
@@ -35,7 +35,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   booking?: Booking;
   club?: Club;
   table?: ClubTable;
-  user?: User;
+  user?: PublicUser;
   receiptUrl = '';
   hasReceipt = false;
   error = '';

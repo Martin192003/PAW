@@ -345,6 +345,54 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
+    public Booking getForUser(String loginIdentifier, UUID bookingId) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        return getForUser(bookingId, user.getId());
+    }
+
+    @Override
+    @Transactional
+    public void cancelForUser(String loginIdentifier, UUID bookingId) {
+        final Booking booking = getForUser(loginIdentifier, bookingId);
+        cancelByUser(bookingId, booking.getUser().getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Booking getAccessibleBooking(String loginIdentifier, UUID bookingId) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        final Booking booking = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+
+        if (isBookingOwner(booking, user.getId()) || isManagedByUser(bookingId, user.getId())) {
+            return booking;
+        }
+
+        throw new UnauthorizedException("booking.notAllowedToView");
+    }
+
+    @Override
+    @Transactional
+    public void cancelAccessibleBooking(String loginIdentifier, UUID bookingId) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        final Booking booking = bookingDao.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+
+        if (isBookingOwner(booking, user.getId())) {
+            cancelByUser(bookingId, user.getId());
+            return;
+        }
+
+        if (isManagedByUser(bookingId, user.getId())) {
+            cancel(bookingId);
+            return;
+        }
+
+        throw new UnauthorizedException("booking.notAllowedToView");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Booking getForUserInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
         if (clubId == null) {
             throw new BadRequestException("clubId es requerido");
@@ -470,6 +518,18 @@ public class BookingServiceImpl implements BookingService {
     public void cancelManagedClubBooking(String loginIdentifier, UUID bookingId) {
         getManagedClubBooking(loginIdentifier, bookingId);
         cancel(bookingId);
+    }
+
+    private boolean isBookingOwner(Booking booking, UUID userId) {
+        return booking.getUser() != null
+                && booking.getUser().getId() != null
+                && booking.getUser().getId().equals(userId);
+    }
+
+    private boolean isManagedByUser(UUID bookingId, UUID userId) {
+        final UUID clubId = clubId(bookingId);
+        final List<UUID> adminClubIds = clubDao.findIdsByAdmin(userId);
+        return adminClubIds != null && adminClubIds.contains(clubId);
     }
 
     @Override
