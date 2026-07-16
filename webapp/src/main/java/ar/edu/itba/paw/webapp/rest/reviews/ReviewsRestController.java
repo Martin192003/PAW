@@ -3,10 +3,13 @@ package ar.edu.itba.paw.webapp.rest.reviews;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.ReviewDto;
 import ar.edu.itba.paw.service.ReviewService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +25,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @Path("/clubs")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.REVIEW, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
+@Consumes({ApiMediaTypes.REVIEW, ApiMediaTypes.APPLICATION_JSON})
 public class ReviewsRestController {
 
     @Autowired
@@ -49,20 +51,21 @@ public class ReviewsRestController {
                                @QueryParam("size") @DefaultValue("20") int size,
                                @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("clubId inválido");
+        if (clubId == null) return badRequest("club.id.invalid");
 
         if (page < 0 || size <= 0) return badRequest("Invalid pagination parameters");
 
-        UUID currentUserId = currentUserId(securityContext);
         int offset = page * size;
         List<Review> reviews = reviewService.listByClub(clubId, null, size, offset);
-        List<ReviewDto> body = reviews.stream()
-                .map(review -> ReviewMapper.toDto(review, uriInfo, currentUserId))
-                .collect(Collectors.toList());
+        List<LinkDto> body = CollectionLinks.items(reviews, review -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/reviews/{reviewId}")
+                .resolveTemplate("clubId", clubId)
+                .resolveTemplate("reviewId", review.getReviewId())
+                .build());
 
         int total = reviewService.countByClub(clubId);
         int totalPages = (int) Math.ceil((double) total / size);
-        GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(body) {};
+        GenericEntity<List<LinkDto>> entity = new GenericEntity<>(body) {};
         Response.ResponseBuilder response = Response.ok(entity)
                 .header("X-Total-Count", total);
         addPaginationLinks(response, page, size, totalPages);
@@ -75,7 +78,7 @@ public class ReviewsRestController {
                            ReviewDto body,
                            @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("clubId inválido");
+        if (clubId == null) return badRequest("club.id.invalid");
 
         if (body == null || body.getRating() == null) {
             return badRequest("Missing required fields");
@@ -127,7 +130,7 @@ public class ReviewsRestController {
     public Response createMultipart(@PathParam("clubId") String clubIdStr,
                                     @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("clubId invalido");
+        if (clubId == null) return badRequest("club.id.invalid");
 
         Integer rating = formInteger("rating");
         if (rating == null) {
@@ -175,10 +178,10 @@ public class ReviewsRestController {
                            ReviewDto body,
                            @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("clubId inválido");
+        if (clubId == null) return badRequest("club.id.invalid");
 
         UUID reviewId = parseUuidOr400(reviewIdStr);
-        if (reviewId == null) return badRequest("reviewId inválido");
+        if (reviewId == null) return badRequest("review.id.invalid");
 
         if (body == null || body.getRating() == null) return badRequest("Body requerido");
 
@@ -210,10 +213,10 @@ public class ReviewsRestController {
                                     @PathParam("reviewId") String reviewIdStr,
                                     @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("clubId invalido");
+        if (clubId == null) return badRequest("club.id.invalid");
 
         UUID reviewId = parseUuidOr400(reviewIdStr);
-        if (reviewId == null) return badRequest("reviewId invalido");
+        if (reviewId == null) return badRequest("review.id.invalid");
 
         Integer rating = formInteger("rating");
         if (rating == null) return badRequest("Body requerido");
@@ -245,10 +248,10 @@ public class ReviewsRestController {
                            @PathParam("reviewId") String reviewIdStr,
                            @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("clubId inválido");
+        if (clubId == null) return badRequest("club.id.invalid");
 
         UUID reviewId = parseUuidOr400(reviewIdStr);
-        if (reviewId == null) return badRequest("reviewId inválido");
+        if (reviewId == null) return badRequest("review.id.invalid");
 
         User user = authenticatedUser(securityContext);
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -269,10 +272,10 @@ public class ReviewsRestController {
     public Response getById(@PathParam("clubId") String clubIdStr,
                             @PathParam("reviewId") String reviewIdStr) {
         UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("clubId invÃ¡lido");
+        if (clubId == null) return badRequest("club.id.invalid");
 
         UUID reviewId = parseUuidOr400(reviewIdStr);
-        if (reviewId == null) return badRequest("reviewId invÃ¡lido");
+        if (reviewId == null) return badRequest("review.id.invalid");
 
         return reviewService.findById(reviewId)
                 .filter(review -> review.getClub() != null && clubId.equals(review.getClub().getClubId()))

@@ -9,6 +9,7 @@ import ar.edu.itba.paw.model.dto.AuthTokenUserDto;
 import ar.edu.itba.paw.model.dto.ErrorDto;
 import ar.edu.itba.paw.service.PasswordResetJobService;
 import ar.edu.itba.paw.service.UserService;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,15 +19,14 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Optional;
 
 @Component
 @Path("/auth")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.AUTH_TOKEN, ApiMediaTypes.APPLICATION_JSON})
+@Consumes({ApiMediaTypes.AUTH_TOKEN, ApiMediaTypes.AUTH_CHALLENGE, ApiMediaTypes.APPLICATION_JSON})
 public class AuthRestController {
 
     private final UserService userService;
@@ -106,12 +106,7 @@ public class AuthRestController {
                         .build();
             }
 
-            AuthTokenDto response = tokenFor(user);
-
-            return Response.ok(response)
-                    .header("Cache-Control", "no-store")
-                    .header("Pragma", "no-cache")
-                    .build();
+            return tokenResponse(user);
         } catch (IllegalStateException ex) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(new ErrorDto("account_disabled"))
@@ -184,10 +179,7 @@ public class AuthRestController {
                     .build();
         }
 
-        return Response.ok(tokenFor(updated.get()))
-                .header("Cache-Control", "no-store")
-                .header("Pragma", "no-cache")
-                .build();
+        return tokenResponse(updated.get());
     }
 
     private Response buildVerificationLoginResponse(String tokenOrCode) {
@@ -204,9 +196,17 @@ public class AuthRestController {
                     .build();
         }
 
-        return Response.ok(tokenFor(user))
+        return tokenResponse(user);
+    }
+
+    private Response tokenResponse(User user) {
+        AuthTokenDto token = tokenFor(user);
+        return Response.ok(token)
                 .header("Cache-Control", "no-store")
                 .header("Pragma", "no-cache")
+                .header("Paw-Auth-Token", token.getAccessToken())
+                .header("Paw-Token-Type", token.getTokenType())
+                .header("Paw-Token-Expires-In", token.getExpiresIn())
                 .build();
     }
 

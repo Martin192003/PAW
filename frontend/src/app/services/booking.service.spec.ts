@@ -15,7 +15,7 @@ describe('BookingService filters', () => {
         userId: 'user-1',
         links: [
           { rel: 'bookings', href: '/api/users/user-1/bookings' },
-          { rel: 'managed-bookings', href: '/api/managed-bookings' },
+          { rel: 'managed', href: '/api/bookings?managed=true' },
         ],
       }),
     };
@@ -80,7 +80,7 @@ describe('BookingService filters', () => {
       hasReceipt: 'false',
     }, 1, 10).subscribe();
 
-    const req = httpMock.expectOne(request => request.url.endsWith('/managed-bookings'));
+    const req = httpMock.expectOne(request => request.urlWithParams.includes('/bookings?managed=true'));
     expect(req.request.params.get('page')).toBe('1');
     expect(req.request.params.get('size')).toBe('10');
     expect(req.request.params.has('managed')).toBe(false);
@@ -97,7 +97,7 @@ describe('BookingService filters', () => {
       status: 'PENDIENTE',
     }, 1, 10).subscribe();
 
-    const first = httpMock.expectOne(request => request.url.endsWith('/managed-bookings'));
+    const first = httpMock.expectOne(request => request.urlWithParams.includes('/bookings?managed=true'));
     first.flush({ message: 'not found' }, { status: 404, statusText: 'Not Found' });
 
     const fallback = httpMock.expectOne(request => request.url.endsWith('/bookings'));

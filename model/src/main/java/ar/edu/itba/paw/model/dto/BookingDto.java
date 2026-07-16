@@ -1,15 +1,18 @@
 package ar.edu.itba.paw.model.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class BookingDto {
     private UUID id;
     private UUID clubId;
     private UUID userId;
     private UUID tableId;
+    private LocalDate date;
     private OffsetDateTime bookingStart;
     private OffsetDateTime bookingEnd;
     private String status;
@@ -48,6 +51,15 @@ public class BookingDto {
 
     public void setTableId(UUID tableId) {
         this.tableId = tableId;
+    }
+
+    @XmlJavaTypeAdapter(LocalDateAdapter.class)
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     public OffsetDateTime getBookingStart() {

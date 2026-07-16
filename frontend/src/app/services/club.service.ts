@@ -1,6 +1,6 @@
-import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin, map, throwError } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AvailabilityPagedResponse } from '../models/availability-paged-response.model';
 import { ClubLimits } from '../models/club-limits.model';
@@ -12,7 +12,7 @@ import { Layout } from '../models/layout.model';
 import { PagedResponse } from '../models/paged-response.model';
 import { Product } from '../models/product.model';
 import { Review } from '../models/review.model';
-import { normalizeLinks, requireAnyLink, resolveApiUrl } from '../utils/api-url.util';
+import { itemLinksFromCollection, normalizeLinks, requireAnyLink, resolveApiUrl, totalFromHeader } from '../utils/api-url.util';
 import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
 
 export interface ClubUpdatePayload {
@@ -159,11 +159,11 @@ export class ClubService {
     if (normalized.isBar) params = params.set('isBar', normalized.isBar);
     if (normalized.sort) params = params.set('sort', normalized.sort);
 
-    return this.http.get<AvailabilityPagedResponse<Club>>(`${this.apiUrl}/clubs`, { params }).pipe(
-      map(response => ({
-        ...response,
-        content: this.normalizeClubs(response.content ?? [])
-      }))
+    return this.http.get<Club[] | AvailabilityPagedResponse<Club>>(`${this.apiUrl}/clubs`, {
+      params,
+      observe: 'response'
+    }).pipe(
+      switchMap(response => this.clubPageFromResponse(response, page, size))
     );
   }
 
@@ -173,14 +173,11 @@ export class ClubService {
       .set('page', page)
       .set('size', size);
 
-    return this.http.get<PagedResponse<Club>>(
+    return this.http.get<Club[] | PagedResponse<Club>>(
       `${this.apiUrl}/clubs`,
-      { params }
+      { params, observe: 'response' }
     ).pipe(
-      map(response => ({
-        ...response,
-        content: this.normalizeClubs(response.content ?? [])
-      }))
+      switchMap(response => this.clubPageFromResponse(response, page, size))
     );
   }
 
@@ -354,8 +351,8 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.get<Product[]>(url).pipe(
-      map(products => (products ?? []).map(product => this.normalizeProduct(product)))
+    return this.http.get<Product[]>(url, { observe: 'response' }).pipe(
+      switchMap(response => this.collectionFromResponse(response, product => this.normalizeProduct(product)))
     );
   }
 
@@ -372,8 +369,8 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.get<ClubTable[]>(url, { params }).pipe(
-      map(tables => (tables ?? []).map(table => this.normalizeTable(table)))
+    return this.http.get<ClubTable[]>(url, { params, observe: 'response' }).pipe(
+      switchMap(response => this.collectionFromResponse(response, table => this.normalizeTable(table)))
     );
   }
 
@@ -602,5 +599,55 @@ export class ClubService {
       url: url ? this.toAbsoluteUrl(url, clubId) : '',
       links
     };
+  }
+
+  private clubPageFromResponse(
+    response: HttpResponse<Club[] | PagedResponse<Club>>,
+    page: number,
+    size: number
+  ): Observable<AvailabilityPagedResponse<Club>> {
+    const body = response.body;
+    const itemLinks = itemLinksFromCollection(body);
+    const total = totalFromHeader(response.headers.get('X-Total-Count'), itemLinks?.length ?? (body as PagedResponse<Club>)?.totalElements ?? 0);
+    const base = {
+      totalElements: total,
+      totalPages: Math.ceil(total / size),
+      page,
+      size,
+      availableToday: response.headers.get('X-Available-Today') === 'true',
+      invalidDay: response.headers.get('X-Invalid-Day') === 'true',
+      selectedAvailabilityDate: response.headers.get('X-Selected-Availability-Date') || null,
+    };
+
+    if (itemLinks) {
+      const requests = itemLinks.map(link => this.getClubByLink(link));
+      return (requests.length ? forkJoin(requests) : of([] as Club[])).pipe(
+        map(content => ({ ...base, content }))
+      );
+    }
+
+    const content = Array.isArray(body)
+      ? this.normalizeClubs(body)
+      : this.normalizeClubs((body as PagedResponse<Club> | null)?.content ?? []);
+
+    return of({
+      ...base,
+      content,
+      totalElements: (body as PagedResponse<Club> | null)?.totalElements ?? base.totalElements,
+      totalPages: (body as PagedResponse<Club> | null)?.totalPages ?? base.totalPages,
+    });
+  }
+
+  private collectionFromResponse<T>(
+    response: HttpResponse<T[]>,
+    normalize: (item: T) => T
+  ): Observable<T[]> {
+    const body = response.body;
+    const itemLinks = itemLinksFromCollection(body);
+    if (itemLinks) {
+      const requests = itemLinks.map(link => this.http.get<T>(resolveApiUrl(link, this.apiUrl)).pipe(map(normalize)));
+      return requests.length ? forkJoin(requests) : of([] as T[]);
+    }
+    return of((body ?? []).map(normalize));
   }
 }

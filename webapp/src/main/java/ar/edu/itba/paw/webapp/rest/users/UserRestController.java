@@ -7,6 +7,8 @@ import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.BookingService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
@@ -27,7 +29,6 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.GenericEntity;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 import javax.ws.rs.*;
@@ -39,8 +40,8 @@ import java.util.UUID;
 
 @Component
 @Path("/users")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.USER, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
+@Consumes({ApiMediaTypes.USER, ApiMediaTypes.APPLICATION_JSON})
 public class UserRestController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserRestController.class);
@@ -105,7 +106,7 @@ public class UserRestController {
     }
 
     @POST
-    public Response createUser(UserCreateDto body) {
+    public Response createUser(UserDto body) {
         if (body == null ||
                 isBlank(body.getUsername()) ||
                 isBlank(body.getName()) ||
@@ -354,16 +355,16 @@ public class UserRestController {
                     .build();
         }
 
-        User authUser = authenticatedUserResolver.resolve(securityContext);
-        UUID currentUserId = authUser != null && authUser.getId().equals(id) ? authUser.getId() : null;
         int offset = page * size;
         List<ar.edu.itba.paw.model.Review> reviews = reviewService.obtainPaginatedReviews(id, null, size, offset);
-        List<ReviewDto> dtos = reviews.stream()
-                .map(review -> ReviewMapper.toDto(review, uriInfo, currentUserId))
-                .collect(Collectors.toList());
+        List<LinkDto> links = CollectionLinks.items(reviews, review -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/reviews/{reviewId}")
+                .resolveTemplate("clubId", review.getClub().getClubId())
+                .resolveTemplate("reviewId", review.getReviewId())
+                .build());
 
         int total = reviewService.countByUser(id);
-        GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(dtos) {};
+        GenericEntity<List<LinkDto>> entity = new GenericEntity<>(links) {};
         Response.ResponseBuilder response = Response.ok(entity)
                 .header("X-Total-Count", total);
         addPaginationLinks(response, page, size, total);
@@ -415,15 +416,16 @@ public class UserRestController {
                 loginIdentifier, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
         final int total = bookingService.countSearchForUser(
                 loginIdentifier, clubId, bookingId, status, bookingDate, hasReceipt);
-        final List<BookingDto> dtos = bookings.stream()
-                .map(booking -> bookingDtoAssembler.toDto(uriInfo, bookingService.clubId(booking.getBookingId()), booking, false, true))
-                .collect(Collectors.toList());
+        final List<LinkDto> links = CollectionLinks.items(bookings, booking -> uriInfo.getBaseUriBuilder()
+                .path("bookings/{bookingId}")
+                .resolveTemplate("bookingId", booking.getBookingId())
+                .build());
 
         final int totalPages = (int) Math.ceil((double) total / size);
-        final BookingPageDto pageDto = new BookingPageDto(dtos, page, size, total, totalPages);
-        final Response.ResponseBuilder response = Response.ok(pageDto)
+        final Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(links) {})
                 .header("Cache-Control", "private, no-store")
                 .header("Pragma", "no-cache")
+                .header("X-Total-Count", total)
                 .header("Vary", "Authorization");
         addOneBasedPaginationLinks(response, page, size, totalPages);
         return response.build();
@@ -494,12 +496,7 @@ public class UserRestController {
                 .replaceQueryParam("size", size)
                 .build() + ">; rel=\"" + rel + "\"";
     }
-    private static String message(String msg) {
-        try {
-            return new com.fasterxml.jackson.databind.ObjectMapper()
-                    .writeValueAsString(java.util.Map.of("message", msg));
-        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            return "{\"message\":\"" + msg.replace("\"", "\\\"") + "\"}";
-        }
+    private static ErrorDto message(String msg) {
+        return new ErrorDto(msg);
     }
 }

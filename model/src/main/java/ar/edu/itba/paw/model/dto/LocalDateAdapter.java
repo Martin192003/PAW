@@ -8,7 +8,7 @@ import java.time.LocalDate;
  * de datetime completo (yyyy-MM-dd'T'HH:mm:ss.SSSXXX) para que las fechas con
  * hora (ej. createdAt) se serialicen bien. Ese mismo patron global lo usa MOXy
  * para CUALQUIER campo de tipo fecha, incluidos los LocalDate simples como
- * "date" en EventDto/BookingCreateRequestDto.
+ * "date" en EventDto/BookingDto.
  *
  * El problema: el frontend manda <input type="date">, que produce un string
  * "yyyy-MM-dd" (ej. "2026-07-22"), sin la parte de hora. MOXy intenta

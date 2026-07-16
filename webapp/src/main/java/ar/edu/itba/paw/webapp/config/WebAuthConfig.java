@@ -134,7 +134,17 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type", "X-Requested-With", "Accept"));
-        configuration.setExposedHeaders(Arrays.asList("Location", "Link", "X-Total-Count"));
+        configuration.setExposedHeaders(Arrays.asList(
+                "Location",
+                "Link",
+                "X-Total-Count",
+                "X-Available-Today",
+                "X-Invalid-Day",
+                "X-Selected-Availability-Date",
+                "Paw-Auth-Token",
+                "Paw-Token-Type",
+                "Paw-Token-Expires-In"
+        ));
 
         final org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

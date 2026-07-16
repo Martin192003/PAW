@@ -150,3 +150,28 @@ export function requireAnyLink(
   }
   throw new Error(`Missing HATEOAS link (${keys.join(', ')}) for ${context}.`);
 }
+
+export function itemLinksFromCollection(body: unknown): string[] | null {
+  if (!Array.isArray(body)) {
+    return null;
+  }
+
+  const links = body
+    .filter((item): item is LinkDto => {
+      return !!item
+        && typeof item === 'object'
+        && 'rel' in item
+        && 'href' in item
+        && typeof (item as LinkDto).rel === 'string'
+        && typeof (item as LinkDto).href === 'string';
+    })
+    .filter(link => link.rel === 'item' || link.rel === 'self')
+    .map(link => link.href);
+
+  return links.length === body.length ? links : null;
+}
+
+export function totalFromHeader(raw: string | null, fallback: number): number {
+  const parsed = raw === null ? NaN : Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}

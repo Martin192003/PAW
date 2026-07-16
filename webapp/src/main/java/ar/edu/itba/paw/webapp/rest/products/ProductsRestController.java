@@ -2,9 +2,13 @@ package ar.edu.itba.paw.webapp.rest.products;
 
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.dto.ErrorDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.ProductDto;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.ProductService;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -12,13 +16,11 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Path("/clubs/{clubId}/menu")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.PRODUCT, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
+@Consumes({ApiMediaTypes.PRODUCT, ApiMediaTypes.APPLICATION_JSON})
 public class ProductsRestController {
 
     private final ProductService productService;
@@ -48,26 +50,29 @@ public class ProductsRestController {
             clubUuid = UUID.fromString(clubId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId inválido"))
+                    .entity(new ErrorDto("club.id.invalid"))
                     .build();
         }
 
         var products = productService.findByClubID(clubUuid);
         if (products == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "El club no tiene menú cargado"))
+                    .entity(new ErrorDto("menu.notfound"))
                     .build();
         }
 
-        boolean canManage = canManageClub(clubUuid, securityContext);
-        List<ProductDto> body = products.stream()
-                .map(product -> productDtoAssembler.toDto(uriInfo, clubUuid, product, canManage))
-                .collect(Collectors.toList());
-        return Response.ok(new GenericEntity<List<ProductDto>>(body) {}).build();
+        List<LinkDto> body = CollectionLinks.items(products, product -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/menu/{productId}")
+                .resolveTemplate("clubId", clubUuid)
+                .resolveTemplate("productId", product.getProductId())
+                .build());
+        return Response.ok(new GenericEntity<List<LinkDto>>(body) {})
+                .header("X-Total-Count", body.size())
+                .build();
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes({ApiMediaTypes.PRODUCT, ApiMediaTypes.APPLICATION_JSON})
     public Response createProduct(@PathParam("clubId") String clubId,
                                   ProductDto body,
                                   @Context SecurityContext securityContext) {
@@ -76,7 +81,7 @@ public class ProductsRestController {
             clubUuid = UUID.fromString(clubId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId inválido"))
+                    .entity(new ErrorDto("club.id.invalid"))
                     .build();
         }
 
@@ -93,7 +98,7 @@ public class ProductsRestController {
                 body.getProductType() == null
         ) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "Missing required fields"))
+                    .entity(new ErrorDto("fields.required"))
                     .build();
         }
 
@@ -125,14 +130,14 @@ public class ProductsRestController {
             productUuid = UUID.fromString(productId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId o productId invÃ¡lido"))
+                    .entity(new ErrorDto("club_or_product.id.invalid"))
                     .build();
         }
 
         List<Product> products = productService.findByClubID(clubUuid);
         if (products == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Producto no encontrado"))
+                    .entity(new ErrorDto("product.notfound"))
                     .build();
         }
 
@@ -142,13 +147,13 @@ public class ProductsRestController {
                 .findFirst()
                 .map(product -> Response.ok(productDtoAssembler.toDto(uriInfo, clubUuid, product, canManage)).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity(Map.of("message", "Producto no encontrado"))
+                        .entity(new ErrorDto("product.notfound"))
                         .build());
     }
 
     @PUT
     @Path("/{productId}")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes({ApiMediaTypes.PRODUCT, ApiMediaTypes.APPLICATION_JSON})
     public Response updateProduct(@PathParam("clubId") String clubId,
                                   @PathParam("productId") String productId,
                                   ProductDto body,
@@ -159,7 +164,7 @@ public class ProductsRestController {
             productUuid = UUID.fromString(productId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId o productId inválido"))
+                    .entity(new ErrorDto("club_or_product.id.invalid"))
                     .build();
         }
 
@@ -171,7 +176,7 @@ public class ProductsRestController {
 
         if (!productBelongsToClub(clubUuid, productUuid)) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Producto no encontrado"))
+                    .entity(new ErrorDto("product.notfound"))
                     .build();
         }
 
@@ -183,7 +188,7 @@ public class ProductsRestController {
                 body.getIsAvailable() == null
         ) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "Missing required fields"))
+                    .entity(new ErrorDto("fields.required"))
                     .build();
         }
 
@@ -198,7 +203,7 @@ public class ProductsRestController {
         );
         if (updated == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Producto o club no encontrado"))
+                    .entity(new ErrorDto("product_or_club.notfound"))
                     .build();
         }
 
@@ -217,7 +222,7 @@ public class ProductsRestController {
             productUuid = UUID.fromString(productId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId o productId inválido"))
+                    .entity(new ErrorDto("club_or_product.id.invalid"))
                     .build();
         }
 
@@ -229,14 +234,14 @@ public class ProductsRestController {
 
         if (!productBelongsToClub(clubUuid, productUuid)) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Producto no encontrado"))
+                    .entity(new ErrorDto("product.notfound"))
                     .build();
         }
 
         boolean removed = productService.delete(productUuid);
         if (!removed) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Producto no encontrado"))
+                    .entity(new ErrorDto("product.notfound"))
                     .build();
         }
 
@@ -265,3 +270,4 @@ public class ProductsRestController {
         }
     }
 }
+

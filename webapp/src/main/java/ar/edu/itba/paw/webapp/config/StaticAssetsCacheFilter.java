@@ -49,6 +49,10 @@ public class StaticAssetsCacheFilter implements Filter {
             // Cache incondicional: el contenido nunca cambia para este nombre de archivo.
             httpResp.setHeader("Cache-Control",
                     "public, max-age=" + ONE_YEAR_SECONDS + ", immutable");
+        } else if (STATIC_EXTENSION.matcher(uri).matches()) {
+            // Recursos estaticos no hasheados (favicon, public/, legacy resources)
+            // no pueden recibir cache incondicional porque no tienen cache busting.
+            httpResp.setHeader("Cache-Control", "no-cache");
         } else if (isIndexHtml(uri)) {
             // El index.html debe revalidarse siempre; es el punto de entrada de la SPA.
             httpResp.setHeader("Cache-Control", "no-cache");

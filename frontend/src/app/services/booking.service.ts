@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpContext, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
+import { forkJoin, map, of, switchMap } from 'rxjs';
 import { Booking, BookingFilters, BookingPage, Receipt } from '../models/booking.model';
 import { environment } from '../../environments/environment';
-import { normalizeLinks, requireAnyLink, requireLink, resolveApiUrl } from '../utils/api-url.util';
+import { itemLinksFromCollection, normalizeLinks, requireAnyLink, requireLink, resolveApiUrl, totalFromHeader } from '../utils/api-url.util';
 import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
 import { AuthStateService } from './auth-state.service';
 
@@ -18,13 +19,15 @@ export class BookingService {
 
   listManagedClubBookings(filters: BookingFilters, page: number, size: number): Observable<BookingPage> {
     const params = this.params(filters, page, size);
-    return this.http.get<BookingPage>(this.currentUserLink(
-      ['managed-bookings'],
-      `${this.apiUrl}/managed-bookings`
+    return this.http.get<Booking[] | BookingPage>(this.currentUserLink(
+      ['managed'],
+      `${this.apiUrl}/bookings?managed=true`
     ), {
       params,
-      context: this.localErrorContext()
+      context: this.localErrorContext(),
+      observe: 'response'
     }).pipe(
+      switchMap(response => this.bookingPageFromResponse(response, page, size)),
       catchError(error => this.retryLegacyManagedBookings(error, params))
     );
   }
@@ -35,10 +38,12 @@ export class BookingService {
       ? `${this.apiUrl}/users/${encodeURIComponent(user.userId)}/bookings`
       : '';
     const params = this.params(filters, page, size);
-    return this.http.get<BookingPage>(this.currentUserLink(['bookings'], fallback), {
+    return this.http.get<Booking[] | BookingPage>(this.currentUserLink(['bookings'], fallback), {
       params,
-      context: this.localErrorContext()
+      context: this.localErrorContext(),
+      observe: 'response'
     }).pipe(
+      switchMap(response => this.bookingPageFromResponse(response, page, size)),
       catchError(error => this.retryLegacyUserBookings(error, params))
     );
   }
@@ -175,20 +180,26 @@ export class BookingService {
     if (!(error instanceof HttpErrorResponse) || error.status !== 404) {
       return throwError(() => error);
     }
-    return this.http.get<BookingPage>(`${this.apiUrl}/bookings`, {
+    const page = Number(params.get('page') ?? '1') || 1;
+    const size = Number(params.get('size') ?? '10') || 10;
+    return this.http.get<Booking[] | BookingPage>(`${this.apiUrl}/bookings`, {
       params,
-      context: this.localErrorContext()
-    });
+      context: this.localErrorContext(),
+      observe: 'response'
+    }).pipe(switchMap(response => this.bookingPageFromResponse(response, page, size)));
   }
 
   private retryLegacyManagedBookings(error: unknown, params: HttpParams): Observable<BookingPage> {
     if (!(error instanceof HttpErrorResponse) || error.status !== 404) {
       return throwError(() => error);
     }
-    return this.http.get<BookingPage>(`${this.apiUrl}/bookings`, {
+    const page = Number(params.get('page') ?? '1') || 1;
+    const size = Number(params.get('size') ?? '10') || 10;
+    return this.http.get<Booking[] | BookingPage>(`${this.apiUrl}/bookings`, {
       params: params.set('managed', 'true'),
-      context: this.localErrorContext()
-    });
+      context: this.localErrorContext(),
+      observe: 'response'
+    }).pipe(switchMap(response => this.bookingPageFromResponse(response, page, size)));
   }
 
   private localErrorContext(): HttpContext {
@@ -207,5 +218,30 @@ export class BookingService {
     });
 
     return params;
+  }
+
+  private bookingPageFromResponse(response: HttpResponse<Booking[] | BookingPage>, page: number, size: number): Observable<BookingPage> {
+    const body = response.body ?? [];
+    if (!Array.isArray(body) && 'content' in body) {
+      return of({
+        content: body.content ?? [],
+        page: body.page ?? page,
+        size: body.size ?? size,
+        totalElements: body.totalElements ?? body.content?.length ?? 0,
+        totalPages: body.totalPages ?? 0,
+      });
+    }
+    const itemLinks = itemLinksFromCollection(body);
+    const totalElements = totalFromHeader(response.headers.get('X-Total-Count'), itemLinks?.length ?? body.length);
+    const totalPages = Math.ceil(totalElements / size);
+
+    if (itemLinks) {
+      const requests = itemLinks.map(link => this.http.get<Booking>(resolveApiUrl(link, this.apiUrl)));
+      return (requests.length ? forkJoin(requests) : of([] as Booking[])).pipe(
+        map(content => ({ content, page, size, totalElements, totalPages }))
+      );
+    }
+
+    return of({ content: body, page, size, totalElements, totalPages });
   }
 }

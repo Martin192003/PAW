@@ -1,10 +1,10 @@
 package ar.edu.itba.paw.webapp.auth;
 
+import ar.edu.itba.paw.model.dto.ErrorDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
 
 final class AuthErrorResponses {
     static final String APPLICATION_JSON = "application/json";
@@ -20,6 +20,6 @@ final class AuthErrorResponses {
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Cache-Control", "no-store");
         response.setHeader("Pragma", "no-cache");
-        MAPPER.writeValue(response.getWriter(), Collections.singletonMap("error", error));
+        MAPPER.writeValue(response.getWriter(), new ErrorDto(error));
     }
 }

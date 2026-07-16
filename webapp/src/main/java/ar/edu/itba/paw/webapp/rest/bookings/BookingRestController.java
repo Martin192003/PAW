@@ -2,11 +2,12 @@ package ar.edu.itba.paw.webapp.rest.bookings;
 
 import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Receipt;
-import ar.edu.itba.paw.model.dto.BookingCreateRequestDto;
+import ar.edu.itba.paw.model.dto.BookingDto;
 import ar.edu.itba.paw.model.exceptions.BadRequestException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.service.BookingService;
 import ar.edu.itba.paw.service.ReceiptService;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
 import ar.edu.itba.paw.webapp.rest.ContentDispositionHeader;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -33,8 +34,8 @@ import java.net.URI;
 import java.util.UUID;
 
 @Path("/clubs/{clubId}/bookings")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.BOOKING, ApiMediaTypes.APPLICATION_JSON})
+@Consumes({ApiMediaTypes.BOOKING, ApiMediaTypes.APPLICATION_JSON})
 public class BookingRestController {
 
     private final BookingService bookingService;
@@ -61,7 +62,7 @@ public class BookingRestController {
 
     @POST
     public Response createBooking(@PathParam("clubId") UUID clubId,
-                                  BookingCreateRequestDto body,
+                                  BookingDto body,
                                   @Context SecurityContext securityContext) {
         if (body == null) {
             throw new BadRequestException("Body requerido");

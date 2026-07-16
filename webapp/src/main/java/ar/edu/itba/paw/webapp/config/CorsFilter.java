@@ -20,6 +20,6 @@ public class CorsFilter implements ContainerResponseFilter {
     public void filter(ContainerRequestContext request,
                        ContainerResponseContext response) throws IOException {
         response.getHeaders().putSingle("Access-Control-Expose-Headers",
-                "Location, Link, X-Total-Count");
+                "Location, Link, X-Total-Count, X-Available-Today, X-Invalid-Day, X-Selected-Availability-Date, Paw-Auth-Token, Paw-Token-Type, Paw-Token-Expires-In");
     }
 }

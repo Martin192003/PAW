@@ -4,9 +4,11 @@ import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.BookingDto;
-import ar.edu.itba.paw.model.dto.BookingPageDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.service.BookingService;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -20,7 +22,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
@@ -29,7 +31,7 @@ import java.util.UUID;
 import java.util.ArrayList;
 
 @Path("/")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.BOOKING, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
 public class BookingsRestController {
 
     private static final int DEFAULT_PAGE = 1;
@@ -52,29 +54,36 @@ public class BookingsRestController {
     }
 
     @GET
-    @Path("/managed-bookings")
-    public Response listManagedBookings(@QueryParam("clubId") UUID clubId,
-                                        @QueryParam("bookingId") String bookingId,
-                                        @QueryParam("status") Status status,
-                                        @QueryParam("sort") @DefaultValue("created_desc") String sort,
-                                        @QueryParam("bookingDate") String bookingDate,
-                                        @QueryParam("hasReceipt") Boolean hasReceipt,
-                                        @QueryParam("page") @DefaultValue("1") int page,
-                                        @QueryParam("size") @DefaultValue("10") int size,
-                                        @Context SecurityContext securityContext) {
+    @Path("/bookings")
+    public Response listBookings(@QueryParam("managed") @DefaultValue("false") boolean managed,
+                                 @QueryParam("clubId") UUID clubId,
+                                 @QueryParam("bookingId") String bookingId,
+                                 @QueryParam("status") Status status,
+                                 @QueryParam("sort") @DefaultValue("created_desc") String sort,
+                                 @QueryParam("bookingDate") String bookingDate,
+                                 @QueryParam("hasReceipt") Boolean hasReceipt,
+                                 @QueryParam("page") @DefaultValue("1") int page,
+                                 @QueryParam("size") @DefaultValue("10") int size,
+                                 @Context SecurityContext securityContext) {
         page = Math.max(page, DEFAULT_PAGE);
         size = size < 1 ? DEFAULT_SIZE : size;
         final int offset = (page - 1) * size;
         final String login = authenticatedLoginIdentifier(securityContext);
 
-        final List<Booking> bookings = bookingService.searchManagedClubsPaginated(
-                login, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
-        final int total = bookingService.countSearchManagedClubs(
-                login, clubId, bookingId, status, bookingDate, hasReceipt);
+        final List<Booking> bookings = managed
+                ? bookingService.searchManagedClubsPaginated(
+                        login, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset)
+                : bookingService.searchForUserPaginated(
+                        login, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
+        final int total = managed
+                ? bookingService.countSearchManagedClubs(
+                        login, clubId, bookingId, status, bookingDate, hasReceipt)
+                : bookingService.countSearchForUser(
+                        login, clubId, bookingId, status, bookingDate, hasReceipt);
 
-        final BookingPageDto pageDto = pageDto(bookings, page, size, total, true, false);
-        Response.ResponseBuilder response = privateResponse(pageDto);
-        addPaginationLinks(response, page, size, pageDto.getTotalPages());
+        final int totalPages = (int) Math.ceil((double) total / size);
+        Response.ResponseBuilder response = privateCollectionResponse(bookings, total);
+        addPaginationLinks(response, page, size, totalPages);
         return response.build();
     }
 
@@ -89,7 +98,7 @@ public class BookingsRestController {
                                             @QueryParam("page") @DefaultValue("1") int page,
                                             @QueryParam("size") @DefaultValue("10") int size,
                                             @Context SecurityContext securityContext) {
-        return listManagedBookings(clubId, bookingId, status, sort, bookingDate, hasReceipt, page, size, securityContext);
+        return listBookings(true, clubId, bookingId, status, sort, bookingDate, hasReceipt, page, size, securityContext);
     }
 
     @GET
@@ -142,14 +151,6 @@ public class BookingsRestController {
         return Response.noContent().build();
     }
 
-    private BookingPageDto pageDto(List<Booking> bookings, int page, int size, int total, boolean canManage, boolean isOwner) {
-        final List<BookingDto> dtos = bookings.stream()
-                .map(booking -> toDto(booking, canManage, isOwner))
-                .toList();
-        final int totalPages = (int) Math.ceil((double) total / size);
-        return new BookingPageDto(dtos, page, size, total, totalPages);
-    }
-
     private BookingDto toDto(Booking booking, boolean canManage, boolean isOwner) {
         final UUID clubId = bookingService.clubId(booking.getBookingId());
         return bookingDtoAssembler.toDto(uriInfo, clubId, booking, canManage, isOwner);
@@ -183,6 +184,18 @@ public class BookingsRestController {
         return Response.ok(entity)
                 .header("Cache-Control", "private, no-store")
                 .header("Pragma", "no-cache")
+                .header("Vary", "Authorization");
+    }
+
+    private Response.ResponseBuilder privateCollectionResponse(List<Booking> bookings, int total) {
+        List<LinkDto> links = CollectionLinks.items(bookings, booking -> uriInfo.getBaseUriBuilder()
+                .path("bookings/{bookingId}")
+                .resolveTemplate("bookingId", booking.getBookingId())
+                .build());
+        return Response.ok(new GenericEntity<List<LinkDto>>(links) {})
+                .header("Cache-Control", "private, no-store")
+                .header("Pragma", "no-cache")
+                .header("X-Total-Count", total)
                 .header("Vary", "Authorization");
     }
 

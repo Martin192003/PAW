@@ -3,10 +3,10 @@ info:
   title: PAW TPE API
   version: 2026.06.01
   description: >
-    Contrato REST de la API actual. Las colecciones simples devuelven arrays.
-    Las colecciones paginadas usadas por el frontend conservan wrapper con
-    content/page/size/totalElements/totalPages y tambien exponen Link y
-    X-Total-Count cuando el recurso lo implementa.
+    Contrato REST de la API actual. Las colecciones principales devuelven
+    links a recursos individuales y exponen la paginacion por headers HTTP
+    Link y X-Total-Count. Las representaciones completas se obtienen desde
+    las URIs canonicas de detalle.
 servers:
   - url: http://localhost:8080/webapp/api
 security:
@@ -24,6 +24,22 @@ tags:
   - name: Bookings
 
 paths:
+  /:
+    get:
+      tags: [Root]
+      summary: Discover API entry points
+      security: []
+      responses:
+        '200':
+          description: Links to root API collections and authentication resources.
+          content:
+            application/vnd.paw.api-root.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
+
   /users:
     post:
       tags: [Users]
@@ -34,7 +50,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserCreateDto'
+              $ref: '#/components/schemas/UserDto'
       responses:
         '201':
           description: User created
@@ -123,17 +139,18 @@ paths:
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Array of reviews
+          description: Links to reviews authored by the user.
           headers:
             X-Total-Count:
               schema:
                 type: integer
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ReviewDto'
+                $ref: '#/components/schemas/LinkCollection'
 
   /auth/tokens:
     post:
@@ -149,7 +166,18 @@ paths:
               $ref: '#/components/schemas/AuthTokenRequestDto'
       responses:
         '200':
-          description: Bearer token created.
+          description: Bearer token created. The token is also exposed in Paw-Auth-Token.
+          headers:
+            Paw-Auth-Token:
+              schema:
+                type: string
+            Paw-Token-Type:
+              schema:
+                type: string
+            Paw-Token-Expires-In:
+              schema:
+                type: integer
+                format: int64
           content:
             application/json:
               schema:
@@ -220,7 +248,7 @@ paths:
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Paginated clubs
+          description: Links to clubs. Pagination is represented by Link and X-Total-Count headers.
           headers:
             Link:
               schema:
@@ -229,9 +257,12 @@ paths:
               schema:
                 type: integer
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                $ref: '#/components/schemas/ClubPagedResponseDto'
+                $ref: '#/components/schemas/LinkCollection'
         '400':
           $ref: '#/components/responses/BadRequest'
     post:
@@ -589,13 +620,14 @@ paths:
       summary: List products by club
       responses:
         '200':
-          description: Product array
+          description: Links to products in the club menu.
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ProductDto'
+                $ref: '#/components/schemas/LinkCollection'
     post:
       tags: [Menu]
       summary: Create product
@@ -660,13 +692,14 @@ paths:
             format: date
       responses:
         '200':
-          description: Table array
+          description: Links to club tables.
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TableDto'
+                $ref: '#/components/schemas/LinkCollection'
     post:
       tags: [Tables]
       summary: Create table
@@ -732,7 +765,7 @@ paths:
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Review array
+          description: Links to reviews for the club.
           headers:
             Link:
               schema:
@@ -741,11 +774,12 @@ paths:
               schema:
                 type: integer
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ReviewDto'
+                $ref: '#/components/schemas/LinkCollection'
     post:
       tags: [Reviews]
       summary: Create current user's review for club
@@ -838,7 +872,7 @@ paths:
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Private paginated bookings managed by the authenticated club admin
+          description: Links to private bookings managed by the authenticated club admin.
           headers:
             Cache-Control:
               schema:
@@ -848,10 +882,19 @@ paths:
               schema:
                 type: string
               description: Authorization
+            Link:
+              schema:
+                type: string
+            X-Total-Count:
+              schema:
+                type: integer
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingPageDto'
+                $ref: '#/components/schemas/LinkCollection'
     post:
       tags: [Bookings]
       summary: Create booking for club
@@ -860,7 +903,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookingCreateRequestDto'
+              $ref: '#/components/schemas/BookingDto'
       responses:
         '201':
           description: Booking created
@@ -936,7 +979,7 @@ paths:
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Private paginated bookings owned by the authenticated user
+          description: Links to private bookings owned by the authenticated user.
           headers:
             Cache-Control:
               schema:
@@ -946,16 +989,31 @@ paths:
               schema:
                 type: string
               description: Authorization
+            Link:
+              schema:
+                type: string
+            X-Total-Count:
+              schema:
+                type: integer
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingPageDto'
+                $ref: '#/components/schemas/LinkCollection'
 
-  /managed-bookings:
+  /bookings:
     get:
       tags: [Bookings]
       summary: List bookings managed by the authenticated user
       parameters:
+        - name: managed
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: true returns bookings managed by the authenticated user.
         - $ref: '#/components/parameters/ClubIdQuery'
         - $ref: '#/components/parameters/BookingIdQuery'
         - $ref: '#/components/parameters/StatusQuery'
@@ -966,7 +1024,7 @@ paths:
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Private paginated bookings managed by the authenticated user
+          description: Links to private bookings managed by the authenticated user.
           headers:
             Cache-Control:
               schema:
@@ -976,10 +1034,19 @@ paths:
               schema:
                 type: string
               description: Authorization
+            Link:
+              schema:
+                type: string
+            X-Total-Count:
+              schema:
+                type: integer
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingPageDto'
+                $ref: '#/components/schemas/LinkCollection'
 
   /bookings/{bookingId}:
     parameters:
@@ -1198,6 +1265,11 @@ components:
         method:
           type: string
 
+    LinkCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/LinkDto'
+
     ErrorDto:
       type: object
       properties:
@@ -1221,6 +1293,10 @@ components:
           type: string
           format: email
           description: Present only in the authenticated user's private representation.
+        password:
+          type: string
+          writeOnly: true
+          description: Accepted only on registration.
         cellphone:
           type: string
           description: Present only in the authenticated user's private representation.
@@ -1241,27 +1317,6 @@ components:
           readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
-
-    UserCreateDto:
-      type: object
-      required: [username, name, surname, email, password, cellphone]
-      properties:
-        username:
-          type: string
-        name:
-          type: string
-        surname:
-          type: string
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          writeOnly: true
-        cellphone:
-          type: string
-        locale:
-          type: string
 
     UserUpdateResponseDto:
       type: object
@@ -1574,51 +1629,36 @@ components:
         tableId:
           type: string
           format: uuid
+        date:
+          type: string
+          format: date
+          writeOnly: true
+          description: Accepted on booking creation.
         bookingStart:
           type: string
           format: date-time
+          readOnly: true
         bookingEnd:
           type: string
           format: date-time
+          readOnly: true
         status:
           $ref: '#/components/schemas/Status'
         createdAt:
           type: string
           format: date-time
+          readOnly: true
         totalAmount:
           type: number
+          readOnly: true
         hasReceipt:
           type: boolean
+          readOnly: true
         links:
           type: array
+          readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
-
-    BookingCreateRequestDto:
-      type: object
-      properties:
-        tableId:
-          type: string
-          format: uuid
-        date:
-          type: string
-          format: date
-
-    BookingPageDto:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/BookingDto'
-        page:
-          type: integer
-        size:
-          type: integer
-        totalElements:
-          type: integer
-        totalPages:
-          type: integer
 
     ReceiptDto:
       type: object

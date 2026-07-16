@@ -160,7 +160,7 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 - `GET /api/clubs/{clubId}/events`: eventos de un club.
 - `GET /api/clubs/{clubId}/reviews`: reviews paginadas.
 - `GET /api/users/{userId}/bookings`: reservas del usuario autenticado.
-- `GET /api/managed-bookings`: reservas administradas por el usuario admin.
+- `GET /api/bookings?managed=true`: reservas administradas por el usuario admin.
 - `GET /api/clubs/{clubId}/bookings`: reservas administradas de un club especifico.
 - `GET /api/bookings/{bookingId}`: detalle canonico de reserva propia o administrada, segun permisos.
 - `PUT /api/bookings/{bookingId}`: confirma o cancela una reserva administrada.
@@ -173,7 +173,9 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 - El frontend prioriza links HATEOAS en flujos principales y conserva fallback solo donde todavia hace falta compatibilidad.
 - Los endpoints de autenticacion viven bajo `/api/auth/*`; `/api/users` queda reservado para el recurso usuario.
 - Las colecciones relevantes mantienen `X-Total-Count` y agregan `Link` pagination cuando aplica.
-- Los assets Angular hasheados reciben `Cache-Control: public, max-age=31536000, immutable`; `index.html` e `index.csr.html` se revalidan con `no-cache`.
+- Los assets Angular hasheados reciben `Cache-Control: public, max-age=31536000, immutable`; `index.html`, `index.csr.html` y assets estaticos no hasheados se revalidan con `no-cache`.
+- Las imagenes modificables guardadas en base usan cache condicional (`Cache-Control: no-cache` + `ETag`). Los recibos privados usan `private, no-store`.
+- Las colecciones REST devuelven links `rel=item`; la paginacion viaja por headers `Link` y `X-Total-Count`.
 
 ## Aclaraciones conocidas
 

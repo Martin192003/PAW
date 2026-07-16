@@ -1,12 +1,16 @@
 package ar.edu.itba.paw.webapp.rest.tables;
 
 import ar.edu.itba.paw.model.ClubTable;
+import ar.edu.itba.paw.model.dto.ErrorDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.TableDto;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.TableService;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -18,13 +22,11 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Path("/clubs/{clubId}/tables")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.TABLE, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
+@Consumes({ApiMediaTypes.TABLE, ApiMediaTypes.APPLICATION_JSON})
 public class TablesRestController {
 
     private static final ZoneId BUENOS_AIRES_ZONE = ZoneId.of("America/Argentina/Buenos_Aires");
@@ -58,39 +60,42 @@ public class TablesRestController {
             clubUuid = UUID.fromString(clubId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId inválido"))
+                    .entity(new ErrorDto("club.id.invalid"))
                     .build();
         }
 
         try {
-            boolean canManage = canManageClub(clubUuid, securityContext);
-            final List<TableDto> tables;
+            final List<ClubTable> tables;
             if (date != null && !date.isBlank()) {
                 LocalDate selectedDate;
                 try {
                     selectedDate = LocalDate.parse(date);
                 } catch (Exception e) {
                     return Response.status(Response.Status.BAD_REQUEST)
-                            .entity(Map.of("message", "date inválida, formato esperado yyyy-MM-dd"))
+                            .entity(new ErrorDto("date.invalid"))
                             .build();
                 }
-                tables = tableService.findAvailableOnDate(clubUuid, selectedDate, BUENOS_AIRES_ZONE, CLOCK).stream()
-                        .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table, canManage))
-                        .collect(Collectors.toList());
+                tables = tableService.findAvailableOnDate(clubUuid, selectedDate, BUENOS_AIRES_ZONE, CLOCK);
             } else {
-                tables = tableService.findByClubId(clubUuid).stream()
-                        .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table, canManage))
-                        .collect(Collectors.toList());
+                tables = tableService.findByClubId(clubUuid);
             }
 
-            return Response.ok(new GenericEntity<List<TableDto>>(tables) {}).build();
+            List<LinkDto> links = CollectionLinks.items(tables, table -> uriInfo.getBaseUriBuilder()
+                    .path("clubs/{clubId}/tables/{tableId}")
+                    .resolveTemplate("clubId", clubUuid)
+                    .resolveTemplate("tableId", table.getTableId())
+                    .build());
+
+            return Response.ok(new GenericEntity<List<LinkDto>>(links) {})
+                    .header("X-Total-Count", links.size())
+                    .build();
         } catch (ValidationException | InvalidDateRangeException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", e.getMessage()))
+                    .entity(new ErrorDto(e.getMessage()))
                     .build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Club no encontrado"))
+                    .entity(new ErrorDto("club.notfound"))
                     .build();
         }
     }
@@ -104,7 +109,7 @@ public class TablesRestController {
             clubUuid = UUID.fromString(clubId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId inválido"))
+                    .entity(new ErrorDto("club.id.invalid"))
                     .build();
         }
 
@@ -121,7 +126,7 @@ public class TablesRestController {
                 body.getDiscount() == null ||
                 body.getTableState() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "Missing required fields"))
+                    .entity(new ErrorDto("fields.required"))
                     .build();
         }
 
@@ -153,7 +158,7 @@ public class TablesRestController {
             tableUuid = UUID.fromString(tableId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId o tableId invalido"))
+                    .entity(new ErrorDto("club_or_table.id.invalid"))
                     .build();
         }
 
@@ -162,7 +167,7 @@ public class TablesRestController {
                 .filter(table -> clubUuid.equals(table.getClubId()))
                 .map(table -> Response.ok(tableDtoAssembler.toDto(uriInfo, clubUuid, table, canManage)).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity(Map.of("message", "Mesa no encontrada"))
+                        .entity(new ErrorDto("table.notfound"))
                         .build());
     }
 
@@ -178,7 +183,7 @@ public class TablesRestController {
             tableUuid = UUID.fromString(tableId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId o tableId inválido"))
+                    .entity(new ErrorDto("club_or_table.id.invalid"))
                     .build();
         }
 
@@ -190,7 +195,7 @@ public class TablesRestController {
 
         if (!tableBelongsToClub(clubUuid, tableUuid)) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Mesa o club no encontrado"))
+                    .entity(new ErrorDto("table_or_club.notfound"))
                     .build();
         }
 
@@ -201,7 +206,7 @@ public class TablesRestController {
                 body.getDiscount() == null ||
                 body.getTableState() == null) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "Missing required fields"))
+                    .entity(new ErrorDto("fields.required"))
                     .build();
         }
 
@@ -216,7 +221,7 @@ public class TablesRestController {
         );
         if (updated == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Mesa o club no encontrado"))
+                    .entity(new ErrorDto("table_or_club.notfound"))
                     .build();
         }
 
@@ -235,7 +240,7 @@ public class TablesRestController {
             tableUuid = UUID.fromString(tableId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId o tableId inválido"))
+                    .entity(new ErrorDto("club_or_table.id.invalid"))
                     .build();
         }
 
@@ -247,14 +252,14 @@ public class TablesRestController {
 
         if (!tableBelongsToClub(clubUuid, tableUuid)) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Mesa no encontrada"))
+                    .entity(new ErrorDto("table.notfound"))
                     .build();
         }
 
         boolean removed = tableService.delete(tableUuid);
         if (!removed) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Mesa no encontrada"))
+                    .entity(new ErrorDto("table.notfound"))
                     .build();
         }
 
@@ -280,3 +285,4 @@ public class TablesRestController {
         }
     }
 }
+

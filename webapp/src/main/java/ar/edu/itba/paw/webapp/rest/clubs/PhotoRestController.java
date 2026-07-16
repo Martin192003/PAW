@@ -56,7 +56,9 @@ public class PhotoRestController {
         // ETag basado en photoId + createdAt: es estable mientras la foto no cambie,
         // y varía si la foto es reemplazada (nuevo UUID o nueva fecha de creación).
         String etagValue = photo.getPhotoId().toString()
-                + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0");
+                + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0")
+                + Objects.toString(photo.getSizeBytes(), "0")
+                + Objects.toString(photo.getContentType(), "");
         EntityTag etag = new EntityTag(Integer.toHexString(etagValue.hashCode()));
 
         Response.ResponseBuilder preconditions = request.evaluatePreconditions(etag);

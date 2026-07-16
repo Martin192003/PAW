@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { Review } from '../models/review.model';
 import { environment } from '../../environments/environment';
+import { itemLinksFromCollection, resolveApiUrl, totalFromHeader } from '../utils/api-url.util';
 
 export interface ReviewCreateRequest {
   rating: number;
@@ -36,12 +37,7 @@ export class ReviewService {
     return this.http
       .get<Review[]>(`${this.apiUrl}/clubs/${clubId}/reviews`, { params, observe: 'response' })
       .pipe(
-        map((response: HttpResponse<Review[]>) => {
-          const reviews = Array.isArray(response.body) ? response.body : [];
-          const totalHeader = response.headers.get('X-Total-Count');
-          const total = totalHeader ? Number(totalHeader) : reviews.length;
-          return { reviews, total: Number.isFinite(total) ? total : reviews.length };
-        })
+        switchMap((response: HttpResponse<Review[]>) => this.listResultFromResponse(response))
       );
   }
 
@@ -57,12 +53,7 @@ export class ReviewService {
     return this.http
       .get<Review[]>(`${this.apiUrl}/users/${userId}/reviews`, { params, observe: 'response' })
       .pipe(
-        map((response: HttpResponse<Review[]>) => {
-          const reviews = Array.isArray(response.body) ? response.body : [];
-          const totalHeader = response.headers.get('X-Total-Count');
-          const total = totalHeader ? Number(totalHeader) : reviews.length;
-          return { reviews, total: Number.isFinite(total) ? total : reviews.length };
-        })
+        switchMap((response: HttpResponse<Review[]>) => this.listResultFromResponse(response))
       );
   }
 
@@ -105,5 +96,20 @@ export class ReviewService {
     }
     formData.append('file', payload.photo);
     return formData;
+  }
+
+  private listResultFromResponse(response: HttpResponse<Review[]>): Observable<ReviewListResult> {
+    const body = response.body ?? [];
+    const itemLinks = itemLinksFromCollection(body);
+    const total = totalFromHeader(response.headers.get('X-Total-Count'), itemLinks?.length ?? body.length);
+
+    if (itemLinks) {
+      const requests = itemLinks.map(link => this.http.get<Review>(resolveApiUrl(link, this.apiUrl)));
+      return (requests.length ? forkJoin(requests) : of([] as Review[])).pipe(
+        map(reviews => ({ reviews, total }))
+      );
+    }
+
+    return of({ reviews: Array.isArray(body) ? body : [], total });
   }
 }

@@ -3,6 +3,8 @@ package ar.edu.itba.paw.webapp.rest.clubs;
 import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.*;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +25,10 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Component
 @Path("/clubs")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.CLUB, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
 public class ClubRestController {
 
     private static final int DEFAULT_PAGE = 1;
@@ -112,24 +113,16 @@ public class ClubRestController {
 
         final int totalPages = (int) Math.ceil((double) totalClubs / size);
 
-        List<ClubDto> dtos = clubs.stream()
-                .map(club -> toDtoWithLinks(club, false))
-                .toList();
+        List<LinkDto> links = CollectionLinks.items(clubs, club -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}")
+                .resolveTemplate("clubId", club.getClubId())
+                .build());
 
-
-        PagedResponseDto response = new PagedResponseDto(
-                dtos,
-                page,
-                size,
-                totalClubs,
-                totalPages,
-                availabilityMode,
-                invalidDay,
-                selectedDay != null ? selectedDay.toString() : null
-        );
-
-        Response.ResponseBuilder responseBuilder = Response.ok(response)
+        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<LinkDto>>(links) {})
                 .header("X-Total-Count", totalClubs)
+                .header("X-Available-Today", availabilityMode)
+                .header("X-Invalid-Day", invalidDay)
+                .header("X-Selected-Availability-Date", selectedDay != null ? selectedDay.toString() : "")
                 .header("Cache-Control", "no-cache");
         addPaginationLinks(responseBuilder, page, size, totalPages, 1);
         return responseBuilder.build();
@@ -145,24 +138,17 @@ public class ClubRestController {
         final boolean includeSensitive = isAuthenticatedUser(id, securityContext);
         final int offset = (page - 1) * size;
         final int totalClubs = clubService.countClubsByUser(id);
-        final List<ClubDto> dtos = clubService.getClubsByUserPaginated(id, size, offset)
-                .stream()
-                .map(club -> toDtoWithLinks(club, includeSensitive))
-                .collect(Collectors.toList());
-
-        final int totalPages = (int) Math.ceil((double) totalClubs / size);
-        final PagedResponseDto response = new PagedResponseDto(
-                dtos,
-                page,
-                size,
-                totalClubs,
-                totalPages,
-                false,
-                false,
-                null
+        final List<LinkDto> links = CollectionLinks.items(
+                clubService.getClubsByUserPaginated(id, size, offset),
+                club -> uriInfo.getBaseUriBuilder()
+                        .path("clubs/{clubId}")
+                        .resolveTemplate("clubId", club.getClubId())
+                        .build()
         );
 
-        Response.ResponseBuilder responseBuilder = Response.ok(response)
+        final int totalPages = (int) Math.ceil((double) totalClubs / size);
+
+        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<LinkDto>>(links) {})
                 .header("X-Total-Count", totalClubs);
         applyClubCacheHeaders(responseBuilder, includeSensitive);
         addPaginationLinks(responseBuilder, page, size, totalPages, 1);
@@ -205,14 +191,14 @@ public class ClubRestController {
             id = UUID.fromString(clubId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId inválido"))
+                    .entity(new ErrorDto("club.id.invalid"))
                     .build();
         }
 
         Club club = clubService.getClubById(id).orElse(null);
         if (club == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Club no encontrado"))
+                    .entity(new ErrorDto("club.notfound"))
                     .build();
         }
 
@@ -237,7 +223,7 @@ public class ClubRestController {
                 isBlank(body.getCbu())) {
 
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "Faltan campos requeridos"))
+                    .entity(new ErrorDto("fields.required"))
                     .build();
         }
 
@@ -277,20 +263,20 @@ public class ClubRestController {
             id = UUID.fromString(clubId);
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "clubId inválido"))
+                    .entity(new ErrorDto("club.id.invalid"))
                     .build();
         }
 
         Optional<Club> existingOpt = clubService.getClubById(id);
         if (existingOpt.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(Map.of("message", "Club no encontrado"))
+                    .entity(new ErrorDto("club.notfound"))
                     .build();
         }
 
         if (body == null) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("message", "Body requerido"))
+                    .entity(new ErrorDto("body.required"))
                     .build();
         }
 
@@ -627,7 +613,9 @@ public class ClubRestController {
                 .map(layout -> {
                     // ETag basado en layoutId + createdAt (cambia al reemplazar el layout)
                     String etagValue = layout.getLayoutId().toString()
-                            + (layout.getCreatedAt() != null ? layout.getCreatedAt().toEpochSecond() : "0");
+                            + (layout.getCreatedAt() != null ? layout.getCreatedAt().toEpochSecond() : "0")
+                            + Objects.toString(layout.getSizeBytes(), "0")
+                            + Objects.toString(layout.getContentType(), "");
                     EntityTag etag = new EntityTag(Integer.toHexString(etagValue.hashCode()));
 
                     Response.ResponseBuilder preconditions = request.evaluatePreconditions(etag);
@@ -1009,7 +997,9 @@ public class ClubRestController {
      */
     private Response buildImageResponse(Photo photo, Request request) {
         String etagValue = photo.getPhotoId().toString()
-                + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0");
+                + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0")
+                + Objects.toString(photo.getSizeBytes(), "0")
+                + Objects.toString(photo.getContentType(), "");
         EntityTag etag = new EntityTag(Integer.toHexString(etagValue.hashCode()));
 
         Response.ResponseBuilder preconditions = request.evaluatePreconditions(etag);
