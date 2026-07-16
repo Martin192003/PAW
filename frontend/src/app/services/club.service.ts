@@ -382,7 +382,7 @@ export class ClubService {
     try {
       url = this.resolveClubLink(
         links,
-        this.linkRels.bookings,
+        ['create-booking', ...this.linkRels.bookings],
         `club ${clubId} bookings`,
         `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings`
       );
@@ -443,7 +443,7 @@ export class ClubService {
   }
 
   updateClub(clubId: string, payload: ClubUpdatePayload): Observable<Club> {
-    return this.http.put<Club>(`${this.apiUrl}/clubs/${clubId}`, payload).pipe(
+    return this.http.patch<Club>(`${this.apiUrl}/clubs/${clubId}`, payload).pipe(
       map(club => this.normalizeClub(club))
     );
   }

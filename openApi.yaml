@@ -268,9 +268,9 @@ paths:
                 $ref: '#/components/schemas/ClubDto'
         '404':
           $ref: '#/components/responses/NotFound'
-    put:
+    patch:
       tags: [Clubs]
-      summary: Update club
+      summary: Partially update club
       requestBody:
         required: true
         content:
@@ -825,6 +825,33 @@ paths:
   /clubs/{clubId}/bookings:
     parameters:
       - $ref: '#/components/parameters/ClubId'
+    get:
+      tags: [Bookings]
+      summary: List bookings managed for a club
+      parameters:
+        - $ref: '#/components/parameters/BookingIdQuery'
+        - $ref: '#/components/parameters/StatusQuery'
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/BookingDateQuery'
+        - $ref: '#/components/parameters/HasReceiptQuery'
+        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Private paginated bookings managed by the authenticated club admin
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: private, no-store
+            Vary:
+              schema:
+                type: string
+              description: Authorization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPageDto'
     post:
       tags: [Bookings]
       summary: Create booking for club
@@ -892,10 +919,12 @@ paths:
         '204':
           description: Receipt deleted
 
-  /bookings:
+  /users/{userId}/bookings:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
     get:
       tags: [Bookings]
-      summary: List authenticated user's bookings
+      summary: List bookings owned by the authenticated user
       parameters:
         - $ref: '#/components/parameters/ClubIdQuery'
         - $ref: '#/components/parameters/BookingIdQuery'
@@ -903,17 +932,50 @@ paths:
         - $ref: '#/components/parameters/SortQuery'
         - $ref: '#/components/parameters/BookingDateQuery'
         - $ref: '#/components/parameters/HasReceiptQuery'
-        - name: managed
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: When true, lists bookings managed by the authenticated user instead of bookings made by them.
         - $ref: '#/components/parameters/PageOne'
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Paginated bookings
+          description: Private paginated bookings owned by the authenticated user
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: private, no-store
+            Vary:
+              schema:
+                type: string
+              description: Authorization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPageDto'
+
+  /managed-bookings:
+    get:
+      tags: [Bookings]
+      summary: List bookings managed by the authenticated user
+      parameters:
+        - $ref: '#/components/parameters/ClubIdQuery'
+        - $ref: '#/components/parameters/BookingIdQuery'
+        - $ref: '#/components/parameters/StatusQuery'
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/BookingDateQuery'
+        - $ref: '#/components/parameters/HasReceiptQuery'
+        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Private paginated bookings managed by the authenticated user
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: private, no-store
+            Vary:
+              schema:
+                type: string
+              description: Authorization
           content:
             application/json:
               schema:

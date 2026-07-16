@@ -1,27 +1,46 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpContext, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Observable, catchError, throwError } from 'rxjs';
 import { Booking, BookingFilters, BookingPage, Receipt } from '../models/booking.model';
 import { environment } from '../../environments/environment';
-import { requireAnyLink, requireLink, resolveApiUrl } from '../utils/api-url.util';
+import { normalizeLinks, requireAnyLink, requireLink, resolveApiUrl } from '../utils/api-url.util';
 import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
+import { AuthStateService } from './auth-state.service';
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly apiUrl = environment.apiBaseUrl;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly authState: AuthStateService,
+  ) {}
 
   listManagedClubBookings(filters: BookingFilters, page: number, size: number): Observable<BookingPage> {
-    return this.http.get<BookingPage>(`${this.apiUrl}/bookings`, {
-      params: this.params(filters, page, size).set('managed', 'true')
-    });
+    const params = this.params(filters, page, size);
+    return this.http.get<BookingPage>(this.currentUserLink(
+      ['managed-bookings'],
+      `${this.apiUrl}/managed-bookings`
+    ), {
+      params,
+      context: this.localErrorContext()
+    }).pipe(
+      catchError(error => this.retryLegacyManagedBookings(error, params))
+    );
   }
 
   listUserBookings(filters: BookingFilters, page: number, size: number): Observable<BookingPage> {
-    return this.http.get<BookingPage>(`${this.apiUrl}/bookings`, {
-      params: this.params(filters, page, size)
-    });
+    const user = this.authState.getUser();
+    const fallback = user?.userId
+      ? `${this.apiUrl}/users/${encodeURIComponent(user.userId)}/bookings`
+      : '';
+    const params = this.params(filters, page, size);
+    return this.http.get<BookingPage>(this.currentUserLink(['bookings'], fallback), {
+      params,
+      context: this.localErrorContext()
+    }).pipe(
+      catchError(error => this.retryLegacyUserBookings(error, params))
+    );
   }
 
   getBooking(_clubId: string, bookingId: string): Observable<Booking> {
@@ -63,7 +82,7 @@ export class BookingService {
     return this.http.put<void>(
       this.resolveBookingLink(
         links,
-        ['confirm', 'managed-update'],
+        ['confirm'],
         `managed booking ${bookingId} confirmation`,
         `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`
       ),
@@ -76,7 +95,7 @@ export class BookingService {
     return this.http.put<void>(
       this.resolveBookingLink(
         links,
-        ['managed-update'],
+        ['managed-cancel'],
         `managed booking ${bookingId} cancellation`,
         `${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`
       ),
@@ -139,6 +158,41 @@ export class BookingService {
       return resolveApiUrl(fallback, this.apiUrl);
     }
     return resolveApiUrl(requireAnyLink(links, rels, context), this.apiUrl);
+  }
+
+  private currentUserLink(rels: string[], fallback: string): string {
+    const links = normalizeLinks(this.authState.getUser()?.links);
+    if (!links) {
+      if (!fallback) {
+        throw new Error('Authenticated user link is required.');
+      }
+      return resolveApiUrl(fallback, this.apiUrl);
+    }
+    return resolveApiUrl(requireAnyLink(links, rels, 'authenticated user'), this.apiUrl);
+  }
+
+  private retryLegacyUserBookings(error: unknown, params: HttpParams): Observable<BookingPage> {
+    if (!(error instanceof HttpErrorResponse) || error.status !== 404) {
+      return throwError(() => error);
+    }
+    return this.http.get<BookingPage>(`${this.apiUrl}/bookings`, {
+      params,
+      context: this.localErrorContext()
+    });
+  }
+
+  private retryLegacyManagedBookings(error: unknown, params: HttpParams): Observable<BookingPage> {
+    if (!(error instanceof HttpErrorResponse) || error.status !== 404) {
+      return throwError(() => error);
+    }
+    return this.http.get<BookingPage>(`${this.apiUrl}/bookings`, {
+      params: params.set('managed', 'true'),
+      context: this.localErrorContext()
+    });
+  }
+
+  private localErrorContext(): HttpContext {
+    return new HttpContext().set(SKIP_API_ERROR_REDIRECT, true);
   }
 
   private params(filters: BookingFilters, page: number, size: number): HttpParams {

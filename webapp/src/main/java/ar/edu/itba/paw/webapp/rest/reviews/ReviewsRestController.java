@@ -46,16 +46,18 @@ public class ReviewsRestController {
     @Path("/{clubId}/reviews")
     public Response listByClub(@PathParam("clubId") String clubIdStr,
                                @QueryParam("page") @DefaultValue("0") int page,
-                               @QueryParam("size") @DefaultValue("20") int size) {
+                               @QueryParam("size") @DefaultValue("20") int size,
+                               @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
         if (clubId == null) return badRequest("clubId inválido");
 
         if (page < 0 || size <= 0) return badRequest("Invalid pagination parameters");
 
+        UUID currentUserId = currentUserId(securityContext);
         int offset = page * size;
         List<Review> reviews = reviewService.listByClub(clubId, null, size, offset);
         List<ReviewDto> body = reviews.stream()
-                .map(review -> ReviewMapper.toDto(review, uriInfo))
+                .map(review -> ReviewMapper.toDto(review, uriInfo, currentUserId))
                 .collect(Collectors.toList());
 
         int total = reviewService.countByClub(clubId);
@@ -110,7 +112,7 @@ public class ReviewsRestController {
                     .build();
 
             return Response.created(location)
-                    .entity(ReviewMapper.toDto(created, uriInfo))
+                    .entity(ReviewMapper.toDto(created, uriInfo, user.getId()))
                     .build();
         } catch (DuplicateEntityException e) {
             return error(Response.Status.CONFLICT, "Review already exists for this user and club");
@@ -157,7 +159,7 @@ public class ReviewsRestController {
                     .build();
 
             return Response.created(location)
-                    .entity(ReviewMapper.toDto(created, uriInfo))
+                    .entity(ReviewMapper.toDto(created, uriInfo, user.getId()))
                     .build();
         } catch (DuplicateEntityException e) {
             return error(Response.Status.CONFLICT, "Review already exists for this user and club");
@@ -195,7 +197,7 @@ public class ReviewsRestController {
                     body.getDescription(),
                     null
             );
-            return Response.ok(ReviewMapper.toDto(updated, uriInfo)).build();
+            return Response.ok(ReviewMapper.toDto(updated, uriInfo, user.getId())).build();
         } catch (Exception e) {
             return serverError("Internal server error");
         }
@@ -231,7 +233,7 @@ public class ReviewsRestController {
                     formString("description"),
                     optionalPhoto()
             );
-            return Response.ok(ReviewMapper.toDto(updated, uriInfo)).build();
+            return Response.ok(ReviewMapper.toDto(updated, uriInfo, user.getId())).build();
         } catch (Exception e) {
             return serverError("Internal server error");
         }
@@ -321,6 +323,11 @@ public class ReviewsRestController {
             user = userService.findByUserName(principalName);
         }
         return user;
+    }
+
+    private UUID currentUserId(SecurityContext securityContext) {
+        User user = authenticatedUser(securityContext);
+        return user != null ? user.getId() : null;
     }
 
     private Optional<Review> ownedReview(UUID clubId, UUID reviewId, User user) {

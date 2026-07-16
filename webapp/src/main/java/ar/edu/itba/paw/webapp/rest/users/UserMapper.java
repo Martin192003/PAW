@@ -68,7 +68,9 @@ public final class UserMapper {
         links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
                 .path("users/{id}").resolveTemplate("id", userId).build(), "GET"));
         links.add(LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder()
-                .path("bookings").build(), "GET"));
+                .path("users/{id}/bookings").resolveTemplate("id", userId).build(), "GET"));
+        links.add(LinkBuilder.link("managed-bookings", uriInfo.getBaseUriBuilder()
+                .path("managed-bookings").build(), "GET"));
         links.add(LinkBuilder.link("reviews", uriInfo.getBaseUriBuilder()
                 .path("users/{id}/reviews").resolveTemplate("id", userId).build(), "GET"));
         links.add(LinkBuilder.link("clubs", uriInfo.getBaseUriBuilder()

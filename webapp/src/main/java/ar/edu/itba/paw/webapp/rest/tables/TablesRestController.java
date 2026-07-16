@@ -51,7 +51,8 @@ public class TablesRestController {
 
     @GET
     public Response listTables(@PathParam("clubId") String clubId,
-                               @QueryParam("date") String date) {
+                               @QueryParam("date") String date,
+                               @Context SecurityContext securityContext) {
         UUID clubUuid;
         try {
             clubUuid = UUID.fromString(clubId);
@@ -62,6 +63,7 @@ public class TablesRestController {
         }
 
         try {
+            boolean canManage = canManageClub(clubUuid, securityContext);
             final List<TableDto> tables;
             if (date != null && !date.isBlank()) {
                 LocalDate selectedDate;
@@ -73,11 +75,11 @@ public class TablesRestController {
                             .build();
                 }
                 tables = tableService.findAvailableOnDate(clubUuid, selectedDate, BUENOS_AIRES_ZONE, CLOCK).stream()
-                        .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table))
+                        .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table, canManage))
                         .collect(Collectors.toList());
             } else {
                 tables = tableService.findByClubId(clubUuid).stream()
-                        .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table))
+                        .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table, canManage))
                         .collect(Collectors.toList());
             }
 
@@ -135,14 +137,15 @@ public class TablesRestController {
                 .path(created.getTableId().toString())
                 .build();
         return Response.created(uri)
-                .entity(tableDtoAssembler.toDto(uriInfo, clubUuid, created))
+                .entity(tableDtoAssembler.toDto(uriInfo, clubUuid, created, true))
                 .build();
     }
 
     @GET
     @Path("/{tableId}")
     public Response getTable(@PathParam("clubId") String clubId,
-                             @PathParam("tableId") String tableId) {
+                             @PathParam("tableId") String tableId,
+                             @Context SecurityContext securityContext) {
         UUID clubUuid;
         UUID tableUuid;
         try {
@@ -154,9 +157,10 @@ public class TablesRestController {
                     .build();
         }
 
+        boolean canManage = canManageClub(clubUuid, securityContext);
         return tableService.findById(tableUuid)
                 .filter(table -> clubUuid.equals(table.getClubId()))
-                .map(table -> Response.ok(tableDtoAssembler.toDto(uriInfo, clubUuid, table)).build())
+                .map(table -> Response.ok(tableDtoAssembler.toDto(uriInfo, clubUuid, table, canManage)).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(Map.of("message", "Mesa no encontrada"))
                         .build());
@@ -216,7 +220,7 @@ public class TablesRestController {
                     .build();
         }
 
-        TableDto responseBody = tableDtoAssembler.toDto(uriInfo, clubUuid, updated);
+        TableDto responseBody = tableDtoAssembler.toDto(uriInfo, clubUuid, updated, true);
         return Response.ok(responseBody).build();
     }
 
@@ -261,5 +265,18 @@ public class TablesRestController {
         return tableService.findById(tableId)
                 .filter(table -> clubId.equals(table.getClubId()))
                 .isPresent();
+    }
+
+    private boolean canManageClub(UUID clubId, SecurityContext securityContext) {
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return false;
+        }
+        try {
+            clubService.assertAdmin(clubId, user.getId());
+            return true;
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 }

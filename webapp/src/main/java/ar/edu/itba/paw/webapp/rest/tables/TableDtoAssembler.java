@@ -15,6 +15,10 @@ import java.util.UUID;
 public class TableDtoAssembler {
 
     public TableDto toDto(final UriInfo uriInfo, final UUID clubId, final ClubTable table) {
+        return toDto(uriInfo, clubId, table, false);
+    }
+
+    public TableDto toDto(final UriInfo uriInfo, final UUID clubId, final ClubTable table, final boolean canManage) {
         TableDto dto = new TableDto();
         dto.setTableId(table.getTableId());
         dto.setClubId(clubId);
@@ -25,11 +29,12 @@ public class TableDtoAssembler {
         dto.setDiscount(table.getDiscount());
 
         List<LinkDto> links = new ArrayList<>();
-        links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
+        var self = uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}/tables/{tableId}")
                 .resolveTemplate("clubId", clubId)
                 .resolveTemplate("tableId", table.getTableId())
-                .build(), "GET"));
+                .build();
+        links.add(LinkBuilder.link("self", self, "GET"));
         links.add(LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}")
                 .resolveTemplate("clubId", clubId)
@@ -38,6 +43,10 @@ public class TableDtoAssembler {
                 .path("clubs/{clubId}/bookings")
                 .resolveTemplate("clubId", clubId)
                 .build(), "GET"));
+        if (canManage) {
+            links.add(LinkBuilder.link("update", self, "PUT"));
+            links.add(LinkBuilder.link("delete", self, "DELETE"));
+        }
         dto.setLinks(links);
 
         return dto;

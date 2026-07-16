@@ -159,8 +159,9 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 - `GET /api/events`: eventos globales.
 - `GET /api/clubs/{clubId}/events`: eventos de un club.
 - `GET /api/clubs/{clubId}/reviews`: reviews paginadas.
-- `GET /api/bookings`: reservas del usuario autenticado.
-- `GET /api/bookings?managed=true`: reservas administradas por el usuario admin.
+- `GET /api/users/{userId}/bookings`: reservas del usuario autenticado.
+- `GET /api/managed-bookings`: reservas administradas por el usuario admin.
+- `GET /api/clubs/{clubId}/bookings`: reservas administradas de un club especifico.
 - `GET /api/bookings/{bookingId}`: detalle canonico de reserva propia o administrada, segun permisos.
 - `PUT /api/bookings/{bookingId}`: confirma o cancela una reserva administrada.
 - `DELETE /api/bookings/{bookingId}`: cancela una reserva propia o administrada.

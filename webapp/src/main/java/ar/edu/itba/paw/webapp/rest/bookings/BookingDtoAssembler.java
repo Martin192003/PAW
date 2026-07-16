@@ -1,6 +1,7 @@
 package ar.edu.itba.paw.webapp.rest.bookings;
 
 import ar.edu.itba.paw.model.Booking;
+import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.dto.BookingDto;
 import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.ReceiptService;
@@ -22,6 +23,10 @@ public class BookingDtoAssembler {
     }
 
     public BookingDto toDto(UriInfo uriInfo, UUID clubId, Booking booking) {
+        return toDto(uriInfo, clubId, booking, false, false);
+    }
+
+    public BookingDto toDto(UriInfo uriInfo, UUID clubId, Booking booking, boolean canManage, boolean isOwner) {
         final UUID tableId = booking.getTableId() != null
                 ? booking.getTableId()
                 : (booking.getTable() != null ? booking.getTable().getTableId() : null);
@@ -66,18 +71,27 @@ public class BookingDtoAssembler {
                 .resolveTemplate("clubId", clubId)
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "GET"));
-        links.add(LinkBuilder.link("cancel", uriInfo.getBaseUriBuilder()
-                .path("bookings/{bookingId}")
-                .resolveTemplate("bookingId", booking.getBookingId())
-                .build(), "DELETE"));
-        links.add(LinkBuilder.link("confirm", uriInfo.getBaseUriBuilder()
-                .path("bookings/{bookingId}")
-                .resolveTemplate("bookingId", booking.getBookingId())
-                .build(), "PUT"));
-        links.add(LinkBuilder.link("managed-update", uriInfo.getBaseUriBuilder()
-                .path("bookings/{bookingId}")
-                .resolveTemplate("bookingId", booking.getBookingId())
-                .build(), "PUT"));
+
+        final boolean cancellable = booking.getStatus() == Status.PENDIENTE
+                || booking.getStatus() == Status.CONFIRMADA;
+        if (isOwner && cancellable) {
+            links.add(LinkBuilder.link("cancel", uriInfo.getBaseUriBuilder()
+                    .path("bookings/{bookingId}")
+                    .resolveTemplate("bookingId", booking.getBookingId())
+                    .build(), "DELETE"));
+        }
+        if (canManage && booking.getStatus() == Status.PENDIENTE && dto.isHasReceipt()) {
+            links.add(LinkBuilder.link("confirm", uriInfo.getBaseUriBuilder()
+                    .path("bookings/{bookingId}")
+                    .resolveTemplate("bookingId", booking.getBookingId())
+                    .build(), "PUT"));
+        }
+        if (canManage && cancellable) {
+            links.add(LinkBuilder.link("managed-cancel", uriInfo.getBaseUriBuilder()
+                    .path("bookings/{bookingId}")
+                    .resolveTemplate("bookingId", booking.getBookingId())
+                    .build(), "PUT"));
+        }
         dto.setLinks(links);
 
         return dto;

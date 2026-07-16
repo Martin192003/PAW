@@ -15,6 +15,10 @@ import java.util.UUID;
 public class ProductDtoAssembler {
 
     public ProductDto toDto(final UriInfo uriInfo, final UUID clubId, final Product product) {
+        return toDto(uriInfo, clubId, product, false);
+    }
+
+    public ProductDto toDto(final UriInfo uriInfo, final UUID clubId, final Product product, final boolean canManage) {
         ProductDto dto = new ProductDto();
         dto.setProductId(product.getProductId());
         dto.setProductName(product.getProductName());
@@ -25,11 +29,12 @@ public class ProductDtoAssembler {
         dto.setCreatedAt(product.getCreatedAt());
 
         List<LinkDto> links = new ArrayList<>();
-        links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
+        var self = uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}/menu/{productId}")
                 .resolveTemplate("clubId", clubId)
                 .resolveTemplate("productId", product.getProductId())
-                .build(), "GET"));
+                .build();
+        links.add(LinkBuilder.link("self", self, "GET"));
         links.add(LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}")
                 .resolveTemplate("clubId", clubId)
@@ -38,6 +43,10 @@ public class ProductDtoAssembler {
                 .path("clubs/{clubId}/menu")
                 .resolveTemplate("clubId", clubId)
                 .build(), "GET"));
+        if (canManage) {
+            links.add(LinkBuilder.link("update", self, "PUT"));
+            links.add(LinkBuilder.link("delete", self, "DELETE"));
+        }
         dto.setLinks(links);
 
         return dto;

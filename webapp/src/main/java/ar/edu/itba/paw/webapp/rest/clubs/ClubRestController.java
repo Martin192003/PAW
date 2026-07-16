@@ -268,7 +268,7 @@ public class ClubRestController {
                 .build();
     }
 
-    @PUT
+    @PATCH
     @Path("/{clubId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateClub(@PathParam("clubId") String clubId, ClubDto body, @Context SecurityContext securityContext) {
@@ -463,28 +463,24 @@ public class ClubRestController {
         UUID id = parseUuidOr400(clubId);
         if (id == null) return badRequest("clubId inválido");
 
-        try {
-            if (clubService.getClubById(id).isEmpty()) {
-                return notFound("Club no encontrado");
-            }
-
-            List<Photo> rawPhotos = photoService.getClubPhotos(id, 50, 0);
-            List<PhotoDto> photos = new ArrayList<>();
-            if (rawPhotos == null || rawPhotos.isEmpty()) {
-                return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
-            }
-
-            for (Photo photo : rawPhotos) {
-                if (photo == null || photo.getPhotoId() == null) {
-                    continue;
-                }
-                photos.add(photoDtoAssembler.toDto(uriInfo, photo));
-            }
-
-            return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
-        } catch (RuntimeException ex) {
-            return Response.ok(new GenericEntity<List<PhotoDto>>(new ArrayList<PhotoDto>()) {}).build();
+        if (clubService.getClubById(id).isEmpty()) {
+            return notFound("Club no encontrado");
         }
+
+        List<Photo> rawPhotos = photoService.getClubPhotos(id, 50, 0);
+        List<PhotoDto> photos = new ArrayList<>();
+        if (rawPhotos == null || rawPhotos.isEmpty()) {
+            return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
+        }
+
+        for (Photo photo : rawPhotos) {
+            if (photo == null || photo.getPhotoId() == null) {
+                continue;
+            }
+            photos.add(photoDtoAssembler.toDto(uriInfo, photo));
+        }
+
+        return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
     }
 
     @POST
@@ -601,28 +597,24 @@ public class ClubRestController {
         UUID id = parseUuidOr400(clubId);
         if (id == null) return badRequest("clubId inválido");
 
-        try {
-            if (clubService.getClubById(id).isEmpty()) {
-                return notFound("Club no encontrado");
-            }
-
-            List<Photo> rawPhotos = photoService.getReviewPhotosByClub(id, 50, 0);
-            List<PhotoDto> photos = new ArrayList<>();
-            if (rawPhotos == null || rawPhotos.isEmpty()) {
-                return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
-            }
-
-            for (Photo photo : rawPhotos) {
-                if (photo == null || photo.getPhotoId() == null) {
-                    continue;
-                }
-                photos.add(photoDtoAssembler.toDto(uriInfo, photo));
-            }
-
-            return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
-        } catch (RuntimeException ex) {
-            return Response.ok(new GenericEntity<List<PhotoDto>>(new ArrayList<PhotoDto>()) {}).build();
+        if (clubService.getClubById(id).isEmpty()) {
+            return notFound("Club no encontrado");
         }
+
+        List<Photo> rawPhotos = photoService.getReviewPhotosByClub(id, 50, 0);
+        List<PhotoDto> photos = new ArrayList<>();
+        if (rawPhotos == null || rawPhotos.isEmpty()) {
+            return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
+        }
+
+        for (Photo photo : rawPhotos) {
+            if (photo == null || photo.getPhotoId() == null) {
+                continue;
+            }
+            photos.add(photoDtoAssembler.toDto(uriInfo, photo));
+        }
+
+        return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
     }
 
     @GET
@@ -802,11 +794,18 @@ public class ClubRestController {
                 .path(clubId.toString())
                 .path("events")
                 .build(), "GET"));
-        links.add(LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder()
+        if (includeSensitive) {
+            links.add(LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder()
+                    .path("clubs")
+                    .path(clubId.toString())
+                    .path("bookings")
+                    .build(), "GET"));
+        }
+        links.add(LinkBuilder.link("create-booking", uriInfo.getBaseUriBuilder()
                 .path("clubs")
                 .path(clubId.toString())
                 .path("bookings")
-                .build(), "GET"));
+                .build(), "POST"));
         links.add(LinkBuilder.link("reviews", uriInfo.getBaseUriBuilder()
                 .path("clubs")
                 .path(clubId.toString())

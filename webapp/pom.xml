@@ -203,7 +203,10 @@
           <artifactId>maven-war-plugin</artifactId>
           <version>3.4.0</version>
             <configuration>
-<!--                <packagingExcludes>**/logback-test.xml</packagingExcludes>-->
+                <packagingExcludes>
+                    WEB-INF/classes/application.properties,
+                    WEB-INF/classes/mail.properties
+                </packagingExcludes>
                 <webResources>
                     <resource>
                         <directory>../frontend/dist/frontend/browser</directory>

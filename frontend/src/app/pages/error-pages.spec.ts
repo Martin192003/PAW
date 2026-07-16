@@ -26,6 +26,8 @@ describe('NotFoundPage', () => {
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('Bling');
+    expect(element.textContent).toContain('Error 404');
     expect(element.textContent).toContain('Pagina no encontrada');
     expect(element.textContent).toContain('La ruta que intentaste visitar no existe o fue movida.');
     expect(element.querySelector('a')?.getAttribute('href')).toBe('/clubs');
@@ -54,6 +56,8 @@ describe('ForbiddenPage', () => {
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('Bling');
+    expect(element.textContent).toContain('Error 403');
     expect(element.textContent).toContain('Acceso denegado');
     expect(element.textContent).toContain('No tenes permisos para acceder a este recurso.');
     expect(element.querySelector('a')?.getAttribute('href')).toBe('/clubs');
@@ -96,9 +100,10 @@ describe('ErrorPage', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(apiErrors.getSnapshot).toHaveBeenCalled();
     expect(apiErrors.clear).toHaveBeenCalled();
+    expect(element.textContent).toContain('Bling');
+    expect(element.textContent).toContain('Error 500');
     expect(element.textContent).toContain('Ocurrio un problema');
     expect(element.textContent).toContain('Server failed');
-    expect(element.textContent).toContain('Codigo: 500');
   });
 
   it('renders the fallback error message when there is no captured API error', () => {
@@ -108,7 +113,7 @@ describe('ErrorPage', () => {
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('Error 500');
     expect(element.textContent).toContain('Ocurrio un error inesperado.');
-    expect(element.textContent).not.toContain('Codigo:');
   });
 });

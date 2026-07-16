@@ -1,7 +1,10 @@
 package ar.edu.itba.paw.webapp.rest.users;
 
+import ar.edu.itba.paw.model.Booking;
+import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.*;
+import ar.edu.itba.paw.service.BookingService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
@@ -17,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import ar.edu.itba.paw.service.ReviewService;
+import ar.edu.itba.paw.webapp.rest.bookings.BookingDtoAssembler;
 import ar.edu.itba.paw.webapp.rest.reviews.ReviewMapper;
 
 import javax.ws.rs.DefaultValue;
@@ -40,6 +44,8 @@ import java.util.UUID;
 public class UserRestController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserRestController.class);
+    private static final int DEFAULT_BOOKINGS_PAGE = 1;
+    private static final int DEFAULT_BOOKINGS_SIZE = 10;
 
     @Context
     private UriInfo uriInfo;
@@ -49,6 +55,12 @@ public class UserRestController {
 
     @Autowired
     private ReviewService reviewService;
+
+    @Autowired
+    private BookingService bookingService;
+
+    @Autowired
+    private BookingDtoAssembler bookingDtoAssembler;
 
     @Autowired
     private AuthenticatedUserResolver authenticatedUserResolver;
@@ -315,7 +327,8 @@ public class UserRestController {
     @Path("/{userId}/reviews")
     public Response getUserReviews(@PathParam("userId") String userIdStr,
                                    @QueryParam("page") @DefaultValue("0") int page,
-                                   @QueryParam("size") @DefaultValue("20") int size) {
+                                   @QueryParam("size") @DefaultValue("20") int size,
+                                   @Context SecurityContext securityContext) {
         UUID id;
         try {
             id = UUID.fromString(userIdStr);
@@ -341,10 +354,12 @@ public class UserRestController {
                     .build();
         }
 
+        User authUser = authenticatedUserResolver.resolve(securityContext);
+        UUID currentUserId = authUser != null && authUser.getId().equals(id) ? authUser.getId() : null;
         int offset = page * size;
         List<ar.edu.itba.paw.model.Review> reviews = reviewService.obtainPaginatedReviews(id, null, size, offset);
         List<ReviewDto> dtos = reviews.stream()
-                .map(review -> ReviewMapper.toDto(review, uriInfo))
+                .map(review -> ReviewMapper.toDto(review, uriInfo, currentUserId))
                 .collect(Collectors.toList());
 
         int total = reviewService.countByUser(id);
@@ -352,6 +367,65 @@ public class UserRestController {
         Response.ResponseBuilder response = Response.ok(entity)
                 .header("X-Total-Count", total);
         addPaginationLinks(response, page, size, total);
+        return response.build();
+    }
+
+    @GET
+    @Path("/{userId}/bookings")
+    public Response getUserBookings(@PathParam("userId") String userIdStr,
+                                    @QueryParam("clubId") UUID clubId,
+                                    @QueryParam("bookingId") String bookingId,
+                                    @QueryParam("status") Status status,
+                                    @QueryParam("sort") @DefaultValue("created_desc") String sort,
+                                    @QueryParam("bookingDate") String bookingDate,
+                                    @QueryParam("hasReceipt") Boolean hasReceipt,
+                                    @QueryParam("page") @DefaultValue("1") int page,
+                                    @QueryParam("size") @DefaultValue("10") int size,
+                                    @Context SecurityContext securityContext) {
+        final UUID userId;
+        try {
+            userId = UUID.fromString(userIdStr);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("userId invalido"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        final User authUser = authenticatedUserResolver.resolve(securityContext);
+        if (authUser == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        if (!authUser.getId().equals(userId)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(message("Forbidden"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        page = Math.max(page, DEFAULT_BOOKINGS_PAGE);
+        size = size < 1 ? DEFAULT_BOOKINGS_SIZE : size;
+        final int offset = (page - 1) * size;
+        final String loginIdentifier = securityContext.getUserPrincipal().getName();
+
+        final List<Booking> bookings = bookingService.searchForUserPaginated(
+                loginIdentifier, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
+        final int total = bookingService.countSearchForUser(
+                loginIdentifier, clubId, bookingId, status, bookingDate, hasReceipt);
+        final List<BookingDto> dtos = bookings.stream()
+                .map(booking -> bookingDtoAssembler.toDto(uriInfo, bookingService.clubId(booking.getBookingId()), booking, false, true))
+                .collect(Collectors.toList());
+
+        final int totalPages = (int) Math.ceil((double) total / size);
+        final BookingPageDto pageDto = new BookingPageDto(dtos, page, size, total, totalPages);
+        final Response.ResponseBuilder response = Response.ok(pageDto)
+                .header("Cache-Control", "private, no-store")
+                .header("Pragma", "no-cache")
+                .header("Vary", "Authorization");
+        addOneBasedPaginationLinks(response, page, size, totalPages);
         return response.build();
     }
     /**
@@ -393,6 +467,21 @@ public class UserRestController {
         if (page < lastPage) {
             links.add(pageLink(page + 1, size, "next"));
             links.add(pageLink(lastPage, size, "last"));
+        }
+        if (!links.isEmpty()) {
+            responseBuilder.header("Link", String.join(", ", links));
+        }
+    }
+
+    private void addOneBasedPaginationLinks(Response.ResponseBuilder responseBuilder, int page, int size, int totalPages) {
+        List<String> links = new ArrayList<>();
+        if (page > DEFAULT_BOOKINGS_PAGE) {
+            links.add(pageLink(DEFAULT_BOOKINGS_PAGE, size, "first"));
+            links.add(pageLink(page - 1, size, "prev"));
+        }
+        if (page < totalPages) {
+            links.add(pageLink(page + 1, size, "next"));
+            links.add(pageLink(totalPages, size, "last"));
         }
         if (!links.isEmpty()) {
             responseBuilder.header("Link", String.join(", ", links));

@@ -41,7 +41,8 @@ public class ProductsRestController {
     }
 
     @GET
-    public Response listProducts(@PathParam("clubId") String clubId) {
+    public Response listProducts(@PathParam("clubId") String clubId,
+                                 @Context SecurityContext securityContext) {
         UUID clubUuid;
         try {
             clubUuid = UUID.fromString(clubId);
@@ -58,8 +59,9 @@ public class ProductsRestController {
                     .build();
         }
 
+        boolean canManage = canManageClub(clubUuid, securityContext);
         List<ProductDto> body = products.stream()
-                .map(product -> productDtoAssembler.toDto(uriInfo, clubUuid, product))
+                .map(product -> productDtoAssembler.toDto(uriInfo, clubUuid, product, canManage))
                 .collect(Collectors.toList());
         return Response.ok(new GenericEntity<List<ProductDto>>(body) {}).build();
     }
@@ -107,14 +109,15 @@ public class ProductsRestController {
                 .path(created.getProductId().toString())
                 .build();
         return Response.created(uri)
-                .entity(productDtoAssembler.toDto(uriInfo, clubUuid, created))
+                .entity(productDtoAssembler.toDto(uriInfo, clubUuid, created, true))
                 .build();
     }
 
     @GET
     @Path("/{productId}")
     public Response getProduct(@PathParam("clubId") String clubId,
-                               @PathParam("productId") String productId) {
+                               @PathParam("productId") String productId,
+                               @Context SecurityContext securityContext) {
         UUID clubUuid;
         UUID productUuid;
         try {
@@ -133,10 +136,11 @@ public class ProductsRestController {
                     .build();
         }
 
+        boolean canManage = canManageClub(clubUuid, securityContext);
         return products.stream()
                 .filter(product -> productUuid.equals(product.getProductId()))
                 .findFirst()
-                .map(product -> Response.ok(productDtoAssembler.toDto(uriInfo, clubUuid, product)).build())
+                .map(product -> Response.ok(productDtoAssembler.toDto(uriInfo, clubUuid, product, canManage)).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(Map.of("message", "Producto no encontrado"))
                         .build());
@@ -198,7 +202,7 @@ public class ProductsRestController {
                     .build();
         }
 
-        ProductDto responseBody = productDtoAssembler.toDto(uriInfo, clubUuid, updated);
+        ProductDto responseBody = productDtoAssembler.toDto(uriInfo, clubUuid, updated, true);
         return Response.ok(responseBody).build();
     }
 
@@ -246,5 +250,18 @@ public class ProductsRestController {
     private boolean productBelongsToClub(UUID clubId, UUID productId) {
         return productService.findByClubID(clubId).stream()
                 .anyMatch(product -> productId.equals(product.getProductId()));
+    }
+
+    private boolean canManageClub(UUID clubId, SecurityContext securityContext) {
+        User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            return false;
+        }
+        try {
+            clubService.assertAdmin(clubId, user.getId());
+            return true;
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 }

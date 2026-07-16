@@ -8,6 +8,7 @@ import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public final class ReviewMapper {
 
@@ -31,17 +32,22 @@ public final class ReviewMapper {
     }
 
     public static ReviewDto toDto(final Review review, final UriInfo uriInfo) {
+        return toDto(review, uriInfo, null);
+    }
+
+    public static ReviewDto toDto(final Review review, final UriInfo uriInfo, final UUID currentUserId) {
         ReviewDto dto = toDto(review);
         if (dto == null || uriInfo == null) {
             return dto;
         }
 
         List<LinkDto> links = new ArrayList<>();
-        links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
+        var self = uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}/reviews/{reviewId}")
                 .resolveTemplate("clubId", dto.getClubId())
                 .resolveTemplate("reviewId", dto.getReviewId())
-                .build(), "GET"));
+                .build();
+        links.add(LinkBuilder.link("self", self, "GET"));
         links.add(LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}")
                 .resolveTemplate("clubId", dto.getClubId())
@@ -60,6 +66,10 @@ public final class ReviewMapper {
                     .toString();
             dto.setPhotoUrl(photoUrl);
             links.add(LinkBuilder.link("photo", photoUrl, "GET"));
+        }
+        if (currentUserId != null && currentUserId.equals(dto.getUserId())) {
+            links.add(LinkBuilder.link("update", self, "PUT"));
+            links.add(LinkBuilder.link("delete", self, "DELETE"));
         }
         dto.setLinks(links);
 

@@ -2,9 +2,12 @@ package ar.edu.itba.paw.webapp.rest.bookings;
 
 import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Status;
+import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.BookingDto;
 import ar.edu.itba.paw.model.dto.BookingPageDto;
+import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.service.BookingService;
+import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.DELETE;
@@ -34,49 +37,59 @@ public class BookingsRestController {
 
     private final BookingService bookingService;
     private final BookingDtoAssembler bookingDtoAssembler;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @Context
     private UriInfo uriInfo;
 
     @Autowired
     public BookingsRestController(final BookingService bookingService,
-                                  final BookingDtoAssembler bookingDtoAssembler) {
+                                  final BookingDtoAssembler bookingDtoAssembler,
+                                  final AuthenticatedUserResolver authenticatedUserResolver) {
         this.bookingService = bookingService;
         this.bookingDtoAssembler = bookingDtoAssembler;
+        this.authenticatedUserResolver = authenticatedUserResolver;
     }
 
     @GET
-    @Path("/bookings")
-    public Response listBookings(@QueryParam("clubId") UUID clubId,
-                                 @QueryParam("bookingId") String bookingId,
-                                 @QueryParam("status") Status status,
-                                 @QueryParam("sort") @DefaultValue("created_desc") String sort,
-                                 @QueryParam("bookingDate") String bookingDate,
-                                 @QueryParam("hasReceipt") Boolean hasReceipt,
-                                 @QueryParam("managed") @DefaultValue("false") boolean managed,
-                                 @QueryParam("page") @DefaultValue("1") int page,
-                                 @QueryParam("size") @DefaultValue("10") int size,
-                                 @Context SecurityContext securityContext) {
+    @Path("/managed-bookings")
+    public Response listManagedBookings(@QueryParam("clubId") UUID clubId,
+                                        @QueryParam("bookingId") String bookingId,
+                                        @QueryParam("status") Status status,
+                                        @QueryParam("sort") @DefaultValue("created_desc") String sort,
+                                        @QueryParam("bookingDate") String bookingDate,
+                                        @QueryParam("hasReceipt") Boolean hasReceipt,
+                                        @QueryParam("page") @DefaultValue("1") int page,
+                                        @QueryParam("size") @DefaultValue("10") int size,
+                                        @Context SecurityContext securityContext) {
         page = Math.max(page, DEFAULT_PAGE);
         size = size < 1 ? DEFAULT_SIZE : size;
         final int offset = (page - 1) * size;
         final String login = authenticatedLoginIdentifier(securityContext);
 
-        final List<Booking> bookings = managed
-                ? bookingService.searchManagedClubsPaginated(
-                        login, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset)
-                : bookingService.searchForUserPaginated(
-                        login, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
-        final int total = managed
-                ? bookingService.countSearchManagedClubs(
-                        login, clubId, bookingId, status, bookingDate, hasReceipt)
-                : bookingService.countSearchForUser(
-                        login, clubId, bookingId, status, bookingDate, hasReceipt);
+        final List<Booking> bookings = bookingService.searchManagedClubsPaginated(
+                login, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
+        final int total = bookingService.countSearchManagedClubs(
+                login, clubId, bookingId, status, bookingDate, hasReceipt);
 
-        final BookingPageDto pageDto = pageDto(bookings, page, size, total);
-        Response.ResponseBuilder response = Response.ok(pageDto);
+        final BookingPageDto pageDto = pageDto(bookings, page, size, total, true, false);
+        Response.ResponseBuilder response = privateResponse(pageDto);
         addPaginationLinks(response, page, size, pageDto.getTotalPages());
         return response.build();
+    }
+
+    @GET
+    @Path("/clubs/{clubId}/bookings")
+    public Response listManagedClubBookings(@PathParam("clubId") UUID clubId,
+                                            @QueryParam("bookingId") String bookingId,
+                                            @QueryParam("status") Status status,
+                                            @QueryParam("sort") @DefaultValue("created_desc") String sort,
+                                            @QueryParam("bookingDate") String bookingDate,
+                                            @QueryParam("hasReceipt") Boolean hasReceipt,
+                                            @QueryParam("page") @DefaultValue("1") int page,
+                                            @QueryParam("size") @DefaultValue("10") int size,
+                                            @Context SecurityContext securityContext) {
+        return listManagedBookings(clubId, bookingId, status, sort, bookingDate, hasReceipt, page, size, securityContext);
     }
 
     @GET
@@ -84,7 +97,13 @@ public class BookingsRestController {
     public Response getBookingById(@PathParam("bookingId") UUID bookingId,
                                    @Context SecurityContext securityContext) {
         final String login = authenticatedLoginIdentifier(securityContext);
-        return Response.ok(toDto(bookingService.getAccessibleBooking(login, bookingId))).build();
+        final User user = authenticatedUser(securityContext);
+        final Booking booking = bookingService.getAccessibleBooking(login, bookingId);
+        final boolean isOwner = booking.getUser() != null
+                && booking.getUser().getId() != null
+                && booking.getUser().getId().equals(user.getId());
+        final boolean canManage = canManageBooking(login, bookingId);
+        return privateResponse(toDto(booking, canManage, isOwner)).build();
     }
 
     @PUT
@@ -112,7 +131,7 @@ public class BookingsRestController {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        return Response.ok(toDto(bookingService.getManagedClubBooking(login, bookingId))).build();
+        return privateResponse(toDto(bookingService.getManagedClubBooking(login, bookingId), true, false)).build();
     }
 
     @DELETE
@@ -123,17 +142,26 @@ public class BookingsRestController {
         return Response.noContent().build();
     }
 
-    private BookingPageDto pageDto(List<Booking> bookings, int page, int size, int total) {
+    private BookingPageDto pageDto(List<Booking> bookings, int page, int size, int total, boolean canManage, boolean isOwner) {
         final List<BookingDto> dtos = bookings.stream()
-                .map(this::toDto)
+                .map(booking -> toDto(booking, canManage, isOwner))
                 .toList();
         final int totalPages = (int) Math.ceil((double) total / size);
         return new BookingPageDto(dtos, page, size, total, totalPages);
     }
 
-    private BookingDto toDto(Booking booking) {
+    private BookingDto toDto(Booking booking, boolean canManage, boolean isOwner) {
         final UUID clubId = bookingService.clubId(booking.getBookingId());
-        return bookingDtoAssembler.toDto(uriInfo, clubId, booking);
+        return bookingDtoAssembler.toDto(uriInfo, clubId, booking, canManage, isOwner);
+    }
+
+    private boolean canManageBooking(String loginIdentifier, UUID bookingId) {
+        try {
+            bookingService.getManagedClubBooking(loginIdentifier, bookingId);
+            return true;
+        } catch (UnauthorizedException ignored) {
+            return false;
+        }
     }
 
     private String authenticatedLoginIdentifier(SecurityContext securityContext) {
@@ -141,6 +169,21 @@ public class BookingsRestController {
             throw new NotAuthorizedException("Authentication required");
         }
         return securityContext.getUserPrincipal().getName();
+    }
+
+    private User authenticatedUser(SecurityContext securityContext) {
+        final User user = authenticatedUserResolver.resolve(securityContext);
+        if (user == null) {
+            throw new NotAuthorizedException("Authentication required");
+        }
+        return user;
+    }
+
+    private Response.ResponseBuilder privateResponse(Object entity) {
+        return Response.ok(entity)
+                .header("Cache-Control", "private, no-store")
+                .header("Pragma", "no-cache")
+                .header("Vary", "Authorization");
     }
 
     private void addPaginationLinks(Response.ResponseBuilder responseBuilder,

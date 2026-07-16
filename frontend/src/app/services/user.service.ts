@@ -14,6 +14,7 @@ import {
   UserUpdateRequest,
 } from '../models/user.model';
 import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
+import { resolveApiUrl } from '../utils/api-url.util';
 
 export type UserUpdateResult = {
   user: User;
@@ -164,7 +165,11 @@ export class UserService {
   private loginResponseFromTokenResponse(tokenResponse: AuthTokenResponse): Observable<LoginResponse> {
     const token = tokenResponse.accessToken;
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    return this.http.get<User>(tokenResponse.user.href, { headers }).pipe(
+    const userUrl = resolveApiUrl(tokenResponse.user.href, this.apiUrl);
+    return this.http.get<User>(userUrl, {
+      headers,
+      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+    }).pipe(
       map((user) => ({ token, user }))
     );
   }
