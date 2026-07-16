@@ -179,7 +179,7 @@
   </dependencies>
 
   <build>
-    <finalName>webapp</finalName>
+    <finalName>app</finalName>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
         <plugin>
@@ -204,7 +204,6 @@
           <version>3.4.0</version>
             <configuration>
                 <packagingExcludes>
-                    WEB-INF/classes/application.properties,
                     WEB-INF/classes/mail.properties
                 </packagingExcludes>
                 <webResources>

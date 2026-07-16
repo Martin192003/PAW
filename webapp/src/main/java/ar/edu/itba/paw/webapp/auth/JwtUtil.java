@@ -20,7 +20,7 @@ public class JwtUtil {
 
     public JwtUtil(@Value("${jwt.secret}") String secret,
                    @Value("${jwt.expirationMinutes}") long expirationMinutes) {
-        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        this.key = Keys.hmacShaKeyFor(secretBytes(secret));
         this.expirationMillis = expirationMinutes * 60L * 1000L;
     }
 
@@ -50,5 +50,27 @@ public class JwtUtil {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    private byte[] secretBytes(String secret) {
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalArgumentException("jwt.secret must be configured");
+        }
+
+        String trimmed = secret.trim();
+        try {
+            byte[] decoded = Decoders.BASE64.decode(trimmed);
+            if (decoded.length >= 32) {
+                return decoded;
+            }
+        } catch (RuntimeException ignored) {
+            // Plain-text secrets are accepted below for deploy configurations.
+        }
+
+        byte[] raw = trimmed.getBytes(StandardCharsets.UTF_8);
+        if (raw.length < 32) {
+            throw new IllegalArgumentException("jwt.secret must be at least 32 bytes for HS256");
+        }
+        return raw;
     }
 }

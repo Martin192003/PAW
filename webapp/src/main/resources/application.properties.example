@@ -8,6 +8,13 @@ local.db.user=postgres
 local.db.pass=postgres
 local.schema.init=false
 
+# Preferred keys for deploy. If absent, WebConfig falls back to local.db.*.
+app.db.host=${local.db.host}
+app.db.port=${local.db.port}
+app.db.name=${local.db.name}
+app.db.user=${local.db.user}
+app.db.pass=${local.db.pass}
+
 local.base.url=http://localhost:8080/webapp
 app.base.url=http://localhost:8080/webapp
 club.contact.fallback-email=no-reply@local

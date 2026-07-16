@@ -52,16 +52,16 @@ public class WebConfig {
     @Value("classpath:/db/schema.sql")
     private Resource schemaSql;
 
-    @Value("${local.db.host}")
+    @Value("${app.db.host:${local.db.host}}")
     private String dbHost;
-    @Value("${local.db.port}")
+    @Value("${app.db.port:${local.db.port}}")
     private String dbPort;
-    @Value("${local.db.name}")
+    @Value("${app.db.name:${local.db.name}}")
     private String dbName;
 
-    @Value("${local.db.user}")
+    @Value("${app.db.user:${local.db.user}}")
     private String dbUser;
-    @Value("${local.db.pass}")
+    @Value("${app.db.pass:${local.db.pass}}")
     private String dbPass;
 
     @Value("${local.schema.init:false}")

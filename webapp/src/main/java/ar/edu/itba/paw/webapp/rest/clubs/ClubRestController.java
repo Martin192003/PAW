@@ -767,10 +767,10 @@ public class ClubRestController {
         dto.setClubName(club.getClubName());
         dto.setDescription(club.getDescription());
         dto.setLocation(club.getLocation());
-        dto.setZone(club.getZone().name());
-        dto.setMusicGenre(club.getMusicGenre().toString());
-        dto.setPriceRange(club.getPriceRange().toString());
-        dto.setBar(club.getIsBar());
+        dto.setZone(club.getZone() != null ? club.getZone().name() : null);
+        dto.setMusicGenre(club.getMusicGenre() != null ? club.getMusicGenre().toString() : null);
+        dto.setPriceRange(club.getPriceRange() != null ? club.getPriceRange().toString() : null);
+        dto.setBar(Boolean.TRUE.equals(club.getIsBar()));
         if (includeSensitive) {
             dto.setCbu(club.getCbu());
         }

@@ -168,6 +168,28 @@ public class ClubRestControllerTest {
     }
 
     @Test
+    public void testGetClub_WithLegacyNullableFields_ReturnsPublicRepresentation() {
+        Club club = club(CLUB_ID);
+        club.setZone(null);
+        club.setMusicGenre(null);
+        club.setPriceRange(null);
+        club.setIsBar(null);
+        when(clubService.getClubById(CLUB_ID)).thenReturn(Optional.of(club));
+
+        SecurityContext anonymous = mock(SecurityContext.class);
+        when(anonymous.getUserPrincipal()).thenReturn(null);
+
+        Response response = controller.getClub(CLUB_ID.toString(), false, anonymous);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        ClubDto dto = (ClubDto) response.getEntity();
+        assertNull(dto.getZone());
+        assertNull(dto.getMusicGenre());
+        assertNull(dto.getPriceRange());
+        assertFalse(dto.isBar());
+    }
+
+    @Test
     public void testGetClub_OwnerCaller_GetsPrivateRepresentation() {
         User owner = user(OWNER_ID);
         Club club = club(CLUB_ID);
