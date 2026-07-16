@@ -204,6 +204,14 @@ export class ClubService {
     );
   }
 
+  getManagedClubById(id: string): Observable<Club> {
+    return this.http.get<Club>(`${this.apiUrl}/clubs/${id}`, {
+      params: new HttpParams().set('managed', 'true')
+    }).pipe(
+      map(club => this.normalizeClub(club))
+    );
+  }
+
   getClubByLink(link: string): Observable<Club> {
     return this.http.get<Club>(resolveApiUrl(link, this.apiUrl)).pipe(
       map(club => this.normalizeClub(club))

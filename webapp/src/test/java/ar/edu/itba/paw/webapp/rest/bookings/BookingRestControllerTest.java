@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -96,6 +97,23 @@ public class BookingRestControllerTest {
         assertNotNull(response.getLocation());
         assertEquals(true, response.getLocation().toString().contains(BOOKING_ID.toString()));
         assertEquals(true, response.getEntity() instanceof BookingDto);
+    }
+
+    @Test
+    public void testGetBooking_UsesOwnerScopedClubBookingEndpoint() {
+        Booking booking = new Booking();
+        booking.setBookingId(BOOKING_ID);
+        booking.setStatus(ar.edu.itba.paw.model.Status.PENDIENTE);
+        booking.setBookingStart(OffsetDateTime.now());
+        booking.setBookingEnd(OffsetDateTime.now().plusHours(6));
+        when(bookingService.getForUserInClub(eq(CLUB_ID), eq(BOOKING_ID), eq(LOGIN))).thenReturn(booking);
+        when(receiptService.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
+
+        Response response = controller.getBooking(CLUB_ID, BOOKING_ID, securityContext);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertEquals(true, response.getEntity() instanceof BookingDto);
+        assertEquals("private, no-store", response.getHeaderString("Cache-Control"));
     }
 
     @Test

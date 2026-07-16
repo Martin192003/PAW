@@ -1390,30 +1390,35 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     }, 7000);
 
     this.loadClub(() => {
+      this.loadSecondaryClubData();
+    }, () => {
       clearTimeout(loadingTimeout);
       this.loading = false;
       this.clubLoadAttempted = true;
       this.cdr.markForCheck();
     });
+    this.startCreateProduct();
+    this.startCreateTable();
+    this.startCreateEvent();
+  }
+
+  private loadSecondaryClubData(): void {
     this.loadMenu();
     this.loadTables();
     this.loadEvents();
     this.loadLayout();
     this.loadGalleryPhotos();
-    this.startCreateProduct();
-    this.startCreateTable();
-    this.startCreateEvent();
-
     this.loadReviews();
   }
 
-  private loadClub(onComplete?: () => void): void {
-    this.clubService.getClubById(this.clubId).pipe(
+  private loadClub(onSuccess?: () => void, onComplete?: () => void): void {
+    this.clubService.getManagedClubById(this.clubId).pipe(
       timeout(6000)
     ).subscribe({
       next: (club) => {
         this.club = club;
         this.coverUrl = this.resolveCoverUrl(club);
+        onSuccess?.();
         onComplete?.();
         this.cdr.detectChanges();
       },

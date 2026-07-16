@@ -140,7 +140,7 @@ public class BookingsRestControllerTest {
 
         org.junit.Assert.assertThrows(
                 ar.edu.itba.paw.model.exceptions.BookingNotFoundException.class,
-                () -> controller.getBookingById(BOOKING_ID, securityContext));
+                () -> controller.getBookingById(BOOKING_ID, false, securityContext));
     }
 
     @Test
@@ -154,12 +154,27 @@ public class BookingsRestControllerTest {
                 .thenThrow(new ar.edu.itba.paw.model.exceptions.UnauthorizedException());
         when(receiptService.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
 
-        Response response = controller.getBookingById(BOOKING_ID, securityContext);
+        Response response = controller.getBookingById(BOOKING_ID, false, securityContext);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertTrue(response.getEntity() instanceof BookingDto);
         assertEquals(BOOKING_ID, ((BookingDto) response.getEntity()).getId());
         assertEquals("private, no-store", response.getHeaderString("Cache-Control"));
+    }
+
+    @Test
+    public void testGetBookingById_ManagedModeRequiresManagedBookingAccess() {
+        Booking booking = booking(BOOKING_ID, Status.PENDIENTE);
+        booking.setUser(user(UUID.randomUUID()));
+        when(bookingService.getManagedClubBooking(eq(LOGIN), eq(BOOKING_ID))).thenReturn(booking);
+        when(bookingService.clubId(BOOKING_ID)).thenReturn(UUID.randomUUID());
+        when(receiptService.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
+
+        Response response = controller.getBookingById(BOOKING_ID, true, securityContext);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertTrue(response.getEntity() instanceof BookingDto);
+        assertEquals(BOOKING_ID, ((BookingDto) response.getEntity()).getId());
     }
 
     @Test

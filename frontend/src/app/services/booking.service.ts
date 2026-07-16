@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import { Booking, BookingFilters, BookingPage, Receipt } from '../models/booking.model';
 import { environment } from '../../environments/environment';
 import { itemLinksFromCollection, normalizeLinks, requireAnyLink, requireLink, resolveApiUrl, totalFromHeader } from '../utils/api-url.util';
@@ -27,6 +27,16 @@ export class BookingService {
       context: this.localErrorContext(),
       observe: 'response'
     }).pipe(
+      catchError(error => {
+        if (error?.status !== 404) {
+          return throwError(() => error);
+        }
+        return this.http.get<Booking[] | BookingPage>(`${this.apiUrl}/bookings`, {
+          params: params.set('managed', 'true'),
+          context: this.localErrorContext(),
+          observe: 'response'
+        });
+      }),
       switchMap(response => this.bookingPageFromResponse(response, page, size))
     );
   }
@@ -42,13 +52,23 @@ export class BookingService {
       context: this.localErrorContext(),
       observe: 'response'
     }).pipe(
+      catchError(error => {
+        if (error?.status !== 404) {
+          return throwError(() => error);
+        }
+        return this.http.get<Booking[] | BookingPage>(`${this.apiUrl}/bookings`, {
+          params,
+          context: this.localErrorContext(),
+          observe: 'response'
+        });
+      }),
       switchMap(response => this.bookingPageFromResponse(response, page, size))
     );
   }
 
-  getBooking(_clubId: string, bookingId: string): Observable<Booking> {
+  getBooking(clubId: string, bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
-      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
+      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 
@@ -75,7 +95,8 @@ export class BookingService {
    */
   getManagedClubBooking(bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
-      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
+      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl),
+      { params: new HttpParams().set('managed', 'true') }
     );
   }
 

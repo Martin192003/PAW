@@ -135,14 +135,14 @@ public class ClubRestControllerTest {
 
     @Test
     public void testGetClub_InvalidUuid_ReturnsBadRequest() {
-        Response response = controller.getClub("not-a-uuid", mock(SecurityContext.class));
+        Response response = controller.getClub("not-a-uuid", false, mock(SecurityContext.class));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
     public void testGetClub_NotFound_Returns404() {
         when(clubService.getClubById(CLUB_ID)).thenReturn(Optional.empty());
-        Response response = controller.getClub(CLUB_ID.toString(), mock(SecurityContext.class));
+        Response response = controller.getClub(CLUB_ID.toString(), false, mock(SecurityContext.class));
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
@@ -156,7 +156,7 @@ public class ClubRestControllerTest {
         SecurityContext anonymous = mock(SecurityContext.class);
         when(anonymous.getUserPrincipal()).thenReturn(null);
 
-        Response response = controller.getClub(CLUB_ID.toString(), anonymous);
+        Response response = controller.getClub(CLUB_ID.toString(), false, anonymous);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertTrue(response.getEntity() instanceof ClubDto);
@@ -177,13 +177,41 @@ public class ClubRestControllerTest {
 
         SecurityContext ownerContext = principalFor(owner);
 
-        Response response = controller.getClub(CLUB_ID.toString(), ownerContext);
+        Response response = controller.getClub(CLUB_ID.toString(), false, ownerContext);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         ClubDto dto = (ClubDto) response.getEntity();
         assertEquals("0000003100000000000001", dto.getCbu());
         assertEquals("private, no-store", response.getHeaderString("Cache-Control"));
         assertEquals("Authorization", response.getHeaderString("Vary"));
+    }
+
+    @Test
+    public void testGetClub_ManagedRequiresAuthentication() {
+        when(clubService.getClubById(CLUB_ID)).thenReturn(Optional.of(club(CLUB_ID)));
+
+        SecurityContext anonymous = mock(SecurityContext.class);
+        when(anonymous.getUserPrincipal()).thenReturn(null);
+
+        Response response = controller.getClub(CLUB_ID.toString(), true, anonymous);
+
+        assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testGetClub_ManagedReturnsPrivateRepresentationForAdmin() {
+        User admin = user(OWNER_ID);
+        Club club = club(CLUB_ID);
+        club.setContactInfo(admin);
+        club.setCbu("0000003100000000000001");
+        when(clubService.getClubById(CLUB_ID)).thenReturn(Optional.of(club));
+
+        Response response = controller.getClub(CLUB_ID.toString(), true, principalFor(admin));
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        ClubDto dto = (ClubDto) response.getEntity();
+        assertEquals("0000003100000000000001", dto.getCbu());
+        assertEquals("private, no-store", response.getHeaderString("Cache-Control"));
     }
 
     @Test

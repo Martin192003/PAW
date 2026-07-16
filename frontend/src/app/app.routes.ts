@@ -78,11 +78,13 @@ export const routes: Routes = [
   },
   {
     path: 'bookings',
-    loadComponent: () => import('./pages/user-bookings.page').then(m => m.UserBookingsPage)
+    loadComponent: () => import('./pages/user-bookings.page').then(m => m.UserBookingsPage),
+    canActivate: [authGuard]
   },
   {
     path: 'bookings/:clubId/:bookingId',
-    loadComponent: () => import('./pages/booking-user-handler.page').then(m => m.BookingUserHandlerPage)
+    loadComponent: () => import('./pages/booking-user-handler.page').then(m => m.BookingUserHandlerPage),
+    canActivate: [authGuard]
   },
   {
     path: 'forbidden',

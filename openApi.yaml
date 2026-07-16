@@ -290,6 +290,13 @@ paths:
     get:
       tags: [Clubs]
       summary: Get club
+      parameters:
+        - name: managed
+          in: query
+          description: Require the authenticated user to manage the club and include private management fields/links.
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Club
@@ -297,6 +304,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClubDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
     patch:
@@ -947,6 +958,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/BookingDto'
 
+  /clubs/{clubId}/bookings/{bookingId}:
+    parameters:
+      - $ref: '#/components/parameters/ClubId'
+      - $ref: '#/components/parameters/BookingId'
+    get:
+      tags: [Bookings]
+      summary: Get current user's booking in club
+      description: Returns the booking only when the authenticated user owns it and it belongs to the given club.
+      responses:
+        '200':
+          description: Booking
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: private, no-store
+            Vary:
+              schema:
+                type: string
+              description: Authorization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /clubs/{clubId}/bookings/{bookingId}/receipt:
     parameters:
       - $ref: '#/components/parameters/ClubId'
@@ -1083,7 +1125,13 @@ paths:
     get:
       tags: [Bookings]
       summary: Get booking by canonical id
-      description: Returns the booking when the authenticated user is the owner or manages its club.
+      description: Returns the booking when the authenticated user is the owner or manages its club. With managed=true, the user must manage the booking's club.
+      parameters:
+        - name: managed
+          in: query
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Booking
@@ -1093,6 +1141,8 @@ paths:
                 $ref: '#/components/schemas/BookingDto'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
     put:

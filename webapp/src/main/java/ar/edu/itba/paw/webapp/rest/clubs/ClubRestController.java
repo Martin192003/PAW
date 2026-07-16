@@ -185,6 +185,7 @@ public class ClubRestController {
     @GET
     @Path("/{clubId}")
     public Response getClub(@PathParam("clubId") String clubId,
+                            @QueryParam("managed") @DefaultValue("false") boolean managed,
                             @Context SecurityContext securityContext) {
         UUID id;
         try {
@@ -200,6 +201,18 @@ public class ClubRestController {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorDto("club.notfound"))
                     .build();
+        }
+
+        if (managed) {
+            User user = resolveAuthenticatedUser(securityContext);
+            if (user == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+            clubService.assertAdmin(id, user.getId());
+
+            Response.ResponseBuilder response = Response.ok(toDtoWithLinks(club, true));
+            applyClubCacheHeaders(response, true);
+            return response.build();
         }
 
         final boolean includeSensitive = canViewSensitiveClubData(club, securityContext);

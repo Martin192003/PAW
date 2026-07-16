@@ -104,8 +104,14 @@ public class BookingsRestController {
     @GET
     @Path("/bookings/{bookingId}")
     public Response getBookingById(@PathParam("bookingId") UUID bookingId,
+                                   @QueryParam("managed") @DefaultValue("false") boolean managed,
                                    @Context SecurityContext securityContext) {
         final String login = authenticatedLoginIdentifier(securityContext);
+        if (managed) {
+            final Booking booking = bookingService.getManagedClubBooking(login, bookingId);
+            return privateResponse(toDto(booking, true, false)).build();
+        }
+
         final User user = authenticatedUser(securityContext);
         final Booking booking = bookingService.getAccessibleBooking(login, bookingId);
         final boolean isOwner = booking.getUser() != null
