@@ -105,4 +105,77 @@ describe('BookingService filters', () => {
     expect(fallback.request.params.get('status')).toBe('PENDIENTE');
     fallback.flush({ content: [] });
   });
+
+  // Los métodos de abajo no tenían ningún test (ver AUDITORIA_ENTREGA_FINAL.md punto
+  // 25): booking.service.spec.ts sólo cubría listUserBookings/listManagedClubBookings,
+  // dejando 7 de los 9 métodos públicos del servicio sin ejercitar.
+
+  it('cancelBooking uses the booking\'s own "cancel" link when available', () => {
+    service.cancelBooking('club-1', 'booking-1', { cancel: '/api/bookings/booking-1' }).subscribe();
+
+    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith('/bookings/booking-1'));
+    req.flush(null);
+  });
+
+  it('cancelBooking falls back to a constructed URL when no links are given', () => {
+    service.cancelBooking('club-1', 'booking-1').subscribe();
+
+    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith('/bookings/booking-1'));
+    req.flush(null);
+  });
+
+  it('confirmManagedClubBooking PUTs a CONFIRMADA status to the "confirm" link', () => {
+    service.confirmManagedClubBooking('booking-1', { confirm: '/api/bookings/booking-1' }).subscribe();
+
+    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/bookings/booking-1'));
+    expect(req.request.body).toEqual({ status: 'CONFIRMADA' });
+    req.flush(null);
+  });
+
+  it('cancelManagedClubBooking PUTs a CANCELADA status to the "managed-cancel" link', () => {
+    service.cancelManagedClubBooking('booking-1', { 'managed-cancel': '/api/bookings/booking-1' }).subscribe();
+
+    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/bookings/booking-1'));
+    expect(req.request.body).toEqual({ status: 'CANCELADA' });
+    req.flush(null);
+  });
+
+  it('putReceipt uploads the file as multipart form data to the receipt sub-resource', () => {
+    const file = new File(['fake'], 'recibo.jpg', { type: 'image/jpeg' });
+
+    service.putReceipt('club-1', 'booking-1', file).subscribe();
+
+    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/clubs/club-1/bookings/booking-1/receipt'));
+    expect(req.request.body instanceof FormData).toBe(true);
+    expect((req.request.body as FormData).get('file')).toBe(file);
+    req.flush({ id: 'receipt-1' });
+  });
+
+  it('getReceiptBlob requests a blob from the explicit receipt link when given', () => {
+    let result: Blob | undefined;
+    service.getReceiptBlob('club-1', 'booking-1', '/api/clubs/club-1/bookings/booking-1/receipt').subscribe(blob => { result = blob; });
+
+    const req = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/clubs/club-1/bookings/booking-1/receipt'));
+    expect(req.request.responseType).toBe('blob');
+    const blob = new Blob(['fake-image']);
+    req.flush(blob);
+
+    expect(result).toBe(blob);
+  });
+
+  it('deleteReceipt DELETEs the constructed receipt URL when no link is given', () => {
+    service.deleteReceipt('club-1', 'booking-1').subscribe();
+
+    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith('/clubs/club-1/bookings/booking-1/receipt'));
+    req.flush(null);
+  });
+
+  it('requireReceiptLink resolves the booking\'s "receipt" link and throws when missing', () => {
+    const url = service.requireReceiptLink({
+      links: { receipt: '/api/clubs/club-1/bookings/booking-1/receipt' },
+    } as never);
+    expect(url).toContain('/clubs/club-1/bookings/booking-1/receipt');
+
+    expect(() => service.requireReceiptLink({ links: {} } as never)).toThrow();
+  });
 });
