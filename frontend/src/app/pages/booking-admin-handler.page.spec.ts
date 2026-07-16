@@ -1,5 +1,5 @@
 import { convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { vi } from 'vitest';
 import { BookingAdminHandlerPage } from './booking-admin-handler.page';
 
@@ -153,5 +153,30 @@ describe('BookingAdminHandlerPage', () => {
     vi.advanceTimersByTime(4000);
 
     expect(component.error).toBe('');
+  });
+
+  it('shows a receipt-required message when confirming without a receipt', () => {
+    component.booking = booking;
+    bookingService.confirmManagedClubBooking.mockReturnValueOnce(
+      throwError(() => ({ error: { message: 'receipt.required' } }))
+    );
+
+    component.confirmBooking();
+
+    expect(component.error).toBe('bookingAdminHandler.errors.receiptRequired');
+  });
+
+  it('sets loading to true while the booking request is pending', () => {
+    const subject = new Subject<any>();
+    bookingService.getManagedClubBooking.mockReturnValueOnce(subject.asObservable());
+
+    component.ngOnInit();
+
+    expect(component.loading).toBe(true);
+
+    subject.next(booking);
+    subject.complete();
+
+    expect(component.loading).toBe(false);
   });
 });
