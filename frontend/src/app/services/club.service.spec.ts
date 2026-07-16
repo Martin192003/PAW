@@ -1,0 +1,116 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { ClubService } from './club.service';
+import { Event } from '../models/event.model';
+
+describe('ClubService event photo links', () => {
+  let service: ClubService;
+  let httpMock: HttpTestingController;
+
+  const clubId = 'club-1';
+  const eventId = 'event-1';
+
+  const eventWithPhotoLink = {
+    eventId,
+    eventName: 'Fiesta',
+    description: 'desc',
+    date: '2026-08-01',
+    links: [{ rel: 'photo', href: '/api/clubs/club-1/events/event-1/photo' }],
+  } as unknown as Event;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        ClubService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+
+    service = TestBed.inject(ClubService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  // Bug real de esta sesion: uploadEventPhoto/deleteEventPhoto no normalizaban
+  // el campo "links" (array HATEOAS [{rel,href}]) a un Record<string,string>
+  // como si lo hacen createEvent/updateEvent. Como consecuencia,
+  // getEventPhotoUrl() (que lee event.links?.['photo']) siempre daba
+  // undefined justo despues de subir la foto en el alta de un evento.
+  it('normalizes the links array returned by uploadEventPhoto into a Record', () => {
+    const file = new File(['fake-image'], 'foto.png', { type: 'image/png' });
+
+    let result: Event | undefined;
+    service.uploadEventPhoto(clubId, eventId, file, eventWithPhotoLink).subscribe(event => {
+      result = event;
+    });
+
+    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith(`/clubs/${clubId}/events/${eventId}/photo`));
+    req.flush({
+      eventId,
+      eventName: 'Fiesta',
+      description: 'desc',
+      date: '2026-08-01',
+      photoId: 'photo-1',
+      links: [
+        { rel: 'self', href: `/api/clubs/${clubId}/events/${eventId}` },
+        { rel: 'photo', href: `/api/clubs/${clubId}/events/${eventId}/photo` },
+      ],
+    });
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result?.links)).toBe(false);
+    expect((result?.links as unknown as Record<string, string>)?.['photo']).toBe(`/api/clubs/${clubId}/events/${eventId}/photo`);
+  });
+
+  it('normalizes the links array returned by deleteEventPhoto into a Record', () => {
+    let result: Event | undefined;
+    service.deleteEventPhoto(clubId, eventId, eventWithPhotoLink).subscribe(event => {
+      result = event;
+    });
+
+    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith(`/clubs/${clubId}/events/${eventId}/photo`));
+    req.flush({
+      eventId,
+      eventName: 'Fiesta',
+      description: 'desc',
+      date: '2026-08-01',
+      links: [
+        { rel: 'self', href: `/api/clubs/${clubId}/events/${eventId}` },
+      ],
+    });
+
+    expect(result).toBeTruthy();
+    expect(Array.isArray(result?.links)).toBe(false);
+    expect((result?.links as unknown as Record<string, string>)?.['self']).toBe(`/api/clubs/${clubId}/events/${eventId}`);
+  });
+
+  it('falls back to a constructed URL when no event links are given', () => {
+    const file = new File(['fake-image'], 'foto.png', { type: 'image/png' });
+
+    service.uploadEventPhoto(clubId, eventId, file, undefined).subscribe();
+
+    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith(`/clubs/${clubId}/events/${eventId}/photo`));
+    req.flush({ eventId, eventName: 'Fiesta', description: 'desc', date: '2026-08-01', links: [] });
+  });
+
+  it('errors without making a request when the event has links but none for "photo"', () => {
+    const file = new File(['fake-image'], 'foto.png', { type: 'image/png' });
+    const eventWithoutPhotoLink = {
+      ...eventWithPhotoLink,
+      links: [{ rel: 'self', href: `/api/clubs/${clubId}/events/${eventId}` }],
+    } as unknown as Event;
+
+    let error: unknown;
+    service.uploadEventPhoto(clubId, eventId, file, eventWithoutPhotoLink).subscribe({
+      error: err => { error = err; },
+    });
+
+    expect(error).toBeInstanceOf(Error);
+    httpMock.expectNone(request => request.url.includes('/photo'));
+  });
+});
