@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { ClubEvent, EventPayload } from '../models/ClubEvent.model';
 import { PagedResponse } from '../models/paged-response.model';
 import { environment } from '../../environments/environment';
-import { normalizeLinks, requireAnyLink, resolveApiUrl } from '../utils/api-url.util';
+import { itemLinksFromCollection, normalizeLinks, requireAnyLink, resolveApiUrl, totalFromHeader } from '../utils/api-url.util';
 
 
 interface EventDto {
@@ -54,13 +53,14 @@ function extractIdFromLink(link: string, segment: string): string | undefined {
   }
 }
 
-function toPagedResponse(raw: EventDto[] | RawResponse): PagedResponse<ClubEvent> {
+function toPagedResponse(raw: EventDto[] | RawResponse, page = 0, size = 20, total?: number): PagedResponse<ClubEvent> {
   const dtos: EventDto[] = Array.isArray(raw) ? raw : (raw.content ?? []);
+  const totalElements = total ?? dtos.length;
   return {
     content:       dtos.map(toClubEvent),
-    totalElements: dtos.length,
-    totalPages:    1,
-    number:        0,
+    totalElements,
+    totalPages:    Math.ceil(totalElements / size),
+    number:        page,
   };
 }
 
@@ -75,14 +75,20 @@ export class EventService {
 
   getUpcomingEvents(page = 0, size = 20): Observable<PagedResponse<ClubEvent>> {
     return this.http
-      .get<EventDto[] | RawResponse>(`${this.base}/events`, { params: this.pageParams(page, size) })
-      .pipe(map(toPagedResponse));
+      .get<EventDto[] | RawResponse>(`${this.base}/events`, {
+        params: this.pageParams(page, size),
+        observe: 'response',
+      })
+      .pipe(switchMap(response => this.pageFromResponse(response, page, size)));
   }
 
   getEventsByClub(clubId: string, page = 0, size = 20): Observable<PagedResponse<ClubEvent>> {
     return this.http
-      .get<EventDto[] | RawResponse>(`${this.base}/clubs/${clubId}/events`, { params: this.pageParams(page, size) })
-      .pipe(map(toPagedResponse));
+      .get<EventDto[] | RawResponse>(`${this.base}/clubs/${clubId}/events`, {
+        params: this.pageParams(page, size),
+        observe: 'response',
+      })
+      .pipe(switchMap(response => this.pageFromResponse(response, page, size)));
   }
 
   /**
@@ -144,5 +150,25 @@ export class EventService {
 
   private pageParams(page: number, size: number): HttpParams {
     return new HttpParams().set('page', page).set('size', size);
+  }
+
+  private pageFromResponse(
+    response: HttpResponse<EventDto[] | RawResponse>,
+    page: number,
+    size: number
+  ): Observable<PagedResponse<ClubEvent>> {
+    const body = response.body ?? [];
+    const itemLinks = itemLinksFromCollection(body);
+    const fallbackTotal = itemLinks?.length ?? (Array.isArray(body) ? body.length : body.content?.length ?? 0);
+    const total = totalFromHeader(response.headers.get('X-Total-Count'), fallbackTotal);
+
+    if (itemLinks) {
+      const requests = itemLinks.map(link => this.http.get<EventDto>(resolveApiUrl(link, this.base)));
+      return (requests.length ? forkJoin(requests) : of([] as EventDto[])).pipe(
+        map(events => toPagedResponse(events, page, size, total))
+      );
+    }
+
+    return of(toPagedResponse(body, page, size, total));
   }
 }

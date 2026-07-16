@@ -102,10 +102,13 @@ export class ClubService {
     };
   }
 
-  private normalizeEvent(event: Event & { id?: string }): Event {
+  private normalizeEvent(event: Event & { id?: string; name?: string }): Event {
     return {
       ...event,
       eventId: event.eventId || event.id || '',
+      eventName: event.eventName || event.name || '',
+      description: event.description || '',
+      date: event.date || '',
       links: normalizeLinks(event.links)
     };
   }
@@ -434,8 +437,8 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.get<Array<Event & { id?: string }>>(url).pipe(
-      map((events) => (events ?? []).map((event) => this.normalizeEvent(event)))
+    return this.http.get<Array<Event & { id?: string }>>(url, { observe: 'response' }).pipe(
+      switchMap((response) => this.collectionFromResponse(response, (event) => this.normalizeEvent(event)))
     );
   }
 

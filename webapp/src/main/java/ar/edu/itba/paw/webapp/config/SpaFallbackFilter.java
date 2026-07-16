@@ -74,7 +74,8 @@ public class SpaFallbackFilter implements Filter {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType("text/html;charset=UTF-8");
-        response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Pragma", "no-cache");
 
         if (!"HEAD".equalsIgnoreCase(request.getMethod())) {
             response.getWriter().write(html);

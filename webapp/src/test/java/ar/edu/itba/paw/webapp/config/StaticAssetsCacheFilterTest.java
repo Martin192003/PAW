@@ -21,13 +21,13 @@ public class StaticAssetsCacheFilterTest {
     }
 
     @Test
-    public void indexCsrHtmlIsNotCachedAggressively() throws Exception {
+    public void indexCsrHtmlIsNotStored() throws Exception {
         StaticAssetsCacheFilter filter = new StaticAssetsCacheFilter();
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/index.csr.html");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilter(request, response, new MockFilterChain());
 
-        assertEquals("no-cache", response.getHeader("Cache-Control"));
+        assertEquals("no-store", response.getHeader("Cache-Control"));
     }
 }
