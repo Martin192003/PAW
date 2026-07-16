@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.exceptions.*;
 import ar.edu.itba.paw.persistence.BookingDao;
 import ar.edu.itba.paw.persistence.ClubDao;
 import ar.edu.itba.paw.persistence.ClubTablesDao;
+import ar.edu.itba.paw.persistence.ReceiptDao;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,6 +59,9 @@ public class BookingServiceImplTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private ReceiptDao receiptDao;
 
     private User mockUser;
     private ClubTable mockTable;
@@ -273,42 +277,61 @@ public class BookingServiceImplTest {
         Assert.assertEquals(Status.CANCELADA, mockBooking.getStatus());
     }
 
-//    @Test
-//    public void testConfirm_PendingToConfirmed() {
-//        mockBooking.setStatus(Status.PENDIENTE);
-//        mockBooking.setTableId(TABLE_ID);
-//        mockBooking.setUser(mockUser);
-//
-//        Mockito.when(bookingDao.findById(BOOKING_ID))
-//                .thenReturn(Optional.of(mockBooking))
-//                .thenReturn(Optional.of(mockBooking));
-//
-//        Mockito.when(bookingDao.updateStatus(BOOKING_ID, Status.CONFIRMADA))
-//                .thenAnswer(inv -> {
-//                    mockBooking.setStatus(Status.CONFIRMADA);
-//                    return Optional.of(mockBooking);
-//                });
-//
-//        Mockito.when(tablesDao.findById(TABLE_ID))
-//                .thenReturn(Optional.of(mockTable));
-//
-//        Club club = new Club();
-//        club.setClubId(CLUB_ID);
-//        Mockito.when(clubDao.findById(CLUB_ID))
-//                .thenReturn(Optional.of(club));
-//
-//        mockUser.setEmail("mail@test.com");
-//        mockUser.setLocale("es");
-//        Mockito.when(userService.findById(USER_ID))
-//                .thenReturn(Optional.of(mockUser));
-//
-//        Mockito.doNothing().when(emailService)
-//                .notifyConfirmationEmailToUser(any(), any(), any(), any());
-//
-//        bookingService.confirm(BOOKING_ID);
-//
-//        Assert.assertEquals(Status.CONFIRMADA, mockBooking.getStatus());
-//    }
+    @Test
+    public void testConfirm_PendingToConfirmed() {
+        mockBooking.setStatus(Status.PENDIENTE);
+        mockBooking.setTableId(TABLE_ID);
+        mockBooking.setUser(mockUser);
+
+        Mockito.when(bookingDao.findById(BOOKING_ID))
+                .thenReturn(Optional.of(mockBooking))
+                .thenReturn(Optional.of(mockBooking));
+
+        Mockito.when(receiptDao.findByBooking(BOOKING_ID))
+                .thenReturn(Optional.of(Mockito.mock(Receipt.class)));
+
+        Mockito.when(bookingDao.updateStatus(BOOKING_ID, Status.CONFIRMADA))
+                .thenAnswer(inv -> {
+                    mockBooking.setStatus(Status.CONFIRMADA);
+                    return Optional.of(mockBooking);
+                });
+
+        Mockito.when(tablesDao.findById(TABLE_ID))
+                .thenReturn(Optional.of(mockTable));
+
+        Club club = new Club();
+        club.setClubId(CLUB_ID);
+        Mockito.when(clubDao.findById(CLUB_ID))
+                .thenReturn(Optional.of(club));
+
+        mockUser.setEmail("mail@test.com");
+        mockUser.setLocale("es");
+        Mockito.when(userService.findById(USER_ID))
+                .thenReturn(Optional.of(mockUser));
+
+        Mockito.doNothing().when(emailService)
+                .notifyConfirmationEmailToUser(any(), any(), any(), any());
+
+        bookingService.confirm(BOOKING_ID);
+
+        Assert.assertEquals(Status.CONFIRMADA, mockBooking.getStatus());
+    }
+
+    @Test
+    public void testConfirm_NoReceipt_ThrowsInvalidReceiptException() {
+        mockBooking.setStatus(Status.PENDIENTE);
+
+        Mockito.when(bookingDao.findById(BOOKING_ID))
+                .thenReturn(Optional.of(mockBooking));
+        Mockito.when(receiptDao.findByBooking(BOOKING_ID))
+                .thenReturn(Optional.empty());
+
+        Assert.assertThrows(InvalidReceiptException.class, () -> {
+            bookingService.confirm(BOOKING_ID);
+        });
+
+        Mockito.verify(bookingDao, Mockito.never()).updateStatus(any(), any());
+    }
 
 
     @Test

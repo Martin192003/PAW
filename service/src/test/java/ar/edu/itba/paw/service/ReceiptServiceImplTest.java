@@ -149,6 +149,7 @@ public class ReceiptServiceImplTest {
 
         Mockito.when(bookingService.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
         Mockito.when(booking.getUser()).thenReturn(new User(UPLOADED_BY));
+        Mockito.when(booking.getStatus()).thenReturn(Status.PENDIENTE);
         Mockito.when(receiptDao.findByBooking(BOOKING_ID)).thenReturn(Optional.of(receipt));
         Mockito.when(receipt.getReceiptId()).thenReturn(RECEIPT_ID);
         Mockito.when(receiptDao.delete(RECEIPT_ID)).thenReturn(true);
@@ -156,6 +157,90 @@ public class ReceiptServiceImplTest {
         boolean result = receiptService.deleteByBookingForUser(BOOKING_ID, UPLOADED_BY);
 
         Assert.assertTrue(result);
+    }
+
+    @Test
+    public void testUploadForBookingConfirmedThrows() {
+        Booking booking = Mockito.mock(Booking.class);
+        Mockito.when(bookingService.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+        Mockito.when(booking.getUser()).thenReturn(new User(UPLOADED_BY));
+        Mockito.when(booking.getStatus()).thenReturn(Status.CONFIRMADA);
+
+        Assert.assertThrows(InvalidReceiptException.class, () ->
+                receiptService.uploadForBooking(BOOKING_ID, UPLOADED_BY, FILENAME, CONTENT_TYPE, DATA));
+
+        Mockito.verify(receiptDao, Mockito.never()).create(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    public void testUploadForBookingCancelledThrows() {
+        Booking booking = Mockito.mock(Booking.class);
+        Mockito.when(bookingService.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+        Mockito.when(booking.getUser()).thenReturn(new User(UPLOADED_BY));
+        Mockito.when(booking.getStatus()).thenReturn(Status.CANCELADA);
+
+        Assert.assertThrows(InvalidReceiptException.class, () ->
+                receiptService.uploadForBooking(BOOKING_ID, UPLOADED_BY, FILENAME, CONTENT_TYPE, DATA));
+
+        Mockito.verify(receiptDao, Mockito.never()).create(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    public void testDeleteByBookingForUserConfirmedThrows() {
+        Booking booking = Mockito.mock(Booking.class);
+        Mockito.when(bookingService.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+        Mockito.when(booking.getUser()).thenReturn(new User(UPLOADED_BY));
+        Mockito.when(booking.getStatus()).thenReturn(Status.CONFIRMADA);
+
+        Assert.assertThrows(InvalidReceiptException.class, () ->
+                receiptService.deleteByBookingForUser(BOOKING_ID, UPLOADED_BY));
+
+        Mockito.verify(receiptDao, Mockito.never()).delete(Mockito.any());
+    }
+
+    @Test
+    public void testPutForBookingInClubSuccess() {
+        Booking booking = Mockito.mock(Booking.class);
+        Mockito.when(booking.getStatus()).thenReturn(Status.PENDIENTE);
+        Mockito.when(booking.getUser()).thenReturn(new User(UPLOADED_BY));
+        Mockito.when(booking.getTableId()).thenReturn(UUID.randomUUID());
+
+        Mockito.when(bookingService.getForUserOrAdminInClub(Mockito.any(), Mockito.eq(BOOKING_ID), Mockito.any()))
+                .thenReturn(booking);
+        Mockito.when(bookingService.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+
+        Receipt newReceipt = Mockito.mock(Receipt.class);
+        Mockito.when(newReceipt.getReceiptId()).thenReturn(RECEIPT_ID);
+
+        Mockito.when(receiptDao.findByBooking(BOOKING_ID))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(newReceipt));
+        Mockito.when(receiptDao.create(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(RECEIPT_ID);
+        Mockito.when(receiptDao.findByIdWithData(RECEIPT_ID)).thenReturn(Optional.of(newReceipt));
+        Mockito.when(tableService.findById(Mockito.any())).thenReturn(Optional.empty());
+
+        UUID someClubId = UUID.randomUUID();
+        Receipt result = receiptService.putForBookingInClub(someClubId, BOOKING_ID, "admin@club.com", FILENAME, CONTENT_TYPE, DATA);
+
+        Assert.assertEquals(newReceipt, result);
+        Mockito.verify(receiptDao).create(BOOKING_ID, UPLOADED_BY, FILENAME, CONTENT_TYPE, DATA);
+    }
+
+    @Test
+    public void testPutForBookingInClubConfirmedThrows() {
+        Booking booking = Mockito.mock(Booking.class);
+        Mockito.when(booking.getStatus()).thenReturn(Status.CONFIRMADA);
+        Mockito.when(bookingService.getForUserOrAdminInClub(Mockito.any(), Mockito.eq(BOOKING_ID), Mockito.any()))
+                .thenReturn(booking);
+
+        UUID someClubId = UUID.randomUUID();
+        Assert.assertThrows(InvalidReceiptException.class, () ->
+                receiptService.putForBookingInClub(someClubId, BOOKING_ID, "admin@club.com", FILENAME, CONTENT_TYPE, DATA));
+
+        Mockito.verify(receiptDao, Mockito.never()).delete(Mockito.any());
+        Mockito.verify(receiptDao, Mockito.never()).create(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
