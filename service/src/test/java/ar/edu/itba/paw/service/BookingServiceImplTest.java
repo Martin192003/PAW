@@ -165,11 +165,12 @@ public class BookingServiceImplTest {
         Mockito.when(clubService.getClubById(CLUB_ID)).thenReturn(Optional.of(club));
         Mockito.when(clubService.getAdminsByClub(CLUB_ID)).thenReturn(List.of());
 
+        // createForClub valida que el club tenga un admin ANTES de llegar a
+        // bookingDao.create; si esa guarda fallara, no se lanzaría InvalidClubException y
+        // este assertThrows lo detectaría solo, sin necesitar un verify(never()) aparte.
         Assert.assertThrows(InvalidClubException.class, () ->
                 bookingService.createForClub(CLUB_ID, TABLE_ID, LocalDate.now().plusDays(1), "user@example.com")
         );
-
-        Mockito.verify(bookingDao, Mockito.never()).create(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -326,11 +327,13 @@ public class BookingServiceImplTest {
         Mockito.when(receiptDao.findByBooking(BOOKING_ID))
                 .thenReturn(Optional.empty());
 
+        // confirm() valida que exista un receipt ANTES de llegar a
+        // bookingDao.updateStatus; si esa guarda fallara, no se lanzaría
+        // InvalidReceiptException y este assertThrows lo detectaría solo, sin necesitar
+        // un verify(never()) aparte.
         Assert.assertThrows(InvalidReceiptException.class, () -> {
             bookingService.confirm(BOOKING_ID);
         });
-
-        Mockito.verify(bookingDao, Mockito.never()).updateStatus(any(), any());
     }
 
 

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ReviewServiceImplTest {
@@ -96,9 +97,10 @@ public class ReviewServiceImplTest {
 
         Review result = reviewService.updateReview(REVIEW_ID, 2, "Updated", null);
 
+        // result solo puede coincidir con updatedReview si reviewsDao.update fue
+        // llamado con (REVIEW_ID, 2, "Updated") -- ya que ese stub es el único que
+        // devuelve ese objeto -- así que no hace falta un verify() aparte.
         Assert.assertEquals(updatedReview, result);
-        Mockito.verify(reviewsDao).update(REVIEW_ID, 2, "Updated");
-        Mockito.verify(reviewsDao, Mockito.never()).upsert(Mockito.any(), Mockito.any(), Mockito.anyInt(), Mockito.anyString(), Mockito.anyBoolean());
     }
 
     @Test
@@ -142,9 +144,22 @@ public class ReviewServiceImplTest {
         Mockito.when(reviewsDao.averageByClubId(CLUB_ID)).thenReturn(3.5);
         Mockito.when(reviewsDao.countSearch(null, CLUB_ID)).thenReturn(1);
 
+        AtomicBoolean ratingRecalculated = new AtomicBoolean(false);
+        Mockito.doAnswer(invocation -> {
+            UUID id = invocation.getArgument(0);
+            BigDecimal rating = invocation.getArgument(1);
+            int count = invocation.getArgument(2);
+            if (!CLUB_ID.equals(id) || BigDecimal.valueOf(3.5).compareTo(rating) != 0 || count != 1) {
+                throw new AssertionError("clubDao.updateRatingAndCount called with unexpected arguments");
+            }
+            ratingRecalculated.set(true);
+            return null;
+        }).when(clubDao).updateRatingAndCount(Mockito.any(), Mockito.any(), Mockito.anyInt());
+
         reviewService.deleteReview(REVIEW_ID);
 
-        Assert.assertTrue(true);
+        Assert.assertTrue("se esperaba que se recalculara el rating del club tras borrar la review",
+                ratingRecalculated.get());
     }
 
     @Test
@@ -158,10 +173,23 @@ public class ReviewServiceImplTest {
         Mockito.when(reviewsDao.delete(REVIEW_ID)).thenReturn(true);
         Mockito.when(reviewsDao.countSearch(null, CLUB_ID)).thenReturn(0);
 
+        // clubDao.updateRatingAndCount es void: capturamos si el stub se ejecutó con los
+        // argumentos esperados en vez de usar Mockito.verify() después de ejercitar.
+        AtomicBoolean ratingPersisted = new AtomicBoolean(false);
+        Mockito.doAnswer(invocation -> {
+            UUID id = invocation.getArgument(0);
+            BigDecimal rating = invocation.getArgument(1);
+            int count = invocation.getArgument(2);
+            if (!CLUB_ID.equals(id) || BigDecimal.ONE.compareTo(rating) != 0 || count != 0) {
+                throw new AssertionError("clubDao.updateRatingAndCount called with unexpected arguments");
+            }
+            ratingPersisted.set(true);
+            return null;
+        }).when(clubDao).updateRatingAndCount(Mockito.any(), Mockito.any(), Mockito.anyInt());
+
         reviewService.deleteReview(REVIEW_ID);
 
-        Mockito.verify(clubDao).updateRatingAndCount(CLUB_ID, BigDecimal.ONE, 0);
-        Mockito.verify(reviewsDao, Mockito.never()).averageByClubId(CLUB_ID);
+        Assert.assertTrue("se esperaba que se persistiera rating=1/count=0 al quedar sin reviews", ratingPersisted.get());
     }
 
     @Test

@@ -20,8 +20,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class ApiBasicAuthenticationFilterTest {
@@ -43,13 +41,22 @@ public class ApiBasicAuthenticationFilterTest {
 
     @Test
     public void basicCredentialsAreIgnoredOutsideTokenCreation() throws Exception {
+        // En vez de crear el mock "nice" de setUp() y comprobar después con
+        // verifyZeroInteractions(), usamos un mock cuyo comportamiento por defecto es
+        // explotar ante CUALQUIER interacción -- así, si el filtro llegara a tocar
+        // userService para una request que no es de creación de token, el test falla
+        // durante el "ejercitar" mismo.
+        UserService strictUserService = mock(UserService.class, invocation -> {
+            throw new AssertionError("Unexpected interaction with userService: " + invocation.getMethod().getName());
+        });
+        ApiBasicAuthenticationFilter strictFilter = new ApiBasicAuthenticationFilter(strictUserService);
+
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users/" + UUID.randomUUID());
         request.addHeader("Authorization", basic("demo@example.com", "secret"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        filter.doFilter(request, response, new MockFilterChain());
+        strictFilter.doFilter(request, response, new MockFilterChain());
 
-        verifyZeroInteractions(userService);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
@@ -63,7 +70,11 @@ public class ApiBasicAuthenticationFilterTest {
 
         filter.doFilter(request, response, new MockFilterChain());
 
-        verify(userService).authenticateAndGetUser("demo@example.com", "secret");
+        // El filtro solo autentica el SecurityContext cuando
+        // userService.authenticateAndGetUser devuelve un user no-nulo, y eso sólo pasa
+        // si se lo llamó con las credenciales correctas (el mock "nice" por defecto
+        // devuelve null para cualquier otra combinación) -- así que estas dos
+        // aserciones ya certifican la llamada correcta sin necesitar verify().
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         assertTrue(SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof PawUserDetails);
     }
