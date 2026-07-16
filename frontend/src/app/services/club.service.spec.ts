@@ -113,4 +113,37 @@ describe('ClubService event photo links', () => {
     expect(error).toBeInstanceOf(Error);
     httpMock.expectNone(request => request.url.includes('/photo'));
   });
+
+  it('hydrates event collections returned as HATEOAS item links', () => {
+    let result: Event[] | undefined;
+    service.getEvents(clubId).subscribe(events => {
+      result = events;
+    });
+
+    const listReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith(`/clubs/${clubId}/events`));
+    listReq.flush([
+      { rel: 'item', href: `/api/clubs/${clubId}/events/${eventId}` },
+    ]);
+
+    const detailReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith(`/clubs/${clubId}/events/${eventId}`));
+    detailReq.flush({
+      id: eventId,
+      eventName: 'Fiesta',
+      description: 'desc',
+      date: '2026-08-01',
+      photoId: 'photo-1',
+      links: [
+        { rel: 'self', href: `/api/clubs/${clubId}/events/${eventId}` },
+        { rel: 'photo', href: `/api/clubs/${clubId}/events/${eventId}/photo` },
+        { rel: 'update', href: `/api/clubs/${clubId}/events/${eventId}` },
+        { rel: 'delete', href: `/api/clubs/${clubId}/events/${eventId}` },
+      ],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result?.[0].eventId).toBe(eventId);
+    expect(result?.[0].eventName).toBe('Fiesta');
+    expect(result?.[0].date).toBe('2026-08-01');
+    expect((result?.[0].links as unknown as Record<string, string>)?.['photo']).toBe(`/api/clubs/${clubId}/events/${eventId}/photo`);
+  });
 });

@@ -55,22 +55,6 @@ describe('BookingService filters', () => {
     req.flush({ content: [] });
   });
 
-  it('falls back to the legacy user bookings endpoint when the REST collection is not deployed', () => {
-    service.listUserBookings({
-      status: 'PENDIENTE',
-    }, 1, 10).subscribe();
-
-    const first = httpMock.expectOne(request => request.url.endsWith('/users/user-1/bookings'));
-    first.flush({ message: 'not found' }, { status: 404, statusText: 'Not Found' });
-
-    const fallback = httpMock.expectOne(request => request.url.endsWith('/bookings'));
-    expect(fallback.request.params.get('page')).toBe('1');
-    expect(fallback.request.params.get('size')).toBe('10');
-    expect(fallback.request.params.get('status')).toBe('PENDIENTE');
-    expect(fallback.request.params.has('managed')).toBe(false);
-    fallback.flush({ content: [] });
-  });
-
   it('syncs managed booking filters into query params', () => {
     service.listManagedClubBookings({
       clubId: 'club-1',
@@ -92,17 +76,4 @@ describe('BookingService filters', () => {
     req.flush({ content: [] });
   });
 
-  it('falls back to the legacy managed bookings mode when the REST collection is not deployed', () => {
-    service.listManagedClubBookings({
-      status: 'PENDIENTE',
-    }, 1, 10).subscribe();
-
-    const first = httpMock.expectOne(request => request.urlWithParams.includes('/bookings?managed=true'));
-    first.flush({ message: 'not found' }, { status: 404, statusText: 'Not Found' });
-
-    const fallback = httpMock.expectOne(request => request.url.endsWith('/bookings'));
-    expect(fallback.request.params.get('managed')).toBe('true');
-    expect(fallback.request.params.get('status')).toBe('PENDIENTE');
-    fallback.flush({ content: [] });
-  });
 });

@@ -18,4 +18,5 @@ public final class ApiMediaTypes {
     public static final String REVIEW = "application/vnd.paw.review.v1+json";
     public static final String PRODUCT = "application/vnd.paw.product.v1+json";
     public static final String TABLE = "application/vnd.paw.table.v1+json";
+    public static final String EVENT = "application/vnd.paw.event.v1+json";
 }

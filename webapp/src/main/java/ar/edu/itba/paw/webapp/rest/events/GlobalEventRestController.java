@@ -1,8 +1,10 @@
 package ar.edu.itba.paw.webapp.rest.events;
 
 import ar.edu.itba.paw.model.Event;
-import ar.edu.itba.paw.model.dto.EventDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.EventService;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,27 +15,20 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Context;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @Path("/events")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.EVENT, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
+@Consumes({ApiMediaTypes.EVENT, ApiMediaTypes.APPLICATION_JSON})
 public class GlobalEventRestController {
 
     @Autowired
     private EventService eventService;
-
-    @Autowired
-    private EventDtoAssembler eventDtoAssembler;
 
     @Context
     private UriInfo uriInfo;
@@ -47,16 +42,13 @@ public class GlobalEventRestController {
 
         List<Event> events = eventService.listUpcoming(page, size);
         int total = eventService.countUpcoming();
-        List<UUID> eventIds = events.stream().map(Event::getEventId).toList();
-        Map<UUID, String> clubNames = eventService.mapClubNamesForEvents(eventIds);
+        List<LinkDto> body = CollectionLinks.items(events, event -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/events/{eventId}")
+                .resolveTemplate("clubId", event.getClubId())
+                .resolveTemplate("eventId", event.getEventId())
+                .build());
 
-        List<EventDto> body = events.stream()
-                .map(event -> eventDtoAssembler.toDto(uriInfo, event, clubNames.get(event.getEventId())))
-                .collect(Collectors.toList());
-
-        GenericEntity<List<EventDto>> entity = new GenericEntity<>(body) {};
-
-        Response.ResponseBuilder response = Response.ok(entity)
+        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
                 .header("X-Total-Count", total);
         addPaginationLinks(response, page, size, total);
         return response.build();

@@ -173,7 +173,7 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 - El frontend prioriza links HATEOAS en flujos principales y conserva fallback solo donde todavia hace falta compatibilidad.
 - Los endpoints de autenticacion viven bajo `/api/auth/*`; `/api/users` queda reservado para el recurso usuario.
 - Las colecciones relevantes mantienen `X-Total-Count` y agregan `Link` pagination cuando aplica.
-- Los assets Angular hasheados reciben `Cache-Control: public, max-age=31536000, immutable`; `index.html`, `index.csr.html` y assets estaticos no hasheados se revalidan con `no-cache`.
+- Los assets Angular hasheados reciben `Cache-Control: public, max-age=31536000, immutable`; `index.html` e `index.csr.html` usan `no-store`, y assets estaticos no hasheados se revalidan con `no-cache`.
 - Las imagenes modificables guardadas en base usan cache condicional (`Cache-Control: no-cache` + `ETag`). Los recibos privados usan `private, no-store`.
 - Las colecciones REST devuelven links `rel=item`; la paginacion viaja por headers `Link` y `X-Total-Count`.
 

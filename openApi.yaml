@@ -503,17 +503,21 @@ paths:
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Event array
+          description: Links to events in the club.
           headers:
+            Link:
+              schema:
+                type: string
             X-Total-Count:
               schema:
                 type: integer
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventDto'
+                $ref: '#/components/schemas/LinkCollection'
     post:
       tags: [Events]
       summary: Create event
@@ -569,6 +573,31 @@ paths:
       responses:
         '204':
           description: Event deleted
+
+  /events:
+    get:
+      tags: [Events]
+      summary: List upcoming events
+      parameters:
+        - $ref: '#/components/parameters/PageZero'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Links to upcoming events.
+          headers:
+            Link:
+              schema:
+                type: string
+            X-Total-Count:
+              schema:
+                type: integer
+          content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
 
   /clubs/{clubId}/events/{eventId}/photo:
     parameters:

@@ -26,7 +26,7 @@ public class SpaFallbackFilterTest {
         filter.doFilter(request, response, new MockFilterChain());
 
         assertEquals(200, response.getStatus());
-        assertEquals("no-cache", response.getHeader("Cache-Control"));
+        assertEquals("no-store", response.getHeader("Cache-Control"));
         assertTrue(response.getContentAsString().contains("<base href=\"/webapp_war_exploded/\">"));
     }
 }

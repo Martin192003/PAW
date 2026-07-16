@@ -16,8 +16,8 @@ import java.util.regex.Pattern;
  * Politica:
  *   - Assets hasheados (*.js, *.css, *.woff2, *.png, etc. con segmento hash):
  *       Cache-Control: public, max-age=31536000, immutable
- *   - index.html, index.csr.html y noscript.html (no hasheados):
- *       Cache-Control: no-cache  (siempre revalidar)
+ *   - index.html, index.csr.html y noscript.html (entrypoints SPA):
+ *       Cache-Control: no-store  (no guardar el shell de la SPA)
  */
 public class StaticAssetsCacheFilter implements Filter {
 
@@ -54,8 +54,9 @@ public class StaticAssetsCacheFilter implements Filter {
             // no pueden recibir cache incondicional porque no tienen cache busting.
             httpResp.setHeader("Cache-Control", "no-cache");
         } else if (isIndexHtml(uri)) {
-            // El index.html debe revalidarse siempre; es el punto de entrada de la SPA.
-            httpResp.setHeader("Cache-Control", "no-cache");
+            // El index.html es el punto de entrada de la SPA; no debe cachearse.
+            httpResp.setHeader("Cache-Control", "no-store");
+            httpResp.setHeader("Pragma", "no-cache");
         }
         // Para cualquier otro recurso (API, etc.) no se toca el header.
 

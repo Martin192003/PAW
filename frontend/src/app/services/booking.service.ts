@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpContext, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { Booking, BookingFilters, BookingPage, Receipt } from '../models/booking.model';
 import { environment } from '../../environments/environment';
@@ -27,8 +27,7 @@ export class BookingService {
       context: this.localErrorContext(),
       observe: 'response'
     }).pipe(
-      switchMap(response => this.bookingPageFromResponse(response, page, size)),
-      catchError(error => this.retryLegacyManagedBookings(error, params))
+      switchMap(response => this.bookingPageFromResponse(response, page, size))
     );
   }
 
@@ -43,8 +42,7 @@ export class BookingService {
       context: this.localErrorContext(),
       observe: 'response'
     }).pipe(
-      switchMap(response => this.bookingPageFromResponse(response, page, size)),
-      catchError(error => this.retryLegacyUserBookings(error, params))
+      switchMap(response => this.bookingPageFromResponse(response, page, size))
     );
   }
 
@@ -174,32 +172,6 @@ export class BookingService {
       return resolveApiUrl(fallback, this.apiUrl);
     }
     return resolveApiUrl(requireAnyLink(links, rels, 'authenticated user'), this.apiUrl);
-  }
-
-  private retryLegacyUserBookings(error: unknown, params: HttpParams): Observable<BookingPage> {
-    if (!(error instanceof HttpErrorResponse) || error.status !== 404) {
-      return throwError(() => error);
-    }
-    const page = Number(params.get('page') ?? '1') || 1;
-    const size = Number(params.get('size') ?? '10') || 10;
-    return this.http.get<Booking[] | BookingPage>(`${this.apiUrl}/bookings`, {
-      params,
-      context: this.localErrorContext(),
-      observe: 'response'
-    }).pipe(switchMap(response => this.bookingPageFromResponse(response, page, size)));
-  }
-
-  private retryLegacyManagedBookings(error: unknown, params: HttpParams): Observable<BookingPage> {
-    if (!(error instanceof HttpErrorResponse) || error.status !== 404) {
-      return throwError(() => error);
-    }
-    const page = Number(params.get('page') ?? '1') || 1;
-    const size = Number(params.get('size') ?? '10') || 10;
-    return this.http.get<Booking[] | BookingPage>(`${this.apiUrl}/bookings`, {
-      params: params.set('managed', 'true'),
-      context: this.localErrorContext(),
-      observe: 'response'
-    }).pipe(switchMap(response => this.bookingPageFromResponse(response, page, size)));
   }
 
   private localErrorContext(): HttpContext {

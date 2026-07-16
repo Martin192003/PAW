@@ -3,8 +3,11 @@ package ar.edu.itba.paw.webapp.rest.events;
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.EventDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
+import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,12 +19,11 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @Path("/clubs")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
+@Produces({ApiMediaTypes.EVENT, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
+@Consumes({ApiMediaTypes.EVENT, ApiMediaTypes.APPLICATION_JSON})
 public class EventRestController {
 
     @Autowired
@@ -52,13 +54,13 @@ public class EventRestController {
         List<Event> events = eventService.listByClub(clubId, page, size);
         int total = eventService.countByClub(clubId);
 
-        List<EventDto> body = events.stream()
-                .map(event -> eventDtoAssembler.toDto(uriInfo,clubId, event))
-                .collect(Collectors.toList());
+        List<LinkDto> body = CollectionLinks.items(events, event -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/events/{eventId}")
+                .resolveTemplate("clubId", clubId)
+                .resolveTemplate("eventId", event.getEventId())
+                .build());
 
-        GenericEntity<List<EventDto>> entity = new GenericEntity<>(body) {};
-
-        Response.ResponseBuilder response = Response.ok(entity)
+        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
                 .header("X-Total-Count", total);
         addPaginationLinks(response, page, size, total);
         return response.build();
@@ -88,7 +90,7 @@ public class EventRestController {
                 .build();
 
         return Response.created(location)
-                .entity(eventDtoAssembler.toDto(uriInfo,clubId, created))
+                .entity(toDtoWithClubName(clubId, created))
                 .build();
     }
 
@@ -99,7 +101,7 @@ public class EventRestController {
 
         Event event = eventService.getForClub(clubId, eventId);
 
-        return Response.ok( eventDtoAssembler.toDto(uriInfo,clubId, event)).build();
+        return Response.ok(toDtoWithClubName(clubId, event)).build();
     }
 
     @PUT
@@ -124,7 +126,7 @@ public class EventRestController {
                 null
         );
 
-        return Response.ok( eventDtoAssembler.toDto(uriInfo,clubId, updated)).build();
+        return Response.ok(toDtoWithClubName(clubId, updated)).build();
     }
 
     @DELETE
@@ -165,6 +167,13 @@ public class EventRestController {
                 .replaceQueryParam("page", page)
                 .replaceQueryParam("size", size)
                 .build() + ">; rel=\"" + rel + "\"";
+    }
+
+    private EventDto toDtoWithClubName(UUID clubId, Event event) {
+        String clubName = clubService.getClubById(clubId)
+                .map(club -> club.getClubName())
+                .orElse(null);
+        return eventDtoAssembler.toDto(uriInfo, clubId, event, clubName);
     }
 
 }
