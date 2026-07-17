@@ -357,7 +357,7 @@ public class BookingServiceImpl implements BookingService {
         final Booking booking = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
 
-        if (isBookingOwner(booking, user.getId()) || isManagedByUser(bookingId, user.getId())) {
+        if (isBookingOwner(booking, user.getId()) || isManagedByUser(booking, user.getId())) {
             return booking;
         }
 
@@ -376,7 +376,7 @@ public class BookingServiceImpl implements BookingService {
             return;
         }
 
-        if (isManagedByUser(bookingId, user.getId())) {
+        if (isManagedByUser(booking, user.getId())) {
             cancel(bookingId);
             return;
         }
@@ -394,7 +394,7 @@ public class BookingServiceImpl implements BookingService {
         final Booking booking = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
 
-        final ClubTable table = ensureTableExists(booking.getTableId());
+        final ClubTable table = booking.getTable() != null ? booking.getTable() : ensureTableExists(booking.getTableId());
         if (!clubId.equals(table.getClubId())) {
             throw new BookingNotFoundException(bookingId.toString());
         }
@@ -451,6 +451,13 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<UUID> searchForUserBookingIdsPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        return searchBookingIdsPaginated(user.getId(), clubId, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public int countSearchForUser(String loginIdentifier, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt) {
         final User user = findUserByLoginIdentifier(loginIdentifier);
         return countSearch(user.getId(), clubId, bookingId, status, bookingDate, hasReceipt);
@@ -465,9 +472,43 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<UUID> searchManagedClubBookingIdsPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset) {
+        final User user = findUserByLoginIdentifier(loginIdentifier);
+        return searchBookingIdsForAdminPaginated(user.getId(), clubId, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public int countSearchManagedClubs(String loginIdentifier, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt) {
         final User user = findUserByLoginIdentifier(loginIdentifier);
         return countSearchForAdmin(user.getId(), clubId, bookingId, status, bookingDate, hasReceipt);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Booking> searchByClubIdsPaginated(List<UUID> clubIds,
+                                                  String oldBookingId,
+                                                  Status status,
+                                                  String sort,
+                                                  String oldBookingDate,
+                                                  Boolean hasReceipt,
+                                                  int limit,
+                                                  int offset) {
+        UUID bookingId = parseBookingId(oldBookingId);
+        LocalDate bookingDate = parseBookingDate(oldBookingDate);
+        return bookingDao.searchByClubIdsPaginated(clubIds, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int countByClubIds(List<UUID> clubIds,
+                              String oldBookingId,
+                              Status status,
+                              String oldBookingDate,
+                              Boolean hasReceipt) {
+        UUID bookingId = parseBookingId(oldBookingId);
+        LocalDate bookingDate = parseBookingDate(oldBookingDate);
+        return bookingDao.countByClubIds(clubIds, bookingId, status, bookingDate, hasReceipt);
     }
 
     @Override
@@ -476,7 +517,7 @@ public class BookingServiceImpl implements BookingService {
         final User user = findUserByLoginIdentifier(loginIdentifier);
         final Booking booking = bookingDao.findById(bookingId)
                 .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
-        final UUID clubId = clubId(bookingId);
+        final UUID clubId = clubIdFromBooking(booking);
         final List<UUID> adminClubIds = clubDao.findIdsByAdmin(user.getId());
         if (adminClubIds == null || !adminClubIds.contains(clubId)) {
             throw new UnauthorizedException("booking.notAllowedToView");
@@ -504,10 +545,17 @@ public class BookingServiceImpl implements BookingService {
                 && booking.getUser().getId().equals(userId);
     }
 
-    private boolean isManagedByUser(UUID bookingId, UUID userId) {
-        final UUID clubId = clubId(bookingId);
+    private boolean isManagedByUser(Booking booking, UUID userId) {
+        final UUID clubId = clubIdFromBooking(booking);
         final List<UUID> adminClubIds = clubDao.findIdsByAdmin(userId);
         return adminClubIds != null && adminClubIds.contains(clubId);
+    }
+
+    private UUID clubIdFromBooking(Booking booking) {
+        if (booking.getTable() != null && booking.getTable().getClubId() != null) {
+            return booking.getTable().getClubId();
+        }
+        return clubId(booking.getBookingId());
     }
 
     @Override
@@ -524,6 +572,21 @@ public class BookingServiceImpl implements BookingService {
         UUID bookingId = parseBookingId(oldBookingId);
         LocalDate bookingDate = parseBookingDate(oldBookingDate);
         return bookingDao.searchPaginated(userId, clubId, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UUID> searchBookingIdsPaginated(UUID userId,
+                                                UUID clubId,
+                                                String oldBookingId,
+                                                Status status,
+                                                String sort,
+                                                String oldBookingDate,
+                                                Boolean hasReceipt,
+                                                int limit,
+                                                int offset) {
+        UUID bookingId = parseBookingId(oldBookingId);
+        LocalDate bookingDate = parseBookingDate(oldBookingDate);
+        return bookingDao.searchIdsPaginated(userId, clubId, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
     }
 
 
@@ -559,6 +622,34 @@ public class BookingServiceImpl implements BookingService {
 
         List<UUID> target = (clubId != null) ? List.of(clubId) : adminClubIds;
         return bookingDao.countByClubIds(target, bookingId, status, bookingDate, hasReceipt);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UUID> searchBookingIdsForAdminPaginated(UUID adminUserId,
+                                                        UUID clubId,
+                                                        String oldBookingId,
+                                                        Status status,
+                                                        String sort,
+                                                        String oldBookingDate,
+                                                        Boolean hasReceipt,
+                                                        int limit,
+                                                        int offset) {
+
+        UUID bookingId = parseBookingId(oldBookingId);
+        LocalDate bookingDate = parseBookingDate(oldBookingDate);
+        List<UUID> adminClubIds = clubDao.findIdsByAdmin(adminUserId);
+        if (adminClubIds == null || adminClubIds.isEmpty()) {
+            return List.of();
+        }
+
+        if (clubId != null) {
+            if (!adminClubIds.contains(clubId)) {
+                return List.of();
+            }
+            adminClubIds = List.of(clubId);
+        }
+
+        return bookingDao.searchIdsByClubIdsPaginated(adminClubIds, bookingId, status, sort, bookingDate, hasReceipt, limit, offset);
     }
 
     @Override

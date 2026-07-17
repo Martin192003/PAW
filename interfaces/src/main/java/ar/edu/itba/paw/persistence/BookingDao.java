@@ -33,7 +33,17 @@ public interface BookingDao {
                                            Boolean hasReceipt,
                                            int limit, int offset);
 
+    List<UUID> searchIdsByClubIdsPaginated(List<UUID> clubIds,
+                                           UUID bookingId,
+                                           Status status,
+                                           String sort,
+                                           LocalDate bookingDate,
+                                           Boolean hasReceipt,
+                                           int limit, int offset);
+
     List<Booking> searchPaginated(UUID userId, UUID clubId, UUID bookingId, Status status, String sort, LocalDate bookingDate, Boolean hasReceipt, int limit, int offset);
+
+    List<UUID> searchIdsPaginated(UUID userId, UUID clubId, UUID bookingId, Status status, String sort, LocalDate bookingDate, Boolean hasReceipt, int limit, int offset);
 
     int countSearch(UUID userId, UUID clubId, UUID bookingId, Status status, LocalDate bookingDate, Boolean hasReceipt);
 

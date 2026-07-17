@@ -45,11 +45,19 @@ public interface BookingService {
 
     List<Booking> searchForUserPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset);
 
+    List<UUID> searchForUserBookingIdsPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset);
+
     int countSearchForUser(String loginIdentifier, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt);
 
     List<Booking> searchManagedClubsPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset);
 
+    List<UUID> searchManagedClubBookingIdsPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset);
+
     int countSearchManagedClubs(String loginIdentifier, UUID clubId, String bookingId, Status status, String bookingDate, Boolean hasReceipt);
+
+    List<Booking> searchByClubIdsPaginated(List<UUID> clubIds, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset);
+
+    int countByClubIds(List<UUID> clubIds, String bookingId, Status status, String bookingDate, Boolean hasReceipt);
 
     Booking getManagedClubBooking(String loginIdentifier, UUID bookingId);
 

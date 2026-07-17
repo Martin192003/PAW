@@ -11,10 +11,6 @@ describe('BookingUserHandlerPage', () => {
     getReceiptBlob: ReturnType<typeof vi.fn>;
     requireReceiptLink: ReturnType<typeof vi.fn>;
   };
-  let clubService: {
-    getClubById: ReturnType<typeof vi.fn>;
-    getTables: ReturnType<typeof vi.fn>;
-  };
   let authState: { getUser: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let component: BookingUserHandlerPage;
@@ -22,24 +18,18 @@ describe('BookingUserHandlerPage', () => {
   const booking = {
     id: 'booking-1',
     clubId: 'club-1',
+    clubName: 'Club One',
     userId: 'user-1',
     tableId: 'table-1',
+    tableNumber: 7,
+    tablePrice: 200,
+    tableDiscount: 25,
     bookingStart: '2026-07-03T22:00:00Z',
     bookingEnd: '2026-07-04T02:00:00Z',
     status: 'PENDIENTE',
     createdAt: '2026-07-03T12:00:00Z',
     totalAmount: 100,
     hasReceipt: false,
-  } as any;
-
-  const club = { clubId: 'club-1', clubName: 'Club One', cbu: '123' } as any;
-  const table = {
-    tableId: 'table-1',
-    tableNumber: 7,
-    capacity: 4,
-    price: 200,
-    discount: 25,
-    tableState: 'DISPONIBLE',
   } as any;
 
   beforeEach(() => {
@@ -50,10 +40,6 @@ describe('BookingUserHandlerPage', () => {
       putReceipt: vi.fn(),
       getReceiptBlob: vi.fn(),
       requireReceiptLink: vi.fn(),
-    };
-    clubService = {
-      getClubById: vi.fn().mockReturnValue(of(club)),
-      getTables: vi.fn().mockReturnValue(of([table])),
     };
     authState = { getUser: vi.fn().mockReturnValue(null) };
     router = { navigate: vi.fn().mockResolvedValue(true) };
@@ -67,7 +53,6 @@ describe('BookingUserHandlerPage', () => {
       router as any,
       authState as any,
       bookingService as any,
-      clubService as any,
       { detectChanges: vi.fn() } as any,
       { instant: (key: string) => key, getLanguage: () => 'es' } as any
     );
@@ -83,8 +68,18 @@ describe('BookingUserHandlerPage', () => {
 
     expect(bookingService.getBooking).toHaveBeenCalledWith('club-1', 'booking-1');
     expect(component.booking).toBe(booking);
-    expect(component.club).toBe(club);
-    expect(component.table).toBe(table);
+    expect(component.club).toEqual(expect.objectContaining({ clubId: 'club-1', clubName: 'Club One' }));
+    expect(component.table).toEqual(expect.objectContaining({ tableId: 'table-1', tableNumber: 7, price: 200, discount: 25 }));
+  });
+
+  it('does not download the receipt during the initial booking load', () => {
+    bookingService.getBooking.mockReturnValueOnce(of({ ...booking, hasReceipt: true }));
+
+    component.ngOnInit();
+
+    expect(component.hasReceipt).toBe(true);
+    expect(component.receiptUrl).toBe('');
+    expect(bookingService.getReceiptBlob).not.toHaveBeenCalled();
   });
 
   it('sets loading to true while the booking request is pending', () => {

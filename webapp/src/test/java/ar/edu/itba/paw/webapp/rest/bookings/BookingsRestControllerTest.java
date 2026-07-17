@@ -1,11 +1,12 @@
 package ar.edu.itba.paw.webapp.rest.bookings;
 
 import ar.edu.itba.paw.model.Booking;
+import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.BookingDto;
-import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.BookingService;
+import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.ReceiptService;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.junit.Before;
@@ -19,13 +20,13 @@ import javax.ws.rs.core.UriInfo;
 import java.security.Principal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -33,16 +34,20 @@ import static org.mockito.Mockito.when;
 
 /**
  * BookingsRestController es el otro controller central del rediseño de paginación
- * (colecciones "solo-links" + unificación de /managed-bookings en
+ * (colecciones paginadas + unificación de /managed-bookings en
  * GET /bookings?managed=true, ver AUDITORIA_ENTREGA_FINAL.md puntos 11/12/24) y no
  * tenía ningún test.
  */
 public class BookingsRestControllerTest {
 
     private static final String LOGIN = "user@example.com";
+    private static final UUID AUTH_USER_ID = UUID.randomUUID();
     private static final UUID BOOKING_ID = UUID.randomUUID();
+    private static final UUID CLUB_ID = UUID.randomUUID();
+    private static final UUID TABLE_ID = UUID.randomUUID();
 
     private BookingService bookingService;
+    private ClubService clubService;
     private BookingDtoAssembler bookingDtoAssembler;
     private ReceiptService receiptService;
     private AuthenticatedUserResolver authenticatedUserResolver;
@@ -52,12 +57,14 @@ public class BookingsRestControllerTest {
     @Before
     public void setUp() {
         bookingService = mock(BookingService.class);
+        clubService = mock(ClubService.class);
         receiptService = mock(ReceiptService.class);
         bookingDtoAssembler = new BookingDtoAssembler(receiptService);
         authenticatedUserResolver = mock(AuthenticatedUserResolver.class);
 
         controller = new BookingsRestController(
                 bookingService,
+                clubService,
                 bookingDtoAssembler,
                 authenticatedUserResolver
         );
@@ -75,15 +82,18 @@ public class BookingsRestControllerTest {
         // getBookingById llama a authenticatedUser(), que exige que el resolver
         // devuelva un User no-nulo (si no, tira NotAuthorizedException). Con esto
         // alcanza para los tests que no les importa quién es el caller exacto.
-        when(authenticatedUserResolver.resolve(securityContext)).thenReturn(user(UUID.randomUUID()));
+        when(authenticatedUserResolver.resolve(securityContext)).thenReturn(user(AUTH_USER_ID));
+        when(clubService.mapClubNames(any())).thenReturn(Map.of(BOOKING_ID, "Club Test"));
+        when(clubService.findManagedClubIds(AUTH_USER_ID)).thenReturn(List.of(CLUB_ID));
+        when(receiptService.buildHasReceiptMap(any())).thenReturn(Map.of(BOOKING_ID, false));
     }
 
     @Test
     public void testListBookings_UnmanagedUsesSearchForUser() {
-        when(bookingService.searchForUserPaginated(
-                eq(LOGIN), any(), any(), any(), any(), any(), any(), anyInt(), anyInt()
-        )).thenReturn(List.of(booking(BOOKING_ID, Status.PENDIENTE)));
-        when(bookingService.countSearchForUser(eq(LOGIN), any(), any(), any(), any(), any())).thenReturn(3);
+        when(bookingService.searchPaginated(
+                eq(AUTH_USER_ID), any(), any(), any(), any(), any(), any(), anyInt(), anyInt()
+        )).thenReturn(List.of(listBooking()));
+        when(bookingService.countSearch(eq(AUTH_USER_ID), any(), any(), any(), any(), any())).thenReturn(3);
 
         Response response = controller.listBookings(
                 false, null, null, null, "created_desc", null, null, 1, 10, securityContext);
@@ -96,23 +106,25 @@ public class BookingsRestControllerTest {
         Object entity = response.getEntity();
         assertTrue(entity instanceof List);
         @SuppressWarnings("unchecked")
-        List<LinkDto> links = (List<LinkDto>) entity;
-        assertEquals(1, links.size());
-        assertTrue(links.get(0).getHref().contains(BOOKING_ID.toString()));
+        List<BookingDto> body = (List<BookingDto>) entity;
+        assertEquals(1, body.size());
+        assertEquals(BOOKING_ID, body.get(0).getId());
+        assertEquals("Club Test", body.get(0).getClubName());
+        assertEquals(Integer.valueOf(7), body.get(0).getTableNumber());
     }
 
     @Test
     public void testListBookings_ManagedUsesSearchManagedClubs() {
-        when(bookingService.searchManagedClubsPaginated(
-                eq(LOGIN), any(), any(), any(), any(), any(), any(), anyInt(), anyInt()
-        )).thenReturn(List.of(booking(BOOKING_ID, Status.PENDIENTE)));
-        when(bookingService.countSearchManagedClubs(eq(LOGIN), any(), any(), any(), any(), any())).thenReturn(7);
+        when(bookingService.searchByClubIdsPaginated(
+                eq(List.of(CLUB_ID)), any(), any(), any(), any(), any(), anyInt(), anyInt()
+        )).thenReturn(List.of(listBooking()));
+        when(bookingService.countByClubIds(eq(List.of(CLUB_ID)), any(), any(), any(), any())).thenReturn(7);
 
         Response response = controller.listBookings(
                 true, null, null, null, "created_desc", null, null, 1, 10, securityContext);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        // Si managed=true no delegara en searchManagedClubsPaginated/countSearchManagedClubs,
+        // Si managed=true no delegara en searchForAdminPaginated/countSearchForAdmin,
         // el total vendría del stub (sin configurar) de la búsqueda "no managed", que
         // devolvería 0 por default -- así que este total ya confirma la rama correcta.
         assertEquals("7", response.getHeaderString("X-Total-Count"));
@@ -120,11 +132,11 @@ public class BookingsRestControllerTest {
 
     @Test
     public void testListManagedClubBookings_DelegatesWithManagedTrue() {
-        UUID clubId = UUID.randomUUID();
-        when(bookingService.searchManagedClubsPaginated(
-                eq(LOGIN), eq(clubId), any(), any(), any(), any(), any(), anyInt(), anyInt()
-        )).thenReturn(List.of(booking(BOOKING_ID, Status.PENDIENTE)));
-        when(bookingService.countSearchManagedClubs(eq(LOGIN), eq(clubId), any(), any(), any(), any())).thenReturn(2);
+        UUID clubId = CLUB_ID;
+        when(bookingService.searchByClubIdsPaginated(
+                eq(List.of(clubId)), any(), any(), any(), any(), any(), anyInt(), anyInt()
+        )).thenReturn(List.of(listBooking()));
+        when(bookingService.countByClubIds(eq(List.of(clubId)), any(), any(), any(), any())).thenReturn(2);
 
         Response response = controller.listManagedClubBookings(
                 clubId, null, null, "created_desc", null, null, 1, 10, securityContext);
@@ -135,8 +147,7 @@ public class BookingsRestControllerTest {
 
     @Test
     public void testGetBookingById_NotFound_PropagatesException() {
-        when(bookingService.getAccessibleBooking(eq(LOGIN), eq(BOOKING_ID)))
-                .thenThrow(new ar.edu.itba.paw.model.exceptions.BookingNotFoundException("booking.notfound"));
+        when(bookingService.findById(BOOKING_ID)).thenReturn(Optional.empty());
 
         org.junit.Assert.assertThrows(
                 ar.edu.itba.paw.model.exceptions.BookingNotFoundException.class,
@@ -145,14 +156,12 @@ public class BookingsRestControllerTest {
 
     @Test
     public void testGetBookingById_Found_ReturnsBookingDto() {
-        User user = user(UUID.randomUUID());
+        User user = user(AUTH_USER_ID);
         Booking booking = booking(BOOKING_ID, Status.PENDIENTE);
         booking.setUser(user);
-        when(bookingService.getAccessibleBooking(eq(LOGIN), eq(BOOKING_ID))).thenReturn(booking);
-        when(bookingService.clubId(BOOKING_ID)).thenReturn(UUID.randomUUID());
-        when(bookingService.getManagedClubBooking(eq(LOGIN), eq(BOOKING_ID)))
-                .thenThrow(new ar.edu.itba.paw.model.exceptions.UnauthorizedException());
-        when(receiptService.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
+        booking.setTable(table());
+        booking.setTableId(TABLE_ID);
+        when(bookingService.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
 
         Response response = controller.getBookingById(BOOKING_ID, false, securityContext);
 
@@ -166,9 +175,9 @@ public class BookingsRestControllerTest {
     public void testGetBookingById_ManagedModeRequiresManagedBookingAccess() {
         Booking booking = booking(BOOKING_ID, Status.PENDIENTE);
         booking.setUser(user(UUID.randomUUID()));
-        when(bookingService.getManagedClubBooking(eq(LOGIN), eq(BOOKING_ID))).thenReturn(booking);
-        when(bookingService.clubId(BOOKING_ID)).thenReturn(UUID.randomUUID());
-        when(receiptService.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
+        booking.setTable(table());
+        booking.setTableId(TABLE_ID);
+        when(bookingService.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
 
         Response response = controller.getBookingById(BOOKING_ID, true, securityContext);
 
@@ -205,7 +214,6 @@ public class BookingsRestControllerTest {
         updated.setUser(user(UUID.randomUUID()));
         when(bookingService.getManagedClubBooking(eq(LOGIN), eq(BOOKING_ID))).thenReturn(updated);
         when(bookingService.clubId(BOOKING_ID)).thenReturn(UUID.randomUUID());
-        when(receiptService.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
 
         Response response = controller.updateBookingById(BOOKING_ID, body, securityContext);
 
@@ -229,6 +237,22 @@ public class BookingsRestControllerTest {
         booking.setBookingEnd(OffsetDateTime.now().plusHours(6));
         booking.setCreatedAt(OffsetDateTime.now());
         return booking;
+    }
+
+    private static Booking listBooking() {
+        Booking booking = booking(BOOKING_ID, Status.PENDIENTE);
+        booking.setUser(user(UUID.randomUUID()));
+        booking.setTable(table());
+        booking.setTableId(TABLE_ID);
+        return booking;
+    }
+
+    private static ClubTable table() {
+        ClubTable table = new ClubTable();
+        table.setTableId(TABLE_ID);
+        table.setClubId(CLUB_ID);
+        table.setTableNumber(7);
+        return table;
     }
 
     private static User user(UUID id) {

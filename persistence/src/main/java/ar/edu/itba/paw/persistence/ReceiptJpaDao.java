@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Receipt;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.*;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 @Repository
@@ -26,22 +27,54 @@ public class ReceiptJpaDao implements ReceiptDao {
 
     @Override
     public Optional<Receipt> findByBooking(UUID bookingId) {
-        final List<Receipt> list = em.createQuery("""
-                SELECT r
+        final List<Object[]> list = em.createQuery("""
+                SELECT r.receiptId,
+                       r.bookingId,
+                       r.uploadedBy,
+                       r.url,
+                       r.filename,
+                       r.contentType,
+                       r.sizeBytes,
+                       r.createdAt
                 FROM Receipt r
                 WHERE r.bookingId = :bid
                 ORDER BY r.createdAt DESC
-                """, Receipt.class)
+                """, Object[].class)
                 .setParameter("bid", bookingId)
                 .setMaxResults(1)
                 .getResultList();
 
         if (list.isEmpty()) return Optional.empty();
 
-        Receipt r = list.getFirst();
-        em.detach(r);
-        r.setData(null);
-        return Optional.of(r);
+        final Object[] row = list.getFirst();
+        return Optional.of(new Receipt(
+                (UUID) row[0],
+                (UUID) row[1],
+                (UUID) row[2],
+                (String) row[3],
+                (String) row[4],
+                (String) row[5],
+                (Long) row[6],
+                (OffsetDateTime) row[7],
+                null
+        ));
+    }
+
+    @Override
+    public Set<UUID> findBookingIdsWithReceipt(Collection<UUID> bookingIds) {
+        if (bookingIds == null || bookingIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        final List<UUID> rows = em.createQuery("""
+                SELECT DISTINCT r.bookingId
+                FROM Receipt r
+                WHERE r.bookingId IN :bookingIds
+                """, UUID.class)
+                .setParameter("bookingIds", bookingIds)
+                .getResultList();
+
+        return new HashSet<>(rows);
     }
 
     @Override

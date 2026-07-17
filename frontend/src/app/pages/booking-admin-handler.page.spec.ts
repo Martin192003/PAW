@@ -11,48 +11,27 @@ describe('BookingAdminHandlerPage', () => {
     getReceiptBlob: ReturnType<typeof vi.fn>;
     requireReceiptLink: ReturnType<typeof vi.fn>;
   };
-  let clubService: {
-    getClubById: ReturnType<typeof vi.fn>;
-    getTables: ReturnType<typeof vi.fn>;
-  };
-  let userService: { getUserById: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let component: BookingAdminHandlerPage;
 
   const booking = {
     id: 'booking-1',
     clubId: 'club-1',
+    clubName: 'Club One',
     userId: 'user-1',
+    userUsername: 'pilar',
+    userName: 'Pilar',
+    userSurname: 'Frutos',
     tableId: 'table-1',
+    tableNumber: 7,
+    tablePrice: 200,
+    tableDiscount: 25,
     bookingStart: '2026-07-03T22:00:00Z',
     bookingEnd: '2026-07-04T02:00:00Z',
     status: 'PENDIENTE',
     createdAt: '2026-07-03T12:00:00Z',
     totalAmount: 100,
     hasReceipt: false,
-  } as any;
-
-  const club = {
-    clubId: 'club-1',
-    clubName: 'Club One',
-    cbu: '123',
-  } as any;
-
-  const table = {
-    tableId: 'table-1',
-    tableNumber: 7,
-    capacity: 4,
-    price: 200,
-    discount: 25,
-    tableState: 'DISPONIBLE',
-  } as any;
-
-  const user = {
-    userId: 'user-1',
-    username: 'pilar',
-    name: 'Pilar',
-    surname: 'Frutos',
-    email: 'pilar@example.com',
   } as any;
 
   beforeEach(() => {
@@ -64,19 +43,12 @@ describe('BookingAdminHandlerPage', () => {
       getReceiptBlob: vi.fn(),
       requireReceiptLink: vi.fn(),
     };
-    clubService = {
-      getClubById: vi.fn().mockReturnValue(of(club)),
-      getTables: vi.fn().mockReturnValue(of([table])),
-    };
-    userService = { getUserById: vi.fn().mockReturnValue(of(user)) };
     router = { navigate: vi.fn().mockResolvedValue(true) };
 
     component = new BookingAdminHandlerPage(
       { snapshot: { paramMap: convertToParamMap({ bookingId: 'booking-1' }) } } as any,
       router as any,
       bookingService as any,
-      clubService as any,
-      userService as any,
       { detectChanges: vi.fn() } as any,
       { instant: (key: string) => key, getLanguage: () => 'es' } as any
     );
@@ -92,10 +64,20 @@ describe('BookingAdminHandlerPage', () => {
 
     expect(bookingService.getManagedClubBooking).toHaveBeenCalledWith('booking-1');
     expect(component.booking).toBe(booking);
-    expect(component.club).toBe(club);
-    expect(component.table).toBe(table);
-    expect(component.user).toBe(user);
+    expect(component.club).toEqual(expect.objectContaining({ clubId: 'club-1', clubName: 'Club One' }));
+    expect(component.table).toEqual(expect.objectContaining({ tableId: 'table-1', tableNumber: 7, price: 200, discount: 25 }));
+    expect(component.user).toEqual(expect.objectContaining({ userId: 'user-1', username: 'pilar', surname: 'Frutos' }));
     expect(component.hasReceipt).toBe(false);
+  });
+
+  it('does not download the receipt during the initial admin booking load', () => {
+    bookingService.getManagedClubBooking.mockReturnValueOnce(of({ ...booking, hasReceipt: true }));
+
+    component.ngOnInit();
+
+    expect(component.hasReceipt).toBe(true);
+    expect(component.receiptUrl).toBe('');
+    expect(bookingService.getReceiptBlob).not.toHaveBeenCalled();
   });
 
   it('navigates back to managed bookings', () => {

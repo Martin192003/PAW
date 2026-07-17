@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -27,13 +28,66 @@ public class BookingDtoAssembler {
     }
 
     public BookingDto toDto(UriInfo uriInfo, UUID clubId, Booking booking, boolean canManage, boolean isOwner) {
+        return toDto(uriInfo, clubId, booking, canManage, isOwner, null, false);
+    }
+
+    public BookingDto toDetailDto(UriInfo uriInfo,
+                                  UUID clubId,
+                                  Booking booking,
+                                  boolean canManage,
+                                  boolean isOwner,
+                                  String clubName) {
+        final boolean hasReceipt = receiptService.buildHasReceiptMap(List.of(booking))
+                .getOrDefault(booking.getBookingId(), false);
+        final BookingDto dto = toDto(uriInfo, clubId, booking, canManage, isOwner, hasReceipt, true);
+        dto.setClubName(clubName);
+        return dto;
+    }
+
+    public List<BookingDto> toDtos(UriInfo uriInfo,
+                                   List<Booking> bookings,
+                                   boolean canManage,
+                                   boolean isOwner,
+                                   Map<UUID, String> clubNamesByBooking) {
+        final Map<UUID, Boolean> hasReceiptByBooking = receiptService.buildHasReceiptMap(bookings);
+        return bookings.stream()
+                .map(booking -> {
+                    final UUID clubId = resolveClubId(booking);
+                    final BookingDto dto = toDto(uriInfo, clubId, booking, canManage, isOwner,
+                            hasReceiptByBooking.getOrDefault(booking.getBookingId(), false),
+                            true);
+                    if (clubNamesByBooking != null) {
+                        dto.setClubName(clubNamesByBooking.get(booking.getBookingId()));
+                    }
+                    return dto;
+                })
+                .toList();
+    }
+
+    private BookingDto toDto(UriInfo uriInfo,
+                             UUID clubId,
+                             Booking booking,
+                             boolean canManage,
+                             boolean isOwner,
+                             Boolean hasReceipt) {
+        return toDto(uriInfo, clubId, booking, canManage, isOwner, hasReceipt, false);
+    }
+
+    private BookingDto toDto(UriInfo uriInfo,
+                             UUID clubId,
+                             Booking booking,
+                             boolean canManage,
+                             boolean isOwner,
+                             Boolean hasReceipt,
+                             boolean includeInlineDetails) {
         final UUID tableId = booking.getTableId() != null
                 ? booking.getTableId()
                 : (booking.getTable() != null ? booking.getTable().getTableId() : null);
+        final UUID resolvedClubId = clubId != null ? clubId : resolveClubId(booking);
 
         BookingDto dto = new BookingDto();
         dto.setId(booking.getBookingId());
-        dto.setClubId(clubId);
+        dto.setClubId(resolvedClubId);
         dto.setUserId(booking.getUser() != null ? booking.getUser().getId() : null);
         dto.setTableId(tableId);
         dto.setBookingStart(booking.getBookingStart());
@@ -41,7 +95,12 @@ public class BookingDtoAssembler {
         dto.setStatus(booking.getStatus() != null ? booking.getStatus().name() : null);
         dto.setCreatedAt(booking.getCreatedAt());
         dto.setTotalAmount(booking.getTotalAmount());
-        dto.setHasReceipt(receiptService.findByBooking(booking.getBookingId()).isPresent());
+        dto.setHasReceipt(hasReceipt != null
+                ? hasReceipt
+                : receiptService.findByBooking(booking.getBookingId()).isPresent());
+        if (includeInlineDetails) {
+            fillInlineDetails(dto, booking);
+        }
 
         List<LinkDto> links = new ArrayList<>();
         links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
@@ -50,7 +109,7 @@ public class BookingDtoAssembler {
                 .build(), "GET"));
         links.add(LinkBuilder.link("club", uriInfo.getBaseUriBuilder()
                 .path("clubs/{clubId}")
-                .resolveTemplate("clubId", clubId)
+                .resolveTemplate("clubId", resolvedClubId)
                 .build(), "GET"));
         if (dto.getUserId() != null) {
             links.add(LinkBuilder.link("user", uriInfo.getBaseUriBuilder()
@@ -61,14 +120,14 @@ public class BookingDtoAssembler {
         if (tableId != null) {
             links.add(LinkBuilder.link("table", uriInfo.getBaseUriBuilder()
                     .path("clubs/{clubId}/tables/{tableId}")
-                    .resolveTemplate("clubId", clubId)
+                    .resolveTemplate("clubId", resolvedClubId)
                     .resolveTemplate("tableId", tableId)
                     .build(), "GET"));
         }
         links.add(LinkBuilder.link("receipt", uriInfo.getBaseUriBuilder()
                 .path(BookingRestController.class)
                 .path(BookingRestController.class, "getReceipt")
-                .resolveTemplate("clubId", clubId)
+                .resolveTemplate("clubId", resolvedClubId)
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "GET"));
 
@@ -95,5 +154,22 @@ public class BookingDtoAssembler {
         dto.setLinks(links);
 
         return dto;
+    }
+
+    private UUID resolveClubId(Booking booking) {
+        return booking.getTable() != null ? booking.getTable().getClubId() : null;
+    }
+
+    private void fillInlineDetails(BookingDto dto, Booking booking) {
+        if (booking.getUser() != null) {
+            dto.setUserUsername(booking.getUser().getUsername());
+            dto.setUserName(booking.getUser().getName());
+            dto.setUserSurname(booking.getUser().getSurname());
+        }
+        if (booking.getTable() != null) {
+            dto.setTableNumber(booking.getTable().getTableNumber());
+            dto.setTablePrice(booking.getTable().getPrice());
+            dto.setTableDiscount(booking.getTable().getDiscount());
+        }
     }
 }

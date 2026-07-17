@@ -124,6 +124,12 @@ public class ClubServiceImpl implements ClubService{
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<UUID> findManagedClubIds(UUID userId) {
+        return clubDao.findIdsByAdmin(userId);
+    }
+
+    @Override
     public List<User> getAdminsByClub(UUID clubId) {
         return clubDao.findAdminsByClubId(clubId);
     }

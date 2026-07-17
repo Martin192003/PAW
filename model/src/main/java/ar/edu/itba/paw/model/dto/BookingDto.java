@@ -10,8 +10,15 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 public class BookingDto {
     private UUID id;
     private UUID clubId;
+    private String clubName;
     private UUID userId;
+    private String userUsername;
+    private String userName;
+    private String userSurname;
     private UUID tableId;
+    private Integer tableNumber;
+    private BigDecimal tablePrice;
+    private BigDecimal tableDiscount;
     private LocalDate date;
     private OffsetDateTime bookingStart;
     private OffsetDateTime bookingEnd;
@@ -37,6 +44,14 @@ public class BookingDto {
         this.clubId = clubId;
     }
 
+    public String getClubName() {
+        return clubName;
+    }
+
+    public void setClubName(String clubName) {
+        this.clubName = clubName;
+    }
+
     public UUID getUserId() {
         return userId;
     }
@@ -45,12 +60,60 @@ public class BookingDto {
         this.userId = userId;
     }
 
+    public String getUserUsername() {
+        return userUsername;
+    }
+
+    public void setUserUsername(String userUsername) {
+        this.userUsername = userUsername;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getUserSurname() {
+        return userSurname;
+    }
+
+    public void setUserSurname(String userSurname) {
+        this.userSurname = userSurname;
+    }
+
     public UUID getTableId() {
         return tableId;
     }
 
     public void setTableId(UUID tableId) {
         this.tableId = tableId;
+    }
+
+    public Integer getTableNumber() {
+        return tableNumber;
+    }
+
+    public void setTableNumber(Integer tableNumber) {
+        this.tableNumber = tableNumber;
+    }
+
+    public BigDecimal getTablePrice() {
+        return tablePrice;
+    }
+
+    public void setTablePrice(BigDecimal tablePrice) {
+        this.tablePrice = tablePrice;
+    }
+
+    public BigDecimal getTableDiscount() {
+        return tableDiscount;
+    }
+
+    public void setTableDiscount(BigDecimal tableDiscount) {
+        this.tableDiscount = tableDiscount;
     }
 
     @XmlJavaTypeAdapter(LocalDateAdapter.class)

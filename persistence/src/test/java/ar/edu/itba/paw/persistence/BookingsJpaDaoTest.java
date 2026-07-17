@@ -4,12 +4,15 @@ import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import java.math.BigDecimal;
@@ -30,6 +33,11 @@ public class BookingsJpaDaoTest {
 
     @PersistenceContext
     private EntityManager em;
+
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
+
+    private Statistics statistics;
 
     private UUID clubId;
     private UUID tableId;
@@ -57,6 +65,7 @@ public class BookingsJpaDaoTest {
 
         booking = persistBooking(user, table, status, totalAmount, start, end);
         em.flush();
+        statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
     }
 
     // ----------------- Tests create -----------------
@@ -385,6 +394,51 @@ public class BookingsJpaDaoTest {
         assertTrue(result.isEmpty());
     }
 
+    @Test
+    public void testSearchIdsPaginatedUsesSingleStatementForLinkCollection() {
+        persistMoreBookings(14);
+        em.flush();
+        em.clear();
+        resetHibernateStats();
+
+        List<UUID> ids = bookingsDao.searchIdsPaginated(
+                user.getId(),
+                null,
+                null,
+                null,
+                "created_desc",
+                null,
+                null,
+                10,
+                0
+        );
+
+        assertEquals(10, ids.size());
+        assertEquals(1L, statistics.getPrepareStatementCount());
+    }
+
+    @Test
+    public void testSearchIdsByClubIdsPaginatedUsesSingleStatementForLinkCollection() {
+        persistMoreBookings(14);
+        em.flush();
+        em.clear();
+        resetHibernateStats();
+
+        List<UUID> ids = bookingsDao.searchIdsByClubIdsPaginated(
+                Collections.singletonList(clubId),
+                null,
+                null,
+                "created_desc",
+                null,
+                null,
+                10,
+                0
+        );
+
+        assertEquals(10, ids.size());
+        assertEquals(1L, statistics.getPrepareStatementCount());
+    }
+
     // ----------------- Tests countByClubIds -----------------
 
     @Test
@@ -646,8 +700,20 @@ public class BookingsJpaDaoTest {
         return b;
     }
 
+    private void persistMoreBookings(int amount) {
+        ClubTable table = em.find(ClubTable.class, tableId);
+        for (int i = 0; i < amount; i++) {
+            OffsetDateTime start = booking.getBookingStart().plusDays(i + 1L);
+            persistBooking(user, table, Status.PENDIENTE, new BigDecimal("200.00"), start, start.plusHours(2));
+        }
+    }
+
     private long countBookings() {
         return em.createQuery("select count(b) from Booking b", Long.class).getSingleResult();
+    }
+
+    private void resetHibernateStats() {
+        statistics.clear();
     }
 
     private void insertReceipt(UUID receiptId, UUID bookingId, UUID uploadedBy) {

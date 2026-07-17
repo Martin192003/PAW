@@ -4,12 +4,15 @@ import ar.edu.itba.paw.model.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import java.math.BigDecimal;
@@ -29,6 +32,11 @@ public class ReviewsJpaDaoTest {
     @PersistenceContext
     private EntityManager em;
 
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
+
+    private Statistics statistics;
+
     private User user;
     private Review review;
 
@@ -44,6 +52,7 @@ public class ReviewsJpaDaoTest {
 
         review = persistReview(user, club);
         em.flush();
+        statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
     }
 
     /* ---------------------------------------------------------------------- */
@@ -167,6 +176,19 @@ public class ReviewsJpaDaoTest {
         assertFalse(found.isPresent());
     }
 
+    @Test
+    public void testSearchLinkTargetsUsesSingleStatementForLinkCollection() {
+        persistMoreReviews(14);
+        em.flush();
+        em.clear();
+        resetHibernateStats();
+
+        Map<UUID, UUID> targets = reviewsDao.searchLinkTargets(user.getId(), null, "created_desc", 10, 0);
+
+        assertEquals(10, targets.size());
+        assertEquals(1L, statistics.getPrepareStatementCount());
+    }
+
 
     /* ---------------------------------------------------------------------- */
     /*                            HELPERS                                      */
@@ -220,6 +242,16 @@ public class ReviewsJpaDaoTest {
         r.setDescription("Very nice");
         em.persist(r);
         return r;
+    }
+
+    private void persistMoreReviews(int amount) {
+        for (int i = 0; i < amount; i++) {
+            persistReview(user, persistClub(user));
+        }
+    }
+
+    private void resetHibernateStats() {
+        statistics.clear();
     }
 
 

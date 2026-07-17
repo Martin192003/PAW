@@ -54,10 +54,21 @@
         </div>
 
         <ng-container *ngIf="hasReceipt; else noReceipt">
-          <div class="overflow-hidden rounded-lg border border-white/10 bg-black/30">
+          <div *ngIf="receiptUrl; else receiptPending" class="overflow-hidden rounded-lg border border-white/10 bg-black/30">
             <img class="max-h-72 w-full object-contain" [src]="receiptUrl" [attr.alt]="'bookingUserHandler.receipt.alt' | translate">
           </div>
-          <button *ngIf="!isCancelled()" class="mt-4 h-10 w-full rounded-md bg-[#9c27b0] text-sm font-semibold transition hover:bg-[#86229a]" (click)="openReceipt()">{{ 'bookingUserHandler.receipt.viewTab' | translate }}</button>
+          <ng-template #receiptPending>
+            <div class="flex min-h-40 items-center justify-center rounded-lg border border-white/10 bg-black/30">
+              <i class="fa-solid text-2xl text-white/50" [ngClass]="receiptLoading ? 'fa-circle-notch fa-spin' : 'fa-receipt'"></i>
+            </div>
+          </ng-template>
+          <button
+            *ngIf="!isCancelled()"
+            class="mt-4 h-10 w-full rounded-md text-sm font-semibold transition"
+            [ngClass]="receiptLoading ? 'cursor-not-allowed bg-[#5d2a66] text-white/60' : 'bg-[#9c27b0] hover:bg-[#86229a]'"
+            [disabled]="receiptLoading"
+            (click)="openReceipt()"
+          >{{ 'bookingUserHandler.receipt.viewTab' | translate }}</button>
           <p *ngIf="isConfirmed()" class="mt-3 text-xs text-white/50">{{ 'bookingUserHandler.receipt.lockedConfirmed' | translate }}</p>
         </ng-container>
 

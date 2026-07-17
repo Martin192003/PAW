@@ -23,6 +23,8 @@ public interface ClubService {
 
     List<Club> getClubsByUser(UUID userId);
 
+    List<UUID> findManagedClubIds(UUID userId);
+
     List<User> getAdminsByClub(UUID clubId);
 
     List<Club> searchPaginated(String nameLike, Zone location, String musicGenre, String priceRange, Boolean isBar, String sort, int limit, int offset);

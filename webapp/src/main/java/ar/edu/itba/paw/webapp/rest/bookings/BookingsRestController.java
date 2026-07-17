@@ -4,11 +4,11 @@ import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.BookingDto;
-import ar.edu.itba.paw.model.dto.LinkDto;
+import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.service.BookingService;
+import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
-import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -27,6 +27,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
 
@@ -38,6 +39,7 @@ public class BookingsRestController {
     private static final int DEFAULT_SIZE = 10;
 
     private final BookingService bookingService;
+    private final ClubService clubService;
     private final BookingDtoAssembler bookingDtoAssembler;
     private final AuthenticatedUserResolver authenticatedUserResolver;
 
@@ -46,9 +48,11 @@ public class BookingsRestController {
 
     @Autowired
     public BookingsRestController(final BookingService bookingService,
+                                  final ClubService clubService,
                                   final BookingDtoAssembler bookingDtoAssembler,
                                   final AuthenticatedUserResolver authenticatedUserResolver) {
         this.bookingService = bookingService;
+        this.clubService = clubService;
         this.bookingDtoAssembler = bookingDtoAssembler;
         this.authenticatedUserResolver = authenticatedUserResolver;
     }
@@ -68,21 +72,25 @@ public class BookingsRestController {
         page = Math.max(page, DEFAULT_PAGE);
         size = size < 1 ? DEFAULT_SIZE : size;
         final int offset = page * size;
-        final String login = authenticatedLoginIdentifier(securityContext);
+        final User authUser = authenticatedUser(securityContext);
 
-        final List<Booking> bookings = managed
-                ? bookingService.searchManagedClubsPaginated(
-                        login, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset)
-                : bookingService.searchForUserPaginated(
-                        login, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
-        final int total = managed
-                ? bookingService.countSearchManagedClubs(
-                        login, clubId, bookingId, status, bookingDate, hasReceipt)
-                : bookingService.countSearchForUser(
-                        login, clubId, bookingId, status, bookingDate, hasReceipt);
+        final List<Booking> bookings;
+        final int total;
+        if (managed) {
+            final List<UUID> managedClubIds = managedClubScope(authUser, clubId);
+            bookings = bookingService.searchByClubIdsPaginated(
+                    managedClubIds, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
+            total = bookingService.countByClubIds(
+                    managedClubIds, bookingId, status, bookingDate, hasReceipt);
+        } else {
+            bookings = bookingService.searchPaginated(
+                    authUser.getId(), clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
+            total = bookingService.countSearch(
+                    authUser.getId(), clubId, bookingId, status, bookingDate, hasReceipt);
+        }
 
         final int totalPages = (int) Math.ceil((double) total / size);
-        Response.ResponseBuilder response = privateCollectionResponse(bookings, total);
+        Response.ResponseBuilder response = privateCollectionResponse(bookings, total, managed, !managed);
         addPaginationLinks(response, page, size, totalPages);
         return response.build();
     }
@@ -106,18 +114,23 @@ public class BookingsRestController {
     public Response getBookingById(@PathParam("bookingId") UUID bookingId,
                                    @QueryParam("managed") @DefaultValue("false") boolean managed,
                                    @Context SecurityContext securityContext) {
-        final String login = authenticatedLoginIdentifier(securityContext);
+        final User user = authenticatedUser(securityContext);
+        final Booking booking = bookingService.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId.toString()));
+        final UUID clubId = resolveClubId(booking);
+
         if (managed) {
-            final Booking booking = bookingService.getManagedClubBooking(login, bookingId);
+            assertCanManage(user, clubId);
             return privateResponse(toDto(booking, true, false)).build();
         }
 
-        final User user = authenticatedUser(securityContext);
-        final Booking booking = bookingService.getAccessibleBooking(login, bookingId);
         final boolean isOwner = booking.getUser() != null
                 && booking.getUser().getId() != null
                 && booking.getUser().getId().equals(user.getId());
-        final boolean canManage = canManageBooking(login, bookingId);
+        final boolean canManage = !isOwner && canManage(user, clubId);
+        if (!isOwner && !canManage) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
         return privateResponse(toDto(booking, canManage, isOwner)).build();
     }
 
@@ -158,17 +171,27 @@ public class BookingsRestController {
     }
 
     private BookingDto toDto(Booking booking, boolean canManage, boolean isOwner) {
-        final UUID clubId = bookingService.clubId(booking.getBookingId());
-        return bookingDtoAssembler.toDto(uriInfo, clubId, booking, canManage, isOwner);
+        final UUID clubId = resolveClubId(booking);
+        final String clubName = clubService.mapClubNames(List.of(booking)).get(booking.getBookingId());
+        return bookingDtoAssembler.toDetailDto(uriInfo, clubId, booking, canManage, isOwner, clubName);
     }
 
-    private boolean canManageBooking(String loginIdentifier, UUID bookingId) {
-        try {
-            bookingService.getManagedClubBooking(loginIdentifier, bookingId);
-            return true;
-        } catch (UnauthorizedException ignored) {
-            return false;
+    private UUID resolveClubId(Booking booking) {
+        if (booking.getTable() == null || booking.getTable().getClubId() == null) {
+            return bookingService.clubId(booking.getBookingId());
         }
+        return booking.getTable().getClubId();
+    }
+
+    private void assertCanManage(User user, UUID clubId) {
+        if (!canManage(user, clubId)) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
+    }
+
+    private boolean canManage(User user, UUID clubId) {
+        final List<UUID> managedClubIds = clubService.findManagedClubIds(user.getId());
+        return managedClubIds != null && managedClubIds.contains(clubId);
     }
 
     private String authenticatedLoginIdentifier(SecurityContext securityContext) {
@@ -186,6 +209,20 @@ public class BookingsRestController {
         return user;
     }
 
+    private List<UUID> managedClubScope(User user, UUID requestedClubId) {
+        final List<UUID> managedClubIds = clubService.findManagedClubIds(user.getId());
+        if (managedClubIds == null || managedClubIds.isEmpty()) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
+        if (requestedClubId == null) {
+            return managedClubIds;
+        }
+        if (!managedClubIds.contains(requestedClubId)) {
+            throw new UnauthorizedException("booking.notAllowedToView");
+        }
+        return List.of(requestedClubId);
+    }
+
     private Response.ResponseBuilder privateResponse(Object entity) {
         return Response.ok(entity)
                 .header("Cache-Control", "private, no-store")
@@ -193,12 +230,14 @@ public class BookingsRestController {
                 .header("Vary", "Authorization");
     }
 
-    private Response.ResponseBuilder privateCollectionResponse(List<Booking> bookings, int total) {
-        List<LinkDto> links = CollectionLinks.items(bookings, booking -> uriInfo.getBaseUriBuilder()
-                .path("bookings/{bookingId}")
-                .resolveTemplate("bookingId", booking.getBookingId())
-                .build());
-        return Response.ok(new GenericEntity<List<LinkDto>>(links) {})
+    private Response.ResponseBuilder privateCollectionResponse(List<Booking> bookings,
+                                                               int total,
+                                                               boolean canManage,
+                                                               boolean isOwner) {
+        final Map<UUID, String> clubNamesByBooking = clubService.mapClubNames(bookings);
+        final List<BookingDto> body = bookingDtoAssembler.toDtos(
+                uriInfo, bookings, canManage, isOwner, clubNamesByBooking);
+        return Response.ok(new GenericEntity<List<BookingDto>>(body) {})
                 .header("Cache-Control", "private, no-store")
                 .header("Pragma", "no-cache")
                 .header("X-Total-Count", total)

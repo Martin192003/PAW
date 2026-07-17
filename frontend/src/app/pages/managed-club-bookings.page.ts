@@ -134,6 +134,7 @@ export class ManagedClubBookingsPage implements OnInit, OnDestroy {
     this.bookingService.listManagedClubBookings(this.filters, this.currentPage, this.pageSize).subscribe({
       next: response => {
         this.bookings = response.content ?? [];
+        this.applyInlineBookingMetadata();
         this.currentPage = response.page || this.currentPage;
         this.totalPages = response.totalPages || 0;
         this.totalElements = response.totalElements || 0;
@@ -251,6 +252,17 @@ export class ManagedClubBookingsPage implements OnInit, OnDestroy {
         this.tableNumbers[table.tableId] = table.tableNumber;
       });
       this.cdr.detectChanges();
+    });
+  }
+
+  private applyInlineBookingMetadata(): void {
+    this.bookings.forEach(booking => {
+      if (booking.clubName) {
+        this.clubNames[booking.clubId] = booking.clubName;
+      }
+      if (booking.tableNumber !== undefined && booking.tableNumber !== null) {
+        this.tableNumbers[booking.tableId] = booking.tableNumber;
+      }
     });
   }
 }

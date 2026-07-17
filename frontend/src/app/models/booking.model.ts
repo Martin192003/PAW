@@ -1,8 +1,15 @@
 export interface Booking {
   id: string;
   clubId: string;
+  clubName?: string;
   userId: string;
+  userUsername?: string;
+  userName?: string;
+  userSurname?: string;
   tableId: string;
+  tableNumber?: number;
+  tablePrice?: number;
+  tableDiscount?: number;
   bookingStart: string;
   bookingEnd: string;
   status: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | string;

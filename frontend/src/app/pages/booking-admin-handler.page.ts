@@ -1,8 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { Booking } from '../models/booking.model';
@@ -10,11 +8,8 @@ import { Club } from '../models/club.model';
 import { ClubTable } from '../models/club-table.model';
 import { PublicUser } from '../models/user.model';
 import { BookingService } from '../services/booking.service';
-import { ClubService } from '../services/club.service';
-import { UserService } from '../services/user.service';
 import { I18nService } from '../services/i18n.service';
 import { argentinaDateCode, formatArgentinaDateTime } from '../utils/argentina-date.util';
-import { normalizeLinks } from '../utils/api-url.util';
 
 @Component({
   standalone: true,
@@ -38,6 +33,7 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   user?: PublicUser;
   receiptUrl = '';
   hasReceipt = false;
+  receiptLoading = false;
   error = '';
   success = '';
   showCancelModal = false;
@@ -50,8 +46,6 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly bookingService: BookingService,
-    private readonly clubService: ClubService,
-    private readonly userService: UserService,
     private readonly cdr: ChangeDetectorRef,
     private readonly i18n: I18nService
   ) {}
@@ -80,24 +74,12 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     this.error = '';
     this.cdr.detectChanges();
 
-    this.bookingService.getManagedClubBooking(bookingId).pipe(
-      switchMap(booking => {
+    this.bookingService.getManagedClubBooking(bookingId).subscribe({
+      next: booking => {
         this.booking = booking;
-        const clubLink = this.extractLink(booking.links, 'club');
-        return forkJoin({
-          club: (clubLink ? this.clubService.getClubByLink(clubLink) : this.clubService.getClubById(booking.clubId))
-            .pipe(catchError(() => of(undefined))),
-          tables: this.clubService.getTables(booking.clubId).pipe(catchError(() => of([] as ClubTable[]))),
-          user: this.userService.getUserById(booking.userId).pipe(catchError(() => of(undefined)))
-        });
-      })
-    ).subscribe({
-      next: ({ club, tables, user }) => {
-        this.club = club;
-        this.table = tables.find(table => table.tableId === this.booking?.tableId);
-        this.user = user;
+        this.applyInlineDetails(booking);
+        this.applyReceiptState(booking);
         this.loading = false;
-        this.loadReceipt();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -138,9 +120,13 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
   }
 
   openReceipt(): void {
+    if (!this.booking || !this.hasReceipt) return;
     if (this.receiptUrl) {
       window.open(this.receiptUrl, '_blank');
+      return;
     }
+    const receiptWindow = window.open('', '_blank');
+    this.loadReceipt(receiptWindow);
   }
 
   goBack(): void {
@@ -182,14 +168,19 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     return `${dateCode}-#${tableNumber}`;
   }
 
-  private loadReceipt(): void {
-    if (!this.booking) return;
+  private loadReceipt(receiptWindow?: Window | null): void {
+    if (!this.booking) {
+      receiptWindow?.close();
+      return;
+    }
 
-    if (!this.booking.hasReceipt) {
+    if (!this.booking.hasReceipt && !this.hasReceipt) {
       this.revokeReceiptUrl();
       this.hasReceipt = false;
       this.receiptUrl = '';
+      this.receiptLoading = false;
       this.cdr.detectChanges();
+      receiptWindow?.close();
       return;
     }
 
@@ -199,30 +190,69 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
     } catch (err) {
       this.hasReceipt = false;
       this.receiptUrl = '';
+      this.receiptLoading = false;
       this.clearMessageTimeout();
       this.error = (err as Error).message;
       this.cdr.detectChanges();
+      receiptWindow?.close();
       return;
     }
+    this.receiptLoading = true;
+    this.cdr.detectChanges();
     this.bookingService.getReceiptBlob(this.booking.clubId, this.booking.id, receiptLink).subscribe({
       next: blob => {
-        this.revokeReceiptUrl();
-        this.receiptObjectUrl = URL.createObjectURL(blob);
-        this.receiptUrl = this.receiptObjectUrl;
-        this.hasReceipt = true;
-        this.cdr.detectChanges();
+        this.showReceiptBlob(blob);
+        if (receiptWindow) {
+          receiptWindow.location.href = this.receiptUrl;
+        }
       },
       error: () => {
         this.revokeReceiptUrl();
         this.hasReceipt = false;
         this.receiptUrl = '';
+        this.receiptLoading = false;
         this.cdr.detectChanges();
+        receiptWindow?.close();
       }
     });
   }
 
-  private extractLink(links: Booking['links'], rel: string): string | undefined {
-    return normalizeLinks(links as any)?.[rel];
+  private applyInlineDetails(booking: Booking): void {
+    this.club = booking.clubName
+      ? ({ clubId: booking.clubId, clubName: booking.clubName } as Club)
+      : undefined;
+    this.table = booking.tableNumber !== undefined && booking.tableNumber !== null
+      ? ({
+          tableId: booking.tableId,
+          tableNumber: booking.tableNumber,
+          price: booking.tablePrice ?? booking.totalAmount ?? 0,
+          discount: booking.tableDiscount ?? 0
+        } as ClubTable)
+      : undefined;
+    this.user = booking.userUsername
+      ? ({
+          userId: booking.userId,
+          username: booking.userUsername,
+          name: booking.userName ?? '',
+          surname: booking.userSurname ?? ''
+        } as PublicUser)
+      : undefined;
+  }
+
+  private applyReceiptState(booking: Booking): void {
+    this.revokeReceiptUrl();
+    this.receiptUrl = '';
+    this.hasReceipt = !!booking.hasReceipt;
+    this.receiptLoading = false;
+  }
+
+  private showReceiptBlob(blob: Blob): void {
+    this.revokeReceiptUrl();
+    this.receiptObjectUrl = URL.createObjectURL(blob);
+    this.receiptUrl = this.receiptObjectUrl;
+    this.hasReceipt = true;
+    this.receiptLoading = false;
+    this.cdr.detectChanges();
   }
 
   private revokeReceiptUrl(): void {
