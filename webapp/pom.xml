@@ -204,7 +204,8 @@
           <version>3.4.0</version>
             <configuration>
                 <packagingExcludes>
-                    WEB-INF/classes/mail.properties
+                    WEB-INF/classes/mail.properties,
+                    WEB-INF/classes/logback-test.xml
                 </packagingExcludes>
                 <webResources>
                     <resource>

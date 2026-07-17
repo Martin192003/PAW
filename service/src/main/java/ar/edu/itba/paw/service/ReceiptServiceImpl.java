@@ -113,25 +113,25 @@ public class ReceiptServiceImpl implements ReceiptService {
                 data
         );
 
-        LOGGER.info("Receipt created successfully with ID: {}", newReceiptId);
+        LOGGER.debug("Receipt created successfully with ID: {}", newReceiptId);
 
         try {
             var tableOpt = tableService.findById(booking.getTableId());
             if (tableOpt.isPresent()) {
                 var table = tableOpt.get();
-                LOGGER.info("Table found: {}", table.getTableId());
+                LOGGER.debug("Table found: {}", table.getTableId());
 
                 var clubOpt = clubService.getClubById(table.getClubId());
                 if (clubOpt.isPresent()) {
                     var club = clubOpt.get();
-                    LOGGER.info("Club found: {}", club.getClubName());
+                    LOGGER.debug("Club found: {}", club.getClubName());
 
                     var admins = clubService.getAdminsByClub(club.getClubId());
-                    LOGGER.info("Found {} admins for club", admins.size());
+                    LOGGER.debug("Found {} admins for club", admins.size());
 
                     if (!admins.isEmpty() && admins.get(0).getEmail() != null && !admins.get(0).getEmail().trim().isEmpty()) {
                         String adminEmail = admins.get(0).getEmail();
-                        LOGGER.info("Sending receipt notification to admin: {}", adminEmail);
+                        LOGGER.debug("Sending receipt notification to admin: {}", adminEmail);
 
                         Receipt receiptForEmail = new Receipt(
                                 newReceiptId,
@@ -145,12 +145,12 @@ public class ReceiptServiceImpl implements ReceiptService {
                                 data
                         );
 
-                        LOGGER.info("Receipt object created for email with data length: {}", data.length);
+                        LOGGER.debug("Receipt object created for email with data length: {}", data.length);
 
                         Locale locale = new Locale("es", "AR");
                         emailService.notifyReceiptUploaded(booking, club, table, admins.get(0), receiptForEmail, locale);
 
-                        LOGGER.info("Receipt upload notification sent successfully to {}", adminEmail);
+                        LOGGER.debug("Receipt upload notification sent successfully to {}", adminEmail);
                     } else {
                         LOGGER.warn("No valid admin email found for club {}", club.getClubId());
                     }
