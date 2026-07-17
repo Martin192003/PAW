@@ -79,6 +79,9 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
         this.booking = booking;
         this.applyInlineDetails(booking);
         this.applyReceiptState(booking);
+        if (booking.hasReceipt) {
+          this.loadReceipt();
+        }
         this.loading = false;
         this.cdr.detectChanges();
       },

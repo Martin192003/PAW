@@ -89,6 +89,10 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
         this.booking = booking;
         this.applyInlineDetails(booking);
         this.applyReceiptState(booking);
+        // Load receipt image automatically if it exists
+        if (booking.hasReceipt) {
+          this.loadReceipt();
+        }
         this.loading = false;
         this.cdr.detectChanges();
       },
