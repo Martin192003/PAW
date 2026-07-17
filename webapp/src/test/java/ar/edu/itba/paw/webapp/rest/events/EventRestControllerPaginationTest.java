@@ -1,6 +1,8 @@
 package ar.edu.itba.paw.webapp.rest.events;
 
+import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Event;
+import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,6 +13,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -22,16 +25,20 @@ public class EventRestControllerPaginationTest {
 
     private EventRestController controller;
     private EventService eventService;
+    private ClubService clubService;
 
     @Before
     public void setUp() {
         controller = new EventRestController();
         eventService = mock(EventService.class);
+        clubService = mock(ClubService.class);
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getRequestUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/clubs/club/events"));
         when(uriInfo.getBaseUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/"));
 
         ReflectionTestUtils.setField(controller, "eventService", eventService);
+        ReflectionTestUtils.setField(controller, "clubService", clubService);
+        ReflectionTestUtils.setField(controller, "eventDtoAssembler", new EventDtoAssembler());
         ReflectionTestUtils.setField(controller, "uriInfo", uriInfo);
     }
 
@@ -41,6 +48,7 @@ public class EventRestControllerPaginationTest {
         Event event = new Event(UUID.randomUUID(), clubId, "Event", "Description", LocalDate.now().plusDays(1), null);
         when(eventService.listByClub(clubId, 1, 10)).thenReturn(Collections.singletonList(event));
         when(eventService.countByClub(clubId)).thenReturn(25);
+        when(clubService.getClubById(clubId)).thenReturn(Optional.of(club(clubId)));
 
         Response response = controller.listByClub(clubId, 1, 10);
 
@@ -51,5 +59,12 @@ public class EventRestControllerPaginationTest {
         assertTrue(link.contains("rel=\"prev\""));
         assertTrue(link.contains("rel=\"next\""));
         assertTrue(link.contains("rel=\"last\""));
+    }
+
+    private static Club club(UUID clubId) {
+        Club club = new Club();
+        club.setClubId(clubId);
+        club.setClubName("Club");
+        return club;
     }
 }

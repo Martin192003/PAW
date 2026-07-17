@@ -55,11 +55,13 @@ export const routes: Routes = [
   },
   {
     path: 'profile',
-    loadComponent: () => import('./pages/profile.page').then(m => m.ProfilePage)
+    loadComponent: () => import('./pages/profile.page').then(m => m.ProfilePage),
+    canActivate: [authGuard]
   },
   {
     path: 'profile/reviews',
-    loadComponent: () => import('./pages/my-reviews.page').then(m => m.MyReviewsPage)
+    loadComponent: () => import('./pages/my-reviews.page').then(m => m.MyReviewsPage),
+    canActivate: [authGuard]
   },
   {
     path: 'admin/activity',

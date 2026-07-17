@@ -2,7 +2,6 @@ package ar.edu.itba.paw.webapp.rest.tables;
 
 import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.dto.ErrorDto;
-import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.TableDto;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
@@ -10,7 +9,6 @@ import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.TableService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
-import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -80,15 +78,15 @@ public class TablesRestController {
                 tables = tableService.findByClubId(clubUuid);
             }
 
-            List<LinkDto> links = CollectionLinks.items(tables, table -> uriInfo.getBaseUriBuilder()
-                    .path("clubs/{clubId}/tables/{tableId}")
-                    .resolveTemplate("clubId", clubUuid)
-                    .resolveTemplate("tableId", table.getTableId())
-                    .build());
+            boolean canManage = canManageClub(clubUuid, securityContext);
+            List<TableDto> body = tables.stream()
+                    .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table, canManage))
+                    .toList();
 
-            return Response.ok(new GenericEntity<List<LinkDto>>(links) {})
-                    .header("X-Total-Count", links.size())
-                    .build();
+            Response.ResponseBuilder response = Response.ok(new GenericEntity<List<TableDto>>(body) {})
+                    .header("X-Total-Count", body.size());
+            applyCollectionCacheHeaders(response, canManage);
+            return response.build();
         } catch (ValidationException | InvalidDateRangeException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto(e.getMessage()))
@@ -283,6 +281,16 @@ public class TablesRestController {
         } catch (RuntimeException ignored) {
             return false;
         }
+    }
+
+    private void applyCollectionCacheHeaders(Response.ResponseBuilder response, boolean canManage) {
+        if (canManage) {
+            response.header("Cache-Control", "private, no-store")
+                    .header("Pragma", "no-cache")
+                    .header("Vary", "Authorization");
+            return;
+        }
+        response.header("Cache-Control", "no-cache");
     }
 }
 

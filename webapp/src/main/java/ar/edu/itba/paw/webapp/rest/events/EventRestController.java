@@ -3,11 +3,9 @@ package ar.edu.itba.paw.webapp.rest.events;
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.EventDto;
-import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
-import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -54,14 +52,16 @@ public class EventRestController {
         List<Event> events = eventService.listByClub(clubId, page, size);
         int total = eventService.countByClub(clubId);
 
-        List<LinkDto> body = CollectionLinks.items(events, event -> uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/events/{eventId}")
-                .resolveTemplate("clubId", clubId)
-                .resolveTemplate("eventId", event.getEventId())
-                .build());
+        String clubName = clubService.getClubById(clubId)
+                .map(club -> club.getClubName())
+                .orElse(null);
+        List<EventDto> body = events.stream()
+                .map(event -> eventDtoAssembler.toDto(uriInfo, clubId, event, clubName))
+                .toList();
 
-        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
-                .header("X-Total-Count", total);
+        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<EventDto>>(body) {})
+                .header("X-Total-Count", total)
+                .header("Cache-Control", "no-cache");
         addPaginationLinks(response, page, size, total);
         return response.build();
     }

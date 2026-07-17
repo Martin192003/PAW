@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
-import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,12 +112,11 @@ public class ClubRestController {
 
         final int totalPages = (int) Math.ceil((double) totalClubs / size);
 
-        List<LinkDto> links = CollectionLinks.items(clubs, club -> uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}")
-                .resolveTemplate("clubId", club.getClubId())
-                .build());
+        List<ClubDto> body = clubs.stream()
+                .map(club -> toDtoWithLinks(club, false))
+                .toList();
 
-        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<LinkDto>>(links) {})
+        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<ClubDto>>(body) {})
                 .header("X-Total-Count", totalClubs)
                 .header("X-Available-Today", availabilityMode)
                 .header("X-Invalid-Day", invalidDay)
@@ -138,17 +136,13 @@ public class ClubRestController {
         final boolean includeSensitive = isAuthenticatedUser(id, securityContext);
         final int offset = (page - 1) * size;
         final int totalClubs = clubService.countClubsByUser(id);
-        final List<LinkDto> links = CollectionLinks.items(
-                clubService.getClubsByUserPaginated(id, size, offset),
-                club -> uriInfo.getBaseUriBuilder()
-                        .path("clubs/{clubId}")
-                        .resolveTemplate("clubId", club.getClubId())
-                        .build()
-        );
+        final List<ClubDto> body = clubService.getClubsByUserPaginated(id, size, offset).stream()
+                .map(club -> toDtoWithLinks(club, includeSensitive))
+                .toList();
 
         final int totalPages = (int) Math.ceil((double) totalClubs / size);
 
-        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<LinkDto>>(links) {})
+        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<ClubDto>>(body) {})
                 .header("X-Total-Count", totalClubs);
         applyClubCacheHeaders(responseBuilder, includeSensitive);
         addPaginationLinks(responseBuilder, page, size, totalPages, 1);

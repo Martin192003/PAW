@@ -185,7 +185,7 @@ describe('ClubService getClubs', () => {
     httpMock.verify();
   });
 
-  it('resolves a link-only collection with N+1 requests and reads total/availability from headers', () => {
+  it('keeps backward compatibility with a link-only collection and reads total/availability from headers', () => {
     let result: AvailabilityPagedResponse<Club> | undefined;
     service.getClubs(1, 10).subscribe(page => { result = page; });
 

@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.ProductType;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.ProductDto;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.ProductService;
@@ -58,7 +57,7 @@ public class ProductsRestControllerTest {
     }
 
     @Test
-    public void testListProducts_ReturnsLinkCollection() {
+    public void testListProducts_ReturnsEmbeddedCollection() {
         when(productService.findByClubID(CLUB_ID)).thenReturn(List.of(product(PRODUCT_ID)));
 
         Response response = controller.listProducts(CLUB_ID.toString(), mock(SecurityContext.class));
@@ -68,8 +67,9 @@ public class ProductsRestControllerTest {
         Object entity = response.getEntity();
         assertTrue(entity instanceof List);
         @SuppressWarnings("unchecked")
-        List<LinkDto> links = (List<LinkDto>) entity;
-        assertEquals("item", links.get(0).getRel());
+        List<ProductDto> products = (List<ProductDto>) entity;
+        assertEquals(PRODUCT_ID, products.get(0).getProductId());
+        assertTrue(products.get(0).getLinks().stream().anyMatch(link -> "self".equals(link.getRel())));
     }
 
     @Test

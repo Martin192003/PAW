@@ -110,6 +110,14 @@ describe('BookingService filters', () => {
   // 25): booking.service.spec.ts sólo cubría listUserBookings/listManagedClubBookings,
   // dejando 7 de los 9 métodos públicos del servicio sin ejercitar.
 
+  it('getBooking reads the booking by its canonical flat URI', () => {
+    service.getBooking('club-1', 'booking-1').subscribe();
+
+    const req = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/bookings/booking-1'));
+    expect(req.request.url).not.toContain('/clubs/club-1/bookings/booking-1');
+    req.flush({ id: 'booking-1' });
+  });
+
   it('cancelBooking uses the booking\'s own "cancel" link when available', () => {
     service.cancelBooking('club-1', 'booking-1', { cancel: '/api/bookings/booking-1' }).subscribe();
 

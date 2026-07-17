@@ -8,6 +8,7 @@ import { vi } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
 import { adminGuard } from './guards/admin.guard';
+import { authGuard } from './guards/auth.guard';
 import { ClubsPage } from './pages/clubs.page';
 import { ApiErrorService } from './services/api-error.service';
 import { apiErrorInterceptor } from './services/api-error.interceptor';
@@ -315,6 +316,14 @@ describe('routes', () => {
   it('protects club management with adminGuard', () => {
     const route = routes.find(candidate => candidate.path === 'clubs/handle');
     expect(route?.canActivate).toContain(adminGuard);
+  });
+
+  it('protects profile routes with authGuard', () => {
+    const profileRoute = routes.find(candidate => candidate.path === 'profile');
+    const reviewsRoute = routes.find(candidate => candidate.path === 'profile/reviews');
+
+    expect(profileRoute?.canActivate).toContain(authGuard);
+    expect(reviewsRoute?.canActivate).toContain(authGuard);
   });
 
   it('includes wildcard not-found route', () => {

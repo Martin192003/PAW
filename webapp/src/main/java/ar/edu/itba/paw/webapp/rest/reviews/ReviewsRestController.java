@@ -3,13 +3,11 @@ package ar.edu.itba.paw.webapp.rest.reviews;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.ReviewDto;
 import ar.edu.itba.paw.service.ReviewService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
-import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -56,18 +54,21 @@ public class ReviewsRestController {
         if (page < 0 || size <= 0) return badRequest("Invalid pagination parameters");
 
         int offset = page * size;
-        List<Review> reviews = reviewService.listByClub(clubId, null, size, offset);
-        List<LinkDto> body = CollectionLinks.items(reviews, review -> uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/reviews/{reviewId}")
-                .resolveTemplate("clubId", clubId)
-                .resolveTemplate("reviewId", review.getReviewId())
-                .build());
+        UUID currentUserId = currentUserId(securityContext);
+        List<ReviewDto> body = reviewService.listByClub(clubId, null, size, offset).stream()
+                .map(review -> ReviewMapper.toDto(review, uriInfo, currentUserId))
+                .toList();
 
         int total = reviewService.countByClub(clubId);
         int totalPages = (int) Math.ceil((double) total / size);
-        GenericEntity<List<LinkDto>> entity = new GenericEntity<>(body) {};
+        GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(body) {};
         Response.ResponseBuilder response = Response.ok(entity)
-                .header("X-Total-Count", total);
+                .header("X-Total-Count", total)
+                .header("Cache-Control", currentUserId == null ? "no-cache" : "private, no-store");
+        if (currentUserId != null) {
+            response.header("Pragma", "no-cache")
+                    .header("Vary", "Authorization");
+        }
         addPaginationLinks(response, page, size, totalPages);
         return response.build();
     }

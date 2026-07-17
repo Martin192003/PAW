@@ -45,7 +45,7 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client
   },
   {
-    path: 'profile',
+    path: 'profile/**',
     renderMode: RenderMode.Client
   },
   {

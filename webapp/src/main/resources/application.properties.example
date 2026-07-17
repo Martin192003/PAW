@@ -8,12 +8,22 @@ local.db.user=postgres
 local.db.pass=postgres
 local.schema.init=false
 
-# Preferred keys for deploy. If absent, WebConfig falls back to local.db.*.
-app.db.host=${local.db.host}
-app.db.port=${local.db.port}
-app.db.name=${local.db.name}
-app.db.user=${local.db.user}
-app.db.pass=${local.db.pass}
+# Preferred deploy options.
+# Option A: set JDBC_DATABASE_URL, for example:
+# JDBC_DATABASE_URL=jdbc:postgresql://host:5432/dbname
+# Option B: set DATABASE_URL, for example:
+# DATABASE_URL=postgres://user:pass@host:5432/dbname
+# Option C: set the split variables below.
+app.db.host=${DB_HOST:${local.db.host}}
+app.db.port=${DB_PORT:${local.db.port}}
+app.db.name=${DB_NAME:${local.db.name}}
+app.db.user=${DB_USER:${local.db.user}}
+app.db.pass=${DB_PASS:${local.db.pass}}
+app.db.pool.maxSize=${DB_POOL_MAX_SIZE:8}
+app.db.pool.minIdle=${DB_POOL_MIN_IDLE:1}
+app.db.pool.connectionTimeoutMs=${DB_POOL_CONNECTION_TIMEOUT_MS:5000}
+app.db.connectTimeoutSeconds=${DB_CONNECT_TIMEOUT_SECONDS:5}
+app.db.socketTimeoutSeconds=${DB_SOCKET_TIMEOUT_SECONDS:30}
 
 local.base.url=http://localhost:8080/webapp
 app.base.url=http://localhost:8080/webapp

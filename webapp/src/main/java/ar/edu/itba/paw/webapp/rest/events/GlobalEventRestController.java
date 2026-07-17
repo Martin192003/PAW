@@ -1,10 +1,10 @@
 package ar.edu.itba.paw.webapp.rest.events;
 
 import ar.edu.itba.paw.model.Event;
-import ar.edu.itba.paw.model.dto.LinkDto;
+import ar.edu.itba.paw.model.dto.EventDto;
+import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
-import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Context;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Component
 @Path("/events")
@@ -29,6 +32,12 @@ public class GlobalEventRestController {
 
     @Autowired
     private EventService eventService;
+
+    @Autowired
+    private EventDtoAssembler eventDtoAssembler;
+
+    @Autowired
+    private ClubService clubService;
 
     @Context
     private UriInfo uriInfo;
@@ -42,14 +51,18 @@ public class GlobalEventRestController {
 
         List<Event> events = eventService.listUpcoming(page, size);
         int total = eventService.countUpcoming();
-        List<LinkDto> body = CollectionLinks.items(events, event -> uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/events/{eventId}")
-                .resolveTemplate("clubId", event.getClubId())
-                .resolveTemplate("eventId", event.getEventId())
-                .build());
+        Map<UUID, String> clubNames = new HashMap<>();
+        List<EventDto> body = events.stream()
+                .map(event -> eventDtoAssembler.toDto(
+                        uriInfo,
+                        event,
+                        clubNames.computeIfAbsent(event.getClubId(), this::clubName)
+                ))
+                .toList();
 
-        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
-                .header("X-Total-Count", total);
+        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<EventDto>>(body) {})
+                .header("X-Total-Count", total)
+                .header("Cache-Control", "no-cache");
         addPaginationLinks(response, page, size, total);
         return response.build();
     }
@@ -76,5 +89,11 @@ public class GlobalEventRestController {
                 .replaceQueryParam("page", page)
                 .replaceQueryParam("size", size)
                 .build() + ">; rel=\"" + rel + "\"";
+    }
+
+    private String clubName(UUID clubId) {
+        return clubService.getClubById(clubId)
+                .map(club -> club.getClubName())
+                .orElse(null);
     }
 }

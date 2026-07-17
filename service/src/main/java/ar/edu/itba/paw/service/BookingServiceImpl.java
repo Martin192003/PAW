@@ -325,13 +325,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional
-    public void cancelForUserInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
-        final Booking booking = getForUserInClub(clubId, bookingId, loginIdentifier);
-        cancelByUser(bookingId, booking.getUser().getId());
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public Booking getForUser(UUID bookingId, UUID userId) {
         final Booking b = bookingDao.findById(bookingId)
@@ -389,21 +382,6 @@ public class BookingServiceImpl implements BookingService {
         }
 
         throw new UnauthorizedException("booking.notAllowedToView");
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Booking getForUserInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
-        if (clubId == null) {
-            throw new BadRequestException("clubId es requerido");
-        }
-        final User user = findUserByLoginIdentifier(loginIdentifier);
-        final Booking booking = getForUser(bookingId, user.getId());
-        final ClubTable table = ensureTableExists(booking.getTableId());
-        if (!clubId.equals(table.getClubId())) {
-            throw new BookingNotFoundException(bookingId.toString());
-        }
-        return booking;
     }
 
     @Override

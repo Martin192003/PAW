@@ -85,24 +85,6 @@ public class BookingRestController {
                 .build();
     }
 
-    @GET
-    @Path("/{bookingId}")
-    public Response getBooking(@PathParam("clubId") UUID clubId,
-                               @PathParam("bookingId") UUID bookingId,
-                               @Context SecurityContext securityContext) {
-        final Booking booking = bookingService.getForUserInClub(
-                clubId,
-                bookingId,
-                authenticatedLoginIdentifier(securityContext)
-        );
-
-        return Response.ok(bookingDtoAssembler.toDto(uriInfo, clubId, booking, false, true))
-                .header("Cache-Control", "private, no-store")
-                .header("Pragma", "no-cache")
-                .header("Vary", "Authorization")
-                .build();
-    }
-
     @PUT
     @Path("/{bookingId}/receipt")
     @Consumes(MediaType.MULTIPART_FORM_DATA)

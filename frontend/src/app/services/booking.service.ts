@@ -66,9 +66,9 @@ export class BookingService {
     );
   }
 
-  getBooking(clubId: string, bookingId: string): Observable<Booking> {
+  getBooking(_clubId: string, bookingId: string): Observable<Booking> {
     return this.http.get<Booking>(
-      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
+      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}`, this.apiUrl)
     );
   }
 

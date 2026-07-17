@@ -169,9 +169,8 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Transactional
     public Receipt putForBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier,
                                        String filename, String contentType, byte[] data) {
-        // getForUserOrAdminInClub (no getForUserInClub): un admin del club
-        // tambien puede tocar el comprobante de una reserva que no es suya
-        // (ver getForBookingInClub mas abajo para el motivo completo).
+        // Un admin del club tambien puede tocar el comprobante de una reserva
+        // que no es suya porque lo necesita para validar el pago.
         final Booking booking = bookingService.getForUserOrAdminInClub(clubId, bookingId, loginIdentifier);
         // Validar el estado antes de borrar el comprobante viejo: si se borra
         // primero y despues uploadForBooking rechaza por estar CONFIRMADA, se
@@ -190,11 +189,8 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Override
     @Transactional(readOnly = true)
     public Optional<Receipt> getForBookingInClub(UUID clubId, UUID bookingId, String loginIdentifier) {
-        // Antes usaba getForUserInClub, que solo deja pasar al dueño de la
-        // reserva: un admin del club que entraba a "Club reservations" para
-        // revisar el comprobante antes de confirmar/rechazar se encontraba
-        // con un 403 (UnauthorizedException -> /forbidden). El admin
-        // necesita poder ver el comprobante aunque la reserva no sea suya.
+        // Un admin del club que entra a "Club reservations" necesita ver el
+        // comprobante para confirmar o rechazar el pago.
         bookingService.getForUserOrAdminInClub(clubId, bookingId, loginIdentifier);
         return getReceiptForBooking(bookingId);
     }

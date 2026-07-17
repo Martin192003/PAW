@@ -35,14 +35,9 @@ public interface BookingService {
 
     void cancelByUser(UUID bookingId, UUID userId);
 
-    void cancelForUserInClub(UUID clubId, UUID bookingId, String loginIdentifier);
-
     Booking createForClub(UUID clubId, UUID tableId, LocalDate date, String loginIdentifier);
 
-    Booking getForUserInClub(UUID clubId, UUID bookingId, String loginIdentifier);
-
-    // A diferencia de getForUserInClub (solo el dueño de la reserva), esta
-    // variante tambien deja pasar a un admin del club: se usa para el
+    // Deja pasar al dueño de la reserva o a un admin del club: se usa para el
     // comprobante de pago, que el admin necesita ver para poder confirmar o
     // rechazar la reserva (antes solo lo podia ver el dueño, y el admin
     // recibia un 403 al intentar verlo).

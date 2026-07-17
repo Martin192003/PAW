@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.ReviewDto;
 import ar.edu.itba.paw.service.ReviewService;
 import ar.edu.itba.paw.service.UserService;
@@ -66,7 +65,7 @@ public class ReviewsRestControllerTest {
     }
 
     @Test
-    public void testListByClub_ReturnsLinkCollectionWithTotalCount() {
+    public void testListByClub_ReturnsEmbeddedCollectionWithTotalCount() {
         when(reviewService.listByClub(CLUB_ID, null, 20, 0)).thenReturn(List.of(review(REVIEW_ID)));
         when(reviewService.countByClub(CLUB_ID)).thenReturn(1);
 
@@ -75,8 +74,9 @@ public class ReviewsRestControllerTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("1", response.getHeaderString("X-Total-Count"));
         @SuppressWarnings("unchecked")
-        List<LinkDto> links = (List<LinkDto>) response.getEntity();
-        assertEquals("item", links.get(0).getRel());
+        List<ReviewDto> reviews = (List<ReviewDto>) response.getEntity();
+        assertEquals(REVIEW_ID, reviews.get(0).getReviewId());
+        assertTrue(reviews.get(0).getLinks().stream().anyMatch(link -> "self".equals(link.getRel())));
     }
 
     @Test

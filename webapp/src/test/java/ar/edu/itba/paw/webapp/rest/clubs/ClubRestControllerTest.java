@@ -7,7 +7,6 @@ import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.dto.ClubDto;
-import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.ClubLayoutService;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.PhotoService;
@@ -43,7 +42,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Cubre listClubs/getClub/createClub/updateClub: son los endpoints reescritos en el
- * commit de paginación (colecciones "solo-links" + headers) que hasta ahora no tenían
+ * commit de paginación (colecciones con headers) que hasta ahora no tenían
  * ningún test (ver AUDITORIA_ENTREGA_FINAL.md, punto 24).
  */
 public class ClubRestControllerTest {
@@ -84,7 +83,7 @@ public class ClubRestControllerTest {
     }
 
     @Test
-    public void testListClubs_ReturnsLinkCollectionWithPaginationHeaders() {
+    public void testListClubs_ReturnsEmbeddedCollectionWithPaginationHeaders() {
         Club club1 = club(UUID.randomUUID());
         Club club2 = club(UUID.randomUUID());
         when(clubService.countSearch(null, null, null, null, null)).thenReturn(25);
@@ -100,10 +99,10 @@ public class ClubRestControllerTest {
         Object entity = response.getEntity();
         assertTrue(entity instanceof List);
         @SuppressWarnings("unchecked")
-        List<LinkDto> links = (List<LinkDto>) entity;
-        assertEquals(2, links.size());
-        assertEquals("item", links.get(0).getRel());
-        assertTrue(links.get(0).getHref().contains(club1.getClubId().toString()));
+        List<ClubDto> clubs = (List<ClubDto>) entity;
+        assertEquals(2, clubs.size());
+        assertEquals(club1.getClubId(), clubs.get(0).getClubId());
+        assertTrue(clubs.get(0).getLinks().stream().anyMatch(link -> "self".equals(link.getRel())));
 
         String linkHeader = response.getHeaderString("Link");
         assertNotNull("con 25 resultados y size=10 debería haber más páginas", linkHeader);

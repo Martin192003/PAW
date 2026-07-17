@@ -5,8 +5,8 @@ import { ReviewService, ReviewListResult } from './review.service';
 import { Review } from '../models/review.model';
 
 // review.service.ts no tenia ningun test propio (ver AUDITORIA_ENTREGA_FINAL.md punto
-// 25), pese a implementar el mismo patron de resolucion N+1 de colecciones
-// "solo-links" que club.service.ts/booking.service.ts (ver punto 20 del mismo audit).
+// 25). Mantiene compatibilidad con colecciones "solo-links", aunque produccion
+// ahora usa arrays embebidos para evitar N+1 en pantallas de alto trafico.
 describe('ReviewService', () => {
   let service: ReviewService;
   let httpMock: HttpTestingController;
@@ -26,7 +26,7 @@ describe('ReviewService', () => {
     httpMock.verify();
   });
 
-  it('listByClub resolves a link-only collection with N+1 requests and reads the total from the header', () => {
+  it('listByClub keeps compatibility with a link-only collection and reads the total from the header', () => {
     let result: ReviewListResult | undefined;
     service.listByClub(clubId, 0, 10).subscribe(res => { result = res; });
 
