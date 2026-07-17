@@ -200,8 +200,9 @@ export class BookingService {
   }
 
   private params(filters: BookingFilters, page: number, size: number): HttpParams {
+    // La UI trabaja con paginas 1-based; la API es 0-based.
     let params = new HttpParams()
-      .set('page', page)
+      .set('page', page - 1)
       .set('size', size);
 
     Object.entries(filters).forEach(([key, value]) => {

@@ -63,12 +63,17 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String username = credentials[0];
-        LOGGER.debug("ApiBasicAuthenticationFilter: attempting authentication for username={}", username);
+        // Enmascarado porque username suele ser el email real del usuario (PII);
+        // no queda en texto plano ni siquiera en logs de nivel debug.
+        LOGGER.debug("ApiBasicAuthenticationFilter: attempting authentication for username={}", mask(username));
 
         try {
             User user = userService.authenticateAndGetUser(credentials[0], credentials[1]);
             if (user == null) {
-                LOGGER.info("ApiBasicAuthenticationFilter: authentication failed for username={}", username);
+                // DEBUG (no INFO): un intento de login fallido (password incorrecta,
+                // etc.) es un evento rutinario, no algo que deba quedar en el nivel
+                // que se loguea siempre en producción.
+                LOGGER.debug("ApiBasicAuthenticationFilter: authentication failed for username={}", mask(username));
                 AuthErrorResponses.write(response, HttpServletResponse.SC_UNAUTHORIZED, "invalid_credentials");
                 return;
             }
@@ -79,16 +84,31 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
             var context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
-            LOGGER.info("ApiBasicAuthenticationFilter: authentication succeeded for username={}", username);
+            // DEBUG (no INFO): cada login exitoso es tráfico normal, no un evento
+            // digno del nivel que se loguea siempre en producción.
+            LOGGER.debug("ApiBasicAuthenticationFilter: authentication succeeded for username={}", mask(username));
 
             filterChain.doFilter(request, response);
         } catch (IllegalStateException ex) {
-            LOGGER.warn("ApiBasicAuthenticationFilter: account disabled for username={}", username, ex);
+            LOGGER.warn("ApiBasicAuthenticationFilter: account disabled for username={}", mask(username), ex);
             AuthErrorResponses.write(response, HttpServletResponse.SC_FORBIDDEN, "account_disabled");
         } catch (Exception ex) {
-            LOGGER.warn("ApiBasicAuthenticationFilter: unexpected authentication error for username={}: {}", username, ex.getMessage());
+            LOGGER.warn("ApiBasicAuthenticationFilter: unexpected authentication error for username={}: {}", mask(username), ex.getMessage());
             AuthErrorResponses.write(response, HttpServletResponse.SC_UNAUTHORIZED, "invalid_credentials");
         }
+    }
+
+    /**
+     * Enmascara un identificador potencialmente sensible (username/email) antes
+     * de loguearlo: conserva sólo los primeros caracteres para poder correlacionar
+     * eventos en debug sin exponer el dato completo.
+     */
+    private static String mask(String value) {
+        if (value == null) {
+            return null;
+        }
+        int visible = Math.min(2, value.length());
+        return value.substring(0, visible) + "***";
     }
 
     private String[] decodeBasicCredentials(String base64Credentials) {

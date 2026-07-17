@@ -34,7 +34,7 @@ import java.util.ArrayList;
 @Produces({ApiMediaTypes.BOOKING, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
 public class BookingsRestController {
 
-    private static final int DEFAULT_PAGE = 1;
+    private static final int DEFAULT_PAGE = 0;
     private static final int DEFAULT_SIZE = 10;
 
     private final BookingService bookingService;
@@ -62,12 +62,12 @@ public class BookingsRestController {
                                  @QueryParam("sort") @DefaultValue("created_desc") String sort,
                                  @QueryParam("bookingDate") String bookingDate,
                                  @QueryParam("hasReceipt") Boolean hasReceipt,
-                                 @QueryParam("page") @DefaultValue("1") int page,
+                                 @QueryParam("page") @DefaultValue("0") int page,
                                  @QueryParam("size") @DefaultValue("10") int size,
                                  @Context SecurityContext securityContext) {
         page = Math.max(page, DEFAULT_PAGE);
         size = size < 1 ? DEFAULT_SIZE : size;
-        final int offset = (page - 1) * size;
+        final int offset = page * size;
         final String login = authenticatedLoginIdentifier(securityContext);
 
         final List<Booking> bookings = managed
@@ -95,7 +95,7 @@ public class BookingsRestController {
                                             @QueryParam("sort") @DefaultValue("created_desc") String sort,
                                             @QueryParam("bookingDate") String bookingDate,
                                             @QueryParam("hasReceipt") Boolean hasReceipt,
-                                            @QueryParam("page") @DefaultValue("1") int page,
+                                            @QueryParam("page") @DefaultValue("0") int page,
                                             @QueryParam("size") @DefaultValue("10") int size,
                                             @Context SecurityContext securityContext) {
         return listBookings(true, clubId, bookingId, status, sort, bookingDate, hasReceipt, page, size, securityContext);
@@ -209,14 +209,17 @@ public class BookingsRestController {
                                     int page,
                                     int size,
                                     int totalPages) {
+        // totalPages es una cantidad de paginas; el ultimo numero de pagina
+        // valido en un esquema 0-based es totalPages - 1.
+        final int lastPage = DEFAULT_PAGE + totalPages - 1;
         List<String> links = new ArrayList<>();
         if (page > DEFAULT_PAGE) {
             links.add(pageLink(DEFAULT_PAGE, size, "first"));
             links.add(pageLink(page - 1, size, "prev"));
         }
-        if (page < totalPages) {
+        if (page < lastPage) {
             links.add(pageLink(page + 1, size, "next"));
-            links.add(pageLink(totalPages, size, "last"));
+            links.add(pageLink(lastPage, size, "last"));
         }
         if (!links.isEmpty()) {
             responseBuilder.header("Link", String.join(", ", links));

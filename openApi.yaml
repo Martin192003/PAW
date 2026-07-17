@@ -244,7 +244,7 @@ paths:
           in: query
           schema:
             type: string
-        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/PageZero'
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
@@ -908,7 +908,7 @@ paths:
         - $ref: '#/components/parameters/SortQuery'
         - $ref: '#/components/parameters/BookingDateQuery'
         - $ref: '#/components/parameters/HasReceiptQuery'
-        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/PageZero'
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
@@ -957,37 +957,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BookingDto'
-
-  /clubs/{clubId}/bookings/{bookingId}:
-    parameters:
-      - $ref: '#/components/parameters/ClubId'
-      - $ref: '#/components/parameters/BookingId'
-    get:
-      tags: [Bookings]
-      summary: Get current user's booking in club
-      description: Returns the booking only when the authenticated user owns it and it belongs to the given club.
-      responses:
-        '200':
-          description: Booking
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-              description: private, no-store
-            Vary:
-              schema:
-                type: string
-              description: Authorization
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BookingDto'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
 
   /clubs/{clubId}/bookings/{bookingId}/receipt:
     parameters:
@@ -1046,7 +1015,7 @@ paths:
         - $ref: '#/components/parameters/SortQuery'
         - $ref: '#/components/parameters/BookingDateQuery'
         - $ref: '#/components/parameters/HasReceiptQuery'
-        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/PageZero'
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
@@ -1091,7 +1060,7 @@ paths:
         - $ref: '#/components/parameters/SortQuery'
         - $ref: '#/components/parameters/BookingDateQuery'
         - $ref: '#/components/parameters/HasReceiptQuery'
-        - $ref: '#/components/parameters/PageOne'
+        - $ref: '#/components/parameters/PageZero'
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
@@ -1243,13 +1212,6 @@ components:
         type: integer
         default: 0
         minimum: 0
-    PageOne:
-      name: page
-      in: query
-      schema:
-        type: integer
-        default: 1
-        minimum: 1
     Size:
       name: size
       in: query

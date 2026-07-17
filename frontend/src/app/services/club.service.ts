@@ -12,7 +12,7 @@ import { Layout } from '../models/layout.model';
 import { PagedResponse } from '../models/paged-response.model';
 import { Product } from '../models/product.model';
 import { Review } from '../models/review.model';
-import { itemLinksFromCollection, normalizeLinks, requireAnyLink, resolveApiUrl, totalFromHeader } from '../utils/api-url.util';
+import { itemLinksFromCollection, LinkMapInput, normalizeLinks, requireAnyLink, resolveApiUrl, totalFromHeader } from '../utils/api-url.util';
 import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
 
 export interface ClubUpdatePayload {
@@ -151,8 +151,9 @@ export class ClubService {
   ): Observable<AvailabilityPagedResponse<Club>> {
     const normalized = { ...this.emptyFilter, ...filters };
 
+    // La UI trabaja con paginas 1-based; la API es 0-based.
     let params = new HttpParams()
-      .set('page', page)
+      .set('page', page - 1)
       .set('size', size);
 
     if (normalized.name) params = params.set('name', normalized.name);
@@ -171,9 +172,10 @@ export class ClubService {
   }
 
   getClubsByUser(userId: string, page: number, size: number): Observable<PagedResponse<Club>> {
+    // La UI trabaja con paginas 1-based; la API es 0-based.
     const params = new HttpParams()
       .set('ownerId', userId)
-      .set('page', page)
+      .set('page', page - 1)
       .set('size', size);
 
     return this.http.get<Club[] | PagedResponse<Club>>(
@@ -323,15 +325,22 @@ export class ClubService {
   }
 
   /**
-   * No hay un link HATEOAS individual por foto para borrar (el backend solo
-   * expone `self` de la foto como GET en /photos/{id}). El recurso que sí
-   * soporta DELETE es la colección `photos` del club, así que resolvemos esa
-   * URL a partir de los links del club y le agregamos el id.
+   * Usa el link HATEOAS "delete" propio de la foto cuando está disponible
+   * (PhotoDto lo expone apuntando a /clubs/{clubId}/photos/{photoId}).
+   * Si por algún motivo no vino (fotos cargadas antes de este cambio, u otra
+   * fuente que no lo incluya), cae al fallback anterior: resolver la
+   * colección `photos` del club y agregarle el id a mano.
    */
-  deleteGalleryPhoto(clubId: string, photoId: string, links?: unknown): Observable<void> {
+  deleteGalleryPhoto(clubId: string, photoId: string, photoLinks?: LinkMapInput, clubLinks?: unknown): Observable<void> {
+    const normalizedPhotoLinks = normalizeLinks(photoLinks);
+    const deleteLink = normalizedPhotoLinks?.['delete'];
+    if (deleteLink) {
+      return this.http.delete<void>(resolveApiUrl(deleteLink, this.apiUrl));
+    }
+
     let base = '';
     try {
-      base = this.resolveClubLink(links, this.linkRels.photos, `club ${clubId} photos`, `${this.apiUrl}/clubs/${clubId}/photos`);
+      base = this.resolveClubLink(clubLinks, this.linkRels.photos, `club ${clubId} photos`, `${this.apiUrl}/clubs/${clubId}/photos`);
     } catch (err) {
       return this.missingLinkError(err);
     }

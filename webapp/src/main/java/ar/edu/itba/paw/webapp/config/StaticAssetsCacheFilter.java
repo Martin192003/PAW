@@ -27,7 +27,7 @@ public class StaticAssetsCacheFilter implements Filter {
             Pattern.compile(".*[\\-\\.][0-9A-Za-z]{8,}\\.[a-zA-Z0-9]+$");
 
     private static final Pattern STATIC_EXTENSION =
-            Pattern.compile(".*\\.(js|css|woff|woff2|ttf|eot|svg|png|jpg|jpeg|webp|ico|map)$",
+            Pattern.compile(".*\\.(js|css|woff|woff2|ttf|otf|eot|svg|png|jpg|jpeg|webp|ico|map|json)$",
                     Pattern.CASE_INSENSITIVE);
 
     private static final long ONE_YEAR_SECONDS = 365L * 24 * 60 * 60; // 31 536 000

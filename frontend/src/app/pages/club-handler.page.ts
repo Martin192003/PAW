@@ -357,7 +357,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
 
     this.deletingGalleryPhotoId = photo.photoId;
 
-    this.clubService.deleteGalleryPhoto(this.clubId, photo.photoId, this.club?.links).pipe(
+    this.clubService.deleteGalleryPhoto(this.clubId, photo.photoId, photo.links, this.club?.links).pipe(
       timeout(this.mutationTimeoutMs),
       finalize(() => {
         this.deletingGalleryPhotoId = null;

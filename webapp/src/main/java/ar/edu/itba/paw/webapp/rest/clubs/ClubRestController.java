@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 @Produces({ApiMediaTypes.CLUB, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
 public class ClubRestController {
 
-    private static final int DEFAULT_PAGE = 1;
+    private static final int DEFAULT_PAGE = 0;
     private static final int DEFAULT_SIZE = 10;
     private static final ZoneId BUENOS_AIRES_ZONE = ZoneId.of("America/Argentina/Buenos_Aires");
 
@@ -72,11 +72,11 @@ public class ClubRestController {
                               @QueryParam("isBar") final Boolean isBar,
                               @QueryParam("availableToday") final Boolean availableToday,
                               @QueryParam("sort") final String sort,
-                              @QueryParam("page") @DefaultValue("1") int page,
+                              @QueryParam("page") @DefaultValue("0") int page,
                               @QueryParam("size") @DefaultValue("10") int size,
                               @Context SecurityContext securityContext) {
 
-        page = (page < 1) ? DEFAULT_PAGE : page;
+        page = (page < 0) ? DEFAULT_PAGE : page;
         size = (size < 1) ? DEFAULT_SIZE : size;
 
         if (ownerId != null && !ownerId.isBlank()) {
@@ -92,7 +92,7 @@ public class ClubRestController {
 
         int totalClubs = 0;
         List<Club> clubs = Collections.emptyList();
-        final int offset = (page - 1) * size;
+        final int offset = page * size;
 
         if (availabilityMode) {
             if (!invalidDay) {
@@ -122,7 +122,7 @@ public class ClubRestController {
                 .header("X-Invalid-Day", invalidDay)
                 .header("X-Selected-Availability-Date", selectedDay != null ? selectedDay.toString() : "")
                 .header("Cache-Control", "no-cache");
-        addPaginationLinks(responseBuilder, page, size, totalPages, 1);
+        addPaginationLinks(responseBuilder, page, size, totalPages, DEFAULT_PAGE);
         return responseBuilder.build();
     }
 
@@ -134,7 +134,7 @@ public class ClubRestController {
         if (id == null) return badRequest("ownerId invalido");
 
         final boolean includeSensitive = isAuthenticatedUser(id, securityContext);
-        final int offset = (page - 1) * size;
+        final int offset = page * size;
         final int totalClubs = clubService.countClubsByUser(id);
         final List<ClubDto> body = clubService.getClubsByUserPaginated(id, size, offset).stream()
                 .map(club -> toDtoWithLinks(club, includeSensitive))
@@ -145,7 +145,7 @@ public class ClubRestController {
         Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<ClubDto>>(body) {})
                 .header("X-Total-Count", totalClubs);
         applyClubCacheHeaders(responseBuilder, includeSensitive);
-        addPaginationLinks(responseBuilder, page, size, totalPages, 1);
+        addPaginationLinks(responseBuilder, page, size, totalPages, DEFAULT_PAGE);
         return responseBuilder.build();
     }
 
@@ -881,14 +881,17 @@ public class ClubRestController {
                                     int size,
                                     int totalPages,
                                     int firstPage) {
+        // totalPages es una cantidad de paginas (1-based por naturaleza); el ultimo
+        // numero de pagina valido depende de si la coleccion arranca en 0 o en 1.
+        final int lastPage = firstPage + totalPages - 1;
         List<String> links = new ArrayList<>();
         if (page > firstPage) {
             links.add(pageLink(firstPage, size, "first"));
             links.add(pageLink(page - 1, size, "prev"));
         }
-        if (page < totalPages) {
+        if (page < lastPage) {
             links.add(pageLink(page + 1, size, "next"));
-            links.add(pageLink(totalPages, size, "last"));
+            links.add(pageLink(lastPage, size, "last"));
         }
         if (!links.isEmpty()) {
             responseBuilder.header("Link", String.join(", ", links));

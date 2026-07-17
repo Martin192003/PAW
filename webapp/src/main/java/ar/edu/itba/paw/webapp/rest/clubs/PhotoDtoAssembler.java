@@ -33,6 +33,15 @@ public class PhotoDtoAssembler {
                 .path("clubs/{clubId}")
                 .resolveTemplate("clubId", photo.getClubId())
                 .build(), "GET"));
+        // El DELETE real vive en ClubRestController (/clubs/{clubId}/photos/{photoId},
+        // sólo admin del club), no en este mismo controller. Lo exponemos igual como link
+        // para que el frontend no tenga que armar la URL a mano concatenando ids; el server
+        // sigue siendo quien valida el permiso al momento de invocarlo.
+        links.add(LinkBuilder.link("delete", uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/photos/{photoId}")
+                .resolveTemplate("clubId", photo.getClubId())
+                .resolveTemplate("photoId", photo.getPhotoId())
+                .build(), "DELETE"));
         if (photo.getReviewId() != null) {
             links.add(LinkBuilder.link("review", uriInfo.getBaseUriBuilder()
                     .path("clubs/{clubId}/reviews/{reviewId}")

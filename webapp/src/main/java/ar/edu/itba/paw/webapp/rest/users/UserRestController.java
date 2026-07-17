@@ -45,7 +45,7 @@ import java.util.UUID;
 public class UserRestController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserRestController.class);
-    private static final int DEFAULT_BOOKINGS_PAGE = 1;
+    private static final int DEFAULT_BOOKINGS_PAGE = 0;
     private static final int DEFAULT_BOOKINGS_SIZE = 10;
 
     @Context
@@ -380,7 +380,7 @@ public class UserRestController {
                                     @QueryParam("sort") @DefaultValue("created_desc") String sort,
                                     @QueryParam("bookingDate") String bookingDate,
                                     @QueryParam("hasReceipt") Boolean hasReceipt,
-                                    @QueryParam("page") @DefaultValue("1") int page,
+                                    @QueryParam("page") @DefaultValue("0") int page,
                                     @QueryParam("size") @DefaultValue("10") int size,
                                     @Context SecurityContext securityContext) {
         final UUID userId;
@@ -409,7 +409,7 @@ public class UserRestController {
 
         page = Math.max(page, DEFAULT_BOOKINGS_PAGE);
         size = size < 1 ? DEFAULT_BOOKINGS_SIZE : size;
-        final int offset = (page - 1) * size;
+        final int offset = page * size;
         final String loginIdentifier = securityContext.getUserPrincipal().getName();
 
         final List<Booking> bookings = bookingService.searchForUserPaginated(
@@ -421,13 +421,12 @@ public class UserRestController {
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build());
 
-        final int totalPages = (int) Math.ceil((double) total / size);
         final Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(links) {})
                 .header("Cache-Control", "private, no-store")
                 .header("Pragma", "no-cache")
                 .header("X-Total-Count", total)
                 .header("Vary", "Authorization");
-        addOneBasedPaginationLinks(response, page, size, totalPages);
+        addPaginationLinks(response, page, size, total);
         return response.build();
     }
     /**
@@ -469,21 +468,6 @@ public class UserRestController {
         if (page < lastPage) {
             links.add(pageLink(page + 1, size, "next"));
             links.add(pageLink(lastPage, size, "last"));
-        }
-        if (!links.isEmpty()) {
-            responseBuilder.header("Link", String.join(", ", links));
-        }
-    }
-
-    private void addOneBasedPaginationLinks(Response.ResponseBuilder responseBuilder, int page, int size, int totalPages) {
-        List<String> links = new ArrayList<>();
-        if (page > DEFAULT_BOOKINGS_PAGE) {
-            links.add(pageLink(DEFAULT_BOOKINGS_PAGE, size, "first"));
-            links.add(pageLink(page - 1, size, "prev"));
-        }
-        if (page < totalPages) {
-            links.add(pageLink(page + 1, size, "next"));
-            links.add(pageLink(totalPages, size, "last"));
         }
         if (!links.isEmpty()) {
             responseBuilder.header("Link", String.join(", ", links));
