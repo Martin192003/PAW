@@ -9,9 +9,15 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Repository
 public class ReviewsJpaDao implements ReviewsDao {
+
+    private static final Pattern UUID_TEXT_PATTERN = Pattern.compile(
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+    );
 
     @PersistenceContext
     private EntityManager em;
@@ -179,6 +185,45 @@ public class ReviewsJpaDao implements ReviewsDao {
         batch.sort(Comparator.comparingInt(r -> orderMap.get(r.getReviewId())));
 
         return batch;
+    }
+
+    @Override
+    public Map<UUID, UUID> searchLinkTargets(UUID userId, UUID clubId, String sort, int limit, int offset) {
+        StringBuilder jpql = new StringBuilder("""
+                    SELECT r.reviewId, r.club.clubId
+                    FROM Review r
+                    WHERE 1=1
+                """);
+
+        if (userId != null) jpql.append(" AND r.user.id = :uid");
+        if (clubId != null) jpql.append(" AND r.club.clubId = :cid");
+        jpql.append(" ").append(resolveOrderBy(sort));
+
+        TypedQuery<Object[]> query = em.createQuery(jpql.toString(), Object[].class)
+                .setFirstResult(offset)
+                .setMaxResults(limit);
+
+        if (userId != null) query.setParameter("uid", userId);
+        if (clubId != null) query.setParameter("cid", clubId);
+
+        Map<UUID, UUID> targets = new LinkedHashMap<>();
+        List<Object[]> rows = query.getResultList();
+        for (Object[] row : rows) {
+            targets.put(uuidFromScalar(row[0]), uuidFromScalar(row[1]));
+        }
+        return targets;
+    }
+
+    private static UUID uuidFromScalar(Object value) {
+        if (value instanceof UUID uuid) {
+            return uuid;
+        }
+        String text = String.valueOf(value);
+        Matcher matcher = UUID_TEXT_PATTERN.matcher(text);
+        if (matcher.find()) {
+            return UUID.fromString(matcher.group());
+        }
+        return UUID.fromString(text);
     }
 
     @Override

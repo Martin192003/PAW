@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.User;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ public interface ReviewsDao {
     List<Review> findByClub(Club club);
 
     List<Review> searchPaginated(UUID userId, UUID clubId, String sort, int limit, int offset);
+    Map<UUID, UUID> searchLinkTargets(UUID userId, UUID clubId, String sort, int limit, int offset);
     int countSearch(UUID userId, UUID clubId);
 
 

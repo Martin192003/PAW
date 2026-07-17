@@ -6,6 +6,7 @@ import ar.edu.itba.paw.model.Review;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,6 +29,7 @@ public interface ReviewService {
     int getCorrectedOffset(UUID clubId,int limit, int offset);
     int calculateOffset(int offset, int limit, int total);
     List<Review> obtainPaginatedReviews(UUID userId, String sort, int limit, int offset);
+    Map<UUID, UUID> listReviewLinkTargetsByUser(UUID userId, String sort, int limit, int offset);
     int gettotalReviewsPages(UUID clubId, int size);
     List<Review> listByClubPaginated(UUID clubId, String sort,int limit, int offset);
 }

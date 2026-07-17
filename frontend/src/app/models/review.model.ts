@@ -2,6 +2,8 @@ export interface Review {
   reviewId: string;
   userId?: string;
   clubId?: string;
+  clubName?: string;
+  clubLocation?: string;
   rating: number;
   description?: string;
   createdAt: string;

@@ -5,10 +5,10 @@ import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.BookingService;
+import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
-import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
@@ -29,6 +29,7 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.GenericEntity;
 import java.util.List;
+import java.util.Map;
 
 
 import javax.ws.rs.*;
@@ -59,6 +60,9 @@ public class UserRestController {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private ClubService clubService;
 
     @Autowired
     private BookingDtoAssembler bookingDtoAssembler;
@@ -356,15 +360,17 @@ public class UserRestController {
         }
 
         int offset = page * size;
-        List<ar.edu.itba.paw.model.Review> reviews = reviewService.obtainPaginatedReviews(id, null, size, offset);
-        List<LinkDto> links = CollectionLinks.items(reviews, review -> uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/reviews/{reviewId}")
-                .resolveTemplate("clubId", review.getClub().getClubId())
-                .resolveTemplate("reviewId", review.getReviewId())
-                .build());
-
         int total = reviewService.countByUser(id);
-        GenericEntity<List<LinkDto>> entity = new GenericEntity<>(links) {};
+        int correctedOffset = reviewService.calculateOffset(offset, size, total);
+        User currentUser = authenticatedUserResolver.resolve(securityContext);
+        UUID currentUserId = currentUser != null ? currentUser.getId() : null;
+        List<ReviewDto> body = total == 0
+                ? List.of()
+                : reviewService.listByUser(id, null, size, correctedOffset).stream()
+                .map(review -> ReviewMapper.toDto(review, uriInfo, currentUserId))
+                .toList();
+
+        GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(body) {};
         Response.ResponseBuilder response = Response.ok(entity)
                 .header("X-Total-Count", total);
         addPaginationLinks(response, page, size, total);
@@ -410,18 +416,15 @@ public class UserRestController {
         page = Math.max(page, DEFAULT_BOOKINGS_PAGE);
         size = size < 1 ? DEFAULT_BOOKINGS_SIZE : size;
         final int offset = page * size;
-        final String loginIdentifier = securityContext.getUserPrincipal().getName();
+        final List<Booking> bookings = bookingService.searchPaginated(
+                userId, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
+        final int total = bookingService.countSearch(
+                userId, clubId, bookingId, status, bookingDate, hasReceipt);
+        final Map<UUID, String> clubNamesByBooking = clubService.mapClubNames(bookings);
+        final List<BookingDto> body = bookingDtoAssembler.toDtos(
+                uriInfo, bookings, false, true, clubNamesByBooking);
 
-        final List<Booking> bookings = bookingService.searchForUserPaginated(
-                loginIdentifier, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
-        final int total = bookingService.countSearchForUser(
-                loginIdentifier, clubId, bookingId, status, bookingDate, hasReceipt);
-        final List<LinkDto> links = CollectionLinks.items(bookings, booking -> uriInfo.getBaseUriBuilder()
-                .path("bookings/{bookingId}")
-                .resolveTemplate("bookingId", booking.getBookingId())
-                .build());
-
-        final Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(links) {})
+        final Response.ResponseBuilder response = Response.ok(new GenericEntity<List<BookingDto>>(body) {})
                 .header("Cache-Control", "private, no-store")
                 .header("Pragma", "no-cache")
                 .header("X-Total-Count", total)

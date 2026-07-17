@@ -22,6 +22,8 @@ public final class ReviewMapper {
         dto.setUserId(review.getUser() != null ? review.getUser().getId() : null);
         dto.setUsername(review.getUser() != null ? review.getUser().getUsername() : null);
         dto.setClubId(review.getClub() != null ? review.getClub().getClubId() : null);
+        dto.setClubName(review.getClub() != null ? review.getClub().getClubName() : null);
+        dto.setClubLocation(review.getClub() != null ? review.getClub().getLocation() : null);
         dto.setRating(review.getRating());
         dto.setDescription(review.getDescription());
         dto.setCreatedAt(review.getCreatedAtOffset());

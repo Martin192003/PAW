@@ -172,12 +172,14 @@ export class MyReviewsPage implements OnInit, OnDestroy {
     });
   }
   /**
-   * Pide los nombres de club de cada review en paralelo (con cache).
-   * El DTO de review trae solo clubId.
+   * Fallback para APIs viejas que todavia no mandan nombre/ubicacion del club.
    */
   private enrichWithClubs(): void {
     const ids = Array.from(new Set(
-      this.reviews.map(r => r.clubId).filter((id): id is string => !!id)
+      this.reviews
+        .filter(r => !r.clubName || !r.clubLocation)
+        .map(r => r.clubId)
+        .filter((id): id is string => !!id)
     ));
 
     ids.forEach(id => {

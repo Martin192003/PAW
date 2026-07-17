@@ -10,6 +10,8 @@ public class ReviewDto {
     private UUID userId;
     private String username;
     private UUID clubId;
+    private String clubName;
+    private String clubLocation;
     private Integer rating;
     private String description;
     private OffsetDateTime createdAt;
@@ -51,6 +53,22 @@ public class ReviewDto {
 
     public void setClubId(UUID clubId) {
         this.clubId = clubId;
+    }
+
+    public String getClubName() {
+        return clubName;
+    }
+
+    public void setClubName(String clubName) {
+        this.clubName = clubName;
+    }
+
+    public String getClubLocation() {
+        return clubLocation;
+    }
+
+    public void setClubLocation(String clubLocation) {
+        this.clubLocation = clubLocation;
     }
 
     public Integer getRating() {

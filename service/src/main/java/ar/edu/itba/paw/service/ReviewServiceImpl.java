@@ -297,6 +297,13 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
+    public Map<UUID, UUID> listReviewLinkTargetsByUser(UUID userId, String sort, int limit, int offset) {
+        final String safeSort = (sort == null) ? "" : sort;
+        return reviewsDao.searchLinkTargets(userId, null, safeSort, limit, offset);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public int gettotalReviewsPages(UUID clubId, int size) {
         if (size <= 0) {
             return 1;

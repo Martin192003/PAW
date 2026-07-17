@@ -240,9 +240,18 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Override
     @Transactional(readOnly = true)
     public Map<UUID, Boolean> buildHasReceiptMap(List<Booking> bookings) {
+        if (bookings == null || bookings.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        final List<UUID> bookingIds = bookings.stream()
+                .map(Booking::getBookingId)
+                .toList();
+        final Set<UUID> withReceipt = receiptDao.findBookingIdsWithReceipt(bookingIds);
+
         Map<UUID, Boolean> map = new HashMap<>();
-        for (Booking b : bookings) {
-            map.put(b.getBookingId(), findByBooking(b.getBookingId()).isPresent());
+        for (UUID bookingId : bookingIds) {
+            map.put(bookingId, withReceipt.contains(bookingId));
         }
         return map;
     }

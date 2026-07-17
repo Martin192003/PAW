@@ -46,6 +46,8 @@ public class TestConfig {
         var props = new Properties();
         props.setProperty("hibernate.hbm2ddl.auto", "update");
         props.setProperty("hibernate.dialect", "org.hibernate.dialect.HSQLDialect");
+        props.setProperty("hibernate.generate_statistics", "true");
+        props.setProperty("hibernate.session.events.log", "false");
         emf.setJpaProperties(props);
         return emf;
     }
