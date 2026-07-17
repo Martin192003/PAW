@@ -46,7 +46,8 @@ describe('BookingService filters', () => {
     }, 2, 20).subscribe();
 
     const req = httpMock.expectOne(request => request.url.endsWith('/users/user-1/bookings'));
-    expect(req.request.params.get('page')).toBe('2');
+    // La UI usa paginas 1-based (2); la API espera 0-based (1).
+    expect(req.request.params.get('page')).toBe('1');
     expect(req.request.params.get('size')).toBe('20');
     expect(req.request.params.get('bookingDate')).toBe('2026-07-03');
     expect(req.request.params.get('status')).toBe('CONFIRMADA');
@@ -64,7 +65,7 @@ describe('BookingService filters', () => {
     first.flush({ message: 'not found' }, { status: 404, statusText: 'Not Found' });
 
     const fallback = httpMock.expectOne(request => request.url.endsWith('/bookings'));
-    expect(fallback.request.params.get('page')).toBe('1');
+    expect(fallback.request.params.get('page')).toBe('0');
     expect(fallback.request.params.get('size')).toBe('10');
     expect(fallback.request.params.get('status')).toBe('PENDIENTE');
     expect(fallback.request.params.has('managed')).toBe(false);
@@ -81,7 +82,7 @@ describe('BookingService filters', () => {
     }, 1, 10).subscribe();
 
     const req = httpMock.expectOne(request => request.urlWithParams.includes('/bookings?managed=true'));
-    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('page')).toBe('0');
     expect(req.request.params.get('size')).toBe('10');
     expect(req.request.params.has('managed')).toBe(false);
     expect(req.request.params.get('clubId')).toBe('club-1');

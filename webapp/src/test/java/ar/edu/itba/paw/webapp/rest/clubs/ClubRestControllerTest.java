@@ -91,7 +91,7 @@ public class ClubRestControllerTest {
                 .thenReturn(List.of(club1, club2));
 
         Response response = controller.listClubs(
-                null, null, null, null, null, null, null, null, 1, 10, mock(SecurityContext.class));
+                null, null, null, null, null, null, null, null, 0, 10, mock(SecurityContext.class));
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("25", response.getHeaderString("X-Total-Count"));
@@ -112,7 +112,7 @@ public class ClubRestControllerTest {
     @Test
     public void testListClubs_InvalidOwnerId_ReturnsBadRequest() {
         Response response = controller.listClubs(
-                null, "not-a-uuid", null, null, null, null, null, null, 1, 10, mock(SecurityContext.class));
+                null, "not-a-uuid", null, null, null, null, null, null, 0, 10, mock(SecurityContext.class));
 
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
@@ -123,7 +123,7 @@ public class ClubRestControllerTest {
         when(clubService.getClubsByUserPaginated(OWNER_ID, 10, 0)).thenReturn(List.of(club(UUID.randomUUID())));
 
         Response response = controller.listClubs(
-                null, OWNER_ID.toString(), null, null, null, null, null, null, 1, 10, mock(SecurityContext.class));
+                null, OWNER_ID.toString(), null, null, null, null, null, null, 0, 10, mock(SecurityContext.class));
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         // Si listClubs no hubiera delegado a la búsqueda por owner, countSearch/searchPaginated
