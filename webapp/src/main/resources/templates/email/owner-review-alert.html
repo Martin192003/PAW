@@ -15,11 +15,11 @@
 
         <h2 style="color:#c97cd3;text-align:center;font-size:22px;font-weight:600;margin:0 0 8px;"
             th:text="#{email.review.owner.title(${clubName})}">Nueva resena</h2>
-        <p style="text-align:center;color:#9a9aa6;font-size:13px;margin:0 0 28px;">Tu club recibio un nuevo comentario</p>
+        <p style="text-align:center;color:#9a9aa6;font-size:13px;margin:0 0 28px;" th:text="#{email.review.owner.new.text}">Tu club recibio un nuevo comentario</p>
 
         <div style="background:#1f1f27;border:1px solid #3a3a45;border-radius:8px;padding:18px 20px;margin:0 0 16px;">
             <p style="margin:0 0 8px;font-size:14px;">
-                <span style="color:#9a9aa6;">Por</span> &nbsp;
+                <span style="color:#9a9aa6;" th:text="#{email.review.owner.by.label}">Por</span> &nbsp;
                 <span style="color:#ffffff;font-weight:600;" th:text="${reviewer}">Usuario</span>
                 <span style="display:inline-block;background:#1a1a1f;border:1px solid #3a3a45;border-radius:14px;padding:3px 10px;margin-left:8px;color:#ffd166;font-weight:600;font-size:13px;">
                     <span th:text="${rating}">5</span> &#9733;
@@ -45,7 +45,7 @@
 
         <p style="text-align:center;font-size:12px;color:#6f6f78;margin:0;">
             <span th:text="${brandName}">BlingBling</span> &mdash;
-            <span th:text="${brandFooter}">&copy; 2025 BlingBling</span>
+            <span th:text="#{email.review.owner.footer}">&copy; 2025 BlingBling</span>
         </p>
     </div>
 </div>

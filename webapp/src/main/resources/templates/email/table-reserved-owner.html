@@ -18,9 +18,9 @@
         <p style="text-align:center;color:#9a9aa6;font-size:13px;margin:0 0 28px;" th:text="#{email.table.owner.body(${clubName})}">Detalles de la nueva reserva.</p>
 
         <div style="background:#1f1f27;border:1px solid #3a3a45;border-radius:8px;padding:18px 20px;margin:0 0 16px;">
-            <p style="margin:0 0 8px;font-size:14px;"><span style="color:#9a9aa6;">Mesa</span> &nbsp; <span style="color:#ffffff;font-weight:600;" th:text="${tableNumber}">0</span></p>
-            <p style="margin:0 0 8px;font-size:14px;"><span style="color:#9a9aa6;">Capacidad</span> &nbsp; <span style="color:#ffffff;font-weight:600;" th:text="#{email.table.owner.capacity(${capacity})}">0</span></p>
-            <p th:if="${dateTime != null}" style="margin:0;font-size:14px;"><span style="color:#9a9aa6;">Horario</span> &nbsp; <span style="color:#ffffff;font-weight:600;" th:text="${dateTime}">2025-01-01 23:00</span></p>
+            <p style="margin:0 0 8px;font-size:14px;"><span style="color:#9a9aa6;" th:text="#{email.table.label}">Mesa</span> &nbsp; <span style="color:#ffffff;font-weight:600;" th:text="${tableNumber}">0</span></p>
+            <p style="margin:0 0 8px;font-size:14px;"><span style="color:#9a9aa6;color:#ffffff;font-weight:600;" th:text="#{email.table.owner.capacity(${capacity})}">Capacity: 0</span></p>
+            <p th:if="${dateTime != null}" style="margin:0;font-size:14px;"><span style="color:#9a9aa6;color:#ffffff;font-weight:600;" th:text="#{email.table.owner.schedule(${dateTime})}">Schedule: 2025-01-01 23:00</span></p>
         </div>
 
         <div style="background:#1f1f27;border:1px solid #3a3a45;border-radius:8px;padding:18px 20px;margin:0 0 24px;">
@@ -39,7 +39,7 @@
 
         <hr style="border:none;height:1px;background:#3a3a45;margin:28px 0 18px;"/>
 
-        <p style="text-align:center;font-size:12px;color:#6f6f78;margin:0;">&copy; 2025 BlingBling</p>
+        <p style="text-align:center;font-size:12px;color:#6f6f78;margin:0;" th:text="#{email.table.owner.footer}">&copy; 2025 BlingBling</p>
     </div>
 </div>
 </body>
