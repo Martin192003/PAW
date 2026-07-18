@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map, switchMap, timeout } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   ApiMessageResponse,
@@ -14,21 +14,10 @@ import {
   UserUpdateRequest,
 } from '../models/user.model';
 import { SKIP_API_ERROR_REDIRECT } from './api-error.interceptor';
-import { resolveApiUrl } from '../utils/api-url.util';
 
 export type UserUpdateResult = {
   user: User;
   token: string | null;
-};
-
-type AuthTokenResponse = {
-  accessToken: string;
-  tokenType: string;
-  expiresIn: number;
-  user: {
-    href: string;
-    userId?: string;
-  };
 };
 
 type UserUpdateResponse = {
@@ -73,55 +62,40 @@ export class UserService {
   }
 
   login(payload: UserLoginRequest): Observable<LoginResponse> {
-    return this.http.post<AuthTokenResponse>(`${this.apiUrl}/auth/tokens`, {
-      grantType: 'password',
-      usernameOrEmail: payload.usernameOrEmail.trim(),
-      password: payload.password,
-    }, {
+    const usernameOrEmail = payload.usernameOrEmail.trim();
+    const headers = new HttpHeaders({
+      Authorization: this.basicAuthorization(usernameOrEmail, payload.password),
+    });
+
+    return this.http.get<User>(`${this.apiUrl}/users/me`, {
+      headers,
+      observe: 'response',
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
-      switchMap((tokenResponse) => this.loginResponseFromTokenResponse(tokenResponse))
+      map((response) => {
+        const token = response.headers.get('Paw-Auth-Token');
+        if (!token || !response.body) {
+          throw new Error('missing_auth_response');
+        }
+        return { token, user: response.body };
+      })
     );
   }
 
   /**
-   * POST /auth/tokens con grant email_verification.
-   *
-   * El backend puede responder de dos formas: un AuthTokenResponse (cuenta
-   * recien verificada, login automatico) o un ApiMessageResponse (ya estaba
-   * verificada, o el backend todavia no emite token). Igual que login() y
-   * resetPassword(), si viene un token hay que resolver el usuario completo
-   * antes de devolver un LoginResponse utilizable por la pagina.
+   * Verifica la cuenta desde el token recibido por mail. Este flujo ya no crea
+   * sesion: los JWT se emiten al mandar Basic Auth contra un recurso protegido.
    */
   verifyByToken(token: string): Observable<LoginResponse | ApiMessageResponse> {
     return this.http
-      .post<AuthTokenResponse | ApiMessageResponse>(`${this.apiUrl}/auth/tokens`, {
-        grantType: 'email_verification',
+      .put<ApiMessageResponse>(`${this.apiUrl}/users/verification`, {
         token: token.trim(),
       }, {
         context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
-        transferCache: false,
       })
       .pipe(
-        timeout(15000),
-        switchMap((response) => this.resolveVerificationResponse(response))
+        timeout(15000)
       );
-  }
-
-  private resolveVerificationResponse(
-    response: AuthTokenResponse | ApiMessageResponse
-  ): Observable<LoginResponse | ApiMessageResponse> {
-    if (!this.isAuthTokenResponse(response)) {
-      return of(response);
-    }
-
-    return this.loginResponseFromTokenResponse(response);
-  }
-
-  private isAuthTokenResponse(
-    response: AuthTokenResponse | ApiMessageResponse
-  ): response is AuthTokenResponse {
-    return !!response && typeof response === 'object' && 'accessToken' in response;
   }
 
   resendVerification(payload: ResendVerificationRequest): Observable<ApiMessageResponse> {
@@ -148,30 +122,24 @@ export class UserService {
   resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<LoginResponse> {
     // Sin este flag, un token invalido/vencido (404) redirige a /error en vez
     // de mostrar el cartel de "token invalido o vencido" en el propio formulario.
-    return this.http.post<AuthTokenResponse>(
-      `${this.apiUrl}/auth/tokens`,
+    return this.http.put<UserUpdateResponse>(
+      `${this.apiUrl}/users/credentials/password`,
       {
-        grantType: 'password_reset',
         token,
         newPassword,
         confirmationPassword
       },
       { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
     ).pipe(
-      switchMap((tokenResponse) => this.loginResponseFromTokenResponse(tokenResponse))
+      map((response) => this.loginResponseFromUserUpdateResponse(response))
     );
   }
 
-  private loginResponseFromTokenResponse(tokenResponse: AuthTokenResponse): Observable<LoginResponse> {
-    const token = tokenResponse.accessToken;
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    const userUrl = resolveApiUrl(tokenResponse.user.href, this.apiUrl);
-    return this.http.get<User>(userUrl, {
-      headers,
-      context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
-    }).pipe(
-      map((user) => ({ token, user }))
-    );
+  private loginResponseFromUserUpdateResponse(response: UserUpdateResponse): LoginResponse {
+    if (!response.accessToken || !response.user) {
+      throw new Error('missing_auth_response');
+    }
+    return { token: response.accessToken, user: response.user };
   }
 
   /**
@@ -184,5 +152,18 @@ export class UserService {
     return this.http.put<void>(`${this.apiUrl}/users/${userId}/credentials/password`, { newPassword, confirmationPassword }, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     });
+  }
+
+  private basicAuthorization(usernameOrEmail: string, password: string): string {
+    return `Basic ${this.base64Encode(`${usernameOrEmail}:${password}`)}`;
+  }
+
+  private base64Encode(value: string): string {
+    const bytes = new TextEncoder().encode(value);
+    let binary = '';
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return btoa(binary);
   }
 }

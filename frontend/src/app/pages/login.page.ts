@@ -146,6 +146,9 @@ export class LoginPage implements OnInit, OnDestroy {
     if (error.status === 400) {
       return this.extractServerMessage(error.error) ?? this.i18n.instant('login.errors.required');
     }
+    if (error.status === 0 || error.status === 503 || error.status >= 500) {
+      return this.i18n.instant('login.errors.loginFailed');
+    }
     return this.extractServerMessage(error.error) ?? this.i18n.instant('login.errors.loginFailed');
   }
 

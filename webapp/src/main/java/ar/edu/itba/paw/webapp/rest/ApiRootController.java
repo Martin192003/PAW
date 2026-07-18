@@ -27,8 +27,8 @@ public class ApiRootController {
                 LinkBuilder.link("clubs", uriInfo.getBaseUriBuilder().path("clubs").build(), "GET"),
                 LinkBuilder.link("events", uriInfo.getBaseUriBuilder().path("events").build(), "GET"),
                 LinkBuilder.link("users", uriInfo.getBaseUriBuilder().path("users").build(), "POST"),
+                LinkBuilder.link("current-user", uriInfo.getBaseUriBuilder().path("users/me").build(), "GET"),
                 LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder().path("bookings").build(), "GET"),
-                LinkBuilder.link("auth-tokens", uriInfo.getBaseUriBuilder().path("auth/tokens").build(), "POST"),
                 LinkBuilder.link("auth-challenges", uriInfo.getBaseUriBuilder().path("auth/challenges").build(), "POST")
         );
         return Response.ok(new GenericEntity<List<LinkDto>>(links) {})

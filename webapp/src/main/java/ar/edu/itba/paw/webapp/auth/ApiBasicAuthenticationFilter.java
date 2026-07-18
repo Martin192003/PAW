@@ -20,20 +20,17 @@ import java.util.Base64;
 public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiBasicAuthenticationFilter.class);
 
-    public ApiBasicAuthenticationFilter(UserService userService) {
+    public ApiBasicAuthenticationFilter(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String method = request.getMethod();
-        String path = request.getRequestURI();
-        return "OPTIONS".equalsIgnoreCase(method)
-                || !"POST".equalsIgnoreCase(method)
-                || path == null
-                || !(path.endsWith("/api/auth/tokens") || path.endsWith("/api/auth/tokens/"));
+        return "OPTIONS".equalsIgnoreCase(request.getMethod());
     }
 
     @Override
@@ -87,14 +84,18 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
             // DEBUG (no INFO): cada login exitoso es tráfico normal, no un evento
             // digno del nivel que se loguea siempre en producción.
             LOGGER.debug("ApiBasicAuthenticationFilter: authentication succeeded for username={}", mask(username));
+            ApiTokenHeaders.remember(request, jwtUtil, user);
 
             filterChain.doFilter(request, response);
+            if (!response.isCommitted()) {
+                ApiTokenHeaders.addTo(response, request);
+            }
         } catch (IllegalStateException ex) {
             LOGGER.warn("ApiBasicAuthenticationFilter: account disabled for username={}", mask(username), ex);
             AuthErrorResponses.write(response, HttpServletResponse.SC_FORBIDDEN, "account_disabled");
         } catch (Exception ex) {
             LOGGER.warn("ApiBasicAuthenticationFilter: unexpected authentication error for username={}: {}", mask(username), ex.getMessage());
-            AuthErrorResponses.write(response, HttpServletResponse.SC_UNAUTHORIZED, "invalid_credentials");
+            AuthErrorResponses.write(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE, "authentication_unavailable");
         }
     }
 
@@ -134,6 +135,3 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 }
-
-
-

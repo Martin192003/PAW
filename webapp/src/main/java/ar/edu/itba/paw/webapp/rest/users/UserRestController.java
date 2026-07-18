@@ -8,6 +8,7 @@ import ar.edu.itba.paw.service.BookingService;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.webapp.auth.ApiTokenHeaders;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
@@ -72,6 +73,106 @@ public class UserRestController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @GET
+    @Path("/me")
+    public Response getCurrentUser(@Context SecurityContext securityContext) {
+        User authUser = authenticatedUserResolver.resolve(securityContext);
+        if (authUser == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(message("Unauthorized"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        return Response.ok(UserMapper.toDto(authUser, uriInfo))
+                .header("Cache-Control", "private, no-store")
+                .header("Pragma", "no-cache")
+                .header("Vary", "Authorization")
+                .build();
+    }
+
+    @PUT
+    @Path("/verification")
+    public Response verifyUser(VerificationRequestDto body) {
+        String tokenOrCode = body == null || isBlank(body.getToken()) ? null : body.getToken();
+        if (isBlank(tokenOrCode) && body != null && !isBlank(body.getCode())) {
+            tokenOrCode = body.getCode();
+        }
+
+        if (isBlank(tokenOrCode)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("verification_token_required"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        String verificationToken = tokenOrCode.trim();
+        User user = userService.findByVerificationToken(verificationToken);
+        if (user == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("invalid_verification_token"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (!user.isVerified() && !userService.verifyUser(verificationToken)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("invalid_verification_token"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        return Response.ok(new ApiMessageDto("verified"))
+                .header("Cache-Control", "no-store")
+                .header("Pragma", "no-cache")
+                .build();
+    }
+
+    @PUT
+    @Path("/credentials/password")
+    public Response resetPassword(PasswordResetDto body) {
+        if (body == null || isBlank(body.getToken())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("token_required"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (isBlank(body.getNewPassword()) || isBlank(body.getConfirmationPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("password_required"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        if (!body.getNewPassword().equals(body.getConfirmationPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("password_confirmation_mismatch"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        Optional<User> updated = userService.resetPassword(body.getToken().trim(), body.getNewPassword());
+        if (updated.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(message("invalid_or_expired_token"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        User user = updated.get();
+        String accessToken = ApiTokenHeaders.tokenFor(jwtUtil, user);
+        long expiresIn = jwtUtil.getExpirationSeconds();
+        UserUpdateResponseDto response = new UserUpdateResponseDto(
+                UserMapper.toDto(user, uriInfo),
+                accessToken,
+                "Bearer",
+                expiresIn
+        );
+        return ApiTokenHeaders.addTo(Response.ok(response), accessToken, expiresIn)
+                .build();
+    }
 
     @GET
     @Path("/{userId}")

@@ -5,7 +5,6 @@ import ar.edu.itba.paw.model.dto.AuthChallengeRequestDto;
 import ar.edu.itba.paw.model.dto.ErrorDto;
 import ar.edu.itba.paw.service.PasswordResetJobService;
 import ar.edu.itba.paw.service.UserService;
-import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -20,8 +19,7 @@ public class AuthRestControllerTest {
     private final UserService userService = mock(UserService.class);
     private final AuthRestController controller = new AuthRestController(
             userService,
-            mock(PasswordResetJobService.class),
-            mock(JwtUtil.class)
+            mock(PasswordResetJobService.class)
     );
 
     @Test

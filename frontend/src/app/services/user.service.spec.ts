@@ -51,57 +51,36 @@ describe('UserService', () => {
     req.flush({});
   });
 
-  it('login trims usernameOrEmail, then resolves the full user from the token response href', () => {
+  it('login trims usernameOrEmail, sends Basic credentials to /users/me, and stores the token header', () => {
     let result: LoginResponse | undefined;
     service.login({ usernameOrEmail: '  demo@example.com  ', password: 'secret123' }).subscribe(res => {
       result = res;
     });
 
-    const tokenReq = httpMock.expectOne(request => request.method === 'POST' && request.url.endsWith('/auth/tokens'));
-    expect(tokenReq.request.body).toEqual({
-      grantType: 'password',
-      usernameOrEmail: 'demo@example.com',
-      password: 'secret123',
-    });
-    tokenReq.flush({
-      accessToken: 'jwt-token',
-      tokenType: 'Bearer',
-      expiresIn: 3600,
-      user: { href: '/api/users/user-1', userId: 'user-1' },
-    });
-
-    const userReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/users/user-1'));
-    expect(userReq.request.headers.get('Authorization')).toBe('Bearer jwt-token');
-    userReq.flush(fakeUser);
+    const userReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/users/me'));
+    expect(userReq.request.headers.get('Authorization')).toBe(`Basic ${btoa('demo@example.com:secret123')}`);
+    userReq.flush(fakeUser, { headers: { 'Paw-Auth-Token': 'jwt-token' } });
 
     expect(result).toEqual({ token: 'jwt-token', user: fakeUser });
   });
 
-  it('verifyByToken resolves a LoginResponse when the backend returns a fresh token', () => {
+  it('verifyByToken calls the user verification resource', () => {
     let result: LoginResponse | ApiMessageResponse | undefined;
     service.verifyByToken('verif-token').subscribe(res => { result = res; });
 
-    const tokenReq = httpMock.expectOne(request => request.method === 'POST' && request.url.endsWith('/auth/tokens'));
-    expect(tokenReq.request.body).toEqual({ grantType: 'email_verification', token: 'verif-token' });
-    tokenReq.flush({
-      accessToken: 'jwt-token-2',
-      tokenType: 'Bearer',
-      expiresIn: 3600,
-      user: { href: '/api/users/user-1' },
-    });
+    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/verification'));
+    expect(verificationReq.request.body).toEqual({ token: 'verif-token' });
+    verificationReq.flush({ message: 'verified' });
 
-    const userReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/users/user-1'));
-    userReq.flush(fakeUser);
-
-    expect(result).toEqual({ token: 'jwt-token-2', user: fakeUser });
+    expect(result).toEqual({ message: 'verified' });
   });
 
   it('verifyByToken passes through an ApiMessageResponse without resolving a user (already verified)', () => {
     let result: LoginResponse | ApiMessageResponse | undefined;
     service.verifyByToken('verif-token').subscribe(res => { result = res; });
 
-    const tokenReq = httpMock.expectOne(request => request.method === 'POST' && request.url.endsWith('/auth/tokens'));
-    tokenReq.flush({ message: 'already_verified' });
+    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/verification'));
+    verificationReq.flush({ message: 'already_verified' });
 
     // No debe haber ningun GET adicional a /users/* si la respuesta no trae token.
     httpMock.expectNone(request => request.method === 'GET');
@@ -134,24 +113,21 @@ describe('UserService', () => {
     let result: LoginResponse | undefined;
     service.resetPassword('reset-token', 'newPass123', 'newPass123').subscribe(res => { result = res; });
 
-    const tokenReq = httpMock.expectOne(request => request.method === 'POST' && request.url.endsWith('/auth/tokens'));
-    expect(tokenReq.request.body).toEqual({
-      grantType: 'password_reset',
+    const resetReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/credentials/password'));
+    expect(resetReq.request.body).toEqual({
       token: 'reset-token',
       newPassword: 'newPass123',
       confirmationPassword: 'newPass123',
     });
-    tokenReq.flush({
+    resetReq.flush({
+      user: fakeUser,
       accessToken: 'jwt-token-3',
       tokenType: 'Bearer',
       expiresIn: 3600,
-      user: { href: '/api/users/user-1' },
     });
 
-    const userReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/users/user-1'));
-    userReq.flush(fakeUser);
-
     expect(result?.token).toBe('jwt-token-3');
+    expect(result?.user).toEqual(fakeUser);
   });
 
   it('changePasswordAuthenticated PUTs to the credentials sub-resource', () => {

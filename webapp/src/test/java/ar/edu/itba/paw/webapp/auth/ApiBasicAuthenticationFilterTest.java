@@ -11,11 +11,13 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -25,13 +27,15 @@ import static org.mockito.Mockito.when;
 public class ApiBasicAuthenticationFilterTest {
 
     private UserService userService;
+    private JwtUtil jwtUtil;
     private ApiBasicAuthenticationFilter filter;
 
     @Before
     public void setUp() {
         SecurityContextHolder.clearContext();
         userService = mock(UserService.class);
-        filter = new ApiBasicAuthenticationFilter(userService);
+        jwtUtil = mock(JwtUtil.class);
+        filter = new ApiBasicAuthenticationFilter(userService, jwtUtil);
     }
 
     @After
@@ -40,31 +44,22 @@ public class ApiBasicAuthenticationFilterTest {
     }
 
     @Test
-    public void basicCredentialsAreIgnoredOutsideTokenCreation() throws Exception {
-        // En vez de crear el mock "nice" de setUp() y comprobar después con
-        // verifyZeroInteractions(), usamos un mock cuyo comportamiento por defecto es
-        // explotar ante CUALQUIER interacción -- así, si el filtro llegara a tocar
-        // userService para una request que no es de creación de token, el test falla
-        // durante el "ejercitar" mismo.
-        UserService strictUserService = mock(UserService.class, invocation -> {
-            throw new AssertionError("Unexpected interaction with userService: " + invocation.getMethod().getName());
-        });
-        ApiBasicAuthenticationFilter strictFilter = new ApiBasicAuthenticationFilter(strictUserService);
-
+    public void missingAuthorizationLeavesRequestUnauthenticated() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users/" + UUID.randomUUID());
-        request.addHeader("Authorization", basic("demo@example.com", "secret"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        strictFilter.doFilter(request, response, new MockFilterChain());
+        filter.doFilter(request, response, new MockFilterChain());
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
-    public void basicCredentialsAuthenticateTokenCreationRequest() throws Exception {
+    public void basicCredentialsAuthenticateAnyApiRequestAndEmitTokenHeaders() throws Exception {
         User user = user(UUID.randomUUID(), Role.USER);
         when(userService.authenticateAndGetUser("demo@example.com", "secret")).thenReturn(user);
-        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/tokens");
+        when(jwtUtil.generateToken(user.getId().toString())).thenReturn("jwt-token");
+        when(jwtUtil.getExpirationSeconds()).thenReturn(3600L);
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users/me");
         request.addHeader("Authorization", basic("demo@example.com", "secret"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -77,6 +72,50 @@ public class ApiBasicAuthenticationFilterTest {
         // aserciones ya certifican la llamada correcta sin necesitar verify().
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         assertTrue(SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof PawUserDetails);
+        assertEquals("jwt-token", response.getHeader("Paw-Auth-Token"));
+        assertEquals("Bearer", response.getHeader("Paw-Token-Type"));
+        assertEquals("3600", response.getHeader("Paw-Token-Expires-In"));
+        assertEquals("Authorization", response.getHeader("Vary"));
+    }
+
+    @Test
+    public void invalidBasicCredentialsReturnUnauthorized() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users/me");
+        request.addHeader("Authorization", basic("demo@example.com", "wrong"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.getStatus());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    public void unverifiedUserReturnsForbidden() throws Exception {
+        when(userService.authenticateAndGetUser("demo@example.com", "secret"))
+                .thenThrow(new IllegalStateException("User not verified"));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users/me");
+        request.addHeader("Authorization", basic("demo@example.com", "secret"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(HttpServletResponse.SC_FORBIDDEN, response.getStatus());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    public void unexpectedAuthenticationFailureReturnsServiceUnavailable() throws Exception {
+        when(userService.authenticateAndGetUser("demo@example.com", "secret"))
+                .thenThrow(new RuntimeException("database unavailable"));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users/me");
+        request.addHeader("Authorization", basic("demo@example.com", "secret"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(HttpServletResponse.SC_SERVICE_UNAVAILABLE, response.getStatus());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     private static String basic(String username, String password) {
