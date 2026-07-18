@@ -124,7 +124,6 @@ public class EventPhotoRestController {
     }
 
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
     public Response deletePhoto(@PathParam("clubId") UUID clubId,
                                 @PathParam("eventId") UUID eventId,
                                 @Context SecurityContext securityContext) {
@@ -137,10 +136,7 @@ public class EventPhotoRestController {
         eventService.getForClub(clubId, eventId);
         eventService.deleteEventPhoto(clubId, eventId);
 
-        Event updatedEvent = eventService.getForClub(clubId, eventId);
-        EventDto dto = eventDtoAssembler.toDto(uriInfo, clubId, updatedEvent);
-
-        return Response.ok(dto).build();
+        return Response.noContent().build();
     }
 
     private void validateImageContentType(String contentType) {

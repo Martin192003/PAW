@@ -4,7 +4,6 @@ import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
-import ar.edu.itba.paw.model.dto.EventDto;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
@@ -24,6 +23,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -74,7 +74,7 @@ public class EventPhotoRestControllerTest {
     }
 
     @Test
-    public void testDeletePhoto_Success_ReturnsUpdatedEvent() {
+    public void testDeletePhoto_Success_ReturnsNoContent() {
         User admin = user(UUID.randomUUID());
         when(authenticatedUserResolver.resolve(any())).thenReturn(admin);
         Event withoutPhoto = event(EVENT_ID, null);
@@ -82,9 +82,8 @@ public class EventPhotoRestControllerTest {
 
         Response response = controller.deletePhoto(CLUB_ID, EVENT_ID, mock(SecurityContext.class));
 
-        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        assertEquals(true, response.getEntity() instanceof EventDto);
-        assertEquals(EVENT_ID, ((EventDto) response.getEntity()).getId());
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
+        assertNull(response.getEntity());
     }
 
     @Test

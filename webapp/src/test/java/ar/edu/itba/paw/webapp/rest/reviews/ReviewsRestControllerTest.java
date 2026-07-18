@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.ReviewDto;
+import ar.edu.itba.paw.model.exceptions.ReviewNotFounException;
 import ar.edu.itba.paw.service.ReviewService;
 import ar.edu.itba.paw.service.UserService;
 import org.junit.Before;
@@ -23,6 +24,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -115,6 +117,23 @@ public class ReviewsRestControllerTest {
     }
 
     @Test
+    public void testCreate_ServiceValidationError_ReturnsBadRequest() throws Exception {
+        User user = user(UUID.randomUUID());
+        when(userService.findByEmail(LOGIN)).thenReturn(user);
+        doThrow(new IllegalArgumentException("Rating must be between 1 and 5"))
+                .when(reviewService)
+                .createReview(user.getId(), CLUB_ID, 6, "rating invalido", null);
+
+        ReviewDto body = new ReviewDto();
+        body.setRating(6);
+        body.setDescription("rating invalido");
+
+        Response response = controller.create(CLUB_ID.toString(), body, principalFor(LOGIN));
+
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
+    @Test
     public void testGetById_InvalidReviewId_ReturnsBadRequest() {
         Response response = controller.getById(CLUB_ID.toString(), "not-a-uuid");
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
@@ -160,6 +179,26 @@ public class ReviewsRestControllerTest {
         Response response = controller.delete(CLUB_ID.toString(), REVIEW_ID.toString(), principalFor(LOGIN));
 
         assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testUpdate_ServiceNotFound_ReturnsNotFound() throws Exception {
+        User caller = user(UUID.randomUUID());
+        when(userService.findByEmail(LOGIN)).thenReturn(caller);
+        Review owned = review(REVIEW_ID);
+        owned.setUser(caller);
+        when(reviewService.findById(REVIEW_ID)).thenReturn(Optional.of(owned));
+        doThrow(new ReviewNotFounException("No se encontro la review"))
+                .when(reviewService)
+                .updateReview(REVIEW_ID, 4, "Actualizada", null);
+
+        ReviewDto body = new ReviewDto();
+        body.setRating(4);
+        body.setDescription("Actualizada");
+
+        Response response = controller.update(CLUB_ID.toString(), REVIEW_ID.toString(), body, principalFor(LOGIN));
+
+        assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     private static Review review(UUID id) {

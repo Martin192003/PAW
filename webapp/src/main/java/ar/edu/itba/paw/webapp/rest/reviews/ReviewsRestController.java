@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.dto.ReviewDto;
 import ar.edu.itba.paw.service.ReviewService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
+import ar.edu.itba.paw.model.exceptions.ReviewNotFounException;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -120,7 +121,9 @@ public class ReviewsRestController {
                     .build();
         } catch (DuplicateEntityException e) {
             return error(Response.Status.CONFLICT, "Review already exists for this user and club");
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return domainArgumentError(e);
+        } catch (IOException e) {
             return serverError("Internal server error");
         }
     }
@@ -167,7 +170,11 @@ public class ReviewsRestController {
                     .build();
         } catch (DuplicateEntityException e) {
             return error(Response.Status.CONFLICT, "Review already exists for this user and club");
-        } catch (Exception e) {
+        } catch (BadRequestException e) {
+            return badRequest(messageOrDefault(e, "Solicitud invalida"));
+        } catch (IllegalArgumentException e) {
+            return domainArgumentError(e);
+        } catch (IOException | ServletException e) {
             return serverError("Internal server error");
         }
     }
@@ -202,7 +209,11 @@ public class ReviewsRestController {
                     null
             );
             return Response.ok(ReviewMapper.toDto(updated, uriInfo, user.getId())).build();
-        } catch (Exception e) {
+        } catch (ReviewNotFounException e) {
+            return notFound(messageOrDefault(e, "Review no encontrado"));
+        } catch (IllegalArgumentException e) {
+            return domainArgumentError(e);
+        } catch (IOException e) {
             return serverError("Internal server error");
         }
     }
@@ -238,7 +249,13 @@ public class ReviewsRestController {
                     optionalPhoto()
             );
             return Response.ok(ReviewMapper.toDto(updated, uriInfo, user.getId())).build();
-        } catch (Exception e) {
+        } catch (BadRequestException e) {
+            return badRequest(messageOrDefault(e, "Solicitud invalida"));
+        } catch (ReviewNotFounException e) {
+            return notFound(messageOrDefault(e, "Review no encontrado"));
+        } catch (IllegalArgumentException e) {
+            return domainArgumentError(e);
+        } catch (IOException | ServletException e) {
             return serverError("Internal server error");
         }
     }
@@ -263,8 +280,10 @@ public class ReviewsRestController {
         try {
             reviewService.deleteReview(reviewId);
             return Response.noContent().build();
-        } catch (Exception e) {
-            return serverError("Internal server error");
+        } catch (ReviewNotFounException e) {
+            return notFound(messageOrDefault(e, "Review no encontrado"));
+        } catch (IllegalArgumentException e) {
+            return domainArgumentError(e);
         }
     }
 
@@ -305,11 +324,23 @@ public class ReviewsRestController {
         return error(Response.Status.INTERNAL_SERVER_ERROR, msg);
     }
 
+    private static Response domainArgumentError(final IllegalArgumentException e) {
+        String message = messageOrDefault(e, "Solicitud invalida");
+        if (message.toLowerCase().contains("not found")) {
+            return notFound(message);
+        }
+        return badRequest(message);
+    }
+
     private static Response error(final Response.Status status, final String msg) {
         return Response.status(status)
                 .type(MediaType.APPLICATION_JSON)
                 .entity(message(msg))
                 .build();
+    }
+
+    private static String messageOrDefault(Throwable e, String fallback) {
+        return e.getMessage() == null || e.getMessage().isBlank() ? fallback : e.getMessage();
     }
 
     private static String message(String msg) {

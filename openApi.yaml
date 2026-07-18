@@ -67,6 +67,91 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get authenticated user
+      description: >
+        When called with Authorization Basic credentials, the response includes
+        fresh JWT headers. Subsequent requests should use Authorization Bearer.
+      security:
+        - bearerAuth: []
+        - basicAuth: []
+      responses:
+        '200':
+          description: Authenticated user's private representation.
+          headers:
+            Paw-Auth-Token:
+              schema:
+                type: string
+              description: Present when the request used valid Basic credentials.
+            Paw-Token-Type:
+              schema:
+                type: string
+              description: Present when Paw-Auth-Token is present.
+            Paw-Token-Expires-In:
+              schema:
+                type: integer
+                format: int64
+              description: Token lifetime in seconds.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/verification:
+    put:
+      tags: [Users]
+      summary: Verify user email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationRequestDto'
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /users/credentials/password:
+    put:
+      tags: [Users]
+      summary: Reset password using a mail token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetDto'
+      responses:
+        '200':
+          description: Password reset. A fresh bearer token is returned in body and headers.
+          headers:
+            Paw-Auth-Token:
+              schema:
+                type: string
+            Paw-Token-Type:
+              schema:
+                type: string
+            Paw-Token-Expires-In:
+              schema:
+                type: integer
+                format: int64
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUpdateResponseDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /users/{userId}:
     parameters:
       - $ref: '#/components/parameters/UserId'
@@ -151,39 +236,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LinkCollection'
-
-  /auth/tokens:
-    post:
-      tags: [Auth]
-      summary: Create authentication token
-      description: Supports password, email_verification and password_reset grants.
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthTokenRequestDto'
-      responses:
-        '200':
-          description: Bearer token created. The token is also exposed in Paw-Auth-Token.
-          headers:
-            Paw-Auth-Token:
-              schema:
-                type: string
-            Paw-Token-Type:
-              schema:
-                type: string
-            Paw-Token-Expires-In:
-              schema:
-                type: integer
-                format: int64
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthTokenDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /auth/challenges:
     post:
@@ -645,12 +697,8 @@ paths:
       tags: [Photos]
       summary: Delete event photo
       responses:
-        '200':
-          description: Event after photo deletion
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EventDto'
+        '204':
+          description: Event photo deleted
 
   /clubs/{clubId}/menu:
     parameters:
@@ -1154,6 +1202,9 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    basicAuth:
+      type: http
+      scheme: basic
 
   parameters:
     UserId:
@@ -1375,63 +1426,6 @@ components:
           format: int64
           description: Token lifetime in seconds.
 
-    AuthTokenDto:
-      type: object
-      properties:
-        accessToken:
-          type: string
-          description: Bearer token for subsequent requests.
-        tokenType:
-          type: string
-          example: Bearer
-        expiresIn:
-          type: integer
-          format: int64
-          description: Token lifetime in seconds.
-        user:
-          $ref: '#/components/schemas/AuthTokenUserDto'
-
-    AuthTokenUserDto:
-      type: object
-      properties:
-        href:
-          type: string
-          format: uri
-          description: Link to the authenticated user resource.
-        userId:
-          type: string
-          format: uuid
-
-    AuthTokenRequestDto:
-      type: object
-      required: [grantType]
-      properties:
-        grantType:
-          type: string
-          enum: [password, email_verification, password_reset]
-        email:
-          type: string
-          format: email
-          description: Accepted for password grant.
-        usernameOrEmail:
-          type: string
-          description: Accepted for password grant.
-        password:
-          type: string
-          writeOnly: true
-        token:
-          type: string
-          description: Verification or password reset token.
-        code:
-          type: string
-          description: Verification code.
-        newPassword:
-          type: string
-          writeOnly: true
-        confirmationPassword:
-          type: string
-          writeOnly: true
-
     AuthChallengeRequestDto:
       type: object
       required: [challengeType]
@@ -1447,9 +1441,22 @@ components:
           format: email
           description: Required for password_reset.
 
+    VerificationRequestDto:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Verification token received by mail.
+        code:
+          type: string
+          description: Verification code received by mail.
+
     PasswordResetDto:
       type: object
       properties:
+        token:
+          type: string
+          description: Required for unauthenticated password reset.
         newPassword:
           type: string
         confirmationPassword:

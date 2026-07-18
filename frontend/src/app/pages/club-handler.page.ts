@@ -1321,9 +1321,9 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     }
 
     this.clubService.deleteEventPhoto(this.clubId, event.eventId, event).subscribe({
-      next: (updatedEvent) => {
+      next: () => {
         this.failedEventPhotoIds.add(event.eventId);
-        this.upsertEventInList(updatedEvent);
+        this.upsertEventInList({ ...event, photoId: undefined });
         this.loadEvents();
         this.showActionSuccess(this.i18n.instant('clubHandler.messages.eventPhotoDeleted'));
         this.actionErrorMessage = '';

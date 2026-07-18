@@ -592,7 +592,7 @@ export class ClubService {
     );
   }
 
-  deleteEventPhoto(clubId: string, eventId: string, event?: Event): Observable<Event> {
+  deleteEventPhoto(clubId: string, eventId: string, event?: Event): Observable<void> {
     let url = '';
     try {
       url = this.resolveClubLink(
@@ -605,9 +605,7 @@ export class ClubService {
       return this.missingLinkError(err);
     }
 
-    return this.http.delete<Event & { id?: string }>(url).pipe(
-      map(updated => this.normalizeEvent(updated))
-    );
+    return this.http.delete<void>(url);
   }
 
   private normalizePhoto(photo: ClubPhoto, clubId: string): ClubPhoto {

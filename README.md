@@ -119,25 +119,29 @@ http://localhost:8080/webapp/api
 
 ## Autenticacion y usuarios
 
-El login REST usa:
+El login REST no usa un endpoint dedicado. Las credenciales se envian como
+metadata en el header `Authorization: Basic ...` contra un recurso protegido,
+por ejemplo el perfil del usuario autenticado:
 
 ```http
-POST /api/auth/tokens
-Content-Type: application/json
-
-{
-  "email": "usuario@example.com",
-  "password": "password"
-}
+GET /api/users/me
+Authorization: Basic base64(usuario@example.com:password)
 ```
 
-La respuesta devuelve un token Bearer. Los endpoints protegidos deben usar:
+Si las credenciales son validas, la respuesta devuelve el recurso solicitado y
+un token Bearer en headers:
+
+```http
+Paw-Auth-Token: <token>
+Paw-Token-Type: Bearer
+Paw-Token-Expires-In: <segundos>
+```
+
+Los endpoints protegidos subsiguientes deben usar:
 
 ```http
 Authorization: Bearer <token>
 ```
-
-Basic Auth esta limitado al endpoint de creacion de token y no se acepta como estrategia global para el resto de `/api`.
 
 No hay usuarios demo versionados en seeds. Para crear un usuario normal, usar `POST /api/users`. Para pruebas de rol admin, promover un usuario existente en la base:
 
@@ -149,8 +153,10 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 
 ## Endpoints principales
 
-- `POST /api/auth/tokens`: crea token Bearer con grants `password`, `email_verification` o `password_reset`.
+- `GET /api/users/me`: devuelve el usuario autenticado; con `Authorization: Basic ...` tambien emite headers JWT frescos.
 - `POST /api/auth/challenges`: solicita desafios de autenticacion como reenvio de verificacion o reset de password.
+- `PUT /api/users/verification`: verifica una cuenta con el token/codigo recibido por mail.
+- `PUT /api/users/credentials/password`: resetea password con token de mail y devuelve una sesion nueva.
 - `GET /api/users/{userId}`: usuario publico, o privado si es el propio usuario.
 - `PUT /api/users/{userId}/credentials/password`: cambia password del usuario autenticado.
 - `GET /api/clubs`: busqueda/listado de clubes.

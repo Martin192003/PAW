@@ -38,7 +38,7 @@ describe('ClubService event photo links', () => {
     httpMock.verify();
   });
 
-  // Bug real de esta sesion: uploadEventPhoto/deleteEventPhoto no normalizaban
+  // Bug real de esta sesion: uploadEventPhoto no normalizaba
   // el campo "links" (array HATEOAS [{rel,href}]) a un Record<string,string>
   // como si lo hacen createEvent/updateEvent. Como consecuencia,
   // getEventPhotoUrl() (que lee event.links?.['photo']) siempre daba
@@ -69,26 +69,18 @@ describe('ClubService event photo links', () => {
     expect((result?.links as unknown as Record<string, string>)?.['photo']).toBe(`/api/clubs/${clubId}/events/${eventId}/photo`);
   });
 
-  it('normalizes the links array returned by deleteEventPhoto into a Record', () => {
-    let result: Event | undefined;
-    service.deleteEventPhoto(clubId, eventId, eventWithPhotoLink).subscribe(event => {
-      result = event;
+  it('deletes event photos without expecting a response body', () => {
+    let completed = false;
+    service.deleteEventPhoto(clubId, eventId, eventWithPhotoLink).subscribe({
+      complete: () => {
+        completed = true;
+      },
     });
 
     const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith(`/clubs/${clubId}/events/${eventId}/photo`));
-    req.flush({
-      eventId,
-      eventName: 'Fiesta',
-      description: 'desc',
-      date: '2026-08-01',
-      links: [
-        { rel: 'self', href: `/api/clubs/${clubId}/events/${eventId}` },
-      ],
-    });
+    req.flush(null, { status: 204, statusText: 'No Content' });
 
-    expect(result).toBeTruthy();
-    expect(Array.isArray(result?.links)).toBe(false);
-    expect((result?.links as unknown as Record<string, string>)?.['self']).toBe(`/api/clubs/${clubId}/events/${eventId}`);
+    expect(completed).toBe(true);
   });
 
   it('falls back to a constructed URL when no event links are given', () => {
