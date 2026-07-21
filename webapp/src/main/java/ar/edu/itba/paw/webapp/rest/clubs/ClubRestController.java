@@ -116,11 +116,12 @@ public class ClubRestController {
                 .map(club -> toDtoWithLinks(club, false))
                 .toList();
 
+        // Solo metadata estandar de coleccion: total (X-Total-Count) y navegacion
+        // (Link). El modo disponibilidad y la fecha seleccionada los conoce el
+        // cliente (los mando el mismo en el filtro/sort), asi que no se exponen
+        // como headers de negocio ad-hoc.
         Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<ClubDto>>(body) {})
                 .header("X-Total-Count", totalClubs)
-                .header("X-Available-Today", availabilityMode)
-                .header("X-Invalid-Day", invalidDay)
-                .header("X-Selected-Availability-Date", selectedDay != null ? selectedDay.toString() : "")
                 .header("Cache-Control", "no-cache");
         addPaginationLinks(responseBuilder, page, size, totalPages, DEFAULT_PAGE);
         return responseBuilder.build();

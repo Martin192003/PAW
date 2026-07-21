@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ClubService } from './club.service';
 import { Event } from '../models/event.model';
 import { Club } from '../models/club.model';
-import { AvailabilityPagedResponse } from '../models/availability-paged-response.model';
+import { PagedResponse } from '../models/paged-response.model';
 
 describe('ClubService event photo links', () => {
   let service: ClubService;
@@ -177,14 +177,14 @@ describe('ClubService getClubs', () => {
     httpMock.verify();
   });
 
-  it('keeps backward compatibility with a link-only collection and reads total/availability from headers', () => {
-    let result: AvailabilityPagedResponse<Club> | undefined;
+  it('keeps backward compatibility with a link-only collection and reads total from headers', () => {
+    let result: PagedResponse<Club> | undefined;
     service.getClubs(1, 10).subscribe(page => { result = page; });
 
     const listReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/clubs'));
     listReq.flush(
       [{ rel: 'item', href: '/api/clubs/club-1' }, { rel: 'item', href: '/api/clubs/club-2' }],
-      { headers: { 'X-Total-Count': '2', 'X-Available-Today': 'false' } }
+      { headers: { 'X-Total-Count': '2' } }
     );
 
     const club1Req = httpMock.expectOne(request => request.url.endsWith('/clubs/club-1'));
@@ -197,7 +197,7 @@ describe('ClubService getClubs', () => {
   });
 
   it('falls back to an embedded array without extra requests for a legacy (non-link) response', () => {
-    let result: AvailabilityPagedResponse<Club> | undefined;
+    let result: PagedResponse<Club> | undefined;
     service.getClubs(1, 10).subscribe(page => { result = page; });
 
     const listReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/clubs'));

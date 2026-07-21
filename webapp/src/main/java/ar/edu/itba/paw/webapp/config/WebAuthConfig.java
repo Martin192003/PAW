@@ -138,9 +138,6 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                 "Location",
                 "Link",
                 "X-Total-Count",
-                "X-Available-Today",
-                "X-Invalid-Day",
-                "X-Selected-Availability-Date",
                 "Paw-Auth-Token",
                 "Paw-Token-Type",
                 "Paw-Token-Expires-In"

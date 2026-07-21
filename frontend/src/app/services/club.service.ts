@@ -2,7 +2,6 @@ import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/comm
 import { Injectable } from '@angular/core';
 import { Observable, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { AvailabilityPagedResponse } from '../models/availability-paged-response.model';
 import { ClubLimits } from '../models/club-limits.model';
 import { ClubPhoto } from '../models/club-photo.model';
 import { ClubTable } from '../models/club-table.model';
@@ -148,7 +147,7 @@ export class ClubService {
     page: number,
     size: number,
     filters: Partial<{ name: string; zone: string; genre: string; price: string; isBar: string; sort: string }> = this.emptyFilter
-  ): Observable<AvailabilityPagedResponse<Club>> {
+  ): Observable<PagedResponse<Club>> {
     const normalized = { ...this.emptyFilter, ...filters };
 
     // La UI trabaja con paginas 1-based; la API es 0-based.
@@ -163,7 +162,7 @@ export class ClubService {
     if (normalized.isBar) params = params.set('isBar', normalized.isBar);
     if (normalized.sort) params = params.set('sort', normalized.sort);
 
-    return this.http.get<Club[] | AvailabilityPagedResponse<Club>>(`${this.apiUrl}/clubs`, {
+    return this.http.get<Club[] | PagedResponse<Club>>(`${this.apiUrl}/clubs`, {
       params,
       observe: 'response'
     }).pipe(
@@ -623,7 +622,7 @@ export class ClubService {
     response: HttpResponse<Club[] | PagedResponse<Club>>,
     page: number,
     size: number
-  ): Observable<AvailabilityPagedResponse<Club>> {
+  ): Observable<PagedResponse<Club>> {
     const body = response.body;
     const itemLinks = itemLinksFromCollection(body);
     const total = totalFromHeader(response.headers.get('X-Total-Count'), itemLinks?.length ?? (body as PagedResponse<Club>)?.totalElements ?? 0);
@@ -632,9 +631,6 @@ export class ClubService {
       totalPages: Math.ceil(total / size),
       page,
       size,
-      availableToday: response.headers.get('X-Available-Today') === 'true',
-      invalidDay: response.headers.get('X-Invalid-Day') === 'true',
-      selectedAvailabilityDate: response.headers.get('X-Selected-Availability-Date') || null,
     };
 
     if (itemLinks) {

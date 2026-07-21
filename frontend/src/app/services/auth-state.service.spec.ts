@@ -50,4 +50,36 @@ describe('AuthStateService', () => {
     expect(localStorage.getItem('auth_token')).toBeNull();
     expect(states).toEqual([false, true, false]);
   });
+
+  it('updateUser replaces the stored user without touching the token', () => {
+    const service = TestBed.inject(AuthStateService);
+    service.setSession('token-123', user, true);
+
+    service.updateUser({ userId: 'u2', username: 'renamed' } as User);
+
+    expect(service.getUser()?.userId).toBe('u2');
+    expect(service.getToken()).toBe('token-123');
+    expect(JSON.parse(localStorage.getItem('auth_user')!).username).toBe('renamed');
+  });
+
+  it('updateToken replaces and normalizes the stored token', () => {
+    const service = TestBed.inject(AuthStateService);
+    service.setSession('token-123', user, true);
+
+    service.updateToken('Bearer token-999');
+
+    expect(service.getToken()).toBe('token-999');
+    expect(localStorage.getItem('auth_token')).toBe('token-999');
+  });
+
+  it('restores and normalizes a quoted session persisted in storage', () => {
+    localStorage.setItem('auth_token', '"token-xyz"');
+    localStorage.setItem('auth_user', JSON.stringify(user));
+
+    const service = TestBed.inject(AuthStateService);
+
+    expect(service.getToken()).toBe('token-xyz');
+    expect(service.getUser()?.userId).toBe('u1');
+    expect(service.isLoggedIn()).toBe(true);
+  });
 });
