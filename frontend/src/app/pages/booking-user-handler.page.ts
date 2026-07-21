@@ -89,10 +89,9 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
         this.booking = booking;
         this.applyInlineDetails(booking);
         this.applyReceiptState(booking);
-        // Load receipt image automatically if it exists
-        if (booking.hasReceipt) {
-          this.loadReceipt();
-        }
+        // El comprobante NO se descarga en la carga inicial: es privado y solo
+        // se pide bajo demanda cuando el usuario toca "ver" (openReceipt()). Asi
+        // se evita consumo de red y object URLs innecesarias en cada carga.
         this.loading = false;
         this.cdr.detectChanges();
       },
