@@ -161,7 +161,7 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 
 - Login: `Authorization: Basic ...` contra cualquier recurso protegido emite headers JWT frescos. No hay `/users/me`: el cliente resuelve `/api/users/{userId}` a partir del claim `sub` del JWT.
 - `POST /api/auth/challenges`: solicita desafios de autenticacion como reenvio de verificacion o reset de password.
-- `PUT /api/users/{userId}/verification`: verifica la cuenta (transicion de estado del usuario) con el token recibido por mail.
+- `PUT /api/users/{userId}/verification`: verifica la cuenta con el token recibido por mail y devuelve una sesion nueva (usuario, JWT y headers de autenticacion).
 - `PUT /api/users/credentials/password`: resetea password con token de mail y devuelve una sesion nueva.
 - `GET /api/users/{userId}`: usuario publico, o privado si es el propio usuario.
 - `PUT /api/users/{userId}/credentials/password`: cambia password del usuario autenticado.

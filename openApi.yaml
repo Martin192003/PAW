@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: PAW TPE API
-  version: 2026.06.01
+  version: 2026.07.21
   description: >
     Contrato REST de la API actual. Las colecciones principales devuelven
     links a recursos individuales y exponen la paginacion por headers HTTP
@@ -11,6 +11,7 @@ servers:
   - url: http://localhost:8080/webapp/api
 security:
   - bearerAuth: []
+  - basicAuth: []
 
 tags:
   - name: Auth
@@ -1103,14 +1104,14 @@ paths:
   /bookings:
     get:
       tags: [Bookings]
-      summary: List bookings managed by the authenticated user
+      summary: List bookings owned or managed by the authenticated user
       parameters:
         - name: managed
           in: query
           schema:
             type: boolean
-            default: true
-          description: true returns bookings managed by the authenticated user.
+            default: false
+          description: false returns bookings owned by the authenticated user; true returns bookings managed by that user.
         - $ref: '#/components/parameters/ClubIdQuery'
         - $ref: '#/components/parameters/BookingIdQuery'
         - $ref: '#/components/parameters/StatusQuery'
@@ -1121,7 +1122,7 @@ paths:
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Links to private bookings managed by the authenticated user.
+          description: Links to private bookings owned or managed by the authenticated user, according to the managed parameter.
           headers:
             Cache-Control:
               schema:
