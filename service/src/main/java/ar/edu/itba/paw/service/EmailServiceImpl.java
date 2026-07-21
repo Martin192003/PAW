@@ -191,7 +191,12 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendUserRegistrationConfirmation(String to, String username, String verificationToken) {
-        String verificationUrl = abs("/verify-mail?token=" + verificationToken);
+        // El link incluye el userId para que el frontend pueda confirmar la
+        // verificacion sobre el recurso canonico PUT /users/{userId}/verification
+        // (la verificacion es una transicion de estado del usuario, no un recurso
+        // suelto /users/verification).
+        String verificationUserId = userDao.findByEmail(to).map(u -> u.getId().toString()).orElse("");
+        String verificationUrl = abs("/verify-mail?userId=" + verificationUserId + "&token=" + verificationToken);
 
         Map<String, Object> model = Map.of(
                 "username", username,

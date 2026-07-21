@@ -74,27 +74,9 @@ public class UserRestController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @GET
-    @Path("/me")
-    public Response getCurrentUser(@Context SecurityContext securityContext) {
-        User authUser = authenticatedUserResolver.resolve(securityContext);
-        if (authUser == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(message("Unauthorized"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        return Response.ok(UserMapper.toDto(authUser, uriInfo))
-                .header("Cache-Control", "private, no-store")
-                .header("Pragma", "no-cache")
-                .header("Vary", "Authorization")
-                .build();
-    }
-
     @PUT
-    @Path("/verification")
-    public Response verifyUser(VerificationRequestDto body) {
+    @Path("/{userId}/verification")
+    public Response verifyUser(@PathParam("userId") String userId, VerificationRequestDto body) {
         String tokenOrCode = body == null || isBlank(body.getToken()) ? null : body.getToken();
         if (isBlank(tokenOrCode) && body != null && !isBlank(body.getCode())) {
             tokenOrCode = body.getCode();
@@ -110,6 +92,15 @@ public class UserRestController {
         String verificationToken = tokenOrCode.trim();
         User user = userService.findByVerificationToken(verificationToken);
         if (user == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(message("invalid_verification_token"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
+        // El token debe pertenecer al usuario del path: la verificacion es una
+        // transicion de estado sobre /users/{userId}, no un recurso global.
+        if (userId == null || !userId.equals(user.getId().toString())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("invalid_verification_token"))
                     .type(MediaType.APPLICATION_JSON)

@@ -55,7 +55,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/clubs/**/photos").hasAnyRole("USER", "ADMIN")
                 .antMatchers(HttpMethod.DELETE, "/api/clubs/**/photos/**").hasAnyRole("USER", "ADMIN")
                 .antMatchers(HttpMethod.POST, "/api/users").permitAll()
-                .antMatchers(HttpMethod.PUT, "/api/users/verification").permitAll()
+                .antMatchers(HttpMethod.PUT, "/api/users/*/verification").permitAll()
                 .antMatchers(HttpMethod.PUT, "/api/users/credentials/password").permitAll()
                 .antMatchers(HttpMethod.POST, "/api/auth/challenges").permitAll()
                 .anyRequest().authenticated().and()

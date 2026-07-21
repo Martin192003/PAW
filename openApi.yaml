@@ -67,45 +67,26 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
 
-  /users/me:
-    get:
-      tags: [Users]
-      summary: Get authenticated user
-      description: >
-        When called with Authorization Basic credentials, the response includes
-        fresh JWT headers. Subsequent requests should use Authorization Bearer.
-      security:
-        - bearerAuth: []
-        - basicAuth: []
-      responses:
-        '200':
-          description: Authenticated user's private representation.
-          headers:
-            Paw-Auth-Token:
-              schema:
-                type: string
-              description: Present when the request used valid Basic credentials.
-            Paw-Token-Type:
-              schema:
-                type: string
-              description: Present when Paw-Auth-Token is present.
-            Paw-Token-Expires-In:
-              schema:
-                type: integer
-                format: int64
-              description: Token lifetime in seconds.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserDto'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /users/verification:
+  /users/{userId}/verification:
     put:
       tags: [Users]
       summary: Verify user email
+      description: >
+        Confirms the account by transitioning the user's verified state. The
+        emailed link carries the userId and the verification token; the token
+        must belong to the user in the path. Authentication is metadata: sending
+        Basic credentials against any protected resource returns fresh JWT
+        headers (Paw-Auth-Token), so there is no /users/me nor a /login resource
+        (the client reads the userId from the JWT `sub` claim and then requests
+        the canonical /users/{userId}).
       security: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -122,6 +103,13 @@ paths:
     put:
       tags: [Users]
       summary: Reset password using a mail token
+      description: >
+        Deliberate authentication-layer exception, not a domain resource. The
+        reset is a pre-identity flow: the user only holds an opaque one-time
+        reset token (delivered as a code in the email body), so the caller cannot
+        name a canonical /users/{userId} URN. The token itself identifies the
+        user server-side. Kept out of the resource surface on purpose; see also
+        POST /auth/challenges.
       security: []
       requestBody:
         required: true
@@ -241,7 +229,13 @@ paths:
     post:
       tags: [Auth]
       summary: Create authentication challenge
-      description: Sends verification or password reset email depending on challengeType.
+      description: >
+        Deliberate authentication-layer exception, not a domain resource. These
+        are pre-identity triggers (resend verification email / request password
+        reset) where the caller only supplies a username or email, not a
+        canonical /users/{userId} URN, so the operation cannot be modelled as a
+        user sub-resource. Sends a verification or password-reset email depending
+        on challengeType. See also PUT /users/credentials/password.
       security: []
       requestBody:
         required: true

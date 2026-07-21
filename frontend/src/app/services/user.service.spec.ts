@@ -51,24 +51,33 @@ describe('UserService', () => {
     req.flush({});
   });
 
-  it('login trims usernameOrEmail, sends Basic credentials to /users/me, and stores the token header', () => {
+  it('login sends Basic credentials, mints the JWT and fetches the canonical /users/{id}', () => {
     let result: LoginResponse | undefined;
     service.login({ usernameOrEmail: '  demo@example.com  ', password: 'secret123' }).subscribe(res => {
       result = res;
     });
 
-    const userReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/users/me'));
-    expect(userReq.request.headers.get('Authorization')).toBe(`Basic ${btoa('demo@example.com:secret123')}`);
-    userReq.flush(fakeUser, { headers: { 'Paw-Auth-Token': 'jwt-token' } });
+    // JWT cuyo claim `sub` es el userId; el login lo decodifica para pedir /users/{id}.
+    const jwt = `header.${btoa(JSON.stringify({ sub: 'user-1' }))}.sig`;
 
-    expect(result).toEqual({ token: 'jwt-token', user: fakeUser });
+    // Paso 1: Basic contra un recurso protegido -> el backend emite el token.
+    const mintReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/bookings'));
+    expect(mintReq.request.headers.get('Authorization')).toBe(`Basic ${btoa('demo@example.com:secret123')}`);
+    mintReq.flush([], { headers: { 'Paw-Auth-Token': jwt } });
+
+    // Paso 2: con el token (Bearer) se pide el recurso canonico del usuario.
+    const userReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/users/user-1'));
+    expect(userReq.request.headers.get('Authorization')).toBe(`Bearer ${jwt}`);
+    userReq.flush(fakeUser);
+
+    expect(result).toEqual({ token: jwt, user: fakeUser });
   });
 
-  it('verifyByToken calls the user verification resource', () => {
+  it('verifyByToken calls the canonical /users/{id}/verification sub-resource', () => {
     let result: LoginResponse | ApiMessageResponse | undefined;
-    service.verifyByToken('verif-token').subscribe(res => { result = res; });
+    service.verifyByToken('user-1', 'verif-token').subscribe(res => { result = res; });
 
-    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/verification'));
+    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/user-1/verification'));
     expect(verificationReq.request.body).toEqual({ token: 'verif-token' });
     verificationReq.flush({ message: 'verified' });
 
@@ -77,9 +86,9 @@ describe('UserService', () => {
 
   it('verifyByToken passes through an ApiMessageResponse without resolving a user (already verified)', () => {
     let result: LoginResponse | ApiMessageResponse | undefined;
-    service.verifyByToken('verif-token').subscribe(res => { result = res; });
+    service.verifyByToken('user-1', 'verif-token').subscribe(res => { result = res; });
 
-    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/verification'));
+    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/user-1/verification'));
     verificationReq.flush({ message: 'already_verified' });
 
     // No debe haber ningun GET adicional a /users/* si la respuesta no trae token.

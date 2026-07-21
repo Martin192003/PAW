@@ -57,6 +57,7 @@ export class VerifyMailPage implements OnDestroy {
       const emailParam = params.get('email') ?? '';
       const usernameOrEmailParam = params.get('usernameOrEmail') ?? '';
       const token = params.get('token') ?? '';
+      const userId = params.get('userId') ?? '';
       const autoResend = params.get('autoResend') === 'true';
 
       this.email = emailParam || usernameOrEmailParam;
@@ -82,7 +83,7 @@ export class VerifyMailPage implements OnDestroy {
       }
 
       if (token) {
-        this.verifyFromToken(token);
+        this.verifyFromToken(userId, token);
       }
 
       if (autoResend && !this.autoResendTriggered && this.email) {
@@ -153,12 +154,12 @@ export class VerifyMailPage implements OnDestroy {
     return 'verifyMail.description';
   }
 
-  private verifyFromToken(token: string): void {
+  private verifyFromToken(userId: string, token: string): void {
     this.tokenChecking = true;
     this.tokenSuccessMessage = '';
     this.tokenErrorMessage = '';
 
-    this.userService.verifyByToken(token.trim()).subscribe({
+    this.userService.verifyByToken(userId.trim(), token.trim()).subscribe({
       next: (response) => {
         this.tokenChecking = false;
         this.handleVerificationSuccess(response);

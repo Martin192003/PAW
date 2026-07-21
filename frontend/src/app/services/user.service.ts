@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, timeout } from 'rxjs/operators';
+import { map, switchMap, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
   ApiMessageResponse,
@@ -63,32 +63,67 @@ export class UserService {
 
   login(payload: UserLoginRequest): Observable<LoginResponse> {
     const usernameOrEmail = payload.usernameOrEmail.trim();
-    const headers = new HttpHeaders({
+    const basicHeaders = new HttpHeaders({
       Authorization: this.basicAuthorization(usernameOrEmail, payload.password),
     });
 
-    return this.http.get<User>(`${this.apiUrl}/users/me`, {
-      headers,
+    // La autenticacion es metadata HTTP: al mandar Basic contra cualquier
+    // recurso protegido, el backend emite el JWT en el header Paw-Auth-Token.
+    // Ya no existe /users/me (`me` no es una URN): el userId viaja en el claim
+    // `sub` del JWT, asi que lo decodificamos y pedimos el recurso canonico
+    // /users/{userId}.
+    return this.http.get(`${this.apiUrl}/bookings`, {
+      headers: basicHeaders,
       observe: 'response',
+      params: { page: '0', size: '1' },
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
-      map((response) => {
+      switchMap((response) => {
         const token = response.headers.get('Paw-Auth-Token');
-        if (!token || !response.body) {
+        const userId = token ? this.userIdFromToken(token) : null;
+        if (!token || !userId) {
           throw new Error('missing_auth_response');
         }
-        return { token, user: response.body };
+        const bearerHeaders = new HttpHeaders({ Authorization: `Bearer ${token}` });
+        return this.http.get<User>(`${this.apiUrl}/users/${encodeURIComponent(userId)}`, {
+          headers: bearerHeaders,
+          context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+        }).pipe(
+          map((user) => ({ token, user }))
+        );
       })
     );
+  }
+
+  /**
+   * Decodifica el userId (claim `sub`) de un JWT sin validar la firma: solo se
+   * usa para saber a que recurso /users/{userId} pedir tras el login. La firma
+   * la valida el backend en cada request posterior.
+   */
+  private userIdFromToken(token: string): string | null {
+    const parts = token.trim().replace(/^Bearer\s+/i, '').split('.');
+    if (parts.length < 2) {
+      return null;
+    }
+    try {
+      let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (payload.length % 4 !== 0) {
+        payload += '=';
+      }
+      const claims = JSON.parse(atob(payload)) as { sub?: string };
+      return typeof claims.sub === 'string' && claims.sub.length > 0 ? claims.sub : null;
+    } catch {
+      return null;
+    }
   }
 
   /**
    * Verifica la cuenta desde el token recibido por mail. Este flujo ya no crea
    * sesion: los JWT se emiten al mandar Basic Auth contra un recurso protegido.
    */
-  verifyByToken(token: string): Observable<LoginResponse | ApiMessageResponse> {
+  verifyByToken(userId: string, token: string): Observable<LoginResponse | ApiMessageResponse> {
     return this.http
-      .put<ApiMessageResponse>(`${this.apiUrl}/users/verification`, {
+      .put<ApiMessageResponse>(`${this.apiUrl}/users/${encodeURIComponent(userId)}/verification`, {
         token: token.trim(),
       }, {
         context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
