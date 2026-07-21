@@ -123,13 +123,21 @@ export class UserService {
    */
   verifyByToken(userId: string, token: string): Observable<LoginResponse | ApiMessageResponse> {
     return this.http
-      .put<ApiMessageResponse>(`${this.apiUrl}/users/${encodeURIComponent(userId)}/verification`, {
+      .put<UserUpdateResponse | ApiMessageResponse>(`${this.apiUrl}/users/${encodeURIComponent(userId)}/verification`, {
         token: token.trim(),
       }, {
         context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
       })
       .pipe(
-        timeout(15000)
+        timeout(15000),
+        map((response) => {
+          const session = response as UserUpdateResponse;
+          if (session && session.accessToken && session.user) {
+            // La verificacion exitosa devuelve una sesion -> auto-login.
+            return { token: session.accessToken, user: session.user } as LoginResponse;
+          }
+          return response as ApiMessageResponse;
+        })
       );
   }
 

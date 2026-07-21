@@ -96,6 +96,17 @@ describe('UserService', () => {
     expect(result).toEqual({ message: 'already_verified' });
   });
 
+  it('verifyByToken maps a session response to a LoginResponse for auto-login', () => {
+    let result: LoginResponse | ApiMessageResponse | undefined;
+    service.verifyByToken('user-1', 'verif-token').subscribe(res => { result = res; });
+
+    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/user-1/verification'));
+    verificationReq.flush({ user: fakeUser, accessToken: 'jwt-token', tokenType: 'Bearer', expiresIn: 3600 });
+
+    // La verificacion exitosa deja al usuario logueado.
+    expect(result).toEqual({ token: 'jwt-token', user: fakeUser });
+  });
+
   it('resendVerification posts the correct challengeType', () => {
     service.resendVerification({ usernameOrEmail: 'demo@example.com' }).subscribe();
 

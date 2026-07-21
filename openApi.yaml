@@ -95,7 +95,22 @@ paths:
               $ref: '#/components/schemas/VerificationRequestDto'
       responses:
         '200':
-          $ref: '#/components/responses/Message'
+          description: Account verified. A fresh bearer token is returned in body and headers so the client is auto-logged-in.
+          headers:
+            Paw-Auth-Token:
+              schema:
+                type: string
+            Paw-Token-Type:
+              schema:
+                type: string
+            Paw-Token-Expires-In:
+              schema:
+                type: integer
+                format: int64
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUpdateResponseDto'
         '400':
           $ref: '#/components/responses/BadRequest'
 

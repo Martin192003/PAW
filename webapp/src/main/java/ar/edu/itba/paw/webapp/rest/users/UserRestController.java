@@ -114,10 +114,20 @@ public class UserRestController {
                     .build();
         }
 
-        return Response.ok(new ApiMessageDto("verified"))
-                .header("Cache-Control", "no-store")
-                .header("Pragma", "no-cache")
-                .build();
+        // Tras verificar, se emite una sesion para que el usuario quede logueado
+        // automaticamente al volver a la app (misma mecanica que el reset de
+        // password: se devuelve el usuario ya verificado + un JWT en el body y
+        // en los headers Paw-Auth-Token).
+        User verified = userService.findById(user.getId()).orElse(user);
+        String accessToken = ApiTokenHeaders.tokenFor(jwtUtil, verified);
+        long expiresIn = jwtUtil.getExpirationSeconds();
+        UserUpdateResponseDto response = new UserUpdateResponseDto(
+                UserMapper.toDto(verified, uriInfo),
+                accessToken,
+                "Bearer",
+                expiresIn
+        );
+        return ApiTokenHeaders.addTo(Response.ok(response), accessToken, expiresIn).build();
     }
 
     @PUT
