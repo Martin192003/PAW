@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,6 +34,22 @@ public class UserMapperTest {
         assertTrue(rels.contains("bookings"));
         assertTrue(rels.contains("reviews"));
         assertTrue(rels.contains("clubs"));
+    }
+
+    @Test
+    public void publicUserDtoHidesPrivateFields() {
+        UUID userId = UUID.randomUUID();
+        UriInfo uriInfo = mock(UriInfo.class);
+        when(uriInfo.getBaseUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/"));
+
+        UserDto dto = UserMapper.toPublicDto(user(userId), uriInfo);
+
+        // El profesor marco dos veces que el email (y datos privados) no deben
+        // ser parte de la representacion publica de un usuario.
+        assertNull(dto.getEmail());
+        assertNull(dto.getCellphone());
+        assertNull(dto.getRole());
+        assertNull(dto.isVerified());
     }
 
     private static User user(UUID id) {
