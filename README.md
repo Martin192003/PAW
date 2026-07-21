@@ -119,22 +119,28 @@ http://localhost:8080/webapp/api
 
 ## Autenticacion y usuarios
 
-El login REST no usa un endpoint dedicado. Las credenciales se envian como
-metadata en el header `Authorization: Basic ...` contra un recurso protegido,
-por ejemplo el perfil del usuario autenticado:
+El login REST no usa un endpoint dedicado y no existe `/users/me`. Las
+credenciales se envian como metadata en el header `Authorization: Basic ...`
+contra cualquier recurso protegido; si son validas, el backend emite un token
+Bearer en headers:
 
 ```http
-GET /api/users/me
+GET /api/bookings
 Authorization: Basic base64(usuario@example.com:password)
 ```
-
-Si las credenciales son validas, la respuesta devuelve el recurso solicitado y
-un token Bearer en headers:
 
 ```http
 Paw-Auth-Token: <token>
 Paw-Token-Type: Bearer
 Paw-Token-Expires-In: <segundos>
+```
+
+El cliente decodifica el `userId` del claim `sub` del JWT y luego pide el
+recurso canonico del usuario usando el Bearer:
+
+```http
+GET /api/users/{userId}
+Authorization: Bearer <token>
 ```
 
 Los endpoints protegidos subsiguientes deben usar:
@@ -153,9 +159,9 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 
 ## Endpoints principales
 
-- `GET /api/users/me`: devuelve el usuario autenticado; con `Authorization: Basic ...` tambien emite headers JWT frescos.
+- Login: `Authorization: Basic ...` contra cualquier recurso protegido emite headers JWT frescos. No hay `/users/me`: el cliente resuelve `/api/users/{userId}` a partir del claim `sub` del JWT.
 - `POST /api/auth/challenges`: solicita desafios de autenticacion como reenvio de verificacion o reset de password.
-- `PUT /api/users/verification`: verifica una cuenta con el token/codigo recibido por mail.
+- `PUT /api/users/{userId}/verification`: verifica la cuenta (transicion de estado del usuario) con el token recibido por mail.
 - `PUT /api/users/credentials/password`: resetea password con token de mail y devuelve una sesion nueva.
 - `GET /api/users/{userId}`: usuario publico, o privado si es el propio usuario.
 - `PUT /api/users/{userId}/credentials/password`: cambia password del usuario autenticado.
