@@ -7,6 +7,7 @@ import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.Zone;
 import ar.edu.itba.paw.model.dto.ClubDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.ClubLayoutService;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.PhotoService;
@@ -79,7 +80,7 @@ public class ClubRestControllerTest {
     }
 
     @Test
-    public void testListClubs_ReturnsEmbeddedCollectionWithPaginationHeaders() {
+    public void testListClubs_ReturnsItemLinksWithPaginationHeaders() {
         Club club1 = club(UUID.randomUUID());
         Club club2 = club(UUID.randomUUID());
         when(clubService.countSearch(null, null, null, null, null)).thenReturn(25);
@@ -95,10 +96,11 @@ public class ClubRestControllerTest {
         Object entity = response.getEntity();
         assertTrue(entity instanceof List);
         @SuppressWarnings("unchecked")
-        List<ClubDto> clubs = (List<ClubDto>) entity;
+        List<LinkDto> clubs = (List<LinkDto>) entity;
         assertEquals(2, clubs.size());
-        assertEquals(club1.getClubId(), clubs.get(0).getClubId());
-        assertTrue(clubs.get(0).getLinks().stream().anyMatch(link -> "self".equals(link.getRel())));
+        assertEquals("item", clubs.get(0).getRel());
+        assertEquals("GET", clubs.get(0).getMethod());
+        assertEquals("http://localhost/api/clubs/" + club1.getClubId(), clubs.get(0).getHref());
 
         String linkHeader = response.getHeaderString("Link");
         assertNotNull("con 25 resultados y size=10 debería haber más páginas", linkHeader);

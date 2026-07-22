@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Club;
 import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.ReviewDto;
 import ar.edu.itba.paw.model.exceptions.ReviewNotFounException;
 import ar.edu.itba.paw.service.ReviewService;
@@ -67,7 +68,7 @@ public class ReviewsRestControllerTest {
     }
 
     @Test
-    public void testListByClub_ReturnsEmbeddedCollectionWithTotalCount() {
+    public void testListByClub_ReturnsItemLinksWithTotalCount() {
         when(reviewService.listByClub(CLUB_ID, null, 20, 0)).thenReturn(List.of(review(REVIEW_ID)));
         when(reviewService.countByClub(CLUB_ID)).thenReturn(1);
 
@@ -76,9 +77,12 @@ public class ReviewsRestControllerTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("1", response.getHeaderString("X-Total-Count"));
         @SuppressWarnings("unchecked")
-        List<ReviewDto> reviews = (List<ReviewDto>) response.getEntity();
-        assertEquals(REVIEW_ID, reviews.get(0).getReviewId());
-        assertTrue(reviews.get(0).getLinks().stream().anyMatch(link -> "self".equals(link.getRel())));
+        List<LinkDto> reviews = (List<LinkDto>) response.getEntity();
+        assertEquals(1, reviews.size());
+        assertEquals("item", reviews.get(0).getRel());
+        assertEquals("GET", reviews.get(0).getMethod());
+        assertEquals("http://localhost/api/clubs/" + CLUB_ID + "/reviews/" + REVIEW_ID,
+                reviews.get(0).getHref());
     }
 
     @Test

@@ -3,9 +3,11 @@ package ar.edu.itba.paw.webapp.rest.events;
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.EventDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -42,6 +44,7 @@ public class EventRestController {
 
     @GET
     @Path("/{clubId}/events")
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response listByClub(@PathParam("clubId") UUID clubId,
                                @QueryParam("page") @DefaultValue("0") int page,
                                @QueryParam("size") @DefaultValue("20") int size) {
@@ -52,14 +55,13 @@ public class EventRestController {
         List<Event> events = eventService.listByClub(clubId, page, size);
         int total = eventService.countByClub(clubId);
 
-        String clubName = clubService.getClubById(clubId)
-                .map(club -> club.getClubName())
-                .orElse(null);
-        List<EventDto> body = events.stream()
-                .map(event -> eventDtoAssembler.toDto(uriInfo, clubId, event, clubName))
-                .toList();
+        List<LinkDto> body = CollectionLinks.items(events, event -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/events/{eventId}")
+                .resolveTemplate("clubId", clubId)
+                .resolveTemplate("eventId", event.getEventId())
+                .build());
 
-        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<EventDto>>(body) {})
+        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
                 .header("X-Total-Count", total)
                 .header("Cache-Control", "no-cache");
         addPaginationLinks(response, page, size, total);

@@ -3,10 +3,12 @@ package ar.edu.itba.paw.webapp.rest.products;
 import ar.edu.itba.paw.model.Product;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.ErrorDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.ProductDto;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.ProductService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -41,6 +43,7 @@ public class ProductsRestController {
     }
 
     @GET
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response listProducts(@PathParam("clubId") String clubId,
                                  @Context SecurityContext securityContext) {
         UUID clubUuid;
@@ -60,10 +63,12 @@ public class ProductsRestController {
         }
 
         boolean canManage = canManageClub(clubUuid, securityContext);
-        List<ProductDto> body = products.stream()
-                .map(product -> productDtoAssembler.toDto(uriInfo, clubUuid, product, canManage))
-                .toList();
-        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<ProductDto>>(body) {})
+        List<LinkDto> body = CollectionLinks.items(products, product -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/menu/{productId}")
+                .resolveTemplate("clubId", clubUuid)
+                .resolveTemplate("productId", product.getProductId())
+                .build());
+        Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
                 .header("X-Total-Count", body.size());
         if (canManage) {
             response.header("Cache-Control", "private, no-store")

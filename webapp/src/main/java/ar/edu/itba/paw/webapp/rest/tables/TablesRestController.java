@@ -2,6 +2,7 @@ package ar.edu.itba.paw.webapp.rest.tables;
 
 import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.dto.ErrorDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.TableDto;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
@@ -9,6 +10,7 @@ import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.TableService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -50,6 +52,7 @@ public class TablesRestController {
     }
 
     @GET
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response listTables(@PathParam("clubId") String clubId,
                                @QueryParam("date") String date,
                                @Context SecurityContext securityContext) {
@@ -79,11 +82,13 @@ public class TablesRestController {
             }
 
             boolean canManage = canManageClub(clubUuid, securityContext);
-            List<TableDto> body = tables.stream()
-                    .map(table -> tableDtoAssembler.toDto(uriInfo, clubUuid, table, canManage))
-                    .toList();
+            List<LinkDto> body = CollectionLinks.items(tables, table -> uriInfo.getBaseUriBuilder()
+                    .path("clubs/{clubId}/tables/{tableId}")
+                    .resolveTemplate("clubId", clubUuid)
+                    .resolveTemplate("tableId", table.getTableId())
+                    .build());
 
-            Response.ResponseBuilder response = Response.ok(new GenericEntity<List<TableDto>>(body) {})
+            Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
                     .header("X-Total-Count", body.size());
             applyCollectionCacheHeaders(response, canManage);
             return response.build();

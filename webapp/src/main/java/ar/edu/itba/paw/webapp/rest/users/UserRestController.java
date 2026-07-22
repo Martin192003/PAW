@@ -10,6 +10,7 @@ import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.auth.ApiTokenHeaders;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
@@ -24,7 +25,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import ar.edu.itba.paw.service.ReviewService;
 import ar.edu.itba.paw.webapp.rest.bookings.BookingDtoAssembler;
-import ar.edu.itba.paw.webapp.rest.reviews.ReviewMapper;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
@@ -428,6 +428,7 @@ public class UserRestController {
 
     @GET
     @Path("/{userId}/reviews")
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response getUserReviews(@PathParam("userId") String userIdStr,
                                    @QueryParam("page") @DefaultValue("0") int page,
                                    @QueryParam("size") @DefaultValue("20") int size,
@@ -460,15 +461,16 @@ public class UserRestController {
         int offset = page * size;
         int total = reviewService.countByUser(id);
         int correctedOffset = reviewService.calculateOffset(offset, size, total);
-        User currentUser = authenticatedUserResolver.resolve(securityContext);
-        UUID currentUserId = currentUser != null ? currentUser.getId() : null;
-        List<ReviewDto> body = total == 0
+         List<ar.edu.itba.paw.model.Review> reviews = total == 0
                 ? List.of()
-                : reviewService.listByUser(id, null, size, correctedOffset).stream()
-                .map(review -> ReviewMapper.toDto(review, uriInfo, currentUserId))
-                .toList();
+                : reviewService.listByUser(id, null, size, correctedOffset);
+        List<LinkDto> body = CollectionLinks.items(reviews, review -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}/reviews/{reviewId}")
+                .resolveTemplate("clubId", review.getClub().getClubId())
+                .resolveTemplate("reviewId", review.getReviewId())
+                .build());
 
-        GenericEntity<List<ReviewDto>> entity = new GenericEntity<>(body) {};
+        GenericEntity<List<LinkDto>> entity = new GenericEntity<>(body) {};
         Response.ResponseBuilder response = Response.ok(entity)
                 .header("X-Total-Count", total);
         addPaginationLinks(response, page, size, total);
@@ -477,6 +479,7 @@ public class UserRestController {
 
     @GET
     @Path("/{userId}/bookings")
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response getUserBookings(@PathParam("userId") String userIdStr,
                                     @QueryParam("clubId") UUID clubId,
                                     @QueryParam("bookingId") String bookingId,
@@ -518,11 +521,12 @@ public class UserRestController {
                 userId, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
         final int total = bookingService.countSearch(
                 userId, clubId, bookingId, status, bookingDate, hasReceipt);
-        final Map<UUID, String> clubNamesByBooking = clubService.mapClubNames(bookings);
-        final List<BookingDto> body = bookingDtoAssembler.toDtos(
-                uriInfo, bookings, false, true, clubNamesByBooking);
+        final List<LinkDto> body = CollectionLinks.items(bookings, booking -> uriInfo.getBaseUriBuilder()
+                .path("bookings/{bookingId}")
+                .resolveTemplate("bookingId", booking.getBookingId())
+                .build());
 
-        final Response.ResponseBuilder response = Response.ok(new GenericEntity<List<BookingDto>>(body) {})
+        final Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
                 .header("Cache-Control", "private, no-store")
                 .header("Pragma", "no-cache")
                 .header("X-Total-Count", total)

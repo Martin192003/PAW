@@ -221,14 +221,11 @@ export class ClubService {
 
     return this.http
       .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(url, {
-        context: this.optionalApiContext()
+        context: this.optionalApiContext(),
+        observe: 'response'
       })
       .pipe(
-        map(response => Array.isArray(response) ? response : (response?.photos ?? [])),
-        map(photos => photos
-          .map(photo => this.normalizePhoto(photo, id))
-          .filter(photo => !!photo.url)
-        )
+        switchMap(response => this.photosFromResponse(response, id))
       );
   }
 
@@ -242,14 +239,11 @@ export class ClubService {
 
     return this.http
       .get<ClubPhoto[] | { photos?: ClubPhoto[] }>(url, {
-        context: this.optionalApiContext()
+        context: this.optionalApiContext(),
+        observe: 'response'
       })
       .pipe(
-        map(response => Array.isArray(response) ? response : (response?.photos ?? [])),
-        map(photos => photos
-          .map(photo => this.normalizePhoto(photo, id))
-          .filter(photo => !!photo.url)
-        )
+        switchMap(response => this.photosFromResponse(response, id))
       );
   }
 
@@ -397,8 +391,8 @@ export class ClubService {
     }
 
     const params = new HttpParams().set('page', page).set('size', size);
-    return this.http.get<any>(url, { params }).pipe(
-      map(response => Array.isArray(response) ? response : (response?.content ?? []))
+    return this.http.get<Review[]>(url, { params, observe: 'response' }).pipe(
+      switchMap(response => this.collectionFromResponse(response, review => review))
     );
   }
 
@@ -411,7 +405,10 @@ export class ClubService {
     }
 
     const params = new HttpParams().set('page', page).set('size', size);
-    return this.http.get<any>(url, { params });
+    return this.http.get<Review[]>(url, { params, observe: 'response' }).pipe(
+      switchMap(response => this.collectionFromResponse(response, review => review)),
+      map(content => ({ content, page, size }))
+    );
   }
 
   getEvents(id: string, links?: unknown) {
@@ -574,6 +571,27 @@ export class ClubService {
       url: url ? this.toAbsoluteUrl(url, clubId) : '',
       links
     };
+  }
+
+  private photosFromResponse(
+    response: HttpResponse<ClubPhoto[] | { photos?: ClubPhoto[] }>,
+    clubId: string
+  ): Observable<ClubPhoto[]> {
+    const body = response.body;
+    const itemLinks = itemLinksFromCollection(body);
+    if (itemLinks) {
+      return of(itemLinks.map(link => {
+        const url = resolveApiUrl(link, this.apiUrl);
+        const resourcePath = url.split(/[?#]/, 1)[0];
+        const photoId = decodeURIComponent(resourcePath.split('/').filter(Boolean).pop() ?? '');
+        return this.normalizePhoto({ photoId, url, links: { self: url } }, clubId);
+      }));
+    }
+
+    const photos = Array.isArray(body) ? body : (body?.photos ?? []);
+    return of(photos
+      .map(photo => this.normalizePhoto(photo, clubId))
+      .filter(photo => !!photo.url));
   }
 
   private clubPageFromResponse(

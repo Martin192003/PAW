@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.BookingDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.BookingService;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.ReceiptService;
@@ -82,7 +83,7 @@ public class BookingsRestControllerTest {
     }
 
     @Test
-    public void testListBookings_UnmanagedUsesSearchForUser() {
+    public void testListBookings_UnmanagedReturnsItemLinks() {
         when(bookingService.searchPaginated(
                 eq(AUTH_USER_ID), any(), any(), any(), any(), any(), any(), anyInt(), anyInt()
         )).thenReturn(List.of(listBooking()));
@@ -99,11 +100,11 @@ public class BookingsRestControllerTest {
         Object entity = response.getEntity();
         assertTrue(entity instanceof List);
         @SuppressWarnings("unchecked")
-        List<BookingDto> body = (List<BookingDto>) entity;
+        List<LinkDto> body = (List<LinkDto>) entity;
         assertEquals(1, body.size());
-        assertEquals(BOOKING_ID, body.get(0).getId());
-        assertEquals("Club Test", body.get(0).getClubName());
-        assertEquals(Integer.valueOf(7), body.get(0).getTableNumber());
+        assertEquals("item", body.get(0).getRel());
+        assertEquals("GET", body.get(0).getMethod());
+        assertEquals("http://localhost/api/bookings/" + BOOKING_ID, body.get(0).getHref());
     }
 
     @Test

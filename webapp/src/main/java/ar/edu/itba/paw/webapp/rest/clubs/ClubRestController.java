@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.*;
 import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,7 @@ public class ClubRestController {
     }
 
     @GET
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response listClubs(@QueryParam("name") final String nameLike,
                               @QueryParam("ownerId") final String ownerId,
                               @QueryParam("zone") final Zone zone,
@@ -112,12 +114,12 @@ public class ClubRestController {
 
         final int totalPages = (int) Math.ceil((double) totalClubs / size);
 
-        List<ClubDto> body = clubs.stream()
-                .map(club -> toDtoWithLinks(club, false))
-                .toList();
+        List<LinkDto> body = CollectionLinks.items(clubs, club -> uriInfo.getBaseUriBuilder()
+                .path("clubs/{clubId}")
+                .resolveTemplate("clubId", club.getClubId())
+                .build());
 
-
-        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<ClubDto>>(body) {})
+        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
                 .header("X-Total-Count", totalClubs)
                 .header("Cache-Control", "no-cache");
         addPaginationLinks(responseBuilder, page, size, totalPages, DEFAULT_PAGE);
@@ -131,18 +133,21 @@ public class ClubRestController {
         UUID id = parseUuidOr400(ownerId);
         if (id == null) return badRequest("ownerId invalido");
 
-        final boolean includeSensitive = isAuthenticatedUser(id, securityContext);
         final int offset = page * size;
         final int totalClubs = clubService.countClubsByUser(id);
-        final List<ClubDto> body = clubService.getClubsByUserPaginated(id, size, offset).stream()
-                .map(club -> toDtoWithLinks(club, includeSensitive))
-                .toList();
+        final List<LinkDto> body = CollectionLinks.items(
+                clubService.getClubsByUserPaginated(id, size, offset),
+                club -> uriInfo.getBaseUriBuilder()
+                        .path("clubs/{clubId}")
+                        .resolveTemplate("clubId", club.getClubId())
+                        .build()
+        );
 
         final int totalPages = (int) Math.ceil((double) totalClubs / size);
 
-        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<ClubDto>>(body) {})
+        Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
                 .header("X-Total-Count", totalClubs);
-        applyClubCacheHeaders(responseBuilder, includeSensitive);
+        applyClubCacheHeaders(responseBuilder, isAuthenticatedUser(id, securityContext));
         addPaginationLinks(responseBuilder, page, size, totalPages, DEFAULT_PAGE);
         return responseBuilder.build();
     }
@@ -450,6 +455,7 @@ public class ClubRestController {
 
     @GET
     @Path("/{clubId}/photos")
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response getClubPhotos(@PathParam("clubId") String clubId) {
         UUID id = parseUuidOr400(clubId);
         if (id == null) return badRequest("clubId inválido");
@@ -458,20 +464,16 @@ public class ClubRestController {
             return notFound("Club no encontrado");
         }
 
-        List<Photo> rawPhotos = photoService.getClubPhotos(id, 50, 0);
-        List<PhotoDto> photos = new ArrayList<>();
-        if (rawPhotos == null || rawPhotos.isEmpty()) {
-            return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
-        }
-
-        for (Photo photo : rawPhotos) {
-            if (photo == null || photo.getPhotoId() == null) {
-                continue;
-            }
-            photos.add(photoDtoAssembler.toDto(uriInfo, photo));
-        }
-
-        return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
+        List<Photo> rawPhotos = Optional.ofNullable(photoService.getClubPhotos(id, 50, 0))
+                .orElseGet(List::of)
+                .stream()
+                .filter(photo -> photo != null && photo.getPhotoId() != null)
+                .toList();
+        List<LinkDto> photos = CollectionLinks.items(rawPhotos, photo -> uriInfo.getBaseUriBuilder()
+                .path("photos/{photoId}")
+                .resolveTemplate("photoId", photo.getPhotoId())
+                .build());
+        return Response.ok(new GenericEntity<List<LinkDto>>(photos) {}).build();
     }
 
     @POST
@@ -584,6 +586,7 @@ public class ClubRestController {
 
     @GET
     @Path("/{clubId}/review-photos")
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response getClubReviewPhotos(@PathParam("clubId") String clubId) {
         UUID id = parseUuidOr400(clubId);
         if (id == null) return badRequest("clubId inválido");
@@ -592,20 +595,16 @@ public class ClubRestController {
             return notFound("Club no encontrado");
         }
 
-        List<Photo> rawPhotos = photoService.getReviewPhotosByClub(id, 50, 0);
-        List<PhotoDto> photos = new ArrayList<>();
-        if (rawPhotos == null || rawPhotos.isEmpty()) {
-            return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
-        }
-
-        for (Photo photo : rawPhotos) {
-            if (photo == null || photo.getPhotoId() == null) {
-                continue;
-            }
-            photos.add(photoDtoAssembler.toDto(uriInfo, photo));
-        }
-
-        return Response.ok(new GenericEntity<List<PhotoDto>>(photos) {}).build();
+        List<Photo> rawPhotos = Optional.ofNullable(photoService.getReviewPhotosByClub(id, 50, 0))
+                .orElseGet(List::of)
+                .stream()
+                .filter(photo -> photo != null && photo.getPhotoId() != null)
+                .toList();
+        List<LinkDto> photos = CollectionLinks.items(rawPhotos, photo -> uriInfo.getBaseUriBuilder()
+                .path("photos/{photoId}")
+                .resolveTemplate("photoId", photo.getPhotoId())
+                .build());
+        return Response.ok(new GenericEntity<List<LinkDto>>(photos) {}).build();
     }
 
     @GET

@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.ClubTable;
 import ar.edu.itba.paw.model.Role;
 import ar.edu.itba.paw.model.TableState;
 import ar.edu.itba.paw.model.User;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.dto.TableDto;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.TableService;
@@ -65,7 +66,7 @@ public class TablesRestControllerTest {
     }
 
     @Test
-    public void testListTables_NoDate_ReturnsEmbeddedCollectionFromClub() {
+    public void testListTables_NoDate_ReturnsItemLinksFromClub() {
         when(tableService.findByClubId(CLUB_ID)).thenReturn(List.of(table(TABLE_ID)));
 
         Response response = controller.listTables(CLUB_ID.toString(), null, mock(SecurityContext.class));
@@ -73,9 +74,12 @@ public class TablesRestControllerTest {
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("1", response.getHeaderString("X-Total-Count"));
         @SuppressWarnings("unchecked")
-        List<TableDto> tables = (List<TableDto>) response.getEntity();
-        assertEquals(TABLE_ID, tables.get(0).getTableId());
-        assertTrue(tables.get(0).getLinks().stream().anyMatch(link -> "self".equals(link.getRel())));
+        List<LinkDto> tables = (List<LinkDto>) response.getEntity();
+        assertEquals(1, tables.size());
+        assertEquals("item", tables.get(0).getRel());
+        assertEquals("GET", tables.get(0).getMethod());
+        assertEquals("http://localhost/api/clubs/" + CLUB_ID + "/tables/" + TABLE_ID,
+                tables.get(0).getHref());
     }
 
     @Test

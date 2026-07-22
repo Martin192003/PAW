@@ -4,11 +4,13 @@ import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.BookingDto;
+import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.service.BookingService;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -59,6 +61,7 @@ public class BookingsRestController {
 
     @GET
     @Path("/bookings")
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response listBookings(@QueryParam("managed") @DefaultValue("false") boolean managed,
                                  @QueryParam("clubId") UUID clubId,
                                  @QueryParam("bookingId") String bookingId,
@@ -97,6 +100,7 @@ public class BookingsRestController {
 
     @GET
     @Path("/clubs/{clubId}/bookings")
+    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response listManagedClubBookings(@PathParam("clubId") UUID clubId,
                                             @QueryParam("bookingId") String bookingId,
                                             @QueryParam("status") Status status,
@@ -234,10 +238,11 @@ public class BookingsRestController {
                                                                int total,
                                                                boolean canManage,
                                                                boolean isOwner) {
-        final Map<UUID, String> clubNamesByBooking = clubService.mapClubNames(bookings);
-        final List<BookingDto> body = bookingDtoAssembler.toDtos(
-                uriInfo, bookings, canManage, isOwner, clubNamesByBooking);
-        return Response.ok(new GenericEntity<List<BookingDto>>(body) {})
+        final List<LinkDto> body = CollectionLinks.items(bookings, booking -> uriInfo.getBaseUriBuilder()
+                .path("bookings/{bookingId}")
+                .resolveTemplate("bookingId", booking.getBookingId())
+                .build());
+        return Response.ok(new GenericEntity<List<LinkDto>>(body) {})
                 .header("Cache-Control", "private, no-store")
                 .header("Pragma", "no-cache")
                 .header("X-Total-Count", total)
