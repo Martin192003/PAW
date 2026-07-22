@@ -1438,7 +1438,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.clubService.getClubPhotos(this.clubId, this.club?.links).subscribe({
       next: (photos) => {
         this.zone.run(() => {
-          this.galleryPhotos = (photos ?? []).filter((photo) => photo.photoType === 'CAROUSEL');
+          this.galleryPhotos = (photos ?? []).filter((photo) => !photo.photoType || photo.photoType === 'CAROUSEL');
           this.cdr.detectChanges();
         });
       },

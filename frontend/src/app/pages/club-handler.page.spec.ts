@@ -9,6 +9,7 @@ describe('ClubHandlerPage saveEvent', () => {
     updateEvent: ReturnType<typeof vi.fn>;
     uploadEventPhoto: ReturnType<typeof vi.fn>;
     getEvents: ReturnType<typeof vi.fn>;
+    getClubPhotos: ReturnType<typeof vi.fn>;
   };
   let reviewService: { listByClub: ReturnType<typeof vi.fn> };
   let component: ClubHandlerPage;
@@ -30,6 +31,7 @@ describe('ClubHandlerPage saveEvent', () => {
       updateEvent: vi.fn(),
       uploadEventPhoto: vi.fn(),
       getEvents: vi.fn().mockReturnValue(of([])),
+      getClubPhotos: vi.fn().mockReturnValue(of([])),
     };
     reviewService = { listByClub: vi.fn().mockReturnValue(of({ reviews: [], total: 0 })) };
 
@@ -96,5 +98,17 @@ describe('ClubHandlerPage saveEvent', () => {
 
     expect(clubService.createEvent).not.toHaveBeenCalled();
     expect(component.showEventError('date')).toBe(true);
+  });
+
+  it('shows gallery photos returned as link-only items', () => {
+    clubService.getClubPhotos.mockReturnValue(of([
+      { photoId: 'photo-1', url: '/api/photos/photo-1' },
+      { photoId: 'photo-2', url: '/api/photos/photo-2', photoType: 'CAROUSEL' },
+    ]));
+
+    (component as unknown as { loadGalleryPhotos: () => void }).loadGalleryPhotos();
+
+    expect(component.galleryPhotos).toHaveLength(2);
+    expect(component.galleryPhotos.map(photo => photo.photoId)).toEqual(['photo-1', 'photo-2']);
   });
 });
