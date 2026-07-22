@@ -127,6 +127,25 @@ public class PhotoRestControllerTest {
         verify(photoService).delete(PHOTO_ID);
     }
 
+    @Test
+    public void testDeletePhoto_LegacyPhotoWithoutTypeReturnsNoContent() {
+        Photo photo = carouselPhoto();
+        photo.setPhotoType(null);
+        User user = new User(
+                UUID.randomUUID(), "admin", "Name", "Surname", "admin@example.com",
+                "$2a$10$012345678901234567890uG0k34v3Ktb5sQ8kOLTNf5/4RswlD2oa",
+                "1122334455", Role.ADMIN, OffsetDateTime.now(), "es"
+        );
+        when(photoService.getWithId(PHOTO_ID)).thenReturn(Optional.of(photo));
+        when(authenticatedUserResolver.resolve(org.mockito.ArgumentMatchers.any())).thenReturn(user);
+        when(photoService.delete(PHOTO_ID)).thenReturn(true);
+
+        Response response = controller.deletePhoto(PHOTO_ID.toString(), mock(SecurityContext.class));
+
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
+        verify(photoService).delete(PHOTO_ID);
+    }
+
     private static Photo carouselPhoto() {
         Photo photo = new Photo();
         photo.setPhotoId(PHOTO_ID);

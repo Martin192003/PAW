@@ -258,6 +258,37 @@ public class UserServiceImplTest {
     }
 
     @Test
+    public void testAuthenticateLegacyPasswordUpgradesItImmediately() {
+        User user = makeUser(UUID.randomUUID());
+        user.setVerified(true);
+        user.setPasswordHash("legacy-password");
+        when(userDao.findByUserName("test")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("legacy-password", "legacy-password")).thenReturn(true);
+        when(passwordEncoder.upgradeEncoding("legacy-password")).thenReturn(true);
+        when(passwordEncoder.encode("legacy-password")).thenReturn("bcrypt-password");
+
+        User authenticated = userService.authenticateAndGetUser("test", "legacy-password");
+
+        assertSame(user, authenticated);
+        assertEquals("bcrypt-password", authenticated.getPassword());
+        verify(userDao).updatePasswordHash(user.getId(), "bcrypt-password");
+    }
+
+    @Test
+    public void testAuthenticateWrongLegacyPasswordDoesNotUpgradeIt() {
+        User user = makeUser(UUID.randomUUID());
+        user.setVerified(true);
+        user.setPasswordHash("legacy-password");
+        when(userDao.findByUserName("test")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong", "legacy-password")).thenReturn(false);
+
+        assertNull(userService.authenticateAndGetUser("test", "wrong"));
+
+        verify(passwordEncoder, never()).encode(any());
+        verify(userDao, never()).updatePasswordHash(any(), anyString());
+    }
+
+    @Test
     public void testUpdateFieldSuccess() {
         UUID id = UUID.randomUUID();
         User u = makeUser(id);

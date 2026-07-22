@@ -264,6 +264,17 @@ public class PhotoJpaDaoTest {
     }
 
     @Test
+    public void testFindCarouselByClubId_includesLegacyPhotoWithoutType() {
+        Photo legacy = persistPhoto(clubId, user.getId(), "legacy.jpg", new byte[]{7}, null);
+        em.flush();
+        em.clear();
+
+        List<Photo> carousel = photoDao.findCarouselByClubId(clubId);
+
+        assertTrue(carousel.stream().anyMatch(p -> legacy.getPhotoId().equals(p.getPhotoId())));
+    }
+
+    @Test
     public void testDeleteCoverByClubId() {
         persistPhoto(clubId, user.getId(), "coverToDelete.jpg", new byte[]{1}, PhotoType.COVER);
         em.flush();
@@ -324,6 +335,17 @@ public class PhotoJpaDaoTest {
         assertTrue(r.isEmpty());
     }
 
+    @Test
+    public void testFindCarouselWithoutEventByClubId_includesLegacyPhotoWithoutType() {
+        Photo legacy = persistPhoto(clubId, user.getId(), "legacy-cover-fallback.jpg", new byte[]{8}, null);
+        em.flush();
+        em.clear();
+
+        List<Photo> result = photoDao.findCarouselWithoutEventByClubId(clubId, 10, 0);
+
+        assertTrue(result.stream().anyMatch(p -> legacy.getPhotoId().equals(p.getPhotoId())));
+    }
+
     // ----------------- findAllCoversByClubIds tests -----------------
 
     @Test
@@ -363,6 +385,16 @@ public class PhotoJpaDaoTest {
     public void testCountByClubIdAndType_zeroWhenNone() {
         long count = photoDao.countByClubIdAndType(UUID.randomUUID(), PhotoType.CAROUSEL);
         assertEquals(0L, count);
+    }
+
+    @Test
+    public void testCountByClubIdAndType_carouselIncludesLegacyPhotoWithoutType() {
+        persistPhoto(clubId, user.getId(), "legacy-count.jpg", new byte[]{9}, null);
+        em.flush();
+
+        long count = photoDao.countByClubIdAndType(clubId, PhotoType.CAROUSEL);
+
+        assertEquals(2L, count);
     }
 
     // ----------------- Helpers -------------------

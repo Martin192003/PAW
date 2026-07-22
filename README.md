@@ -155,7 +155,6 @@ No hay usuarios demo versionados en seeds. Para crear un usuario normal, usar `P
 UPDATE users SET role = 'ADMIN' WHERE user_name = 'admin';
 ```
 
-Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwords en texto plano, esos usuarios deben migrarse a BCrypt porque el fallback plaintext fue eliminado.
 
 ## Endpoints principales
 

@@ -309,7 +309,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public User authenticateAndGetUser(String usernameOrEmail, String password) throws IllegalStateException {
         LOGGER.debug("UserServiceImpl.authenticateAndGetUser: attempt usernameOrEmail={}", usernameOrEmail);
         User user = userDao.findByUserName(usernameOrEmail).orElse(null);
@@ -329,6 +329,13 @@ public class UserServiceImpl implements UserService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             LOGGER.info("UserServiceImpl.authenticateAndGetUser: password mismatch for usernameOrEmail={}", usernameOrEmail);
             return null;
+        }
+
+        if (passwordEncoder.upgradeEncoding(user.getPassword())) {
+            final String upgradedPassword = passwordEncoder.encode(password);
+            userDao.updatePasswordHash(user.getId(), upgradedPassword);
+            user.setPasswordHash(upgradedPassword);
+            LOGGER.info("UserServiceImpl.authenticateAndGetUser: upgraded password encoding for userId={}", user.getId());
         }
 
         LOGGER.info("UserServiceImpl.authenticateAndGetUser: authentication success for usernameOrEmail={}", usernameOrEmail);

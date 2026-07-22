@@ -131,7 +131,9 @@ public class PhotoJpaDao implements PhotoDao {
     @Override
     public List<Photo> findCarouselByClubId(UUID clubId) {
         return em.createQuery(
-                        "SELECT p FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type ORDER BY p.createdAt DESC", Photo.class)
+                        "SELECT p FROM Photo p WHERE p.clubId = :clubId " +
+                                "AND (p.photoType = :type OR p.photoType IS NULL) " +
+                                "ORDER BY p.createdAt DESC", Photo.class)
                 .setParameter("clubId", clubId)
                 .setParameter("type", PhotoType.CAROUSEL)
                 .setFirstResult(OFFSET_CAROUSEL)
@@ -230,7 +232,7 @@ public class PhotoJpaDao implements PhotoDao {
             FROM photos p
             LEFT JOIN event e ON e.photoid = p.photo_id
             WHERE p.club_id = :clubId
-              AND p.photo_type = 'CAROUSEL'
+              AND (p.photo_type = 'CAROUSEL' OR p.photo_type IS NULL)
               AND e.photoid IS NULL
             ORDER BY p.created_at DESC NULLS LAST, p.photo_id DESC
             LIMIT :limit OFFSET :offset
@@ -286,8 +288,11 @@ public class PhotoJpaDao implements PhotoDao {
     }
 
     public long countByClubIdAndType(UUID clubId, PhotoType type) {
+        final String typeCondition = type == PhotoType.CAROUSEL
+                ? "(p.photoType = :type OR p.photoType IS NULL)"
+                : "p.photoType = :type";
         return em.createQuery(
-                        "SELECT COUNT(p) FROM Photo p WHERE p.clubId = :clubId AND p.photoType = :type", Long.class)
+                        "SELECT COUNT(p) FROM Photo p WHERE p.clubId = :clubId AND " + typeCondition, Long.class)
                 .setParameter("clubId", clubId)
                 .setParameter("type", type)
                 .getSingleResult();

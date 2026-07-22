@@ -16,6 +16,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -90,7 +92,7 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
 
             @Override
             public boolean matches(CharSequence rawPassword, String encodedPassword) {
-                if (encodedPassword == null) {
+                if (rawPassword == null || encodedPassword == null) {
                     return false;
                 }
 
@@ -103,12 +105,20 @@ public class WebAuthConfig extends WebSecurityConfigurerAdapter {
                     return bcrypt.matches(rawPassword, unwrapPrefix(candidate));
                 }
 
-                return false;
+
+                return MessageDigest.isEqual(
+                        rawPassword.toString().getBytes(StandardCharsets.UTF_8),
+                        encodedPassword.getBytes(StandardCharsets.UTF_8)
+                );
             }
 
             @Override
             public boolean upgradeEncoding(String encodedPassword) {
-                return false;
+                if (encodedPassword == null || encodedPassword.trim().isEmpty()) {
+                    return false;
+                }
+                final String candidate = encodedPassword.trim();
+                return !isBcrypt(candidate) || bcrypt.upgradeEncoding(unwrapPrefix(candidate));
             }
 
             private boolean isBcrypt(String value) {

@@ -130,6 +130,14 @@ public class UserJpaDao implements UserDao {
     }
 
     @Override
+    public void updatePasswordHash(UUID userId, String passwordHash) {
+        User u = em.find(User.class, userId);
+        if (u != null) {
+            u.setPasswordHash(passwordHash);
+        }
+    }
+
+    @Override
     public void updateLocale(UUID userId, String locale) {
         User u = em.find(User.class, userId);
         if (u != null) {

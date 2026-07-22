@@ -79,7 +79,8 @@ public class PhotoRestController {
         }
         clubService.assertAdmin(photo.getClubId(), user.getId());
 
-        if (photo.getPhotoType() != PhotoType.CAROUSEL) {
+
+        if (photo.getPhotoType() != null && photo.getPhotoType() != PhotoType.CAROUSEL) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("Solo se pueden eliminar fotos de galería"))
                     .build();

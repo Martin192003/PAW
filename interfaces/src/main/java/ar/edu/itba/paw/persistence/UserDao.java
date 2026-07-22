@@ -22,5 +22,6 @@ public interface UserDao {
     void updateResetPasswordToken(UUID userId, String token);
     Optional<User> findByResetPasswordToken(String token);
     void clearResetPasswordToken(UUID userId);
+    void updatePasswordHash(UUID userId, String passwordHash);
     void updateLocale(UUID userId, String locale);
 }

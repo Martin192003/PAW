@@ -322,6 +322,18 @@ public class UserJpaDaoTest {
         assertNull(u.getResetPasswordToken());
     }
 
+    @Test
+    public void testUpdatePasswordHashOnlyChangesPassword() {
+        String originalEmail = user.getEmail();
+
+        userDao.updatePasswordHash(user.getId(), "$2a$10$upgraded");
+        em.flush();
+
+        User u = em.find(User.class, user.getId());
+        assertEquals("$2a$10$upgraded", u.getPassword());
+        assertEquals(originalEmail, u.getEmail());
+    }
+
     // ---------------------------------------------------------
     // UPDATE LOCALE
     // ---------------------------------------------------------
