@@ -91,11 +91,7 @@ export class EventService {
       .pipe(switchMap(response => this.pageFromResponse(response, page, size)));
   }
 
-  /**
-   * Entrypoint por clubId + eventId (deep link). Si ya tenés el `ClubEvent`
-   * cargado (por ejemplo, desde `getEventsByClub`), usá sus `links` en vez de
-   * llamar de nuevo con ids sueltos.
-   */
+
   getEventById(clubId: string, eventId: string): Observable<ClubEvent> {
     return this.http
       .get<EventDto>(`${this.base}/clubs/${clubId}/events/${eventId}`)
@@ -130,11 +126,6 @@ export class EventService {
     });
   }
 
-  /**
-   * Resuelve la URL de una acción sobre un evento a partir de sus links
-   * HATEOAS. La reconstrucción manual (`fallback`) es un último recurso
-   * documentado para cuando todavía no tenemos el `ClubEvent` completo.
-   */
   private resolveEventLink(
     links: Record<string, string> | undefined,
     rels: string[],

@@ -41,20 +41,9 @@ public class PhotoRestController {
                         .build());
     }
 
-    /**
-     * Construye la respuesta de imagen con caching condicional correcto.
-     *
-     * Las fotos son recursos modificables (se pueden reemplazar o eliminar), por lo que NO
-     * se debe usar cache largo (max-age anual). Se usa:
-     *   Cache-Control: no-cache
-     *   ETag: basado en photoId + createdAt (estable, cambia al re-subir con distinto ID)
-     *
-     * El cliente puede cachear localmente pero DEBE revalidar con el servidor antes de usar
-     * la copia cacheada. Si el ETag coincide, el servidor responde 304 Not Modified (sin body).
-     */
+
     private Response buildImageResponse(Photo photo, Request request) {
-        // ETag basado en photoId + createdAt: es estable mientras la foto no cambie,
-        // y varía si la foto es reemplazada (nuevo UUID o nueva fecha de creación).
+
         String etagValue = photo.getPhotoId().toString()
                 + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0")
                 + Objects.toString(photo.getSizeBytes(), "0")
@@ -63,7 +52,6 @@ public class PhotoRestController {
 
         Response.ResponseBuilder preconditions = request.evaluatePreconditions(etag);
 
-        // no-cache: el cliente debe revalidar antes de usar la copia cacheada
         CacheControl cacheControl = new CacheControl();
         cacheControl.setNoCache(true);
         cacheControl.setPrivate(false);

@@ -4,9 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ReviewService, ReviewListResult } from './review.service';
 import { Review } from '../models/review.model';
 
-// review.service.ts no tenia ningun test propio (ver AUDITORIA_ENTREGA_FINAL.md punto
-// 25). Mantiene compatibilidad con colecciones "solo-links", aunque produccion
-// ahora usa arrays embebidos para evitar N+1 en pantallas de alto trafico.
+
 describe('ReviewService', () => {
   let service: ReviewService;
   let httpMock: HttpTestingController;

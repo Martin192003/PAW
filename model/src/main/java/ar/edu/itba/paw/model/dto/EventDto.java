@@ -10,7 +10,7 @@ public class EventDto {
     private UUID id;
     private String eventName;
 
-    private LocalDate date; // JSON: "2026-02-01"
+    private LocalDate date;
 
     private String description;
     private List<LinkDto> links;
@@ -23,13 +23,7 @@ public class EventDto {
     public String getEventName() { return eventName; }
     public void setEventName(String eventName) { this.eventName = eventName; }
 
-    // Esta clase no declara @XmlAccessorType, asi que MOXy usa el default
-    // PUBLIC_MEMBER (mira los getters/setters, no los campos), por eso el
-    // adapter va aca y no en el field. Sin esto, MOXy usa el patron de
-    // datetime global de JaxRsConfig (eclipselink.json.date-format) tambien
-    // para esta fecha sin hora, y el body "2026-07-22" que manda el
-    // <input type="date"> del frontend falla al deserializar (500 crudo,
-    // antes de llegar al controller/service).
+
     @XmlJavaTypeAdapter(LocalDateAdapter.class)
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }

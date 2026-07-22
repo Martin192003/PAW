@@ -97,8 +97,7 @@ public class EventPhotoRestController {
 
         Photo photo = eventService.getEventPhoto(clubId, eventId);
 
-        // Cache condicional: ETag basado en identidad y metadata del contenido.
-        // Las event photos son modificables, por lo que se usa no-cache (revalidar cada vez).
+
         String etagValue = photo.getPhotoId().toString()
                 + ":" + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0")
                 + ":" + (photo.getSizeBytes() != null ? photo.getSizeBytes() : 0L)

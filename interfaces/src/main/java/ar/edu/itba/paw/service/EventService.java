@@ -22,20 +22,16 @@ public interface EventService {
     Event getForClub(UUID clubId, UUID eventId);
 
 
-    /** Lista eventos de un club con paginación (data) */
     List<Event> listByClub(UUID clubId, int page, int size);
 
 
-    /** Total para paginación (count) */
     int countByClub(UUID clubId);
 
 
 
 
-    /** Próximos eventos desde hoy (data) */
     List<Event> listUpcoming(int page, int size);
 
-    /** Total de próximos eventos (count) */
     int countUpcoming();
 
     List<Event> findUpcomingByClub(UUID clubId, int offset, int limit);

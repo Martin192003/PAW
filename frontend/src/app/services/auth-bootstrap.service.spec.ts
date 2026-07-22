@@ -5,9 +5,7 @@ import { AuthStateService } from './auth-state.service';
 import { UserService } from './user.service';
 import { User } from '../models/user.model';
 
-// auth-bootstrap.service.ts no tenia ningun test (ver AUDITORIA_ENTREGA_FINAL.md
-// punto 25) pese a decidir, en cada carga de la SPA, si la sesion guardada sigue
-// siendo valida.
+
 describe('AuthBootstrapService', () => {
   let service: AuthBootstrapService;
   let authState: {
@@ -41,9 +39,7 @@ describe('AuthBootstrapService', () => {
     service = TestBed.inject(AuthBootstrapService);
   });
 
-  // async/await + firstValueFrom en vez de un callback done(): con los tipos globals
-  // de Vitest de este proyecto, el parámetro de it(...) es un TestContext (no un
-  // done-callback estilo Jasmine/Mocha), así que done() no es invocable.
+
   it('resolves immediately without calling the backend when there is no stored token', async () => {
     authState.getToken.mockReturnValue(null);
 

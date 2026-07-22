@@ -40,11 +40,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Cubre listClubs/getClub/createClub/updateClub: son los endpoints reescritos en el
- * commit de paginación (colecciones con headers) que hasta ahora no tenían
- * ningún test (ver AUDITORIA_ENTREGA_FINAL.md, punto 24).
- */
+
 public class ClubRestControllerTest {
 
     private static final UUID CLUB_ID = UUID.randomUUID();
@@ -126,9 +122,6 @@ public class ClubRestControllerTest {
                 null, OWNER_ID.toString(), null, null, null, null, null, null, 0, 10, mock(SecurityContext.class));
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        // Si listClubs no hubiera delegado a la búsqueda por owner, countSearch/searchPaginated
-        // (sin stubear para este caso) habrían devuelto los valores "nice" por defecto (0 /
-        // lista vacía) y este total no coincidiría con el de countClubsByUser.
         assertEquals("5", response.getHeaderString("X-Total-Count"));
     }
 

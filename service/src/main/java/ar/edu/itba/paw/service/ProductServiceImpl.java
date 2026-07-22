@@ -20,10 +20,6 @@ public class ProductServiceImpl implements ProductService {
     private final ClubService clubService;
     private static final int MAX_MENU_PRODUCTS = 50;
 
-    // "description" es TEXT en la base (sin limite de longitud a nivel de
-    // columna); este limite es una regla de negocio que espeja el
-    // maxLength del frontend (club-handler.page.ts), para que no sea
-    // bypasseable pegandole directo a la API.
     private static final int DESCRIPTION_MAX_LENGTH = 300;
 
     public ProductServiceImpl(ProductsDao productsDao, ClubService clubService) {
@@ -38,9 +34,6 @@ public class ProductServiceImpl implements ProductService {
         if(basePrice.compareTo(BigDecimal.valueOf(100000000)) >= 0)
             throw new ValidationException("Precio demasiado alto");
         if(name.length() > 100)
-            // Antes tiraba IllegalArgumentException, que no tiene ExceptionMapper
-            // registrado: un nombre largo mandado directo a la API (sin pasar por
-            // el frontend, que ya lo limita a 100) terminaba en un 500 crudo.
             throw new ValidationException("Nombre demasiado largo");
         validateDescription(description);
         List<Product> current = productsDao.findByClub(club);

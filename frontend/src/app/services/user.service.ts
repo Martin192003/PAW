@@ -48,9 +48,7 @@ export class UserService {
   }
 
   updateUser(userId: string, payload: UserUpdateRequest): Observable<UserUpdateResult> {
-    // Sin este flag, un 409 (usuario/email duplicado) lo agarra el interceptor
-    // global y redirige a /error antes de que profile.page.ts pueda mostrarlo
-    // como error de campo (mismo problema que tenian createTable/createProduct).
+
     return this.http.patch<UserUpdateResponse>(`${this.apiUrl}/users/${userId}`, payload, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
@@ -67,11 +65,7 @@ export class UserService {
       Authorization: this.basicAuthorization(usernameOrEmail, payload.password),
     });
 
-    // La autenticacion es metadata HTTP: al mandar Basic contra cualquier
-    // recurso protegido, el backend emite el JWT en el header Paw-Auth-Token.
-    // Ya no existe /users/me (`me` no es una URN): el userId viaja en el claim
-    // `sub` del JWT, asi que lo decodificamos y pedimos el recurso canonico
-    // /users/{userId}.
+
     return this.http.get(`${this.apiUrl}/bookings`, {
       headers: basicHeaders,
       observe: 'response',
@@ -95,11 +89,7 @@ export class UserService {
     );
   }
 
-  /**
-   * Decodifica el userId (claim `sub`) de un JWT sin validar la firma: solo se
-   * usa para saber a que recurso /users/{userId} pedir tras el login. La firma
-   * la valida el backend en cada request posterior.
-   */
+
   private userIdFromToken(token: string): string | null {
     const parts = token.trim().replace(/^Bearer\s+/i, '').split('.');
     if (parts.length < 2) {
@@ -117,10 +107,7 @@ export class UserService {
     }
   }
 
-  /**
-   * Verifica la cuenta desde el token recibido por mail. Este flujo ya no crea
-   * sesion: los JWT se emiten al mandar Basic Auth contra un recurso protegido.
-   */
+
   verifyByToken(userId: string, token: string): Observable<LoginResponse | ApiMessageResponse> {
     return this.http
       .put<UserUpdateResponse | ApiMessageResponse>(`${this.apiUrl}/users/${encodeURIComponent(userId)}/verification`, {
@@ -133,7 +120,6 @@ export class UserService {
         map((response) => {
           const session = response as UserUpdateResponse;
           if (session && session.accessToken && session.user) {
-            // La verificacion exitosa devuelve una sesion -> auto-login.
             return { token: session.accessToken, user: session.user } as LoginResponse;
           }
           return response as ApiMessageResponse;
@@ -149,9 +135,7 @@ export class UserService {
   }
 
   requestPasswordReset(email: string): Observable<void> {
-    // Sin este flag, cualquier codigo de la lista del interceptor
-    // (401/403/404/409/415/500+) redirige a /error antes de que
-    // change-password.page.ts pueda mostrar su propio error de campo/cartel.
+
     return this.http.post(`${this.apiUrl}/auth/challenges`, {
       challengeType: 'password_reset',
       email,
@@ -163,8 +147,7 @@ export class UserService {
   }
 
   resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<LoginResponse> {
-    // Sin este flag, un token invalido/vencido (404) redirige a /error en vez
-    // de mostrar el cartel de "token invalido o vencido" en el propio formulario.
+
     return this.http.put<UserUpdateResponse>(
       `${this.apiUrl}/users/credentials/password`,
       {
@@ -185,12 +168,7 @@ export class UserService {
     return { token: response.accessToken, user: response.user };
   }
 
-  /**
-   * Cambio de contraseña para un usuario que ya tiene sesion iniciada (ej.
-   * desde /profile). A diferencia de resetPassword(), no hace falta un token
-   * de mail: la identidad sale del JWT que ya se manda en cada request
-   * (interceptor de auth), asi que no hace falta reflejar un nuevo token acá.
-   */
+
   changePasswordAuthenticated(userId: string, newPassword: string, confirmationPassword: string): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/users/${userId}/credentials/password`, { newPassword, confirmationPassword }, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),

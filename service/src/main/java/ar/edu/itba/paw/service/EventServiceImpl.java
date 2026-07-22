@@ -137,8 +137,6 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("eventName too long (max 120)");
     }
 
-    // "description" es TEXT en la base (sin limite de longitud a nivel de
-    // columna); este limite espeja el maxLength del frontend (club-handler.page.ts).
     private static final int DESCRIPTION_MAX_LENGTH = 500;
 
     private void validateDescription(String description) {

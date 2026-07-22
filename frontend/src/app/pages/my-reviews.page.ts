@@ -171,9 +171,7 @@ export class MyReviewsPage implements OnInit, OnDestroy {
       }
     });
   }
-  /**
-   * Fallback para APIs viejas que todavia no mandan nombre/ubicacion del club.
-   */
+
   private enrichWithClubs(): void {
     const ids = Array.from(new Set(
       this.reviews

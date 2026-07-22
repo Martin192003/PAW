@@ -170,11 +170,6 @@ public class EventServiceImplTest {
                 Mockito.eq(FUTURE_DATE),
                 Mockito.eq(PHOTO_ID)
         )).thenReturn(mockUpdatedEvent);
-        // En vez de un Mockito.verify(never()) posterior, dejamos que el propio stub
-        // detecte una llamada inesperada: si update() subiera una foto nueva pese a que
-        // no se pasó imagen, este stub explota durante el "ejercitar". lenient() porque,
-        // en el camino feliz, este stub no llega a usarse (y eso es lo esperado): sin
-        // lenient(), Mockito en modo strict marcaría el stub como "unnecessary".
         Mockito.lenient().when(photoService.uploadEventPhoto(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenThrow(new AssertionError("photoService.uploadEventPhoto should not have been called"));
 
@@ -234,14 +229,9 @@ public class EventServiceImplTest {
     public void testDelete_Success_WithPhoto() {
         Mockito.when(eventDao.findById(Mockito.eq(EVENT_ID)))
                 .thenReturn(Optional.of(mockEvent));
-        // Si eventDao.delete no se llamara con el id correcto, el mock "nice" por
-        // defecto devuelve false y delete() lanzaría NotFoundException -> el test ya
-        // fallaría por una excepción inesperada, sin necesitar un verify() aparte.
         Mockito.when(eventDao.delete(Mockito.eq(EVENT_ID)))
                 .thenReturn(true);
 
-        // photoService.delete es void: capturamos si el stub llegó a ejecutarse (y con
-        // qué id) en vez de usar Mockito.verify() después de ejercitar.
         AtomicBoolean photoDeleted = new AtomicBoolean(false);
         Mockito.doAnswer(invocation -> {
             UUID deletedId = invocation.getArgument(0);
@@ -264,9 +254,7 @@ public class EventServiceImplTest {
         Mockito.when(mockEvent.getPhotoId()).thenReturn(null);
         Mockito.when(eventDao.delete(Mockito.eq(EVENT_ID)))
                 .thenReturn(true);
-        // Si delete() igualmente intentara borrar una foto que no existe, este stub
-        // explota durante el "ejercitar" en vez de comprobarse después con verify().
-        // lenient() porque en el camino feliz este stub no se usa, y eso es lo esperado.
+
         Mockito.lenient().doThrow(new AssertionError("photoService.delete should not have been called"))
                 .when(photoService).delete(Mockito.any());
 
@@ -427,9 +415,7 @@ public class EventServiceImplTest {
         Mockito.when(eventDao.findById(Mockito.eq(EVENT_ID)))
                 .thenReturn(Optional.of(mockEvent));
 
-        // deleteEventPhoto es void y sus tres efectos son llamadas a colaboradores; en
-        // vez de Mockito.verify() después, cada stub confirma su propia invocación (y
-        // argumentos correctos) mientras se ejercita el método.
+
         AtomicBoolean photoDetached = new AtomicBoolean(false);
         Mockito.doAnswer(invocation -> {
             UUID id = invocation.getArgument(0);
@@ -470,10 +456,6 @@ public class EventServiceImplTest {
                 .thenReturn(Optional.of(mockEvent));
         Mockito.when(mockEvent.getPhotoId()).thenReturn(null);
 
-        // deleteEventPhoto hace un return temprano cuando el evento no tiene foto; si esa
-        // guarda fallara, cualquiera de estos dos stubs lanzaría un AssertionError
-        // durante el "ejercitar", sin necesitar verify(never()) después. lenient() porque
-        // en el camino feliz (guarda intacta) ninguno de los dos llega a usarse.
         Mockito.lenient().doThrow(new AssertionError("eventDao.attachPhoto should not have been called"))
                 .when(eventDao).attachPhoto(Mockito.any(), Mockito.any());
         Mockito.lenient().doThrow(new AssertionError("photoService.delete should not have been called"))

@@ -191,10 +191,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendUserRegistrationConfirmation(String to, String username, String verificationToken) {
-        // El link incluye el userId para que el frontend pueda confirmar la
-        // verificacion sobre el recurso canonico PUT /users/{userId}/verification
-        // (la verificacion es una transicion de estado del usuario, no un recurso
-        // suelto /users/verification).
+
         String verificationUserId = userDao.findByEmail(to).map(u -> u.getId().toString()).orElse("");
         String verificationUrl = abs("/verify-mail?userId=" + verificationUserId + "&token=" + verificationToken);
 
@@ -544,7 +541,6 @@ public class EmailServiceImpl implements EmailService {
                 : "usuario";
         final Integer rating    = review.getRating() != 0 ? review.getRating() : 5;
         final String description = Objects.requireNonNullElse(review.getDescription(), "");
-        //final boolean fromTableGuest = Boolean.TRUE.equals(review.getFromTableGuest());
 
         String photoUrl = null;
         if (review.getPhotoId() != null) {

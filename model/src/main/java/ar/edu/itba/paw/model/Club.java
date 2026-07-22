@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.math.BigDecimal;
 
-//TODO: preguntar todo lo de xml
 @Entity
 @Table(name = "clubs")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -46,7 +45,6 @@ public class Club {
     @Column
     private String description;
 
-    // TODO: chequear el xmlTransient
     @XmlTransient
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_info")

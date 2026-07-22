@@ -56,11 +56,7 @@ describe('ClubHandlerPage saveEvent', () => {
     expect(component.actionSuccessMessage).toBe('clubHandler.messages.eventSaved');
   });
 
-  // Bug real de esta sesion: al crear un evento con foto, el handler de exito
-  // usaba el "savedEvent" original (de antes de subir la foto, con
-  // photoId=null) en vez del evento que devuelve uploadEventPhoto (con el
-  // photoId ya seteado). La foto recien subida no se mostraba hasta el
-  // proximo loadEvents().
+
   it('upserts the event returned by uploadEventPhoto (with photoId set), not the stale pre-upload event', () => {
     const file = new File(['fake-image'], 'foto.png', { type: 'image/png' });
     component.selectedEventPhotoFile = file;

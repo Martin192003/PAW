@@ -13,9 +13,7 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
-        // Usuario existente pero no verificado → 403 para que el frontend
-        // redirija al flow de verificación de email en lugar de mostrar
-        // "credenciales inválidas".
+
         if (authException instanceof DisabledException) {
             AuthErrorResponses.write(response, HttpServletResponse.SC_FORBIDDEN, "account_disabled");
             return;

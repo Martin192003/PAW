@@ -37,10 +37,6 @@ public interface BookingService {
 
     Booking createForClub(UUID clubId, UUID tableId, LocalDate date, String loginIdentifier);
 
-    // Deja pasar al dueño de la reserva o a un admin del club: se usa para el
-    // comprobante de pago, que el admin necesita ver para poder confirmar o
-    // rechazar la reserva (antes solo lo podia ver el dueño, y el admin
-    // recibia un 403 al intentar verlo).
     Booking getForUserOrAdminInClub(UUID clubId, UUID bookingId, String loginIdentifier);
 
     List<Booking> searchForUserPaginated(String loginIdentifier, UUID clubId, String bookingId, Status status, String sort, String bookingDate, Boolean hasReceipt, int limit, int offset);

@@ -76,10 +76,6 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
       return;
     }
 
-    // Sin este flag la pantalla se queda completamente en blanco (solo el
-    // header) mientras espera la respuesta, lo que parece un error/pantalla
-    // rota en vez de una carga en curso, sobre todo justo despues de crear
-    // la reserva.
     this.loading = true;
     this.error = '';
     this.cdr.detectChanges();
@@ -89,9 +85,6 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
         this.booking = booking;
         this.applyInlineDetails(booking);
         this.applyReceiptState(booking);
-        // El comprobante NO se descarga en la carga inicial: es privado y solo
-        // se pide bajo demanda cuando el usuario toca "ver" (openReceipt()). Asi
-        // se evita consumo de red y object URLs innecesarias en cada carga.
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -186,9 +179,6 @@ export class BookingUserHandlerPage implements OnInit, OnDestroy {
     return (this.booking?.status || '').trim().toUpperCase() === 'CONFIRMADA';
   }
 
-  // Una vez que el admin confirma la reserva, el comprobante queda fijo: ya
-  // se uso para validar el pago, asi que no tendria sentido dejar que el
-  // usuario lo reemplace o lo borre despues de esa validacion.
   canEditReceipt(): boolean {
     return !this.isCancelled() && !this.isConfirmed();
   }

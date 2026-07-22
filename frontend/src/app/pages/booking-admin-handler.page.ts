@@ -67,9 +67,6 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
       return;
     }
 
-    // Sin este flag la pantalla se queda en blanco (solo el header) mientras
-    // espera la respuesta, lo que parece una pantalla rota en vez de una
-    // carga en curso.
     this.loading = true;
     this.error = '';
     this.cdr.detectChanges();
@@ -79,9 +76,6 @@ export class BookingAdminHandlerPage implements OnInit, OnDestroy {
         this.booking = booking;
         this.applyInlineDetails(booking);
         this.applyReceiptState(booking);
-        // El comprobante NO se descarga en la carga inicial: es privado y solo
-        // se pide bajo demanda cuando el admin toca "ver" (openReceipt()). Asi
-        // se evita consumo de red y object URLs innecesarias en cada carga.
         this.loading = false;
         this.cdr.detectChanges();
       },

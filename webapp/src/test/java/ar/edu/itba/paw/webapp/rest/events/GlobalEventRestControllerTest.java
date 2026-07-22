@@ -22,9 +22,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Cubre la colección global de eventos próximos: links item + headers de paginación.
- */
 public class GlobalEventRestControllerTest {
 
     private EventService eventService;

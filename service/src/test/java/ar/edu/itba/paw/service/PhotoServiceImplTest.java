@@ -231,7 +231,7 @@ public class PhotoServiceImplTest {
         Optional<String> result = photoService.getCoverUrl(CLUB_ID);
 
         Assert.assertTrue(result.isPresent());
-        Assert.assertEquals("/api/photos/carousel2", result.get()); // La más reciente
+        Assert.assertEquals("/api/photos/carousel2", result.get());
     }
 
     @Test

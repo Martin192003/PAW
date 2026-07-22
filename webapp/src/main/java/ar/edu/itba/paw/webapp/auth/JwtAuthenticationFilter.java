@@ -88,7 +88,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         auth = new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
                     }
 
-                    // CRITICO: crear contexto nuevo, no reusar el existente
                     var context = SecurityContextHolder.createEmptyContext();
                     context.setAuthentication(auth);
                     SecurityContextHolder.setContext(context);

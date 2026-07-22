@@ -98,9 +98,6 @@ public class EventPhotoRestControllerTest {
         when(eventService.getEventPhoto(CLUB_ID, EVENT_ID)).thenReturn(photo);
 
         Request request = mock(Request.class);
-        // any(EntityTag.class), no any() a secas: evaluatePreconditions está sobrecargado
-        // (EntityTag / Date / Date,EntityTag) y el compilador no puede resolver cuál
-        // sobrecarga corresponde a un any() sin tipo.
         when(request.evaluatePreconditions(any(EntityTag.class))).thenReturn(null);
 
         Response response = controller.getPhoto(CLUB_ID, EVENT_ID, request);

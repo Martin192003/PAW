@@ -30,8 +30,7 @@ export class VerifyMailPage implements OnDestroy {
   verifyingFromLink = false;
   verificationCompleted = false;
 
-  // Cuenta atrás antes de redirigir automáticamente a /clubs una vez
-  // verificada la cuenta (reemplaza al botón manual: ver handleVerificationSuccess).
+
   redirectCountdown = 5;
   private redirectTimerId: ReturnType<typeof setInterval> | null = null;
 
@@ -68,16 +67,7 @@ export class VerifyMailPage implements OnDestroy {
         this.resendForm.patchValue({ usernameOrEmail: this.email });
       }
 
-      // La verificación (y el auto-resend) son acciones con efecto: si corren
-      // durante el render en el servidor (SSR), el HTML ya sale servido con
-      // el resultado, pero al hidratar en el browser el componente se vuelve
-      // a construir y dispara la MISMA verificación de nuevo desde el cliente.
-      // Esa segunda corrida (ahora sí en el browser) es la que termina
-      // pisando el estado renderizado por el servidor, y el botón de "Ir a
-      // inicio" solo terminaba viéndose bien después de un refresh manual.
-      // Al limitar esto a isPlatformBrowser, la verificación corre una sola
-      // vez, siempre en el cliente, y la UI se actualiza de forma normal sin
-      // necesitar un refresh.
+
       if (!isPlatformBrowser(this.platformId)) {
         return;
       }
@@ -135,13 +125,7 @@ export class VerifyMailPage implements OnDestroy {
     return this.verifyingFromLink && this.tokenChecking && !this.verifiedStateVisible && !this.tokenErrorMessage;
   }
 
-  // El titulo/descripcion de arriba tenian solo dos estados (pagina inicial
-  // de "revisa tu mail" vs "cuenta verificada"), asi que mientras se estaba
-  // verificando el link se veia por un instante la pantalla de "revisa tu
-  // mail" (que no tiene sentido si ya se abrio el link) antes de pasar a la
-  // de verificado. Con este tercer estado ("verificando cuenta") ese frame
-  // intermedio queda coherente con el resto del flujo en vez de parecer una
-  // pantalla equivocada.
+
   get headingKey(): string {
     if (this.verifiedStateVisible) return 'verifyMail.success.title';
     if (this.linkCheckInProgress) return 'verifyMail.linkVerification.title';
@@ -163,10 +147,6 @@ export class VerifyMailPage implements OnDestroy {
       next: (response) => {
         this.tokenChecking = false;
         this.handleVerificationSuccess(response);
-        // Por alguna razon esta respuesta no siempre dispara un ciclo de
-        // change detection solo (viene de un flujo SSR->hidratacion medio
-        // particular), asi que forzamos el refresco de la vista a mano para
-        // no depender de que zone.js lo detecte por su cuenta.
         this.cdr.detectChanges();
       },
       error: (error: HttpErrorResponse) => {
@@ -207,9 +187,7 @@ export class VerifyMailPage implements OnDestroy {
   }
 
   private startRedirectCountdown(): void {
-    // Solo tiene sentido en el browser: en SSR no hay a donde "volver" ni
-    // tiempo real que contar, y no queremos temporizadores corriendo en el
-    // servidor (ver el guard de isPlatformBrowser en el constructor).
+
     if (!isPlatformBrowser(this.platformId) || this.redirectTimerId) {
       return;
     }

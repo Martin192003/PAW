@@ -116,10 +116,7 @@ public class ClubRestController {
                 .map(club -> toDtoWithLinks(club, false))
                 .toList();
 
-        // Solo metadata estandar de coleccion: total (X-Total-Count) y navegacion
-        // (Link). El modo disponibilidad y la fecha seleccionada los conoce el
-        // cliente (los mando el mismo en el filtro/sort), asi que no se exponen
-        // como headers de negocio ad-hoc.
+
         Response.ResponseBuilder responseBuilder = Response.ok(new GenericEntity<List<ClubDto>>(body) {})
                 .header("X-Total-Count", totalClubs)
                 .header("Cache-Control", "no-cache");
@@ -619,7 +616,6 @@ public class ClubRestController {
 
         return clubLayoutService.getLayoutByClub(id)
                 .map(layout -> {
-                    // ETag basado en layoutId + createdAt (cambia al reemplazar el layout)
                     String etagValue = layout.getLayoutId().toString()
                             + (layout.getCreatedAt() != null ? layout.getCreatedAt().toEpochSecond() : "0")
                             + Objects.toString(layout.getSizeBytes(), "0")
@@ -628,7 +624,6 @@ public class ClubRestController {
 
                     Response.ResponseBuilder preconditions = request.evaluatePreconditions(etag);
 
-                    // Cache condicional: no-cache + ETag (recurso modificable)
                     CacheControl cacheControl = new CacheControl();
                     cacheControl.setNoCache(true);
                     cacheControl.setPrivate(false);
@@ -882,8 +877,7 @@ public class ClubRestController {
                                     int size,
                                     int totalPages,
                                     int firstPage) {
-        // totalPages es una cantidad de paginas (1-based por naturaleza); el ultimo
-        // numero de pagina valido depende de si la coleccion arranca en 0 o en 1.
+
         final int lastPage = firstPage + totalPages - 1;
         List<String> links = new ArrayList<>();
         if (page > firstPage) {
@@ -1001,11 +995,6 @@ public class ClubRestController {
         return filename;
     }
 
-    /**
-     * Respuesta para imágenes modificables (cover del club).
-     * Usa Cache-Control: no-cache + ETag basado en photoId + createdAt.
-     * El cliente puede cachear localmente pero debe revalidar antes de usar la copia.
-     */
     private Response buildImageResponse(Photo photo, Request request) {
         String etagValue = photo.getPhotoId().toString()
                 + (photo.getCreatedAt() != null ? photo.getCreatedAt().toEpochSecond() : "0")

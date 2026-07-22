@@ -61,11 +61,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
         this.updateRouteState();
-        // hasClubs solo se recalculaba en cambios de sesion (isLoggedIn$), no
-        // en cada navegacion. Al crear tu primer club, club-new.page.ts te
-        // promueve a ADMIN y redirige a /clubs, pero el topbar seguia
-        // mostrando "Add Club" hasta refrescar la pagina porque nunca
-        // volvia a consultar si ya tenias clubes. Se resincroniza aca.
         this.syncHasClubs();
       })
     );

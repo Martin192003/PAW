@@ -38,11 +38,7 @@ describe('ClubService event photo links', () => {
     httpMock.verify();
   });
 
-  // Bug real de esta sesion: uploadEventPhoto no normalizaba
-  // el campo "links" (array HATEOAS [{rel,href}]) a un Record<string,string>
-  // como si lo hacen createEvent/updateEvent. Como consecuencia,
-  // getEventPhotoUrl() (que lee event.links?.['photo']) siempre daba
-  // undefined justo despues de subir la foto en el alta de un evento.
+
   it('normalizes the links array returned by uploadEventPhoto into a Record', () => {
     const file = new File(['fake-image'], 'foto.png', { type: 'image/png' });
 
@@ -142,10 +138,7 @@ describe('ClubService event photo links', () => {
   });
 });
 
-// getClubs/getClubsByUser (vía clubPageFromResponse) son el método más usado del
-// servicio y, pese a ser el que motivó todo el rediseño de paginación auditado en
-// AUDITORIA_ENTREGA_FINAL.md (puntos 11 y 20), no tenían ningún test propio: la spec
-// de arriba sólo cubre uploadEventPhoto/deleteEventPhoto (2 de ~25 métodos públicos).
+
 describe('ClubService getClubs', () => {
   let service: ClubService;
   let httpMock: HttpTestingController;

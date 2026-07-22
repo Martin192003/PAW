@@ -248,8 +248,6 @@ public class BookingsRestController {
                                     int page,
                                     int size,
                                     int totalPages) {
-        // totalPages es una cantidad de paginas; el ultimo numero de pagina
-        // valido en un esquema 0-based es totalPages - 1.
         final int lastPage = DEFAULT_PAGE + totalPages - 1;
         List<String> links = new ArrayList<>();
         if (page > DEFAULT_PAGE) {

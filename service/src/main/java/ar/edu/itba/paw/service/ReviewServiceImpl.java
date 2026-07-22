@@ -219,7 +219,6 @@ public class ReviewServiceImpl implements ReviewService {
 
     }
 
-    /** Recalcula rating y cantidad desde DB y persiste solo esas columnas. */
     private void recalcClubRating(UUID clubId) {
         final int count = reviewsDao.countSearch(null, clubId);
         if (count == 0) {

@@ -116,10 +116,6 @@ describe('BookingUserHandlerPage', () => {
     expect(component.success).toBe('bookingUserHandler.success.cancelled');
   });
 
-  // canEditReceipt() es el reflejo en el frontend de la regla de negocio
-  // agregada esta sesion en el backend (ReceiptServiceImpl): una vez que la
-  // reserva esta CONFIRMADA (o CANCELADA), el comprobante ya no se puede
-  // editar/reemplazar.
   it('allows editing the receipt only while the booking is pending', () => {
     component.booking = { ...booking, status: 'PENDIENTE' };
     expect(component.canEditReceipt()).toBe(true);

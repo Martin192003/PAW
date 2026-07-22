@@ -24,10 +24,7 @@ public class PawUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(final String usernameOrEmail) throws UsernameNotFoundException {
-        // DEBUG (no WARN): esto se ejecuta en cada intento de login, no es una
-        // condicion excepcional. Y el identificador se enmascara porque puede
-        // ser un email/username real (PII) que no debe quedar en texto plano
-        // ni siquiera en logs de nivel debug.
+
         LOGGER.debug("[AUTH] loadUserByUsername called with: '{}'", mask(usernameOrEmail));
 
         User user = resolveUser(usernameOrEmail);
@@ -39,18 +36,11 @@ public class PawUserDetailsService implements UserDetailsService {
         LOGGER.debug("[AUTH] User FOUND: id={}, username='{}', email='{}', verified={}",
                 user.getId(), mask(user.getUsername()), mask(user.getEmail()), user.isVerified());
 
-        // No lanzar aquí para usuarios no verificados: Spring Security llama a
-        // isEnabled() en PawUserDetails y lanza DisabledException si retorna false.
-        // ApiAuthenticationEntryPoint mapea DisabledException → 403 para que el
-        // frontend redirija al flow de verificación de email.
+
         return new PawUserDetails(user);
     }
 
-    /**
-     * Enmascara un identificador potencialmente sensible (email o username) antes
-     * de loguearlo: conserva sólo los primeros caracteres para poder correlacionar
-     * eventos en debug sin exponer el dato completo.
-     */
+
     private static String mask(String value) {
         if (value == null) {
             return null;

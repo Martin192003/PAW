@@ -112,16 +112,6 @@ export class ClubService {
     };
   }
 
-  /**
-   * Resuelve la URL de un recurso a partir de los links HATEOAS del club.
-   *
-   * La construcción manual (`fallback`) es un último recurso **documentado**:
-   * solo se usa cuando todavía no tenemos el objeto con `links` a mano (por
-   * ejemplo, la primera carga de una página a partir de un id de ruta). En
-   * cuanto el llamador tiene el recurso padre ya cargado, debe pasar sus
-   * `links` para que se use el href que devuelve el backend en vez de la URL
-   * construida a mano.
-   */
   private resolveClubLink(
     links: unknown,
     rels: string[],
@@ -150,7 +140,6 @@ export class ClubService {
   ): Observable<PagedResponse<Club>> {
     const normalized = { ...this.emptyFilter, ...filters };
 
-    // La UI trabaja con paginas 1-based; la API es 0-based.
     let params = new HttpParams()
       .set('page', page - 1)
       .set('size', size);
@@ -191,14 +180,7 @@ export class ClubService {
     );
   }
 
-  /**
-   * Carga un club a partir de su id.
-   *
-   * Este es el único punto de entrada legítimo por id: se usa cuando todavía
-   * no tenemos ningún recurso con links (por ejemplo, al entrar directo a
-   * `/clubs/:id` desde la URL). Si ya tenés un club, booking, producto, etc.
-   * con `links.club`, preferí `getClubByLink` en su lugar.
-   */
+
   getClubById(id: string): Observable<Club> {
     return this.http.get<Club>(`${this.apiUrl}/clubs/${id}`).pipe(
       map(club => this.normalizeClub(club))
@@ -219,19 +201,12 @@ export class ClubService {
     );
   }
 
-  /**
-   * Fallback documentado para la URL de portada cuando todavía no tenemos el
-   * club cargado (y por lo tanto no tenemos `club.links['cover']`). Los
-   * llamadores que ya tienen el club deben preferir su link `cover`.
-   */
+
   getCoverUrl(id: string): string {
     return resolveApiUrl(`${this.apiUrl}/clubs/${id}/cover`, this.apiUrl);
   }
 
-  /**
-   * Fallback documentado para la URL de una foto cuando no tenemos el link
-   * `self` de la foto a mano. Preferir `photo.links['self']` cuando exista.
-   */
+
   getPhotoUrl(photoId: string): string {
     return resolveApiUrl(`${this.apiUrl}/photos/${photoId}`, this.apiUrl);
   }
@@ -323,13 +298,7 @@ export class ClubService {
     return forkJoin(uploads);
   }
 
-  /**
-   * Usa el link HATEOAS "delete" propio de la foto cuando está disponible
-   * (PhotoDto lo expone apuntando a /clubs/{clubId}/photos/{photoId}).
-   * Si por algún motivo no vino (fotos cargadas antes de este cambio, u otra
-   * fuente que no lo incluya), cae al fallback anterior: resolver la
-   * colección `photos` del club y agregarle el id a mano.
-   */
+
   deleteGalleryPhoto(clubId: string, photoId: string, photoLinks?: LinkMapInput, clubLinks?: unknown): Observable<void> {
     const normalizedPhotoLinks = normalizeLinks(photoLinks);
     const deleteLink = normalizedPhotoLinks?.['delete'];
@@ -466,9 +435,7 @@ export class ClubService {
 
   createProduct(clubId: string, payload: ProductPayload, links?: unknown): Observable<Product> {
     const url = this.resolveClubLink(links, this.linkRels.menu, `club ${clubId} menu`, `${this.apiUrl}/clubs/${clubId}/menu`);
-    // Sin este flag un 409/500 lo agarra primero el interceptor global y
-    // redirige a /error antes de que el formulario pueda mostrar su propio
-    // error de campo (mismo problema que tenian createTable/updateTable).
+
     return this.http.post<Product>(url, payload, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(map(product => this.normalizeProduct(product)));
@@ -498,9 +465,7 @@ export class ClubService {
 
   createTable(clubId: string, payload: TablePayload, links?: unknown): Observable<ClubTable> {
     const url = this.resolveClubLink(links, this.linkRels.tables, `club ${clubId} tables`, `${this.apiUrl}/clubs/${clubId}/tables`);
-    // El 409 por numero de mesa duplicado lo maneja club-handler.page.ts como
-    // error de campo (igual que el resto de los formularios); sin este flag
-    // el interceptor global lo agarra primero y redirige a /error.
+
     return this.http.post<ClubTable>(url, payload, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(map(table => this.normalizeTable(table)));
@@ -530,8 +495,7 @@ export class ClubService {
 
   createEvent(clubId: string, payload: EventPayload, links?: unknown): Observable<Event> {
     const url = this.resolveClubLink(links, this.linkRels.events, `club ${clubId} events`, `${this.apiUrl}/clubs/${clubId}/events`);
-    // Mismo motivo que createProduct/createTable: sin el flag, un 409/500
-    // termina en la pantalla de error global en vez del error de campo.
+
     return this.http.post<Event & { id?: string }>(url, payload, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
     }).pipe(
@@ -579,13 +543,7 @@ export class ClubService {
     const formData = new FormData();
     formData.append('file', file);
 
-    // createEvent/updateEvent normalizan los links (array de {rel,href} ->
-    // Record<string,string>) antes de devolver el Event; esta llamada no lo
-    // hacia, asi que el Event resultante quedaba con "links" en formato
-    // array. getEventPhotoUrl() lee event.links?.['photo'] esperando un
-    // objeto ya normalizado, y con el array eso siempre daba undefined -
-    // por eso la foto recien subida en el alta no se mostraba bien hasta
-    // el proximo loadEvents() (que si pasa por normalizeEvent/backend list).
+
     return this.http.put<Event & { id?: string }>(url, formData).pipe(
       map(updated => this.normalizeEvent(updated))
     );

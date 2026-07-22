@@ -69,7 +69,6 @@ describe('AddClubComponent', () => {
     const description = component.clubForm.get('description');
     description?.setValue('');
 
-    // Antes de intentar enviar, no se muestra (mismo comportamiento que registro).
     expect(component.showError('description')).toBe(false);
 
     component.onSubmit();
@@ -101,9 +100,7 @@ describe('AddClubComponent', () => {
     component.onSubmit();
     expect(component.showError('name')).toBe(true);
 
-    // Se corrige el campo pero todavia no se reintenta el submit: el error
-    // sigue visible (congelado) hasta el proximo intento, igual que en
-    // register.page.
+
     component.clubForm.get('name')?.setValue('Fixed name');
     expect(component.showError('name')).toBe(true);
 

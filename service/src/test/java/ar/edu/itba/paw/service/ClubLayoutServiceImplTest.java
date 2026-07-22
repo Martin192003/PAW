@@ -43,9 +43,7 @@ public class ClubLayoutServiceImplTest {
     @Test
     public void testUploadLayoutSuccess_DefaultsMissingContentType() {
         ClubLayout[] savedLayout = new ClubLayout[1];
-        // layoutDao.save recibe el layout recién construido (variable local del método
-        // bajo test, no accesible desde afuera); en vez de un Mockito.verify() posterior,
-        // lo capturamos con thenAnswer y afirmamos sobre sus campos.
+
         Mockito.when(layoutDao.save(Mockito.any())).thenAnswer(invocation -> {
             savedLayout[0] = invocation.getArgument(0);
             return savedLayout[0];
@@ -79,10 +77,7 @@ public class ClubLayoutServiceImplTest {
 
     @Test
     public void testUploadLayoutDeletesPreviousLayoutBeforeSaving() {
-        // club_layouts tiene un constraint unique en club_id: si save() se llamara antes
-        // que deleteByClubId(), o si deleteByClubId no se llamara, el insert real
-        // fallaría. En vez de comprobar el orden con Mockito.verify() (InOrder), usamos
-        // un flag: el stub de save() explota si todavía no se borró el layout anterior.
+
         AtomicBoolean deletedFirst = new AtomicBoolean(false);
         Mockito.doAnswer(invocation -> {
             UUID id = invocation.getArgument(0);
@@ -110,11 +105,6 @@ public class ClubLayoutServiceImplTest {
     public void testUploadLayoutNotAdminThrows() {
         Mockito.doThrow(new UnauthorizedException())
                 .when(clubService).assertAdmin(CLUB_ID, ADMIN_ID);
-        // clubService.assertAdmin corta el flujo antes de llegar a layoutDao.save: si esa
-        // guarda se rompiera, uploadLayout no lanzaría UnauthorizedException y este
-        // assertThrows ya lo detectaría, sin necesidad de un stub adicional sobre save()
-        // (que Mockito en modo strict marcaría como "unnecessary stubbing" al no
-        // ejecutarse nunca).
         Assert.assertThrows(UnauthorizedException.class, () ->
                 clubLayoutService.uploadLayout(CLUB_ID, ADMIN_EMAIL, FILENAME, "image/png", DATA));
     }

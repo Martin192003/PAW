@@ -25,11 +25,7 @@ export class LoginPage implements OnInit, OnDestroy {
 
   loginForm!: FormGroup;
 
-  /**
-   * Destino al que volver después de un login exitoso (por ejemplo,
-   * `/clubs/new` cuando authGuard interrumpió el flujo de creación de club).
-   * Viene del query param `returnUrl` que setean los guards al redirigir acá.
-   */
+
   private returnUrl: string | null = null;
 
   constructor(
@@ -73,9 +69,8 @@ export class LoginPage implements OnInit, OnDestroy {
   onSubmit(): void {
     this.submittedAttempted = true;
     this.loginForm.markAllAsTouched();
-    
+
     if (this.loginForm.invalid || this.submitting) {
-      // Clear server error when form has validation errors
       this.errorMessage = '';
       return;
     }
@@ -106,8 +101,6 @@ export class LoginPage implements OnInit, OnDestroy {
         const status = error?.status ?? 0;
 
         if (status === 403) {
-          // Backend retorna 403 para cuentas no verificadas (DisabledException).
-          // Redirigir al flow de verificación y pedir reenvio automatico.
           this.router.navigate(['/verify-mail'], {
             queryParams: {
               usernameOrEmail,
@@ -119,7 +112,6 @@ export class LoginPage implements OnInit, OnDestroy {
 
         this.invalidCredentials = status === 401;
         this.errorMessage = error ? this.resolveErrorMessage(error) : this.i18n.instant('login.errors.loginFailed');
-        // Ensure validation and error message render immediately
         this.submittedAttempted = true;
         try { this.cd.detectChanges(); } catch {}
       },
@@ -152,23 +144,14 @@ export class LoginPage implements OnInit, OnDestroy {
     return this.extractServerMessage(error.error) ?? this.i18n.instant('login.errors.loginFailed');
   }
 
-  /**
-   * Solo aceptamos returnUrl que sean una ruta interna de la app (empieza
-   * con "/" pero no "//", que el navegador podria interpretar como un host
-   * externo). Cualquier otra cosa se descarta para evitar un open redirect.
-   */
+
   private sanitizeReturnUrl(raw: string | null): string | null {
     if (!raw) return null;
     if (!raw.startsWith('/') || raw.startsWith('//')) return null;
     return raw;
   }
 
-  /**
-   * Vuelve a returnUrl si un guard lo dejó guardado (ej. clubs/new), o a
-   * /clubs por default. Usamos navigateByUrl en vez de navigate([...]) porque
-   * returnUrl es una URL completa (puede traer sus propios query params,
-   * como pasa con /admin/bookings?status=...) y navigate() no la parsea bien.
-   */
+
   private redirectAfterLogin(): void {
     const destination$ = this.returnUrl
       ? this.router.navigateByUrl(this.returnUrl, { replaceUrl: true })

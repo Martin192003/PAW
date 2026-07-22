@@ -33,9 +33,7 @@ describe('ClubActivityPage', () => {
     authState = { getUser: vi.fn().mockReturnValue({ userId: 'admin-1' }) };
     cdr = { detectChanges: vi.fn() };
 
-    // Simula el ActivatedRoute real: queryParamMap es un observable que
-    // re-emite el valor actual al suscribirse (por eso BehaviorSubject), y
-    // router.navigate() empuja los nuevos queryParams como una navegacion real.
+
     queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({}));
     route = {
       snapshot: { queryParamMap: convertToParamMap({}) },

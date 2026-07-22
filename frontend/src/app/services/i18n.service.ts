@@ -20,7 +20,6 @@ export class I18nService {
   ) {
     this.initializeLanguage();
 
-    // Si estamos en el navegador, escuchar cambios de idioma del navegador en tiempo real
     if (isPlatformBrowser(this.platformId) && typeof window !== 'undefined' && 'addEventListener' in window) {
       window.addEventListener('languagechange', () => {
         const newLang = this.getBrowserLanguage();
@@ -31,11 +30,9 @@ export class I18nService {
   }
 
   private initializeLanguage(): void {
-    // Configurar idioma en translate
     this.translate.setDefaultLang(this.defaultLanguage);
     this.translate.addLangs(this.supportedLanguages);
 
-    // En SSR no forzamos translate.use() para evitar requests HTTP a assets durante prerender.
     if (!isPlatformBrowser(this.platformId)) {
       this.currentLanguageSubject.next(this.defaultLanguage);
       return;
@@ -49,7 +46,6 @@ export class I18nService {
   }
 
   private getBrowserLanguage(): string {
-    // Obtener el idioma del navegador (solo en el navegador)
     if (!isPlatformBrowser(this.platformId)) {
       return this.defaultLanguage;
     }
@@ -61,7 +57,6 @@ export class I18nService {
     if (this.supportedLanguages.includes(language)) {
       this.translate.use(language);
       this.currentLanguageSubject.next(language);
-      // Guardar preferencia en localStorage solo si estamos en el navegador
       if (isPlatformBrowser(this.platformId)) {
         localStorage.setItem('language', language);
       }

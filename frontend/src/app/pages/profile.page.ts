@@ -84,9 +84,7 @@ export class ProfilePage implements OnInit {
   errorMessage = '';
   saving = false;
 
-  // Mismo patron de "errores congelados" que register.page.ts / club-new.page.ts:
-  // el error no se muestra en vivo mientras se escribe, solo despues de un
-  // intento de guardar, y una vez mostrado queda fijo hasta el proximo intento.
+
   submittedAttempted = false;
   frozenError = false;
   frozenErrorMessage = '';
@@ -123,7 +121,6 @@ export class ProfilePage implements OnInit {
         this.authState.updateUser(freshUser);
       },
       error: () => {
-        // Mantengo el cache local si el backend no responde; el profile sigue usable.
       }
     });
   }
@@ -327,10 +324,7 @@ export class ProfilePage implements OnInit {
     return this.i18n.instant('profile.errors.invalid');
   }
 
-  // El backend no distingue el campo en conflicto en /users/{id} (a diferencia
-  // de /users en el alta), pero como aca se edita un solo campo por vez, un
-  // 409 solo puede deberse al campo que se esta editando (username o email
-  // son los unicos con restriccion de unicidad).
+
   private applyServerFieldError(error: HttpErrorResponse): boolean {
     if (error.status !== 409) {
       return false;

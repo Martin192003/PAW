@@ -32,12 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * BookingsRestController es el otro controller central del rediseño de paginación
- * (colecciones paginadas + unificación de /managed-bookings en
- * GET /bookings?managed=true, ver AUDITORIA_ENTREGA_FINAL.md puntos 11/12/24) y no
- * tenía ningún test.
- */
+
 public class BookingsRestControllerTest {
 
     private static final String LOGIN = "user@example.com";
@@ -79,9 +74,7 @@ public class BookingsRestControllerTest {
         when(principal.getName()).thenReturn(LOGIN);
         when(securityContext.getUserPrincipal()).thenReturn(principal);
 
-        // getBookingById llama a authenticatedUser(), que exige que el resolver
-        // devuelva un User no-nulo (si no, tira NotAuthorizedException). Con esto
-        // alcanza para los tests que no les importa quién es el caller exacto.
+
         when(authenticatedUserResolver.resolve(securityContext)).thenReturn(user(AUTH_USER_ID));
         when(clubService.mapClubNames(any())).thenReturn(Map.of(BOOKING_ID, "Club Test"));
         when(clubService.findManagedClubIds(AUTH_USER_ID)).thenReturn(List.of(CLUB_ID));
@@ -124,9 +117,6 @@ public class BookingsRestControllerTest {
                 true, null, null, null, "created_desc", null, null, 1, 10, securityContext);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        // Si managed=true no delegara en searchForAdminPaginated/countSearchForAdmin,
-        // el total vendría del stub (sin configurar) de la búsqueda "no managed", que
-        // devolvería 0 por default -- así que este total ya confirma la rama correcta.
         assertEquals("7", response.getHeaderString("X-Total-Count"));
     }
 

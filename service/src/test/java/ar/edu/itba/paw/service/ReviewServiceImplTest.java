@@ -97,9 +97,6 @@ public class ReviewServiceImplTest {
 
         Review result = reviewService.updateReview(REVIEW_ID, 2, "Updated", null);
 
-        // result solo puede coincidir con updatedReview si reviewsDao.update fue
-        // llamado con (REVIEW_ID, 2, "Updated") -- ya que ese stub es el único que
-        // devuelve ese objeto -- así que no hace falta un verify() aparte.
         Assert.assertEquals(updatedReview, result);
     }
 
@@ -173,8 +170,7 @@ public class ReviewServiceImplTest {
         Mockito.when(reviewsDao.delete(REVIEW_ID)).thenReturn(true);
         Mockito.when(reviewsDao.countSearch(null, CLUB_ID)).thenReturn(0);
 
-        // clubDao.updateRatingAndCount es void: capturamos si el stub se ejecutó con los
-        // argumentos esperados en vez de usar Mockito.verify() después de ejercitar.
+
         AtomicBoolean ratingPersisted = new AtomicBoolean(false);
         Mockito.doAnswer(invocation -> {
             UUID id = invocation.getArgument(0);

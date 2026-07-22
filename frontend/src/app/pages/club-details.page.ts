@@ -63,12 +63,10 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   reviewsTotalPages = 1;
   private reviewsPageSize = 3;
 
-  // Estado del usuario actual y de su review (si tiene una)
   currentUser: User | null = null;
   isLoggedIn = false;
   myReview?: Review;
 
-  // Estado del formulario de review (crear / editar)
   reviewFormOpen = false;
   reviewFormMode: 'create' | 'edit' = 'create';
   reviewFormRating = 0;
@@ -142,7 +140,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Estado del usuario logueado para condicionar UI de reviews
     this.currentUser = this.authState.getUser();
     this.authState.isLoggedIn$.pipe(takeUntil(this.destroy$)).subscribe(logged => {
       this.isLoggedIn = logged;
@@ -413,7 +410,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       const d = new Date(base);
       d.setDate(base.getDate() + i);
       const day = d.getDay();
-      // 4=Thu, 5=Fri, 6=Sat (mismo criterio que JSP)
       if (day === 4 || day === 5 || day === 6) {
         dates.push(this.toIsoDate(d));
       }
@@ -529,8 +525,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
   refreshAfterReservation(): void {
     this.setReservationModalOpen(false);
     if (this.currentClubId) {
-      // Refrescamos solo la disponibilidad de mesas vía el service (sin
-      // recargar toda la página) para no perder el estado de la SPA.
       this.loadAvailableBookingDates(this.currentClubId, this.selectedDate, this.clubLinks);
     }
   }
@@ -617,11 +611,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /**
-   * Refresca el rating/quantityRatings del club tras una mutación de review.
-   * El backend recalcula el promedio en updateClubRating, así que basta con
-   * pedir el club fresco.
-   */
+
   private refreshClubRating(): void {
     if (!this.currentClubId) return;
     const id = this.currentClubId;
@@ -629,7 +619,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     this.clubService.getClubById(id).subscribe({
       next: c => {
         if (this.club && id === this.currentClubId) {
-          // Actualizo solo los campos relevantes para no romper otras refs
           this.club = {
             ...this.club,
             rating: c.rating,
@@ -642,11 +631,7 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  /**
-   * Detecta si el usuario logueado ya tiene una review en este club.
-   * Como el endpoint REST de reviews devuelve userId, comparamos por id.
-   * Si no encontramos en la pagina actual, buscamos en todas las paginas.
-   */
+
   private refreshMyReview(clubId: string): void {
     const user = this.currentUser;
     if (!user) {
@@ -654,7 +639,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // Primero buscamos en la pagina cargada
     const inCurrentPage = this.reviews.find(r => r.userId === user.userId);
     if (inCurrentPage) {
       this.myReview = inCurrentPage;
@@ -933,7 +917,6 @@ export class ClubDetailsPage implements OnInit, AfterViewInit, OnDestroy {
       mapContainer.style.cursor = 'pointer';
       mapContainer.addEventListener('click', () => this.enableMapInteraction(L, mapContainer), { once: true });
 
-      // Leaflet needs a reflow when the container was recently created by Angular.
       setTimeout(() => this.mapInstance?.invalidateSize(), 0);
     } catch (error) {
       console.error('map init error', error);

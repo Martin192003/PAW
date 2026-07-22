@@ -98,8 +98,7 @@ public class UserRestController {
                     .build();
         }
 
-        // El token debe pertenecer al usuario del path: la verificacion es una
-        // transicion de estado sobre /users/{userId}, no un recurso global.
+
         if (userId == null || !userId.equals(user.getId().toString())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("invalid_verification_token"))
@@ -114,10 +113,7 @@ public class UserRestController {
                     .build();
         }
 
-        // Tras verificar, se emite una sesion para que el usuario quede logueado
-        // automaticamente al volver a la app (misma mecanica que el reset de
-        // password: se devuelve el usuario ya verificado + un JWT en el body y
-        // en los headers Paw-Auth-Token).
+
         User verified = userService.findById(user.getId()).orElse(user);
         String accessToken = ApiTokenHeaders.tokenFor(jwtUtil, verified);
         long expiresIn = jwtUtil.getExpirationSeconds();
@@ -534,10 +530,7 @@ public class UserRestController {
         addPaginationLinks(response, page, size, total);
         return response.build();
     }
-    /**
-     * Resuelve el User de dominio a partir del Authentication de Spring Security.
-     * Soporta PawUserDetails (tiene el UUID) y fallback por username/email.
-     */
+
     private User resolveAuthenticatedUser(Authentication auth) {
         Object principal = auth.getPrincipal();
         if (principal instanceof PawUserDetails) {

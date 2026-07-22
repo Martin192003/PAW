@@ -12,7 +12,6 @@ import java.util.List;
 public final class UserMapper {
     private UserMapper() {}
 
-    // --- DTO privado (propio usuario o admin) ---
 
     public static UserDto toDto(User user) {
         if (user == null) return null;
@@ -39,7 +38,6 @@ public final class UserMapper {
         return dto;
     }
 
-    // --- Misma representación de usuario, sin campos privados ---
 
     public static UserDto toPublicDto(User user, UriInfo uriInfo) {
         if (user == null) return null;
@@ -61,7 +59,6 @@ public final class UserMapper {
         return dto;
     }
 
-    // --- Helpers ---
 
     private static List<LinkDto> buildPrivateLinks(String userId, UriInfo uriInfo) {
         List<LinkDto> links = new ArrayList<>();

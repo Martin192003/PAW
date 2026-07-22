@@ -63,10 +63,7 @@ export class AuthStateService {
     this.persistToken(normalizedToken);
   }
 
-  /**
-   * Cierra la sesión: limpia token y usuario de ambos storages y notifica a los suscriptores.
-   * Llamar desde el interceptor al recibir 401 con token expirado o inválido.
-   */
+
   logout(): void {
     this.clearMemorySession();
     this.clearStoredSession();
@@ -203,7 +200,7 @@ export class AuthStateService {
       storage.removeItem(this.tokenKey);
       storage.removeItem(this.userKey);
     } catch {
-      // ignore
+      // ignorar
     }
   }
 

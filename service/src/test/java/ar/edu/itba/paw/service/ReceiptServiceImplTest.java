@@ -95,10 +95,6 @@ public class ReceiptServiceImplTest {
         Mockito.when(booking.getStatus()).thenReturn(Status.PENDIENTE);
 
         Mockito.when(receiptDao.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
-        // En vez de un Mockito.verify() posterior, capturamos los argumentos reales
-        // dentro del propio stub y los comparamos después de ejercitar: así la
-        // postcondición real ("se creó el receipt con los datos esperados") queda
-        // comprobada sin depender del orden de resolución de stubs de Mockito.
         Object[] createArgs = new Object[5];
         Mockito.when(receiptDao.create(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenAnswer(invocation -> {
@@ -135,8 +131,6 @@ public class ReceiptServiceImplTest {
     public void testUploadForBookingNormalizesJpgAlias() {
         mockValidBookingForUpload();
         Mockito.when(receiptDao.findByBooking(BOOKING_ID)).thenReturn(Optional.empty());
-        // Capturamos el content type con el que se llamó al DAO en vez de usar
-        // Mockito.verify() después de ejercitar.
         String[] capturedContentType = new String[1];
         Mockito.when(receiptDao.create(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenAnswer(invocation -> {
@@ -189,10 +183,6 @@ public class ReceiptServiceImplTest {
         Mockito.when(booking.getUser()).thenReturn(new User(UPLOADED_BY));
         Mockito.when(booking.getStatus()).thenReturn(Status.CONFIRMADA);
 
-        // uploadForBooking valida el estado ANTES de llegar a receiptDao.create (ver
-        // ReceiptServiceImpl líneas 101-102): si esa guarda se rompiera, el método no
-        // lanzaría InvalidReceiptException y este assertThrows fallaría por sí solo, sin
-        // necesidad de un Mockito.verify(never()) adicional sobre receiptDao.create.
         Assert.assertThrows(InvalidReceiptException.class, () ->
                 receiptService.uploadForBooking(BOOKING_ID, UPLOADED_BY, FILENAME, CONTENT_TYPE, DATA));
     }
@@ -204,9 +194,7 @@ public class ReceiptServiceImplTest {
         Mockito.when(booking.getUser()).thenReturn(new User(UPLOADED_BY));
         Mockito.when(booking.getStatus()).thenReturn(Status.CANCELADA);
 
-        // Mismo razonamiento que en testUploadForBookingConfirmedThrows: la guarda de
-        // estado corta el flujo antes de tocar el DAO, así que el propio assertThrows ya
-        // certifica que receiptDao.create no se llegó a invocar.
+
         Assert.assertThrows(InvalidReceiptException.class, () ->
                 receiptService.uploadForBooking(BOOKING_ID, UPLOADED_BY, FILENAME, CONTENT_TYPE, DATA));
     }
@@ -218,10 +206,7 @@ public class ReceiptServiceImplTest {
         Mockito.when(booking.getUser()).thenReturn(new User(UPLOADED_BY));
         Mockito.when(booking.getStatus()).thenReturn(Status.CONFIRMADA);
 
-        // deleteByBookingForUser corta por estado (CONFIRMADA) antes de llegar a
-        // receiptDao.findByBooking/delete (ver líneas 221-222 de la implementación); si
-        // esa guarda fallara, el método no lanzaría y este assertThrows lo detectaría
-        // solo, sin necesidad de verificar la ausencia de la llamada al DAO aparte.
+
         Assert.assertThrows(InvalidReceiptException.class, () ->
                 receiptService.deleteByBookingForUser(BOOKING_ID, UPLOADED_BY));
     }
@@ -244,9 +229,7 @@ public class ReceiptServiceImplTest {
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(newReceipt));
-        // Los argumentos exactos de receiptDao.create ya están cubiertos por
-        // testUploadForBookingSuccess; acá lo relevante es que putForBookingInClub
-        // resuelve y devuelve el receipt recién creado.
+
         Mockito.when(receiptDao.create(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(RECEIPT_ID);
         Mockito.when(receiptDao.findByIdWithData(RECEIPT_ID)).thenReturn(Optional.of(newReceipt));
@@ -265,11 +248,6 @@ public class ReceiptServiceImplTest {
         Mockito.when(bookingService.getForUserOrAdminInClub(Mockito.any(), Mockito.eq(BOOKING_ID), Mockito.any()))
                 .thenReturn(booking);
 
-        // putForBookingInClub corta por estado (CONFIRMADA) antes de tocar
-        // receiptDao.findByBooking/delete/create (líneas 179-180 de la implementación);
-        // si esa guarda fallara, no se lanzaría InvalidReceiptException y este
-        // assertThrows ya lo detectaría, sin necesitar verificar por separado que el DAO
-        // no fue invocado.
         UUID someClubId = UUID.randomUUID();
         Assert.assertThrows(InvalidReceiptException.class, () ->
                 receiptService.putForBookingInClub(someClubId, BOOKING_ID, "admin@club.com", FILENAME, CONTENT_TYPE, DATA));

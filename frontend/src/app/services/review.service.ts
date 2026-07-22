@@ -25,10 +25,7 @@ export class ReviewService {
 
   constructor(private readonly http: HttpClient) {}
 
-  /**
-   * GET /clubs/{clubId}/reviews
-   * Lista paginada de reviews. El backend manda X-Total-Count en el header.
-   */
+
   listByClub(clubId: string, page = 0, size = 10): Observable<ReviewListResult> {
     const params = new HttpParams()
       .set('page', page)
@@ -41,10 +38,7 @@ export class ReviewService {
       );
   }
 
-  /**
-   * GET /users/{userId}/reviews
-   * Lista paginada de las reviews que hizo el usuario.
-   */
+
   listByUser(userId: string, page = 0, size = 10): Observable<ReviewListResult> {
     const params = new HttpParams()
       .set('page', page)
@@ -57,26 +51,17 @@ export class ReviewService {
       );
   }
 
-  /**
-   * POST /clubs/{clubId}/reviews
-   * Crea una review nueva. Requiere estar autenticado.
-   */
+
   create(clubId: string, payload: ReviewCreateRequest): Observable<Review> {
     return this.http.post<Review>(`${this.apiUrl}/clubs/${clubId}/reviews`, this.toRequestBody(payload));
   }
 
-  /**
-   * PUT /clubs/{clubId}/reviews/{reviewId}
-   * Actualiza una review concreta del usuario autenticado.
-   */
+
   update(clubId: string, reviewId: string, payload: ReviewCreateRequest): Observable<Review> {
     return this.http.put<Review>(`${this.apiUrl}/clubs/${clubId}/reviews/${reviewId}`, this.toRequestBody(payload));
   }
 
-  /**
-   * DELETE /clubs/{clubId}/reviews/{reviewId}
-   * Borra una review concreta del usuario autenticado.
-   */
+
   delete(clubId: string, reviewId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/reviews/${reviewId}`);
   }

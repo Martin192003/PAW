@@ -86,8 +86,6 @@ public class TablesRestControllerTest {
         Response response = controller.listTables(CLUB_ID.toString(), "2026-08-01", mock(SecurityContext.class));
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
-        // Si no hubiera usado findAvailableOnDate, el total vendría de
-        // findByClubId (sin stubear), que devuelve una lista vacía por default.
         assertEquals("2", response.getHeaderString("X-Total-Count"));
     }
 

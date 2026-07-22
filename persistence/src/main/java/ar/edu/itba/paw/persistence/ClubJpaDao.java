@@ -102,7 +102,6 @@ public class ClubJpaDao implements ClubDao {
     @Override
     public List<User> findAdminsByClubId(UUID clubId) {
 
-        //Hay solo uno
         List<User> admins = em.createQuery("""
                         select distinct u
                         from Club c
@@ -112,7 +111,6 @@ public class ClubJpaDao implements ClubDao {
                 .setParameter("cid", clubId)
                 .getResultList();
 
-        // Puede no existir si el club no tiene contact_info o si el id no existe.
         List<User> contacts = em.createQuery("""
                         select c.contactInfo
                         from Club c
@@ -451,7 +449,6 @@ public class ClubJpaDao implements ClubDao {
         };
     }
 
-    // Mapea el sort a propiedades JPQL
     private static String jpqlClubSort(final String sort) {
         final String key = (sort == null) ? "" : sort;
         return switch (key) {

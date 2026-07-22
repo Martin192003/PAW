@@ -65,11 +65,7 @@ public class ApiBasicAuthenticationFilterTest {
 
         filter.doFilter(request, response, new MockFilterChain());
 
-        // El filtro solo autentica el SecurityContext cuando
-        // userService.authenticateAndGetUser devuelve un user no-nulo, y eso sólo pasa
-        // si se lo llamó con las credenciales correctas (el mock "nice" por defecto
-        // devuelve null para cualquier otra combinación) -- así que estas dos
-        // aserciones ya certifican la llamada correcta sin necesitar verify().
+
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         assertTrue(SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof PawUserDetails);
         assertEquals("jwt-token", response.getHeader("Paw-Auth-Token"));

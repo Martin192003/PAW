@@ -4,10 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { EventService } from './event.service';
 import { ClubEvent } from '../models/ClubEvent.model';
 
-// event.service.ts no tenia ningun test (ver AUDITORIA_ENTREGA_FINAL.md punto 25):
-// mapea DTOs a ClubEvent, extrae el clubId del link "club", y resuelve las URLs de
-// mutacion a partir de los links HATEOAS del evento (con fallback a una URL armada a
-// mano cuando todavia no se cargó el evento completo).
+
 describe('EventService', () => {
   let service: EventService;
   let httpMock: HttpTestingController;

@@ -1,9 +1,7 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
-  // Rutas de autenticación: client-only. No hay contenido SEO que pre-renderizar
-  // y el SSR/prerender interfiere con el manejo de formularios interactivos
-  // (withEventReplay captura submit events antes de que Angular hidrate).
+
   {
     path: 'login',
     renderMode: RenderMode.Client
@@ -54,7 +52,7 @@ export const serverRoutes: ServerRoute[] = [
   },
   {
     path: 'admin/**',
-    renderMode: RenderMode.Client  // ← no SSR para rutas autenticadas
+    renderMode: RenderMode.Client
   },
   {
     path: '**',

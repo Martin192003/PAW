@@ -25,10 +25,7 @@ export class SideBarComponent {
     private readonly router: Router,
   ) {}
 
-  // 'clubs' (Mis clubes) y 'clubsReservations' (Reservas de clubes) llevan a
-  // /admin/activity y /admin/bookings, que ya estan protegidas por
-  // adminGuard. Alguien sin role ADMIN no administra ningun club, asi que
-  // ademas de bloquear la ruta hay que ni mostrar esas tabs.
+
   private readonly allItems: Array<{
     key: SideBarSection;
     labelKey: string;

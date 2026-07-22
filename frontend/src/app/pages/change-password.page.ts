@@ -10,8 +10,7 @@ import { finalize, takeUntil } from 'rxjs/operators';
 import { TranslateModule } from '@ngx-translate/core';
 import { I18nService } from '../services/i18n.service';
 
-// Antes este formulario pedia 8 caracteres mientras que el de registro
-// (register.page.ts) pedia 6: se unifica al mismo minimo en toda la app.
+
 const PASSWORD_MIN_LENGTH = 6;
 
 @Component({
@@ -30,10 +29,6 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
   showResetModal = false;
   useLoggedUserEmail = false;
 
-  // Errores generales de la request (red, 5xx, token invalido/vencido: no son
-  // atribuibles a un campo puntual del formulario), se siguen mostrando como
-  // cartel arriba del form. Los que si son de un campo van por el mismo
-  // patron de "errores congelados" que register.page.ts / club-handler.page.ts.
   forgotError = '';
   resetError = '';
   resetCompleted = false;
@@ -82,11 +77,6 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     });
   }
 
-  // Si ya tenes sesion iniciada y entraste desde /profile, no tiene sentido
-  // mandarte un mail y hacerte tocar un link para volver a esta misma pantalla:
-  // se muestra directamente el formulario de nueva contraseña, identificando
-  // al usuario por el JWT de la sesion actual en vez de por un token de mail.
-  // El flujo de "te mando un mail" solo aplica cuando NO hay sesion (login).
   get showResetForm(): boolean {
     return !!this.token || this.useLoggedUserEmail;
   }
@@ -167,8 +157,7 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
       return;
     }
 
-    // Sin token: solo se llega hasta acá si useLoggedUserEmail es true
-    // (ver showResetForm), es decir, cambio de contraseña autenticado.
+
     const userId = this.authState.getUser()?.userId;
     if (!userId) {
       this.applyAuthenticatedChangeError(new HttpErrorResponse({ status: 401 }));
@@ -209,9 +198,6 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     ).subscribe({
       next: () => {
         this.ngZone.run(() => {
-          // A diferencia del flujo con token, aca la sesion actual sigue
-          // siendo valida (el JWT no cambia), asi que no hace falta un nuevo
-          // login: solo se confirma el cambio con el mismo modal de éxito.
           this.resetCompleted = true;
           this.cdr.detectChanges();
         });
@@ -340,9 +326,7 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     };
   }
 
-  // El 400 de "email requerido" solo puede pasar si se manda un email vacio
-  // directo a la API (el frontend ya lo exige antes de submitir), pero se
-  // mapea igual al campo por si acaso, en vez de mostrar un cartel generico.
+
   private applyForgotError(error: HttpErrorResponse): void {
     if (error.status === 0) {
       this.forgotError = this.i18n.instant('passwordReset.errors.network');
@@ -363,9 +347,7 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
       return;
     }
 
-    // El token vencido/invalido no es un campo editable del formulario (viene
-    // del link del mail), asi que se sigue mostrando como cartel arriba del
-    // form en vez de error de campo.
+
     if (error.status === 404) {
       this.resetError = this.i18n.instant('passwordReset.errors.invalidToken');
       return;
@@ -384,8 +366,7 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
         return;
       }
 
-      // Unico otro 400 posible a esta altura: ValidationException de
-      // "la contraseña no puede ser igual a la anterior" (UserServiceImpl).
+
       this.resetServerFieldErrors['newPassword'] = this.i18n.instant('passwordReset.errors.passwordUnchanged');
       return;
     }
@@ -393,8 +374,6 @@ export class ChangePasswordPage implements OnInit, OnDestroy {
     this.resetError = this.i18n.instant('passwordReset.errors.updateFailed');
   }
 
-  // El subrecurso de credenciales devuelve "password_unchanged" como mensaje
-  // literal, asi que no hace falta adivinar cual es el unico 400 restante.
   private applyAuthenticatedChangeError(error: HttpErrorResponse): void {
     if (error.status === 0) {
       this.resetError = this.i18n.instant('passwordReset.errors.network');

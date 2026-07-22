@@ -6,23 +6,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-/**
- * Agrega headers de cache apropiados para los assets estaticos de Angular.
- *
- * Angular genera nombres con hash para todos sus assets (outputHashing: "all"),
- * por lo que esos archivos nunca cambian de contenido. Se les aplica cache
- * incondicional de un anio con la directiva "immutable".
- *
- * Politica:
- *   - Assets hasheados (*.js, *.css, *.woff2, *.png, etc. con segmento hash):
- *       Cache-Control: public, max-age=31536000, immutable
- *   - index.html, index.csr.html y noscript.html (entrypoints SPA):
- *       Cache-Control: no-store  (no guardar el shell de la SPA)
- */
+
 public class StaticAssetsCacheFilter implements Filter {
 
-    // Angular output hashes are alphanumeric, not only hexadecimal.
-    // Examples: styles-L6HQ23U3.css, chunk-QASGRXRC.js.
     private static final Pattern HASHED_ASSET =
             Pattern.compile(".*[\\-\\.][0-9A-Za-z]{8,}\\.[a-zA-Z0-9]+$");
 
@@ -46,19 +32,14 @@ public class StaticAssetsCacheFilter implements Filter {
         String uri = httpReq.getRequestURI();
 
         if (isHashedStaticAsset(uri)) {
-            // Cache incondicional: el contenido nunca cambia para este nombre de archivo.
             httpResp.setHeader("Cache-Control",
                     "public, max-age=" + ONE_YEAR_SECONDS + ", immutable");
         } else if (STATIC_EXTENSION.matcher(uri).matches()) {
-            // Recursos estaticos no hasheados (favicon, public/, legacy resources)
-            // no pueden recibir cache incondicional porque no tienen cache busting.
             httpResp.setHeader("Cache-Control", "no-cache");
         } else if (isIndexHtml(uri)) {
-            // El index.html es el punto de entrada de la SPA; no debe cachearse.
             httpResp.setHeader("Cache-Control", "no-store");
             httpResp.setHeader("Pragma", "no-cache");
         }
-        // Para cualquier otro recurso (API, etc.) no se toca el header.
 
         chain.doFilter(request, response);
     }

@@ -44,8 +44,7 @@ public class UserMapperTest {
 
         UserDto dto = UserMapper.toPublicDto(user(userId), uriInfo);
 
-        // El profesor marco dos veces que el email (y datos privados) no deben
-        // ser parte de la representacion publica de un usuario.
+
         assertNull(dto.getEmail());
         assertNull(dto.getCellphone());
         assertNull(dto.getRole());

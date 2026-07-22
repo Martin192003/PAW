@@ -125,7 +125,6 @@ public class BookingRestController {
                 )
                 .orElseThrow(() -> new NotFoundException("receipt.notfound"));
 
-        // Los receipts son documentos privados; nunca deben cachearse en proxies ni CDN.
         CacheControl cacheControl = new CacheControl();
         cacheControl.setPrivate(true);
         cacheControl.setNoStore(true);

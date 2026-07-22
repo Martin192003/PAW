@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ApiErrorService } from './api-error.service';
 
-// api-error.service.ts no tenia ningun test (ver AUDITORIA_ENTREGA_FINAL.md punto 25).
 describe('ApiErrorService', () => {
   let service: ApiErrorService;
 

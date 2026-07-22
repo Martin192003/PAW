@@ -154,7 +154,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   productFrozenErrorMessages: { [key: string]: string } = {};
   private static readonly PRODUCT_FIELDS = ['productName', 'basePrice', 'description'];
 
-  // Idem para el formulario de eventos: eventname es VARCHAR(120) en schema.sql.
   eventSubmittedAttempted = false;
   eventFrozenErrors: { [key: string]: boolean } = {};
   eventFrozenErrorMessages: { [key: string]: string } = {};
@@ -170,10 +169,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     description: '',
     date: ''
   };
-  // Foto elegida en el formulario de alta/edicion de evento, todavia no
-  // subida: se manda recien despues de crear/actualizar el evento (el
-  // endpoint de foto necesita un eventId existente, no hay forma de crear
-  // el evento con la foto en un solo request).
+
   selectedEventPhotoFile: File | null = null;
   selectedEventPhotoName = '';
 
@@ -1102,9 +1098,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       case 'date': {
         const value = this.eventForm.date;
         if (!value) return this.i18n.instant('clubHandler.eventErrors.required');
-        // EventServiceImpl.validateDate() rechaza fechas anteriores a hoy
-        // (InvalidDateRangeException, mapeada a 400). Se valida lo mismo acá
-        // para no depender del viaje al backend para un error tan básico.
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const parsed = new Date(`${value}T00:00:00`);
@@ -1113,8 +1106,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         return '';
       }
       case 'description': {
-        // A diferencia de club/producto, la descripcion del evento es
-        // opcional (EventServiceImpl la deja en null si viene vacia).
         const value = (this.eventForm.description ?? '').trim();
         if (value.length > 500) return this.i18n.instant('clubHandler.eventErrors.descriptionMax');
         return '';
@@ -1172,16 +1163,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         if (!photoToUpload || !savedEvent.eventId) {
           return of({ savedEvent, photoFailed: false });
         }
-        // La foto se manda en un segundo request recien ahora, porque el
-        // endpoint de foto necesita que el evento ya exista (requiere
-        // eventId). Si esto falla, el evento igual quedo creado/actualizado:
-        // se avisa con un mensaje distinto en vez de perder el guardado.
-        //
-        // Importante: hay que usar el evento que devuelve uploadEventPhoto
-        // (con photoId ya seteado), no el "savedEvent" original de
-        // create/update. Ese seguia con photoId null porque se capturo antes
-        // de subir la foto, y al insertarlo en la lista con upsertEventInList
-        // quedaba una copia desactualizada hasta el proximo loadEvents().
         return this.clubService.uploadEventPhoto(clubId, savedEvent.eventId, photoToUpload, savedEvent).pipe(
           timeout(this.mutationTimeoutMs),
           map((eventWithPhoto) => ({ savedEvent: eventWithPhoto, photoFailed: false })),
@@ -1195,8 +1176,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     ).subscribe({
       next: ({ savedEvent, photoFailed }) => {
         if (!photoFailed && savedEvent.eventId) {
-          // Por si este eventId habia quedado marcado como "foto rota" de un
-          // intento anterior (p. ej. reintentando despues de un error).
           this.failedEventPhotoIds.delete(savedEvent.eventId);
         }
         this.upsertEventInList(savedEvent);
@@ -1208,11 +1187,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
         this.loadEvents();
       },
       error: (error: HttpErrorResponse) => {
-        // eventName y date ya se validan arriba antes de mandar el request,
-        // asi que el unico 400 que puede llegar del backend a esta altura es
-        // InvalidDateRangeException/ValidationException (EventServiceImpl).
-        // Se muestra como error de campo en vez del cartel/modal generico,
-        // igual que el resto de los formularios (mesas, club, producto).
+
         if (error.status === 400) {
           this.eventSubmittedAttempted = true;
           this.eventFrozenErrors['date'] = true;
@@ -1382,7 +1357,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
     this.clubLoadAttempted = false;
     this.errorMessage = '';
 
-    // Avoid indefinite loading when any secondary endpoint hangs.
     const loadingTimeout = setTimeout(() => {
       this.loading = false;
       this.clubLoadAttempted = true;
@@ -1543,7 +1517,6 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
   }
 
   private withCacheBust(url: string): string {
-    // Only used immediately after replacing image resources that keep the same URL.
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}t=${Date.now()}`;
   }

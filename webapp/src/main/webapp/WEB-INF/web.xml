@@ -85,7 +85,6 @@
         <url-pattern>/api/*</url-pattern>
     </servlet-mapping>
 
-    <!-- Cache incondicional para assets estáticos hasheados de Angular -->
     <filter>
         <filter-name>staticAssetsCacheFilter</filter-name>
         <filter-class>ar.edu.itba.paw.webapp.config.StaticAssetsCacheFilter</filter-class>

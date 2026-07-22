@@ -4,10 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { UserService, UserUpdateResult } from './user.service';
 import { ApiMessageResponse, LoginResponse, User } from '../models/user.model';
 
-// UserService maneja toda la autenticacion (login, verificacion, reset de password,
-// cambio de password autenticado) y no tenia ningun test propio -- ver
-// AUDITORIA_ENTREGA_FINAL.md punto 25 ("capa de estado" sin cubrir, requisito
-// explicito de Unidad 10).
+
 describe('UserService', () => {
   let service: UserService;
   let httpMock: HttpTestingController;
@@ -57,15 +54,12 @@ describe('UserService', () => {
       result = res;
     });
 
-    // JWT cuyo claim `sub` es el userId; el login lo decodifica para pedir /users/{id}.
     const jwt = `header.${btoa(JSON.stringify({ sub: 'user-1' }))}.sig`;
 
-    // Paso 1: Basic contra un recurso protegido -> el backend emite el token.
     const mintReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/bookings'));
     expect(mintReq.request.headers.get('Authorization')).toBe(`Basic ${btoa('demo@example.com:secret123')}`);
     mintReq.flush([], { headers: { 'Paw-Auth-Token': jwt } });
 
-    // Paso 2: con el token (Bearer) se pide el recurso canonico del usuario.
     const userReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/users/user-1'));
     expect(userReq.request.headers.get('Authorization')).toBe(`Bearer ${jwt}`);
     userReq.flush(fakeUser);
@@ -91,7 +85,6 @@ describe('UserService', () => {
     const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/user-1/verification'));
     verificationReq.flush({ message: 'already_verified' });
 
-    // No debe haber ningun GET adicional a /users/* si la respuesta no trae token.
     httpMock.expectNone(request => request.method === 'GET');
     expect(result).toEqual({ message: 'already_verified' });
   });
@@ -103,7 +96,6 @@ describe('UserService', () => {
     const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/user-1/verification'));
     verificationReq.flush({ user: fakeUser, accessToken: 'jwt-token', tokenType: 'Bearer', expiresIn: 3600 });
 
-    // La verificacion exitosa deja al usuario logueado.
     expect(result).toEqual({ token: 'jwt-token', user: fakeUser });
   });
 

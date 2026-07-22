@@ -107,10 +107,6 @@ describe('BookingService filters', () => {
     fallback.flush({ content: [] });
   });
 
-  // Los métodos de abajo no tenían ningún test (ver AUDITORIA_ENTREGA_FINAL.md punto
-  // 25): booking.service.spec.ts sólo cubría listUserBookings/listManagedClubBookings,
-  // dejando 7 de los 9 métodos públicos del servicio sin ejercitar.
-
   it('getBooking reads the booking by its canonical flat URI', () => {
     service.getBooking('club-1', 'booking-1').subscribe();
 

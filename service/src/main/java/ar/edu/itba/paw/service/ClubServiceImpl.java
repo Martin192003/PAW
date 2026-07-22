@@ -20,12 +20,7 @@ import java.util.*;
 @Service
 public class ClubServiceImpl implements ClubService{
 
-    // "description" es TEXT en la base (sin limite de longitud a nivel de
-    // columna), asi que sin este chequeo un club podia guardar una
-    // descripcion arbitrariamente larga. El limite del frontend
-    // (club-new.page.ts / club-handler.page.ts) espeja este mismo numero,
-    // pero se valida tambien aca para que no sea bypasseable pegandole
-    // directo a la API.
+
     private static final int DESCRIPTION_MAX_LENGTH = 1000;
 
     private final ClubDao clubDao;

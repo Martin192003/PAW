@@ -60,16 +60,12 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String username = credentials[0];
-        // Enmascarado porque username suele ser el email real del usuario (PII);
-        // no queda en texto plano ni siquiera en logs de nivel debug.
+
         LOGGER.debug("ApiBasicAuthenticationFilter: attempting authentication for username={}", mask(username));
 
         try {
             User user = userService.authenticateAndGetUser(credentials[0], credentials[1]);
             if (user == null) {
-                // DEBUG (no INFO): un intento de login fallido (password incorrecta,
-                // etc.) es un evento rutinario, no algo que deba quedar en el nivel
-                // que se loguea siempre en producción.
                 LOGGER.debug("ApiBasicAuthenticationFilter: authentication failed for username={}", mask(username));
                 AuthErrorResponses.write(response, HttpServletResponse.SC_UNAUTHORIZED, "invalid_credentials");
                 return;
@@ -81,8 +77,6 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
             var context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
-            // DEBUG (no INFO): cada login exitoso es tráfico normal, no un evento
-            // digno del nivel que se loguea siempre en producción.
             LOGGER.debug("ApiBasicAuthenticationFilter: authentication succeeded for username={}", mask(username));
             ApiTokenHeaders.remember(request, jwtUtil, user);
 
@@ -99,11 +93,7 @@ public class ApiBasicAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    /**
-     * Enmascara un identificador potencialmente sensible (username/email) antes
-     * de loguearlo: conserva sólo los primeros caracteres para poder correlacionar
-     * eventos en debug sin exponer el dato completo.
-     */
+
     private static String mask(String value) {
         if (value == null) {
             return null;

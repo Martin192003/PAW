@@ -30,8 +30,7 @@ describe('LoginPage', () => {
     router = {
       navigate: vi.fn().mockResolvedValue(true),
       navigateByUrl: vi.fn().mockResolvedValue(true),
-      // The template uses routerLink (e.g. "Registrarse" / "Olvidé mi contraseña"),
-      // which needs a working createUrlTree/serializeUrl/events even on a mocked Router.
+
       createUrlTree: vi.fn().mockReturnValue({} as any),
       serializeUrl: vi.fn().mockReturnValue(''),
       events: new Subject<unknown>(),

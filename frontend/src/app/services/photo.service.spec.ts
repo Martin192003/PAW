@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { PhotoService } from './photo.service';
 
-// photo.service.ts no tenia ningun test (ver AUDITORIA_ENTREGA_FINAL.md punto 25).
 describe('PhotoService', () => {
   let service: PhotoService;
 

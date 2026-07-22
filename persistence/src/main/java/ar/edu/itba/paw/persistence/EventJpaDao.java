@@ -166,7 +166,6 @@ public class EventJpaDao implements EventDao {
     @Override
     public List<Event> findPastByClub(UUID clubId, int page, int size) {
 
-        // Si no hay clubId, no tiene sentido buscar
         if (clubId == null) {
             return List.of();
         }
