@@ -214,7 +214,7 @@ public class UserRestController {
                 isBlank(body.getName()) ||
                 isBlank(body.getSurname()) ||
                 isBlank(body.getEmail()) ||
-                isBlank(body.getPassword()) ||
+                isBlank(body.registrationPassword()) ||
                 isBlank(body.getCellphone())
         ) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -227,7 +227,7 @@ public class UserRestController {
             User user = userService.create(
                     body.getUsername().trim(),
                     body.getName().trim(),
-                    body.getPassword(),
+                    body.registrationPassword(),
                     body.getSurname().trim(),
                     body.getEmail().trim(),
                     body.getCellphone().trim(),

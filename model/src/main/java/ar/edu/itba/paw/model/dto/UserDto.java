@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.model.dto;
 
+import javax.xml.bind.annotation.XmlElement;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -36,8 +37,11 @@ public class UserDto {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getPassword() { return password; }
+
+    @XmlElement
     public void setPassword(String password) { this.password = password; }
+
+    public String registrationPassword() { return password; }
 
     public String getCellphone() { return cellphone; }
     public void setCellphone(String cellphone) { this.cellphone = cellphone; }
