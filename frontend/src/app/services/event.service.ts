@@ -84,8 +84,8 @@ export class EventService {
 
   getEventsByClub(clubId: string, page = 0, size = 20): Observable<PagedResponse<ClubEvent>> {
     return this.http
-      .get<EventDto[] | RawResponse>(`${this.base}/clubs/${clubId}/events`, {
-        params: this.pageParams(page, size),
+      .get<EventDto[] | RawResponse>(`${this.base}/events`, {
+        params: this.pageParams(page, size).set('clubId', clubId),
         observe: 'response',
       })
       .pipe(switchMap(response => this.pageFromResponse(response, page, size)));
@@ -94,33 +94,33 @@ export class EventService {
 
   getEventById(clubId: string, eventId: string): Observable<ClubEvent> {
     return this.http
-      .get<EventDto>(`${this.base}/clubs/${clubId}/events/${eventId}`)
+      .get<EventDto>(`${this.base}/events/${eventId}`)
       .pipe(map(toClubEvent));
   }
 
 
   createEvent(clubId: string, payload: EventPayload, clubLinks?: Record<string, string>): Observable<ClubEvent> {
-    const url = this.resolveEventLink(clubLinks, ['events', 'club-events'], `club ${clubId} events`, `${this.base}/clubs/${clubId}/events`);
+    const url = this.resolveEventLink(clubLinks, ['events', 'club-events'], `club ${clubId} events`, `${this.base}/events?clubId=${encodeURIComponent(clubId)}`);
     return this.http
       .post<EventDto>(url, payload)
       .pipe(map(toClubEvent));
   }
 
   updateEvent(clubId: string, eventId: string, payload: EventPayload, event?: ClubEvent): Observable<ClubEvent> {
-    const url = this.resolveEventLink(event?.links, ['update', 'self'], `event ${eventId}`, `${this.base}/clubs/${clubId}/events/${eventId}`);
+    const url = this.resolveEventLink(event?.links, ['update', 'self'], `event ${eventId}`, `${this.base}/events/${eventId}`);
     return this.http
       .put<EventDto>(url, payload)
       .pipe(map(toClubEvent));
   }
 
   deleteEvent(clubId: string, eventId: string, event?: ClubEvent): Observable<void> {
-    const url = this.resolveEventLink(event?.links, ['delete', 'self'], `event ${eventId}`, `${this.base}/clubs/${clubId}/events/${eventId}`);
+    const url = this.resolveEventLink(event?.links, ['delete', 'self'], `event ${eventId}`, `${this.base}/events/${eventId}`);
     return this.http.delete<void>(url);
   }
 
 
   getEventPhoto(clubId: string, eventId: string, event?: ClubEvent): Observable<Blob> {
-    const url = this.resolveEventLink(event?.links, ['photo'], `event ${eventId} photo`, `${this.base}/clubs/${clubId}/events/${eventId}/photo`);
+    const url = this.resolveEventLink(event?.links, ['photo'], `event ${eventId} photo`, `${this.base}/events/${eventId}/photo`);
     return this.http.get(url, {
       responseType: 'blob',
     });

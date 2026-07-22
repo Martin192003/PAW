@@ -90,7 +90,7 @@ public class BookingsRestControllerTest {
         when(bookingService.countSearch(eq(AUTH_USER_ID), any(), any(), any(), any(), any())).thenReturn(3);
 
         Response response = controller.listBookings(
-                false, null, null, null, "created_desc", null, null, 1, 10, securityContext);
+                false, null, null, null, null, "created_desc", null, null, 1, 10, securityContext);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("3", response.getHeaderString("X-Total-Count"));
@@ -115,22 +115,22 @@ public class BookingsRestControllerTest {
         when(bookingService.countByClubIds(eq(List.of(CLUB_ID)), any(), any(), any(), any())).thenReturn(7);
 
         Response response = controller.listBookings(
-                true, null, null, null, "created_desc", null, null, 1, 10, securityContext);
+                true, null, null, null, null, "created_desc", null, null, 1, 10, securityContext);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("7", response.getHeaderString("X-Total-Count"));
     }
 
     @Test
-    public void testListManagedClubBookings_DelegatesWithManagedTrue() {
+    public void testListBookings_ManagedClubFilterUsesCanonicalCollection() {
         UUID clubId = CLUB_ID;
         when(bookingService.searchByClubIdsPaginated(
                 eq(List.of(clubId)), any(), any(), any(), any(), any(), anyInt(), anyInt()
         )).thenReturn(List.of(listBooking()));
         when(bookingService.countByClubIds(eq(List.of(clubId)), any(), any(), any(), any())).thenReturn(2);
 
-        Response response = controller.listManagedClubBookings(
-                clubId, null, null, "created_desc", null, null, 1, 10, securityContext);
+        Response response = controller.listBookings(
+                true, null, clubId, null, null, "created_desc", null, null, 1, 10, securityContext);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("2", response.getHeaderString("X-Total-Count"));

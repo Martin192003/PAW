@@ -19,15 +19,15 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class GlobalEventRestControllerTest {
+public class EventRestControllerCollectionTest {
 
     private EventService eventService;
-    private GlobalEventRestController controller;
+    private EventRestController controller;
 
     @Before
     public void setUp() {
         eventService = mock(EventService.class);
-        controller = new GlobalEventRestController();
+        controller = new EventRestController();
 
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getBaseUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/"));
@@ -39,7 +39,7 @@ public class GlobalEventRestControllerTest {
 
     @Test
     public void testListUpcoming_InvalidPaging_ReturnsBadRequest() {
-        Response response = controller.listUpcoming(-1, 20);
+        Response response = controller.list(null, -1, 20);
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
@@ -49,7 +49,7 @@ public class GlobalEventRestControllerTest {
         Event event = new Event(UUID.randomUUID(), clubId, "Fiesta", "desc", LocalDate.now().plusDays(2), null);
         when(eventService.listUpcoming(0, 20)).thenReturn(List.of(event));
         when(eventService.countUpcoming()).thenReturn(1);
-        Response response = controller.listUpcoming(0, 20);
+        Response response = controller.list(null, 0, 20);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("1", response.getHeaderString("X-Total-Count"));
@@ -60,7 +60,7 @@ public class GlobalEventRestControllerTest {
         assertEquals(1, events.size());
         assertEquals("item", events.get(0).getRel());
         assertEquals("GET", events.get(0).getMethod());
-        assertEquals("http://localhost/api/clubs/" + clubId + "/events/" + event.getEventId(),
+        assertEquals("http://localhost/api/events/" + event.getEventId(),
                 events.get(0).getHref());
     }
 }

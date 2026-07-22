@@ -45,8 +45,7 @@ public final class ReviewMapper {
 
         List<LinkDto> links = new ArrayList<>();
         var self = uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/reviews/{reviewId}")
-                .resolveTemplate("clubId", dto.getClubId())
+                .path("reviews/{reviewId}")
                 .resolveTemplate("reviewId", dto.getReviewId())
                 .build();
         links.add(LinkBuilder.link("self", self, "GET"));

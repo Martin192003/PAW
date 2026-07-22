@@ -129,7 +129,7 @@ describe('BookingUserHandlerPage', () => {
 
   it('shows a specific message when uploading a receipt for an already-confirmed booking', () => {
     component.booking = { ...booking, status: 'CONFIRMADA' };
-    bookingService.requireReceiptLink.mockReturnValue('/api/clubs/club-1/bookings/booking-1/receipt');
+    bookingService.requireReceiptLink.mockReturnValue('/api/bookings/booking-1/receipt');
     bookingService.putReceipt.mockReturnValue(
       throwError(() => ({ error: { message: 'receipt.for.confirmed' } }))
     );

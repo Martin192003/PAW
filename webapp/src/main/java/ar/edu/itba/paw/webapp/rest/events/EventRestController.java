@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-@Path("/clubs")
+@Path("/events")
 @Produces({ApiMediaTypes.EVENT, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
 @Consumes({ApiMediaTypes.EVENT, ApiMediaTypes.APPLICATION_JSON})
 public class EventRestController {
@@ -43,21 +43,23 @@ public class EventRestController {
 
 
     @GET
-    @Path("/{clubId}/events")
     @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
-    public Response listByClub(@PathParam("clubId") UUID clubId,
-                               @QueryParam("page") @DefaultValue("0") int page,
-                               @QueryParam("size") @DefaultValue("20") int size) {
+    public Response list(@QueryParam("clubId") UUID clubId,
+                         @QueryParam("page") @DefaultValue("0") int page,
+                         @QueryParam("size") @DefaultValue("20") int size) {
         if (page < 0 || size <= 0) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
-        List<Event> events = eventService.listByClub(clubId, page, size);
-        int total = eventService.countByClub(clubId);
+        List<Event> events = clubId == null
+                ? eventService.listUpcoming(page, size)
+                : eventService.listByClub(clubId, page, size);
+        int total = clubId == null
+                ? eventService.countUpcoming()
+                : eventService.countByClub(clubId);
 
         List<LinkDto> body = CollectionLinks.items(events, event -> uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/events/{eventId}")
-                .resolveTemplate("clubId", clubId)
+                .path("events/{eventId}")
                 .resolveTemplate("eventId", event.getEventId())
                 .build());
 
@@ -69,10 +71,13 @@ public class EventRestController {
     }
 
     @POST
-    @Path("/{clubId}/events")
-    public Response create(@PathParam("clubId") UUID clubId,
+    public Response create(@QueryParam("clubId") UUID clubId,
                            @Valid EventDto dto,
                            @Context SecurityContext securityContext) {
+
+        if (clubId == null) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
 
         User user = authenticatedUserResolver.resolve(securityContext);
         if (user == null) {
@@ -87,32 +92,33 @@ public class EventRestController {
                 dto.getDate()
         );
 
-        URI location = uriInfo.getAbsolutePathBuilder()
-                .path(created.getEventId().toString())
+        URI location = uriInfo.getBaseUriBuilder()
+                .path("events/{eventId}")
+                .resolveTemplate("eventId", created.getEventId())
                 .build();
 
         return Response.created(location)
-                .entity(toDtoWithClubName(clubId, created))
+                .entity(toDtoWithClubName(created))
                 .build();
     }
 
     @GET
-    @Path("/{clubId}/events/{eventId}")
-    public Response getById(@PathParam("clubId") UUID clubId,
-                            @PathParam("eventId") UUID eventId) {
+    @Path("/{eventId}")
+    public Response getById(@PathParam("eventId") UUID eventId) {
 
-        Event event = eventService.getForClub(clubId, eventId);
+        Event event = eventService.get(eventId);
 
-        return Response.ok(toDtoWithClubName(clubId, event)).build();
+        return Response.ok(toDtoWithClubName(event)).build();
     }
 
     @PUT
-    @Path("/{clubId}/events/{eventId}")
-    public Response update(@PathParam("clubId") UUID clubId,
-                           @PathParam("eventId") UUID eventId,
+    @Path("/{eventId}")
+    public Response update(@PathParam("eventId") UUID eventId,
                            @Valid EventDto dto,
                            @Context SecurityContext securityContext) {
 
+        Event existing = eventService.get(eventId);
+        UUID clubId = existing.getClubId();
         User user = authenticatedUserResolver.resolve(securityContext);
         if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -128,15 +134,16 @@ public class EventRestController {
                 null
         );
 
-        return Response.ok(toDtoWithClubName(clubId, updated)).build();
+        return Response.ok(toDtoWithClubName(updated)).build();
     }
 
     @DELETE
-    @Path("/{clubId}/events/{eventId}")
-    public Response delete(@PathParam("clubId") UUID clubId,
-                           @PathParam("eventId") UUID eventId,
+    @Path("/{eventId}")
+    public Response delete(@PathParam("eventId") UUID eventId,
                            @Context SecurityContext securityContext) {
 
+        Event existing = eventService.get(eventId);
+        UUID clubId = existing.getClubId();
         User user = authenticatedUserResolver.resolve(securityContext);
         if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -171,7 +178,8 @@ public class EventRestController {
                 .build() + ">; rel=\"" + rel + "\"";
     }
 
-    private EventDto toDtoWithClubName(UUID clubId, Event event) {
+    private EventDto toDtoWithClubName(Event event) {
+        UUID clubId = event.getClubId();
         String clubName = clubService.getClubById(clubId)
                 .map(club -> club.getClubName())
                 .orElse(null);

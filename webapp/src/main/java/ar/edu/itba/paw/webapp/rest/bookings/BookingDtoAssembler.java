@@ -125,9 +125,7 @@ public class BookingDtoAssembler {
                     .build(), "GET"));
         }
         links.add(LinkBuilder.link("receipt", uriInfo.getBaseUriBuilder()
-                .path(BookingRestController.class)
-                .path(BookingRestController.class, "getReceipt")
-                .resolveTemplate("clubId", resolvedClubId)
+                .path("bookings/{bookingId}/receipt")
                 .resolveTemplate("bookingId", booking.getBookingId())
                 .build(), "GET"));
 

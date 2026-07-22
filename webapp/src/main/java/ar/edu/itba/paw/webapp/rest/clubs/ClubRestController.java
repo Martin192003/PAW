@@ -544,46 +544,6 @@ public class ClubRestController {
         }
     }
 
-    @DELETE
-    @Path("/{clubId}/photos/{photoId}")
-    public Response deleteClubPhoto(@PathParam("clubId") String clubId,
-                                    @PathParam("photoId") String photoId,
-                                    @Context SecurityContext securityContext) {
-        UUID clubUuid = parseUuidOr400(clubId);
-        if (clubUuid == null) return badRequest("clubId inválido");
-
-        UUID photoUuid = parseUuidOr400(photoId);
-        if (photoUuid == null) return badRequest("photoId inválido");
-
-        Optional<Club> clubOpt = clubService.getClubById(clubUuid);
-        if (clubOpt.isEmpty()) return notFound("Club no encontrado");
-
-        User user = resolveAuthenticatedUser(securityContext);
-        if (user == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
-
-        clubService.assertAdmin(clubUuid, user.getId());
-
-        Optional<Photo> photoOpt = photoService.getWithId(photoUuid);
-        if (photoOpt.isEmpty()) return notFound("Foto no encontrada");
-
-        Photo photo = photoOpt.get();
-        if (!clubUuid.equals(photo.getClubId())) {
-            return notFound("Foto no encontrada para este club");
-        }
-        if (photo.getPhotoType() != PhotoType.CAROUSEL) {
-            return badRequest("Solo se pueden eliminar fotos de galeria");
-        }
-
-        boolean deleted = photoService.delete(photoUuid);
-        if (!deleted) {
-            return notFound("Foto no encontrada");
-        }
-
-        return Response.noContent().build();
-    }
-
     @GET
     @Path("/{clubId}/review-photos")
     @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
@@ -780,26 +740,23 @@ public class ClubRestController {
                 .path(clubId.toString())
                 .build(), "GET"));
         links.add(LinkBuilder.link("events", uriInfo.getBaseUriBuilder()
-                .path("clubs")
-                .path(clubId.toString())
                 .path("events")
+                .queryParam("clubId", clubId)
                 .build(), "GET"));
         if (includeSensitive) {
             links.add(LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder()
-                    .path("clubs")
-                    .path(clubId.toString())
                     .path("bookings")
+                    .queryParam("clubId", clubId)
+                    .queryParam("managed", true)
                     .build(), "GET"));
         }
         links.add(LinkBuilder.link("create-booking", uriInfo.getBaseUriBuilder()
-                .path("clubs")
-                .path(clubId.toString())
                 .path("bookings")
+                .queryParam("clubId", clubId)
                 .build(), "POST"));
         links.add(LinkBuilder.link("reviews", uriInfo.getBaseUriBuilder()
-                .path("clubs")
-                .path(clubId.toString())
                 .path("reviews")
+                .queryParam("clubId", clubId)
                 .build(), "GET"));
         links.add(LinkBuilder.link("photos", uriInfo.getBaseUriBuilder()
                 .path("clubs")

@@ -28,11 +28,12 @@ describe('ReviewService', () => {
     let result: ReviewListResult | undefined;
     service.listByClub(clubId, 0, 10).subscribe(res => { result = res; });
 
-    const listReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith(`/clubs/${clubId}/reviews`));
+    const listReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/reviews'));
+    expect(listReq.request.params.get('clubId')).toBe(clubId);
     listReq.flush(
       [
-        { rel: 'item', href: `/api/clubs/${clubId}/reviews/review-1` },
-        { rel: 'item', href: `/api/clubs/${clubId}/reviews/review-2` },
+        { rel: 'item', href: `/api/reviews/review-1` },
+        { rel: 'item', href: `/api/reviews/review-2` },
       ],
       { headers: { 'X-Total-Count': '2' } }
     );
@@ -51,7 +52,8 @@ describe('ReviewService', () => {
     let result: ReviewListResult | undefined;
     service.listByClub(clubId, 0, 10).subscribe(res => { result = res; });
 
-    const listReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith(`/clubs/${clubId}/reviews`));
+    const listReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/reviews'));
+    expect(listReq.request.params.get('clubId')).toBe(clubId);
     listReq.flush(
       [{ reviewId: 'review-1', rating: 5, createdAt: '2026-01-01' } as Review],
       { headers: { 'X-Total-Count': '1' } }
@@ -62,10 +64,11 @@ describe('ReviewService', () => {
     expect(result?.reviews[0].reviewId).toBe('review-1');
   });
 
-  it('listByUser hits /users/{userId}/reviews with pagination params', () => {
+  it('listByUser filters the canonical /reviews collection by userId', () => {
     service.listByUser('user-1', 2, 5).subscribe();
 
-    const req = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/users/user-1/reviews'));
+    const req = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/reviews'));
+    expect(req.request.params.get('userId')).toBe('user-1');
     expect(req.request.params.get('page')).toBe('2');
     expect(req.request.params.get('size')).toBe('5');
     req.flush([], { headers: { 'X-Total-Count': '0' } });
@@ -74,7 +77,8 @@ describe('ReviewService', () => {
   it('create posts plain JSON when there is no photo', () => {
     service.create(clubId, { rating: 4, description: 'Bien' }).subscribe();
 
-    const req = httpMock.expectOne(request => request.method === 'POST' && request.url.endsWith(`/clubs/${clubId}/reviews`));
+    const req = httpMock.expectOne(request => request.method === 'POST' && request.url.endsWith('/reviews'));
+    expect(req.request.params.get('clubId')).toBe(clubId);
     expect(req.request.body).toEqual({ rating: 4, description: 'Bien' });
     req.flush({ reviewId: 'review-1', rating: 4, createdAt: '2026-01-01' });
   });
@@ -84,7 +88,8 @@ describe('ReviewService', () => {
 
     service.create(clubId, { rating: 5, photo }).subscribe();
 
-    const req = httpMock.expectOne(request => request.method === 'POST' && request.url.endsWith(`/clubs/${clubId}/reviews`));
+    const req = httpMock.expectOne(request => request.method === 'POST' && request.url.endsWith('/reviews'));
+    expect(req.request.params.get('clubId')).toBe(clubId);
     expect(req.request.body instanceof FormData).toBe(true);
     expect((req.request.body as FormData).get('rating')).toBe('5');
     expect((req.request.body as FormData).get('file')).toBe(photo);
@@ -94,7 +99,7 @@ describe('ReviewService', () => {
   it('update PUTs to the specific review resource', () => {
     service.update(clubId, 'review-1', { rating: 2 }).subscribe();
 
-    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith(`/clubs/${clubId}/reviews/review-1`));
+    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/reviews/review-1'));
     expect(req.request.body).toEqual({ rating: 2 });
     req.flush({ reviewId: 'review-1', rating: 2, createdAt: '2026-01-01' });
   });
@@ -102,7 +107,7 @@ describe('ReviewService', () => {
   it('delete DELETEs the specific review resource', () => {
     service.delete(clubId, 'review-1').subscribe();
 
-    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith(`/clubs/${clubId}/reviews/review-1`));
+    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith('/reviews/review-1'));
     req.flush(null);
   });
 });

@@ -40,7 +40,7 @@ public class ReceiptDtoAssemblerTest {
         Map<String, String> links = dto.getLinks().stream()
                 .collect(Collectors.toMap(link -> link.getRel(), link -> link.getHref()));
         assertEquals(
-                "http://localhost/api/clubs/" + clubId + "/bookings/" + bookingId + "/receipt",
+                "http://localhost/api/bookings/" + bookingId + "/receipt",
                 links.get("self")
         );
         assertEquals(

@@ -47,8 +47,8 @@ public class ReviewsRestControllerTest {
 
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getBaseUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/"));
-        when(uriInfo.getRequestUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/clubs/" + CLUB_ID + "/reviews"));
-        when(uriInfo.getAbsolutePathBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/clubs/" + CLUB_ID + "/reviews"));
+        when(uriInfo.getRequestUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/reviews?clubId=" + CLUB_ID));
+        when(uriInfo.getAbsolutePathBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/reviews"));
 
         ReflectionTestUtils.setField(controller, "reviewService", reviewService);
         ReflectionTestUtils.setField(controller, "userService", userService);
@@ -57,13 +57,19 @@ public class ReviewsRestControllerTest {
 
     @Test
     public void testListByClub_InvalidClubId_ReturnsBadRequest() {
-        Response response = controller.listByClub("not-a-uuid", 0, 20, mock(SecurityContext.class));
+        Response response = controller.list("not-a-uuid", null, 0, 20, mock(SecurityContext.class));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testList_MissingFilters_ReturnsBadRequest() {
+        Response response = controller.list(null, null, 0, 20, mock(SecurityContext.class));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
     public void testListByClub_InvalidPagination_ReturnsBadRequest() {
-        Response response = controller.listByClub(CLUB_ID.toString(), -1, 20, mock(SecurityContext.class));
+        Response response = controller.list(CLUB_ID.toString(), null, -1, 20, mock(SecurityContext.class));
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
@@ -72,7 +78,7 @@ public class ReviewsRestControllerTest {
         when(reviewService.listByClub(CLUB_ID, null, 20, 0)).thenReturn(List.of(review(REVIEW_ID)));
         when(reviewService.countByClub(CLUB_ID)).thenReturn(1);
 
-        Response response = controller.listByClub(CLUB_ID.toString(), 0, 20, mock(SecurityContext.class));
+        Response response = controller.list(CLUB_ID.toString(), null, 0, 20, mock(SecurityContext.class));
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("1", response.getHeaderString("X-Total-Count"));
@@ -81,13 +87,23 @@ public class ReviewsRestControllerTest {
         assertEquals(1, reviews.size());
         assertEquals("item", reviews.get(0).getRel());
         assertEquals("GET", reviews.get(0).getMethod());
-        assertEquals("http://localhost/api/clubs/" + CLUB_ID + "/reviews/" + REVIEW_ID,
+        assertEquals("http://localhost/api/reviews/" + REVIEW_ID,
                 reviews.get(0).getHref());
     }
 
     @Test
     public void testCreate_MissingRating_ReturnsBadRequest() {
         Response response = controller.create(CLUB_ID.toString(), new ReviewDto(), mock(SecurityContext.class));
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    public void testCreate_MissingClubId_ReturnsBadRequest() {
+        ReviewDto body = new ReviewDto();
+        body.setRating(5);
+
+        Response response = controller.create(null, body, mock(SecurityContext.class));
+
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
@@ -139,21 +155,21 @@ public class ReviewsRestControllerTest {
 
     @Test
     public void testGetById_InvalidReviewId_ReturnsBadRequest() {
-        Response response = controller.getById(CLUB_ID.toString(), "not-a-uuid");
+        Response response = controller.getById("not-a-uuid");
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
     }
 
     @Test
     public void testGetById_NotFound_ReturnsNotFound() {
         when(reviewService.findById(REVIEW_ID)).thenReturn(Optional.empty());
-        Response response = controller.getById(CLUB_ID.toString(), REVIEW_ID.toString());
+        Response response = controller.getById(REVIEW_ID.toString());
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
 
     @Test
     public void testGetById_Found_ReturnsReviewDto() {
         when(reviewService.findById(REVIEW_ID)).thenReturn(Optional.of(review(REVIEW_ID)));
-        Response response = controller.getById(CLUB_ID.toString(), REVIEW_ID.toString());
+        Response response = controller.getById(REVIEW_ID.toString());
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals(REVIEW_ID, ((ReviewDto) response.getEntity()).getReviewId());
@@ -167,7 +183,7 @@ public class ReviewsRestControllerTest {
         someoneElses.setUser(user(UUID.randomUUID()));
         when(reviewService.findById(REVIEW_ID)).thenReturn(Optional.of(someoneElses));
 
-        Response response = controller.delete(CLUB_ID.toString(), REVIEW_ID.toString(), principalFor(LOGIN));
+        Response response = controller.delete(REVIEW_ID.toString(), principalFor(LOGIN));
 
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }
@@ -180,7 +196,7 @@ public class ReviewsRestControllerTest {
         owned.setUser(caller);
         when(reviewService.findById(REVIEW_ID)).thenReturn(Optional.of(owned));
 
-        Response response = controller.delete(CLUB_ID.toString(), REVIEW_ID.toString(), principalFor(LOGIN));
+        Response response = controller.delete(REVIEW_ID.toString(), principalFor(LOGIN));
 
         assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
     }
@@ -200,7 +216,7 @@ public class ReviewsRestControllerTest {
         body.setRating(4);
         body.setDescription("Actualizada");
 
-        Response response = controller.update(CLUB_ID.toString(), REVIEW_ID.toString(), body, principalFor(LOGIN));
+        Response response = controller.update(REVIEW_ID.toString(), body, principalFor(LOGIN));
 
         assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
     }

@@ -40,8 +40,8 @@ public class TableDtoAssembler {
                 .resolveTemplate("clubId", clubId)
                 .build(), "GET"));
         links.add(LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/bookings")
-                .resolveTemplate("clubId", clubId)
+                .path("bookings")
+                .queryParam("clubId", clubId)
                 .build(), "GET"));
         if (canManage) {
             links.add(LinkBuilder.link("update", self, "PUT"));

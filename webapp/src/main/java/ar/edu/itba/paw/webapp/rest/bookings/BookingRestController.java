@@ -23,6 +23,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -33,7 +34,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.UUID;
 
-@Path("/clubs/{clubId}/bookings")
+@Path("/bookings")
 @Produces({ApiMediaTypes.BOOKING, ApiMediaTypes.APPLICATION_JSON})
 @Consumes({ApiMediaTypes.BOOKING, ApiMediaTypes.APPLICATION_JSON})
 public class BookingRestController {
@@ -61,10 +62,10 @@ public class BookingRestController {
     }
 
     @POST
-    public Response createBooking(@PathParam("clubId") UUID clubId,
+    public Response createBooking(@QueryParam("clubId") UUID clubId,
                                   BookingDto body,
                                   @Context SecurityContext securityContext) {
-        if (body == null) {
+        if (body == null || clubId == null) {
             throw new BadRequestException("Body requerido");
         }
 
@@ -88,9 +89,9 @@ public class BookingRestController {
     @PUT
     @Path("/{bookingId}/receipt")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response putReceipt(@PathParam("clubId") UUID clubId,
-                               @PathParam("bookingId") UUID bookingId,
+    public Response putReceipt(@PathParam("bookingId") UUID bookingId,
                                @Context SecurityContext securityContext) {
+        final UUID clubId = bookingService.clubId(bookingId);
         final String loginIdentifier = authenticatedLoginIdentifier(securityContext);
         final boolean existed = receiptService.getForBookingInClub(clubId, bookingId, loginIdentifier).isPresent();
         final Part filePart = filePart();
@@ -115,9 +116,9 @@ public class BookingRestController {
     @GET
     @Path("/{bookingId}/receipt")
     @Produces({"image/jpeg", "image/png", "image/webp"})
-    public Response getReceipt(@PathParam("clubId") UUID clubId,
-                               @PathParam("bookingId") UUID bookingId,
+    public Response getReceipt(@PathParam("bookingId") UUID bookingId,
                                @Context SecurityContext securityContext) {
+        final UUID clubId = bookingService.clubId(bookingId);
         final Receipt receipt = receiptService.getForBookingInClub(
                         clubId,
                         bookingId,
@@ -138,9 +139,9 @@ public class BookingRestController {
 
     @DELETE
     @Path("/{bookingId}/receipt")
-    public Response deleteReceipt(@PathParam("clubId") UUID clubId,
-                                  @PathParam("bookingId") UUID bookingId,
+    public Response deleteReceipt(@PathParam("bookingId") UUID bookingId,
                                   @Context SecurityContext securityContext) {
+        final UUID clubId = bookingService.clubId(bookingId);
         final boolean deleted = receiptService.deleteByBookingInClub(
                 clubId,
                 bookingId,

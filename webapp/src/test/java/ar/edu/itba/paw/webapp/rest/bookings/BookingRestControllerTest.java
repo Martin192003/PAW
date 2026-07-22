@@ -51,7 +51,7 @@ public class BookingRestControllerTest {
 
         UriInfo uriInfo = mock(UriInfo.class);
         when(uriInfo.getBaseUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/"));
-        when(uriInfo.getAbsolutePathBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/clubs/" + CLUB_ID + "/bookings/" + BOOKING_ID + "/receipt"));
+        when(uriInfo.getAbsolutePathBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/bookings/" + BOOKING_ID + "/receipt"));
         ReflectionTestUtils.setField(controller, "uriInfo", uriInfo);
 
         securityContext = mock(SecurityContext.class);
@@ -100,21 +100,23 @@ public class BookingRestControllerTest {
 
     @Test
     public void testGetReceipt_NotFound_ThrowsNotFoundException() {
+        when(bookingService.clubId(BOOKING_ID)).thenReturn(CLUB_ID);
         when(receiptService.getForBookingInClub(CLUB_ID, BOOKING_ID, LOGIN)).thenReturn(Optional.empty());
 
         Assert.assertThrows(NotFoundException.class, () ->
-                controller.getReceipt(CLUB_ID, BOOKING_ID, securityContext));
+                controller.getReceipt(BOOKING_ID, securityContext));
     }
 
     @Test
     public void testGetReceipt_Found_ReturnsPrivateNoStoreImage() {
+        when(bookingService.clubId(BOOKING_ID)).thenReturn(CLUB_ID);
         Receipt receipt = new Receipt(
                 UUID.randomUUID(), BOOKING_ID, UUID.randomUUID(), null,
                 "recibo.jpg", "image/jpeg", 3L, OffsetDateTime.now(), new byte[]{1, 2, 3}
         );
         when(receiptService.getForBookingInClub(CLUB_ID, BOOKING_ID, LOGIN)).thenReturn(Optional.of(receipt));
 
-        Response response = controller.getReceipt(CLUB_ID, BOOKING_ID, securityContext);
+        Response response = controller.getReceipt(BOOKING_ID, securityContext);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("image/jpeg", response.getMediaType().toString());
@@ -125,17 +127,19 @@ public class BookingRestControllerTest {
 
     @Test
     public void testDeleteReceipt_NotFound_ThrowsNotFoundException() {
+        when(bookingService.clubId(BOOKING_ID)).thenReturn(CLUB_ID);
         when(receiptService.deleteByBookingInClub(CLUB_ID, BOOKING_ID, LOGIN)).thenReturn(false);
 
         Assert.assertThrows(NotFoundException.class, () ->
-                controller.deleteReceipt(CLUB_ID, BOOKING_ID, securityContext));
+                controller.deleteReceipt(BOOKING_ID, securityContext));
     }
 
     @Test
     public void testDeleteReceipt_Success_ReturnsNoContent() {
+        when(bookingService.clubId(BOOKING_ID)).thenReturn(CLUB_ID);
         when(receiptService.deleteByBookingInClub(CLUB_ID, BOOKING_ID, LOGIN)).thenReturn(true);
 
-        Response response = controller.deleteReceipt(CLUB_ID, BOOKING_ID, securityContext);
+        Response response = controller.deleteReceipt(BOOKING_ID, securityContext);
 
         assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
     }

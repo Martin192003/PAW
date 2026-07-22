@@ -300,14 +300,7 @@ export class ClubService {
       return this.http.delete<void>(resolveApiUrl(deleteLink, this.apiUrl));
     }
 
-    let base = '';
-    try {
-      base = this.resolveClubLink(clubLinks, this.linkRels.photos, `club ${clubId} photos`, `${this.apiUrl}/clubs/${clubId}/photos`);
-    } catch (err) {
-      return this.missingLinkError(err);
-    }
-
-    return this.http.delete<void>(`${base}/${encodeURIComponent(photoId)}`);
+    return this.http.delete<void>(`${this.apiUrl}/photos/${encodeURIComponent(photoId)}`);
   }
 
   toAbsoluteUrl(path: string, clubId?: string): string {
@@ -363,7 +356,7 @@ export class ClubService {
         links,
         ['create-booking', ...this.linkRels.bookings],
         `club ${clubId} bookings`,
-        `${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings`
+        `${this.apiUrl}/bookings?clubId=${encodeURIComponent(clubId)}`
       );
     } catch (err) {
       return this.missingLinkError(err);
@@ -385,7 +378,7 @@ export class ClubService {
   getReviews(id: string, page = 0, size = 10, links?: unknown): Observable<Review[]> {
     let url = '';
     try {
-      url = this.resolveClubLink(links, this.linkRels.reviews, `club ${id} reviews`, `${this.apiUrl}/clubs/${id}/reviews`);
+      url = this.resolveClubLink(links, this.linkRels.reviews, `club ${id} reviews`, `${this.apiUrl}/reviews?clubId=${encodeURIComponent(id)}`);
     } catch (err) {
       return this.missingLinkError(err);
     }
@@ -399,7 +392,7 @@ export class ClubService {
   getReviewsPaginated(id: string, page = 0, size = 10, links?: unknown): Observable<any> {
     let url = '';
     try {
-      url = this.resolveClubLink(links, this.linkRels.reviews, `club ${id} reviews`, `${this.apiUrl}/clubs/${id}/reviews`);
+      url = this.resolveClubLink(links, this.linkRels.reviews, `club ${id} reviews`, `${this.apiUrl}/reviews?clubId=${encodeURIComponent(id)}`);
     } catch (err) {
       return this.missingLinkError(err);
     }
@@ -414,7 +407,7 @@ export class ClubService {
   getEvents(id: string, links?: unknown) {
     let url = '';
     try {
-      url = this.resolveClubLink(links, this.linkRels.events, `club ${id} events`, `${this.apiUrl}/clubs/${id}/events`);
+      url = this.resolveClubLink(links, this.linkRels.events, `club ${id} events`, `${this.apiUrl}/events?clubId=${encodeURIComponent(id)}`);
     } catch (err) {
       return this.missingLinkError(err);
     }
@@ -491,7 +484,7 @@ export class ClubService {
   }
 
   createEvent(clubId: string, payload: EventPayload, links?: unknown): Observable<Event> {
-    const url = this.resolveClubLink(links, this.linkRels.events, `club ${clubId} events`, `${this.apiUrl}/clubs/${clubId}/events`);
+    const url = this.resolveClubLink(links, this.linkRels.events, `club ${clubId} events`, `${this.apiUrl}/events?clubId=${encodeURIComponent(clubId)}`);
 
     return this.http.post<Event & { id?: string }>(url, payload, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
@@ -505,7 +498,7 @@ export class ClubService {
       event?.links,
       ['update', 'self'],
       `event ${eventId}`,
-      `${this.apiUrl}/clubs/${clubId}/events/${eventId}`
+      `${this.apiUrl}/events/${eventId}`
     );
     return this.http.put<Event & { id?: string }>(url, payload, {
       context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
@@ -519,7 +512,7 @@ export class ClubService {
       event?.links,
       ['delete', 'self'],
       `event ${eventId}`,
-      `${this.apiUrl}/clubs/${clubId}/events/${eventId}`
+      `${this.apiUrl}/events/${eventId}`
     );
     return this.http.delete<void>(url);
   }
@@ -531,7 +524,7 @@ export class ClubService {
         event?.links,
         ['photo'],
         `event ${eventId} photo`,
-        `${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`
+        `${this.apiUrl}/events/${eventId}/photo`
       );
     } catch (err) {
       return this.missingLinkError(err);
@@ -553,7 +546,7 @@ export class ClubService {
         event?.links,
         ['photo'],
         `event ${eventId} photo`,
-        `${this.apiUrl}/clubs/${clubId}/events/${eventId}/photo`
+        `${this.apiUrl}/events/${eventId}/photo`
       );
     } catch (err) {
       return this.missingLinkError(err);

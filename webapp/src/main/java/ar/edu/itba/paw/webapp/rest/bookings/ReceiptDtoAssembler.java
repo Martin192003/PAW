@@ -26,9 +26,7 @@ public class ReceiptDtoAssembler {
 
         List<LinkDto> links = new ArrayList<>();
         links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
-                .path(BookingRestController.class)
-                .path(BookingRestController.class, "getReceipt")
-                .resolveTemplate("clubId", clubId)
+                .path("bookings/{bookingId}/receipt")
                 .resolveTemplate("bookingId", receipt.getBookingId())
                 .build(), "GET"));
         links.add(LinkBuilder.link("booking", uriInfo.getBaseUriBuilder()

@@ -1324,7 +1324,7 @@ export class ClubHandlerPage implements OnInit, OnDestroy {
       return this.clubService.toAbsoluteUrl(photoLink);
     }
 
-    return this.clubService.toAbsoluteUrl(`/clubs/${this.clubId}/events/${event.eventId}/photo`);
+    return this.clubService.toAbsoluteUrl(`/events/${event.eventId}/photo`);
   }
 
   onEventPhotoError(event: Event): void {

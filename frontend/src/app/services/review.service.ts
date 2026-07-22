@@ -28,11 +28,12 @@ export class ReviewService {
 
   listByClub(clubId: string, page = 0, size = 10): Observable<ReviewListResult> {
     const params = new HttpParams()
+      .set('clubId', clubId)
       .set('page', page)
       .set('size', size);
 
     return this.http
-      .get<Review[]>(`${this.apiUrl}/clubs/${clubId}/reviews`, { params, observe: 'response' })
+      .get<Review[]>(`${this.apiUrl}/reviews`, { params, observe: 'response' })
       .pipe(
         switchMap((response: HttpResponse<Review[]>) => this.listResultFromResponse(response))
       );
@@ -41,11 +42,12 @@ export class ReviewService {
 
   listByUser(userId: string, page = 0, size = 10): Observable<ReviewListResult> {
     const params = new HttpParams()
+      .set('userId', userId)
       .set('page', page)
       .set('size', size);
 
     return this.http
-      .get<Review[]>(`${this.apiUrl}/users/${userId}/reviews`, { params, observe: 'response' })
+      .get<Review[]>(`${this.apiUrl}/reviews`, { params, observe: 'response' })
       .pipe(
         switchMap((response: HttpResponse<Review[]>) => this.listResultFromResponse(response))
       );
@@ -53,17 +55,19 @@ export class ReviewService {
 
 
   create(clubId: string, payload: ReviewCreateRequest): Observable<Review> {
-    return this.http.post<Review>(`${this.apiUrl}/clubs/${clubId}/reviews`, this.toRequestBody(payload));
+    return this.http.post<Review>(`${this.apiUrl}/reviews`, this.toRequestBody(payload), {
+      params: new HttpParams().set('clubId', clubId)
+    });
   }
 
 
   update(clubId: string, reviewId: string, payload: ReviewCreateRequest): Observable<Review> {
-    return this.http.put<Review>(`${this.apiUrl}/clubs/${clubId}/reviews/${reviewId}`, this.toRequestBody(payload));
+    return this.http.put<Review>(`${this.apiUrl}/reviews/${reviewId}`, this.toRequestBody(payload));
   }
 
 
   delete(clubId: string, reviewId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/clubs/${clubId}/reviews/${reviewId}`);
+    return this.http.delete<void>(`${this.apiUrl}/reviews/${reviewId}`);
   }
 
   private toRequestBody(payload: ReviewCreateRequest): ReviewCreateRequest | FormData {

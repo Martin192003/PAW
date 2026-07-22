@@ -14,7 +14,7 @@ describe('BookingService filters', () => {
       getUser: vi.fn().mockReturnValue({
         userId: 'user-1',
         links: [
-          { rel: 'bookings', href: '/api/users/user-1/bookings' },
+          { rel: 'bookings', href: '/api/bookings?userId=user-1' },
           { rel: 'managed', href: '/api/bookings?managed=true' },
         ],
       }),
@@ -45,7 +45,7 @@ describe('BookingService filters', () => {
       hasReceipt: 'true',
     }, 2, 20).subscribe();
 
-    const req = httpMock.expectOne(request => request.url.endsWith('/users/user-1/bookings'));
+    const req = httpMock.expectOne(request => request.urlWithParams.includes('/bookings?userId=user-1'));
     // La UI usa paginas 1-based (2); la API espera 0-based (1).
     expect(req.request.params.get('page')).toBe('1');
     expect(req.request.params.get('size')).toBe('20');
@@ -56,20 +56,18 @@ describe('BookingService filters', () => {
     req.flush({ content: [] });
   });
 
-  it('falls back to the legacy user bookings endpoint when the REST collection is not deployed', () => {
+  it('constructs the canonical userId filter when user links are absent', () => {
+    authState.getUser.mockReturnValue({ userId: 'user-1' });
     service.listUserBookings({
       status: 'PENDIENTE',
     }, 1, 10).subscribe();
 
-    const first = httpMock.expectOne(request => request.url.endsWith('/users/user-1/bookings'));
-    first.flush({ message: 'not found' }, { status: 404, statusText: 'Not Found' });
-
-    const fallback = httpMock.expectOne(request => request.url.endsWith('/bookings'));
-    expect(fallback.request.params.get('page')).toBe('0');
-    expect(fallback.request.params.get('size')).toBe('10');
-    expect(fallback.request.params.get('status')).toBe('PENDIENTE');
-    expect(fallback.request.params.has('managed')).toBe(false);
-    fallback.flush({ content: [] });
+    const req = httpMock.expectOne(request => request.urlWithParams.includes('/bookings?userId=user-1'));
+    expect(req.request.params.get('page')).toBe('0');
+    expect(req.request.params.get('size')).toBe('10');
+    expect(req.request.params.get('status')).toBe('PENDIENTE');
+    expect(req.request.params.has('managed')).toBe(false);
+    req.flush({ content: [] });
   });
 
   it('syncs managed booking filters into query params', () => {
@@ -93,18 +91,15 @@ describe('BookingService filters', () => {
     req.flush({ content: [] });
   });
 
-  it('falls back to the legacy managed bookings mode when the REST collection is not deployed', () => {
+  it('constructs the canonical managed filter when user links are absent', () => {
+    authState.getUser.mockReturnValue({ userId: 'user-1' });
     service.listManagedClubBookings({
       status: 'PENDIENTE',
     }, 1, 10).subscribe();
 
-    const first = httpMock.expectOne(request => request.urlWithParams.includes('/bookings?managed=true'));
-    first.flush({ message: 'not found' }, { status: 404, statusText: 'Not Found' });
-
-    const fallback = httpMock.expectOne(request => request.url.endsWith('/bookings'));
-    expect(fallback.request.params.get('managed')).toBe('true');
-    expect(fallback.request.params.get('status')).toBe('PENDIENTE');
-    fallback.flush({ content: [] });
+    const req = httpMock.expectOne(request => request.urlWithParams.includes('/bookings?managed=true'));
+    expect(req.request.params.get('status')).toBe('PENDIENTE');
+    req.flush({ content: [] });
   });
 
   it('getBooking reads the booking by its canonical flat URI', () => {
@@ -150,7 +145,7 @@ describe('BookingService filters', () => {
 
     service.putReceipt('club-1', 'booking-1', file).subscribe();
 
-    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/clubs/club-1/bookings/booking-1/receipt'));
+    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/bookings/booking-1/receipt'));
     expect(req.request.body instanceof FormData).toBe(true);
     expect((req.request.body as FormData).get('file')).toBe(file);
     req.flush({ id: 'receipt-1' });
@@ -158,9 +153,9 @@ describe('BookingService filters', () => {
 
   it('getReceiptBlob requests a blob from the explicit receipt link when given', () => {
     let result: Blob | undefined;
-    service.getReceiptBlob('club-1', 'booking-1', '/api/clubs/club-1/bookings/booking-1/receipt').subscribe(blob => { result = blob; });
+    service.getReceiptBlob('club-1', 'booking-1', '/api/bookings/booking-1/receipt').subscribe(blob => { result = blob; });
 
-    const req = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/clubs/club-1/bookings/booking-1/receipt'));
+    const req = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith('/bookings/booking-1/receipt'));
     expect(req.request.responseType).toBe('blob');
     const blob = new Blob(['fake-image']);
     req.flush(blob);
@@ -171,15 +166,15 @@ describe('BookingService filters', () => {
   it('deleteReceipt DELETEs the constructed receipt URL when no link is given', () => {
     service.deleteReceipt('club-1', 'booking-1').subscribe();
 
-    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith('/clubs/club-1/bookings/booking-1/receipt'));
+    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith('/bookings/booking-1/receipt'));
     req.flush(null);
   });
 
   it('requireReceiptLink resolves the booking\'s "receipt" link and throws when missing', () => {
     const url = service.requireReceiptLink({
-      links: { receipt: '/api/clubs/club-1/bookings/booking-1/receipt' },
+      links: { receipt: '/api/bookings/booking-1/receipt' },
     } as never);
-    expect(url).toContain('/clubs/club-1/bookings/booking-1/receipt');
+    expect(url).toContain('/bookings/booking-1/receipt');
 
     expect(() => service.requireReceiptLink({ links: {} } as never)).toThrow();
   });

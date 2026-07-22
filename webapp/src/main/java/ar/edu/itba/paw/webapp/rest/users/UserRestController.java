@@ -1,16 +1,11 @@
 package ar.edu.itba.paw.webapp.rest.users;
 
-import ar.edu.itba.paw.model.Booking;
-import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.*;
-import ar.edu.itba.paw.service.BookingService;
-import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.auth.ApiTokenHeaders;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
-import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
@@ -23,20 +18,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import ar.edu.itba.paw.service.ReviewService;
-import ar.edu.itba.paw.webapp.rest.bookings.BookingDtoAssembler;
-
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.GenericEntity;
-import java.util.List;
-import java.util.Map;
-
-
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,26 +31,11 @@ import java.util.UUID;
 public class UserRestController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserRestController.class);
-    private static final int DEFAULT_BOOKINGS_PAGE = 0;
-    private static final int DEFAULT_BOOKINGS_SIZE = 10;
-
     @Context
     private UriInfo uriInfo;
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private ReviewService reviewService;
-
-    @Autowired
-    private BookingService bookingService;
-
-    @Autowired
-    private ClubService clubService;
-
-    @Autowired
-    private BookingDtoAssembler bookingDtoAssembler;
 
     @Autowired
     private AuthenticatedUserResolver authenticatedUserResolver;
@@ -426,115 +395,6 @@ public class UserRestController {
                 .build();
     }
 
-    @GET
-    @Path("/{userId}/reviews")
-    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
-    public Response getUserReviews(@PathParam("userId") String userIdStr,
-                                   @QueryParam("page") @DefaultValue("0") int page,
-                                   @QueryParam("size") @DefaultValue("20") int size,
-                                   @Context SecurityContext securityContext) {
-        UUID id;
-        try {
-            id = UUID.fromString(userIdStr);
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId inválido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        Optional<User> maybe = userService.findById(id);
-        if (maybe.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(message("Usuario no encontrado"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        if (page < 0 || size <= 0) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("Invalid pagination parameters"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        int offset = page * size;
-        int total = reviewService.countByUser(id);
-        int correctedOffset = reviewService.calculateOffset(offset, size, total);
-         List<ar.edu.itba.paw.model.Review> reviews = total == 0
-                ? List.of()
-                : reviewService.listByUser(id, null, size, correctedOffset);
-        List<LinkDto> body = CollectionLinks.items(reviews, review -> uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/reviews/{reviewId}")
-                .resolveTemplate("clubId", review.getClub().getClubId())
-                .resolveTemplate("reviewId", review.getReviewId())
-                .build());
-
-        GenericEntity<List<LinkDto>> entity = new GenericEntity<>(body) {};
-        Response.ResponseBuilder response = Response.ok(entity)
-                .header("X-Total-Count", total);
-        addPaginationLinks(response, page, size, total);
-        return response.build();
-    }
-
-    @GET
-    @Path("/{userId}/bookings")
-    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
-    public Response getUserBookings(@PathParam("userId") String userIdStr,
-                                    @QueryParam("clubId") UUID clubId,
-                                    @QueryParam("bookingId") String bookingId,
-                                    @QueryParam("status") Status status,
-                                    @QueryParam("sort") @DefaultValue("created_desc") String sort,
-                                    @QueryParam("bookingDate") String bookingDate,
-                                    @QueryParam("hasReceipt") Boolean hasReceipt,
-                                    @QueryParam("page") @DefaultValue("0") int page,
-                                    @QueryParam("size") @DefaultValue("10") int size,
-                                    @Context SecurityContext securityContext) {
-        final UUID userId;
-        try {
-            userId = UUID.fromString(userIdStr);
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(message("userId invalido"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        final User authUser = authenticatedUserResolver.resolve(securityContext);
-        if (authUser == null) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(message("Unauthorized"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-        if (!authUser.getId().equals(userId)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(message("Forbidden"))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-
-        page = Math.max(page, DEFAULT_BOOKINGS_PAGE);
-        size = size < 1 ? DEFAULT_BOOKINGS_SIZE : size;
-        final int offset = page * size;
-        final List<Booking> bookings = bookingService.searchPaginated(
-                userId, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
-        final int total = bookingService.countSearch(
-                userId, clubId, bookingId, status, bookingDate, hasReceipt);
-        final List<LinkDto> body = CollectionLinks.items(bookings, booking -> uriInfo.getBaseUriBuilder()
-                .path("bookings/{bookingId}")
-                .resolveTemplate("bookingId", booking.getBookingId())
-                .build());
-
-        final Response.ResponseBuilder response = Response.ok(new GenericEntity<List<LinkDto>>(body) {})
-                .header("Cache-Control", "private, no-store")
-                .header("Pragma", "no-cache")
-                .header("X-Total-Count", total)
-                .header("Vary", "Authorization");
-        addPaginationLinks(response, page, size, total);
-        return response.build();
-    }
-
     private User resolveAuthenticatedUser(Authentication auth) {
         Object principal = auth.getPrincipal();
         if (principal instanceof PawUserDetails) {
@@ -559,29 +419,6 @@ public class UserRestController {
         return "user.duplicate";
     }
 
-    private void addPaginationLinks(Response.ResponseBuilder responseBuilder, int page, int size, int total) {
-        int totalPages = (int) Math.ceil((double) total / size);
-        int lastPage = Math.max(0, totalPages - 1);
-        List<String> links = new ArrayList<>();
-        if (page > 0) {
-            links.add(pageLink(0, size, "first"));
-            links.add(pageLink(page - 1, size, "prev"));
-        }
-        if (page < lastPage) {
-            links.add(pageLink(page + 1, size, "next"));
-            links.add(pageLink(lastPage, size, "last"));
-        }
-        if (!links.isEmpty()) {
-            responseBuilder.header("Link", String.join(", ", links));
-        }
-    }
-
-    private String pageLink(int page, int size, String rel) {
-        return "<" + uriInfo.getRequestUriBuilder()
-                .replaceQueryParam("page", page)
-                .replaceQueryParam("size", size)
-                .build() + ">; rel=\"" + rel + "\"";
-    }
     private static ErrorDto message(String msg) {
         return new ErrorDto(msg);
     }

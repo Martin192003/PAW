@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-@Path("/clubs")
+@Path("/reviews")
 @Produces({ApiMediaTypes.REVIEW, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
 @Consumes({ApiMediaTypes.REVIEW, ApiMediaTypes.APPLICATION_JSON})
 public class ReviewsRestController {
@@ -46,27 +46,49 @@ public class ReviewsRestController {
     private HttpServletRequest request;
 
     @GET
-    @Path("/{clubId}/reviews")
     @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
-    public Response listByClub(@PathParam("clubId") String clubIdStr,
-                               @QueryParam("page") @DefaultValue("0") int page,
-                               @QueryParam("size") @DefaultValue("20") int size,
-                               @Context SecurityContext securityContext) {
-        UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("club.id.invalid");
+    public Response list(@QueryParam("clubId") String clubIdStr,
+                         @QueryParam("userId") String userIdStr,
+                         @QueryParam("page") @DefaultValue("0") int page,
+                         @QueryParam("size") @DefaultValue("20") int size,
+                         @Context SecurityContext securityContext) {
+        if (clubIdStr == null && userIdStr == null) {
+            return badRequest("clubId or userId is required");
+        }
+
+        UUID clubId = clubIdStr == null ? null : parseUuidOr400(clubIdStr);
+        if (clubIdStr != null && clubId == null) return badRequest("club.id.invalid");
+        UUID userId = userIdStr == null ? null : parseUuidOr400(userIdStr);
+        if (userIdStr != null && userId == null) return badRequest("user.id.invalid");
+        if (userId != null && userService.findById(userId).isEmpty()) {
+            return notFound("Usuario no encontrado");
+        }
 
         if (page < 0 || size <= 0) return badRequest("Invalid pagination parameters");
 
         int offset = page * size;
         UUID currentUserId = currentUserId(securityContext);
-        List<Review> reviews = reviewService.listByClub(clubId, null, size, offset);
+        final List<Review> reviews;
+        final int total;
+        if (clubId != null && userId != null) {
+            Optional<Review> review = reviewService.getUserReviewForClub(userId, clubId);
+            total = review.isPresent() ? 1 : 0;
+            reviews = page == 0 ? review.map(List::of).orElseGet(List::of) : List.of();
+        } else if (clubId != null) {
+            reviews = reviewService.listByClub(clubId, null, size, offset);
+            total = reviewService.countByClub(clubId);
+        } else {
+            total = reviewService.countByUser(userId);
+            int correctedOffset = reviewService.calculateOffset(offset, size, total);
+            reviews = total == 0
+                    ? List.of()
+                    : reviewService.listByUser(userId, null, size, correctedOffset);
+        }
         List<LinkDto> body = CollectionLinks.items(reviews, review -> uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/reviews/{reviewId}")
-                .resolveTemplate("clubId", clubId)
+                .path("reviews/{reviewId}")
                 .resolveTemplate("reviewId", review.getReviewId())
                 .build());
 
-        int total = reviewService.countByClub(clubId);
         int totalPages = (int) Math.ceil((double) total / size);
         GenericEntity<List<LinkDto>> entity = new GenericEntity<>(body) {};
         Response.ResponseBuilder response = Response.ok(entity)
@@ -81,8 +103,7 @@ public class ReviewsRestController {
     }
 
     @POST
-    @Path("/{clubId}/reviews")
-    public Response create(@PathParam("clubId") String clubIdStr,
+    public Response create(@QueryParam("clubId") String clubIdStr,
                            ReviewDto body,
                            @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
@@ -118,8 +139,9 @@ public class ReviewsRestController {
             }
             Review created = maybe.get();
 
-            URI location = uriInfo.getAbsolutePathBuilder()
-                    .path(created.getReviewId().toString())
+            URI location = uriInfo.getBaseUriBuilder()
+                    .path("reviews/{reviewId}")
+                    .resolveTemplate("reviewId", created.getReviewId())
                     .build();
 
             return Response.created(location)
@@ -135,9 +157,8 @@ public class ReviewsRestController {
     }
 
     @POST
-    @Path("/{clubId}/reviews")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response createMultipart(@PathParam("clubId") String clubIdStr,
+    public Response createMultipart(@QueryParam("clubId") String clubIdStr,
                                     @Context SecurityContext securityContext) {
         UUID clubId = parseUuidOr400(clubIdStr);
         if (clubId == null) return badRequest("club.id.invalid");
@@ -166,8 +187,7 @@ public class ReviewsRestController {
             Review created = maybe.get();
 
             URI location = uriInfo.getBaseUriBuilder()
-                    .path("clubs/{clubId}/reviews/{reviewId}")
-                    .resolveTemplate("clubId", clubId)
+                    .path("reviews/{reviewId}")
                     .resolveTemplate("reviewId", created.getReviewId())
                     .build();
 
@@ -186,14 +206,10 @@ public class ReviewsRestController {
     }
 
     @PUT
-    @Path("/{clubId}/reviews/{reviewId}")
-    public Response update(@PathParam("clubId") String clubIdStr,
-                           @PathParam("reviewId") String reviewIdStr,
+    @Path("/{reviewId}")
+    public Response update(@PathParam("reviewId") String reviewIdStr,
                            ReviewDto body,
                            @Context SecurityContext securityContext) {
-        UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("club.id.invalid");
-
         UUID reviewId = parseUuidOr400(reviewIdStr);
         if (reviewId == null) return badRequest("review.id.invalid");
 
@@ -202,7 +218,7 @@ public class ReviewsRestController {
         User user = authenticatedUser(securityContext);
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
 
-        Optional<Review> existingOpt = ownedReview(clubId, reviewId, user);
+        Optional<Review> existingOpt = ownedReview(reviewId, user);
         if (existingOpt.isEmpty()) {
             return notFound("Review no encontrado");
         }
@@ -225,14 +241,10 @@ public class ReviewsRestController {
     }
 
     @PUT
-    @Path("/{clubId}/reviews/{reviewId}")
+    @Path("/{reviewId}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response updateMultipart(@PathParam("clubId") String clubIdStr,
-                                    @PathParam("reviewId") String reviewIdStr,
+    public Response updateMultipart(@PathParam("reviewId") String reviewIdStr,
                                     @Context SecurityContext securityContext) {
-        UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("club.id.invalid");
-
         UUID reviewId = parseUuidOr400(reviewIdStr);
         if (reviewId == null) return badRequest("review.id.invalid");
 
@@ -242,7 +254,7 @@ public class ReviewsRestController {
         User user = authenticatedUser(securityContext);
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
 
-        Optional<Review> existingOpt = ownedReview(clubId, reviewId, user);
+        Optional<Review> existingOpt = ownedReview(reviewId, user);
         if (existingOpt.isEmpty()) {
             return notFound("Review no encontrado");
         }
@@ -267,20 +279,16 @@ public class ReviewsRestController {
     }
 
     @DELETE
-    @Path("/{clubId}/reviews/{reviewId}")
-    public Response delete(@PathParam("clubId") String clubIdStr,
-                           @PathParam("reviewId") String reviewIdStr,
+    @Path("/{reviewId}")
+    public Response delete(@PathParam("reviewId") String reviewIdStr,
                            @Context SecurityContext securityContext) {
-        UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("club.id.invalid");
-
         UUID reviewId = parseUuidOr400(reviewIdStr);
         if (reviewId == null) return badRequest("review.id.invalid");
 
         User user = authenticatedUser(securityContext);
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();
 
-        Optional<Review> existingOpt = ownedReview(clubId, reviewId, user);
+        Optional<Review> existingOpt = ownedReview(reviewId, user);
         if (existingOpt.isEmpty()) return notFound("Review no encontrado");
 
         try {
@@ -294,23 +302,21 @@ public class ReviewsRestController {
     }
 
     @GET
-    @Path("/{clubId}/reviews/{reviewId}")
-    public Response getById(@PathParam("clubId") String clubIdStr,
-                            @PathParam("reviewId") String reviewIdStr) {
-        UUID clubId = parseUuidOr400(clubIdStr);
-        if (clubId == null) return badRequest("club.id.invalid");
-
+    @Path("/{reviewId}")
+    public Response getById(@PathParam("reviewId") String reviewIdStr) {
         UUID reviewId = parseUuidOr400(reviewIdStr);
         if (reviewId == null) return badRequest("review.id.invalid");
 
         return reviewService.findById(reviewId)
-                .filter(review -> review.getClub() != null && clubId.equals(review.getClub().getClubId()))
                 .map(review -> Response.ok(ReviewMapper.toDto(review, uriInfo)).build())
                 .orElseGet(() -> notFound("Review no encontrado"));
     }
 
 
     private static UUID parseUuidOr400(final String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
         try {
             return UUID.fromString(raw);
         } catch (IllegalArgumentException e) {
@@ -371,9 +377,8 @@ public class ReviewsRestController {
         return user != null ? user.getId() : null;
     }
 
-    private Optional<Review> ownedReview(UUID clubId, UUID reviewId, User user) {
+    private Optional<Review> ownedReview(UUID reviewId, User user) {
         return reviewService.findById(reviewId)
-                .filter(review -> review.getClub() != null && clubId.equals(review.getClub().getClubId()))
                 .filter(review -> review.getUser() != null && user.getId().equals(review.getUser().getId()));
     }
 

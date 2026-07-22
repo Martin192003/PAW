@@ -53,7 +53,7 @@ public final class UserMapper {
             links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
                     .path("users/{id}").resolveTemplate("id", uid).build(), "GET"));
             links.add(LinkBuilder.link("reviews", uriInfo.getBaseUriBuilder()
-                    .path("users/{id}/reviews").resolveTemplate("id", uid).build(), "GET"));
+                    .path("reviews").queryParam("userId", uid).build(), "GET"));
             dto.setLinks(links);
         }
         return dto;
@@ -65,11 +65,11 @@ public final class UserMapper {
         links.add(LinkBuilder.link("self", uriInfo.getBaseUriBuilder()
                 .path("users/{id}").resolveTemplate("id", userId).build(), "GET"));
         links.add(LinkBuilder.link("bookings", uriInfo.getBaseUriBuilder()
-                .path("users/{id}/bookings").resolveTemplate("id", userId).build(), "GET"));
+                .path("bookings").queryParam("userId", userId).build(), "GET"));
         links.add(LinkBuilder.link("managed", uriInfo.getBaseUriBuilder()
                 .path("bookings").queryParam("managed", "true").build(), "GET"));
         links.add(LinkBuilder.link("reviews", uriInfo.getBaseUriBuilder()
-                .path("users/{id}/reviews").resolveTemplate("id", userId).build(), "GET"));
+                .path("reviews").queryParam("userId", userId).build(), "GET"));
         links.add(LinkBuilder.link("clubs", uriInfo.getBaseUriBuilder()
                 .path("clubs").queryParam("ownerId", userId).build(), "GET"));
         return links;

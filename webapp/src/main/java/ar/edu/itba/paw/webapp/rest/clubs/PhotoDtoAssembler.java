@@ -35,14 +35,12 @@ public class PhotoDtoAssembler {
                 .build(), "GET"));
 
         links.add(LinkBuilder.link("delete", uriInfo.getBaseUriBuilder()
-                .path("clubs/{clubId}/photos/{photoId}")
-                .resolveTemplate("clubId", photo.getClubId())
+                .path("photos/{photoId}")
                 .resolveTemplate("photoId", photo.getPhotoId())
                 .build(), "DELETE"));
         if (photo.getReviewId() != null) {
             links.add(LinkBuilder.link("review", uriInfo.getBaseUriBuilder()
-                    .path("clubs/{clubId}/reviews/{reviewId}")
-                    .resolveTemplate("clubId", photo.getClubId())
+                    .path("reviews/{reviewId}")
                     .resolveTemplate("reviewId", photo.getReviewId())
                     .build(), "GET"));
         }

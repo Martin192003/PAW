@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
 
-@Path("/")
+@Path("/bookings")
 @Produces({ApiMediaTypes.BOOKING, ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
 public class BookingsRestController {
 
@@ -60,9 +60,9 @@ public class BookingsRestController {
     }
 
     @GET
-    @Path("/bookings")
     @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
     public Response listBookings(@QueryParam("managed") @DefaultValue("false") boolean managed,
+                                 @QueryParam("userId") UUID userId,
                                  @QueryParam("clubId") UUID clubId,
                                  @QueryParam("bookingId") String bookingId,
                                  @QueryParam("status") Status status,
@@ -77,6 +77,13 @@ public class BookingsRestController {
         final int offset = page * size;
         final User authUser = authenticatedUser(securityContext);
 
+        if (managed && userId != null) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        if (!managed && userId != null && !authUser.getId().equals(userId)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+
         final List<Booking> bookings;
         final int total;
         if (managed) {
@@ -86,10 +93,11 @@ public class BookingsRestController {
             total = bookingService.countByClubIds(
                     managedClubIds, bookingId, status, bookingDate, hasReceipt);
         } else {
+            final UUID targetUserId = userId != null ? userId : authUser.getId();
             bookings = bookingService.searchPaginated(
-                    authUser.getId(), clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
+                    targetUserId, clubId, bookingId, status, sort, bookingDate, hasReceipt, size, offset);
             total = bookingService.countSearch(
-                    authUser.getId(), clubId, bookingId, status, bookingDate, hasReceipt);
+                    targetUserId, clubId, bookingId, status, bookingDate, hasReceipt);
         }
 
         final int totalPages = (int) Math.ceil((double) total / size);
@@ -99,22 +107,7 @@ public class BookingsRestController {
     }
 
     @GET
-    @Path("/clubs/{clubId}/bookings")
-    @Produces({ApiMediaTypes.LINK_COLLECTION, ApiMediaTypes.APPLICATION_JSON})
-    public Response listManagedClubBookings(@PathParam("clubId") UUID clubId,
-                                            @QueryParam("bookingId") String bookingId,
-                                            @QueryParam("status") Status status,
-                                            @QueryParam("sort") @DefaultValue("created_desc") String sort,
-                                            @QueryParam("bookingDate") String bookingDate,
-                                            @QueryParam("hasReceipt") Boolean hasReceipt,
-                                            @QueryParam("page") @DefaultValue("0") int page,
-                                            @QueryParam("size") @DefaultValue("10") int size,
-                                            @Context SecurityContext securityContext) {
-        return listBookings(true, clubId, bookingId, status, sort, bookingDate, hasReceipt, page, size, securityContext);
-    }
-
-    @GET
-    @Path("/bookings/{bookingId}")
+    @Path("/{bookingId}")
     public Response getBookingById(@PathParam("bookingId") UUID bookingId,
                                    @QueryParam("managed") @DefaultValue("false") boolean managed,
                                    @Context SecurityContext securityContext) {
@@ -139,7 +132,7 @@ public class BookingsRestController {
     }
 
     @PUT
-    @Path("/bookings/{bookingId}")
+    @Path("/{bookingId}")
     public Response updateBookingById(@PathParam("bookingId") UUID bookingId,
                                       BookingDto body,
                                       @Context SecurityContext securityContext) {
@@ -167,7 +160,7 @@ public class BookingsRestController {
     }
 
     @DELETE
-    @Path("/bookings/{bookingId}")
+    @Path("/{bookingId}")
     public Response cancelBooking(@PathParam("bookingId") UUID bookingId,
                                   @Context SecurityContext securityContext) {
         bookingService.cancelAccessibleBooking(authenticatedLoginIdentifier(securityContext), bookingId);

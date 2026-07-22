@@ -57,18 +57,20 @@ public class EventPhotoRestControllerTest {
 
     @Test
     public void testPutPhoto_Unauthenticated_ReturnsUnauthorized() throws Exception {
+        when(eventService.get(EVENT_ID)).thenReturn(event(EVENT_ID, null));
         when(authenticatedUserResolver.resolve(any())).thenReturn(null);
 
-        Response response = controller.putPhoto(CLUB_ID, EVENT_ID, mock(SecurityContext.class));
+        Response response = controller.putPhoto(EVENT_ID, mock(SecurityContext.class));
 
         assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
     }
 
     @Test
     public void testDeletePhoto_Unauthenticated_ReturnsUnauthorized() {
+        when(eventService.get(EVENT_ID)).thenReturn(event(EVENT_ID, null));
         when(authenticatedUserResolver.resolve(any())).thenReturn(null);
 
-        Response response = controller.deletePhoto(CLUB_ID, EVENT_ID, mock(SecurityContext.class));
+        Response response = controller.deletePhoto(EVENT_ID, mock(SecurityContext.class));
 
         assertEquals(Response.Status.UNAUTHORIZED.getStatusCode(), response.getStatus());
     }
@@ -78,9 +80,9 @@ public class EventPhotoRestControllerTest {
         User admin = user(UUID.randomUUID());
         when(authenticatedUserResolver.resolve(any())).thenReturn(admin);
         Event withoutPhoto = event(EVENT_ID, null);
-        when(eventService.getForClub(CLUB_ID, EVENT_ID)).thenReturn(withoutPhoto);
+        when(eventService.get(EVENT_ID)).thenReturn(withoutPhoto);
 
-        Response response = controller.deletePhoto(CLUB_ID, EVENT_ID, mock(SecurityContext.class));
+        Response response = controller.deletePhoto(EVENT_ID, mock(SecurityContext.class));
 
         assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
         assertNull(response.getEntity());
@@ -95,12 +97,13 @@ public class EventPhotoRestControllerTest {
         photo.setFilename("evento.jpg");
         photo.setSizeBytes(3L);
         photo.setCreatedAt(OffsetDateTime.now());
+        when(eventService.get(EVENT_ID)).thenReturn(event(EVENT_ID, photo.getPhotoId()));
         when(eventService.getEventPhoto(CLUB_ID, EVENT_ID)).thenReturn(photo);
 
         Request request = mock(Request.class);
         when(request.evaluatePreconditions(any(EntityTag.class))).thenReturn(null);
 
-        Response response = controller.getPhoto(CLUB_ID, EVENT_ID, request);
+        Response response = controller.getPhoto(EVENT_ID, request);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertNotNull(response.getHeaderString("Content-Disposition"));

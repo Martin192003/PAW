@@ -18,7 +18,7 @@ describe('ClubService event photo links', () => {
     eventName: 'Fiesta',
     description: 'desc',
     date: '2026-08-01',
-    links: [{ rel: 'photo', href: '/api/clubs/club-1/events/event-1/photo' }],
+    links: [{ rel: 'photo', href: '/api/events/event-1/photo' }],
   } as unknown as Event;
 
   beforeEach(() => {
@@ -47,7 +47,7 @@ describe('ClubService event photo links', () => {
       result = event;
     });
 
-    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith(`/clubs/${clubId}/events/${eventId}/photo`));
+    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith(`/events/${eventId}/photo`));
     req.flush({
       eventId,
       eventName: 'Fiesta',
@@ -55,14 +55,14 @@ describe('ClubService event photo links', () => {
       date: '2026-08-01',
       photoId: 'photo-1',
       links: [
-        { rel: 'self', href: `/api/clubs/${clubId}/events/${eventId}` },
-        { rel: 'photo', href: `/api/clubs/${clubId}/events/${eventId}/photo` },
+        { rel: 'self', href: `/api/events/${eventId}` },
+        { rel: 'photo', href: `/api/events/${eventId}/photo` },
       ],
     });
 
     expect(result).toBeTruthy();
     expect(Array.isArray(result?.links)).toBe(false);
-    expect((result?.links as unknown as Record<string, string>)?.['photo']).toBe(`/api/clubs/${clubId}/events/${eventId}/photo`);
+    expect((result?.links as unknown as Record<string, string>)?.['photo']).toBe(`/api/events/${eventId}/photo`);
   });
 
   it('deletes event photos without expecting a response body', () => {
@@ -73,7 +73,7 @@ describe('ClubService event photo links', () => {
       },
     });
 
-    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith(`/clubs/${clubId}/events/${eventId}/photo`));
+    const req = httpMock.expectOne(request => request.method === 'DELETE' && request.url.endsWith(`/events/${eventId}/photo`));
     req.flush(null, { status: 204, statusText: 'No Content' });
 
     expect(completed).toBe(true);
@@ -84,7 +84,7 @@ describe('ClubService event photo links', () => {
 
     service.uploadEventPhoto(clubId, eventId, file, undefined).subscribe();
 
-    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith(`/clubs/${clubId}/events/${eventId}/photo`));
+    const req = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith(`/events/${eventId}/photo`));
     req.flush({ eventId, eventName: 'Fiesta', description: 'desc', date: '2026-08-01', links: [] });
   });
 
@@ -92,7 +92,7 @@ describe('ClubService event photo links', () => {
     const file = new File(['fake-image'], 'foto.png', { type: 'image/png' });
     const eventWithoutPhotoLink = {
       ...eventWithPhotoLink,
-      links: [{ rel: 'self', href: `/api/clubs/${clubId}/events/${eventId}` }],
+      links: [{ rel: 'self', href: `/api/events/${eventId}` }],
     } as unknown as Event;
 
     let error: unknown;
@@ -110,12 +110,12 @@ describe('ClubService event photo links', () => {
       result = events;
     });
 
-    const listReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith(`/clubs/${clubId}/events`));
+    const listReq = httpMock.expectOne(request => request.method === 'GET' && request.urlWithParams.includes(`/events?clubId=${clubId}`));
     listReq.flush([
-      { rel: 'item', href: `/api/clubs/${clubId}/events/${eventId}` },
+      { rel: 'item', href: `/api/events/${eventId}` },
     ]);
 
-    const detailReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith(`/clubs/${clubId}/events/${eventId}`));
+    const detailReq = httpMock.expectOne(request => request.method === 'GET' && request.url.endsWith(`/events/${eventId}`));
     detailReq.flush({
       id: eventId,
       eventName: 'Fiesta',
@@ -123,10 +123,10 @@ describe('ClubService event photo links', () => {
       date: '2026-08-01',
       photoId: 'photo-1',
       links: [
-        { rel: 'self', href: `/api/clubs/${clubId}/events/${eventId}` },
-        { rel: 'photo', href: `/api/clubs/${clubId}/events/${eventId}/photo` },
-        { rel: 'update', href: `/api/clubs/${clubId}/events/${eventId}` },
-        { rel: 'delete', href: `/api/clubs/${clubId}/events/${eventId}` },
+        { rel: 'self', href: `/api/events/${eventId}` },
+        { rel: 'photo', href: `/api/events/${eventId}/photo` },
+        { rel: 'update', href: `/api/events/${eventId}` },
+        { rel: 'delete', href: `/api/events/${eventId}` },
       ],
     });
 
@@ -134,7 +134,7 @@ describe('ClubService event photo links', () => {
     expect(result?.[0].eventId).toBe(eventId);
     expect(result?.[0].eventName).toBe('Fiesta');
     expect(result?.[0].date).toBe('2026-08-01');
-    expect((result?.[0].links as unknown as Record<string, string>)?.['photo']).toBe(`/api/clubs/${clubId}/events/${eventId}/photo`);
+    expect((result?.[0].links as unknown as Record<string, string>)?.['photo']).toBe(`/api/events/${eventId}/photo`);
   });
 });
 

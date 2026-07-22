@@ -33,7 +33,7 @@ public class EventRestControllerPaginationTest {
         eventService = mock(EventService.class);
         clubService = mock(ClubService.class);
         UriInfo uriInfo = mock(UriInfo.class);
-        when(uriInfo.getRequestUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/clubs/club/events"));
+        when(uriInfo.getRequestUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/events?clubId=club"));
         when(uriInfo.getBaseUriBuilder()).thenAnswer(invocation -> UriBuilder.fromUri("http://localhost/api/"));
 
         ReflectionTestUtils.setField(controller, "eventService", eventService);
@@ -50,7 +50,7 @@ public class EventRestControllerPaginationTest {
         when(eventService.countByClub(clubId)).thenReturn(25);
         when(clubService.getClubById(clubId)).thenReturn(Optional.of(club(clubId)));
 
-        Response response = controller.listByClub(clubId, 1, 10);
+        Response response = controller.list(clubId, 1, 10);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("25", response.getHeaderString("X-Total-Count"));

@@ -168,15 +168,19 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 - `GET /api/clubs`: busqueda/listado de clubes.
 - `GET /api/clubs?ownerId={userId}`: clubes por duenio/admin.
 - `GET /api/clubs/{clubId}`: detalle de club.
-- `GET /api/events`: eventos globales.
-- `GET /api/clubs/{clubId}/events`: eventos de un club.
-- `GET /api/clubs/{clubId}/reviews`: reviews paginadas.
-- `GET /api/users/{userId}/bookings`: reservas del usuario autenticado.
-- `GET /api/bookings?managed=true`: reservas administradas por el usuario admin.
-- `GET /api/clubs/{clubId}/bookings`: reservas administradas de un club especifico.
+- `GET /api/events`: eventos globales; `?clubId={clubId}` filtra la misma colección por club.
+- `POST /api/events?clubId={clubId}`: crea un evento; su URI canónica es `/api/events/{eventId}`.
+- `GET /api/reviews?clubId={clubId}` o `?userId={userId}`: filtra la colección canónica de reviews. Se pueden combinar ambos filtros.
+- `POST /api/reviews?clubId={clubId}`: crea una review; su URI canónica es `/api/reviews/{reviewId}`.
+- `GET /api/bookings?userId={userId}`: reservas del usuario autenticado.
+- `GET /api/bookings?managed=true&clubId={clubId}`: reservas administradas, opcionalmente filtradas por club.
+- `POST /api/bookings?clubId={clubId}`: crea una reserva; su URI canónica es `/api/bookings/{bookingId}`.
 - `GET /api/bookings/{bookingId}`: detalle canonico de reserva propia o administrada, segun permisos.
 - `PUT /api/bookings/{bookingId}`: confirma o cancela una reserva administrada.
 - `DELETE /api/bookings/{bookingId}`: cancela una reserva propia o administrada.
+- `GET|PUT|DELETE /api/bookings/{bookingId}/receipt`: recibo asociado a la reserva canónica.
+- `GET|PUT|DELETE /api/events/{eventId}/photo`: imagen asociada al evento canónico.
+- `GET|DELETE /api/photos/{photoId}`: lectura o borrado de una foto de galería mediante la misma URI.
 
 ## Decisiones REST/HATEOAS
 

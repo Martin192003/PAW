@@ -217,30 +217,6 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
-  /users/{userId}/reviews:
-    parameters:
-      - $ref: '#/components/parameters/UserId'
-    get:
-      tags: [Reviews]
-      summary: List reviews by user
-      parameters:
-        - $ref: '#/components/parameters/PageZero'
-        - $ref: '#/components/parameters/Size'
-      responses:
-        '200':
-          description: Links to reviews authored by the user.
-          headers:
-            X-Total-Count:
-              schema:
-                type: integer
-          content:
-            application/vnd.paw.link-collection.v1+json:
-              schema:
-                $ref: '#/components/schemas/LinkCollection'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LinkCollection'
-
   /auth/challenges:
     post:
       tags: [Auth]
@@ -519,19 +495,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PhotoDto'
 
-  /clubs/{clubId}/photos/{photoId}:
-    parameters:
-      - $ref: '#/components/parameters/ClubId'
-      - $ref: '#/components/parameters/PhotoId'
-    delete:
-      tags: [Photos]
-      summary: Delete club gallery photo
-      responses:
-        '204':
-          description: Photo deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-
   /clubs/{clubId}/review-photos:
     parameters:
       - $ref: '#/components/parameters/ClubId'
@@ -564,19 +527,32 @@ paths:
                 format: binary
         '404':
           $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Photos]
+      summary: Delete club gallery photo by its canonical URI
+      responses:
+        '204':
+          description: Photo deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
-  /clubs/{clubId}/events:
-    parameters:
-      - $ref: '#/components/parameters/ClubId'
+  /events:
     get:
       tags: [Events]
-      summary: List events by club
+      summary: List upcoming events, optionally filtered by club
       parameters:
+        - $ref: '#/components/parameters/ClubIdQuery'
         - $ref: '#/components/parameters/PageZero'
         - $ref: '#/components/parameters/Size'
       responses:
         '200':
-          description: Links to events in the club.
+          description: Links to upcoming events.
           headers:
             Link:
               schema:
@@ -593,7 +569,14 @@ paths:
                 $ref: '#/components/schemas/LinkCollection'
     post:
       tags: [Events]
-      summary: Create event
+      summary: Create event for a club
+      parameters:
+        - name: clubId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -603,18 +586,28 @@ paths:
       responses:
         '201':
           description: Event created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
-  /clubs/{clubId}/events/{eventId}:
+  /events/{eventId}:
     parameters:
-      - $ref: '#/components/parameters/ClubId'
       - $ref: '#/components/parameters/EventId'
     get:
       tags: [Events]
-      summary: Get event in club
+      summary: Get event by its canonical URI
       responses:
         '200':
           description: Event
@@ -640,41 +633,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [Events]
       summary: Delete event
       responses:
         '204':
           description: Event deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
-  /events:
-    get:
-      tags: [Events]
-      summary: List upcoming events
-      parameters:
-        - $ref: '#/components/parameters/PageZero'
-        - $ref: '#/components/parameters/Size'
-      responses:
-        '200':
-          description: Links to upcoming events.
-          headers:
-            Link:
-              schema:
-                type: string
-            X-Total-Count:
-              schema:
-                type: integer
-          content:
-            application/vnd.paw.link-collection.v1+json:
-              schema:
-                $ref: '#/components/schemas/LinkCollection'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LinkCollection'
-
-  /clubs/{clubId}/events/{eventId}/photo:
+  /events/{eventId}/photo:
     parameters:
-      - $ref: '#/components/parameters/ClubId'
       - $ref: '#/components/parameters/EventId'
     get:
       tags: [Photos]
@@ -866,13 +845,14 @@ paths:
         '204':
           description: Table deleted
 
-  /clubs/{clubId}/reviews:
-    parameters:
-      - $ref: '#/components/parameters/ClubId'
+  /reviews:
     get:
       tags: [Reviews]
-      summary: List reviews by club
+      summary: List reviews by club and/or user
+      description: At least one of clubId or userId must be supplied. Supplying both returns that user's review for the club as a zero-or-one item collection.
       parameters:
+        - $ref: '#/components/parameters/ClubIdQuery'
+        - $ref: '#/components/parameters/UserIdQuery'
         - $ref: '#/components/parameters/PageZero'
         - $ref: '#/components/parameters/Size'
       responses:
@@ -895,6 +875,13 @@ paths:
     post:
       tags: [Reviews]
       summary: Create current user's review for club
+      parameters:
+        - name: clubId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -913,9 +900,9 @@ paths:
                 $ref: '#/components/schemas/ReviewDto'
         '409':
           $ref: '#/components/responses/Conflict'
-  /clubs/{clubId}/reviews/{reviewId}:
+
+  /reviews/{reviewId}:
     parameters:
-      - $ref: '#/components/parameters/ClubId'
       - name: reviewId
         in: path
         required: true
@@ -924,7 +911,7 @@ paths:
           format: uuid
     get:
       tags: [Reviews]
-      summary: Get review by id in club
+      summary: Get review by its canonical URI
       responses:
         '200':
           description: Review
@@ -968,71 +955,8 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /clubs/{clubId}/bookings:
+  /bookings/{bookingId}/receipt:
     parameters:
-      - $ref: '#/components/parameters/ClubId'
-    get:
-      tags: [Bookings]
-      summary: List bookings managed for a club
-      parameters:
-        - $ref: '#/components/parameters/BookingIdQuery'
-        - $ref: '#/components/parameters/StatusQuery'
-        - $ref: '#/components/parameters/SortQuery'
-        - $ref: '#/components/parameters/BookingDateQuery'
-        - $ref: '#/components/parameters/HasReceiptQuery'
-        - $ref: '#/components/parameters/PageZero'
-        - $ref: '#/components/parameters/Size'
-      responses:
-        '200':
-          description: Links to private bookings managed by the authenticated club admin.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-              description: private, no-store
-            Vary:
-              schema:
-                type: string
-              description: Authorization
-            Link:
-              schema:
-                type: string
-            X-Total-Count:
-              schema:
-                type: integer
-          content:
-            application/vnd.paw.link-collection.v1+json:
-              schema:
-                $ref: '#/components/schemas/LinkCollection'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LinkCollection'
-    post:
-      tags: [Bookings]
-      summary: Create booking for club
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BookingDto'
-      responses:
-        '201':
-          description: Booking created
-          headers:
-            Location:
-              schema:
-                type: string
-                format: uri
-              description: Canonical booking URI.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BookingDto'
-
-  /clubs/{clubId}/bookings/{bookingId}/receipt:
-    parameters:
-      - $ref: '#/components/parameters/ClubId'
       - $ref: '#/components/parameters/BookingId'
     get:
       tags: [Bookings]
@@ -1074,52 +998,12 @@ paths:
         '204':
           description: Receipt deleted
 
-  /users/{userId}/bookings:
-    parameters:
-      - $ref: '#/components/parameters/UserId'
-    get:
-      tags: [Bookings]
-      summary: List bookings owned by the authenticated user
-      parameters:
-        - $ref: '#/components/parameters/ClubIdQuery'
-        - $ref: '#/components/parameters/BookingIdQuery'
-        - $ref: '#/components/parameters/StatusQuery'
-        - $ref: '#/components/parameters/SortQuery'
-        - $ref: '#/components/parameters/BookingDateQuery'
-        - $ref: '#/components/parameters/HasReceiptQuery'
-        - $ref: '#/components/parameters/PageZero'
-        - $ref: '#/components/parameters/Size'
-      responses:
-        '200':
-          description: Links to private bookings owned by the authenticated user.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-              description: private, no-store
-            Vary:
-              schema:
-                type: string
-              description: Authorization
-            Link:
-              schema:
-                type: string
-            X-Total-Count:
-              schema:
-                type: integer
-          content:
-            application/vnd.paw.link-collection.v1+json:
-              schema:
-                $ref: '#/components/schemas/LinkCollection'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LinkCollection'
-
   /bookings:
     get:
       tags: [Bookings]
       summary: List bookings owned or managed by the authenticated user
       parameters:
+        - $ref: '#/components/parameters/UserIdQuery'
         - name: managed
           in: query
           schema:
@@ -1159,6 +1043,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LinkCollection'
+    post:
+      tags: [Bookings]
+      summary: Create booking for a club
+      parameters:
+        - name: clubId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingDto'
+      responses:
+        '201':
+          description: Booking created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: Canonical booking URI.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /bookings/{bookingId}:
     parameters:
@@ -1296,6 +1213,12 @@ components:
         minimum: 1
     ClubIdQuery:
       name: clubId
+      in: query
+      schema:
+        type: string
+        format: uuid
+    UserIdQuery:
+      name: userId
       in: query
       schema:
         type: string

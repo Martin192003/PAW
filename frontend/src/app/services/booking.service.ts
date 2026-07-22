@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
+import { forkJoin, map, of, switchMap } from 'rxjs';
 import { Booking, BookingFilters, BookingPage, Receipt } from '../models/booking.model';
 import { environment } from '../../environments/environment';
 import { itemLinksFromCollection, normalizeLinks, requireAnyLink, requireLink, resolveApiUrl, totalFromHeader } from '../utils/api-url.util';
@@ -26,44 +26,20 @@ export class BookingService {
       params,
       context: this.localErrorContext(),
       observe: 'response'
-    }).pipe(
-      catchError(error => {
-        if (error?.status !== 404) {
-          return throwError(() => error);
-        }
-        return this.http.get<Booking[] | BookingPage>(`${this.apiUrl}/bookings`, {
-          params: params.set('managed', 'true'),
-          context: this.localErrorContext(),
-          observe: 'response'
-        });
-      }),
-      switchMap(response => this.bookingPageFromResponse(response, page, size))
-    );
+    }).pipe(switchMap(response => this.bookingPageFromResponse(response, page, size)));
   }
 
   listUserBookings(filters: BookingFilters, page: number, size: number): Observable<BookingPage> {
     const user = this.authState.getUser();
     const fallback = user?.userId
-      ? `${this.apiUrl}/users/${encodeURIComponent(user.userId)}/bookings`
+      ? `${this.apiUrl}/bookings?userId=${encodeURIComponent(user.userId)}`
       : '';
     const params = this.params(filters, page, size);
     return this.http.get<Booking[] | BookingPage>(this.currentUserLink(['bookings'], fallback), {
       params,
       context: this.localErrorContext(),
       observe: 'response'
-    }).pipe(
-      catchError(error => {
-        if (error?.status !== 404) {
-          return throwError(() => error);
-        }
-        return this.http.get<Booking[] | BookingPage>(`${this.apiUrl}/bookings`, {
-          params,
-          context: this.localErrorContext(),
-          observe: 'response'
-        });
-      }),
-      switchMap(response => this.bookingPageFromResponse(response, page, size))
-    );
+    }).pipe(switchMap(response => this.bookingPageFromResponse(response, page, size)));
   }
 
   getBooking(_clubId: string, bookingId: string): Observable<Booking> {
@@ -128,7 +104,7 @@ export class BookingService {
       return this.http.put<Receipt>(resolveApiUrl(receiptLink, this.apiUrl), formData, options);
     }
     return this.http.put<Receipt>(
-      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
+      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
       formData,
       options
     );
@@ -139,7 +115,7 @@ export class BookingService {
       return this.http.get(resolveApiUrl(receiptLink, this.apiUrl), { responseType: 'blob' });
     }
     return this.http.get(
-      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
+      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
       { responseType: 'blob' }
     );
   }
@@ -150,7 +126,7 @@ export class BookingService {
       return this.http.delete<void>(resolveApiUrl(receiptLink, this.apiUrl), options);
     }
     return this.http.delete<void>(
-      resolveApiUrl(`${this.apiUrl}/clubs/${encodeURIComponent(clubId)}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
+      resolveApiUrl(`${this.apiUrl}/bookings/${encodeURIComponent(bookingId)}/receipt`, this.apiUrl),
       options
     );
   }

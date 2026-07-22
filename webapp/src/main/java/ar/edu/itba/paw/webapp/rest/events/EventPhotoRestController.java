@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Component
-@Path("/clubs/{clubId}/events/{eventId}/photo")
+@Path("/events/{eventId}/photo")
 public class EventPhotoRestController {
 
     @Autowired
@@ -51,18 +51,17 @@ public class EventPhotoRestController {
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response putPhoto(@PathParam("clubId") UUID clubId,
-                             @PathParam("eventId") UUID eventId,
+    public Response putPhoto(@PathParam("eventId") UUID eventId,
                              @Context SecurityContext securityContext)
             throws IOException, ServletException {
 
+        Event event = eventService.get(eventId);
+        UUID clubId = event.getClubId();
         User user = authenticatedUserResolver.resolve(securityContext);
         if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
         clubService.assertAdmin(clubId, user.getId());
-        eventService.getForClub(clubId, eventId);
-
         Part filePart = request.getPart("file");
         if (filePart == null) {
             throw new BadRequestException("Missing multipart part 'file'");
@@ -84,17 +83,18 @@ public class EventPhotoRestController {
 
         eventService.setEventPhoto(clubId, eventId, photo);
 
-        Event updatedEvent = eventService.getForClub(clubId, eventId);
+        Event updatedEvent = eventService.get(eventId);
         EventDto dto = eventDtoAssembler.toDto(uriInfo, clubId, updatedEvent);
 
         return Response.ok(dto).build();
     }
 
     @GET
-    public Response getPhoto(@PathParam("clubId") UUID clubId,
-                             @PathParam("eventId") UUID eventId,
+    public Response getPhoto(@PathParam("eventId") UUID eventId,
                              @Context Request request) {
 
+        Event event = eventService.get(eventId);
+        UUID clubId = event.getClubId();
         Photo photo = eventService.getEventPhoto(clubId, eventId);
 
 
@@ -123,16 +123,16 @@ public class EventPhotoRestController {
     }
 
     @DELETE
-    public Response deletePhoto(@PathParam("clubId") UUID clubId,
-                                @PathParam("eventId") UUID eventId,
+    public Response deletePhoto(@PathParam("eventId") UUID eventId,
                                 @Context SecurityContext securityContext) {
 
+        Event event = eventService.get(eventId);
+        UUID clubId = event.getClubId();
         User user = authenticatedUserResolver.resolve(securityContext);
         if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
         clubService.assertAdmin(clubId, user.getId());
-        eventService.getForClub(clubId, eventId);
         eventService.deleteEventPhoto(clubId, eventId);
 
         return Response.noContent().build();
