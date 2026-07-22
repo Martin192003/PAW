@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.model.dto;
 
+
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,6 +33,7 @@ public class EventDto {
     public void setDescription(String description) { this.description = description; }
 
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getId() {
         return id;
     }
@@ -40,6 +42,7 @@ public class EventDto {
         this.id = id;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public List<LinkDto> getLinks() {
         return links;
     }
@@ -48,8 +51,10 @@ public class EventDto {
     }
 
     public  void setPhotoId(UUID photoId) { this.photoId = photoId; }
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getPhotoId() { return photoId; }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getClubName() { return clubName; }
     public void setClubName(String clubName) { this.clubName = clubName; }
 

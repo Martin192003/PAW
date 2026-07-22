@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.model.dto;
 
+
 import javax.xml.bind.annotation.XmlElement;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -22,6 +23,7 @@ public class UserDto {
 
     public UserDto() {}
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
 
@@ -39,6 +41,7 @@ public class UserDto {
 
 
     @XmlElement
+    @ApiFieldAccess(ApiFieldAccess.Mode.WRITE_ONLY)
     public void setPassword(String password) { this.password = password; }
 
     public String registrationPassword() { return password; }
@@ -46,18 +49,22 @@ public class UserDto {
     public String getCellphone() { return cellphone; }
     public void setCellphone(String cellphone) { this.cellphone = cellphone; }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public Boolean isVerified() { return verified; }
     public void setVerified(Boolean verified) { this.verified = verified; }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 
     public String getLocale() { return locale; }
     public void setLocale(String locale) { this.locale = locale; }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public List<LinkDto> getLinks() { return links; }
     public void setLinks(List<LinkDto> links) { this.links = links; }
 }

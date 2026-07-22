@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.model.dto;
 
+
 public class LinkDto {
     private String rel;
     private String href;
@@ -14,6 +15,7 @@ public class LinkDto {
         this.method = method;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getRel() {
         return rel;
     }
@@ -22,6 +24,7 @@ public class LinkDto {
         this.rel = rel;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getHref() {
         return href;
     }
@@ -30,6 +33,7 @@ public class LinkDto {
         this.href = href;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getMethod() {
         return method;
     }

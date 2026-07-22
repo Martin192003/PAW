@@ -18,6 +18,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -73,6 +74,7 @@ public class BookingRestControllerTest {
 
         BookingDto body = new BookingDto();
         body.setTableId(UUID.randomUUID());
+        body.setDate(LocalDate.now().plusDays(1));
 
         Assert.assertThrows(NotAuthorizedException.class, () ->
                 controller.createBooking(CLUB_ID, body, anonymous));
@@ -83,6 +85,7 @@ public class BookingRestControllerTest {
         BookingDto body = new BookingDto();
         UUID tableId = UUID.randomUUID();
         body.setTableId(tableId);
+        body.setDate(LocalDate.now().plusDays(1));
 
         Booking created = new Booking();
         created.setBookingId(BOOKING_ID);

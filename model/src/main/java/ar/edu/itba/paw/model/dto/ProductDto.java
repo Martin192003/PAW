@@ -18,6 +18,7 @@ public class ProductDto {
     private OffsetDateTime createdAt;
     private List<LinkDto> links;
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getProductId() {
         return productId;
     }
@@ -66,6 +67,7 @@ public class ProductDto {
         isAvailable = available;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
@@ -74,6 +76,7 @@ public class ProductDto {
         this.createdAt = createdAt;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public List<LinkDto> getLinks() {
         return links;
     }

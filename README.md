@@ -186,6 +186,9 @@ Todas las passwords nuevas pasan por BCrypt. Si existe una base vieja con passwo
 
 - La API usa JAX-RS/Jersey bajo `/api/*`.
 - Los DTOs principales exponen `links` con `rel`, `href` y `method`.
+- Cada recurso conserva una sola representacion DTO. `ApiFieldAccess` marca los atributos administrados por el servidor como `READ_ONLY` y las credenciales/codigos aceptados unicamente en requests como `WRITE_ONLY`; los atributos sin marca son de lectoescritura.
+- La frontera HTTP aplica los grupos `ValidationGroups.Create` y `ValidationGroups.Update` mediante `DtoValidation`. De ese modo, una misma representacion puede exigir subconjuntos distintos segun se cree, reemplace o actualice un recurso.
+- `openApi.yaml` refleja esas direcciones con `readOnly`/`writeOnly`, y declara con `allOf.required` los campos obligatorios de cada operacion. Los DTOs obsoletos que duplicaban representaciones fueron eliminados.
 - El frontend prioriza links HATEOAS en flujos principales y conserva fallback solo donde todavia hace falta compatibilidad.
 - Los endpoints de autenticacion viven bajo `/api/auth/*`; `/api/users` queda reservado para el recurso usuario.
 - Las colecciones relevantes mantienen `X-Total-Count` y agregan `Link` pagination cuando aplica.

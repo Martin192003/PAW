@@ -3,12 +3,14 @@ package ar.edu.itba.paw.webapp.rest.bookings;
 import ar.edu.itba.paw.model.Booking;
 import ar.edu.itba.paw.model.Receipt;
 import ar.edu.itba.paw.model.dto.BookingDto;
+import ar.edu.itba.paw.model.dto.ValidationGroups;
 import ar.edu.itba.paw.model.exceptions.BadRequestException;
 import ar.edu.itba.paw.model.exceptions.NotFoundException;
 import ar.edu.itba.paw.service.BookingService;
 import ar.edu.itba.paw.service.ReceiptService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
 import ar.edu.itba.paw.webapp.rest.ContentDispositionHeader;
+import ar.edu.itba.paw.webapp.rest.DtoValidation;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.ServletException;
@@ -65,7 +67,7 @@ public class BookingRestController {
     public Response createBooking(@QueryParam("clubId") UUID clubId,
                                   BookingDto body,
                                   @Context SecurityContext securityContext) {
-        if (body == null || clubId == null) {
+        if (clubId == null || !DtoValidation.isValid(body, ValidationGroups.Create.class)) {
             throw new BadRequestException("Body requerido");
         }
 

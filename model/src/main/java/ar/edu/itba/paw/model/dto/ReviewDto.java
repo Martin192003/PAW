@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.model.dto;
 
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public class ReviewDto {
     public ReviewDto() {
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getReviewId() {
         return reviewId;
     }
@@ -31,6 +33,7 @@ public class ReviewDto {
         this.reviewId = reviewId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getUserId() {
         return userId;
     }
@@ -39,6 +42,7 @@ public class ReviewDto {
         this.userId = userId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getUsername() {
         return username;
     }
@@ -47,6 +51,7 @@ public class ReviewDto {
         this.username = username;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getClubId() {
         return clubId;
     }
@@ -55,6 +60,7 @@ public class ReviewDto {
         this.clubId = clubId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getClubName() {
         return clubName;
     }
@@ -63,6 +69,7 @@ public class ReviewDto {
         this.clubName = clubName;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getClubLocation() {
         return clubLocation;
     }
@@ -87,6 +94,7 @@ public class ReviewDto {
         this.description = description;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
@@ -95,6 +103,7 @@ public class ReviewDto {
         this.createdAt = createdAt;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public boolean isFromTableGuest() {
         return fromTableGuest;
     }
@@ -103,6 +112,7 @@ public class ReviewDto {
         this.fromTableGuest = fromTableGuest;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getPhotoId() {
         return photoId;
     }
@@ -111,6 +121,7 @@ public class ReviewDto {
         this.photoId = photoId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getPhotoUrl() {
         return photoUrl;
     }
@@ -119,6 +130,7 @@ public class ReviewDto {
         this.photoUrl = photoUrl;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public List<LinkDto> getLinks() {
         return links;
     }

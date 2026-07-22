@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.model.dto;
 
+
 public class UserUpdateResponseDto {
 
     private UserDto user;
@@ -17,6 +18,7 @@ public class UserUpdateResponseDto {
         this.expiresIn = expiresIn;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UserDto getUser() {
         return user;
     }
@@ -25,6 +27,7 @@ public class UserUpdateResponseDto {
         this.user = user;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getAccessToken() {
         return accessToken;
     }
@@ -33,6 +36,7 @@ public class UserUpdateResponseDto {
         this.accessToken = accessToken;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getTokenType() {
         return tokenType;
     }
@@ -41,6 +45,7 @@ public class UserUpdateResponseDto {
         this.tokenType = tokenType;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public long getExpiresIn() {
         return expiresIn;
     }

@@ -1,10 +1,12 @@
 package ar.edu.itba.paw.model.dto;
 
+
 public class PasswordResetDto {
     private String token;
     private String newPassword;
     private String confirmationPassword;
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.WRITE_ONLY)
     public String getToken() {
         return token;
     }
@@ -13,6 +15,7 @@ public class PasswordResetDto {
         this.token = token;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.WRITE_ONLY)
     public String getNewPassword() {
         return newPassword;
     }
@@ -21,6 +24,7 @@ public class PasswordResetDto {
         this.newPassword = newPassword;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.WRITE_ONLY)
     public String getConfirmationPassword() {
         return confirmationPassword;
     }

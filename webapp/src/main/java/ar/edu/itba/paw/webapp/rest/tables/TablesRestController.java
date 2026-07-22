@@ -5,11 +5,13 @@ import ar.edu.itba.paw.model.dto.ErrorDto;
 import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.TableDto;
+import ar.edu.itba.paw.model.dto.ValidationGroups;
 import ar.edu.itba.paw.model.exceptions.InvalidDateRangeException;
 import ar.edu.itba.paw.model.exceptions.ValidationException;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.TableService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.DtoValidation;
 import ar.edu.itba.paw.webapp.rest.CollectionLinks;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,12 +124,7 @@ public class TablesRestController {
         }
         clubService.assertAdmin(clubUuid, user.getId());
 
-        if (body == null ||
-                body.getTableNumber() == null ||
-                body.getCapacity() == null ||
-                body.getPrice() == null ||
-                body.getDiscount() == null ||
-                body.getTableState() == null) {
+        if (!DtoValidation.isValid(body, ValidationGroups.Create.class)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("fields.required"))
                     .build();
@@ -202,12 +199,7 @@ public class TablesRestController {
                     .build();
         }
 
-        if (body == null ||
-                body.getTableNumber() == null ||
-                body.getCapacity() == null ||
-                body.getPrice() == null ||
-                body.getDiscount() == null ||
-                body.getTableState() == null) {
+        if (!DtoValidation.isValid(body, ValidationGroups.Update.class)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("fields.required"))
                     .build();

@@ -6,6 +6,7 @@ import ar.edu.itba.paw.service.UserService;
 import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.webapp.auth.ApiTokenHeaders;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
+import ar.edu.itba.paw.webapp.rest.DtoValidation;
 import ar.edu.itba.paw.webapp.auth.JwtUtil;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
@@ -174,14 +175,7 @@ public class UserRestController {
 
     @POST
     public Response createUser(UserDto body) {
-        if (body == null ||
-                isBlank(body.getUsername()) ||
-                isBlank(body.getName()) ||
-                isBlank(body.getSurname()) ||
-                isBlank(body.getEmail()) ||
-                isBlank(body.registrationPassword()) ||
-                isBlank(body.getCellphone())
-        ) {
+        if (!DtoValidation.isValid(body, ValidationGroups.Create.class)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("Missing required fields"))
                     .type(MediaType.APPLICATION_JSON)
@@ -259,7 +253,7 @@ public class UserRestController {
                     .build();
         }
 
-        if (body == null) {
+        if (!DtoValidation.isValid(body, ValidationGroups.Update.class)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(message("Body requerido"))
                     .type(MediaType.APPLICATION_JSON)

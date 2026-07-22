@@ -17,6 +17,7 @@ public class TableDto {
     private BigDecimal discount;
     private List<LinkDto> links;
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getTableId() {
         return tableId;
     }
@@ -25,6 +26,7 @@ public class TableDto {
         this.tableId = tableId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getClubId() {
         return clubId;
     }
@@ -73,6 +75,7 @@ public class TableDto {
         this.discount = discount;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public List<LinkDto> getLinks() {
         return links;
     }

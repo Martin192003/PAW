@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.model.dto;
 
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +16,7 @@ public class PhotoDto {
     private OffsetDateTime createdAt;
     private List<LinkDto> links;
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getPhotoId() {
         return photoId;
     }
@@ -23,6 +25,7 @@ public class PhotoDto {
         this.photoId = photoId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getClubId() {
         return clubId;
     }
@@ -31,6 +34,7 @@ public class PhotoDto {
         this.clubId = clubId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getPostedBy() {
         return postedBy;
     }
@@ -39,6 +43,7 @@ public class PhotoDto {
         this.postedBy = postedBy;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getReviewId() {
         return reviewId;
     }
@@ -47,6 +52,7 @@ public class PhotoDto {
         this.reviewId = reviewId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getContentType() {
         return contentType;
     }
@@ -55,6 +61,7 @@ public class PhotoDto {
         this.contentType = contentType;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public Long getSizeBytes() {
         return sizeBytes;
     }
@@ -63,6 +70,7 @@ public class PhotoDto {
         this.sizeBytes = sizeBytes;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getPhotoType() {
         return photoType;
     }
@@ -71,6 +79,7 @@ public class PhotoDto {
         this.photoType = photoType;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
@@ -79,6 +88,7 @@ public class PhotoDto {
         this.createdAt = createdAt;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public List<LinkDto> getLinks() {
         return links;
     }

@@ -5,12 +5,14 @@ import ar.edu.itba.paw.model.Status;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.BookingDto;
 import ar.edu.itba.paw.model.dto.LinkDto;
+import ar.edu.itba.paw.model.dto.ValidationGroups;
 import ar.edu.itba.paw.model.exceptions.BookingNotFoundException;
 import ar.edu.itba.paw.model.exceptions.UnauthorizedException;
 import ar.edu.itba.paw.service.BookingService;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
 import ar.edu.itba.paw.webapp.rest.CollectionLinks;
+import ar.edu.itba.paw.webapp.rest.DtoValidation;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -136,7 +138,7 @@ public class BookingsRestController {
     public Response updateBookingById(@PathParam("bookingId") UUID bookingId,
                                       BookingDto body,
                                       @Context SecurityContext securityContext) {
-        if (body == null || body.getStatus() == null || body.getStatus().isBlank()) {
+        if (!DtoValidation.isValid(body, ValidationGroups.Update.class)) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 

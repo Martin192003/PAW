@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.model.dto;
 
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class ClubDto {
 
     public ClubDto() {}
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getClubId() { return clubId; }
     public void setClubId(UUID clubId) { this.clubId = clubId; }
 
@@ -51,15 +53,19 @@ public class ClubDto {
     public String getCbu() { return cbu; }
     public void setCbu(String cbu) { this.cbu = cbu; }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public Float getRating() { return rating; }
     public void setRating(Float rating) { this.rating = rating; }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public Integer getQuantityRatings() { return quantityRatings; }
     public void setQuantityRatings(Integer quantityRatings) { this.quantityRatings = quantityRatings; }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public List<LinkDto> getLinks() { return links; }
     public void setLinks(List<LinkDto> links) { this.links = links; }
 

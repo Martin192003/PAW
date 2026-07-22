@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: PAW TPE API
-  version: 2026.07.21
+  version: 2026.07.22
   description: >
     Contrato REST de la API actual. Las colecciones principales devuelven
     links a recursos individuales y exponen la paginacion por headers HTTP
@@ -32,7 +32,7 @@ paths:
       security: []
       responses:
         '200':
-          description: Links to root API collections and authentication resources.
+          description: Links to resources advertised by the API root.
           content:
             application/vnd.paw.api-root.v1+json:
               schema:
@@ -51,7 +51,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserDto'
+              allOf:
+                - $ref: '#/components/schemas/UserDto'
+                - type: object
+                  required: [username, name, surname, email, password, cellphone]
       responses:
         '201':
           description: User created
@@ -93,7 +96,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VerificationRequestDto'
+              allOf:
+                - $ref: '#/components/schemas/VerificationRequestDto'
+              anyOf:
+                - required: [token]
+                - required: [code]
       responses:
         '200':
           description: Account verified. A fresh bearer token is returned only in authentication response headers so the client is auto-logged-in.
@@ -132,7 +139,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PasswordResetDto'
+              allOf:
+                - $ref: '#/components/schemas/PasswordResetDto'
+                - type: object
+                  required: [token, newPassword, confirmationPassword]
       responses:
         '200':
           description: Password reset. A fresh bearer token is returned only in authentication response headers.
@@ -206,7 +216,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PasswordResetDto'
+              allOf:
+                - $ref: '#/components/schemas/PasswordResetDto'
+                - type: object
+                  required: [newPassword, confirmationPassword]
       responses:
         '204':
           description: Password changed
@@ -247,6 +260,7 @@ paths:
     get:
       tags: [Clubs]
       summary: List clubs
+      security: []
       description: Supports owner filtering used by UserDto.links.clubs.
       parameters:
         - name: ownerId
@@ -311,7 +325,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ClubDto'
+              allOf:
+                - $ref: '#/components/schemas/ClubDto'
+                - type: object
+                  required: [clubName, description, location, zone, musicGenre, priceRange, cbu]
       responses:
         '201':
           description: Club created
@@ -328,6 +345,7 @@ paths:
     get:
       tags: [Clubs]
       summary: Get club
+      security: []
       parameters:
         - name: managed
           in: query
@@ -375,6 +393,7 @@ paths:
     get:
       tags: [Clubs]
       summary: Get booking limits for club
+      security: []
       responses:
         '200':
           description: Club limits
@@ -391,6 +410,7 @@ paths:
     get:
       tags: [Photos]
       summary: Get club cover image
+      security: []
       responses:
         '200':
           description: Image bytes
@@ -411,8 +431,14 @@ paths:
             schema:
               $ref: '#/components/schemas/FileUpload'
       responses:
+        '200':
+          description: Cover replaced and photo metadata returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhotoDto'
         '204':
-          description: Cover replaced
+          description: Cover stored but metadata could not be reloaded
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -424,6 +450,7 @@ paths:
     get:
       tags: [Clubs]
       summary: Get club layout metadata
+      security: []
       responses:
         '200':
           description: Layout metadata
@@ -443,8 +470,12 @@ paths:
             schema:
               $ref: '#/components/schemas/FileUpload'
       responses:
-        '204':
+        '200':
           description: Layout replaced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LayoutDto'
 
   /clubs/{clubId}/layout/image:
     parameters:
@@ -452,6 +483,7 @@ paths:
     get:
       tags: [Photos]
       summary: Get club layout image
+      security: []
       responses:
         '200':
           description: Image bytes
@@ -469,15 +501,17 @@ paths:
     get:
       tags: [Photos]
       summary: List club gallery photos
+      security: []
       responses:
         '200':
-          description: Photo DTO array
+          description: Links to gallery photos.
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PhotoDto'
+                $ref: '#/components/schemas/LinkCollection'
     post:
       tags: [Photos]
       summary: Upload club gallery photo
@@ -501,15 +535,17 @@ paths:
     get:
       tags: [Photos]
       summary: List review photos for club
+      security: []
       responses:
         '200':
-          description: Photo DTO array
+          description: Links to review photos.
           content:
+            application/vnd.paw.link-collection.v1+json:
+              schema:
+                $ref: '#/components/schemas/LinkCollection'
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PhotoDto'
+                $ref: '#/components/schemas/LinkCollection'
 
   /photos/{photoId}:
     parameters:
@@ -517,6 +553,7 @@ paths:
     get:
       tags: [Photos]
       summary: Get photo image
+      security: []
       responses:
         '200':
           description: Image bytes
@@ -546,6 +583,7 @@ paths:
     get:
       tags: [Events]
       summary: List upcoming events, optionally filtered by club
+      security: []
       parameters:
         - $ref: '#/components/parameters/ClubIdQuery'
         - $ref: '#/components/parameters/PageZero'
@@ -582,7 +620,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventDto'
+              allOf:
+                - $ref: '#/components/schemas/EventDto'
+                - type: object
+                  required: [eventName, date]
       responses:
         '201':
           description: Event created
@@ -608,6 +649,7 @@ paths:
     get:
       tags: [Events]
       summary: Get event by its canonical URI
+      security: []
       responses:
         '200':
           description: Event
@@ -625,7 +667,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventDto'
+              allOf:
+                - $ref: '#/components/schemas/EventDto'
+                - type: object
+                  required: [eventName, date]
       responses:
         '200':
           description: Event updated
@@ -658,6 +703,7 @@ paths:
     get:
       tags: [Photos]
       summary: Get event photo
+      security: []
       responses:
         '200':
           description: Image bytes
@@ -695,6 +741,7 @@ paths:
     get:
       tags: [Menu]
       summary: List products by club
+      security: []
       responses:
         '200':
           description: Links to products in the club menu.
@@ -713,7 +760,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductDto'
+              allOf:
+                - $ref: '#/components/schemas/ProductDto'
+                - type: object
+                  required: [productName, description, basePrice, productType]
       responses:
         '201':
           description: Product created
@@ -729,6 +779,7 @@ paths:
     get:
       tags: [Menu]
       summary: Get product
+      security: []
       responses:
         '200':
           description: Product
@@ -746,7 +797,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductDto'
+              allOf:
+                - $ref: '#/components/schemas/ProductDto'
+                - type: object
+                  required: [productName, description, basePrice, productType, isAvailable]
       responses:
         '200':
           description: Product updated
@@ -775,6 +829,7 @@ paths:
     get:
       tags: [Tables]
       summary: List club tables
+      security: []
       parameters:
         - name: date
           in: query
@@ -799,7 +854,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TableDto'
+              allOf:
+                - $ref: '#/components/schemas/TableDto'
+                - type: object
+                  required: [tableNumber, capacity, tableState, price, discount]
       responses:
         '201':
           description: Table created
@@ -815,6 +873,7 @@ paths:
     get:
       tags: [Tables]
       summary: Get table
+      security: []
       responses:
         '200':
           description: Table
@@ -830,7 +889,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TableDto'
+              allOf:
+                - $ref: '#/components/schemas/TableDto'
+                - type: object
+                  required: [tableNumber, capacity, tableState, price, discount]
       responses:
         '200':
           description: Table updated
@@ -849,6 +911,7 @@ paths:
     get:
       tags: [Reviews]
       summary: List reviews by club and/or user
+      security: []
       description: At least one of clubId or userId must be supplied. Supplying both returns that user's review for the club as a zero-or-one item collection.
       parameters:
         - $ref: '#/components/parameters/ClubIdQuery'
@@ -887,7 +950,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewDto'
+              allOf:
+                - $ref: '#/components/schemas/ReviewDto'
+                - type: object
+                  required: [rating]
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/ReviewMultipartRequest'
@@ -912,6 +978,7 @@ paths:
     get:
       tags: [Reviews]
       summary: Get review by its canonical URI
+      security: []
       responses:
         '200':
           description: Review
@@ -929,7 +996,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewDto'
+              allOf:
+                - $ref: '#/components/schemas/ReviewDto'
+                - type: object
+                  required: [rating]
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/ReviewMultipartRequest'
@@ -1058,7 +1128,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookingDto'
+              allOf:
+                - $ref: '#/components/schemas/BookingDto'
+                - type: object
+                  required: [tableId, date]
       responses:
         '201':
           description: Booking created
@@ -1112,7 +1185,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookingDto'
+              allOf:
+                - $ref: '#/components/schemas/BookingDto'
+                - type: object
+                  required: [status]
       responses:
         '200':
           description: Booking updated
@@ -1298,11 +1374,14 @@ components:
       properties:
         rel:
           type: string
+          readOnly: true
         href:
           type: string
           format: uri
+          readOnly: true
         method:
           type: string
+          readOnly: true
 
     LinkCollection:
       type: array
@@ -1314,6 +1393,7 @@ components:
       properties:
         message:
           type: string
+          readOnly: true
 
     UserDto:
       type: object
@@ -1324,10 +1404,13 @@ components:
           readOnly: true
         username:
           type: string
+          maxLength: 100
         name:
           type: string
+          maxLength: 100
         surname:
           type: string
+          maxLength: 100
         email:
           type: string
           format: email
@@ -1335,9 +1418,12 @@ components:
         password:
           type: string
           writeOnly: true
+          minLength: 6
           description: Accepted only on registration.
         cellphone:
           type: string
+          maxLength: 30
+          pattern: '^(?=.*\d)[0-9+()\-\s]+$'
           description: Present only in the authenticated user's private representation.
         role:
           type: string
@@ -1361,16 +1447,21 @@ components:
       type: object
       properties:
         user:
-          $ref: '#/components/schemas/UserDto'
+          readOnly: true
+          allOf:
+            - $ref: '#/components/schemas/UserDto'
         accessToken:
           type: string
+          readOnly: true
           description: Replacement bearer token for subsequent requests.
         tokenType:
           type: string
+          readOnly: true
           example: Bearer
         expiresIn:
           type: integer
           format: int64
+          readOnly: true
           description: Token lifetime in seconds.
 
     AuthChallengeRequestDto:
@@ -1380,12 +1471,15 @@ components:
         challengeType:
           type: string
           enum: [email_verification, password_reset]
+          writeOnly: true
         usernameOrEmail:
           type: string
+          writeOnly: true
           description: Required for email_verification.
         email:
           type: string
           format: email
+          writeOnly: true
           description: Required for password_reset.
 
     VerificationRequestDto:
@@ -1393,9 +1487,11 @@ components:
       properties:
         token:
           type: string
+          writeOnly: true
           description: Verification token received by mail.
         code:
           type: string
+          writeOnly: true
           description: Verification code received by mail.
 
     PasswordResetDto:
@@ -1403,11 +1499,16 @@ components:
       properties:
         token:
           type: string
+          writeOnly: true
           description: Required for unauthenticated password reset.
         newPassword:
           type: string
+          writeOnly: true
+          minLength: 6
         confirmationPassword:
           type: string
+          writeOnly: true
+          minLength: 6
 
     ClubDto:
       type: object
@@ -1418,8 +1519,10 @@ components:
           readOnly: true
         clubName:
           type: string
+          maxLength: 100
         description:
           type: string
+          maxLength: 1000
         location:
           type: string
         zone:
@@ -1433,6 +1536,7 @@ components:
         cbu:
           type: string
           nullable: true
+          maxLength: 50
           description: Required on create/update. Returned only on owner-authenticated club responses; omitted or null in public club representations.
         rating:
           type: number
@@ -1456,22 +1560,44 @@ components:
       properties:
         clubId:
           type: string
+          format: uuid
+          readOnly: true
         maxCapacity:
           type: integer
+          readOnly: true
         maxTables:
           type: integer
-        minTables:
+          readOnly: true
+        minReservationPeople:
           type: integer
-        maxBookingDays:
+          readOnly: true
+        maxReservationPeople:
           type: integer
+          readOnly: true
+        links:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/LinkDto'
 
     LayoutDto:
       type: object
       properties:
         clubId:
           type: string
-        imageUrl:
+          format: uuid
+          readOnly: true
+        url:
           type: string
+          readOnly: true
+        image:
+          type: string
+          readOnly: true
+        links:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/LinkDto'
 
     PhotoDto:
       type: object
@@ -1479,18 +1605,37 @@ components:
         photoId:
           type: string
           format: uuid
+          readOnly: true
         clubId:
           type: string
           format: uuid
+          readOnly: true
+        postedBy:
+          type: string
+          format: uuid
+          readOnly: true
         reviewId:
           type: string
           format: uuid
-        url:
-          type: string
+          nullable: true
+          readOnly: true
         contentType:
           type: string
+          readOnly: true
+        sizeBytes:
+          type: integer
+          format: int64
+          readOnly: true
+        photoType:
+          type: string
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
         links:
           type: array
+          readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
 
@@ -1500,18 +1645,27 @@ components:
         id:
           type: string
           format: uuid
+          readOnly: true
         eventName:
           type: string
+          maxLength: 120
         date:
           type: string
           format: date
         description:
           type: string
+          maxLength: 500
         photoId:
           type: string
           format: uuid
+          nullable: true
+          readOnly: true
+        clubName:
+          type: string
+          readOnly: true
         links:
           type: array
+          readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
 
@@ -1524,10 +1678,15 @@ components:
           readOnly: true
         productName:
           type: string
+          maxLength: 100
         description:
           type: string
+          maxLength: 300
         basePrice:
           type: number
+          minimum: 0
+          exclusiveMaximum: true
+          maximum: 100000000
         productType:
           $ref: '#/components/schemas/ProductType'
         isAvailable:
@@ -1555,14 +1714,20 @@ components:
           readOnly: true
         tableNumber:
           type: integer
+          minimum: 1
         capacity:
           type: integer
+          minimum: 1
+          maximum: 9999
         tableState:
           $ref: '#/components/schemas/TableState'
         price:
           type: number
+          minimum: 0
         discount:
           type: number
+          minimum: 0
+          maximum: 100
         links:
           type: array
           readOnly: true
@@ -1581,14 +1746,41 @@ components:
           type: string
           format: uuid
           readOnly: true
+        username:
+          type: string
+          readOnly: true
         clubId:
           type: string
           format: uuid
           readOnly: true
+        clubName:
+          type: string
+          readOnly: true
+        clubLocation:
+          type: string
+          readOnly: true
         rating:
           type: integer
+          minimum: 1
+          maximum: 5
         description:
           type: string
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        fromTableGuest:
+          type: boolean
+          readOnly: true
+        photoId:
+          type: string
+          format: uuid
+          nullable: true
+          readOnly: true
+        photoUrl:
+          type: string
+          nullable: true
+          readOnly: true
         links:
           type: array
           readOnly: true
@@ -1615,15 +1807,39 @@ components:
         id:
           type: string
           format: uuid
+          readOnly: true
         clubId:
           type: string
           format: uuid
+          readOnly: true
+        clubName:
+          type: string
+          readOnly: true
         userId:
           type: string
           format: uuid
+          readOnly: true
+        userUsername:
+          type: string
+          readOnly: true
+        userName:
+          type: string
+          readOnly: true
+        userSurname:
+          type: string
+          readOnly: true
         tableId:
           type: string
           format: uuid
+        tableNumber:
+          type: integer
+          readOnly: true
+        tablePrice:
+          type: number
+          readOnly: true
+        tableDiscount:
+          type: number
+          readOnly: true
         date:
           type: string
           format: date
@@ -1658,18 +1874,35 @@ components:
     ReceiptDto:
       type: object
       properties:
-        receiptId:
+        id:
           type: string
           format: uuid
+          readOnly: true
         bookingId:
           type: string
           format: uuid
+          readOnly: true
+        uploadedBy:
+          type: string
+          format: uuid
+          readOnly: true
         filename:
           type: string
+          readOnly: true
         contentType:
           type: string
+          readOnly: true
+        sizeBytes:
+          type: integer
+          format: int64
+          readOnly: true
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
         links:
           type: array
+          readOnly: true
           items:
             $ref: '#/components/schemas/LinkDto'
 

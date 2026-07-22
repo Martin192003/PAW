@@ -4,6 +4,7 @@ import ar.edu.itba.paw.model.Review;
 import ar.edu.itba.paw.model.Photo;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.ReviewDto;
+import ar.edu.itba.paw.model.dto.ValidationGroups;
 import ar.edu.itba.paw.model.dto.LinkDto;
 import ar.edu.itba.paw.service.ReviewService;
 import ar.edu.itba.paw.service.UserService;
@@ -11,6 +12,7 @@ import ar.edu.itba.paw.model.exceptions.DuplicateEntityException;
 import ar.edu.itba.paw.model.exceptions.ReviewNotFounException;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
 import ar.edu.itba.paw.webapp.rest.CollectionLinks;
+import ar.edu.itba.paw.webapp.rest.DtoValidation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -109,7 +111,7 @@ public class ReviewsRestController {
         UUID clubId = parseUuidOr400(clubIdStr);
         if (clubId == null) return badRequest("club.id.invalid");
 
-        if (body == null || body.getRating() == null) {
+        if (!DtoValidation.isValid(body, ValidationGroups.Create.class)) {
             return badRequest("Missing required fields");
         }
 
@@ -213,7 +215,7 @@ public class ReviewsRestController {
         UUID reviewId = parseUuidOr400(reviewIdStr);
         if (reviewId == null) return badRequest("review.id.invalid");
 
-        if (body == null || body.getRating() == null) return badRequest("Body requerido");
+        if (!DtoValidation.isValid(body, ValidationGroups.Update.class)) return badRequest("Body requerido");
 
         User user = authenticatedUser(securityContext);
         if (user == null) return Response.status(Response.Status.UNAUTHORIZED).build();

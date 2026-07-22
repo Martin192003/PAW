@@ -3,16 +3,18 @@ package ar.edu.itba.paw.webapp.rest.events;
 import ar.edu.itba.paw.model.Event;
 import ar.edu.itba.paw.model.User;
 import ar.edu.itba.paw.model.dto.EventDto;
+import ar.edu.itba.paw.model.dto.ErrorDto;
 import ar.edu.itba.paw.model.dto.LinkDto;
+import ar.edu.itba.paw.model.dto.ValidationGroups;
 import ar.edu.itba.paw.service.ClubService;
 import ar.edu.itba.paw.service.EventService;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
 import ar.edu.itba.paw.webapp.rest.CollectionLinks;
+import ar.edu.itba.paw.webapp.rest.DtoValidation;
 import ar.edu.itba.paw.webapp.rest.auth.AuthenticatedUserResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
@@ -72,11 +74,13 @@ public class EventRestController {
 
     @POST
     public Response create(@QueryParam("clubId") UUID clubId,
-                           @Valid EventDto dto,
+                           EventDto dto,
                            @Context SecurityContext securityContext) {
 
-        if (clubId == null) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+        if (clubId == null || !DtoValidation.isValid(dto, ValidationGroups.Create.class)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorDto("fields.required"))
+                    .build();
         }
 
         User user = authenticatedUserResolver.resolve(securityContext);
@@ -114,8 +118,14 @@ public class EventRestController {
     @PUT
     @Path("/{eventId}")
     public Response update(@PathParam("eventId") UUID eventId,
-                           @Valid EventDto dto,
+                           EventDto dto,
                            @Context SecurityContext securityContext) {
+
+        if (!DtoValidation.isValid(dto, ValidationGroups.Update.class)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorDto("fields.required"))
+                    .build();
+        }
 
         Event existing = eventService.get(eventId);
         UUID clubId = existing.getClubId();

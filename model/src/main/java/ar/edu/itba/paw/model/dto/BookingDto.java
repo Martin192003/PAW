@@ -1,5 +1,6 @@
 package ar.edu.itba.paw.model.dto;
 
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -28,6 +29,7 @@ public class BookingDto {
     private boolean hasReceipt;
     private List<LinkDto> links;
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getId() {
         return id;
     }
@@ -36,6 +38,7 @@ public class BookingDto {
         this.id = id;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getClubId() {
         return clubId;
     }
@@ -44,6 +47,7 @@ public class BookingDto {
         this.clubId = clubId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getClubName() {
         return clubName;
     }
@@ -52,6 +56,7 @@ public class BookingDto {
         this.clubName = clubName;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public UUID getUserId() {
         return userId;
     }
@@ -60,6 +65,7 @@ public class BookingDto {
         this.userId = userId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getUserUsername() {
         return userUsername;
     }
@@ -68,6 +74,7 @@ public class BookingDto {
         this.userUsername = userUsername;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getUserName() {
         return userName;
     }
@@ -76,6 +83,7 @@ public class BookingDto {
         this.userName = userName;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public String getUserSurname() {
         return userSurname;
     }
@@ -92,6 +100,7 @@ public class BookingDto {
         this.tableId = tableId;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public Integer getTableNumber() {
         return tableNumber;
     }
@@ -100,6 +109,7 @@ public class BookingDto {
         this.tableNumber = tableNumber;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public BigDecimal getTablePrice() {
         return tablePrice;
     }
@@ -108,6 +118,7 @@ public class BookingDto {
         this.tablePrice = tablePrice;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public BigDecimal getTableDiscount() {
         return tableDiscount;
     }
@@ -117,6 +128,7 @@ public class BookingDto {
     }
 
     @XmlJavaTypeAdapter(LocalDateAdapter.class)
+    @ApiFieldAccess(ApiFieldAccess.Mode.WRITE_ONLY)
     public LocalDate getDate() {
         return date;
     }
@@ -125,6 +137,7 @@ public class BookingDto {
         this.date = date;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public OffsetDateTime getBookingStart() {
         return bookingStart;
     }
@@ -133,6 +146,7 @@ public class BookingDto {
         this.bookingStart = bookingStart;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public OffsetDateTime getBookingEnd() {
         return bookingEnd;
     }
@@ -149,6 +163,7 @@ public class BookingDto {
         this.status = status;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
@@ -157,6 +172,7 @@ public class BookingDto {
         this.createdAt = createdAt;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public BigDecimal getTotalAmount() {
         return totalAmount;
     }
@@ -165,6 +181,7 @@ public class BookingDto {
         this.totalAmount = totalAmount;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public boolean isHasReceipt() {
         return hasReceipt;
     }
@@ -173,6 +190,7 @@ public class BookingDto {
         this.hasReceipt = hasReceipt;
     }
 
+    @ApiFieldAccess(ApiFieldAccess.Mode.READ_ONLY)
     public List<LinkDto> getLinks() {
         return links;
     }

@@ -5,6 +5,7 @@ import ar.edu.itba.paw.model.dto.*;
 import ar.edu.itba.paw.service.*;
 import ar.edu.itba.paw.webapp.rest.ApiMediaTypes;
 import ar.edu.itba.paw.webapp.rest.CollectionLinks;
+import ar.edu.itba.paw.webapp.rest.DtoValidation;
 import ar.edu.itba.paw.webapp.auth.PawUserDetails;
 import ar.edu.itba.paw.webapp.rest.LinkBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -223,14 +224,7 @@ public class ClubRestController {
     public Response createClub(ClubDto body,
                                @Context SecurityContext securityContext) {
 
-        if (body == null ||
-                isBlank(body.getClubName()) ||
-                isBlank(body.getLocation()) ||
-                isBlank(body.getDescription()) ||
-                isBlank(body.getZone()) ||
-                isBlank(body.getMusicGenre()) ||
-                isBlank(body.getPriceRange()) ||
-                isBlank(body.getCbu())) {
+        if (!DtoValidation.isValid(body, ValidationGroups.Create.class)) {
 
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("fields.required"))
@@ -284,7 +278,7 @@ public class ClubRestController {
                     .build();
         }
 
-        if (body == null) {
+        if (!DtoValidation.isValid(body, ValidationGroups.Update.class)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorDto("body.required"))
                     .build();
