@@ -86,13 +86,11 @@ public class UserRestController {
         User verified = userService.findById(user.getId()).orElse(user);
         String accessToken = ApiTokenHeaders.tokenFor(jwtUtil, verified);
         long expiresIn = jwtUtil.getExpirationSeconds();
-        UserUpdateResponseDto response = new UserUpdateResponseDto(
-                UserMapper.toDto(verified, uriInfo),
+        return ApiTokenHeaders.addTo(
+                Response.ok(UserMapper.toDto(verified, uriInfo)),
                 accessToken,
-                "Bearer",
                 expiresIn
-        );
-        return ApiTokenHeaders.addTo(Response.ok(response), accessToken, expiresIn).build();
+        ).build();
     }
 
     @PUT
@@ -130,13 +128,11 @@ public class UserRestController {
         User user = updated.get();
         String accessToken = ApiTokenHeaders.tokenFor(jwtUtil, user);
         long expiresIn = jwtUtil.getExpirationSeconds();
-        UserUpdateResponseDto response = new UserUpdateResponseDto(
-                UserMapper.toDto(user, uriInfo),
+        return ApiTokenHeaders.addTo(
+                Response.ok(UserMapper.toDto(user, uriInfo)),
                 accessToken,
-                "Bearer",
                 expiresIn
-        );
-        return ApiTokenHeaders.addTo(Response.ok(response), accessToken, expiresIn)
+        )
                 .build();
     }
 

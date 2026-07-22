@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { UserService, UserUpdateResult } from './user.service';
-import { ApiMessageResponse, LoginResponse, User } from '../models/user.model';
+import { LoginResponse, User } from '../models/user.model';
 
 
 describe('UserService', () => {
@@ -67,36 +67,25 @@ describe('UserService', () => {
     expect(result).toEqual({ token: jwt, user: fakeUser });
   });
 
-  it('verifyByToken calls the canonical /users/{id}/verification sub-resource', () => {
-    let result: LoginResponse | ApiMessageResponse | undefined;
+  it('verifyByToken reads the session token only from response headers', () => {
+    let result: LoginResponse | undefined;
     service.verifyByToken('user-1', 'verif-token').subscribe(res => { result = res; });
 
     const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/user-1/verification'));
     expect(verificationReq.request.body).toEqual({ token: 'verif-token' });
-    verificationReq.flush({ message: 'verified' });
-
-    expect(result).toEqual({ message: 'verified' });
-  });
-
-  it('verifyByToken passes through an ApiMessageResponse without resolving a user (already verified)', () => {
-    let result: LoginResponse | ApiMessageResponse | undefined;
-    service.verifyByToken('user-1', 'verif-token').subscribe(res => { result = res; });
-
-    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/user-1/verification'));
-    verificationReq.flush({ message: 'already_verified' });
-
-    httpMock.expectNone(request => request.method === 'GET');
-    expect(result).toEqual({ message: 'already_verified' });
-  });
-
-  it('verifyByToken maps a session response to a LoginResponse for auto-login', () => {
-    let result: LoginResponse | ApiMessageResponse | undefined;
-    service.verifyByToken('user-1', 'verif-token').subscribe(res => { result = res; });
-
-    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/user-1/verification'));
-    verificationReq.flush({ user: fakeUser, accessToken: 'jwt-token', tokenType: 'Bearer', expiresIn: 3600 });
+    verificationReq.flush(fakeUser, { headers: { 'Paw-Auth-Token': 'jwt-token' } });
 
     expect(result).toEqual({ token: 'jwt-token', user: fakeUser });
+  });
+
+  it('verifyByToken rejects a successful response without an authentication header', () => {
+    let error: Error | undefined;
+    service.verifyByToken('user-1', 'verif-token').subscribe({ error: value => { error = value; } });
+
+    const verificationReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/user-1/verification'));
+    verificationReq.flush(fakeUser);
+
+    expect(error?.message).toBe('missing_auth_response');
   });
 
   it('resendVerification posts the correct challengeType', () => {
@@ -131,15 +120,22 @@ describe('UserService', () => {
       newPassword: 'newPass123',
       confirmationPassword: 'newPass123',
     });
-    resetReq.flush({
-      user: fakeUser,
-      accessToken: 'jwt-token-3',
-      tokenType: 'Bearer',
-      expiresIn: 3600,
-    });
+    resetReq.flush(fakeUser, { headers: { 'Paw-Auth-Token': 'jwt-token-3' } });
 
     expect(result?.token).toBe('jwt-token-3');
     expect(result?.user).toEqual(fakeUser);
+  });
+
+  it('resetPassword does not accept a token from the response body', () => {
+    let error: Error | undefined;
+    service.resetPassword('reset-token', 'newPass123', 'newPass123').subscribe({
+      error: value => { error = value; },
+    });
+
+    const resetReq = httpMock.expectOne(request => request.method === 'PUT' && request.url.endsWith('/users/credentials/password'));
+    resetReq.flush({ ...fakeUser, accessToken: 'body-token-must-be-ignored' });
+
+    expect(error?.message).toBe('missing_auth_response');
   });
 
   it('changePasswordAuthenticated PUTs to the credentials sub-resource', () => {

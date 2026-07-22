@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpContext, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, switchMap, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -108,22 +108,17 @@ export class UserService {
   }
 
 
-  verifyByToken(userId: string, token: string): Observable<LoginResponse | ApiMessageResponse> {
+  verifyByToken(userId: string, token: string): Observable<LoginResponse> {
     return this.http
-      .put<UserUpdateResponse | ApiMessageResponse>(`${this.apiUrl}/users/${encodeURIComponent(userId)}/verification`, {
+      .put<User>(`${this.apiUrl}/users/${encodeURIComponent(userId)}/verification`, {
         token: token.trim(),
       }, {
+        observe: 'response',
         context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
       })
       .pipe(
         timeout(15000),
-        map((response) => {
-          const session = response as UserUpdateResponse;
-          if (session && session.accessToken && session.user) {
-            return { token: session.accessToken, user: session.user } as LoginResponse;
-          }
-          return response as ApiMessageResponse;
-        })
+        map((response) => this.loginResponseFromHeaders(response))
       );
   }
 
@@ -148,24 +143,28 @@ export class UserService {
 
   resetPassword(token: string, newPassword: string, confirmationPassword: string): Observable<LoginResponse> {
 
-    return this.http.put<UserUpdateResponse>(
+    return this.http.put<User>(
       `${this.apiUrl}/users/credentials/password`,
       {
         token,
         newPassword,
         confirmationPassword
       },
-      { context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true) }
+      {
+        observe: 'response',
+        context: new HttpContext().set(SKIP_API_ERROR_REDIRECT, true),
+      }
     ).pipe(
-      map((response) => this.loginResponseFromUserUpdateResponse(response))
+      map((response) => this.loginResponseFromHeaders(response))
     );
   }
 
-  private loginResponseFromUserUpdateResponse(response: UserUpdateResponse): LoginResponse {
-    if (!response.accessToken || !response.user) {
+  private loginResponseFromHeaders(response: HttpResponse<User>): LoginResponse {
+    const token = response.headers.get('Paw-Auth-Token');
+    if (!token || !response.body) {
       throw new Error('missing_auth_response');
     }
-    return { token: response.accessToken, user: response.user };
+    return { token, user: response.body };
   }
 
 

@@ -96,7 +96,7 @@ paths:
               $ref: '#/components/schemas/VerificationRequestDto'
       responses:
         '200':
-          description: Account verified. A fresh bearer token is returned in body and headers so the client is auto-logged-in.
+          description: Account verified. A fresh bearer token is returned only in authentication response headers so the client is auto-logged-in.
           headers:
             Paw-Auth-Token:
               schema:
@@ -111,7 +111,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserUpdateResponseDto'
+                $ref: '#/components/schemas/UserDto'
         '400':
           $ref: '#/components/responses/BadRequest'
 
@@ -135,7 +135,7 @@ paths:
               $ref: '#/components/schemas/PasswordResetDto'
       responses:
         '200':
-          description: Password reset. A fresh bearer token is returned in body and headers.
+          description: Password reset. A fresh bearer token is returned only in authentication response headers.
           headers:
             Paw-Auth-Token:
               schema:
@@ -150,7 +150,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserUpdateResponseDto'
+                $ref: '#/components/schemas/UserDto'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
